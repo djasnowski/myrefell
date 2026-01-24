@@ -57,12 +57,13 @@ Based on PLANNING.md as of January 2026.
 - [x] XP formula implementation (L² × 60)
 - [x] Skill level calculations
 - [~] Combat level derived from ATK + STR + DEF (formula exists, no combat yet)
-- [~] Skill UI components (shown in gathering/crafting, no dedicated skills page)
+- [x] Skill UI components (sidebar nav-skills + dedicated Skills page)
 
 **Models:** PlayerSkill
 
+**Pages:** Skills/Index
+
 **Missing:**
-- [ ] Dedicated Skills page/panel
 - [ ] Combat skills actually used in combat
 
 ---
@@ -350,7 +351,7 @@ Based on PLANNING.md as of January 2026.
 ### High Priority (Core Gameplay Loop)
 1. **Combat System** - Central to game, affects skills, loot, progression
 2. **Monster/Loot Tables** - Required for combat
-3. **Skills Page** - Players need to see their progress
+3. ~~**Skills Page** - Players need to see their progress~~ DONE (Jan 24, 2026)
 
 ### Medium Priority (Economy & Social)
 4. **Jobs System** - Employment, wages, economy
@@ -366,3 +367,13 @@ Based on PLANNING.md as of January 2026.
 ---
 
 *Last updated: January 24, 2026*
+
+---
+
+## Changelog
+
+### January 24, 2026
+- Added dedicated Skills page (`/skills`) showing all 9 skills organized by category (Combat, Gathering, Crafting)
+- Skills display level, XP progress bar, total XP, and XP to next level
+- Header shows combat level, total level, and total XP stats
+- Created SkillsController.php and Skills/Index.tsx
