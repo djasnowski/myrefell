@@ -1,0 +1,68 @@
+# Laravel
+/.phpunit.cache
+/bootstrap/ssr
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+/vendor
+Homestead.json
+Homestead.yaml
+/auth.json
+
+# Laravel Wayfinder generated files
+/resources/js/actions
+/resources/js/routes
+/resources/js/wayfinder
+
+# Environment files
+.env
+.env.backup
+.env.local
+.env.production
+.env.*.local
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+pnpm-debug.log
+.pnpm-store/
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing
+.phpactor.json
+.phpunit.result.cache
+/coverage
+/.nyc_output
+
+# SQLite
+*.sqlite
+*.sqlite-journal
+
+# IDE / Editor
+.DS_Store
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+*.swp
+*.swo
+*~
+
+# Docker (local data volumes)
+/docker/mysql/data
+/docker/postgres/data
+/docker/redis/data
+
+# Misc
+.claude/todos.json

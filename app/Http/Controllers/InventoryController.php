@@ -1,0 +1,165 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\PlayerInventory;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class InventoryController extends Controller
+{
+    /**
+     * Display the player's inventory.
+     */
+    public function index(Request $request): Response
+    {
+        $player = $request->user();
+        $inventory = $player->inventory()->with('item')->get();
+
+        // Create a 28-slot array with nulls for empty slots
+        $slots = array_fill(0, PlayerInventory::MAX_SLOTS, null);
+
+        foreach ($inventory as $slot) {
+            if ($slot->slot_number >= 0 && $slot->slot_number < PlayerInventory::MAX_SLOTS) {
+                $slots[$slot->slot_number] = [
+                    'id' => $slot->id,
+                    'item' => [
+                        'id' => $slot->item->id,
+                        'name' => $slot->item->name,
+                        'description' => $slot->item->description,
+                        'type' => $slot->item->type,
+                        'subtype' => $slot->item->subtype,
+                        'rarity' => $slot->item->rarity,
+                        'stackable' => $slot->item->stackable,
+                        'equipment_slot' => $slot->item->equipment_slot,
+                        'atk_bonus' => $slot->item->atk_bonus,
+                        'str_bonus' => $slot->item->str_bonus,
+                        'def_bonus' => $slot->item->def_bonus,
+                        'hp_bonus' => $slot->item->hp_bonus,
+                        'base_value' => $slot->item->base_value,
+                    ],
+                    'quantity' => $slot->quantity,
+                    'is_equipped' => $slot->is_equipped,
+                ];
+            }
+        }
+
+        return Inertia::render('inventory', [
+            'slots' => $slots,
+            'max_slots' => PlayerInventory::MAX_SLOTS,
+            'gold' => $player->gold,
+        ]);
+    }
+
+    /**
+     * Move an item to a different slot.
+     */
+    public function move(Request $request)
+    {
+        $request->validate([
+            'from_slot' => 'required|integer|min:0|max:27',
+            'to_slot' => 'required|integer|min:0|max:27',
+        ]);
+
+        $player = $request->user();
+        $fromSlot = $request->from_slot;
+        $toSlot = $request->to_slot;
+
+        if ($fromSlot === $toSlot) {
+            return back();
+        }
+
+        $fromItem = $player->inventory()->where('slot_number', $fromSlot)->first();
+        $toItem = $player->inventory()->where('slot_number', $toSlot)->first();
+
+        if (!$fromItem) {
+            return back()->withErrors(['error' => 'No item in source slot.']);
+        }
+
+        // Swap slots
+        if ($toItem) {
+            $toItem->update(['slot_number' => $fromSlot]);
+        }
+        $fromItem->update(['slot_number' => $toSlot]);
+
+        return back();
+    }
+
+    /**
+     * Drop an item from inventory.
+     */
+    public function drop(Request $request)
+    {
+        $request->validate([
+            'slot' => 'required|integer|min:0|max:27',
+            'quantity' => 'nullable|integer|min:1',
+        ]);
+
+        $player = $request->user();
+        $slot = $player->inventory()->where('slot_number', $request->slot)->first();
+
+        if (!$slot) {
+            return back()->withErrors(['error' => 'No item in that slot.']);
+        }
+
+        $quantity = $request->quantity ?? $slot->quantity;
+
+        if ($quantity >= $slot->quantity) {
+            $slot->delete();
+        } else {
+            $slot->decrement('quantity', $quantity);
+        }
+
+        return back();
+    }
+
+    /**
+     * Equip an item.
+     */
+    public function equip(Request $request)
+    {
+        $request->validate([
+            'slot' => 'required|integer|min:0|max:27',
+        ]);
+
+        $player = $request->user();
+        $slot = $player->inventory()->with('item')->where('slot_number', $request->slot)->first();
+
+        if (!$slot || !$slot->item->equipment_slot) {
+            return back()->withErrors(['error' => 'Cannot equip this item.']);
+        }
+
+        // Unequip any item in the same equipment slot
+        $player->inventory()
+            ->whereHas('item', fn ($q) => $q->where('equipment_slot', $slot->item->equipment_slot))
+            ->where('is_equipped', true)
+            ->update(['is_equipped' => false]);
+
+        // Equip the new item
+        $slot->update(['is_equipped' => true]);
+
+        return back();
+    }
+
+    /**
+     * Unequip an item.
+     */
+    public function unequip(Request $request)
+    {
+        $request->validate([
+            'slot' => 'required|integer|min:0|max:27',
+        ]);
+
+        $player = $request->user();
+        $slot = $player->inventory()->where('slot_number', $request->slot)->first();
+
+        if (!$slot || !$slot->is_equipped) {
+            return back()->withErrors(['error' => 'Item is not equipped.']);
+        }
+
+        $slot->update(['is_equipped' => false]);
+
+        return back();
+    }
+}
