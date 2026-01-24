@@ -17,6 +17,7 @@ use App\Http\Controllers\PortController;
 use App\Http\Controllers\SkillsController;
 use App\Http\Controllers\TownController;
 use App\Http\Controllers\TravelController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\VillageController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -148,6 +149,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('jobs/{employment}/work', [JobController::class, 'work'])->name('jobs.work');
     Route::post('jobs/{employment}/quit', [JobController::class, 'quit'])->name('jobs.quit');
     Route::get('jobs/status', [JobController::class, 'status'])->name('jobs.status');
+
+    // Roles
+    Route::get('villages/{village}/roles', [RoleController::class, 'villageRoles'])->name('villages.roles');
+    Route::get('castles/{castle}/roles', [RoleController::class, 'castleRoles'])->name('castles.roles');
+    Route::get('kingdoms/{kingdom}/roles', [RoleController::class, 'kingdomRoles'])->name('kingdoms.roles');
+    Route::get('roles', [RoleController::class, 'myRoles'])->name('roles.index');
+    Route::post('roles/appoint', [RoleController::class, 'appoint'])->name('roles.appoint');
+    Route::post('roles/{playerRole}/resign', [RoleController::class, 'resign'])->name('roles.resign');
+    Route::post('roles/{playerRole}/remove', [RoleController::class, 'remove'])->name('roles.remove');
+    Route::get('roles/status', [RoleController::class, 'status'])->name('roles.status');
 });
 
 require __DIR__.'/settings.php';
