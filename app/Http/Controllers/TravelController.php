@@ -60,7 +60,7 @@ class TravelController extends Controller
     /**
      * Start traveling to a destination.
      */
-    public function start(Request $request): JsonResponse
+    public function start(Request $request)
     {
         $request->validate([
             'destination_type' => 'required|string|in:village,castle,town,wilderness',
@@ -76,11 +76,20 @@ class TravelController extends Controller
                 $request->input('destination_id')
             );
 
+            // If Inertia request, redirect back
+            if ($request->header('X-Inertia')) {
+                return back();
+            }
+
             return response()->json([
                 'success' => true,
                 'travel' => $result,
             ]);
         } catch (\InvalidArgumentException $e) {
+            if ($request->header('X-Inertia')) {
+                return back()->withErrors(['travel' => $e->getMessage()]);
+            }
+
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage(),
@@ -91,15 +100,23 @@ class TravelController extends Controller
     /**
      * Cancel current travel.
      */
-    public function cancel(Request $request): JsonResponse
+    public function cancel(Request $request)
     {
         $user = $request->user();
 
         if ($this->travelService->cancelTravel($user)) {
+            if ($request->header('X-Inertia')) {
+                return back();
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Travel cancelled.',
             ]);
+        }
+
+        if ($request->header('X-Inertia')) {
+            return back()->withErrors(['travel' => 'You are not traveling.']);
         }
 
         return response()->json([
@@ -111,13 +128,17 @@ class TravelController extends Controller
     /**
      * Arrive at destination (manual check).
      */
-    public function arrive(Request $request): JsonResponse
+    public function arrive(Request $request)
     {
         $user = $request->user();
 
         $arrival = $this->travelService->checkArrival($user);
 
         if ($arrival) {
+            if ($request->header('X-Inertia')) {
+                return redirect()->route('travel.index');
+            }
+
             return response()->json([
                 'success' => true,
                 'arrived' => true,
@@ -128,10 +149,18 @@ class TravelController extends Controller
         $status = $this->travelService->getTravelStatus($user);
 
         if (! $status) {
+            if ($request->header('X-Inertia')) {
+                return back()->withErrors(['travel' => 'You are not traveling.']);
+            }
+
             return response()->json([
                 'success' => false,
                 'error' => 'You are not traveling.',
             ], 422);
+        }
+
+        if ($request->header('X-Inertia')) {
+            return back();
         }
 
         return response()->json([

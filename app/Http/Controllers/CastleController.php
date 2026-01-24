@@ -29,7 +29,7 @@ class CastleController extends Controller
                     'id' => $castle->kingdom->id,
                     'name' => $castle->kingdom->name,
                 ] : null,
-                'is_capital' => $castle->isCapital(),
+                'is_capital' => $castle->isInCapital(),
                 'coordinates' => [
                     'x' => $castle->coordinates_x,
                     'y' => $castle->coordinates_y,
@@ -55,7 +55,7 @@ class CastleController extends Controller
                 'description' => $castle->description,
                 'biome' => $castle->biome,
                 'tax_rate' => $castle->tax_rate,
-                'is_capital' => $castle->isCapital(),
+                'is_capital' => $castle->isInCapital(),
                 'coordinates' => [
                     'x' => $castle->coordinates_x,
                     'y' => $castle->coordinates_y,

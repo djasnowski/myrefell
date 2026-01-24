@@ -9,6 +9,7 @@ import {
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { Link, router, usePage } from '@inertiajs/react';
 import {
+    Anchor,
     Banknote,
     Calendar,
     Castle,
@@ -34,6 +35,7 @@ interface LocationData {
     id: number | null;
     name: string;
     biome: string;
+    is_port?: boolean;
 }
 
 interface HomeVillage {
@@ -61,6 +63,7 @@ interface SidebarData {
     location: LocationData | null;
     home_village: HomeVillage | null;
     travel: TravelStatus | null;
+    nearby_destinations: TravelDestination[];
 }
 
 interface NavItem {
@@ -74,8 +77,9 @@ interface TravelDestination {
     type: string;
     id: number;
     name: string;
-    icon: LucideIcon;
-    description?: string;
+    biome?: string;
+    distance?: number;
+    travel_time: number;
 }
 
 // Location type icons
@@ -121,6 +125,14 @@ function getLocationServices(location: LocationData | null): NavItem[] {
                 icon: Users,
                 description: 'People who live here',
             });
+            if (location.is_port) {
+                items.push({
+                    title: 'Harbor',
+                    href: `/villages/${location.id}/port`,
+                    icon: Anchor,
+                    description: 'Book passage to other kingdoms',
+                });
+            }
             break;
 
         case 'castle':
@@ -173,95 +185,9 @@ function getLocationServices(location: LocationData | null): NavItem[] {
     return items;
 }
 
-// Get places you can travel to from current location
-function getTravelDestinations(location: LocationData | null, homeVillage: HomeVillage | null): TravelDestination[] {
-    const items: TravelDestination[] = [];
-
-    if (!homeVillage) return items;
-
-    const currentType = location?.type;
-
-    // From village
-    if (currentType === 'village') {
-        if (homeVillage.castle) {
-            items.push({
-                type: 'castle',
-                id: homeVillage.castle.id,
-                name: homeVillage.castle.name,
-                icon: Castle,
-                description: 'The castle',
-            });
-        }
-        if (homeVillage.town) {
-            items.push({
-                type: 'town',
-                id: homeVillage.town.id,
-                name: homeVillage.town.name,
-                icon: Church,
-                description: 'The town',
-            });
-        }
-        items.push({
-            type: 'wilderness',
-            id: 0,
-            name: 'Wilderness',
-            icon: Trees,
-            description: 'Venture into the wild',
-        });
-    }
-
-    // From castle
-    if (currentType === 'castle') {
-        items.push({
-            type: 'village',
-            id: homeVillage.id,
-            name: homeVillage.name,
-            icon: Home,
-            description: 'Your home',
-        });
-        if (homeVillage.town) {
-            items.push({
-                type: 'town',
-                id: homeVillage.town.id,
-                name: homeVillage.town.name,
-                icon: Church,
-                description: 'The town',
-            });
-        }
-    }
-
-    // From town
-    if (currentType === 'town') {
-        items.push({
-            type: 'village',
-            id: homeVillage.id,
-            name: homeVillage.name,
-            icon: Home,
-            description: 'Your home',
-        });
-        if (homeVillage.castle) {
-            items.push({
-                type: 'castle',
-                id: homeVillage.castle.id,
-                name: homeVillage.castle.name,
-                icon: Castle,
-                description: 'The castle',
-            });
-        }
-    }
-
-    // From wilderness or no location
-    if (currentType === 'wilderness' || !currentType) {
-        items.push({
-            type: 'village',
-            id: homeVillage.id,
-            name: homeVillage.name,
-            icon: Home,
-            description: 'Return home',
-        });
-    }
-
-    return items;
+// Get icon for destination type
+function getDestinationIcon(type: string): LucideIcon {
+    return locationIcons[type] || MapPin;
 }
 
 // Get common services
@@ -306,21 +232,28 @@ function formatTime(seconds: number): string {
 
 function TravelingIndicator({ travel }: { travel: TravelStatus }) {
     const [remaining, setRemaining] = useState(travel.remaining_seconds);
+    const [arriving, setArriving] = useState(false);
 
     useEffect(() => {
         setRemaining(travel.remaining_seconds);
         const interval = setInterval(() => {
             setRemaining((prev) => {
                 const newVal = Math.max(0, prev - 1);
-                if (newVal <= 0) {
-                    // Refresh to check arrival
-                    router.reload({ only: ['sidebar'] });
+                if (newVal <= 0 && !arriving) {
+                    // Call arrive endpoint to complete travel
+                    setArriving(true);
+                    router.post('/travel/arrive', {}, {
+                        preserveScroll: true,
+                        onFinish: () => {
+                            router.reload();
+                        },
+                    });
                 }
                 return newVal;
             });
         }, 1000);
         return () => clearInterval(interval);
-    }, [travel.remaining_seconds]);
+    }, [travel.remaining_seconds, arriving]);
 
     const Icon = locationIcons[travel.destination.type] || MapPin;
 
@@ -352,9 +285,9 @@ export function NavLocation() {
 
     if (!sidebar) return null;
 
-    const { location, home_village, travel } = sidebar;
+    const { location, home_village, travel, nearby_destinations } = sidebar;
     const services = getLocationServices(location);
-    const travelDestinations = getTravelDestinations(location, home_village);
+    const travelDestinations = nearby_destinations || [];
     const commonServices = getCommonServices(location, home_village);
 
     const LocationIcon = location ? locationIcons[location.type] || MapPin : MapPin;
@@ -483,23 +416,25 @@ export function NavLocation() {
             {/* Travel Destinations */}
             {travelDestinations.length > 0 && (
                 <SidebarGroup className="px-2 py-0">
-                    <SidebarGroupLabel>Travel To</SidebarGroupLabel>
+                    <SidebarGroupLabel>Nearby ({travelDestinations.length})</SidebarGroupLabel>
                     <SidebarMenu>
-                        {travelDestinations.map((dest) => {
+                        {travelDestinations.slice(0, 6).map((dest) => {
                             const isLoading = travelingTo === `${dest.type}-${dest.id}`;
+                            const Icon = getDestinationIcon(dest.type);
                             return (
                                 <SidebarMenuItem key={`${dest.type}-${dest.id}`}>
                                     <SidebarMenuButton
                                         onClick={() => handleTravel(dest)}
                                         disabled={isLoading}
-                                        tooltip={{ children: dest.description || dest.name }}
+                                        tooltip={{ children: `${dest.name} (${dest.travel_time} min)` }}
                                     >
                                         {isLoading ? (
                                             <Loader2 className="h-4 w-4 animate-spin" />
                                         ) : (
-                                            <dest.icon className="h-4 w-4" />
+                                            <Icon className="h-4 w-4" />
                                         )}
-                                        <span>{dest.name}</span>
+                                        <span className="flex-1 truncate">{dest.name}</span>
+                                        <span className="text-[10px] text-sidebar-foreground/50">{dest.travel_time}m</span>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             );

@@ -10,7 +10,10 @@ use App\Http\Controllers\DailyTaskController;
 use App\Http\Controllers\ElectionController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\KingdomController;
+use App\Http\Controllers\MapController;
 use App\Http\Controllers\PlayerController;
+use App\Http\Controllers\PortController;
+use App\Http\Controllers\TownController;
 use App\Http\Controllers\TravelController;
 use App\Http\Controllers\VillageController;
 use Illuminate\Support\Facades\Route;
@@ -38,7 +41,7 @@ if (app()->environment('local')) {
 }
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', [PlayerController::class, 'dashboard'])->name('dashboard');
+    Route::get('dashboard', [MapController::class, 'index'])->name('dashboard');
     Route::get('api/player/stats', [PlayerController::class, 'stats'])->name('player.stats');
 
     // Inventory routes
@@ -56,6 +59,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('castles', [CastleController::class, 'index'])->name('castles.index');
     Route::get('castles/{castle}', [CastleController::class, 'show'])->name('castles.show');
     Route::get('castles/{castle}/villages', [CastleController::class, 'villages'])->name('castles.villages');
+
+    Route::get('towns', [TownController::class, 'index'])->name('towns.index');
+    Route::get('towns/{town}', [TownController::class, 'show'])->name('towns.show');
+    Route::get('towns/{town}/hall', [TownController::class, 'hall'])->name('towns.hall');
 
     Route::get('villages', [VillageController::class, 'index'])->name('villages.index');
     Route::get('villages/{village}', [VillageController::class, 'show'])->name('villages.show');
@@ -123,6 +130,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('quests/accept', [QuestController::class, 'accept'])->name('quests.accept');
     Route::post('quests/{playerQuest}/abandon', [QuestController::class, 'abandon'])->name('quests.abandon');
     Route::post('quests/{playerQuest}/claim', [QuestController::class, 'claim'])->name('quests.claim');
+
+    // Port
+    Route::get('villages/{village}/port', [PortController::class, 'show'])->name('villages.port');
+    Route::post('port/book', [PortController::class, 'book'])->name('port.book');
 });
 
 require __DIR__.'/settings.php';

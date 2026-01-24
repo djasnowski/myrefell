@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Castle, Church, Clock, Home, Loader2, MapPin, Trees, X, Zap } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Destination {
     type: string;
@@ -68,9 +68,11 @@ function formatTime(seconds: number): string {
 function TravelProgress({ status, onCancel, onArrive }: { status: TravelStatus; onCancel: () => void; onArrive: () => void }) {
     const [remaining, setRemaining] = useState(status.remaining_seconds);
     const [progress, setProgress] = useState(status.progress_percent);
+    const arrivedRef = useRef(false);
 
     useEffect(() => {
-        if (status.has_arrived) {
+        if (status.has_arrived && !arrivedRef.current) {
+            arrivedRef.current = true;
             onArrive();
             return;
         }
@@ -78,7 +80,9 @@ function TravelProgress({ status, onCancel, onArrive }: { status: TravelStatus; 
         const interval = setInterval(() => {
             setRemaining((prev) => {
                 const newVal = Math.max(0, prev - 1);
-                if (newVal <= 0) {
+                if (newVal <= 0 && !arrivedRef.current) {
+                    arrivedRef.current = true;
+                    clearInterval(interval);
                     onArrive();
                 }
                 return newVal;
@@ -87,7 +91,7 @@ function TravelProgress({ status, onCancel, onArrive }: { status: TravelStatus; 
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [status, onArrive]);
+    }, [status.has_arrived, status.total_seconds, onArrive]);
 
     const Icon = locationIcons[status.destination.type] || MapPin;
 

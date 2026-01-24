@@ -20,6 +20,7 @@ class Village extends Model
         'population',
         'wealth',
         'biome',
+        'is_port',
         'coordinates_x',
         'coordinates_y',
     ];
@@ -28,6 +29,7 @@ class Village extends Model
     {
         return [
             'is_town' => 'boolean',
+            'is_port' => 'boolean',
             'population' => 'integer',
             'wealth' => 'integer',
             'coordinates_x' => 'integer',
@@ -81,6 +83,14 @@ class Village extends Model
     public function isIndependent(): bool
     {
         return $this->castle_id === null;
+    }
+
+    /**
+     * Check if this village is a port.
+     */
+    public function isPort(): bool
+    {
+        return $this->is_port;
     }
 
     /**

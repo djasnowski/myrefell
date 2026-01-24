@@ -126,7 +126,7 @@ class ElectionController extends Controller
     /**
      * Declare candidacy for an election.
      */
-    public function declareCandidacy(Request $request, Election $election): JsonResponse
+    public function declareCandidacy(Request $request, Election $election): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $request->validate([
             'platform' => 'nullable|string|max:1000',
@@ -139,27 +139,34 @@ class ElectionController extends Controller
                 $request->input('platform')
             );
 
-            return response()->json([
-                'success' => true,
-                'candidate' => [
-                    'id' => $candidate->id,
-                    'user_id' => $candidate->user_id,
-                    'platform' => $candidate->platform,
-                    'declared_at' => $candidate->declared_at->toIso8601String(),
-                ],
-            ]);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'candidate' => [
+                        'id' => $candidate->id,
+                        'user_id' => $candidate->user_id,
+                        'platform' => $candidate->platform,
+                        'declared_at' => $candidate->declared_at->toIso8601String(),
+                    ],
+                ]);
+            }
+
+            return back()->with('success', 'You have declared your candidacy.');
         } catch (\InvalidArgumentException $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage(),
-            ], 422);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => $e->getMessage(),
+                ], 422);
+            }
+            return back()->withErrors(['candidacy' => $e->getMessage()]);
         }
     }
 
     /**
      * Withdraw candidacy from an election.
      */
-    public function withdrawCandidacy(Election $election): JsonResponse
+    public function withdrawCandidacy(Request $request, Election $election): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $user = auth()->user();
 
@@ -169,30 +176,40 @@ class ElectionController extends Controller
             ->first();
 
         if (! $candidate) {
-            return response()->json([
-                'success' => false,
-                'error' => 'You are not an active candidate in this election.',
-            ], 422);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'You are not an active candidate in this election.',
+                ], 422);
+            }
+            return back()->withErrors(['candidacy' => 'You are not an active candidate in this election.']);
         }
 
         if (! $election->isOpen()) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Cannot withdraw from a closed election.',
-            ], 422);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Cannot withdraw from a closed election.',
+                ], 422);
+            }
+            return back()->withErrors(['candidacy' => 'Cannot withdraw from a closed election.']);
         }
 
         $candidate->withdraw();
 
-        return response()->json([
-            'success' => true,
-        ]);
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+            ]);
+        }
+
+        return back()->with('success', 'You have withdrawn your candidacy.');
     }
 
     /**
      * Cast a vote for a candidate.
      */
-    public function vote(Request $request, Election $election): JsonResponse
+    public function vote(Request $request, Election $election): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $request->validate([
             'candidate_id' => 'required|integer|exists:election_candidates,id',
@@ -207,29 +224,36 @@ class ElectionController extends Controller
                 $candidate
             );
 
-            return response()->json([
-                'success' => true,
-                'vote' => [
-                    'id' => $vote->id,
-                    'voted_at' => $vote->voted_at->toIso8601String(),
-                ],
-                'election' => [
-                    'votes_cast' => $election->fresh()->votes_cast,
-                    'quorum_met' => $election->fresh()->quorum_met,
-                ],
-            ]);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'vote' => [
+                        'id' => $vote->id,
+                        'voted_at' => $vote->voted_at->toIso8601String(),
+                    ],
+                    'election' => [
+                        'votes_cast' => $election->fresh()->votes_cast,
+                        'quorum_met' => $election->fresh()->quorum_met,
+                    ],
+                ]);
+            }
+
+            return back()->with('success', 'Your vote has been cast.');
         } catch (\InvalidArgumentException $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage(),
-            ], 422);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => $e->getMessage(),
+                ], 422);
+            }
+            return back()->withErrors(['vote' => $e->getMessage()]);
         }
     }
 
     /**
      * Start a village role election.
      */
-    public function startVillageElection(Request $request, Village $village): JsonResponse
+    public function startVillageElection(Request $request, Village $village): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $request->validate([
             'role' => 'required|string|in:' . implode(',', Election::VILLAGE_ROLES),
@@ -239,10 +263,13 @@ class ElectionController extends Controller
 
         // Validate user is a resident
         if ($user->home_village_id !== $village->id) {
-            return response()->json([
-                'success' => false,
-                'error' => 'You must be a resident of this village to start an election.',
-            ], 422);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'You must be a resident of this village to start an election.',
+                ], 422);
+            }
+            return back()->withErrors(['election' => 'You must be a resident of this village to start an election.']);
         }
 
         try {
@@ -253,26 +280,33 @@ class ElectionController extends Controller
                 $user
             );
 
-            return response()->json([
-                'success' => true,
-                'election' => [
-                    'id' => $election->id,
-                    'status' => $election->status,
-                    'voting_ends_at' => $election->voting_ends_at->toIso8601String(),
-                ],
-            ]);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'election' => [
+                        'id' => $election->id,
+                        'status' => $election->status,
+                        'voting_ends_at' => $election->voting_ends_at->toIso8601String(),
+                    ],
+                ]);
+            }
+
+            return back()->with('success', 'Election started successfully.');
         } catch (\InvalidArgumentException $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage(),
-            ], 422);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => $e->getMessage(),
+                ], 422);
+            }
+            return back()->withErrors(['election' => $e->getMessage()]);
         }
     }
 
     /**
      * Self-appoint to a village role (for small villages).
      */
-    public function selfAppoint(Request $request, Village $village): JsonResponse
+    public function selfAppoint(Request $request, Village $village): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $request->validate([
             'role' => 'required|string|in:' . implode(',', Election::VILLAGE_ROLES),
@@ -287,27 +321,34 @@ class ElectionController extends Controller
                 $request->input('role')
             );
 
-            return response()->json([
-                'success' => true,
-                'election' => [
-                    'id' => $election->id,
-                    'status' => $election->status,
-                    'is_self_appointment' => true,
-                ],
-                'message' => "You have been appointed as {$request->input('role')} of {$village->name}.",
-            ]);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'election' => [
+                        'id' => $election->id,
+                        'status' => $election->status,
+                        'is_self_appointment' => true,
+                    ],
+                    'message' => "You have been appointed as {$request->input('role')} of {$village->name}.",
+                ]);
+            }
+
+            return back()->with('success', "You have been appointed as {$request->input('role')} of {$village->name}.");
         } catch (\InvalidArgumentException $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage(),
-            ], 422);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => $e->getMessage(),
+                ], 422);
+            }
+            return back()->withErrors(['appointment' => $e->getMessage()]);
         }
     }
 
     /**
      * Start a mayor election for a town.
      */
-    public function startMayorElection(Request $request, Town $town): JsonResponse
+    public function startMayorElection(Request $request, Town $town): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $user = $request->user();
 
@@ -320,10 +361,13 @@ class ElectionController extends Controller
             ]),
             $user
         )) {
-            return response()->json([
-                'success' => false,
-                'error' => 'You must be a resident of a village in this town to start an election.',
-            ], 422);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'You must be a resident of a village in this town to start an election.',
+                ], 422);
+            }
+            return back()->withErrors(['election' => 'You must be a resident of a village in this town to start an election.']);
         }
 
         try {
@@ -334,26 +378,33 @@ class ElectionController extends Controller
                 $user
             );
 
-            return response()->json([
-                'success' => true,
-                'election' => [
-                    'id' => $election->id,
-                    'status' => $election->status,
-                    'voting_ends_at' => $election->voting_ends_at->toIso8601String(),
-                ],
-            ]);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'election' => [
+                        'id' => $election->id,
+                        'status' => $election->status,
+                        'voting_ends_at' => $election->voting_ends_at->toIso8601String(),
+                    ],
+                ]);
+            }
+
+            return back()->with('success', 'Election started successfully.');
         } catch (\InvalidArgumentException $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage(),
-            ], 422);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => $e->getMessage(),
+                ], 422);
+            }
+            return back()->withErrors(['election' => $e->getMessage()]);
         }
     }
 
     /**
      * Start a king election for a kingdom.
      */
-    public function startKingElection(Request $request, Kingdom $kingdom): JsonResponse
+    public function startKingElection(Request $request, Kingdom $kingdom): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $user = $request->user();
 
@@ -366,10 +417,13 @@ class ElectionController extends Controller
             ]),
             $user
         )) {
-            return response()->json([
-                'success' => false,
-                'error' => 'You must be a resident of a village in this kingdom to start an election.',
-            ], 422);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'You must be a resident of a village in this kingdom to start an election.',
+                ], 422);
+            }
+            return back()->withErrors(['election' => 'You must be a resident of a village in this kingdom to start an election.']);
         }
 
         try {
@@ -380,19 +434,26 @@ class ElectionController extends Controller
                 $user
             );
 
-            return response()->json([
-                'success' => true,
-                'election' => [
-                    'id' => $election->id,
-                    'status' => $election->status,
-                    'voting_ends_at' => $election->voting_ends_at->toIso8601String(),
-                ],
-            ]);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'election' => [
+                        'id' => $election->id,
+                        'status' => $election->status,
+                        'voting_ends_at' => $election->voting_ends_at->toIso8601String(),
+                    ],
+                ]);
+            }
+
+            return back()->with('success', 'Election started successfully.');
         } catch (\InvalidArgumentException $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage(),
-            ], 422);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => $e->getMessage(),
+                ], 422);
+            }
+            return back()->withErrors(['election' => $e->getMessage()]);
         }
     }
 }

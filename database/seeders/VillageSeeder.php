@@ -24,7 +24,8 @@ class VillageSeeder extends Seeder
             ['name' => 'Willowmere', 'castle' => 'Greenhold', 'biome' => 'forest', 'description' => 'A village by a tranquil lake of willows.'],
             ['name' => 'Honeyhill', 'castle' => 'Greenhold', 'biome' => 'plains', 'description' => 'Famous for its apiaries and sweet mead.'],
 
-            // Riverwatch Villages (5) - Plains
+            // Riverwatch Villages (6) - Plains - includes port
+            ['name' => 'Riverside Landing', 'castle' => 'Riverwatch', 'biome' => 'plains', 'description' => 'Where the great river meets the sea. Ships depart for distant kingdoms.', 'is_port' => true],
             ['name' => 'Brookside', 'castle' => 'Riverwatch', 'biome' => 'plains', 'description' => 'A fishing village along the great river.'],
             ['name' => 'Grainford', 'castle' => 'Riverwatch', 'biome' => 'plains', 'description' => 'Where the grain barges cross the ford.'],
             ['name' => 'Meadowbrook', 'castle' => 'Riverwatch', 'biome' => 'plains', 'description' => 'Rolling meadows as far as the eye can see.'],
@@ -37,7 +38,8 @@ class VillageSeeder extends Seeder
             ['name' => 'Fenwick', 'castle' => 'Thornkeep', 'biome' => 'swamps', 'description' => 'Gatherers of rare herbs and mosses.'],
             ['name' => 'Briarwood', 'castle' => 'Thornkeep', 'biome' => 'forest', 'description' => 'At the edge where forest meets swamp.'],
 
-            // Winterspire Villages (5) - Tundra/Mountains
+            // Winterspire Villages (6) - Tundra/Mountains - includes port
+            ['name' => 'Icebreaker Bay', 'castle' => 'Winterspire', 'biome' => 'tundra', 'description' => 'Hardy sailors brave the frozen waters to reach distant shores.', 'is_port' => true],
             ['name' => 'Frostford', 'castle' => 'Winterspire', 'biome' => 'tundra', 'description' => 'Where the frozen river can be crossed.'],
             ['name' => 'Snowhaven', 'castle' => 'Winterspire', 'biome' => 'tundra', 'description' => 'A warm hearth in the frozen wastes.'],
             ['name' => 'Icewind', 'castle' => 'Winterspire', 'biome' => 'tundra', 'description' => 'The northernmost settlement in Myrefell.'],
@@ -51,11 +53,11 @@ class VillageSeeder extends Seeder
             ['name' => 'Highcliff', 'castle' => 'Ironpeak', 'biome' => 'mountains', 'description' => 'Perched on a dramatic cliff face.'],
             ['name' => 'Quarrytown', 'castle' => 'Ironpeak', 'biome' => 'mountains', 'description' => 'Stone for all of Frostholm comes from here.'],
 
-            // Tidekeep Villages (5) - Coastal
+            // Tidekeep Villages (5) - Coastal - includes port
             ['name' => 'Saltmere', 'castle' => 'Tidekeep', 'biome' => 'coastal', 'description' => 'Salt harvested from evaporation pools.'],
             ['name' => 'Fishermans Cove', 'castle' => 'Tidekeep', 'biome' => 'coastal', 'description' => 'The finest catch in all of Sandmar.'],
             ['name' => 'Seashell Bay', 'castle' => 'Tidekeep', 'biome' => 'coastal', 'description' => 'Pearl divers and shell collectors.'],
-            ['name' => 'Anchor Point', 'castle' => 'Tidekeep', 'biome' => 'coastal', 'description' => 'Where ships take shelter from storms.'],
+            ['name' => 'Anchor Point', 'castle' => 'Tidekeep', 'biome' => 'coastal', 'description' => 'The great harbor of Sandmar. Ships sail to all corners of the world.', 'is_port' => true],
             ['name' => 'Coraltown', 'castle' => 'Tidekeep', 'biome' => 'coastal', 'description' => 'Beautiful coral jewelry is crafted here.'],
 
             // Sunspear Villages (5) - Desert
@@ -72,7 +74,8 @@ class VillageSeeder extends Seeder
             ['name' => 'Starfall', 'castle' => 'Oasishold', 'biome' => 'desert', 'description' => 'Astronomers study the clear night skies.'],
             ['name' => 'Spicetown', 'castle' => 'Oasishold', 'biome' => 'desert', 'description' => 'Exotic spices from distant lands.'],
 
-            // Embercrown Villages (5) - Volcano
+            // Embercrown Villages (6) - Volcano - includes port
+            ['name' => 'Ember Harbor', 'castle' => 'Embercrown', 'biome' => 'volcano', 'description' => 'Where lava meets sea. Ships dock at obsidian piers.', 'is_port' => true],
             ['name' => 'Ashdale', 'castle' => 'Embercrown', 'biome' => 'volcano', 'description' => 'Fertile ash soil for rare crops.'],
             ['name' => 'Sulfur Springs', 'castle' => 'Embercrown', 'biome' => 'volcano', 'description' => 'Hot springs with healing properties.'],
             ['name' => 'Obsidian', 'castle' => 'Embercrown', 'biome' => 'volcano', 'description' => 'Black glass harvested from lava flows.'],
@@ -87,25 +90,63 @@ class VillageSeeder extends Seeder
             ['name' => 'Caldera', 'castle' => 'Cinderfall', 'biome' => 'volcano', 'description' => 'In the bowl of an ancient volcano.'],
         ];
 
-        $offset = 0;
-        foreach ($villages as $index => $villageData) {
-            $castle = $castles[$villageData['castle']];
+        // Port positions - absolute coordinates for precise placement
+        // World coords: (0,0) at bottom-left, max ~(772, 817)
+        $portAbsoluteCoords = [
+            'Riverside Landing' => ['x' => 77, 'y' => 80],    // Valdoria - top right
+            'Anchor Point' => ['x' => 154, 'y' => 524],       // Sandmar - bottom right
+            'Icebreaker Bay' => ['x' => 752, 'y' => 800],     // Frostholm - bottom
+            'Ember Harbor' => ['x' => 767, 'y' => 115],       // Ashenfell - top
+        ];
 
-            // Generate coordinates near the castle
-            $offsetX = (($index % 5) - 2) * 8 + rand(-3, 3);
-            $offsetY = ((int)($index / 5) % 3 - 1) * 8 + rand(-3, 3);
+        // Track village index per castle for spreading villages around each castle
+        $castleVillageIndex = [];
+
+        foreach ($villages as $villageData) {
+            $castle = $castles[$villageData['castle']];
+            $castleName = $villageData['castle'];
+
+            // Initialize counter for this castle
+            if (! isset($castleVillageIndex[$castleName])) {
+                $castleVillageIndex[$castleName] = 0;
+            }
+
+            $index = $castleVillageIndex[$castleName];
+            $castleVillageIndex[$castleName]++;
+
+            // Check if this is a port with absolute positioning
+            if (isset($portAbsoluteCoords[$villageData['name']])) {
+                $absoluteX = $portAbsoluteCoords[$villageData['name']]['x'];
+                $absoluteY = $portAbsoluteCoords[$villageData['name']]['y'];
+            } else {
+                // Spread villages in a circle around the castle (±30 units)
+                // Each village gets a different angle to distribute them evenly
+                $angle = ($index * 60 + rand(-15, 15)) * (M_PI / 180); // Convert to radians
+                $distance = 20 + rand(0, 15); // 20-35 units from castle
+
+                $offsetX = (int) round(cos($angle) * $distance);
+                $offsetY = (int) round(sin($angle) * $distance);
+            }
+
+            // Use absolute coords for ports, offset coords for regular villages
+            $finalX = isset($absoluteX) ? $absoluteX : $castle->coordinates_x + $offsetX;
+            $finalY = isset($absoluteY) ? $absoluteY : $castle->coordinates_y + $offsetY;
 
             Village::create([
                 'name' => $villageData['name'],
                 'description' => $villageData['description'],
                 'castle_id' => $castle->id,
                 'is_town' => false,
+                'is_port' => $villageData['is_port'] ?? false,
                 'population' => rand(50, 500),
                 'wealth' => rand(1000, 50000),
                 'biome' => $villageData['biome'],
-                'coordinates_x' => $castle->coordinates_x + $offsetX,
-                'coordinates_y' => $castle->coordinates_y + $offsetY,
+                'coordinates_x' => $finalX,
+                'coordinates_y' => $finalY,
             ]);
+
+            // Reset for next iteration
+            unset($absoluteX, $absoluteY, $offsetX, $offsetY);
         }
     }
 }

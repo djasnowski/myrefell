@@ -103,6 +103,7 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
             ] : null,
             'travel' => $this->travelService->getTravelStatus($player),
+            'nearby_destinations' => $this->travelService->getAvailableDestinations($player),
         ];
     }
 
@@ -158,6 +159,7 @@ class HandleInertiaRequests extends Middleware
             'id' => $location->id,
             'name' => $location->name,
             'biome' => $location->biome ?? 'unknown',
+            'is_port' => $location->is_port ?? false,
         ];
     }
 }

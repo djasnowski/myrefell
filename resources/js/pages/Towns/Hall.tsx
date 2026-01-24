@@ -1,0 +1,261 @@
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
+import { Head, Link, router } from '@inertiajs/react';
+import { Building2, Clock, Coins, Crown, Gavel, ScrollText, Users, Vote } from 'lucide-react';
+import { useState } from 'react';
+
+interface Town {
+    id: number;
+    name: string;
+    biome: string;
+    is_capital: boolean;
+    population: number;
+    wealth: number;
+    tax_rate: number;
+    kingdom: { id: number; name: string } | null;
+    mayor: { id: number; username: string; primary_title: string | null } | null;
+}
+
+interface Election {
+    id: number;
+    position: string;
+    status: string;
+    voting_ends_at?: string;
+    candidate_count?: number;
+    started_at?: string;
+    ended_at?: string;
+}
+
+interface Props {
+    town: Town;
+    active_election: Election | null;
+    recent_elections: Election[];
+    can_start_election: boolean;
+    is_mayor: boolean;
+}
+
+export default function TownHall({ town, active_election, recent_elections, can_start_election, is_mayor }: Props) {
+    const [starting, setStarting] = useState(false);
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: town.name, href: `/towns/${town.id}` },
+        { title: 'Town Hall', href: `/towns/${town.id}/hall` },
+    ];
+
+    const handleStartElection = () => {
+        setStarting(true);
+        router.post(`/towns/${town.id}/elections/mayor`, {}, {
+            onFinish: () => setStarting(false),
+        });
+    };
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title={`Town Hall - ${town.name}`} />
+            <div className="flex h-full flex-1 flex-col overflow-auto p-4">
+                {/* Header */}
+                <div className="mb-6 flex items-center gap-3">
+                    <div className="rounded-lg bg-blue-900/30 p-3">
+                        <Building2 className="h-8 w-8 text-blue-400" />
+                    </div>
+                    <div>
+                        <h1 className="font-pixel text-2xl text-blue-400">Town Hall</h1>
+                        <div className="flex items-center gap-1 text-stone-400">
+                            <span className="font-pixel text-xs">{town.name}</span>
+                            {town.is_capital && (
+                                <span className="ml-2 flex items-center gap-1 rounded-full bg-amber-900/50 px-2 py-0.5 font-pixel text-[10px] text-amber-400">
+                                    <Crown className="h-3 w-3" />
+                                    Capital
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mx-auto w-full max-w-4xl">
+                    <div className="grid gap-4 lg:grid-cols-2">
+                        {/* Town Governance */}
+                        <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
+                            <h2 className="mb-4 flex items-center gap-2 font-pixel text-sm text-stone-300">
+                                <Gavel className="h-4 w-4 text-blue-400" />
+                                Town Governance
+                            </h2>
+
+                            {/* Mayor */}
+                            <div className="mb-4 rounded-lg border border-stone-700 bg-stone-800/50 p-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <div className="font-pixel text-[10px] text-stone-500">Mayor</div>
+                                        {town.mayor ? (
+                                            <div className="flex items-center gap-2">
+                                                <Crown className="h-4 w-4 text-amber-400" />
+                                                <span className="font-pixel text-sm text-stone-200">{town.mayor.username}</span>
+                                                {town.mayor.primary_title && (
+                                                    <span className="font-pixel text-[10px] text-stone-500">
+                                                        ({town.mayor.primary_title})
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <span className="font-pixel text-sm text-stone-500">Position Vacant</span>
+                                        )}
+                                    </div>
+                                    {is_mayor && (
+                                        <span className="rounded bg-green-900/50 px-2 py-1 font-pixel text-[10px] text-green-400">
+                                            This is you!
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Town Stats */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="rounded-lg border border-stone-700 bg-stone-800/30 p-3">
+                                    <div className="flex items-center gap-2">
+                                        <Users className="h-4 w-4 text-stone-500" />
+                                        <div>
+                                            <div className="font-pixel text-[10px] text-stone-500">Population</div>
+                                            <div className="font-pixel text-sm text-stone-300">{town.population.toLocaleString()}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="rounded-lg border border-stone-700 bg-stone-800/30 p-3">
+                                    <div className="flex items-center gap-2">
+                                        <Coins className="h-4 w-4 text-yellow-400" />
+                                        <div>
+                                            <div className="font-pixel text-[10px] text-stone-500">Treasury</div>
+                                            <div className="font-pixel text-sm text-yellow-400">{town.wealth.toLocaleString()}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="rounded-lg border border-stone-700 bg-stone-800/30 p-3">
+                                    <div className="flex items-center gap-2">
+                                        <ScrollText className="h-4 w-4 text-stone-500" />
+                                        <div>
+                                            <div className="font-pixel text-[10px] text-stone-500">Tax Rate</div>
+                                            <div className="font-pixel text-sm text-stone-300">{(town.tax_rate * 100).toFixed(0)}%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="rounded-lg border border-stone-700 bg-stone-800/30 p-3">
+                                    <div className="flex items-center gap-2">
+                                        <Crown className="h-4 w-4 text-amber-400" />
+                                        <div>
+                                            <div className="font-pixel text-[10px] text-stone-500">Kingdom</div>
+                                            {town.kingdom ? (
+                                                <Link href={`/kingdoms/${town.kingdom.id}`} className="font-pixel text-sm text-amber-400 hover:underline">
+                                                    {town.kingdom.name}
+                                                </Link>
+                                            ) : (
+                                                <span className="font-pixel text-sm text-stone-500">Independent</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Elections */}
+                        <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
+                            <h2 className="mb-4 flex items-center gap-2 font-pixel text-sm text-stone-300">
+                                <Vote className="h-4 w-4 text-purple-400" />
+                                Elections
+                            </h2>
+
+                            {/* Active Election */}
+                            {active_election ? (
+                                <div className="mb-4 rounded-lg border-2 border-purple-600/50 bg-purple-900/20 p-4">
+                                    <div className="mb-2 flex items-center justify-between">
+                                        <span className="font-pixel text-xs text-purple-400">Active Election</span>
+                                        <span className="rounded bg-purple-900/50 px-2 py-0.5 font-pixel text-[10px] text-purple-300">
+                                            {active_election.status}
+                                        </span>
+                                    </div>
+                                    <div className="mb-2 font-pixel text-sm text-stone-200">
+                                        {active_election.position} Election
+                                    </div>
+                                    <div className="mb-3 flex items-center gap-4 font-pixel text-[10px] text-stone-500">
+                                        <span>{active_election.candidate_count} candidates</span>
+                                        {active_election.voting_ends_at && (
+                                            <span className="flex items-center gap-1">
+                                                <Clock className="h-3 w-3" />
+                                                Ends: {new Date(active_election.voting_ends_at).toLocaleDateString()}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <Link
+                                        href={`/elections/${active_election.id}`}
+                                        className="block w-full rounded-lg bg-purple-600 py-2 text-center font-pixel text-xs text-white transition hover:bg-purple-500"
+                                    >
+                                        View Election
+                                    </Link>
+                                </div>
+                            ) : (
+                                <div className="mb-4 rounded-lg border border-stone-700 bg-stone-800/30 p-4 text-center">
+                                    <Vote className="mx-auto mb-2 h-8 w-8 text-stone-600" />
+                                    <div className="mb-1 font-pixel text-xs text-stone-400">No Active Election</div>
+                                    <div className="font-pixel text-[10px] text-stone-600">
+                                        The town is at peace... for now.
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Start Election Button */}
+                            {can_start_election && !active_election && (
+                                <button
+                                    onClick={handleStartElection}
+                                    disabled={starting}
+                                    className="mb-4 w-full rounded-lg border-2 border-purple-600/50 bg-purple-900/20 py-2 font-pixel text-xs text-purple-400 transition hover:bg-purple-900/40 disabled:opacity-50"
+                                >
+                                    {starting ? 'Starting...' : 'Start Mayoral Election'}
+                                </button>
+                            )}
+
+                            {/* Recent Elections */}
+                            {recent_elections.length > 0 && (
+                                <div>
+                                    <div className="mb-2 font-pixel text-[10px] text-stone-500">Recent Elections</div>
+                                    <div className="space-y-2">
+                                        {recent_elections.map((election) => (
+                                            <Link
+                                                key={election.id}
+                                                href={`/elections/${election.id}`}
+                                                className="flex items-center justify-between rounded-lg border border-stone-700 bg-stone-800/30 p-2 transition hover:bg-stone-700/50"
+                                            >
+                                                <div>
+                                                    <div className="font-pixel text-xs text-stone-300">{election.position}</div>
+                                                    <div className="font-pixel text-[10px] text-stone-500">{election.started_at}</div>
+                                                </div>
+                                                <span className={`rounded px-2 py-0.5 font-pixel text-[10px] ${
+                                                    election.status === 'completed'
+                                                        ? 'bg-green-900/50 text-green-400'
+                                                        : 'bg-red-900/50 text-red-400'
+                                                }`}>
+                                                    {election.status}
+                                                </span>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Town Decrees / Laws - Future Feature */}
+                    <div className="mt-4 rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
+                        <h2 className="mb-4 flex items-center gap-2 font-pixel text-sm text-stone-300">
+                            <ScrollText className="h-4 w-4 text-amber-400" />
+                            Town Decrees
+                        </h2>
+                        <div className="py-8 text-center">
+                            <ScrollText className="mx-auto mb-2 h-8 w-8 text-stone-600" />
+                            <div className="font-pixel text-xs text-stone-500">No decrees have been issued.</div>
+                            <div className="font-pixel text-[10px] text-stone-600">The mayor may issue decrees that affect the town.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </AppLayout>
+    );
+}

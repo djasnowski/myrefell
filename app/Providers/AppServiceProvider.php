@@ -2,7 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\Kingdom;
+use App\Models\Town;
+use App\Models\Village;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -24,6 +28,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureMorphMap();
+    }
+
+    protected function configureMorphMap(): void
+    {
+        Relation::enforceMorphMap([
+            'village' => Village::class,
+            'town' => Town::class,
+            'kingdom' => Kingdom::class,
+        ]);
     }
 
     protected function configureDefaults(): void

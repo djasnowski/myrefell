@@ -13,27 +13,20 @@ use Illuminate\Support\Facades\DB;
 class TravelService
 {
     /**
-     * Travel times in minutes between location types.
+     * Distance divisor for travel time calculation.
+     * Travel time = ceil(distance / DISTANCE_DIVISOR) in minutes.
      */
-    public const TRAVEL_TIMES = [
-        'village_to_castle' => 5,
-        'village_to_town' => 15,
-        'village_to_wilderness' => 3,
-        'village_to_village' => 10,
-        'castle_to_village' => 5,
-        'castle_to_town' => 10,
-        'castle_to_castle' => 20,
-        'town_to_village' => 15,
-        'town_to_castle' => 10,
-        'town_to_town' => 30,
-        'wilderness_to_village' => 3,
-        'wilderness_to_castle' => 8,
-    ];
+    public const DISTANCE_DIVISOR = 10;
 
     /**
      * Energy cost for travel.
      */
     public const ENERGY_COST = 5;
+
+    /**
+     * Dev mode: all travel takes this many seconds (set to null to disable).
+     */
+    public const DEV_TRAVEL_SECONDS = 2;
 
     /**
      * Start traveling to a destination.
@@ -61,9 +54,15 @@ class TravelService
             throw new \InvalidArgumentException('Not enough energy to travel.');
         }
 
-        // Calculate travel time
-        $travelMinutes = $this->calculateTravelTime($user, $destinationType);
-        $arrivesAt = now()->addMinutes($travelMinutes);
+        // Calculate travel time based on coordinate distance
+        // In dev mode, use fast travel for testing
+        if (app()->environment('local') && self::DEV_TRAVEL_SECONDS !== null) {
+            $arrivesAt = now()->addSeconds(self::DEV_TRAVEL_SECONDS);
+            $travelMinutes = 0;
+        } else {
+            $travelMinutes = $this->calculateTravelTime($user, $destinationType, $destinationId);
+            $arrivesAt = now()->addMinutes($travelMinutes);
+        }
 
         return DB::transaction(function () use ($user, $destinationType, $destinationId, $arrivesAt, $destination, $travelMinutes) {
             // Consume energy
@@ -181,7 +180,7 @@ class TravelService
 
         $totalSeconds = $user->travel_started_at->diffInSeconds($user->travel_arrives_at);
         $elapsedSeconds = $user->travel_started_at->diffInSeconds(now());
-        $remainingSeconds = max(0, $user->travel_arrives_at->diffInSeconds(now(), false));
+        $remainingSeconds = max(0, $user->travel_arrives_at->timestamp - now()->timestamp);
 
         return [
             'is_traveling' => true,
@@ -201,125 +200,144 @@ class TravelService
     }
 
     /**
-     * Get available destinations from current location.
+     * Maximum distance to show nearby destinations.
+     */
+    public const MAX_TRAVEL_DISTANCE = 100;
+
+    /**
+     * Get available destinations from current location based on proximity.
      */
     public function getAvailableDestinations(User $user): array
     {
-        $destinations = [];
-        $homeVillage = $user->homeVillage;
-
-        if (! $homeVillage) {
-            return $destinations;
-        }
-
-        $homeVillage->load('castle.town.kingdom');
-
+        $currentCoords = $this->getCurrentCoordinates($user);
         $currentType = $user->current_location_type;
         $currentId = $user->current_location_id;
 
-        // From village
-        if ($currentType === 'village') {
-            // Can go to castle
-            if ($homeVillage->castle) {
+        $destinations = [];
+
+        // Get all nearby villages
+        $villages = Village::all();
+        foreach ($villages as $village) {
+            // Skip current location
+            if ($currentType === 'village' && $currentId === $village->id) {
+                continue;
+            }
+
+            $distance = $this->calculateDistance($currentCoords, $village->coordinates_x, $village->coordinates_y);
+            if ($distance <= self::MAX_TRAVEL_DISTANCE) {
+                $destinations[] = [
+                    'type' => 'village',
+                    'id' => $village->id,
+                    'name' => $village->name,
+                    'biome' => $village->biome,
+                    'distance' => $distance,
+                    'travel_time' => max(1, (int) ceil($distance / self::DISTANCE_DIVISOR)),
+                ];
+            }
+        }
+
+        // Get all nearby castles
+        $castles = Castle::all();
+        foreach ($castles as $castle) {
+            if ($currentType === 'castle' && $currentId === $castle->id) {
+                continue;
+            }
+
+            $distance = $this->calculateDistance($currentCoords, $castle->coordinates_x, $castle->coordinates_y);
+            if ($distance <= self::MAX_TRAVEL_DISTANCE) {
                 $destinations[] = [
                     'type' => 'castle',
-                    'id' => $homeVillage->castle->id,
-                    'name' => $homeVillage->castle->name,
-                    'travel_time' => self::TRAVEL_TIMES['village_to_castle'],
+                    'id' => $castle->id,
+                    'name' => $castle->name,
+                    'biome' => $castle->biome,
+                    'distance' => $distance,
+                    'travel_time' => max(1, (int) ceil($distance / self::DISTANCE_DIVISOR)),
                 ];
             }
-            // Can go to town
-            if ($homeVillage->castle?->town) {
+        }
+
+        // Get all nearby towns
+        $towns = Town::all();
+        foreach ($towns as $town) {
+            if ($currentType === 'town' && $currentId === $town->id) {
+                continue;
+            }
+
+            $distance = $this->calculateDistance($currentCoords, $town->coordinates_x, $town->coordinates_y);
+            if ($distance <= self::MAX_TRAVEL_DISTANCE) {
                 $destinations[] = [
                     'type' => 'town',
-                    'id' => $homeVillage->castle->town->id,
-                    'name' => $homeVillage->castle->town->name,
-                    'travel_time' => self::TRAVEL_TIMES['village_to_town'],
-                ];
-            }
-            // Can go to wilderness
-            $destinations[] = [
-                'type' => 'wilderness',
-                'id' => 0,
-                'name' => 'The Wilderness',
-                'travel_time' => self::TRAVEL_TIMES['village_to_wilderness'],
-            ];
-        }
-
-        // From castle
-        if ($currentType === 'castle') {
-            // Can go to home village
-            $destinations[] = [
-                'type' => 'village',
-                'id' => $homeVillage->id,
-                'name' => $homeVillage->name,
-                'travel_time' => self::TRAVEL_TIMES['castle_to_village'],
-            ];
-            // Can go to town
-            if ($homeVillage->castle?->town) {
-                $destinations[] = [
-                    'type' => 'town',
-                    'id' => $homeVillage->castle->town->id,
-                    'name' => $homeVillage->castle->town->name,
-                    'travel_time' => self::TRAVEL_TIMES['castle_to_town'],
+                    'id' => $town->id,
+                    'name' => $town->name,
+                    'biome' => $town->biome,
+                    'distance' => $distance,
+                    'travel_time' => max(1, (int) ceil($distance / self::DISTANCE_DIVISOR)),
                 ];
             }
         }
 
-        // From town
-        if ($currentType === 'town') {
-            // Can go to home village
-            $destinations[] = [
-                'type' => 'village',
-                'id' => $homeVillage->id,
-                'name' => $homeVillage->name,
-                'travel_time' => self::TRAVEL_TIMES['town_to_village'],
-            ];
-            // Can go to castle
-            if ($homeVillage->castle) {
-                $destinations[] = [
-                    'type' => 'castle',
-                    'id' => $homeVillage->castle->id,
-                    'name' => $homeVillage->castle->name,
-                    'travel_time' => self::TRAVEL_TIMES['town_to_castle'],
-                ];
-            }
-        }
-
-        // From wilderness
-        if ($currentType === 'wilderness' || ! $currentType) {
-            // Can go to home village
-            $destinations[] = [
-                'type' => 'village',
-                'id' => $homeVillage->id,
-                'name' => $homeVillage->name,
-                'travel_time' => self::TRAVEL_TIMES['wilderness_to_village'],
-            ];
-        }
+        // Sort by distance (closest first)
+        usort($destinations, fn ($a, $b) => $a['distance'] <=> $b['distance']);
 
         return $destinations;
     }
 
     /**
-     * Calculate travel time between locations.
+     * Calculate Euclidean distance between two points.
      */
-    protected function calculateTravelTime(User $user, string $destinationType): int
+    protected function calculateDistance(array $from, float $toX, float $toY): float
     {
-        $fromType = $user->current_location_type ?? 'wilderness';
-        $key = "{$fromType}_to_{$destinationType}";
+        return sqrt(pow($toX - $from['x'], 2) + pow($toY - $from['y'], 2));
+    }
 
-        return self::TRAVEL_TIMES[$key] ?? 10;
+    /**
+     * Calculate travel time based on coordinate distance.
+     * Returns time in minutes: 1 minute per 10 coordinate units (minimum 1 minute).
+     */
+    protected function calculateTravelTime(User $user, string $destType, int $destId): int
+    {
+        // Get current location coordinates
+        $currentCoords = $this->getCurrentCoordinates($user);
+
+        // Get destination coordinates
+        $destination = $this->getDestination($destType, $destId);
+        $destX = $destination->coordinates_x ?? 0;
+        $destY = $destination->coordinates_y ?? 0;
+
+        // Euclidean distance, 1 minute per 10 units (min 1 minute)
+        $distance = sqrt(pow($destX - $currentCoords['x'], 2) + pow($destY - $currentCoords['y'], 2));
+
+        return max(1, (int) ceil($distance / self::DISTANCE_DIVISOR));
+    }
+
+    /**
+     * Get the current location's coordinates.
+     */
+    protected function getCurrentCoordinates(User $user): array
+    {
+        $locationType = $user->current_location_type ?? 'wilderness';
+        $locationId = $user->current_location_id ?? 0;
+
+        if ($locationType === 'wilderness') {
+            // Wilderness defaults to center of map
+            return ['x' => 0, 'y' => 0];
+        }
+
+        $location = $this->getDestination($locationType, $locationId);
+
+        return [
+            'x' => $location->coordinates_x ?? 0,
+            'y' => $location->coordinates_y ?? 0,
+        ];
     }
 
     /**
      * Get destination model.
      */
-    protected function getDestination(string $type, int $id): ?Model
+    protected function getDestination(string $type, int $id): ?object
     {
         if ($type === 'wilderness') {
-            return new class {
-                public string $name = 'The Wilderness';
-            };
+            return (object) ['name' => 'The Wilderness', 'id' => 0];
         }
 
         return match ($type) {

@@ -18,8 +18,9 @@ class TownSeeder extends Seeder
         $sandmar = Kingdom::where('name', 'Sandmar')->first();
         $ashenfell = Kingdom::where('name', 'Ashenfell')->first();
 
+        // Towns are positioned ±100 units from their kingdom center
         $towns = [
-            // Valdoria Towns (3)
+            // Valdoria Towns (3) - Kingdom at (200, 200)
             [
                 'name' => 'Greenhold Town',
                 'description' => 'The capital town of Valdoria, surrounded by vast farmlands and ancient oak forests.',
@@ -29,8 +30,8 @@ class TownSeeder extends Seeder
                 'tax_rate' => 10.00,
                 'population' => 5000,
                 'wealth' => 100000,
-                'coordinates_x' => 10,
-                'coordinates_y' => 5,
+                'coordinates_x' => 200,
+                'coordinates_y' => 220,
             ],
             [
                 'name' => 'Riverwatch Town',
@@ -41,8 +42,8 @@ class TownSeeder extends Seeder
                 'tax_rate' => 8.00,
                 'population' => 3000,
                 'wealth' => 60000,
-                'coordinates_x' => -20,
-                'coordinates_y' => 15,
+                'coordinates_x' => 120,
+                'coordinates_y' => 180,
             ],
             [
                 'name' => 'Thornkeep Town',
@@ -53,11 +54,11 @@ class TownSeeder extends Seeder
                 'tax_rate' => 7.00,
                 'population' => 2000,
                 'wealth' => 40000,
-                'coordinates_x' => 30,
-                'coordinates_y' => -25,
+                'coordinates_x' => 280,
+                'coordinates_y' => 140,
             ],
 
-            // Frostholm Towns (2)
+            // Frostholm Towns (2) - Kingdom at (800, 800)
             [
                 'name' => 'Winterspire Town',
                 'description' => 'The frozen seat of Frostholm\'s power, built into the side of a glacier.',
@@ -67,8 +68,8 @@ class TownSeeder extends Seeder
                 'tax_rate' => 8.00,
                 'population' => 4000,
                 'wealth' => 80000,
-                'coordinates_x' => 110,
-                'coordinates_y' => 210,
+                'coordinates_x' => 820,
+                'coordinates_y' => 820,
             ],
             [
                 'name' => 'Ironpeak Town',
@@ -79,11 +80,11 @@ class TownSeeder extends Seeder
                 'tax_rate' => 9.00,
                 'population' => 2500,
                 'wealth' => 70000,
-                'coordinates_x' => 90,
-                'coordinates_y' => 180,
+                'coordinates_x' => 720,
+                'coordinates_y' => 760,
             ],
 
-            // Sandmar Towns (3)
+            // Sandmar Towns (3) - Kingdom at (200, 800)
             [
                 'name' => 'Tidekeep Town',
                 'description' => 'The great harbor town of Sandmar, controlling all trade along the coast.',
@@ -93,8 +94,8 @@ class TownSeeder extends Seeder
                 'tax_rate' => 12.00,
                 'population' => 6000,
                 'wealth' => 150000,
-                'coordinates_x' => -140,
-                'coordinates_y' => -90,
+                'coordinates_x' => 180,
+                'coordinates_y' => 820,
             ],
             [
                 'name' => 'Sunspear Town',
@@ -105,8 +106,8 @@ class TownSeeder extends Seeder
                 'tax_rate' => 11.00,
                 'population' => 2000,
                 'wealth' => 50000,
-                'coordinates_x' => -180,
-                'coordinates_y' => -120,
+                'coordinates_x' => 280,
+                'coordinates_y' => 860,
             ],
             [
                 'name' => 'Oasishold Town',
@@ -117,11 +118,11 @@ class TownSeeder extends Seeder
                 'tax_rate' => 10.00,
                 'population' => 3500,
                 'wealth' => 80000,
-                'coordinates_x' => -130,
-                'coordinates_y' => -140,
+                'coordinates_x' => 140,
+                'coordinates_y' => 740,
             ],
 
-            // Ashenfell Towns (2)
+            // Ashenfell Towns (2) - Kingdom at (800, 200)
             [
                 'name' => 'Embercrown Town',
                 'description' => 'The volcanic capital of Ashenfell, its forges never cool and its fires never dim.',
@@ -131,8 +132,8 @@ class TownSeeder extends Seeder
                 'tax_rate' => 15.00,
                 'population' => 4500,
                 'wealth' => 120000,
-                'coordinates_x' => 210,
-                'coordinates_y' => -140,
+                'coordinates_x' => 820,
+                'coordinates_y' => 220,
             ],
             [
                 'name' => 'Cinderfall Town',
@@ -143,8 +144,8 @@ class TownSeeder extends Seeder
                 'tax_rate' => 13.00,
                 'population' => 2000,
                 'wealth' => 60000,
-                'coordinates_x' => 180,
-                'coordinates_y' => -170,
+                'coordinates_x' => 740,
+                'coordinates_y' => 140,
             ],
         ];
 

@@ -3,7 +3,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { usePage } from '@inertiajs/react';
 import {
     Beef,
-    Dumbbell,
+    BicepsFlexed,
     Fish,
     Hammer,
     LucideIcon,
@@ -30,7 +30,7 @@ const skillOrder = ['attack', 'strength', 'defense', 'mining', 'fishing', 'woodc
 
 const skillIcons: Record<string, LucideIcon> = {
     attack: Sword,
-    strength: Dumbbell,
+    strength: BicepsFlexed,
     defense: Shield,
     mining: Pickaxe,
     fishing: Fish,
