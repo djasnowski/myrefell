@@ -1,8 +1,8 @@
+import { Head, Link } from '@inertiajs/react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
 
 interface Castle {
     id: number;
@@ -103,6 +103,16 @@ export default function KingdomShow({ kingdom }: Props) {
                             <CardTitle className="text-lg">{kingdom.tax_rate}%</CardTitle>
                         </CardHeader>
                     </Card>
+                </div>
+
+                <div className="flex gap-4">
+                    <Link
+                        href={`/kingdoms/${kingdom.id}/roles`}
+                        className="flex-1 rounded-lg border-2 border-amber-600/50 bg-amber-900/20 p-4 text-center transition hover:bg-amber-800/30"
+                    >
+                        <span className="font-pixel text-lg text-amber-300">View Roles</span>
+                        <p className="text-sm text-stone-400">See kingdom officials and positions</p>
+                    </Link>
                 </div>
 
                 <div>

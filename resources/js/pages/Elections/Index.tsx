@@ -1,7 +1,7 @@
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { Crown, Vote } from 'lucide-react';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
 
 interface Election {
     id: number;

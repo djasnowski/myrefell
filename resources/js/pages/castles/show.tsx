@@ -1,8 +1,8 @@
+import { Head, Link } from '@inertiajs/react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
 
 interface Village {
     id: number;
@@ -110,6 +110,16 @@ export default function CastleShow({ castle }: Props) {
                             <CardTitle className="text-lg">({castle.coordinates.x}, {castle.coordinates.y})</CardTitle>
                         </CardHeader>
                     </Card>
+                </div>
+
+                <div className="flex gap-4">
+                    <Link
+                        href={`/castles/${castle.id}/roles`}
+                        className="flex-1 rounded-lg border-2 border-amber-600/50 bg-amber-900/20 p-4 text-center transition hover:bg-amber-800/30"
+                    >
+                        <span className="font-pixel text-lg text-amber-300">View Roles</span>
+                        <p className="text-sm text-stone-400">See castle officials and positions</p>
+                    </Link>
                 </div>
 
                 <div>

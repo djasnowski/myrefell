@@ -1,6 +1,6 @@
-import { useSidebar } from '@/components/ui/sidebar';
 import { usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import { useSidebar } from '@/components/ui/sidebar';
 
 interface SidebarData {
     player: {

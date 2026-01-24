@@ -1,8 +1,8 @@
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { ArrowUp, Axe, Backpack, Fish, Loader2, Package, Pickaxe, Sparkles, Zap } from 'lucide-react';
 import { useState } from 'react';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
 
 interface Resource {
     name: string;

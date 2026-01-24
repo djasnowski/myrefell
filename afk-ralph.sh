@@ -19,20 +19,14 @@ for ((i=1; i<=$1; i++)); do
   git pull origin $MAIN_BRANCH 2>/dev/null || true
 
   # Run Claude to pick and implement a feature
-  result=$(claude --permission-mode acceptEdits -p "@PLANNING.md @progress.txt \
-  You are implementing features for Myrefell.
-
-  1. Read @progress.txt to find the highest-priority unimplemented task.
-  2. Create a new git branch: feature/<feature-name>
-  3. Implement the feature (models, migrations, services, controllers, pages).
-  4. Run tests and type checks (sail artisan test, npm run build).
-  5. Update @progress.txt marking what was completed.
-  6. Commit all changes with a descriptive message.
-  7. Merge to master: git checkout master && git merge feature/<feature-name>
-  8. Delete the feature branch: git branch -d feature/<feature-name>
-
-  ONLY WORK ON A SINGLE FEATURE PER ITERATION.
-  If all features in @progress.txt are complete, output <promise>COMPLETE</promise>.")
+  result=$(docker sandbox run claude --permission-mode acceptEdits -p "@PRD.md @progress.txt \
+  1. Find the highest-priority unimplemented task in progress.txt. \
+  2. Implement the feature (models, migrations, services, controllers, pages). \
+  3. Run tests: sail artisan test && npm run build. \
+  4. Update progress.txt marking what was completed. \
+  5. Commit your changes with a descriptive message. \
+  ONLY WORK ON A SINGLE TASK. \
+  If all tasks are complete, output <promise>COMPLETE</promise>.")
 
   echo "$result"
 

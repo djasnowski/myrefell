@@ -1,8 +1,8 @@
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Castle, Church, Coins, Heart, Home, Loader2, Sparkles } from 'lucide-react';
 import { useState } from 'react';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
 
 interface HealingOption {
     id: string;

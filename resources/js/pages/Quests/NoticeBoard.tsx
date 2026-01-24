@@ -1,5 +1,3 @@
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import {
     Axe,
@@ -18,6 +16,8 @@ import {
     X,
 } from 'lucide-react';
 import { useState } from 'react';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
 
 interface Quest {
     id: number;

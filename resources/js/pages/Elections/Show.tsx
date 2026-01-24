@@ -1,8 +1,8 @@
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { CheckCircle, Clock, Crown, ScrollText, Users, Vote, XCircle } from 'lucide-react';
 import { useState } from 'react';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
 
 interface Candidate {
     id: number;

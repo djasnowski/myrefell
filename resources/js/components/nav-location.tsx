@@ -1,12 +1,3 @@
-import {
-    SidebarGroup,
-    SidebarGroupLabel,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    useSidebar,
-} from '@/components/ui/sidebar';
-import { useCurrentUrl } from '@/hooks/use-current-url';
 import { Link, router, usePage } from '@inertiajs/react';
 import {
     Anchor,
@@ -29,6 +20,15 @@ import {
     type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import {
+    SidebarGroup,
+    SidebarGroupLabel,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    useSidebar,
+} from '@/components/ui/sidebar';
+import { useCurrentUrl } from '@/hooks/use-current-url';
 
 interface LocationData {
     type: string;
@@ -303,6 +303,7 @@ export function NavLocation() {
             {
                 preserveScroll: true,
                 onFinish: () => setTravelingTo(null),
+                onSuccess: () => router.visit('/travel'),
             }
         );
     };

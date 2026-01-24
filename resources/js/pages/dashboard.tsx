@@ -1,8 +1,8 @@
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import { Anchor, Castle, Church, Compass, Crown, Home, MapPin, Minus, Plus, RotateCcw, Search, X } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
 
 interface Location {
     id: number;

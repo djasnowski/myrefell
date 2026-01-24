@@ -1,10 +1,10 @@
+import { Head, router, usePage } from '@inertiajs/react';
+import { ShieldOff, Sword, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { getItemIcon, GoldIcon, HelpCircle } from '@/lib/item-icons';
 import { inventory } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
-import { Head, router, usePage } from '@inertiajs/react';
-import { ShieldOff, Sword, Trash2 } from 'lucide-react';
-import { useState } from 'react';
 
 interface Item {
     id: number;

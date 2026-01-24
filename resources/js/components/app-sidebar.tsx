@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import { NavLocation } from '@/components/nav-location';
 import { NavPlayerInfo } from '@/components/nav-player-info';
 import { NavSkills } from '@/components/nav-skills';
@@ -13,7 +14,6 @@ import {
     SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { Link } from '@inertiajs/react';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {

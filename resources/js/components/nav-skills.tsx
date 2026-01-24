@@ -1,18 +1,19 @@
-import { useSidebar } from '@/components/ui/sidebar';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePage } from '@inertiajs/react';
+import type {
+    LucideIcon} from 'lucide-react';
 import {
     Beef,
     BicepsFlexed,
     Fish,
     Hammer,
-    LucideIcon,
     Pickaxe,
     Scissors,
     Shield,
     Sword,
     TreeDeciduous,
 } from 'lucide-react';
+import { useSidebar } from '@/components/ui/sidebar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Skill {
     name: string;

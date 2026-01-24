@@ -1,7 +1,7 @@
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { Anchor, Banknote, Building2, Castle, Church, Crown, Home, MapPin, Users } from 'lucide-react';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
 
 interface Town {
     id: number;

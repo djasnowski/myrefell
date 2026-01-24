@@ -1,12 +1,11 @@
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
+import type {
+    LucideIcon} from 'lucide-react';
 import {
     Beef,
     BicepsFlexed,
     Fish,
     Hammer,
-    LucideIcon,
     Pickaxe,
     Scissors,
     Shield,
@@ -15,6 +14,8 @@ import {
     TreeDeciduous,
     Trophy,
 } from 'lucide-react';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
 
 interface Skill {
     name: string;

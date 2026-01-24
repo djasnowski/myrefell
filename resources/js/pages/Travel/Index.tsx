@@ -1,8 +1,8 @@
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Castle, Church, Clock, Home, Loader2, MapPin, Trees, X, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
 
 interface Destination {
     type: string;
