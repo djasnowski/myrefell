@@ -45,6 +45,36 @@ Kingdoms
 - **Vote of no-confidence** to remove leaders
 - **Title progression**: Peasant → Knight → Lord → King
 
+### Religion & Cults
+
+> "Religions create loyalty that competes with political loyalty."
+
+Non-territorial power structures that overlay the political hierarchy. Players may have to choose between their King and their God.
+
+**Cults** (Secret):
+- Founded by 5+ players for free
+- Hidden membership, can infiltrate governments
+- 2 beliefs with powerful dark bonuses
+- High-risk, high-reward gameplay
+- Can upgrade to a public Religion
+
+**Religions** (Public):
+- Require 15+ followers and 100,000 gold to upgrade from cult
+- Up to 5 beliefs with bonuses and penalties
+- Build structures: Shrines (50K), Temples (500K), Cathedrals (5M gold)
+- Religious ranks: Prophet → High Priest → Priest → Acolyte → Follower
+
+**Beliefs** provide bonuses with tradeoffs:
+- Combat: Blood Oath (+15% damage, -10% healing), Warrior's Path (+10% combat XP, -10% crafting)
+- Economy: Merchant Faith (+10% trade profits, -5% combat), Ascetic Vow (+15% crafting XP, max 1K gold)
+- Dark/Cult-only: Shadow Pact (invisible while traveling, -25% HP), Death Cult (keep 50% gold on death)
+
+**Political Integration**:
+- Kingdoms can adopt a state religion for tax bonuses and happiness
+- Kingdoms can ban religions, forcing followers underground or into exile
+- Castle jails hold persecuted followers and criminals
+- Faith points earned through prayer, donations, conversions, and pilgrimages
+
 ### Economy
 - **Bank accounts** per location with transaction tracking
 - **Tax flow** from villages up to kingdoms
