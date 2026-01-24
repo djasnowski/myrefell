@@ -5,6 +5,7 @@ use App\Http\Controllers\CastleController;
 use App\Http\Controllers\CraftingController;
 use App\Http\Controllers\GatheringController;
 use App\Http\Controllers\HealerController;
+use App\Http\Controllers\JobController;
 use App\Http\Controllers\QuestController;
 use App\Http\Controllers\DailyTaskController;
 use App\Http\Controllers\ElectionController;
@@ -138,6 +139,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Port
     Route::get('villages/{village}/port', [PortController::class, 'show'])->name('villages.port');
     Route::post('port/book', [PortController::class, 'book'])->name('port.book');
+
+    // Jobs
+    Route::get('villages/{village}/jobs', [JobController::class, 'villageJobs'])->name('villages.jobs');
+    Route::get('castles/{castle}/jobs', [JobController::class, 'castleJobs'])->name('castles.jobs');
+    Route::get('towns/{town}/jobs', [JobController::class, 'townJobs'])->name('towns.jobs');
+    Route::post('jobs/apply', [JobController::class, 'apply'])->name('jobs.apply');
+    Route::post('jobs/{employment}/work', [JobController::class, 'work'])->name('jobs.work');
+    Route::post('jobs/{employment}/quit', [JobController::class, 'quit'])->name('jobs.quit');
+    Route::get('jobs/status', [JobController::class, 'status'])->name('jobs.status');
 });
 
 require __DIR__.'/settings.php';

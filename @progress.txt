@@ -71,18 +71,16 @@ Based on PLANNING.md as of January 2026.
 ## Phase 5: Jobs & Economy
 - [x] Bank system (BankService, BankController)
 - [~] Basic trading (no market, just bank)
-- [ ] Job system (employment jobs like Cook, Farmhand, etc.)
-- [ ] Work action (costs energy, pays gold)
+- [x] Job system (employment jobs like Cook, Farmhand, etc.)
+- [x] Work action (costs energy, pays gold)
 
-**Services:** BankService
+**Services:** BankService, JobService
 
-**Pages:** Bank/Index, Bank/NotHere
+**Pages:** Bank/Index, Bank/NotHere, Jobs/Index, Jobs/NotHere
 
 **Missing:**
-- [ ] Jobs model and employment system
-- [ ] Job board UI
 - [ ] Supervisor bonuses
-- [ ] Wages system
+- [ ] Market/trading system
 
 ---
 
@@ -94,7 +92,7 @@ Based on PLANNING.md as of January 2026.
 - [ ] Loot drops
 - [ ] Death/respawn
 
-**Status:** NOT STARTED
+**Status:** SKIP (deferred)
 
 **Missing:**
 - Monster model
@@ -294,8 +292,8 @@ Based on PLANNING.md as of January 2026.
 | gathering_nodes | [ ] Not started (hardcoded) |
 | roles | [ ] Not started |
 | player_roles | [ ] Not started |
-| jobs | [ ] Not started |
-| player_jobs | [ ] Not started |
+| employment_jobs | [x] Complete |
+| player_employment | [x] Complete |
 | crafting_orders | [ ] Not started |
 | location_npcs | [ ] Not started |
 | location_stockpiles | [ ] Not started |
@@ -332,6 +330,7 @@ Based on PLANNING.md as of January 2026.
 - PortService
 - ElectionService
 - BirthService (player creation)
+- JobService
 
 ### Not Implemented
 - CombatService
@@ -349,20 +348,23 @@ Based on PLANNING.md as of January 2026.
 ## Priority Recommendations
 
 ### High Priority (Core Gameplay Loop)
-1. **Combat System** - Central to game, affects skills, loot, progression
-2. **Monster/Loot Tables** - Required for combat
-3. ~~**Skills Page** - Players need to see their progress~~ DONE (Jan 24, 2026)
+1. ~~**Skills Page** - Players need to see their progress~~ DONE (Jan 24, 2026)
+2. ~~**Jobs System** - Employment, wages, economy~~ DONE (Jan 24, 2026)
+3. **Village Roles** - Blacksmith, Healer roles with NPCs
 
 ### Medium Priority (Economy & Social)
-4. **Jobs System** - Employment, wages, economy
-5. **Village Roles** - Blacksmith, Healer roles with NPCs
-6. **Tax System** - Economic flow between locations
+4. **Tax System** - Economic flow between locations
+5. **Chat System** - Social features
+6. **No Confidence Votes** - Complete election system
 
 ### Lower Priority (Advanced Features)
 7. **Dungeons** - Instanced content
-8. **Chat System** - Social features
-9. **Religion System** - Complex overlay system
-10. **Charter System** - Settlement founding
+8. **Religion System** - Complex overlay system
+9. **Charter System** - Settlement founding
+
+### Deferred (SKIP)
+- **Combat System** - Monster entities, turn-based combat, loot
+- **Monster/Loot Tables** - Required for combat
 
 ---
 
@@ -377,3 +379,14 @@ Based on PLANNING.md as of January 2026.
 - Skills display level, XP progress bar, total XP, and XP to next level
 - Header shows combat level, total level, and total XP stats
 - Created SkillsController.php and Skills/Index.tsx
+- **Jobs System** - Employment system for villages, castles, and towns
+  - Created `employment_jobs` table with job definitions (name, wage, energy cost, XP, requirements)
+  - Created `player_employment` table to track player jobs and work history
+  - Created EmploymentJob and PlayerEmployment models
+  - Created JobService with apply, work, quit functionality
+  - Created JobController with location-based job access
+  - Created Jobs/Index.tsx and Jobs/NotHere.tsx pages
+  - Jobs include: Cook, Cleaner, Stable Hand, Farmhand, Miner, Lumberjack, Guard Duty, Squire, Market Vendor, Blacksmith Assistant
+  - Players can have up to 2 concurrent jobs
+  - Work action costs energy, pays gold, awards XP
+  - Cooldown system between work actions

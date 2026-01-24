@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             ItemSeeder::class,
             DailyTaskSeeder::class,
             QuestSeeder::class,
+            JobSeeder::class,
             DanAdminSeeder::class,
         ]);
 

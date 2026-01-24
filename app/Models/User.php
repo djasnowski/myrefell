@@ -304,4 +304,21 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(PlayerQuest::class)
             ->where('status', PlayerQuest::STATUS_ACTIVE);
     }
+
+    /**
+     * Get all employment records for this user.
+     */
+    public function employment(): HasMany
+    {
+        return $this->hasMany(PlayerEmployment::class);
+    }
+
+    /**
+     * Get active employment for this user.
+     */
+    public function activeEmployment(): HasMany
+    {
+        return $this->hasMany(PlayerEmployment::class)
+            ->where('status', PlayerEmployment::STATUS_EMPLOYED);
+    }
 }
