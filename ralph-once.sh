@@ -22,11 +22,10 @@ You are implementing features for Myrefell.
 4. Run tests and type checks (sail artisan test, npm run build).
 5. Update @progress.txt marking what was completed.
 6. Commit all changes with a descriptive message.
-7. Create a PR to master using: gh pr create --title 'Feature: <name>' --body '<summary>'
-8. Return to master branch.
+7. Merge to master: git checkout master && git merge feature/<feature-name>
+8. Delete the feature branch: git branch -d feature/<feature-name>
 
 ONLY WORK ON A SINGLE FEATURE.
 If all features in @progress.txt are complete, output <promise>COMPLETE</promise>."
 
 echo "=== Complete ==="
-echo "Check open PRs with: gh pr list"

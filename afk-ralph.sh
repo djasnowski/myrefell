@@ -2,7 +2,7 @@
 set -e
 
 # AFK Ralph - Automated Feature Development
-# Creates a branch for each feature, implements it, creates a PR, then moves to next
+# Creates a branch for each feature, implements it, merges to master
 
 if [ -z "$1" ]; then
   echo "Usage: $0 <iterations>"
@@ -28,8 +28,8 @@ for ((i=1; i<=$1; i++)); do
   4. Run tests and type checks (sail artisan test, npm run build).
   5. Update @progress.txt marking what was completed.
   6. Commit all changes with a descriptive message.
-  7. Create a PR to master using: gh pr create --title 'Feature: <name>' --body '<summary>'
-  8. Return to master branch.
+  7. Merge to master: git checkout master && git merge feature/<feature-name>
+  8. Delete the feature branch: git branch -d feature/<feature-name>
 
   ONLY WORK ON A SINGLE FEATURE PER ITERATION.
   If all features in @progress.txt are complete, output <promise>COMPLETE</promise>.")
@@ -45,4 +45,4 @@ for ((i=1; i<=$1; i++)); do
   echo ""
 done
 
-echo "Completed $1 iterations. Check open PRs with: gh pr list"
+echo "Completed $1 iterations."
