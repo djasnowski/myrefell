@@ -1,8 +1,10 @@
+import { Head, Link, router } from '@inertiajs/react';
+import { Home, Loader2, MapPin } from 'lucide-react';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
 
 interface Resident {
     id: number;
@@ -37,6 +39,9 @@ interface Village {
 
 interface Props {
     village: Village;
+    is_resident: boolean;
+    can_migrate: boolean;
+    has_pending_request: boolean;
 }
 
 const biomeColors: Record<string, string> = {
@@ -50,12 +55,21 @@ const biomeColors: Record<string, string> = {
     swamps: 'bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200',
 };
 
-export default function VillageShow({ village }: Props) {
+export default function VillageShow({ village, is_resident, can_migrate, has_pending_request }: Props) {
+    const [loading, setLoading] = useState(false);
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
         { title: 'Villages', href: '/villages' },
         { title: village.name, href: `/villages/${village.id}` },
     ];
+
+    const handleRequestMigration = () => {
+        setLoading(true);
+        router.post(`/migration/request/${village.id}`, {}, {
+            onFinish: () => setLoading(false),
+        });
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -128,6 +142,49 @@ export default function VillageShow({ village }: Props) {
                         </CardHeader>
                     </Card>
                 </div>
+
+                <div className="flex gap-4">
+                    <Link
+                        href={`/villages/${village.id}/roles`}
+                        className="flex-1 rounded-lg border-2 border-amber-600/50 bg-amber-900/20 p-4 text-center transition hover:bg-amber-800/30"
+                    >
+                        <span className="font-pixel text-lg text-amber-300">View Roles</span>
+                        <p className="text-sm text-stone-400">See village officials and positions</p>
+                    </Link>
+                </div>
+
+                {/* Migration / Settlement */}
+                {is_resident ? (
+                    <div className="flex items-center gap-2 rounded-lg border-2 border-green-600/50 bg-green-900/20 p-4">
+                        <Home className="h-5 w-5 text-green-400" />
+                        <span className="font-pixel text-green-300">This is your home village</span>
+                    </div>
+                ) : has_pending_request ? (
+                    <div className="rounded-lg border-2 border-amber-600/50 bg-amber-900/20 p-4">
+                        <p className="font-pixel text-amber-300">You have a pending migration request</p>
+                        <Link href="/migration" className="text-sm text-stone-400 hover:underline">
+                            View your request
+                        </Link>
+                    </div>
+                ) : can_migrate ? (
+                    <button
+                        onClick={handleRequestMigration}
+                        disabled={loading}
+                        className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-blue-600/50 bg-blue-900/20 p-4 transition hover:bg-blue-800/30 disabled:opacity-50"
+                    >
+                        {loading ? (
+                            <Loader2 className="h-5 w-5 animate-spin text-blue-300" />
+                        ) : (
+                            <MapPin className="h-5 w-5 text-blue-300" />
+                        )}
+                        <span className="font-pixel text-lg text-blue-300">Request to Settle Here</span>
+                    </button>
+                ) : (
+                    <div className="rounded-lg border-2 border-stone-600/50 bg-stone-800/50 p-4">
+                        <p className="font-pixel text-stone-400">Migration on cooldown</p>
+                        <p className="text-sm text-stone-500">You must wait before you can move again</p>
+                    </div>
+                )}
 
                 <div>
                     <h2 className="text-xl font-semibold mb-4">

@@ -18,6 +18,7 @@ use App\Http\Controllers\SkillsController;
 use App\Http\Controllers\TownController;
 use App\Http\Controllers\TravelController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\MigrationController;
 use App\Http\Controllers\VillageController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -159,6 +160,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('roles/{playerRole}/resign', [RoleController::class, 'resign'])->name('roles.resign');
     Route::post('roles/{playerRole}/remove', [RoleController::class, 'remove'])->name('roles.remove');
     Route::get('roles/status', [RoleController::class, 'status'])->name('roles.status');
+    Route::post('roles/claim', [RoleController::class, 'claim'])->name('roles.claim');
+
+    // Migration (moving between villages)
+    Route::get('migration', [MigrationController::class, 'index'])->name('migration.index');
+    Route::post('migration/request/{village}', [MigrationController::class, 'request'])->name('migration.request');
+    Route::post('migration/{migrationRequest}/cancel', [MigrationController::class, 'cancel'])->name('migration.cancel');
+    Route::post('migration/{migrationRequest}/approve', [MigrationController::class, 'approve'])->name('migration.approve');
+    Route::post('migration/{migrationRequest}/deny', [MigrationController::class, 'deny'])->name('migration.deny');
 });
 
 require __DIR__.'/settings.php';

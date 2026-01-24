@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MigrationRequest;
 use App\Models\Village;
+use App\Services\MigrationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -46,9 +48,15 @@ class VillageController extends Controller
     /**
      * Display the specified village.
      */
-    public function show(Village $village): Response
+    public function show(Request $request, Village $village, MigrationService $migrationService): Response
     {
         $village->load(['castle.kingdom', 'residents']);
+        $user = $request->user();
+
+        $isResident = $user->home_village_id === $village->id;
+        $hasPendingRequest = MigrationRequest::where('user_id', $user->id)
+            ->pending()
+            ->exists();
 
         return Inertia::render('villages/show', [
             'village' => [
@@ -79,6 +87,9 @@ class VillageController extends Controller
                 ]),
                 'resident_count' => $village->residents->count(),
             ],
+            'is_resident' => $isResident,
+            'can_migrate' => $migrationService->canMigrate($user),
+            'has_pending_request' => $hasPendingRequest,
         ]);
     }
 

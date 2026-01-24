@@ -12,6 +12,12 @@ use Illuminate\Support\Facades\DB;
 class RoleService
 {
     /**
+     * Minimum population for self-appointment. Below this, anyone can claim.
+     * At or above this threshold, an election is required.
+     */
+    public const SELF_APPOINT_THRESHOLD = 5;
+
+    /**
      * Get all roles at a location with their current holders.
      */
     public function getRolesAtLocation(string $locationType, int $locationId): Collection
@@ -45,6 +51,88 @@ class RoleService
     }
 
     /**
+     * Self-appoint to a vacant leadership role.
+     * Only allowed if:
+     * - You reside at this location (home village, or village belongs to castle/kingdom)
+     * - Location has < 5 residents/members
+     */
+    public function selfAppoint(User $user, Role $role, string $locationType, int $locationId): array
+    {
+        // Check if user resides at this location
+        if (!$this->userResidesAt($user, $locationType, $locationId)) {
+            return [
+                'success' => false,
+                'message' => 'You must be a resident of this location to claim a role here.',
+            ];
+        }
+
+        // Check if role is vacant
+        $currentHolder = PlayerRole::where('role_id', $role->id)
+            ->where('location_type', $locationType)
+            ->where('location_id', $locationId)
+            ->active()
+            ->first();
+
+        if ($currentHolder) {
+            return [
+                'success' => false,
+                'message' => "This role is already held by {$currentHolder->user->username}.",
+            ];
+        }
+
+        // Check population - self-appointment only allowed with < 5 people
+        $population = $this->getLocationPopulation($locationType, $locationId);
+
+        if ($population >= self::SELF_APPOINT_THRESHOLD) {
+            return [
+                'success' => false,
+                'message' => "This location has {$population} residents. An election is required to fill this role.",
+            ];
+        }
+
+        // Use regular appoint logic (appointedBy = null means self-appointed)
+        return $this->appointRole($user, $role, $locationType, $locationId, null, null);
+    }
+
+    /**
+     * Check if a user resides at a location.
+     * - Village: user's home_village_id matches
+     * - Castle: user's home village belongs to this castle
+     * - Kingdom: user's home village's castle belongs to this kingdom
+     */
+    public function userResidesAt(User $user, string $locationType, int $locationId): bool
+    {
+        $homeVillage = $user->homeVillage;
+
+        if (!$homeVillage) {
+            return false;
+        }
+
+        return match ($locationType) {
+            'village' => $user->home_village_id === $locationId,
+            'castle' => $homeVillage->castle_id === $locationId,
+            'kingdom' => $homeVillage->castle?->kingdom_id === $locationId,
+            default => false,
+        };
+    }
+
+    /**
+     * Get the population count for a location.
+     */
+    protected function getLocationPopulation(string $locationType, int $locationId): int
+    {
+        return match ($locationType) {
+            'village' => \App\Models\Village::find($locationId)?->residents()->count() ?? 0,
+            'castle' => \App\Models\Castle::find($locationId)?->villages()
+                ->withCount('residents')->get()->sum('residents_count') ?? 0,
+            'kingdom' => \App\Models\User::whereHas('homeVillage.castle', function ($q) use ($locationId) {
+                $q->where('kingdom_id', $locationId);
+            })->count(),
+            default => 0,
+        };
+    }
+
+    /**
      * Appoint a user to a role at a location.
      */
     public function appointRole(
@@ -55,6 +143,18 @@ class RoleService
         ?User $appointedBy = null,
         ?\DateTimeInterface $expiresAt = null
     ): array {
+        // Check if user already holds ANY role anywhere (one role per player globally)
+        $existingAnyRole = PlayerRole::where('user_id', $user->id)
+            ->active()
+            ->first();
+
+        if ($existingAnyRole) {
+            return [
+                'success' => false,
+                'message' => 'You can only hold one role at a time. Resign from your current role first.',
+            ];
+        }
+
         // Check if role is for this location type
         if ($role->location_type !== $locationType) {
             return [
@@ -124,7 +224,7 @@ class RoleService
     /**
      * Remove a user from a role.
      */
-    public function removeFromRole(PlayerRole $playerRole, User $removedBy, string $reason = null): array
+    public function removeFromRole(PlayerRole $playerRole, User $removedBy, ?string $reason = null): array
     {
         if (!$playerRole->isActive()) {
             return [

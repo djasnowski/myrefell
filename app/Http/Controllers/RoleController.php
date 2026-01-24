@@ -75,6 +75,10 @@ class RoleController extends Controller
             fn ($r) => $r['location_type'] === $locationType && $r['location_id'] === $locationId
         )->values();
 
+        // Get population to determine if self-appointment is allowed
+        $population = $this->getLocationPopulation($locationType, $locationId);
+        $canSelfAppoint = $population < RoleService::SELF_APPOINT_THRESHOLD;
+
         return Inertia::render('Roles/Index', [
             'location_type' => $locationType,
             'location_id' => $locationId,
@@ -82,6 +86,9 @@ class RoleController extends Controller
             'roles' => $roles,
             'user_roles' => $userRoles,
             'user_roles_here' => $userRolesHere,
+            'population' => $population,
+            'can_self_appoint' => $canSelfAppoint,
+            'self_appoint_threshold' => RoleService::SELF_APPOINT_THRESHOLD,
             'player' => [
                 'id' => $user->id,
                 'username' => $user->username,
@@ -89,6 +96,22 @@ class RoleController extends Controller
                 'title_tier' => $user->title_tier,
             ],
         ]);
+    }
+
+    /**
+     * Get population count for a location.
+     */
+    protected function getLocationPopulation(string $locationType, int $locationId): int
+    {
+        return match ($locationType) {
+            'village' => Village::find($locationId)?->residents()->count() ?? 0,
+            'castle' => Castle::find($locationId)?->villages()
+                ->withCount('residents')->get()->sum('residents_count') ?? 0,
+            'kingdom' => \App\Models\User::whereHas('homeVillage.castle', function ($q) use ($locationId) {
+                $q->where('kingdom_id', $locationId);
+            })->count(),
+            default => 0,
+        };
     }
 
     /**
@@ -211,5 +234,34 @@ class RoleController extends Controller
             'roles' => $userRoles,
             'count' => $userRoles->count(),
         ]);
+    }
+
+    /**
+     * Claim a vacant role (self-appointment).
+     * If no one holds the role, anyone can take it.
+     */
+    public function claim(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'role_id' => 'required|exists:roles,id',
+            'location_type' => 'required|in:village,castle,kingdom',
+            'location_id' => 'required|integer',
+        ]);
+
+        $user = $request->user();
+        $role = Role::findOrFail($request->role_id);
+
+        $result = $this->roleService->selfAppoint(
+            $user,
+            $role,
+            $request->location_type,
+            $request->location_id
+        );
+
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
     }
 }

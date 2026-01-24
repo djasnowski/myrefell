@@ -83,6 +83,9 @@ interface PageProps {
     roles: Role[];
     user_roles: UserRole[];
     user_roles_here: UserRole[];
+    population: number;
+    can_self_appoint: boolean;
+    self_appoint_threshold: number;
     player: {
         id: number;
         username: string;
@@ -136,18 +139,31 @@ function RoleCard({
     role,
     currentUserId,
     userRoleHere,
+    userHasAnyRole,
+    canSelfAppoint,
+    locationType,
+    locationId,
     onResign,
+    onClaim,
     resignLoading,
+    claimLoading,
 }: {
     role: Role;
     currentUserId: number;
     userRoleHere: UserRole | undefined;
+    userHasAnyRole: boolean;
+    canSelfAppoint: boolean;
+    locationType: string;
+    locationId: number;
     onResign: (playerRoleId: number) => void;
+    onClaim: (roleId: number) => void;
     resignLoading: number | null;
+    claimLoading: number | null;
 }) {
     const Icon = iconMap[role.icon.toLowerCase()] || Crown;
     const isCurrentUser = role.holder?.user_id === currentUserId;
     const isUserRole = userRoleHere?.role_id === role.id;
+    const canClaim = role.is_vacant && canSelfAppoint && !userHasAnyRole;
 
     return (
         <div className={`rounded-xl border-2 ${tierColors[role.tier] || tierColors[1]} p-4`}>
@@ -245,10 +261,45 @@ function RoleCard({
                         </div>
                     </div>
                     {role.npc.description && <p className="mt-1 text-xs text-stone-500">{role.npc.description}</p>}
+                    {canClaim ? (
+                        <button
+                            onClick={() => onClaim(role.id)}
+                            disabled={claimLoading === role.id}
+                            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-green-600/50 bg-green-900/20 px-4 py-2 font-pixel text-xs text-green-300 transition hover:bg-green-800/30 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {claimLoading === role.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <>
+                                    <Crown className="h-4 w-4" />
+                                    Take Over Role
+                                </>
+                            )}
+                        </button>
+                    ) : (
+                        <p className="mt-2 font-pixel text-[10px] text-stone-600">Election required to replace NPC</p>
+                    )}
                 </div>
             ) : (
                 <div className="rounded-lg border border-dashed border-stone-600/30 bg-stone-900/30 p-3 text-center">
-                    <span className="font-pixel text-xs text-stone-500">Position awaiting appointment</span>
+                    {canClaim ? (
+                        <button
+                            onClick={() => onClaim(role.id)}
+                            disabled={claimLoading === role.id}
+                            className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-green-600/50 bg-green-900/20 px-4 py-2 font-pixel text-xs text-green-300 transition hover:bg-green-800/30 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {claimLoading === role.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <>
+                                    <Crown className="h-4 w-4" />
+                                    Claim This Role
+                                </>
+                            )}
+                        </button>
+                    ) : (
+                        <span className="font-pixel text-xs text-stone-500">Election required to fill</span>
+                    )}
                 </div>
             )}
         </div>
@@ -256,11 +307,13 @@ function RoleCard({
 }
 
 export default function RolesIndex() {
-    const { location_type, location_id, location_name, roles, user_roles_here, player } = usePage<PageProps>().props;
+    const { location_type, location_id, location_name, roles, user_roles, user_roles_here, population, can_self_appoint, self_appoint_threshold, player } = usePage<PageProps>().props;
 
     const [resignLoading, setResignLoading] = useState<number | null>(null);
+    const [claimLoading, setClaimLoading] = useState<number | null>(null);
 
     const locationTypeDisplay = location_type.charAt(0).toUpperCase() + location_type.slice(1);
+    const userHasAnyRole = user_roles.length > 0;
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -276,6 +329,22 @@ export default function RolesIndex() {
             {
                 preserveScroll: true,
                 onFinish: () => setResignLoading(null),
+            }
+        );
+    };
+
+    const handleClaim = (roleId: number) => {
+        setClaimLoading(roleId);
+        router.post(
+            '/roles/claim',
+            {
+                role_id: roleId,
+                location_type: location_type,
+                location_id: location_id,
+            },
+            {
+                preserveScroll: true,
+                onFinish: () => setClaimLoading(null),
             }
         );
     };
@@ -304,6 +373,11 @@ export default function RolesIndex() {
                     <div>
                         <h1 className="font-pixel text-2xl text-amber-400">{locationTypeDisplay} Roles</h1>
                         <p className="font-pixel text-sm text-stone-400">Official positions at {location_name}</p>
+                        <p className="font-pixel text-xs text-stone-500 mt-1">
+                            Population: {population} {can_self_appoint
+                                ? '- Vacant roles can be claimed'
+                                : `- Election required (${self_appoint_threshold}+ residents)`}
+                        </p>
                     </div>
                     <div className="flex items-center gap-4">
                         {user_roles_here.length > 0 && (
@@ -335,8 +409,14 @@ export default function RolesIndex() {
                                             role={role}
                                             currentUserId={player.id}
                                             userRoleHere={userRoleHere}
+                                            userHasAnyRole={userHasAnyRole}
+                                            canSelfAppoint={can_self_appoint}
+                                            locationType={location_type}
+                                            locationId={location_id}
                                             onResign={handleResign}
+                                            onClaim={handleClaim}
                                             resignLoading={resignLoading}
+                                            claimLoading={claimLoading}
                                         />
                                     );
                                 })}
