@@ -13,6 +13,7 @@ use App\Http\Controllers\KingdomController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\PortController;
+use App\Http\Controllers\SkillsController;
 use App\Http\Controllers\TownController;
 use App\Http\Controllers\TravelController;
 use App\Http\Controllers\VillageController;
@@ -43,6 +44,9 @@ if (app()->environment('local')) {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [MapController::class, 'index'])->name('dashboard');
     Route::get('api/player/stats', [PlayerController::class, 'stats'])->name('player.stats');
+
+    // Skills
+    Route::get('skills', [SkillsController::class, 'index'])->name('skills.index');
 
     // Inventory routes
     Route::get('inventory', [InventoryController::class, 'index'])->name('inventory');
