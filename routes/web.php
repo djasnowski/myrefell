@@ -3,6 +3,7 @@
 use App\Http\Controllers\BankController;
 use App\Http\Controllers\CastleController;
 use App\Http\Controllers\CombatController;
+use App\Http\Controllers\DungeonController;
 use App\Http\Controllers\CraftingController;
 use App\Http\Controllers\DocketController;
 use App\Http\Controllers\GatheringController;
@@ -208,6 +209,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('combat/attack', [CombatController::class, 'attack'])->name('combat.attack');
     Route::post('combat/eat', [CombatController::class, 'eat'])->name('combat.eat');
     Route::post('combat/flee', [CombatController::class, 'flee'])->name('combat.flee');
+
+    // Dungeons
+    Route::get('dungeons', [DungeonController::class, 'index'])->name('dungeons.index');
+    Route::get('dungeons/status', [DungeonController::class, 'status'])->name('dungeons.status');
+    Route::get('dungeons/{dungeon}', [DungeonController::class, 'show'])->name('dungeons.show');
+    Route::post('dungeons/enter', [DungeonController::class, 'enter'])->name('dungeons.enter');
+    Route::post('dungeons/fight', [DungeonController::class, 'fight'])->name('dungeons.fight');
+    Route::post('dungeons/next-floor', [DungeonController::class, 'nextFloor'])->name('dungeons.next-floor');
+    Route::post('dungeons/eat', [DungeonController::class, 'eat'])->name('dungeons.eat');
+    Route::post('dungeons/abandon', [DungeonController::class, 'abandon'])->name('dungeons.abandon');
 
     // Chat
     Route::get('chat', [ChatController::class, 'index'])->name('chat.index');

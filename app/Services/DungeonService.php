@@ -1,0 +1,609 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Dungeon;
+use App\Models\DungeonFloor;
+use App\Models\DungeonSession;
+use App\Models\Monster;
+use App\Models\PlayerSkill;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+
+class DungeonService
+{
+    public function __construct(
+        protected EnergyService $energyService,
+        protected LootService $lootService,
+        protected CombatService $combatService
+    ) {}
+
+    /**
+     * Get available dungeons for a player at their current location.
+     *
+     * @return array<Dungeon>
+     */
+    public function getAvailableDungeons(User $player): array
+    {
+        $biome = $this->getLocationBiome($player);
+
+        return Dungeon::query()
+            ->where('min_combat_level', '<=', $player->combat_level)
+            ->where(function ($query) use ($biome) {
+                $query->where('biome', $biome)
+                    ->orWhereNull('biome');
+            })
+            ->with('bossMonster')
+            ->orderBy('min_combat_level')
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * Get the biome for a player's current location.
+     */
+    protected function getLocationBiome(User $player): ?string
+    {
+        return match ($player->current_location_type) {
+            'village' => \App\Models\Village::find($player->current_location_id)?->biome,
+            'castle' => \App\Models\Castle::find($player->current_location_id)?->kingdom?->biome,
+            'kingdom' => \App\Models\Kingdom::find($player->current_location_id)?->biome,
+            default => null,
+        };
+    }
+
+    /**
+     * Get the player's active dungeon session.
+     */
+    public function getActiveSession(User $player): ?DungeonSession
+    {
+        return DungeonSession::where('user_id', $player->id)
+            ->where('status', DungeonSession::STATUS_ACTIVE)
+            ->with(['dungeon', 'dungeon.floors', 'dungeon.bossMonster'])
+            ->first();
+    }
+
+    /**
+     * Enter a dungeon.
+     */
+    public function enterDungeon(User $player, int $dungeonId, string $trainingStyle = 'attack'): array
+    {
+        // Check if player is traveling
+        if ($player->isTraveling()) {
+            return ['success' => false, 'message' => 'You cannot enter a dungeon while traveling.'];
+        }
+
+        // Check if player is alive
+        if (!$player->isAlive()) {
+            return ['success' => false, 'message' => 'You are dead and cannot enter a dungeon.'];
+        }
+
+        // Check for active combat
+        $activeCombat = $this->combatService->getActiveCombat($player);
+        if ($activeCombat) {
+            return ['success' => false, 'message' => 'You are in combat and cannot enter a dungeon.'];
+        }
+
+        // Check for existing dungeon session
+        $existingSession = $this->getActiveSession($player);
+        if ($existingSession) {
+            return ['success' => false, 'message' => 'You are already in a dungeon.'];
+        }
+
+        // Find the dungeon
+        $dungeon = Dungeon::with('floors')->find($dungeonId);
+        if (!$dungeon) {
+            return ['success' => false, 'message' => 'Dungeon not found.'];
+        }
+
+        // Check level requirement
+        if (!$dungeon->canBeEnteredBy($player)) {
+            return ['success' => false, 'message' => "You need combat level {$dungeon->min_combat_level} to enter this dungeon."];
+        }
+
+        // Check energy
+        if (!$this->energyService->hasEnergy($player, $dungeon->energy_cost)) {
+            return ['success' => false, 'message' => "You need {$dungeon->energy_cost} energy to enter this dungeon."];
+        }
+
+        // Validate training style
+        if (!in_array($trainingStyle, DungeonSession::TRAINING_STYLES)) {
+            $trainingStyle = 'attack';
+        }
+
+        return DB::transaction(function () use ($player, $dungeon, $trainingStyle) {
+            // Consume energy
+            $this->energyService->consumeEnergy($player, $dungeon->energy_cost);
+
+            // Get first floor monster count
+            $firstFloor = $dungeon->floors()->where('floor_number', 1)->first();
+            $monsterCount = $firstFloor?->monster_count ?? 3;
+
+            // Create session
+            $session = DungeonSession::create([
+                'user_id' => $player->id,
+                'dungeon_id' => $dungeon->id,
+                'current_floor' => 1,
+                'monsters_defeated' => 0,
+                'total_monsters_on_floor' => $monsterCount,
+                'status' => DungeonSession::STATUS_ACTIVE,
+                'xp_accumulated' => 0,
+                'gold_accumulated' => 0,
+                'loot_accumulated' => [],
+                'training_style' => $trainingStyle,
+                'entry_location_type' => $player->current_location_type,
+                'entry_location_id' => $player->current_location_id,
+            ]);
+
+            $session->load(['dungeon', 'dungeon.floors', 'dungeon.bossMonster']);
+
+            return [
+                'success' => true,
+                'message' => "You enter {$dungeon->name}...",
+                'data' => [
+                    'session' => $session,
+                ],
+            ];
+        });
+    }
+
+    /**
+     * Fight the next monster in the dungeon.
+     */
+    public function fightMonster(User $player): array
+    {
+        $session = $this->getActiveSession($player);
+        if (!$session) {
+            return ['success' => false, 'message' => 'You are not in a dungeon.'];
+        }
+
+        if ($session->isFloorCleared()) {
+            return ['success' => false, 'message' => 'This floor is already cleared. Proceed to the next floor.'];
+        }
+
+        // Check if player is alive
+        if (!$player->isAlive()) {
+            return $this->handleDeath($player, $session);
+        }
+
+        return DB::transaction(function () use ($player, $session) {
+            $floor = $session->getCurrentFloor();
+            if (!$floor) {
+                return ['success' => false, 'message' => 'Floor data error.'];
+            }
+
+            // Get the monster for this encounter
+            $monster = $this->getMonsterForFloor($session, $floor);
+            if (!$monster) {
+                return ['success' => false, 'message' => 'No monsters available on this floor.'];
+            }
+
+            // Simulate combat (simplified dungeon combat)
+            $combatResult = $this->simulateCombat($player, $monster, $floor);
+
+            if ($combatResult['player_won']) {
+                // Award XP (with floor multiplier)
+                $xpGained = (int) floor($monster->xp_reward * $floor->xp_multiplier);
+                $session->addXp($xpGained);
+
+                // Award gold
+                $goldGained = $monster->rollGoldDrop();
+                $session->addGold($goldGained);
+
+                // Roll for loot (with floor multiplier affecting chance)
+                $loot = $this->rollDungeonLoot($player, $monster, $session, $floor);
+
+                // Increment defeated count
+                $session->increment('monsters_defeated');
+                $session->refresh();
+
+                $floorCleared = $session->isFloorCleared();
+                $dungeonCompleted = $floorCleared && $session->isOnFinalFloor();
+
+                if ($dungeonCompleted) {
+                    return $this->completeDungeon($player, $session, $monster, $xpGained, $goldGained, $loot);
+                }
+
+                return [
+                    'success' => true,
+                    'message' => "You defeated {$monster->name}!",
+                    'data' => [
+                        'session' => $session->fresh(['dungeon', 'dungeon.floors']),
+                        'combat' => $combatResult,
+                        'rewards' => [
+                            'xp' => $xpGained,
+                            'gold' => $goldGained,
+                            'items' => $loot,
+                        ],
+                        'floor_cleared' => $floorCleared,
+                        'status' => 'active',
+                    ],
+                ];
+            } else {
+                // Player was defeated
+                return $this->handleDeath($player, $session);
+            }
+        });
+    }
+
+    /**
+     * Get a monster for the current floor encounter.
+     */
+    protected function getMonsterForFloor(DungeonSession $session, DungeonFloor $floor): ?Monster
+    {
+        // On boss floor with all other monsters defeated, spawn boss
+        if ($floor->is_boss_floor && $session->monsters_defeated === $session->total_monsters_on_floor - 1) {
+            return $session->dungeon->bossMonster;
+        }
+
+        // Otherwise get random monster from floor spawn table
+        return $floor->getRandomMonster();
+    }
+
+    /**
+     * Simulate combat between player and monster.
+     */
+    protected function simulateCombat(User $player, Monster $monster, DungeonFloor $floor): array
+    {
+        $playerHp = $player->hp;
+        $monsterHp = $monster->max_hp;
+        $rounds = 0;
+        $maxRounds = 50; // Safety limit
+
+        $equipment = $this->getPlayerEquipmentBonuses($player);
+        $attackLevel = $player->getSkillLevel('attack');
+        $strengthLevel = $player->getSkillLevel('strength');
+        $defenseLevel = $player->getSkillLevel('defense');
+
+        while ($playerHp > 0 && $monsterHp > 0 && $rounds < $maxRounds) {
+            $rounds++;
+
+            // Player attacks
+            $playerHitChance = 50 + ($attackLevel - $monster->defense_level) * 2 + $equipment['atk_bonus'];
+            $playerHitChance = max(10, min(95, $playerHitChance));
+
+            if (rand(1, 100) <= $playerHitChance) {
+                $baseDamage = $strengthLevel + $equipment['str_bonus'];
+                $maxHit = (int) floor($baseDamage * 0.5);
+                $damage = rand(1, max(1, $maxHit));
+                $monsterHp -= $damage;
+            }
+
+            if ($monsterHp <= 0) break;
+
+            // Monster attacks
+            $monsterHitChance = 50 + ($monster->attack_level - $defenseLevel - $equipment['def_bonus']) * 2;
+            $monsterHitChance = max(10, min(95, $monsterHitChance));
+
+            if (rand(1, 100) <= $monsterHitChance) {
+                $maxHit = (int) floor($monster->strength_level * 0.5);
+                $damage = rand(1, max(1, $maxHit));
+                $playerHp -= $damage;
+            }
+        }
+
+        // Update player HP
+        $player->hp = max(0, $playerHp);
+        $player->save();
+
+        return [
+            'player_won' => $monsterHp <= 0,
+            'rounds' => $rounds,
+            'player_hp_remaining' => max(0, $playerHp),
+            'damage_taken' => $player->hp - max(0, $playerHp),
+        ];
+    }
+
+    /**
+     * Get player equipment bonuses.
+     */
+    protected function getPlayerEquipmentBonuses(User $player): array
+    {
+        $bonuses = [
+            'atk_bonus' => 0,
+            'str_bonus' => 0,
+            'def_bonus' => 0,
+            'hp_bonus' => 0,
+        ];
+
+        $equippedItems = $player->inventory()
+            ->where('is_equipped', true)
+            ->with('item')
+            ->get();
+
+        foreach ($equippedItems as $slot) {
+            $item = $slot->item;
+            $bonuses['atk_bonus'] += $item->atk_bonus;
+            $bonuses['str_bonus'] += $item->str_bonus;
+            $bonuses['def_bonus'] += $item->def_bonus;
+            $bonuses['hp_bonus'] += $item->hp_bonus;
+        }
+
+        return $bonuses;
+    }
+
+    /**
+     * Roll for dungeon loot (stored until completion).
+     */
+    protected function rollDungeonLoot(User $player, Monster $monster, DungeonSession $session, DungeonFloor $floor): array
+    {
+        $items = [];
+
+        foreach ($monster->lootTable as $lootEntry) {
+            // Apply floor loot multiplier to chance
+            $adjustedChance = min(100, $lootEntry->drop_chance * $floor->loot_multiplier);
+
+            if (rand(1, 100) <= $adjustedChance) {
+                $quantity = rand($lootEntry->quantity_min, $lootEntry->quantity_max);
+                if ($quantity > 0) {
+                    $session->addLoot($lootEntry->item_id, $quantity);
+                    $items[] = [
+                        'name' => $lootEntry->item->name,
+                        'quantity' => $quantity,
+                    ];
+                }
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * Proceed to the next floor.
+     */
+    public function nextFloor(User $player): array
+    {
+        $session = $this->getActiveSession($player);
+        if (!$session) {
+            return ['success' => false, 'message' => 'You are not in a dungeon.'];
+        }
+
+        if (!$session->isFloorCleared()) {
+            return ['success' => false, 'message' => 'You must defeat all monsters on this floor first.'];
+        }
+
+        if ($session->isOnFinalFloor()) {
+            return ['success' => false, 'message' => 'You are on the final floor. Complete the dungeon.'];
+        }
+
+        return DB::transaction(function () use ($player, $session) {
+            $nextFloorNumber = $session->current_floor + 1;
+            $nextFloor = $session->dungeon->floors()->where('floor_number', $nextFloorNumber)->first();
+
+            if (!$nextFloor) {
+                return ['success' => false, 'message' => 'Next floor not found.'];
+            }
+
+            $session->current_floor = $nextFloorNumber;
+            $session->monsters_defeated = 0;
+            $session->total_monsters_on_floor = $nextFloor->monster_count;
+            $session->save();
+
+            return [
+                'success' => true,
+                'message' => "You descend to {$nextFloor->display_name}...",
+                'data' => [
+                    'session' => $session->fresh(['dungeon', 'dungeon.floors']),
+                    'floor' => $nextFloor,
+                ],
+            ];
+        });
+    }
+
+    /**
+     * Complete the dungeon successfully.
+     */
+    protected function completeDungeon(User $player, DungeonSession $session, Monster $lastMonster, int $xpGained, int $goldGained, array $loot): array
+    {
+        $dungeon = $session->dungeon;
+
+        // Add completion bonus XP and gold
+        $bonusXp = $dungeon->xp_reward_base;
+        $bonusGold = $dungeon->rollGoldReward();
+        $session->addXp($bonusXp);
+        $session->addGold($bonusGold);
+
+        // Mark as completed
+        $session->status = DungeonSession::STATUS_COMPLETED;
+        $session->save();
+
+        // Award accumulated XP to skill
+        $this->awardAccumulatedRewards($player, $session);
+
+        return [
+            'success' => true,
+            'message' => "Dungeon Complete! You conquered {$dungeon->name}!",
+            'data' => [
+                'session' => $session,
+                'status' => 'completed',
+                'combat_rewards' => [
+                    'xp' => $xpGained,
+                    'gold' => $goldGained,
+                    'items' => $loot,
+                ],
+                'completion_bonus' => [
+                    'xp' => $bonusXp,
+                    'gold' => $bonusGold,
+                ],
+                'total_rewards' => [
+                    'xp' => $session->xp_accumulated,
+                    'gold' => $session->gold_accumulated,
+                    'skill' => $session->training_style,
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Award accumulated rewards to the player.
+     */
+    protected function awardAccumulatedRewards(User $player, DungeonSession $session): void
+    {
+        // Award XP to training skill
+        $skill = $player->skills()->where('skill_name', $session->training_style)->first();
+
+        if (!$skill) {
+            $skill = PlayerSkill::create([
+                'player_id' => $player->id,
+                'skill_name' => $session->training_style,
+                'level' => 5,
+                'xp' => 0,
+            ]);
+        }
+
+        $skill->addXp($session->xp_accumulated);
+
+        // Award gold
+        $player->increment('gold', $session->gold_accumulated);
+
+        // Award items (already accumulated in session)
+        $loot = $session->loot_accumulated ?? [];
+        foreach ($loot as $itemId => $quantity) {
+            $item = \App\Models\Item::find($itemId);
+            if ($item) {
+                $this->lootService->inventoryService->addItem($player, $item, $quantity);
+            }
+        }
+    }
+
+    /**
+     * Handle player death in dungeon.
+     */
+    protected function handleDeath(User $player, DungeonSession $session): array
+    {
+        $session->status = DungeonSession::STATUS_FAILED;
+        $session->save();
+
+        // Player loses accumulated rewards
+        $this->energyService->setEnergyOnDeath($player);
+
+        return [
+            'success' => false,
+            'message' => "You died in the dungeon. All accumulated rewards are lost.",
+            'data' => [
+                'session' => $session,
+                'status' => 'failed',
+            ],
+        ];
+    }
+
+    /**
+     * Abandon the dungeon (player choice).
+     */
+    public function abandonDungeon(User $player): array
+    {
+        $session = $this->getActiveSession($player);
+        if (!$session) {
+            return ['success' => false, 'message' => 'You are not in a dungeon.'];
+        }
+
+        $session->status = DungeonSession::STATUS_ABANDONED;
+        $session->save();
+
+        // Player keeps nothing on abandon
+        return [
+            'success' => true,
+            'message' => 'You fled the dungeon. All accumulated rewards are lost.',
+            'data' => [
+                'session' => $session,
+                'status' => 'abandoned',
+            ],
+        ];
+    }
+
+    /**
+     * Eat food during dungeon exploration.
+     */
+    public function eatFood(User $player, int $inventorySlotId): array
+    {
+        $session = $this->getActiveSession($player);
+        if (!$session) {
+            return ['success' => false, 'message' => 'You are not in a dungeon.'];
+        }
+
+        // Find the inventory slot
+        $slot = $player->inventory()
+            ->where('id', $inventorySlotId)
+            ->with('item')
+            ->first();
+
+        if (!$slot) {
+            return ['success' => false, 'message' => 'Item not found in your inventory.'];
+        }
+
+        $item = $slot->item;
+
+        // Check if it's consumable food
+        if ($item->type !== 'consumable' || $item->hp_bonus <= 0) {
+            return ['success' => false, 'message' => 'This item cannot be eaten.'];
+        }
+
+        return DB::transaction(function () use ($player, $session, $slot, $item) {
+            // Calculate HP restored
+            $hpRestored = min($item->hp_bonus, $player->max_hp - $player->hp);
+            $player->hp = min($player->max_hp, $player->hp + $item->hp_bonus);
+            $player->save();
+
+            // Remove item from inventory
+            if ($slot->quantity > 1) {
+                $slot->decrement('quantity');
+            } else {
+                $slot->delete();
+            }
+
+            return [
+                'success' => true,
+                'message' => "You ate {$item->name} and restored {$hpRestored} HP.",
+                'data' => [
+                    'session' => $session,
+                    'hp_restored' => $hpRestored,
+                    'current_hp' => $player->hp,
+                ],
+            ];
+        });
+    }
+
+    /**
+     * Get dungeon info for display.
+     */
+    public function getDungeonInfo(User $player): array
+    {
+        $session = $this->getActiveSession($player);
+        $equipment = $this->getPlayerEquipmentBonuses($player);
+
+        return [
+            'in_dungeon' => $session !== null,
+            'session' => $session,
+            'player_stats' => [
+                'hp' => $player->hp,
+                'max_hp' => $player->max_hp,
+                'combat_level' => $player->combat_level,
+                'attack' => $player->getSkillLevel('attack'),
+                'strength' => $player->getSkillLevel('strength'),
+                'defense' => $player->getSkillLevel('defense'),
+            ],
+            'equipment' => $equipment,
+            'energy' => [
+                'current' => $player->energy,
+            ],
+        ];
+    }
+
+    /**
+     * Get food items available for eating in dungeon.
+     */
+    public function getAvailableFood(User $player): array
+    {
+        return $player->inventory()
+            ->with('item')
+            ->whereHas('item', fn ($q) => $q->where('type', 'consumable')->where('hp_bonus', '>', 0))
+            ->get()
+            ->map(fn ($slot) => [
+                'id' => $slot->id,
+                'name' => $slot->item->name,
+                'hp_bonus' => $slot->item->hp_bonus,
+                'quantity' => $slot->quantity,
+            ])
+            ->toArray();
+    }
+}
