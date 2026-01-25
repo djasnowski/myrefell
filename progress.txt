@@ -35,11 +35,9 @@
 ### Medium Priority - Economy & Social
 - [x] Tax System
 - [x] Chat System
+- [x] NPC Crafting & Docket System
 
 ## Not Implemented (Priority Order)
-
-### Medium Priority
-- [ ] NPC Crafting & Docket System
 
 ### Lower Priority
 - [ ] Combat System

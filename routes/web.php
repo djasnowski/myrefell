@@ -3,6 +3,7 @@
 use App\Http\Controllers\BankController;
 use App\Http\Controllers\CastleController;
 use App\Http\Controllers\CraftingController;
+use App\Http\Controllers\DocketController;
 use App\Http\Controllers\GatheringController;
 use App\Http\Controllers\HealerController;
 use App\Http\Controllers\JobController;
@@ -142,6 +143,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('crafting', [CraftingController::class, 'index'])->name('crafting.index');
     Route::post('crafting/craft', [CraftingController::class, 'craft'])->name('crafting.craft');
     Route::get('crafting/recipe/{recipe}', [CraftingController::class, 'recipe'])->name('crafting.recipe');
+
+    // Crafting Docket
+    Route::get('docket', [DocketController::class, 'index'])->name('docket.index');
+    Route::get('docket/status', [DocketController::class, 'status'])->name('docket.status');
+    Route::post('docket/npc-order', [DocketController::class, 'npcOrder'])->name('docket.npc-order');
+    Route::post('docket/place-order', [DocketController::class, 'placeOrder'])->name('docket.place-order');
+    Route::post('docket/{order}/accept', [DocketController::class, 'acceptOrder'])->name('docket.accept');
+    Route::post('docket/{order}/complete', [DocketController::class, 'completeOrder'])->name('docket.complete');
+    Route::post('docket/{order}/cancel', [DocketController::class, 'cancelOrder'])->name('docket.cancel');
+    Route::post('docket/{order}/abandon', [DocketController::class, 'abandonOrder'])->name('docket.abandon');
 
     // Quests
     Route::get('villages/{village}/quests', [QuestController::class, 'noticeBoard'])->name('villages.quests');
