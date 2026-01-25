@@ -116,11 +116,11 @@ class PlayerEmployment extends Model
     /**
      * Get the location model (polymorphic).
      */
-    public function getLocationAttribute(): Village|Castle|Town|null
+    public function getLocationAttribute(): Village|Barony|Town|null
     {
         return match ($this->location_type) {
             'village' => Village::find($this->location_id),
-            'castle' => Castle::find($this->location_id),
+            'barony' => Barony::find($this->location_id),
             'town' => Town::find($this->location_id),
             default => null,
         };

@@ -47,7 +47,7 @@ class SalaryPayment extends Model
     {
         return match ($this->source_location_type) {
             'village' => Village::find($this->source_location_id),
-            'castle' => Castle::find($this->source_location_id),
+            'barony' => Barony::find($this->source_location_id),
             'kingdom' => Kingdom::find($this->source_location_id),
             default => null,
         };

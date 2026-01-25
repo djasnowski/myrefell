@@ -48,7 +48,7 @@ class TaxCollection extends Model
     {
         return match ($this->receiver_location_type) {
             'village' => Village::find($this->receiver_location_id),
-            'castle' => Castle::find($this->receiver_location_id),
+            'barony' => Barony::find($this->receiver_location_id),
             'kingdom' => Kingdom::find($this->receiver_location_id),
             default => null,
         };
@@ -73,7 +73,7 @@ class TaxCollection extends Model
 
         return match ($this->payer_location_type) {
             'village' => Village::find($this->payer_location_id),
-            'castle' => Castle::find($this->payer_location_id),
+            'barony' => Barony::find($this->payer_location_id),
             default => null,
         };
     }

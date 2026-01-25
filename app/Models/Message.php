@@ -20,7 +20,7 @@ class Message extends Model
      * Location types for location channels.
      */
     public const LOCATION_VILLAGE = 'village';
-    public const LOCATION_CASTLE = 'castle';
+    public const LOCATION_BARONY = 'barony';
     public const LOCATION_KINGDOM = 'kingdom';
 
     protected $fillable = [
@@ -86,7 +86,7 @@ class Message extends Model
 
         return match ($this->channel_location_type) {
             self::LOCATION_VILLAGE => Village::find($this->channel_id),
-            self::LOCATION_CASTLE => Castle::find($this->channel_id),
+            self::LOCATION_BARONY => Barony::find($this->channel_id),
             self::LOCATION_KINGDOM => Kingdom::find($this->channel_id),
             default => null,
         };

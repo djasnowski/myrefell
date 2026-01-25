@@ -47,7 +47,7 @@ class LocationTreasury extends Model
     {
         return match ($this->location_type) {
             'village' => Village::find($this->location_id),
-            'castle' => Castle::find($this->location_id),
+            'barony' => Barony::find($this->location_id),
             'kingdom' => Kingdom::find($this->location_id),
             default => null,
         };

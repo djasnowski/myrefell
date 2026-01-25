@@ -75,7 +75,7 @@ class TreasuryTransaction extends Model
 
         return match ($this->related_location_type) {
             'village' => Village::find($this->related_location_id),
-            'castle' => Castle::find($this->related_location_id),
+            'barony' => Barony::find($this->related_location_id),
             'kingdom' => Kingdom::find($this->related_location_id),
             default => null,
         };

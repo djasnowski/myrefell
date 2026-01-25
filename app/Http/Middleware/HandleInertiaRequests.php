@@ -60,7 +60,7 @@ class HandleInertiaRequests extends Middleware
      */
     protected function getSidebarData($player): array
     {
-        $player->load(['skills', 'homeVillage.castle.town.kingdom']);
+        $player->load(['skills', 'homeVillage.barony.kingdom']);
 
         return [
             'player' => [
@@ -89,17 +89,13 @@ class HandleInertiaRequests extends Middleware
                 'id' => $player->homeVillage->id,
                 'name' => $player->homeVillage->name,
                 'resident_count' => $player->homeVillage->residents()->count(),
-                'castle' => $player->homeVillage->castle ? [
-                    'id' => $player->homeVillage->castle->id,
-                    'name' => $player->homeVillage->castle->name,
+                'barony' => $player->homeVillage->barony ? [
+                    'id' => $player->homeVillage->barony->id,
+                    'name' => $player->homeVillage->barony->name,
                 ] : null,
-                'town' => $player->homeVillage->castle?->town ? [
-                    'id' => $player->homeVillage->castle->town->id,
-                    'name' => $player->homeVillage->castle->town->name,
-                ] : null,
-                'kingdom' => $player->homeVillage->castle?->town?->kingdom ? [
-                    'id' => $player->homeVillage->castle->town->kingdom->id,
-                    'name' => $player->homeVillage->castle->town->kingdom->name,
+                'kingdom' => $player->homeVillage->barony?->kingdom ? [
+                    'id' => $player->homeVillage->barony->kingdom->id,
+                    'name' => $player->homeVillage->barony->kingdom->name,
                 ] : null,
             ] : null,
             'travel' => $this->travelService->getTravelStatus($player),
@@ -128,7 +124,7 @@ class HandleInertiaRequests extends Middleware
 
         $modelClass = match ($player->current_location_type) {
             'village' => \App\Models\Village::class,
-            'castle' => \App\Models\Castle::class,
+            'barony' => \App\Models\Barony::class,
             'town' => \App\Models\Town::class,
             'kingdom' => \App\Models\Kingdom::class,
             'wilderness' => null,
