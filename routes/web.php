@@ -35,6 +35,7 @@ use App\Http\Controllers\TrialController;
 use App\Http\Controllers\SocialClassController;
 use App\Http\Controllers\StableController;
 use App\Http\Controllers\ArmyController;
+use App\Http\Controllers\WarController;
 use App\Http\Controllers\CaravanController;
 use App\Http\Controllers\TradeRouteController;
 use App\Http\Controllers\TrainingController;
@@ -393,6 +394,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('warfare/armies', [ArmyController::class, 'store'])->name('warfare.armies.store');
     Route::post('warfare/armies/{army}/disband', [ArmyController::class, 'disband'])->name('warfare.armies.disband');
     Route::post('warfare/mercenaries/{company}/hire', [ArmyController::class, 'hireMercenary'])->name('warfare.mercenaries.hire');
+
+    // Warfare - Wars
+    Route::get('warfare/wars', [WarController::class, 'index'])->name('warfare.wars');
 });
 
 require __DIR__.'/settings.php';
