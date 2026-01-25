@@ -35,6 +35,7 @@ use App\Http\Controllers\TrialController;
 use App\Http\Controllers\SocialClassController;
 use App\Http\Controllers\StableController;
 use App\Http\Controllers\ArmyController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\SiegeController;
 use App\Http\Controllers\WarController;
 use App\Http\Controllers\CaravanController;
@@ -288,6 +289,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Calendar (World Time)
     Route::get('calendar', [CalendarController::class, 'index'])->name('calendar.index');
+
+    // Events (Festivals, Tournaments, Royal Events)
+    Route::get('events', [EventController::class, 'index'])->name('events.index');
+    Route::post('events/festivals/{festival}/join', [EventController::class, 'joinFestival'])->name('events.festivals.join');
+    Route::post('events/tournaments/{tournament}/register', [EventController::class, 'registerForTournament'])->name('events.tournaments.register');
 
     // Charters
     Route::get('charters', [CharterController::class, 'index'])->name('charters.index');

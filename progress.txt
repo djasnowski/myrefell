@@ -93,14 +93,14 @@
 - [x] UI: Army management screen (view armies, raise army, disband, hire mercenaries)
 - [x] UI: War/battle viewer (wars overview page with war scores, participants, battles, sieges)
 - [x] UI: Siege interface (view siege details, fortification progress, launch assaults, build equipment)
-- [ ] UI: Mercenary hiring (integrated into army management)
+- [x] UI: Mercenary hiring (integrated into army management)
 
 ### Phase 6 - World Events (BACKEND COMPLETE)
 - [x] Festivals and tournaments (seasonal, jousting, archery, melee, etc.)
 - [x] Disease spread (infections, outbreaks, quarantine, immunity)
 - [x] Natural disasters (drought, flood, fire, storm, earthquake, blizzard)
 - [x] Infrastructure construction (building types, construction projects, damage)
-- [ ] UI: Festival/tournament participation
+- [x] UI: Festival/tournament participation (Events Calendar page)
 - [ ] UI: Disease/health status display
 - [ ] UI: Building construction interface
 
