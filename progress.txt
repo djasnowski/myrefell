@@ -90,10 +90,10 @@
 - [x] Siege mechanics (fortifications, equipment, starvation, assault)
 - [x] War goals and peace treaties (casus belli, war score, truces)
 - [x] Mercenary companies (hiring, contracts, specializations)
-- [ ] UI: Army management screen
+- [x] UI: Army management screen (view armies, raise army, disband, hire mercenaries)
 - [ ] UI: War/battle viewer
 - [ ] UI: Siege interface
-- [ ] UI: Mercenary hiring
+- [ ] UI: Mercenary hiring (integrated into army management)
 
 ### Phase 6 - World Events (BACKEND COMPLETE)
 - [x] Festivals and tournaments (seasonal, jousting, archery, melee, etc.)

@@ -34,6 +34,7 @@ use App\Http\Controllers\CrimeController;
 use App\Http\Controllers\TrialController;
 use App\Http\Controllers\SocialClassController;
 use App\Http\Controllers\StableController;
+use App\Http\Controllers\ArmyController;
 use App\Http\Controllers\CaravanController;
 use App\Http\Controllers\TradeRouteController;
 use App\Http\Controllers\TrainingController;
@@ -386,6 +387,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Pardon (King only)
     Route::post('crime/punishment/{punishment}/pardon', [CrimeController::class, 'pardon'])->name('crime.punishment.pardon');
+
+    // Warfare - Armies
+    Route::get('warfare/armies', [ArmyController::class, 'index'])->name('warfare.armies');
+    Route::post('warfare/armies', [ArmyController::class, 'store'])->name('warfare.armies.store');
+    Route::post('warfare/armies/{army}/disband', [ArmyController::class, 'disband'])->name('warfare.armies.disband');
+    Route::post('warfare/mercenaries/{company}/hire', [ArmyController::class, 'hireMercenary'])->name('warfare.mercenaries.hire');
 });
 
 require __DIR__.'/settings.php';
