@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BankController;
 use App\Http\Controllers\CastleController;
+use App\Http\Controllers\CombatController;
 use App\Http\Controllers\CraftingController;
 use App\Http\Controllers\DocketController;
 use App\Http\Controllers\GatheringController;
@@ -199,6 +200,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('taxes', [TaxController::class, 'myTaxes'])->name('taxes.index');
     Route::post('taxes/set-rate', [TaxController::class, 'setTaxRate'])->name('taxes.set-rate');
     Route::get('taxes/treasury-status', [TaxController::class, 'treasuryStatus'])->name('taxes.treasury-status');
+
+    // Combat
+    Route::get('combat', [CombatController::class, 'index'])->name('combat.index');
+    Route::get('combat/status', [CombatController::class, 'status'])->name('combat.status');
+    Route::post('combat/start', [CombatController::class, 'start'])->name('combat.start');
+    Route::post('combat/attack', [CombatController::class, 'attack'])->name('combat.attack');
+    Route::post('combat/eat', [CombatController::class, 'eat'])->name('combat.eat');
+    Route::post('combat/flee', [CombatController::class, 'flee'])->name('combat.flee');
 
     // Chat
     Route::get('chat', [ChatController::class, 'index'])->name('chat.index');

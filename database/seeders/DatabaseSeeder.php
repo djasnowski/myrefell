@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             CastleSeeder::class,
             VillageSeeder::class,
             ItemSeeder::class,
+            MonsterSeeder::class,
             DailyTaskSeeder::class,
             QuestSeeder::class,
             JobSeeder::class,

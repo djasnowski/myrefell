@@ -40,7 +40,7 @@
 ## Not Implemented (Priority Order)
 
 ### Lower Priority
-- [ ] Combat System
+- [x] Combat System
 - [ ] Dungeons
 - [ ] Religion System
 - [ ] Charter System
