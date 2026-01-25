@@ -30,11 +30,9 @@
 ### High Priority - Core Gameplay Loop
 - [x] Jobs System
 - [x] Village Roles System
+- [x] No Confidence Votes
 
 ## Not Implemented (Priority Order)
-
-### High Priority
-- [ ] No Confidence Votes
 
 ### Medium Priority
 - [ ] Tax System

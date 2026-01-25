@@ -6,6 +6,8 @@ use App\Models\Election;
 use App\Models\ElectionCandidate;
 use App\Models\ElectionVote;
 use App\Models\Kingdom;
+use App\Models\NoConfidenceBallot;
+use App\Models\NoConfidenceVote;
 use App\Models\PlayerTitle;
 use App\Models\Town;
 use App\Models\User;
@@ -425,5 +427,303 @@ class ElectionService
             $domain->king_user_id = $winner->id;
             $domain->save();
         }
+    }
+
+    /**
+     * Start a no confidence vote against a role holder.
+     */
+    public function startNoConfidenceVote(
+        User $initiator,
+        User $target,
+        string $role,
+        Model $domain,
+        ?string $reason = null
+    ): NoConfidenceVote {
+        // Validate the role is challengeable
+        if (! NoConfidenceVote::isRoleChallengeable($role)) {
+            throw new \InvalidArgumentException("Role '{$role}' cannot be challenged with a no confidence vote.");
+        }
+
+        // Validate initiator is eligible (resident of the domain)
+        if (! $this->validateNoConfidenceEligibility($initiator, $domain)) {
+            throw new \InvalidArgumentException('You are not eligible to initiate a no confidence vote in this domain.');
+        }
+
+        // Validate target holds the role in this domain
+        if (! $this->validateTargetHoldsRole($target, $role, $domain)) {
+            throw new \InvalidArgumentException("Target player does not hold the '{$role}' role in this location.");
+        }
+
+        // Check no active no confidence vote exists for this role/domain
+        $existingVote = NoConfidenceVote::where('domain_type', strtolower(class_basename($domain)))
+            ->where('domain_id', $domain->id)
+            ->where('target_role', $role)
+            ->whereIn('status', [NoConfidenceVote::STATUS_PENDING, NoConfidenceVote::STATUS_OPEN])
+            ->first();
+
+        if ($existingVote) {
+            throw new \InvalidArgumentException('An active no confidence vote already exists for this role.');
+        }
+
+        // Initiator cannot challenge themselves
+        if ($initiator->id === $target->id) {
+            throw new \InvalidArgumentException('You cannot initiate a no confidence vote against yourself.');
+        }
+
+        $eligibleVoterCount = $this->getNoConfidenceEligibleVoterCount($domain);
+        $quorumRequired = max(1, (int) ceil($eligibleVoterCount * NoConfidenceVote::QUORUM_PERCENTAGE));
+
+        return NoConfidenceVote::create([
+            'target_player_id' => $target->id,
+            'target_role' => $role,
+            'domain_type' => strtolower(class_basename($domain)),
+            'domain_id' => $domain->id,
+            'initiated_by_user_id' => $initiator->id,
+            'status' => NoConfidenceVote::STATUS_OPEN,
+            'voting_starts_at' => now(),
+            'voting_ends_at' => now()->addHours(NoConfidenceVote::DURATION_HOURS),
+            'votes_for' => 0,
+            'votes_against' => 0,
+            'votes_cast' => 0,
+            'quorum_required' => $quorumRequired,
+            'quorum_met' => false,
+            'reason' => $reason,
+        ]);
+    }
+
+    /**
+     * Cast a ballot in a no confidence vote.
+     */
+    public function castNoConfidenceBallot(
+        NoConfidenceVote $vote,
+        User $voter,
+        bool $voteForRemoval
+    ): NoConfidenceBallot {
+        if (! $vote->isOpen()) {
+            throw new \InvalidArgumentException('This no confidence vote is not open for voting.');
+        }
+
+        if (! $vote->canVote($voter)) {
+            throw new \InvalidArgumentException('You have already voted or cannot vote in this no confidence vote.');
+        }
+
+        if (! $this->validateNoConfidenceEligibility($voter, $vote->domain)) {
+            throw new \InvalidArgumentException('You are not eligible to vote in this no confidence vote.');
+        }
+
+        return DB::transaction(function () use ($vote, $voter, $voteForRemoval) {
+            $ballot = NoConfidenceBallot::create([
+                'no_confidence_vote_id' => $vote->id,
+                'voter_user_id' => $voter->id,
+                'vote_for_removal' => $voteForRemoval,
+                'voted_at' => now(),
+            ]);
+
+            // Update vote tallies
+            if ($voteForRemoval) {
+                $vote->increment('votes_for');
+            } else {
+                $vote->increment('votes_against');
+            }
+            $vote->increment('votes_cast');
+
+            // Check if quorum is met
+            if ($vote->votes_cast >= $vote->quorum_required) {
+                $vote->quorum_met = true;
+                $vote->save();
+            }
+
+            return $ballot;
+        });
+    }
+
+    /**
+     * Finalize a no confidence vote after voting ends.
+     */
+    public function finalizeNoConfidenceVote(NoConfidenceVote $vote): NoConfidenceVote
+    {
+        if ($vote->status !== NoConfidenceVote::STATUS_OPEN) {
+            throw new \InvalidArgumentException('This no confidence vote is not open.');
+        }
+
+        if (! $vote->hasEnded()) {
+            throw new \InvalidArgumentException('The voting period has not ended yet.');
+        }
+
+        return DB::transaction(function () use ($vote) {
+            // Close the vote
+            $vote->status = NoConfidenceVote::STATUS_CLOSED;
+
+            // Check if quorum was met
+            if (! $vote->quorum_met) {
+                $vote->status = NoConfidenceVote::STATUS_FAILED;
+                $vote->finalized_at = now();
+                $vote->notes = 'Vote failed: Quorum not met.';
+                $vote->save();
+
+                return $vote;
+            }
+
+            // Determine outcome - majority vote for removal wins
+            if ($vote->hasPassed()) {
+                $vote->status = NoConfidenceVote::STATUS_PASSED;
+                $vote->finalized_at = now();
+                $vote->notes = "Vote passed: {$vote->votes_for} for removal, {$vote->votes_against} against.";
+                $vote->save();
+
+                // Revoke the title
+                $this->revokeRoleFromNoConfidence($vote);
+            } else {
+                $vote->status = NoConfidenceVote::STATUS_FAILED;
+                $vote->finalized_at = now();
+                $vote->notes = "Vote failed: {$vote->votes_for} for removal, {$vote->votes_against} against.";
+                $vote->save();
+            }
+
+            return $vote;
+        });
+    }
+
+    /**
+     * Revoke a role after a successful no confidence vote.
+     */
+    protected function revokeRoleFromNoConfidence(NoConfidenceVote $vote): void
+    {
+        // Revoke the player's title
+        PlayerTitle::where('user_id', $vote->target_player_id)
+            ->where('domain_type', $vote->domain_type)
+            ->where('domain_id', $vote->domain_id)
+            ->where('title', $vote->target_role)
+            ->where('is_active', true)
+            ->update([
+                'is_active' => false,
+                'revoked_at' => now(),
+            ]);
+
+        // Update user's primary title if needed
+        $target = $vote->targetPlayer;
+        if ($target->primary_title === $vote->target_role) {
+            // Find their next highest active title
+            $nextTitle = PlayerTitle::where('user_id', $target->id)
+                ->where('is_active', true)
+                ->orderByDesc('tier')
+                ->first();
+
+            if ($nextTitle) {
+                $target->primary_title = $nextTitle->title;
+                $target->title_tier = $nextTitle->tier;
+            } else {
+                $target->primary_title = 'peasant';
+                $target->title_tier = 1;
+            }
+            $target->save();
+        }
+
+        // Clear domain leadership reference if applicable
+        $this->clearDomainLeadership($vote);
+    }
+
+    /**
+     * Clear domain leadership after a no confidence vote passes.
+     */
+    protected function clearDomainLeadership(NoConfidenceVote $vote): void
+    {
+        $domain = $vote->domain;
+
+        if ($vote->target_role === 'mayor' && $domain instanceof Town) {
+            $domain->mayor_user_id = null;
+            $domain->save();
+        }
+
+        if ($vote->target_role === 'king' && $domain instanceof Kingdom) {
+            $domain->king_user_id = null;
+            $domain->save();
+        }
+    }
+
+    /**
+     * Validate that a user is eligible to participate in a no confidence vote.
+     */
+    public function validateNoConfidenceEligibility(User $user, ?Model $domain): bool
+    {
+        if (! $domain) {
+            return false;
+        }
+
+        $domainType = strtolower(class_basename($domain));
+
+        // Village: user must be a resident
+        if ($domainType === 'village') {
+            return $user->home_village_id === $domain->id;
+        }
+
+        // Town: user's home village must be in the town
+        if ($domainType === 'town') {
+            $townVillageIds = $domain->villages()->pluck('villages.id');
+
+            return $townVillageIds->contains($user->home_village_id);
+        }
+
+        // Kingdom: user's home village must be in the kingdom
+        if ($domainType === 'kingdom') {
+            $kingdomVillageIds = $domain->villages()->pluck('id');
+
+            return $kingdomVillageIds->contains($user->home_village_id);
+        }
+
+        return false;
+    }
+
+    /**
+     * Validate that the target holds the specified role in the domain.
+     */
+    public function validateTargetHoldsRole(User $target, string $role, Model $domain): bool
+    {
+        $domainType = strtolower(class_basename($domain));
+
+        return PlayerTitle::where('user_id', $target->id)
+            ->where('domain_type', $domainType)
+            ->where('domain_id', $domain->id)
+            ->where('title', $role)
+            ->where('is_active', true)
+            ->exists();
+    }
+
+    /**
+     * Get the count of eligible voters for a no confidence vote.
+     */
+    public function getNoConfidenceEligibleVoterCount(Model $domain): int
+    {
+        $domainType = strtolower(class_basename($domain));
+
+        if ($domainType === 'village') {
+            return $domain->residents()->count();
+        }
+
+        if ($domainType === 'town') {
+            return User::whereIn('home_village_id', $domain->villages()->pluck('villages.id'))->count();
+        }
+
+        if ($domainType === 'kingdom') {
+            return User::whereIn('home_village_id', $domain->villages()->pluck('id'))->count();
+        }
+
+        return 0;
+    }
+
+    /**
+     * Get the role holder for a specific role in a domain.
+     */
+    public function getRoleHolder(string $role, Model $domain): ?User
+    {
+        $domainType = strtolower(class_basename($domain));
+
+        $title = PlayerTitle::where('domain_type', $domainType)
+            ->where('domain_id', $domain->id)
+            ->where('title', $role)
+            ->where('is_active', true)
+            ->first();
+
+        return $title?->user;
     }
 }

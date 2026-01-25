@@ -19,6 +19,7 @@ use App\Http\Controllers\TownController;
 use App\Http\Controllers\TravelController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\MigrationController;
+use App\Http\Controllers\NoConfidenceController;
 use App\Http\Controllers\VillageController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -92,6 +93,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Kingdom elections
     Route::post('kingdoms/{kingdom}/elections/king', [ElectionController::class, 'startKingElection'])->name('kingdoms.elections.king');
+
+    // No Confidence Votes
+    Route::get('no-confidence', [NoConfidenceController::class, 'index'])->name('no-confidence.index');
+    Route::get('no-confidence/{noConfidenceVote}', [NoConfidenceController::class, 'show'])->name('no-confidence.show');
+    Route::get('no-confidence/{noConfidenceVote}/status', [NoConfidenceController::class, 'status'])->name('no-confidence.status');
+    Route::post('no-confidence/{noConfidenceVote}/vote', [NoConfidenceController::class, 'vote'])->name('no-confidence.vote');
+    Route::post('villages/{village}/no-confidence', [NoConfidenceController::class, 'startVillageNoConfidence'])->name('villages.no-confidence');
+    Route::post('towns/{town}/no-confidence', [NoConfidenceController::class, 'startTownNoConfidence'])->name('towns.no-confidence');
+    Route::post('kingdoms/{kingdom}/no-confidence', [NoConfidenceController::class, 'startKingdomNoConfidence'])->name('kingdoms.no-confidence');
 
     // Daily Tasks
     Route::get('daily-tasks', [DailyTaskController::class, 'index'])->name('daily-tasks.index');
