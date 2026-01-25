@@ -1,6 +1,7 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { Anchor, Castle, Church, Compass, Crown, Home, MapPin, Minus, Plus, RotateCcw, Search, Users, X } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { HealthStatusWidget, type DiseaseInfection, type DiseaseImmunity } from '@/components/ui/health-status-widget';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -63,8 +64,15 @@ interface MapData {
     bounds: MapBounds;
 }
 
+interface HealthData {
+    infections: DiseaseInfection[];
+    immunities: DiseaseImmunity[];
+    healer_path: string | null;
+}
+
 interface PageProps {
     map_data: MapData;
+    health_data: HealthData;
     [key: string]: unknown;
 }
 
@@ -144,7 +152,7 @@ function generateIslandPath(cx: number, cy: number, index: number): string {
 }
 
 export default function Dashboard() {
-    const { map_data } = usePage<PageProps>().props;
+    const { map_data, health_data } = usePage<PageProps>().props;
     const { kingdoms, towns, baronies, villages, player, bounds } = map_data;
 
     const [zoom, setZoom] = useState(1);
@@ -607,6 +615,17 @@ export default function Dashboard() {
                         Locate Me
                     </button>
                 </div>
+
+                {/* Health Status Widget - Above Legend */}
+                {health_data.infections.length > 0 && (
+                    <div className="absolute bottom-36 left-4 z-10 w-64">
+                        <HealthStatusWidget
+                            infections={health_data.infections}
+                            immunities={health_data.immunities}
+                            currentLocationPath={health_data.healer_path ?? undefined}
+                        />
+                    </div>
+                )}
 
                 {/* Legend Panel - Bottom Left */}
                 <div className="absolute bottom-4 left-4 z-10">

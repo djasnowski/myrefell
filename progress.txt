@@ -101,7 +101,7 @@
 - [x] Natural disasters (drought, flood, fire, storm, earthquake, blizzard)
 - [x] Infrastructure construction (building types, construction projects, damage)
 - [x] UI: Festival/tournament participation (Events Calendar page)
-- [ ] UI: Disease/health status display
+- [x] UI: Disease/health status display (HealthStatusWidget on dashboard)
 - [ ] UI: Building construction interface
 
 ### Part 12 - Marriage and Dynasties (BACKEND COMPLETE)

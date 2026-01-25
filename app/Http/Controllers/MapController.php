@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Barony;
+use App\Models\DiseaseInfection;
+use App\Models\DiseaseImmunity;
 use App\Models\Kingdom;
 use App\Models\Town;
 use App\Models\Village;
@@ -17,8 +19,11 @@ class MapController extends Controller
      */
     public function index(Request $request): Response
     {
+        $user = $request->user();
+
         return Inertia::render('dashboard', [
-            'map_data' => $this->getMapData($request->user()),
+            'map_data' => $this->getMapData($user),
+            'health_data' => $this->getHealthData($user),
         ]);
     }
 
@@ -192,5 +197,79 @@ class MapController extends Controller
             'min_y' => $minY - $padding,
             'max_y' => $maxY + $padding,
         ];
+    }
+
+    /**
+     * Get player's health data including disease infections and immunities.
+     */
+    protected function getHealthData($user): array
+    {
+        // Get active disease infections
+        $infections = DiseaseInfection::where('user_id', $user->id)
+            ->active()
+            ->with('diseaseType')
+            ->get()
+            ->map(fn ($infection) => [
+                'id' => $infection->id,
+                'status' => $infection->status,
+                'days_infected' => $infection->days_infected,
+                'days_symptomatic' => $infection->days_symptomatic,
+                'is_treated' => $infection->is_treated,
+                'disease_type' => [
+                    'id' => $infection->diseaseType->id,
+                    'name' => $infection->diseaseType->name,
+                    'severity' => $infection->diseaseType->severity,
+                    'symptoms' => $infection->diseaseType->symptoms ?? [],
+                ],
+            ])
+            ->toArray();
+
+        // Get active immunities
+        $immunities = DiseaseImmunity::where('user_id', $user->id)
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->with('diseaseType')
+            ->get()
+            ->map(fn ($immunity) => [
+                'id' => $immunity->id,
+                'immunity_type' => $immunity->immunity_type,
+                'expires_at' => $immunity->expires_at?->toIso8601String(),
+                'disease_type' => [
+                    'id' => $immunity->diseaseType->id,
+                    'name' => $immunity->diseaseType->name,
+                ],
+            ])
+            ->toArray();
+
+        // Build healer path based on current location
+        $healerPath = $this->getHealerPath($user);
+
+        return [
+            'infections' => $infections,
+            'immunities' => $immunities,
+            'healer_path' => $healerPath,
+        ];
+    }
+
+    /**
+     * Get the path to the healer based on current location.
+     */
+    protected function getHealerPath($user): ?string
+    {
+        $locationType = $user->current_location_type;
+        $locationId = $user->current_location_id;
+
+        if (!$locationType || !$locationId) {
+            return null;
+        }
+
+        return match ($locationType) {
+            'village' => "/villages/{$locationId}/healer",
+            'barony' => "/baronies/{$locationId}/infirmary",
+            'town' => "/towns/{$locationId}/infirmary",
+            default => null,
+        };
     }
 }

@@ -447,6 +447,30 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get all disease infections for this user.
+     */
+    public function diseaseInfections(): HasMany
+    {
+        return $this->hasMany(DiseaseInfection::class);
+    }
+
+    /**
+     * Get active disease infections for this user.
+     */
+    public function activeDiseaseInfections(): HasMany
+    {
+        return $this->hasMany(DiseaseInfection::class)->active();
+    }
+
+    /**
+     * Get disease immunities for this user.
+     */
+    public function diseaseImmunities(): HasMany
+    {
+        return $this->hasMany(DiseaseImmunity::class);
+    }
+
+    /**
      * Check if user is a serf.
      */
     public function isSerf(): bool
