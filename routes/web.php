@@ -33,6 +33,7 @@ use App\Http\Controllers\CharterController;
 use App\Http\Controllers\CrimeController;
 use App\Http\Controllers\SocialClassController;
 use App\Http\Controllers\StableController;
+use App\Http\Controllers\CaravanController;
 use App\Http\Controllers\TradeRouteController;
 use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\VillageController;
@@ -316,6 +317,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Trade Routes
     Route::get('trade/routes', [TradeRouteController::class, 'index'])->name('trade.routes');
     Route::post('trade/routes', [TradeRouteController::class, 'store'])->name('trade.routes.store');
+
+    // Caravans
+    Route::get('trade/caravans', [CaravanController::class, 'index'])->name('trade.caravans');
+    Route::post('trade/caravans', [CaravanController::class, 'store'])->name('trade.caravans.store');
+    Route::post('trade/caravans/{caravan}/load', [CaravanController::class, 'loadGoods'])->name('trade.caravans.load');
+    Route::post('trade/caravans/{caravan}/dispatch', [CaravanController::class, 'dispatch'])->name('trade.caravans.dispatch');
+    Route::post('trade/caravans/{caravan}/unload', [CaravanController::class, 'unload'])->name('trade.caravans.unload');
+    Route::post('trade/caravans/{caravan}/disband', [CaravanController::class, 'disband'])->name('trade.caravans.disband');
 
     // Guilds
     Route::get('guilds', [GuildController::class, 'index'])->name('guilds.index');

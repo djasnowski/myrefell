@@ -62,7 +62,7 @@
 - [x] Resource decay/consumption
 - [x] Trade caravans (routes, caravans, goods, events, tariffs)
 - [x] UI: Trade Routes Index page (view available routes, create new routes)
-- [ ] UI: Caravan management screens (loading, dispatch, tracking)
+- [x] UI: Caravan management screens (loading, dispatch, tracking)
 
 ### Phase 4 - Political Systems (BACKEND COMPLETE)
 - [x] Elections and roles
