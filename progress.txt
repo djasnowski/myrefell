@@ -32,10 +32,12 @@
 - [x] Village Roles System
 - [x] No Confidence Votes
 
+### Medium Priority - Economy & Social
+- [x] Tax System
+
 ## Not Implemented (Priority Order)
 
 ### Medium Priority
-- [ ] Tax System
 - [ ] Chat System
 - [ ] NPC Crafting & Docket System
 

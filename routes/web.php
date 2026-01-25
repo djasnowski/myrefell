@@ -20,6 +20,7 @@ use App\Http\Controllers\TravelController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\MigrationController;
 use App\Http\Controllers\NoConfidenceController;
+use App\Http\Controllers\TaxController;
 use App\Http\Controllers\VillageController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -178,6 +179,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('migration/{migrationRequest}/cancel', [MigrationController::class, 'cancel'])->name('migration.cancel');
     Route::post('migration/{migrationRequest}/approve', [MigrationController::class, 'approve'])->name('migration.approve');
     Route::post('migration/{migrationRequest}/deny', [MigrationController::class, 'deny'])->name('migration.deny');
+
+    // Taxes
+    Route::get('villages/{village}/taxes', [TaxController::class, 'villageTaxes'])->name('villages.taxes');
+    Route::get('castles/{castle}/taxes', [TaxController::class, 'castleTaxes'])->name('castles.taxes');
+    Route::get('kingdoms/{kingdom}/taxes', [TaxController::class, 'kingdomTaxes'])->name('kingdoms.taxes');
+    Route::get('taxes', [TaxController::class, 'myTaxes'])->name('taxes.index');
+    Route::post('taxes/set-rate', [TaxController::class, 'setTaxRate'])->name('taxes.set-rate');
+    Route::get('taxes/treasury-status', [TaxController::class, 'treasuryStatus'])->name('taxes.treasury-status');
 });
 
 require __DIR__.'/settings.php';
