@@ -46,4 +46,20 @@
 ### Phase 1 - Core Player Loop
 - [x] Combat Stat Training (ATK/STR/DEF)
 
-## Status: PRD Complete
+### Phase 2 - Living World Foundation
+- [x] Calendar/Seasons System
+
+## Next Priority Tasks
+
+### Phase 2 - Living World Foundation (continued)
+- [ ] Seasonal effects on gathering
+- [ ] NPC aging and death
+- [ ] NPC reproduction
+- [ ] Basic food consumption
+
+### Phase 3 - Economic Depth
+- [ ] Dynamic market prices
+- [ ] Player-owned businesses
+- [ ] Player-run guilds
+- [ ] Resource decay/consumption
+- [ ] Trade caravans

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BankController;
 use App\Http\Controllers\BaronyController;
+use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CombatController;
 use App\Http\Controllers\DungeonController;
 use App\Http\Controllers\CraftingController;
@@ -265,6 +266,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('religions/build-structure', [ReligionController::class, 'buildStructure'])->name('religions.build-structure');
     Route::post('religions/make-public', [ReligionController::class, 'makePublic'])->name('religions.make-public');
     Route::post('religions/kingdom-status', [ReligionController::class, 'setKingdomStatus'])->name('religions.kingdom-status');
+
+    // Calendar (World Time)
+    Route::get('calendar', [CalendarController::class, 'index'])->name('calendar.index');
 
     // Charters
     Route::get('charters', [CharterController::class, 'index'])->name('charters.index');

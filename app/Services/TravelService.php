@@ -7,6 +7,7 @@ use App\Models\Kingdom;
 use App\Models\Town;
 use App\Models\User;
 use App\Models\Village;
+use App\Models\WorldState;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
@@ -231,6 +232,7 @@ class TravelService
         $currentType = $user->current_location_type;
         $currentId = $user->current_location_id;
         $speedMultiplier = $user->getTravelSpeedMultiplier();
+        $seasonalModifier = WorldState::current()->getTravelModifier();
 
         $destinations = [];
 
@@ -245,6 +247,7 @@ class TravelService
             $distance = $this->calculateDistance($currentCoords, $village->coordinates_x, $village->coordinates_y);
             if ($distance <= self::MAX_TRAVEL_DISTANCE) {
                 $baseTime = $distance / self::DISTANCE_DIVISOR;
+                $adjustedTime = ($baseTime / $speedMultiplier) * $seasonalModifier;
                 $locationType = $village->isHamlet() ? 'hamlet' : 'village';
                 $destinations[] = [
                     'type' => 'village', // Still use 'village' for DB lookup
@@ -253,7 +256,7 @@ class TravelService
                     'name' => $village->name,
                     'biome' => $village->biome,
                     'distance' => $distance,
-                    'travel_time' => max(1, (int) ceil($baseTime / $speedMultiplier)),
+                    'travel_time' => max(1, (int) ceil($adjustedTime)),
                     'is_hamlet' => $village->isHamlet(),
                 ];
             }
@@ -269,6 +272,7 @@ class TravelService
             $distance = $this->calculateDistance($currentCoords, $barony->coordinates_x, $barony->coordinates_y);
             if ($distance <= self::MAX_TRAVEL_DISTANCE) {
                 $baseTime = $distance / self::DISTANCE_DIVISOR;
+                $adjustedTime = ($baseTime / $speedMultiplier) * $seasonalModifier;
                 $destinations[] = [
                     'type' => 'barony',
                     'display_type' => 'barony',
@@ -276,7 +280,7 @@ class TravelService
                     'name' => $barony->name,
                     'biome' => $barony->biome,
                     'distance' => $distance,
-                    'travel_time' => max(1, (int) ceil($baseTime / $speedMultiplier)),
+                    'travel_time' => max(1, (int) ceil($adjustedTime)),
                 ];
             }
         }
@@ -291,6 +295,7 @@ class TravelService
             $distance = $this->calculateDistance($currentCoords, $town->coordinates_x, $town->coordinates_y);
             if ($distance <= self::MAX_TRAVEL_DISTANCE) {
                 $baseTime = $distance / self::DISTANCE_DIVISOR;
+                $adjustedTime = ($baseTime / $speedMultiplier) * $seasonalModifier;
                 $destinations[] = [
                     'type' => 'town',
                     'display_type' => 'town',
@@ -298,7 +303,7 @@ class TravelService
                     'name' => $town->name,
                     'biome' => $town->biome,
                     'distance' => $distance,
-                    'travel_time' => max(1, (int) ceil($baseTime / $speedMultiplier)),
+                    'travel_time' => max(1, (int) ceil($adjustedTime)),
                 ];
             }
         }
@@ -321,6 +326,7 @@ class TravelService
      * Calculate travel time based on coordinate distance.
      * Returns time in minutes: 1 minute per 10 coordinate units (minimum 1 minute).
      * Applies horse speed multiplier if user has a horse.
+     * Applies seasonal travel modifier based on current world time.
      */
     protected function calculateTravelTime(User $user, string $destType, int $destId): int
     {
@@ -339,6 +345,10 @@ class TravelService
         // Apply horse speed multiplier (faster = lower time)
         $speedMultiplier = $user->getTravelSpeedMultiplier();
         $adjustedTime = $baseTime / $speedMultiplier;
+
+        // Apply seasonal travel modifier (>1 = slower, <1 = faster)
+        $seasonalModifier = WorldState::current()->getTravelModifier();
+        $adjustedTime = $adjustedTime * $seasonalModifier;
 
         return max(1, (int) ceil($adjustedTime));
     }
