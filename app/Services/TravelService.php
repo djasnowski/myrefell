@@ -212,6 +212,7 @@ class TravelService
         $currentCoords = $this->getCurrentCoordinates($user);
         $currentType = $user->current_location_type;
         $currentId = $user->current_location_id;
+        $speedMultiplier = $user->getTravelSpeedMultiplier();
 
         $destinations = [];
 
@@ -225,13 +226,14 @@ class TravelService
 
             $distance = $this->calculateDistance($currentCoords, $village->coordinates_x, $village->coordinates_y);
             if ($distance <= self::MAX_TRAVEL_DISTANCE) {
+                $baseTime = $distance / self::DISTANCE_DIVISOR;
                 $destinations[] = [
                     'type' => 'village',
                     'id' => $village->id,
                     'name' => $village->name,
                     'biome' => $village->biome,
                     'distance' => $distance,
-                    'travel_time' => max(1, (int) ceil($distance / self::DISTANCE_DIVISOR)),
+                    'travel_time' => max(1, (int) ceil($baseTime / $speedMultiplier)),
                 ];
             }
         }
@@ -245,13 +247,14 @@ class TravelService
 
             $distance = $this->calculateDistance($currentCoords, $castle->coordinates_x, $castle->coordinates_y);
             if ($distance <= self::MAX_TRAVEL_DISTANCE) {
+                $baseTime = $distance / self::DISTANCE_DIVISOR;
                 $destinations[] = [
                     'type' => 'castle',
                     'id' => $castle->id,
                     'name' => $castle->name,
                     'biome' => $castle->biome,
                     'distance' => $distance,
-                    'travel_time' => max(1, (int) ceil($distance / self::DISTANCE_DIVISOR)),
+                    'travel_time' => max(1, (int) ceil($baseTime / $speedMultiplier)),
                 ];
             }
         }
@@ -265,13 +268,14 @@ class TravelService
 
             $distance = $this->calculateDistance($currentCoords, $town->coordinates_x, $town->coordinates_y);
             if ($distance <= self::MAX_TRAVEL_DISTANCE) {
+                $baseTime = $distance / self::DISTANCE_DIVISOR;
                 $destinations[] = [
                     'type' => 'town',
                     'id' => $town->id,
                     'name' => $town->name,
                     'biome' => $town->biome,
                     'distance' => $distance,
-                    'travel_time' => max(1, (int) ceil($distance / self::DISTANCE_DIVISOR)),
+                    'travel_time' => max(1, (int) ceil($baseTime / $speedMultiplier)),
                 ];
             }
         }
@@ -293,6 +297,7 @@ class TravelService
     /**
      * Calculate travel time based on coordinate distance.
      * Returns time in minutes: 1 minute per 10 coordinate units (minimum 1 minute).
+     * Applies horse speed multiplier if user has a horse.
      */
     protected function calculateTravelTime(User $user, string $destType, int $destId): int
     {
@@ -306,8 +311,13 @@ class TravelService
 
         // Euclidean distance, 1 minute per 10 units (min 1 minute)
         $distance = sqrt(pow($destX - $currentCoords['x'], 2) + pow($destY - $currentCoords['y'], 2));
+        $baseTime = $distance / self::DISTANCE_DIVISOR;
 
-        return max(1, (int) ceil($distance / self::DISTANCE_DIVISOR));
+        // Apply horse speed multiplier (faster = lower time)
+        $speedMultiplier = $user->getTravelSpeedMultiplier();
+        $adjustedTime = $baseTime / $speedMultiplier;
+
+        return max(1, (int) ceil($adjustedTime));
     }
 
     /**

@@ -1,5 +1,5 @@
-import { Head, usePage } from '@inertiajs/react';
-import { Anchor, Castle, Church, Compass, Crown, Home, MapPin, Minus, Plus, RotateCcw, Search, X } from 'lucide-react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { Anchor, Castle, Church, Compass, Crown, Home, MapPin, Minus, Plus, RotateCcw, Search, Users, X } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -158,7 +158,69 @@ export default function Dashboard() {
     const [mouseCoords, setMouseCoords] = useState<{ x: number; y: number } | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedResult, setSelectedResult] = useState<{ type: string; data: Location } | null>(null);
+    const [clickedLocation, setClickedLocation] = useState<{ type: string; data: Location & { population?: number; is_port?: boolean; kingdom_name?: string; castle_name?: string } } | null>(null);
+    const [isTraveling, setIsTraveling] = useState(false);
     const svgRef = useRef<SVGSVGElement>(null);
+
+    // Calculate travel time from player position
+    const getTravelTime = useCallback((loc: Location) => {
+        const dist = Math.sqrt(
+            Math.pow(loc.coordinates_x - player.coordinates_x, 2) +
+            Math.pow(loc.coordinates_y - player.coordinates_y, 2)
+        );
+        return Math.max(1, Math.ceil(dist / 10));
+    }, [player.coordinates_x, player.coordinates_y]);
+
+    // Get rumor-style population description
+    const getPopulationRumor = (pop?: number) => {
+        if (!pop) return null;
+        if (pop < 10) return "a quiet hamlet with few souls";
+        if (pop < 25) return "a small settlement";
+        if (pop < 50) return "a modest village";
+        if (pop < 100) return "a bustling community";
+        return "a thriving population";
+    };
+
+    // Get rumor-style services
+    const getServiceRumors = (type: string, isPort?: boolean) => {
+        const rumors: string[] = [];
+        if (type === 'village') {
+            rumors.push("Folk speak of a healer");
+            rumors.push("There's said to be a bank");
+            if (isPort) rumors.push("Ships dock at the harbor");
+        } else if (type === 'castle') {
+            rumors.push("Knights train in the barracks");
+            rumors.push("An arena for combat");
+            rumors.push("A secure vault");
+        } else if (type === 'town') {
+            rumors.push("A proper infirmary");
+            rumors.push("The town hall handles affairs");
+            rumors.push("Merchants trade freely");
+        } else if (type === 'kingdom') {
+            rumors.push("The seat of royal power");
+        }
+        return rumors;
+    };
+
+    const handleLocationClick = (type: string, data: Location & { population?: number; is_port?: boolean; kingdom_name?: string; castle_name?: string }) => {
+        setClickedLocation({ type, data });
+    };
+
+    const handleTravel = () => {
+        if (!clickedLocation) return;
+        setIsTraveling(true);
+        router.post('/travel/start', {
+            destination_type: clickedLocation.type === 'port' ? 'village' : clickedLocation.type,
+            destination_id: clickedLocation.data.id,
+        }, {
+            preserveScroll: true,
+            onFinish: () => setIsTraveling(false),
+            onSuccess: () => {
+                setClickedLocation(null);
+                router.visit('/travel');
+            },
+        });
+    };
 
     // Search all locations
     const searchResults = useMemo(() => {
@@ -361,8 +423,10 @@ export default function Dashboard() {
                 const kCenterX = (kMinX + kMaxX) / 2;
                 const kCenterY = (kMinY + kMaxY) / 2;
 
-                const kRadiusX = (kMaxX - kMinX) / 2 + 30;
-                const kRadiusY = (kMaxY - kMinY) / 2 + 30;
+                // Extra padding for Sandmar to include outlying villages
+                const padding = kingdom.name === 'Sandmar' ? 50 : 30;
+                const kRadiusX = (kMaxX - kMinX) / 2 + padding;
+                const kRadiusY = (kMaxY - kMinY) / 2 + padding;
                 const kBaseRadius = Math.max(kRadiusX, kRadiusY, 110);
 
                 // Generate organic blob for this kingdom
@@ -471,17 +535,6 @@ export default function Dashboard() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="World Map" />
             <div className="relative flex h-0 min-h-0 w-full flex-1 overflow-hidden" style={{ backgroundColor: DEEP_WATER_COLOR }}>
-                {/* Top Center - Locate Me Button */}
-                <div className="absolute left-1/2 top-4 z-10 -translate-x-1/2">
-                    <button
-                        onClick={handleLocateMe}
-                        className="flex items-center gap-2 rounded-lg border-2 border-amber-600 bg-amber-900/90 px-4 py-2 font-pixel text-xs text-amber-300 transition hover:bg-amber-800"
-                    >
-                        <Compass className="h-4 w-4" />
-                        Locate Me
-                    </button>
-                </div>
-
                 {/* Right Controls */}
                 <div className="absolute right-4 top-4 z-10 flex flex-col gap-2">
                     <button onClick={handleZoomIn} className="rounded-lg border-2 border-stone-600 bg-stone-800/90 p-2 text-stone-300 transition hover:bg-stone-700" title="Zoom In">
@@ -496,7 +549,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Search Input - Top Left */}
-                <div className="absolute left-4 top-4 z-10 w-80">
+                <div className="absolute left-4 top-2 z-10 w-80">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
                         <input
@@ -504,7 +557,7 @@ export default function Dashboard() {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search locations..."
-                            className="w-full rounded-lg border-2 border-stone-600 bg-stone-800/95 py-2 pl-10 pr-8 font-pixel text-xs text-stone-200 placeholder-stone-500 outline-none focus:border-amber-600"
+                            className="w-full rounded-lg border-2 border-stone-600 bg-stone-800/95 py-2 pl-10 pr-8 text-sm text-stone-200 placeholder-stone-500 outline-none focus:border-amber-600"
                         />
                         {searchQuery && (
                             <button
@@ -533,8 +586,8 @@ export default function Dashboard() {
                                     >
                                         <Icon className="h-4 w-4 flex-shrink-0" style={{ color }} />
                                         <div className="min-w-0 flex-1">
-                                            <div className="truncate font-pixel text-xs text-stone-200">{result.data.name}</div>
-                                            <div className="flex items-center gap-2 font-pixel text-[10px] text-stone-500">
+                                            <div className="truncate text-sm text-stone-200">{result.data.name}</div>
+                                            <div className="flex items-center gap-2 text-xs text-stone-500">
                                                 <span className="capitalize">{result.type}</span>
                                                 <span>•</span>
                                                 <span>{result.data.biome}</span>
@@ -547,6 +600,14 @@ export default function Dashboard() {
                             })}
                         </div>
                     )}
+                    {/* Locate Me Button */}
+                    <button
+                        onClick={handleLocateMe}
+                        className="mt-2 flex items-center gap-2 rounded-lg border-2 border-amber-600 bg-amber-900/90 px-4 py-2 font-pixel text-xs text-amber-300 transition hover:bg-amber-800"
+                    >
+                        <Compass className="h-4 w-4" />
+                        Locate Me
+                    </button>
                 </div>
 
                 {/* Legend Panel - Bottom Left */}
@@ -613,13 +674,12 @@ export default function Dashboard() {
                 {hoveredLocation && (
                     <div className="pointer-events-none absolute left-1/2 top-16 z-20 -translate-x-1/2 rounded-lg border-2 border-amber-600/50 bg-stone-800/95 px-4 py-2">
                         <div className="flex items-center gap-2">
-                            {hoveredLocation.type === 'kingdom' && <Crown className="h-4 w-4" style={{ color: iconColors.kingdom.icon }} />}
-                            {hoveredLocation.type === 'town' && <Church className="h-4 w-4" style={{ color: iconColors.town.icon }} />}
-                            {hoveredLocation.type === 'castle' && <Castle className="h-4 w-4" style={{ color: iconColors.castle.icon }} />}
-                            {hoveredLocation.type === 'village' && <Home className="h-4 w-4" style={{ color: iconColors.village.icon }} />}
-                            {hoveredLocation.type === 'port' && <Anchor className="h-4 w-4" style={{ color: iconColors.port.icon }} />}
-                            <span className="font-pixel text-sm text-amber-300">{hoveredLocation.data.name}</span>
-                            <span className="font-pixel text-[10px] capitalize text-stone-500">({hoveredLocation.data.biome})</span>
+                            {hoveredLocation.type === 'kingdom' && <Crown className="h-5 w-5 flex-shrink-0" style={{ color: iconColors.kingdom.icon }} />}
+                            {hoveredLocation.type === 'town' && <Church className="h-5 w-5 flex-shrink-0" style={{ color: iconColors.town.icon }} />}
+                            {hoveredLocation.type === 'castle' && <Castle className="h-5 w-5 flex-shrink-0" style={{ color: iconColors.castle.icon }} />}
+                            {hoveredLocation.type === 'village' && <Home className="h-5 w-5 flex-shrink-0" style={{ color: iconColors.village.icon }} />}
+                            {hoveredLocation.type === 'port' && <Anchor className="h-5 w-5 flex-shrink-0" style={{ color: iconColors.port.icon }} />}
+                            <span className="font-pixel text-sm leading-none text-amber-300">{hoveredLocation.data.name}</span>
                         </div>
                     </div>
                 )}
@@ -665,6 +725,7 @@ export default function Dashboard() {
                                 className="cursor-pointer"
                                 onMouseEnter={() => setHoveredLocation({ type: isPort ? 'port' : 'village', data: village })}
                                 onMouseLeave={() => setHoveredLocation(null)}
+                                onClick={() => handleLocationClick(isPort ? 'port' : 'village', village)}
                             >
                                 <circle r={isPort ? 8 : 6} fill={colors.bg} stroke={colors.stroke} strokeWidth={1.5} />
                                 {isPort ? (
@@ -686,6 +747,7 @@ export default function Dashboard() {
                                 className="cursor-pointer"
                                 onMouseEnter={() => setHoveredLocation({ type: 'castle', data: castle })}
                                 onMouseLeave={() => setHoveredLocation(null)}
+                                onClick={() => handleLocationClick('castle', castle)}
                             >
                                 <circle r={10} fill={colors.bg} stroke={colors.stroke} strokeWidth={2} />
                                 <Castle x={-7} y={-7} width={14} height={14} color={colors.icon} strokeWidth={1.5} />
@@ -703,6 +765,7 @@ export default function Dashboard() {
                                 className="cursor-pointer"
                                 onMouseEnter={() => setHoveredLocation({ type: 'town', data: town })}
                                 onMouseLeave={() => setHoveredLocation(null)}
+                                onClick={() => handleLocationClick('town', town)}
                             >
                                 <circle r={12} fill={colors.bg} stroke={colors.stroke} strokeWidth={2} />
                                 <Church x={-8} y={-8} width={16} height={16} color={colors.icon} strokeWidth={1.5} />
@@ -721,6 +784,7 @@ export default function Dashboard() {
                                 className="cursor-pointer"
                                 onMouseEnter={() => setHoveredLocation({ type: 'kingdom', data: kingdom })}
                                 onMouseLeave={() => setHoveredLocation(null)}
+                                onClick={() => handleLocationClick('kingdom', kingdom)}
                             >
                                 <circle r={18} fill={colors.bg} stroke={colors.stroke} strokeWidth={3} />
                                 <Crown x={-11} y={-11} width={22} height={22} color={colors.icon} fill={colors.icon} strokeWidth={0} />
@@ -763,6 +827,84 @@ export default function Dashboard() {
                         )}
                     </span>
                 </div>
+
+                {/* Location Info Modal */}
+                {clickedLocation && (
+                    <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/50" onClick={() => setClickedLocation(null)}>
+                        <div
+                            className="mx-4 w-full max-w-sm rounded-lg border-2 border-amber-600/70 bg-stone-900/95 shadow-xl"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Header */}
+                            <div className="flex items-center justify-between border-b border-stone-700 px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                    {clickedLocation.type === 'kingdom' && <Crown className="h-5 w-5" style={{ color: iconColors.kingdom.icon }} />}
+                                    {clickedLocation.type === 'town' && <Church className="h-5 w-5" style={{ color: iconColors.town.icon }} />}
+                                    {clickedLocation.type === 'castle' && <Castle className="h-5 w-5" style={{ color: iconColors.castle.icon }} />}
+                                    {clickedLocation.type === 'village' && <Home className="h-5 w-5" style={{ color: iconColors.village.icon }} />}
+                                    {clickedLocation.type === 'port' && <Anchor className="h-5 w-5" style={{ color: iconColors.port.icon }} />}
+                                    <span className="font-pixel text-base text-amber-300">{clickedLocation.data.name}</span>
+                                </div>
+                                <button onClick={() => setClickedLocation(null)} className="text-stone-500 hover:text-stone-300">
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+
+                            {/* Content */}
+                            <div className="space-y-3 px-4 py-3">
+                                {/* Type & Region */}
+                                <div className="text-sm text-stone-400">
+                                    <span className="capitalize">{clickedLocation.type === 'port' ? 'Port Village' : clickedLocation.type}</span>
+                                    {clickedLocation.data.kingdom_name && (
+                                        <span> in {clickedLocation.data.kingdom_name}</span>
+                                    )}
+                                </div>
+
+                                {/* Population Rumor */}
+                                {clickedLocation.data.population && (
+                                    <div className="flex items-start gap-2 text-sm">
+                                        <Users className="mt-0.5 h-4 w-4 flex-shrink-0 text-stone-500" />
+                                        <span className="italic text-stone-300">
+                                            "They say it's {getPopulationRumor(clickedLocation.data.population)}..."
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Service Rumors */}
+                                <div className="space-y-1">
+                                    <div className="text-xs font-medium uppercase tracking-wide text-stone-500">Rumors speak of...</div>
+                                    <ul className="space-y-1 text-sm text-stone-300">
+                                        {getServiceRumors(clickedLocation.type === 'port' ? 'village' : clickedLocation.type, clickedLocation.data.is_port).map((rumor, i) => (
+                                            <li key={i} className="flex items-center gap-2">
+                                                <span className="text-stone-600">•</span>
+                                                <span className="italic">{rumor}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+
+                                {/* Travel Time */}
+                                <div className="flex items-center gap-2 rounded border border-stone-700 bg-stone-800/50 px-3 py-2">
+                                    <MapPin className="h-4 w-4 text-amber-500" />
+                                    <span className="text-sm text-stone-300">
+                                        About <span className="font-medium text-amber-400">{getTravelTime(clickedLocation.data)} minutes</span> journey from here
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="border-t border-stone-700 px-4 py-3">
+                                <button
+                                    onClick={handleTravel}
+                                    disabled={isTraveling || (player.location_type === (clickedLocation.type === 'port' ? 'village' : clickedLocation.type) && player.location_id === clickedLocation.data.id)}
+                                    className="w-full rounded-lg border-2 border-amber-600 bg-amber-900/80 px-4 py-2 font-pixel text-sm text-amber-300 transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {isTraveling ? 'Setting out...' : player.location_type === (clickedLocation.type === 'port' ? 'village' : clickedLocation.type) && player.location_id === clickedLocation.data.id ? 'You are here' : 'Travel Here'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </AppLayout>
     );

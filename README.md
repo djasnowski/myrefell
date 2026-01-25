@@ -76,16 +76,46 @@ Non-territorial power structures that overlay the political hierarchy. Players m
 - Faith points earned through prayer, donations, conversions, and pilgrimages
 
 ### Economy
-- **Bank accounts** per location with transaction tracking
-- **Tax flow** from villages up to kingdoms
-- **Role salaries** for elected positions
-- **Crafting and trading** systems
+- **Bank accounts** per location with deposit/withdrawal tracking
+- **Tax system**: Configurable rates by Lords and Kings; daily collection flows from Players → Villages → Castles → Kingdoms
+- **Role salaries**: Elected officials receive regular salary distributions
+- **No confidence votes**: Challenge role holders; 48-hour voting period, majority removes
+
+### Combat & Dungeons
+
+**Turn-Based Combat**:
+- Fight monsters in the wilderness with training style selection (ATK/STR/DEF)
+- Weapon effectiveness varies by enemy type
+- Monsters drop gold and loot based on loot tables
+- Death respawns at hospital with 25% energy
+
+**Dungeons**:
+- Multi-floor instanced content with increasing difficulty
+- Multiple monster fights per floor
+- Eat food between rounds to restore HP
+- Boss fight on final floor with best loot
+- Minimum combat level requirements
+
+### Chat System
+- **Location chat**: Talk with players in your village, castle, or kingdom
+- **Private messaging**: Direct player-to-player communication
+- **Moderation tools**: Elders, Lords, and Kings can moderate their jurisdiction
+
+### Charter System
+
+Found new settlements and expand the world:
+- **Cost**: 1,000,000+ gold to petition for a charter
+- **Requirements**: Location approval from controlling Lord/King
+- **Signatories**: Gather support from other players
+- **Vulnerability window**: New settlements are vulnerable after founding
+- **Failure**: Abandoned settlements become explorable ruins
 
 ### Gameplay
 - **Daily Tasks**: Combat, gathering, crafting, and service tasks with gold/XP rewards
 - **Quests**: Accept up to 5 quests with various objectives and rewards
 - **Gathering**: Mining, fishing, woodcutting in the wilderness
 - **Crafting**: Smithing, cooking, and general crafting with recipes
+- **Crafting Docket**: Player crafters can accept orders; NPC crafting available for instant (but costlier) results
 - **Travel**: Move between locations with energy cost and travel time
 - **Healing**: Village healers and castle/town infirmaries
 

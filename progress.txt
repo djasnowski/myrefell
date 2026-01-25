@@ -37,10 +37,10 @@
 - [x] Chat System
 - [x] NPC Crafting & Docket System
 
-## Not Implemented (Priority Order)
-
-### Lower Priority
+### Lower Priority - Advanced Features
 - [x] Combat System
 - [x] Dungeons
 - [x] Religion System
 - [x] Charter System
+
+## Status: PRD Complete

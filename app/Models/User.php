@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -320,5 +321,33 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(PlayerEmployment::class)
             ->where('status', PlayerEmployment::STATUS_EMPLOYED);
+    }
+
+    /**
+     * Get the player's horse.
+     */
+    public function horse(): HasOne
+    {
+        return $this->hasOne(PlayerHorse::class);
+    }
+
+    /**
+     * Check if player has a horse.
+     */
+    public function hasHorse(): bool
+    {
+        return $this->horse()->exists();
+    }
+
+    /**
+     * Get the player's travel speed multiplier.
+     */
+    public function getTravelSpeedMultiplier(): float
+    {
+        if (!$this->hasHorse()) {
+            return 1.0;
+        }
+
+        return $this->horse->speed_multiplier;
     }
 }

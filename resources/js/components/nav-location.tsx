@@ -304,6 +304,10 @@ export function NavLocation() {
                 preserveScroll: true,
                 onFinish: () => setTravelingTo(null),
                 onSuccess: () => router.visit('/travel'),
+                onError: (errors) => {
+                    const message = errors.travel || Object.values(errors)[0] || 'Failed to start travel';
+                    alert(message);
+                },
             }
         );
     };
