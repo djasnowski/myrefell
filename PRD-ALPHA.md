@@ -572,15 +572,15 @@ return Inertia::render('Events/FestivalShow', [
 ```
 
 **Features:**
-- [ ] Tournament name, type (melee, joust, archery)
-- [ ] Prize pool and entry fee
-- [ ] Registration status and deadline
-- [ ] Competitor list with stats
-- [ ] Visual bracket display (rounds)
-- [ ] Match results with winners highlighted
-- [ ] Your next match info
-- [ ] Register button (if not registered)
-- [ ] Withdraw button (if registered, before start)
+- [x] Tournament name, type (melee, joust, archery)
+- [x] Prize pool and entry fee
+- [x] Registration status and deadline
+- [x] Competitor list with stats
+- [x] Visual bracket display (rounds)
+- [x] Match results with winners highlighted
+- [x] Your next match info
+- [x] Register button (if not registered)
+- [x] Withdraw button (if registered, before start)
 
 **Props needed:**
 ```php

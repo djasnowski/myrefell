@@ -7,6 +7,7 @@ use App\Models\FestivalParticipant;
 use App\Models\RoyalEvent;
 use App\Models\Tournament;
 use App\Models\TournamentCompetitor;
+use App\Models\TournamentMatch;
 use App\Services\CalendarService;
 use App\Services\FestivalService;
 use Illuminate\Http\JsonResponse;
@@ -219,6 +220,163 @@ class EventController extends Controller
     }
 
     /**
+     * Show tournament detail page with bracket.
+     */
+    public function showTournament(Request $request, Tournament $tournament): Response
+    {
+        $user = $request->user();
+
+        // Load all relationships
+        $tournament->load([
+            'tournamentType',
+            'festival',
+            'sponsor',
+            'competitors.user',
+            'matches.competitor1.user',
+            'matches.competitor2.user',
+            'matches.winner.user',
+        ]);
+
+        // Get user's competitor info if registered
+        $userCompetitor = $tournament->competitors()
+            ->where('user_id', $user->id)
+            ->first();
+
+        // Format competitors with details
+        $competitors = $tournament->competitors->map(fn($c) => [
+            'id' => $c->id,
+            'user_id' => $c->user_id,
+            'username' => $c->user?->username ?? 'Unknown',
+            'seed' => $c->seed,
+            'status' => $c->status,
+            'wins' => $c->wins ?? 0,
+            'losses' => $c->losses ?? 0,
+            'final_placement' => $c->final_placement,
+            'prize_won' => $c->prize_won ?? 0,
+            'fame_earned' => $c->fame_earned ?? 0,
+        ])->sortBy('seed')->values();
+
+        // Format matches grouped by round
+        $matchesByRound = $tournament->matches
+            ->groupBy('round_number')
+            ->map(fn($roundMatches) => $roundMatches->sortBy('match_number')->values()->map(fn($m) => [
+                'id' => $m->id,
+                'round_number' => $m->round_number,
+                'match_number' => $m->match_number,
+                'competitor1' => $m->competitor1 ? [
+                    'id' => $m->competitor1->id,
+                    'username' => $m->competitor1->user?->username ?? 'Unknown',
+                    'seed' => $m->competitor1->seed,
+                ] : null,
+                'competitor2' => $m->competitor2 ? [
+                    'id' => $m->competitor2->id,
+                    'username' => $m->competitor2->user?->username ?? 'Unknown',
+                    'seed' => $m->competitor2->seed,
+                ] : null,
+                'winner_id' => $m->winner_id,
+                'winner_username' => $m->winner?->user?->username,
+                'status' => $m->status,
+                'competitor1_score' => $m->competitor1_score ?? 0,
+                'competitor2_score' => $m->competitor2_score ?? 0,
+                'is_bye' => $m->isBye(),
+                'combat_log' => $m->combat_log ?? [],
+            ]));
+
+        // Get user's next match if in tournament and active
+        $userNextMatch = null;
+        if ($userCompetitor && in_array($userCompetitor->status, ['registered', 'active'])) {
+            $userNextMatch = $tournament->matches()
+                ->where('status', '!=', TournamentMatch::STATUS_COMPLETED)
+                ->where(function ($q) use ($userCompetitor) {
+                    $q->where('competitor1_id', $userCompetitor->id)
+                        ->orWhere('competitor2_id', $userCompetitor->id);
+                })
+                ->orderBy('round_number')
+                ->first();
+
+            if ($userNextMatch) {
+                $userNextMatch->load(['competitor1.user', 'competitor2.user']);
+                $opponent = $userNextMatch->competitor1_id === $userCompetitor->id
+                    ? $userNextMatch->competitor2
+                    : $userNextMatch->competitor1;
+
+                $userNextMatch = [
+                    'id' => $userNextMatch->id,
+                    'round_number' => $userNextMatch->round_number,
+                    'opponent_username' => $opponent?->user?->username ?? 'BYE',
+                    'status' => $userNextMatch->status,
+                ];
+            }
+        }
+
+        // Find the winner if tournament is completed
+        $winner = null;
+        if ($tournament->status === Tournament::STATUS_COMPLETED) {
+            $winnerCompetitor = $tournament->competitors()
+                ->where('status', TournamentCompetitor::STATUS_WINNER)
+                ->with('user')
+                ->first();
+            if ($winnerCompetitor) {
+                $winner = [
+                    'id' => $winnerCompetitor->id,
+                    'username' => $winnerCompetitor->user?->username ?? 'Unknown',
+                    'prize_won' => $winnerCompetitor->prize_won ?? 0,
+                ];
+            }
+        }
+
+        return Inertia::render('Events/TournamentShow', [
+            'tournament' => [
+                'id' => $tournament->id,
+                'name' => $tournament->name,
+                'type' => [
+                    'id' => $tournament->tournamentType->id,
+                    'name' => $tournament->tournamentType->name,
+                    'combat_type' => $tournament->tournamentType->combat_type,
+                    'description' => $tournament->tournamentType->description,
+                    'entry_fee' => $tournament->tournamentType->entry_fee,
+                    'min_level' => $tournament->tournamentType->min_level,
+                    'max_participants' => $tournament->tournamentType->max_participants,
+                    'is_lethal' => $tournament->tournamentType->is_lethal,
+                ],
+                'status' => $tournament->status,
+                'location_type' => $tournament->location_type,
+                'location_id' => $tournament->location_id,
+                'location_name' => $tournament->location?->name ?? 'Unknown',
+                'registration_ends_at' => $tournament->registration_ends_at?->toISOString(),
+                'registration_ends_formatted' => $tournament->registration_ends_at?->format('M j, Y'),
+                'starts_at' => $tournament->starts_at?->toISOString(),
+                'starts_at_formatted' => $tournament->starts_at?->format('M j, Y'),
+                'completed_at' => $tournament->completed_at?->toISOString(),
+                'completed_at_formatted' => $tournament->completed_at?->format('M j, Y'),
+                'prize_pool' => $tournament->prize_pool,
+                'current_round' => $tournament->current_round,
+                'total_rounds' => $tournament->total_rounds,
+                'sponsor_name' => $tournament->sponsor?->username,
+                'sponsor_contribution' => $tournament->sponsor_contribution ?? 0,
+                'festival_id' => $tournament->festival_id,
+                'festival_name' => $tournament->festival?->name,
+                'is_registration_open' => $tournament->isRegistrationOpen(),
+            ],
+            'competitors' => $competitors->toArray(),
+            'matches_by_round' => $matchesByRound->toArray(),
+            'is_registered' => $userCompetitor !== null,
+            'user_competitor' => $userCompetitor ? [
+                'id' => $userCompetitor->id,
+                'seed' => $userCompetitor->seed,
+                'status' => $userCompetitor->status,
+                'wins' => $userCompetitor->wins ?? 0,
+                'losses' => $userCompetitor->losses ?? 0,
+                'prize_won' => $userCompetitor->prize_won ?? 0,
+            ] : null,
+            'user_next_match' => $userNextMatch,
+            'winner' => $winner,
+            'user_gold' => $user->gold,
+            'user_combat_level' => $user->combat_level ?? 1,
+        ]);
+    }
+
+    /**
      * Register for a tournament.
      */
     public function registerForTournament(Request $request, Tournament $tournament): JsonResponse
@@ -229,6 +387,42 @@ class EventController extends Controller
         );
 
         return response()->json($result);
+    }
+
+    /**
+     * Withdraw from a tournament.
+     */
+    public function withdrawFromTournament(Request $request, Tournament $tournament): JsonResponse
+    {
+        $user = $request->user();
+
+        // Find user's competitor entry
+        $competitor = TournamentCompetitor::where('tournament_id', $tournament->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$competitor) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not registered for this tournament.',
+            ]);
+        }
+
+        // Can only withdraw during registration phase
+        if ($tournament->status !== Tournament::STATUS_REGISTRATION) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You can only withdraw during the registration period.',
+            ]);
+        }
+
+        // Update status to withdrew
+        $competitor->update(['status' => TournamentCompetitor::STATUS_WITHDREW]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'You have withdrawn from the tournament.',
+        ]);
     }
 
     /**

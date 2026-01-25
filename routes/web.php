@@ -295,7 +295,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('events/festivals/{festival}', [EventController::class, 'showFestival'])->name('events.festivals.show');
     Route::post('events/festivals/{festival}/join', [EventController::class, 'joinFestival'])->name('events.festivals.join');
     Route::post('events/festivals/{festival}/leave', [EventController::class, 'leaveFestival'])->name('events.festivals.leave');
+    Route::get('events/tournaments/{tournament}', [EventController::class, 'showTournament'])->name('events.tournaments.show');
     Route::post('events/tournaments/{tournament}/register', [EventController::class, 'registerForTournament'])->name('events.tournaments.register');
+    Route::post('events/tournaments/{tournament}/withdraw', [EventController::class, 'withdrawFromTournament'])->name('events.tournaments.withdraw');
 
     // Charters
     Route::get('charters', [CharterController::class, 'index'])->name('charters.index');
