@@ -1,8 +1,8 @@
 # Myrefell
 
-A persistent browser-based medieval game (PBBG) where players start as peasants and rise through a feudal hierarchy to become knights, lords, or kings through democratic elections, economic power, and political maneuvering.
+A persistent browser-based medieval MMO where players and NPCs live together in a living simulation. Train combat stats, run businesses, found guilds, participate in elections, and rise through a feudal hierarchy from peasant to king.
 
-> **"Land belongs to groups. Power belongs to players."**
+> **"A medieval analogue to eRepublik - player-driven society with RPG training."**
 
 ## Tech Stack
 
@@ -22,22 +22,32 @@ A persistent browser-based medieval game (PBBG) where players start as peasants 
 ## Features
 
 ### Player System
-- **Stats**: HP, Energy, Combat Level, Gold, Titles
-- **9 Skills**: Attack, Strength, Defense, Mining, Fishing, Woodcutting, Cooking, Smithing, Crafting
+- **Combat Stats**: Attack, Strength, Defense (train daily at training grounds)
+- **9 Skills**: Mining, Fishing, Woodcutting, Cooking, Smithing, Crafting, Foraging, Combat, Riding
+- **Resources**: HP, Energy (regens 1/5min), Gold
 - **Equipment**: 9 slots (head, chest, legs, feet, hands, weapon, shield, ring, amulet)
-- **28-slot inventory** with stackable items
-- **Energy system** with regeneration (1 point every 5 minutes)
+- **28-slot inventory** with stackable items and perishable tracking
 
 ### World Hierarchy
 ```
-Kingdoms
-  └── Towns (upgraded villages with markets)
-        └── Castles (military centers)
-              └── Villages (population hubs)
-                    └── Players
+Kingdom (ruled by elected King)
+└── Barony (ruled by Baron)
+    ├── Town (ruled by Mayor) - guild halls, markets, cathedrals
+    └── Village (ruled by Elder) - population hubs
+        └── Hamlet - uses parent village services
 ```
 
 - **8 Biomes**: Forests, Plains, Mountains, Swamps, Desert, Tundra, Coastal, Volcano
+
+### Living World
+
+The world runs on a calendar system with time passing automatically:
+
+- **Calendar**: 4 seasons × 12 weeks = 48-week year (1 real day = 1 game week)
+- **Seasons affect**: Travel speed, gathering yields, food decay, market prices
+- **NPCs live full lives**: Age, marry, have children, and die naturally
+- **Food consumption**: Weekly food drain from granaries; starvation if empty
+- **Resource decay**: Perishable items spoil over time (faster in summer)
 
 ### Political System
 - **Democratic elections** for village roles, mayors, and kings
@@ -72,14 +82,34 @@ Non-territorial power structures that overlay the political hierarchy. Players m
 **Political Integration**:
 - Kingdoms can adopt a state religion for tax bonuses and happiness
 - Kingdoms can ban religions, forcing followers underground or into exile
-- Castle jails hold persecuted followers and criminals
+- Barony jails hold persecuted followers and criminals
 - Faith points earned through prayer, donations, conversions, and pilgrimages
 
 ### Economy
-- **Bank accounts** per location with deposit/withdrawal tracking
-- **Tax system**: Configurable rates by Lords and Kings; daily collection flows from Players → Villages → Castles → Kingdoms
-- **Role salaries**: Elected officials receive regular salary distributions
-- **No confidence votes**: Challenge role holders; 48-hour voting period, majority removes
+
+**Dynamic Markets**:
+- Supply/demand pricing per location (no global auction house)
+- Seasonal modifiers (food expensive in winter, cheap at harvest)
+- Buy/sell spread with transaction history
+- Must travel to trade between settlements
+
+**Player Businesses**:
+- Own workshops, farms, mines, inns
+- Hire NPCs with wages and efficiency tracking
+- Business treasury, reputation, and transaction logs
+- Categories: production, service, extraction
+
+**Player-Run Guilds**:
+- Found guilds at towns (5+ members, 50k gold)
+- Ranks: Apprentice → Journeyman → Master → Guildmaster
+- Guild treasury, dues, elections, and benefits
+- Price controls for monopoly guilds
+
+**Core Systems**:
+- Bank accounts per location with deposit/withdrawal tracking
+- Tax system: Players → Villages → Baronies → Kingdoms
+- Role salaries for elected officials
+- No-confidence votes to remove leaders
 
 ### Combat & Dungeons
 
@@ -97,15 +127,15 @@ Non-territorial power structures that overlay the political hierarchy. Players m
 - Minimum combat level requirements
 
 ### Chat System
-- **Location chat**: Talk with players in your village, castle, or kingdom
+- **Location chat**: Talk with players in your village, barony, or kingdom
 - **Private messaging**: Direct player-to-player communication
-- **Moderation tools**: Elders, Lords, and Kings can moderate their jurisdiction
+- **Moderation tools**: Elders, Barons, and Kings can moderate their jurisdiction
 
 ### Charter System
 
 Found new settlements and expand the world:
 - **Cost**: 1,000,000+ gold to petition for a charter
-- **Requirements**: Location approval from controlling Lord/King
+- **Requirements**: Location approval from controlling Baron/King
 - **Signatories**: Gather support from other players
 - **Vulnerability window**: New settlements are vulnerable after founding
 - **Failure**: Abandoned settlements become explorable ruins
@@ -117,7 +147,7 @@ Found new settlements and expand the world:
 - **Crafting**: Smithing, cooking, and general crafting with recipes
 - **Crafting Docket**: Player crafters can accept orders; NPC crafting available for instant (but costlier) results
 - **Travel**: Move between locations with energy cost and travel time
-- **Healing**: Village healers and castle/town infirmaries
+- **Healing**: Village healers and town/barony infirmaries
 
 ## Requirements
 

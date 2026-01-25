@@ -877,92 +877,78 @@ EnergyService, InventoryService, BirthService, BankService, HealerService, Gathe
 
 ## Part 17: Development Priorities
 
-### Phase 1: Core Player Loop (Immediate)
+### Phase 1: Core Player Loop - COMPLETE
 
 **Goal:** Playable daily loop with training, work, and local interaction.
 
-| Feature | Status | Priority |
-|---------|--------|----------|
-| Combat stat training (ATK/STR/DEF) | **Needed** | Critical |
-| Daily tasks | Done | - |
-| Jobs and wages | Done | - |
-| Local chat | Done | - |
-| Settlement residency | Done | - |
+| Feature | Status |
+|---------|--------|
+| Combat stat training (ATK/STR/DEF) | Done |
+| Daily tasks | Done |
+| Jobs and wages | Done |
+| Local chat | Done |
+| Settlement residency | Done |
 
-**Implementation:**
-```php
-// Add to users table
-$table->integer('attack_xp')->default(0);
-$table->integer('strength_xp')->default(0);
-$table->integer('defense_xp')->default(0);
-
-// TrainingService.php
-public function train(User $user, string $stat): void
-{
-    $this->energyService->consume($user, 10);
-    $xpGain = 10 * $user->getTrainingMultiplier();
-    $user->increment("{$stat}_xp", $xpGain);
-}
-```
-
-### Phase 2: Living World Foundation
+### Phase 2: Living World Foundation - COMPLETE
 
 **Goal:** Time passes, seasons change, NPCs live and die.
 
-| Feature | Status | Priority |
-|---------|--------|----------|
-| Calendar/seasons | Needed | High |
-| Seasonal effects on travel/gathering | Needed | High |
-| NPC aging and death | Needed | High |
-| NPC reproduction | Needed | Medium |
-| Basic food consumption | Needed | Medium |
+| Feature | Status |
+|---------|--------|
+| Calendar/seasons (48-week year) | Done |
+| Seasonal effects on travel/gathering | Done |
+| NPC aging and death | Done |
+| NPC reproduction and families | Done |
+| Basic food consumption | Done |
+| Resource decay/spoilage | Done |
 
-### Phase 3: Economic Depth
+### Phase 3: Economic Depth - MOSTLY COMPLETE
 
 **Goal:** Scarcity-based economy with player ownership.
 
-| Feature | Status | Priority |
-|---------|--------|----------|
-| Dynamic market prices | Needed | High |
-| Player-owned businesses | Needed | High |
-| Player-run guilds | Needed | High |
-| Resource decay/consumption | Needed | Medium |
-| Trade caravans | Needed | Medium |
+| Feature | Status |
+|---------|--------|
+| Dynamic market prices (supply/demand) | Done |
+| Player-owned businesses | Done |
+| Player-run guilds | Done |
+| Resource decay/consumption | Done |
+| Trade caravans | Needed |
 
-### Phase 4: Political Systems
+### Phase 4: Political Systems - PARTIAL
 
 **Goal:** Meaningful governance with consequences.
 
-| Feature | Status | Priority |
-|---------|--------|----------|
-| Legitimacy system | Needed | High |
-| Social class restrictions | Needed | High |
-| Laws and crime | Needed | High |
-| Court system | Needed | Medium |
-| Communal governance option | Needed | Low |
+| Feature | Status |
+|---------|--------|
+| Elections and roles | Done |
+| No-confidence votes | Done |
+| Legitimacy system | Needed |
+| Social class restrictions | Needed |
+| Laws and crime | Needed |
+| Court system | Needed |
 
-### Phase 5: Warfare
+### Phase 5: Warfare - NOT STARTED
 
 **Goal:** Strategic, logistics-driven conflict.
 
-| Feature | Status | Priority |
-|---------|--------|----------|
-| Army recruitment | Needed | High |
-| Battle resolution (daily ticks) | Needed | High |
-| Supply lines | Needed | Medium |
-| Siege mechanics | Needed | Medium |
-| War goals and peace treaties | Needed | Medium |
+| Feature | Status |
+|---------|--------|
+| Army recruitment | Needed |
+| Battle resolution (daily ticks) | Needed |
+| Supply lines | Needed |
+| Siege mechanics | Needed |
+| War goals and peace treaties | Needed |
 
-### Phase 6: World Events
+### Phase 6: World Events - NOT STARTED
 
 **Goal:** Dynamic events that shake up the world.
 
-| Feature | Status | Priority |
-|---------|--------|----------|
-| Festivals and tournaments | Needed | Medium |
-| Disease spread | Needed | Medium |
-| Natural disasters | Needed | Low |
-| Infrastructure construction | Needed | Low |
+| Feature | Status |
+|---------|--------|
+| Festivals and tournaments | Needed |
+| Disease spread | Needed |
+| Natural disasters | Needed |
+| Infrastructure construction | Needed |
 
 ---
 
