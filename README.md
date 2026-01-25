@@ -55,6 +55,46 @@ The world runs on a calendar system with time passing automatically:
 - **Vote of no-confidence** to remove leaders
 - **Title progression**: Peasant → Knight → Lord → King
 
+### Social Classes
+
+Medieval feudal class system with rights and restrictions:
+
+| Class | Rights | Restrictions |
+|-------|--------|--------------|
+| **Serf** | Basic protection | Cannot vote, cannot travel freely, bound to land |
+| **Freeman** | Vote, own property, travel | Must pay taxes, military service |
+| **Burgher** | Vote, guilds, business ownership | Higher taxes, town residence required |
+| **Noble** | Vote, high office, land ownership | Knight service to king |
+| **Clergy** | Vote in church, exempt from some laws | Cannot hold secular office |
+
+**Class Mobility:**
+- Serfs can earn freedom through baron's decree, military service, or purchase (100k gold)
+- Freemen can petition for nobility through royal decree, service, marriage, or purchase (1M gold)
+- Manumission requests reviewed by barons; ennoblement by kings
+
+### Law & Crime
+
+Full justice system with courts, trials, and punishments:
+
+**Crime Types:**
+- Minor: Theft, Trespassing
+- Moderate: Assault, Fraud, Smuggling, False Accusation
+- Major: Murder, Desertion
+- Capital: Treason
+- Religious: Heresy
+
+**Court Hierarchy:**
+| Court | Jurisdiction | Judge |
+|-------|--------------|-------|
+| Village Court | Minor crimes | Elder |
+| Baron's Court | Moderate crimes | Baron |
+| Royal Court | Major crimes, appeals | King |
+| Church Court | Religious crimes | High Priest |
+
+**Punishments:** Fine, Imprisonment, Exile, Outlawry (kill on sight), Execution
+
+**Bounty System:** Post bounties on outlaws, claim rewards for capture
+
 ### Religion & Cults
 
 > "Religions create loyalty that competes with political loyalty."

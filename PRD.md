@@ -846,7 +846,7 @@ High dynasty reputation → easier elections, better marriages, more legitimacy.
 
 ## Part 16: Implemented Features
 
-### Models (52 total)
+### Models (66 total)
 
 **Core Player:**
 User, PlayerSkill, PlayerInventory, Item, PlayerTitle, BankAccount, BankTransaction
@@ -855,10 +855,16 @@ User, PlayerSkill, PlayerInventory, Item, PlayerTitle, BankAccount, BankTransact
 Kingdom, Barony, Town, Village
 
 **Economy:**
-EmploymentJob, PlayerEmployment, TaxCollection, LocationTreasury, TreasuryTransaction, SalaryPayment, CraftingOrder, LocationStockpile
+EmploymentJob, PlayerEmployment, TaxCollection, LocationTreasury, TreasuryTransaction, SalaryPayment, CraftingOrder, LocationStockpile, MarketPrice, MarketTransaction, BusinessType, PlayerBusiness, BusinessEmployee, BusinessInventory, BusinessTransaction, BusinessProductionOrder, Guild, GuildMember, GuildBenefit, GuildActivity, GuildElection, GuildElectionCandidate, GuildElectionVote, GuildPriceControl
 
 **Governance:**
 Role, PlayerRole, LocationNpc, Election, ElectionCandidate, ElectionVote, NoConfidenceVote, NoConfidenceBallot, MigrationRequest
+
+**Social Class:**
+ManumissionRequest, EnnoblementRequest, SocialClassHistory
+
+**Crime & Law:**
+CrimeType, Crime, CrimeWitness, Accusation, Trial, Punishment, Bounty, JailInmate, Outlaw, Exile
 
 **Combat:**
 Monster, MonsterLootTable, CombatSession, CombatLog, Dungeon, DungeonFloor, DungeonFloorMonster, DungeonSession
@@ -867,11 +873,11 @@ Monster, MonsterLootTable, CombatSession, CombatLog, Dungeon, DungeonFloor, Dung
 Religion, Belief, ReligionMember, ReligiousStructure, KingdomReligion, ReligiousAction
 
 **Other:**
-Quest, PlayerQuest, DailyTask, PlayerDailyTask, Message, Charter, CharterSignatory, SettlementRuin, Horse, PlayerHorse
+Quest, PlayerQuest, DailyTask, PlayerDailyTask, Message, Charter, CharterSignatory, SettlementRuin, Horse, PlayerHorse, WorldState
 
-### Services (24 total)
+### Services (26 total)
 
-EnergyService, InventoryService, BirthService, BankService, HealerService, GatheringService, CraftingService, DailyTaskService, QuestService, PortService, JobService, RoleService, MigrationService, ElectionService, TaxService, ChatService, DocketService, LootService, CombatService, DungeonService, ReligionService, CharterService, TravelService, StableService
+EnergyService, InventoryService, BirthService, BankService, HealerService, GatheringService, CraftingService, DailyTaskService, QuestService, PortService, JobService, RoleService, MigrationService, ElectionService, TaxService, ChatService, DocketService, LootService, CombatService, DungeonService, ReligionService, CharterService, TravelService, StableService, SocialClassService, CrimeService
 
 ---
 
@@ -914,7 +920,7 @@ EnergyService, InventoryService, BirthService, BankService, HealerService, Gathe
 | Resource decay/consumption | Done |
 | Trade caravans | Needed |
 
-### Phase 4: Political Systems - PARTIAL
+### Phase 4: Political Systems - MOSTLY COMPLETE
 
 **Goal:** Meaningful governance with consequences.
 
@@ -922,22 +928,30 @@ EnergyService, InventoryService, BirthService, BankService, HealerService, Gathe
 |---------|--------|
 | Elections and roles | Done |
 | No-confidence votes | Done |
+| Social class system (serf/freeman/burgher/noble/clergy) | Done |
+| Class-based rights and restrictions | Done |
+| Manumission system (serf freedom) | Done |
+| Ennoblement system (nobility requests) | Done |
+| Laws and crime types | Done |
+| Court hierarchy (village/barony/kingdom/church) | Done |
+| Trial system with verdicts | Done |
+| Punishments (fine/jail/exile/outlawry/execution) | Done |
+| Bounty system | Done |
 | Legitimacy system | Needed |
-| Social class restrictions | Needed |
-| Laws and crime | Needed |
-| Court system | Needed |
 
-### Phase 5: Warfare - NOT STARTED
+### Phase 5: Warfare - DEFERRED
 
 **Goal:** Strategic, logistics-driven conflict.
 
+**Status:** Intentionally skipped for future development. The warfare system requires significant complexity (armies, supply lines, sieges) that is better addressed after core social/economic systems are complete.
+
 | Feature | Status |
 |---------|--------|
-| Army recruitment | Needed |
-| Battle resolution (daily ticks) | Needed |
-| Supply lines | Needed |
-| Siege mechanics | Needed |
-| War goals and peace treaties | Needed |
+| Army recruitment | Deferred |
+| Battle resolution (daily ticks) | Deferred |
+| Supply lines | Deferred |
+| Siege mechanics | Deferred |
+| War goals and peace treaties | Deferred |
 
 ### Phase 6: World Events - NOT STARTED
 
