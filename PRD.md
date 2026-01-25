@@ -846,7 +846,7 @@ High dynasty reputation → easier elections, better marriages, more legitimacy.
 
 ## Part 16: Implemented Features
 
-### Models (66 total)
+### Models (115+ total)
 
 **Core Player:**
 User, PlayerSkill, PlayerInventory, Item, PlayerTitle, BankAccount, BankTransaction
@@ -857,8 +857,11 @@ Kingdom, Barony, Town, Village
 **Economy:**
 EmploymentJob, PlayerEmployment, TaxCollection, LocationTreasury, TreasuryTransaction, SalaryPayment, CraftingOrder, LocationStockpile, MarketPrice, MarketTransaction, BusinessType, PlayerBusiness, BusinessEmployee, BusinessInventory, BusinessTransaction, BusinessProductionOrder, Guild, GuildMember, GuildBenefit, GuildActivity, GuildElection, GuildElectionCandidate, GuildElectionVote, GuildPriceControl
 
+**Trade Caravans:**
+TradeRoute, Caravan, CaravanGoods, CaravanEvent, TradeTariff, TariffCollection
+
 **Governance:**
-Role, PlayerRole, LocationNpc, Election, ElectionCandidate, ElectionVote, NoConfidenceVote, NoConfidenceBallot, MigrationRequest
+Role, PlayerRole, LocationNpc, Election, ElectionCandidate, ElectionVote, NoConfidenceVote, NoConfidenceBallot, MigrationRequest, LegitimacyEvent
 
 **Social Class:**
 ManumissionRequest, EnnoblementRequest, SocialClassHistory
@@ -869,15 +872,34 @@ CrimeType, Crime, CrimeWitness, Accusation, Trial, Punishment, Bounty, JailInmat
 **Combat:**
 Monster, MonsterLootTable, CombatSession, CombatLog, Dungeon, DungeonFloor, DungeonFloorMonster, DungeonSession
 
+**Warfare:**
+Army, ArmyUnit, War, WarParticipant, WarGoal, Battle, BattleParticipant, Siege, SupplyLine, PeaceTreaty, MercenaryCompany
+
 **Religion:**
 Religion, Belief, ReligionMember, ReligiousStructure, KingdomReligion, ReligiousAction
+
+**Festivals & Events:**
+FestivalType, Festival, FestivalParticipant, TournamentType, Tournament, TournamentCompetitor, TournamentMatch, RoyalEvent
+
+**Disease & Health:**
+DiseaseType, DiseaseOutbreak, DiseaseInfection, DiseaseImmunity, QuarantineOrder
+
+**Disasters & Infrastructure:**
+DisasterType, Disaster, BuildingDamage, BuildingType, Building, ConstructionProject
+
+**Marriage & Dynasties:**
+Dynasty, DynastyMember, DynastyEvent, DynastyAlliance, Marriage, MarriageProposal, Birth, SuccessionRule, InheritanceClaim
 
 **Other:**
 Quest, PlayerQuest, DailyTask, PlayerDailyTask, Message, Charter, CharterSignatory, SettlementRuin, Horse, PlayerHorse, WorldState
 
-### Services (26 total)
+### Services (38 total)
 
+**Core:**
 EnergyService, InventoryService, BirthService, BankService, HealerService, GatheringService, CraftingService, DailyTaskService, QuestService, PortService, JobService, RoleService, MigrationService, ElectionService, TaxService, ChatService, DocketService, LootService, CombatService, DungeonService, ReligionService, CharterService, TravelService, StableService, SocialClassService, CrimeService
+
+**New Systems:**
+LegitimacyService, CaravanService, FestivalService, DiseaseService, DisasterService, ArmyService, WarService, BattleService, SiegeService, DynastyService, MarriageService
 
 ---
 
@@ -908,61 +930,132 @@ EnergyService, InventoryService, BirthService, BankService, HealerService, Gathe
 | Basic food consumption | Done |
 | Resource decay/spoilage | Done |
 
-### Phase 3: Economic Depth - MOSTLY COMPLETE
+### Phase 3: Economic Depth - BACKEND COMPLETE
 
 **Goal:** Scarcity-based economy with player ownership.
 
-| Feature | Status |
-|---------|--------|
-| Dynamic market prices (supply/demand) | Done |
-| Player-owned businesses | Done |
-| Player-run guilds | Done |
-| Resource decay/consumption | Done |
-| Trade caravans | Needed |
+| Feature | Backend | UI |
+|---------|---------|-----|
+| Dynamic market prices (supply/demand) | ✅ Done | ✅ Done |
+| Player-owned businesses | ✅ Done | ✅ Done |
+| Player-run guilds | ✅ Done | ✅ Done |
+| Resource decay/consumption | ✅ Done | ✅ Done |
+| Trade caravans | ✅ Done | ❌ Needed |
 
-### Phase 4: Political Systems - MOSTLY COMPLETE
+**UI Needed for Trade Caravans:**
+- Trade route viewer (map with routes between settlements)
+- Caravan management page (create, load goods, dispatch)
+- Caravan tracking (status, location, ETA)
+- Tariff configuration (for rulers)
+- Caravan event notifications
+
+### Phase 4: Political Systems - BACKEND COMPLETE
 
 **Goal:** Meaningful governance with consequences.
 
-| Feature | Status |
-|---------|--------|
-| Elections and roles | Done |
-| No-confidence votes | Done |
-| Social class system (serf/freeman/burgher/noble/clergy) | Done |
-| Class-based rights and restrictions | Done |
-| Manumission system (serf freedom) | Done |
-| Ennoblement system (nobility requests) | Done |
-| Laws and crime types | Done |
-| Court hierarchy (village/barony/kingdom/church) | Done |
-| Trial system with verdicts | Done |
-| Punishments (fine/jail/exile/outlawry/execution) | Done |
-| Bounty system | Done |
-| Legitimacy system | Needed |
+| Feature | Backend | UI |
+|---------|---------|-----|
+| Elections and roles | ✅ Done | ✅ Done |
+| No-confidence votes | ✅ Done | ✅ Done |
+| Social class system | ✅ Done | ❌ Partial |
+| Manumission system | ✅ Done | ❌ Needed |
+| Ennoblement system | ✅ Done | ❌ Needed |
+| Laws and crime types | ✅ Done | ❌ Needed |
+| Court/trial system | ✅ Done | ❌ Needed |
+| Punishments | ✅ Done | ❌ Needed |
+| Bounty system | ✅ Done | ❌ Needed |
+| Legitimacy system | ✅ Done | ❌ Needed |
 
-### Phase 5: Warfare - DEFERRED
+**UI Needed for Political Systems:**
+- Social class display in player profile
+- Manumission request form (serf → freeman)
+- Ennoblement petition form (freeman → noble)
+- Crime accusation interface
+- Court/trial viewer (evidence, defense, verdict)
+- Punishment status display (jail time, exile status)
+- Bounty board (view/post bounties)
+- Ruler legitimacy indicator in settlement view
+
+### Phase 5: Warfare - BACKEND COMPLETE
 
 **Goal:** Strategic, logistics-driven conflict.
 
-**Status:** Intentionally skipped for future development. The warfare system requires significant complexity (armies, supply lines, sieges) that is better addressed after core social/economic systems are complete.
+| Feature | Backend | UI |
+|---------|---------|-----|
+| Army recruitment | ✅ Done | ❌ Needed |
+| Battle resolution (daily ticks) | ✅ Done | ❌ Needed |
+| Supply lines | ✅ Done | ❌ Needed |
+| Siege mechanics | ✅ Done | ❌ Needed |
+| War goals and peace treaties | ✅ Done | ❌ Needed |
+| Mercenary companies | ✅ Done | ❌ Needed |
 
-| Feature | Status |
-|---------|--------|
-| Army recruitment | Deferred |
-| Battle resolution (daily ticks) | Deferred |
-| Supply lines | Deferred |
-| Siege mechanics | Deferred |
-| War goals and peace treaties | Deferred |
+**UI Needed for Warfare:**
+- Army management page (raise, recruit units, disband)
+- Army composition viewer (unit types, counts, stats)
+- War declaration interface (casus belli selection, war goals)
+- Active wars list with war score
+- Battle viewer (participants, daily results, casualties)
+- Battle log/history
+- Siege interface (equipment, assault options, garrison status)
+- Supply line management (establish, view status)
+- Peace treaty negotiation screen
+- Mercenary hiring interface
 
-### Phase 6: World Events - NOT STARTED
+### Phase 6: World Events - BACKEND COMPLETE
 
 **Goal:** Dynamic events that shake up the world.
 
-| Feature | Status |
-|---------|--------|
-| Festivals and tournaments | Needed |
-| Disease spread | Needed |
-| Natural disasters | Needed |
-| Infrastructure construction | Needed |
+| Feature | Backend | UI |
+|---------|---------|-----|
+| Festivals and tournaments | ✅ Done | ❌ Needed |
+| Disease spread | ✅ Done | ❌ Needed |
+| Natural disasters | ✅ Done | ❌ Needed |
+| Infrastructure construction | ✅ Done | ❌ Needed |
+
+**UI Needed for World Events:**
+- Festival calendar (upcoming events)
+- Festival participation interface
+- Tournament registration and bracket view
+- Tournament match viewer (combat results)
+- Royal event announcements (coronations, weddings)
+- Disease/health status in player profile
+- Outbreak warning notifications
+- Quarantine order display
+- Active disasters list for settlement
+- Disaster damage report
+- Building construction interface (select type, assign workers)
+- Construction progress tracker
+- Building list with condition/maintenance status
+
+### Phase 7: Marriage and Dynasties - BACKEND COMPLETE
+
+**Goal:** Family lineages and inheritance systems.
+
+| Feature | Backend | UI |
+|---------|---------|-----|
+| Dynasty founding | ✅ Done | ❌ Needed |
+| Dynasty members/lineage | ✅ Done | ❌ Needed |
+| Succession rules | ✅ Done | ❌ Needed |
+| Marriage proposals | ✅ Done | ❌ Needed |
+| Marriage/divorce | ✅ Done | ❌ Needed |
+| Children and births | ✅ Done | ❌ Needed |
+| Dynasty alliances | ✅ Done | ❌ Needed |
+| Inheritance claims | ✅ Done | ❌ Needed |
+
+**UI Needed for Marriage and Dynasties:**
+- Dynasty overview page (name, motto, prestige, members count)
+- Family tree visualization
+- Dynasty member list with lineage info
+- Succession rules configuration (for dynasty head)
+- Heir indicator
+- Marriage proposal form (dowry, terms)
+- Incoming proposals list
+- Marriage status in player profile
+- Spouse display
+- Children list
+- Dynasty alliance viewer
+- Dynasty event history/chronicle
+- Inheritance claim management
 
 ---
 
