@@ -76,12 +76,13 @@
 - [x] Bounty system
 - [x] Legitimacy system (events, modifiers, decay)
 
-### Phase 5 - Warfare (DEFERRED)
-- [ ] Army recruitment
-- [ ] Battle resolution (daily ticks)
-- [ ] Supply lines
-- [ ] Siege mechanics
-- [ ] War goals and peace treaties
+### Phase 5 - Warfare (COMPLETE)
+- [x] Army recruitment (levies, militia, knights, archers, cavalry, siege engineers)
+- [x] Battle resolution (daily ticks, terrain modifiers, morale, casualties)
+- [x] Supply lines (resupply, disruption, severing)
+- [x] Siege mechanics (fortifications, equipment, starvation, assault)
+- [x] War goals and peace treaties (casus belli, war score, truces)
+- [x] Mercenary companies (hiring, contracts, specializations)
 
 ### Phase 6 - World Events (COMPLETE)
 - [x] Festivals and tournaments (seasonal, jousting, archery, melee, etc.)
@@ -89,5 +90,16 @@
 - [x] Natural disasters (drought, flood, fire, storm, earthquake, blizzard)
 - [x] Infrastructure construction (building types, construction projects, damage)
 
-### Unimplemented PRD Parts
-- [ ] Part 12: Marriage and Dynasties
+### Part 12 - Marriage and Dynasties (COMPLETE)
+- [x] Dynasty system (founding, prestige, members, history)
+- [x] Dynasty members (lineage, generations, birth order)
+- [x] Succession rules (primogeniture, ultimogeniture, seniority, gender laws)
+- [x] Heir calculation and disinheritance
+- [x] Inheritance claims (weak, strong, pressed)
+- [x] Marriage proposals and contracts
+- [x] Marriage types (standard, political, secret, morganatic)
+- [x] Divorce and annulment
+- [x] Birth recording with legitimacy
+- [x] Dynasty alliances (marriage, pact, blood oath)
+
+## All PRD Phases Complete!
