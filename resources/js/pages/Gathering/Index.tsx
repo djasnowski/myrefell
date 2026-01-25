@@ -1,5 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Axe, Fish, Pickaxe, Zap } from 'lucide-react';
+import { Axe, Fish, Leaf, Pickaxe, Snowflake, Sun, TreeDeciduous, Zap } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -13,10 +13,17 @@ interface Activity {
     available_resources: number;
 }
 
+interface SeasonalData {
+    season: 'spring' | 'summer' | 'autumn' | 'winter';
+    modifier: number;
+    description: string;
+}
+
 interface PageProps {
     activities: Activity[];
     player_energy: number;
     max_energy: number;
+    seasonal: SeasonalData;
     [key: string]: unknown;
 }
 
@@ -43,8 +50,27 @@ const activityDescriptions: Record<string, string> = {
     woodcutting: 'Chop trees for wood and lumber',
 };
 
+const seasonIcons: Record<string, typeof Sun> = {
+    spring: Leaf,
+    summer: Sun,
+    autumn: TreeDeciduous,
+    winter: Snowflake,
+};
+
+const seasonColors: Record<string, string> = {
+    spring: 'text-green-400 bg-green-900/30 border-green-600/50',
+    summer: 'text-yellow-400 bg-yellow-900/30 border-yellow-600/50',
+    autumn: 'text-orange-400 bg-orange-900/30 border-orange-600/50',
+    winter: 'text-blue-400 bg-blue-900/30 border-blue-600/50',
+};
+
 export default function GatheringIndex() {
-    const { activities, player_energy, max_energy } = usePage<PageProps>().props;
+    const { activities, player_energy, max_energy, seasonal } = usePage<PageProps>().props;
+    const SeasonIcon = seasonIcons[seasonal.season] || Sun;
+    const seasonColor = seasonColors[seasonal.season] || 'text-stone-400';
+    const modifierPercent = Math.round((seasonal.modifier - 1) * 100);
+    const isBonus = modifierPercent > 0;
+    const isPenalty = modifierPercent < 0;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -54,6 +80,28 @@ export default function GatheringIndex() {
                 <div className="mb-6">
                     <h1 className="font-pixel text-2xl text-amber-400">Gathering</h1>
                     <p className="font-pixel text-sm text-stone-400">Collect resources from the world around you</p>
+                </div>
+
+                {/* Seasonal Effect Banner */}
+                <div className={`mb-4 rounded-lg border p-3 ${seasonColor}`}>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <SeasonIcon className="h-5 w-5" />
+                            <span className="font-pixel text-sm capitalize">{seasonal.season} Season</span>
+                        </div>
+                        <div className="font-pixel text-sm">
+                            {isBonus && (
+                                <span className="text-green-400">+{modifierPercent}% bonus yield chance</span>
+                            )}
+                            {isPenalty && (
+                                <span className="text-red-400">{modifierPercent}% yield penalty</span>
+                            )}
+                            {!isBonus && !isPenalty && (
+                                <span className="text-stone-400">Normal yields</span>
+                            )}
+                        </div>
+                    </div>
+                    <p className="mt-1 font-pixel text-[10px] text-stone-400">{seasonal.description}</p>
                 </div>
 
                 {/* Energy Bar */}

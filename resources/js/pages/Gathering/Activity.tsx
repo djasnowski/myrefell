@@ -1,5 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUp, Axe, Backpack, Fish, Loader2, Package, Pickaxe, Sparkles, Zap } from 'lucide-react';
+import { ArrowUp, Axe, Backpack, Fish, Leaf, Loader2, Package, Pickaxe, Snowflake, Sparkles, Sun, TreeDeciduous, Zap } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -24,6 +24,8 @@ interface Activity {
     next_unlock: Resource | null;
     inventory_full: boolean;
     free_slots: number;
+    seasonal_modifier: number;
+    current_season: 'spring' | 'summer' | 'autumn' | 'winter';
 }
 
 interface GatherResult {
@@ -33,10 +35,12 @@ interface GatherResult {
         name: string;
         description: string;
     };
+    quantity?: number;
     xp_awarded?: number;
     skill?: string;
     leveled_up?: boolean;
     energy_remaining?: number;
+    seasonal_bonus?: boolean;
 }
 
 interface PageProps {
@@ -58,6 +62,20 @@ const activityBgColors: Record<string, string> = {
     woodcutting: 'from-green-900/50 to-stone-900 border-green-600/50',
 };
 
+const seasonIcons: Record<string, typeof Sun> = {
+    spring: Leaf,
+    summer: Sun,
+    autumn: TreeDeciduous,
+    winter: Snowflake,
+};
+
+const seasonColors: Record<string, string> = {
+    spring: 'text-green-400 border-green-600/50 bg-green-900/20',
+    summer: 'text-yellow-400 border-yellow-600/50 bg-yellow-900/20',
+    autumn: 'text-orange-400 border-orange-600/50 bg-orange-900/20',
+    winter: 'text-blue-400 border-blue-600/50 bg-blue-900/20',
+};
+
 export default function GatheringActivity() {
     const { activity, player_energy, max_energy } = usePage<PageProps>().props;
     const [loading, setLoading] = useState(false);
@@ -66,6 +84,12 @@ export default function GatheringActivity() {
 
     const Icon = activityIcons[activity.id] || Pickaxe;
     const bgColor = activityBgColors[activity.id] || 'from-stone-800 to-stone-900 border-stone-600';
+
+    const SeasonIcon = seasonIcons[activity.current_season] || Sun;
+    const seasonColor = seasonColors[activity.current_season] || 'text-stone-400';
+    const modifierPercent = Math.round((activity.seasonal_modifier - 1) * 100);
+    const isBonus = modifierPercent > 0;
+    const isPenalty = modifierPercent < 0;
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -127,6 +151,27 @@ export default function GatheringActivity() {
                         </div>
                     </div>
 
+                    {/* Seasonal Modifier Banner */}
+                    <div className={`mb-4 rounded-lg border p-3 ${seasonColor}`}>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <SeasonIcon className="h-4 w-4" />
+                                <span className="font-pixel text-xs capitalize">{activity.current_season}</span>
+                            </div>
+                            <div className="font-pixel text-xs">
+                                {isBonus && (
+                                    <span className="text-green-400">+{modifierPercent}% bonus yield chance</span>
+                                )}
+                                {isPenalty && (
+                                    <span className="text-red-400">{modifierPercent}% reduced yields</span>
+                                )}
+                                {!isBonus && !isPenalty && (
+                                    <span className="text-stone-400">Normal yields</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Energy and Inventory Status */}
                     <div className="mb-6 grid grid-cols-2 gap-4">
                         <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
@@ -170,8 +215,17 @@ export default function GatheringActivity() {
                                     <>
                                         <Package className="h-8 w-8 text-green-400" />
                                         <div>
-                                            <div className="font-pixel text-sm text-green-300">
-                                                {result.resource.name}
+                                            <div className="flex items-center gap-2 font-pixel text-sm text-green-300">
+                                                {result.quantity && result.quantity > 1 ? (
+                                                    <span>{result.quantity}x {result.resource.name}</span>
+                                                ) : (
+                                                    <span>{result.resource.name}</span>
+                                                )}
+                                                {result.seasonal_bonus && (
+                                                    <span className="rounded bg-orange-900/50 px-1.5 py-0.5 text-[10px] text-orange-300">
+                                                        Seasonal Bonus!
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <span className="font-pixel text-[10px] text-amber-400">

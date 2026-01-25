@@ -28,10 +28,13 @@ class GatheringController extends Controller
             ]);
         }
 
+        $seasonalData = $this->gatheringService->getSeasonalData();
+
         return Inertia::render('Gathering/Index', [
             'activities' => $activities,
             'player_energy' => $user->energy,
             'max_energy' => $user->max_energy,
+            'seasonal' => $seasonalData,
         ]);
     }
 
