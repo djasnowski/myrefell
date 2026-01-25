@@ -58,6 +58,6 @@
 ### Phase 3 - Economic Depth
 - [x] Dynamic market prices
 - [x] Player-owned businesses
-- [ ] Player-run guilds
+- [x] Player-run guilds
 - [ ] Resource decay/consumption
 - [ ] Trade caravans

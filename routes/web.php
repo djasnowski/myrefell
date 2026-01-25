@@ -9,6 +9,7 @@ use App\Http\Controllers\DungeonController;
 use App\Http\Controllers\CraftingController;
 use App\Http\Controllers\DocketController;
 use App\Http\Controllers\GatheringController;
+use App\Http\Controllers\GuildController;
 use App\Http\Controllers\HealerController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\QuestController;
@@ -308,6 +309,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('businesses/{business}/add-stock', [BusinessController::class, 'addStock'])->name('businesses.add-stock');
     Route::post('businesses/{business}/remove-stock', [BusinessController::class, 'removeStock'])->name('businesses.remove-stock');
     Route::get('businesses-status', [BusinessController::class, 'status'])->name('businesses.status');
+
+    // Guilds
+    Route::get('guilds', [GuildController::class, 'index'])->name('guilds.index');
+    Route::get('guilds/location', [GuildController::class, 'locationGuilds'])->name('guilds.location');
+    Route::get('guilds/{guild}', [GuildController::class, 'show'])->name('guilds.show');
+    Route::post('guilds/create', [GuildController::class, 'create'])->name('guilds.create');
+    Route::post('guilds/join', [GuildController::class, 'join'])->name('guilds.join');
+    Route::post('guilds/leave', [GuildController::class, 'leave'])->name('guilds.leave');
+    Route::post('guilds/donate', [GuildController::class, 'donate'])->name('guilds.donate');
+    Route::post('guilds/pay-dues', [GuildController::class, 'payDues'])->name('guilds.pay-dues');
+    Route::post('guilds/promote', [GuildController::class, 'promote'])->name('guilds.promote');
+    Route::post('guilds/start-election', [GuildController::class, 'startElection'])->name('guilds.start-election');
+    Route::post('guilds/declare-candidacy', [GuildController::class, 'declareCandidacy'])->name('guilds.declare-candidacy');
+    Route::post('guilds/vote', [GuildController::class, 'vote'])->name('guilds.vote');
+    Route::post('guilds/set-membership-fee', [GuildController::class, 'setMembershipFee'])->name('guilds.set-membership-fee');
+    Route::post('guilds/set-weekly-dues', [GuildController::class, 'setWeeklyDues'])->name('guilds.set-weekly-dues');
+    Route::post('guilds/set-public-status', [GuildController::class, 'setPublicStatus'])->name('guilds.set-public-status');
 });
 
 require __DIR__.'/settings.php';
