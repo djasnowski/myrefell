@@ -132,6 +132,43 @@ class CrimeController extends Controller
     }
 
     /**
+     * Display the accusation form.
+     */
+    public function accuseForm(Request $request): Response
+    {
+        $user = $request->user();
+
+        // Get crime types available for accusation (exclude internal system crimes)
+        $crimeTypes = CrimeType::orderBy('severity')
+            ->orderBy('name')
+            ->get()
+            ->map(fn($ct) => [
+                'slug' => $ct->slug,
+                'name' => $ct->name,
+                'description' => $ct->description,
+                'severity' => $ct->severity,
+                'severity_display' => $ct->severity_display,
+                'court_level' => $ct->court_level,
+                'court_display' => $ct->court_display,
+            ]);
+
+        // Get players in the same location that can be accused
+        $playersInLocation = User::where('id', '!=', $user->id)
+            ->where('current_village_id', $user->current_village_id)
+            ->get()
+            ->map(fn($p) => [
+                'id' => $p->id,
+                'username' => $p->username,
+            ]);
+
+        return Inertia::render('Crime/Accuse', [
+            'crime_types' => $crimeTypes,
+            'players_in_location' => $playersInLocation,
+            'current_location' => $user->currentVillage?->name ?? 'Unknown',
+        ]);
+    }
+
+    /**
      * File an accusation against another player.
      */
     public function accuse(Request $request): RedirectResponse

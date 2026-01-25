@@ -78,6 +78,7 @@
 - [x] Bounty system
 - [x] Legitimacy system (events, modifiers, decay)
 - [ ] UI: Social class display and manumission requests
+- [x] UI: Crime accusation form (file accusations against other players)
 - [ ] UI: Court/trial interface
 - [ ] UI: Bounty board
 

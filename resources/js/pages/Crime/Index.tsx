@@ -110,6 +110,13 @@ export default function CrimeIndex() {
                     </div>
                     <div className="flex gap-2">
                         <Link
+                            href="/crime/accuse"
+                            className="flex items-center gap-2 rounded-lg border border-red-600/50 bg-red-900/20 px-3 py-2 font-pixel text-xs text-red-300 transition hover:bg-red-800/30"
+                        >
+                            <Gavel className="h-4 w-4" />
+                            File Accusation
+                        </Link>
+                        <Link
                             href="/crime/bounties"
                             className="flex items-center gap-2 rounded-lg border border-amber-600/50 bg-amber-900/20 px-3 py-2 font-pixel text-xs text-amber-300 transition hover:bg-amber-800/30"
                         >

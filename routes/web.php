@@ -365,6 +365,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('crime', [CrimeController::class, 'index'])->name('crime.index');
     Route::get('crime/types', [CrimeController::class, 'crimeTypes'])->name('crime.types');
     Route::get('crime/bounties', [CrimeController::class, 'bountyBoard'])->name('crime.bounties');
+    Route::get('crime/accuse', [CrimeController::class, 'accuseForm'])->name('crime.accuse.form');
     Route::post('crime/accuse', [CrimeController::class, 'accuse'])->name('crime.accuse');
     Route::post('crime/accusation/{accusation}/withdraw', [CrimeController::class, 'withdrawAccusation'])->name('crime.accusation.withdraw');
     Route::post('crime/bounty', [CrimeController::class, 'postBounty'])->name('crime.bounty.post');
