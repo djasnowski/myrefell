@@ -330,11 +330,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Caravans
     Route::get('trade/caravans', [CaravanController::class, 'index'])->name('trade.caravans');
+    Route::get('trade/caravans/{caravan}', [CaravanController::class, 'show'])->name('trade.caravans.show');
     Route::post('trade/caravans', [CaravanController::class, 'store'])->name('trade.caravans.store');
     Route::post('trade/caravans/{caravan}/load', [CaravanController::class, 'loadGoods'])->name('trade.caravans.load');
     Route::post('trade/caravans/{caravan}/dispatch', [CaravanController::class, 'dispatch'])->name('trade.caravans.dispatch');
     Route::post('trade/caravans/{caravan}/unload', [CaravanController::class, 'unload'])->name('trade.caravans.unload');
     Route::post('trade/caravans/{caravan}/disband', [CaravanController::class, 'disband'])->name('trade.caravans.disband');
+    Route::post('trade/caravans/{caravan}/remove-goods', [CaravanController::class, 'removeGoods'])->name('trade.caravans.remove-goods');
 
     // Guilds
     Route::get('guilds', [GuildController::class, 'index'])->name('guilds.index');

@@ -1,9 +1,10 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     Box,
     Clock,
     Coins,
+    Eye,
     MapPin,
     Package,
     Plus,
@@ -289,17 +290,26 @@ export default function Caravans() {
                 )}
 
                 {/* Actions */}
-                {showActions && isActive && (
+                {showActions && (
                     <div className="flex gap-2">
-                        <button
-                            onClick={() => disbandCaravan(caravan.id)}
-                            disabled={isDisbanding === caravan.id || caravan.status === 'traveling'}
-                            className="flex flex-1 items-center justify-center gap-1 rounded border border-red-600/50 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-300 transition hover:bg-red-900/40 disabled:cursor-not-allowed disabled:opacity-50"
-                            title={caravan.status === 'traveling' ? 'Cannot disband while traveling' : 'Disband caravan'}
+                        <Link
+                            href={`/trade/caravans/${caravan.id}`}
+                            className="flex flex-1 items-center justify-center gap-1 rounded border border-amber-600/50 bg-amber-900/20 px-3 py-1.5 font-pixel text-xs text-amber-300 transition hover:bg-amber-900/40"
                         >
-                            <XCircle className="h-3 w-3" />
-                            {isDisbanding === caravan.id ? 'Disbanding...' : 'Disband'}
-                        </button>
+                            <Eye className="h-3 w-3" />
+                            View Details
+                        </Link>
+                        {isActive && (
+                            <button
+                                onClick={() => disbandCaravan(caravan.id)}
+                                disabled={isDisbanding === caravan.id || caravan.status === 'traveling'}
+                                className="flex flex-1 items-center justify-center gap-1 rounded border border-red-600/50 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-300 transition hover:bg-red-900/40 disabled:cursor-not-allowed disabled:opacity-50"
+                                title={caravan.status === 'traveling' ? 'Cannot disband while traveling' : 'Disband caravan'}
+                            >
+                                <XCircle className="h-3 w-3" />
+                                {isDisbanding === caravan.id ? 'Disbanding...' : 'Disband'}
+                            </button>
+                        )}
                     </div>
                 )}
 

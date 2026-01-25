@@ -18,6 +18,132 @@ class CaravanController extends Controller
     ) {}
 
     /**
+     * Display a single caravan detail page.
+     */
+    public function show(Request $request, Caravan $caravan): Response
+    {
+        $user = $request->user();
+
+        // Check ownership
+        if ($caravan->owner_id !== $user->id) {
+            abort(403, 'You do not own this caravan.');
+        }
+
+        // Load relations
+        $caravan->load(['tradeRoute.originSettlement', 'tradeRoute.destinationSettlement', 'goods.item', 'events']);
+
+        // Get available routes from current location
+        $availableRoutes = TradeRoute::active()
+            ->where(function ($query) use ($caravan) {
+                $query->where('origin_type', $caravan->current_location_type)
+                    ->where('origin_id', $caravan->current_location_id);
+            })
+            ->get()
+            ->map(fn ($route) => [
+                'id' => $route->id,
+                'name' => $route->name,
+                'origin' => [
+                    'type' => $route->origin_type,
+                    'id' => $route->origin_id,
+                    'name' => $route->origin?->name ?? 'Unknown',
+                ],
+                'destination' => [
+                    'type' => $route->destination_type,
+                    'id' => $route->destination_id,
+                    'name' => $route->destination?->name ?? 'Unknown',
+                ],
+                'base_travel_days' => $route->base_travel_days,
+                'danger_level' => $route->danger_level,
+            ]);
+
+        // Get player's tradeable inventory items
+        $inventory = $user->inventory()
+            ->with('item')
+            ->whereHas('item', fn ($q) => $q->where('is_tradeable', true))
+            ->get()
+            ->map(fn ($inv) => [
+                'id' => $inv->item_id,
+                'name' => $inv->item->name ?? 'Unknown',
+                'quantity' => $inv->quantity,
+                'base_price' => $inv->item->base_price ?? 1,
+            ]);
+
+        return Inertia::render('Trade/CaravanShow', [
+            'caravan' => $this->mapCaravanDetail($caravan),
+            'available_routes' => $availableRoutes->toArray(),
+            'inventory' => $inventory->toArray(),
+        ]);
+    }
+
+    /**
+     * Map caravan to detailed array for frontend.
+     */
+    private function mapCaravanDetail(Caravan $caravan): array
+    {
+        $route = $caravan->tradeRoute;
+
+        return [
+            'id' => $caravan->id,
+            'name' => $caravan->name,
+            'status' => $caravan->status,
+            'capacity' => $caravan->capacity,
+            'guards' => $caravan->guards,
+            'gold_carried' => $caravan->gold_carried,
+            'travel_progress' => $caravan->travel_progress,
+            'travel_total' => $caravan->travel_total,
+            'travel_progress_percent' => $caravan->travel_progress_percent,
+            'departed_at' => $caravan->departed_at?->toISOString(),
+            'arrived_at' => $caravan->arrived_at?->toISOString(),
+            'current_location' => [
+                'type' => $caravan->current_location_type,
+                'id' => $caravan->current_location_id,
+                'name' => $caravan->current_location?->name ?? 'Unknown',
+            ],
+            'destination' => [
+                'type' => $caravan->destination_type,
+                'id' => $caravan->destination_id,
+                'name' => $caravan->destination?->name ?? 'Unknown',
+            ],
+            'route' => $route ? [
+                'id' => $route->id,
+                'name' => $route->name,
+                'danger_level' => $route->danger_level,
+                'base_travel_days' => $route->base_travel_days,
+                'origin_name' => $route->origin?->name ?? 'Unknown',
+                'destination_name' => $route->destination?->name ?? 'Unknown',
+            ] : null,
+            'goods' => $caravan->goods->map(fn ($goods) => [
+                'id' => $goods->id,
+                'item_id' => $goods->item_id,
+                'item_name' => $goods->item->name ?? 'Unknown',
+                'quantity' => $goods->quantity,
+                'purchase_price' => $goods->purchase_price,
+                'total_value' => $goods->total_value,
+            ])->toArray(),
+            'total_goods' => $caravan->total_goods,
+            'remaining_capacity' => $caravan->remaining_capacity,
+            'goods_value' => $caravan->goods->sum('total_value'),
+            'events' => $caravan->events->map(fn ($event) => [
+                'id' => $event->id,
+                'event_type' => $event->event_type,
+                'event_type_name' => $event->event_type_name,
+                'description' => $event->description,
+                'gold_lost' => $event->gold_lost,
+                'gold_gained' => $event->gold_gained,
+                'goods_lost' => $event->goods_lost,
+                'guards_lost' => $event->guards_lost,
+                'days_delayed' => $event->days_delayed,
+                'is_negative' => $event->isNegative(),
+                'is_positive' => $event->isPositive(),
+                'created_at' => $event->created_at->toISOString(),
+            ])->sortByDesc('created_at')->values()->toArray(),
+            'can_depart' => $caravan->canDepart(),
+            'is_traveling' => $caravan->isTraveling(),
+            'has_arrived' => $caravan->status === Caravan::STATUS_ARRIVED,
+        ];
+    }
+
+    /**
      * Display a listing of the user's caravans.
      */
     public function index(Request $request): Response
@@ -291,5 +417,68 @@ class CaravanController extends Controller
         $result = $this->caravanService->disbandCaravan($caravan);
 
         return response()->json($result, $result['success'] ? 200 : 400);
+    }
+
+    /**
+     * Remove goods from caravan (return to inventory).
+     */
+    public function removeGoods(Request $request, Caravan $caravan): JsonResponse
+    {
+        $user = $request->user();
+
+        // Check ownership
+        if ($caravan->owner_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not own this caravan.',
+            ], 403);
+        }
+
+        // Can only remove goods while preparing
+        if ($caravan->status !== Caravan::STATUS_PREPARING) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Can only remove goods while caravan is loading.',
+            ], 400);
+        }
+
+        $validated = $request->validate([
+            'item_id' => 'required|exists:items,id',
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        $goods = $caravan->goods()->where('item_id', $validated['item_id'])->first();
+
+        if (!$goods || $goods->quantity < $validated['quantity']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Insufficient goods in caravan.',
+            ], 400);
+        }
+
+        // Return to player inventory
+        $existingInventory = $user->inventory()->where('item_id', $validated['item_id'])->first();
+        if ($existingInventory) {
+            $existingInventory->increment('quantity', $validated['quantity']);
+        } else {
+            $user->inventory()->create([
+                'item_id' => $validated['item_id'],
+                'quantity' => $validated['quantity'],
+            ]);
+        }
+
+        // Remove from caravan
+        if ($goods->quantity === $validated['quantity']) {
+            $goods->delete();
+        } else {
+            $goods->decrement('quantity', $validated['quantity']);
+        }
+
+        $item = Item::find($validated['item_id']);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Removed {$validated['quantity']} {$item->name} from caravan.",
+        ]);
     }
 }
