@@ -13,6 +13,41 @@ use Inertia\Response;
 class WarController extends Controller
 {
     /**
+     * Display a specific war.
+     */
+    public function show(Request $request, War $war): Response
+    {
+        $user = $request->user();
+
+        // Load all related data
+        $war->load([
+            'attackerKingdom',
+            'defenderKingdom',
+            'participants',
+            'battles' => function ($query) {
+                $query->latest('started_at');
+            },
+            'sieges',
+            'goals',
+            'peaceTreaty',
+        ]);
+
+        // Check if user can offer peace (is war leader)
+        $userParticipant = $war->participants
+            ->where('participant_type', 'player')
+            ->where('participant_id', $user->id)
+            ->first();
+        $canOfferPeace = $userParticipant && $userParticipant->is_war_leader && $war->status === War::STATUS_ACTIVE;
+
+        return Inertia::render('Warfare/WarShow', [
+            'war' => $this->mapWar($war, $user, true),
+            'all_battles' => $war->battles->map(fn ($b) => $this->mapBattle($b))->toArray(),
+            'all_sieges' => $war->sieges->map(fn ($s) => $this->mapSiege($s))->toArray(),
+            'can_offer_peace' => $canOfferPeace,
+        ]);
+    }
+
+    /**
      * Display a listing of wars.
      */
     public function index(Request $request): Response

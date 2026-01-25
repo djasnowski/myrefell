@@ -451,6 +451,14 @@ export default function Wars() {
                         </div>
                     </details>
                 )}
+
+                {/* View Details Link */}
+                <Link
+                    href={`/warfare/wars/${war.id}`}
+                    className="mt-3 flex items-center justify-center gap-1 rounded border border-stone-600/50 bg-stone-900/30 px-3 py-2 font-pixel text-xs text-stone-300 transition hover:bg-stone-800/50"
+                >
+                    View Full Details
+                </Link>
             </div>
         );
     };

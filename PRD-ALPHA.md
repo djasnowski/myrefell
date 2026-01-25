@@ -233,15 +233,15 @@ return Inertia::render('Warfare/ArmyShow', [
 ```
 
 **Features:**
-- [ ] War name, casus belli, start date
-- [ ] Attacker vs Defender blocks with war scores
-- [ ] War score progress bar
-- [ ] Participant list (primary + allies) with contribution scores
-- [ ] War goals list with completion status
-- [ ] Active battles list with links
-- [ ] Active sieges list with links
-- [ ] Recent battle results
-- [ ] Peace offer button (for war leaders)
+- [x] War name, casus belli, start date
+- [x] Attacker vs Defender blocks with war scores
+- [x] War score progress bar
+- [x] Participant list (primary + allies) with contribution scores
+- [x] War goals list with completion status
+- [x] Active battles list with links
+- [x] Active sieges list with links
+- [x] Recent battle results
+- [x] Peace offer button (for war leaders)
 
 **Props needed:**
 ```php

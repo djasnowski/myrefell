@@ -409,6 +409,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Warfare - Wars
     Route::get('warfare/wars', [WarController::class, 'index'])->name('warfare.wars');
+    Route::get('warfare/wars/{war}', [WarController::class, 'show'])->name('warfare.wars.show');
 
     // Warfare - Sieges
     Route::get('warfare/sieges/{siege}', [SiegeController::class, 'show'])->name('warfare.sieges.show');
