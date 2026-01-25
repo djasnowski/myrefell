@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Barony;
+use App\Models\PlayerRole;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -45,9 +47,31 @@ class BaronyController extends Controller
     /**
      * Display the specified barony.
      */
-    public function show(Barony $barony): Response
+    public function show(Request $request, Barony $barony): Response
     {
-        $barony->load(['kingdom', 'villages', 'towns']);
+        $barony->load(['kingdom', 'villages', 'towns', 'baron']);
+        $user = $request->user();
+
+        // Get the baron's role assignment for legitimacy
+        $baron = null;
+        if ($barony->baron) {
+            $baronRole = Role::where('slug', 'baron')->first();
+            $baronAssignment = null;
+            if ($baronRole) {
+                $baronAssignment = PlayerRole::active()
+                    ->where('role_id', $baronRole->id)
+                    ->where('location_type', 'barony')
+                    ->where('location_id', $barony->id)
+                    ->first();
+            }
+
+            $baron = [
+                'id' => $barony->baron->id,
+                'username' => $barony->baron->username,
+                'primary_title' => $barony->baron->primary_title,
+                'legitimacy' => $baronAssignment?->legitimacy ?? 50,
+            ];
+        }
 
         return Inertia::render('baronies/show', [
             'barony' => [
@@ -81,7 +105,9 @@ class BaronyController extends Controller
                 ]),
                 'village_count' => $barony->villages->count(),
                 'town_count' => $barony->towns->count(),
+                'baron' => $baron,
             ],
+            'current_user_id' => $user->id,
         ]);
     }
 

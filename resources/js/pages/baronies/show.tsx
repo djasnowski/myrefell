@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { RulerDisplay } from '@/components/ui/legitimacy-badge';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -10,6 +11,13 @@ interface Village {
     biome: string;
     is_town: boolean;
     population: number;
+}
+
+interface Ruler {
+    id: number;
+    username: string;
+    primary_title?: string | null;
+    legitimacy?: number;
 }
 
 interface Barony {
@@ -30,10 +38,12 @@ interface Barony {
     } | null;
     villages: Village[];
     village_count: number;
+    baron?: Ruler | null;
 }
 
 interface Props {
     barony: Barony;
+    current_user_id: number;
 }
 
 const biomeColors: Record<string, string> = {
@@ -47,7 +57,7 @@ const biomeColors: Record<string, string> = {
     swamps: 'bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200',
 };
 
-export default function BaronyShow({ barony }: Props) {
+export default function BaronyShow({ barony, current_user_id }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
         { title: 'Baronies', href: '/baronies' },
@@ -111,6 +121,13 @@ export default function BaronyShow({ barony }: Props) {
                         </CardHeader>
                     </Card>
                 </div>
+
+                {/* Baron / Ruler */}
+                <RulerDisplay
+                    ruler={barony.baron}
+                    title="Baron"
+                    isCurrentUser={barony.baron?.id === current_user_id}
+                />
 
                 <div className="flex gap-4">
                     <Link

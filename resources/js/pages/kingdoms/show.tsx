@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { RulerDisplay } from '@/components/ui/legitimacy-badge';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -10,6 +11,13 @@ interface Barony {
     biome: string;
     is_capital: boolean;
     village_count: number;
+}
+
+interface Ruler {
+    id: number;
+    username: string;
+    primary_title?: string | null;
+    legitimacy?: number;
 }
 
 interface Kingdom {
@@ -30,10 +38,12 @@ interface Kingdom {
     baronies: Barony[];
     barony_count: number;
     total_villages: number;
+    king?: Ruler | null;
 }
 
 interface Props {
     kingdom: Kingdom;
+    current_user_id: number;
 }
 
 const biomeColors: Record<string, string> = {
@@ -47,7 +57,7 @@ const biomeColors: Record<string, string> = {
     swamps: 'bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200',
 };
 
-export default function KingdomShow({ kingdom }: Props) {
+export default function KingdomShow({ kingdom, current_user_id }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
         { title: 'Kingdoms', href: '/kingdoms' },
@@ -104,6 +114,13 @@ export default function KingdomShow({ kingdom }: Props) {
                         </CardHeader>
                     </Card>
                 </div>
+
+                {/* King / Ruler */}
+                <RulerDisplay
+                    ruler={kingdom.king}
+                    title="King"
+                    isCurrentUser={kingdom.king?.id === current_user_id}
+                />
 
                 <div className="flex gap-4">
                     <Link

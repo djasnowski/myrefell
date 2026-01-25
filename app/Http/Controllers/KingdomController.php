@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Kingdom;
+use App\Models\PlayerRole;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -43,9 +45,31 @@ class KingdomController extends Controller
     /**
      * Display the specified kingdom.
      */
-    public function show(Kingdom $kingdom): Response
+    public function show(Request $request, Kingdom $kingdom): Response
     {
-        $kingdom->load(['capitalTown', 'baronies.villages', 'baronies.towns']);
+        $kingdom->load(['capitalTown', 'baronies.villages', 'baronies.towns', 'king']);
+        $user = $request->user();
+
+        // Get the king's role assignment for legitimacy
+        $king = null;
+        if ($kingdom->king) {
+            $kingRole = Role::where('slug', 'king')->first();
+            $kingAssignment = null;
+            if ($kingRole) {
+                $kingAssignment = PlayerRole::active()
+                    ->where('role_id', $kingRole->id)
+                    ->where('location_type', 'kingdom')
+                    ->where('location_id', $kingdom->id)
+                    ->first();
+            }
+
+            $king = [
+                'id' => $kingdom->king->id,
+                'username' => $kingdom->king->username,
+                'primary_title' => $kingdom->king->primary_title,
+                'legitimacy' => $kingAssignment?->legitimacy ?? 50,
+            ];
+        }
 
         return Inertia::render('kingdoms/show', [
             'kingdom' => [
@@ -74,7 +98,9 @@ class KingdomController extends Controller
                 'barony_count' => $kingdom->baronies->count(),
                 'total_villages' => $kingdom->baronies->sum(fn ($b) => $b->villages->count()),
                 'total_towns' => $kingdom->baronies->sum(fn ($b) => $b->towns->count()),
+                'king' => $king,
             ],
+            'current_user_id' => $user->id,
         ]);
     }
 

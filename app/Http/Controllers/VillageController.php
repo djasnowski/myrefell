@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\MigrationRequest;
+use App\Models\PlayerRole;
+use App\Models\Role;
 use App\Models\Village;
 use App\Services\MigrationService;
 use Illuminate\Http\Request;
@@ -58,6 +60,27 @@ class VillageController extends Controller
             ->pending()
             ->exists();
 
+        // Get the village elder (primary ruler) with legitimacy
+        $elderRole = Role::where('slug', 'elder')->first();
+        $elder = null;
+        if ($elderRole) {
+            $elderAssignment = PlayerRole::active()
+                ->where('role_id', $elderRole->id)
+                ->where('location_type', 'village')
+                ->where('location_id', $village->id)
+                ->with('user')
+                ->first();
+
+            if ($elderAssignment && $elderAssignment->user) {
+                $elder = [
+                    'id' => $elderAssignment->user->id,
+                    'username' => $elderAssignment->user->username,
+                    'primary_title' => $elderAssignment->user->primary_title,
+                    'legitimacy' => $elderAssignment->legitimacy ?? 50,
+                ];
+            }
+        }
+
         return Inertia::render('villages/show', [
             'village' => [
                 'id' => $village->id,
@@ -90,10 +113,12 @@ class VillageController extends Controller
                     'combat_level' => $resident->combat_level,
                 ]),
                 'resident_count' => $village->residents->count(),
+                'elder' => $elder,
             ],
             'is_resident' => $isResident,
             'can_migrate' => $migrationService->canMigrate($user),
             'has_pending_request' => $hasPendingRequest,
+            'current_user_id' => $user->id,
         ]);
     }
 

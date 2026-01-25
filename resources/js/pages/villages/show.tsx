@@ -3,6 +3,7 @@ import { Home, Loader2, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { RulerDisplay } from '@/components/ui/legitimacy-badge';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -10,6 +11,13 @@ interface Resident {
     id: number;
     username: string;
     combat_level: number;
+}
+
+interface Ruler {
+    id: number;
+    username: string;
+    primary_title?: string | null;
+    legitimacy?: number;
 }
 
 interface Village {
@@ -35,6 +43,7 @@ interface Village {
     } | null;
     residents: Resident[];
     resident_count: number;
+    elder?: Ruler | null;
 }
 
 interface Props {
@@ -42,6 +51,7 @@ interface Props {
     is_resident: boolean;
     can_migrate: boolean;
     has_pending_request: boolean;
+    current_user_id: number;
 }
 
 const biomeColors: Record<string, string> = {
@@ -55,7 +65,7 @@ const biomeColors: Record<string, string> = {
     swamps: 'bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200',
 };
 
-export default function VillageShow({ village, is_resident, can_migrate, has_pending_request }: Props) {
+export default function VillageShow({ village, is_resident, can_migrate, has_pending_request, current_user_id }: Props) {
     const [loading, setLoading] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -142,6 +152,13 @@ export default function VillageShow({ village, is_resident, can_migrate, has_pen
                         </CardHeader>
                     </Card>
                 </div>
+
+                {/* Village Elder / Ruler */}
+                <RulerDisplay
+                    ruler={village.elder}
+                    title="Village Elder"
+                    isCurrentUser={village.elder?.id === current_user_id}
+                />
 
                 <div className="flex gap-4">
                     <Link
