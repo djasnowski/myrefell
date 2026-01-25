@@ -43,4 +43,7 @@
 - [x] Religion System
 - [x] Charter System
 
+### Phase 1 - Core Player Loop
+- [x] Combat Stat Training (ATK/STR/DEF)
+
 ## Status: PRD Complete

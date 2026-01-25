@@ -28,6 +28,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ReligionController;
 use App\Http\Controllers\CharterController;
 use App\Http\Controllers\StableController;
+use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\VillageController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -153,6 +154,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('gathering', [GatheringController::class, 'index'])->name('gathering.index');
     Route::get('gathering/{activity}', [GatheringController::class, 'show'])->name('gathering.show');
     Route::post('gathering/gather', [GatheringController::class, 'gather'])->name('gathering.gather');
+
+    // Training (Combat Stats)
+    Route::get('training', [TrainingController::class, 'index'])->name('training.index');
+    Route::post('training/train', [TrainingController::class, 'train'])->name('training.train');
+    Route::get('training/status', [TrainingController::class, 'status'])->name('training.status');
 
     // Crafting
     Route::get('crafting', [CraftingController::class, 'index'])->name('crafting.index');
