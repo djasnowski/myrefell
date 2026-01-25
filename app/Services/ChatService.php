@@ -260,18 +260,18 @@ class ChatService
             }
         }
 
-        // Check parent locations (village -> castle -> kingdom)
+        // Check parent locations (village -> barony -> kingdom)
         if ($locationType === 'village') {
             $village = \App\Models\Village::find($locationId);
-            if ($village && $village->castle_id) {
-                if ($this->hasModeratePermission($user, 'castle', $village->castle_id)) {
+            if ($village && $village->barony_id) {
+                if ($this->hasModeratePermission($user, 'barony', $village->barony_id)) {
                     return true;
                 }
             }
-        } elseif ($locationType === 'castle') {
-            $castle = \App\Models\Castle::find($locationId);
-            if ($castle && $castle->kingdom_id) {
-                if ($this->hasModeratePermission($user, 'kingdom', $castle->kingdom_id)) {
+        } elseif ($locationType === 'barony') {
+            $barony = \App\Models\Barony::find($locationId);
+            if ($barony && $barony->kingdom_id) {
+                if ($this->hasModeratePermission($user, 'kingdom', $barony->kingdom_id)) {
                     return true;
                 }
             }

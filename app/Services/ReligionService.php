@@ -531,7 +531,7 @@ class ReligionService
         }
 
         // Validate location
-        if (!in_array($locationType, ['village', 'castle', 'kingdom'])) {
+        if (!in_array($locationType, ['village', 'barony', 'kingdom'])) {
             return ['success' => false, 'message' => 'Invalid location type.'];
         }
 
@@ -768,8 +768,9 @@ class ReligionService
     {
         // Get kingdom based on current location
         return match ($player->current_location_type) {
-            'village' => \App\Models\Village::find($player->current_location_id)?->castle?->kingdom_id,
-            'castle' => \App\Models\Castle::find($player->current_location_id)?->kingdom_id,
+            'village' => \App\Models\Village::find($player->current_location_id)?->barony?->kingdom_id,
+            'barony' => \App\Models\Barony::find($player->current_location_id)?->kingdom_id,
+            'town' => \App\Models\Town::find($player->current_location_id)?->barony?->kingdom_id,
             'kingdom' => $player->current_location_id,
             default => null,
         };

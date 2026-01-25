@@ -81,15 +81,15 @@ class RoleSeeder extends Seeder
             ],
         ];
 
-        // Castle Roles
-        $castleRoles = [
+        // Barony Roles
+        $baronyRoles = [
             [
-                'name' => 'Lord',
-                'slug' => 'lord',
+                'name' => 'Baron',
+                'slug' => 'baron',
                 'icon' => 'crown',
-                'description' => 'The ruler of the castle and surrounding villages, a powerful noble.',
-                'location_type' => 'castle',
-                'permissions' => ['manage_castle', 'appoint_roles', 'remove_roles', 'set_taxes', 'declare_war', 'moderate_chat'],
+                'description' => 'The ruler of the barony and surrounding villages, a powerful noble.',
+                'location_type' => 'barony',
+                'permissions' => ['manage_barony', 'appoint_roles', 'remove_roles', 'set_taxes', 'declare_war', 'moderate_chat'],
                 'bonuses' => ['xp_bonus' => 10, 'reputation_bonus' => 20, 'income_bonus' => 15],
                 'salary' => 500,
                 'tier' => 5,
@@ -100,8 +100,8 @@ class RoleSeeder extends Seeder
                 'name' => 'Steward',
                 'slug' => 'steward',
                 'icon' => 'briefcase',
-                'description' => 'The administrator who manages castle affairs and resources.',
-                'location_type' => 'castle',
+                'description' => 'The administrator who manages barony affairs and resources.',
+                'location_type' => 'barony',
                 'permissions' => ['manage_resources', 'manage_staff', 'access_treasury'],
                 'bonuses' => ['resource_bonus' => 10, 'efficiency_bonus' => 5],
                 'salary' => 200,
@@ -113,8 +113,8 @@ class RoleSeeder extends Seeder
                 'name' => 'Marshal',
                 'slug' => 'marshal',
                 'icon' => 'swords',
-                'description' => 'The military commander of the castle forces.',
-                'location_type' => 'castle',
+                'description' => 'The military commander of the barony forces.',
+                'location_type' => 'barony',
                 'permissions' => ['command_troops', 'manage_defenses', 'lead_attacks'],
                 'bonuses' => ['combat_xp_bonus' => 15, 'army_bonus' => 10],
                 'salary' => 250,
@@ -126,8 +126,8 @@ class RoleSeeder extends Seeder
                 'name' => 'Treasurer',
                 'slug' => 'treasurer',
                 'icon' => 'wallet',
-                'description' => 'The keeper of the castle treasury and financial records.',
-                'location_type' => 'castle',
+                'description' => 'The keeper of the barony treasury and financial records.',
+                'location_type' => 'barony',
                 'permissions' => ['access_treasury', 'manage_finances', 'collect_taxes'],
                 'bonuses' => ['gold_bonus' => 10, 'tax_efficiency' => 5],
                 'salary' => 175,
@@ -139,8 +139,8 @@ class RoleSeeder extends Seeder
                 'name' => 'Jailsman',
                 'slug' => 'jailsman',
                 'icon' => 'gavel',
-                'description' => 'The warden of the castle dungeon, responsible for prisoners.',
-                'location_type' => 'castle',
+                'description' => 'The warden of the barony dungeon, responsible for prisoners.',
+                'location_type' => 'barony',
                 'permissions' => ['manage_prison', 'interrogate', 'release_prisoners'],
                 'bonuses' => ['intimidation_bonus' => 10],
                 'salary' => 100,
@@ -206,7 +206,7 @@ class RoleSeeder extends Seeder
             ],
         ];
 
-        $allRoles = array_merge($villageRoles, $castleRoles, $kingdomRoles);
+        $allRoles = array_merge($villageRoles, $baronyRoles, $kingdomRoles);
 
         foreach ($allRoles as $roleData) {
             Role::updateOrCreate(

@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Castle;
+use App\Models\Barony;
 use App\Models\Kingdom;
 use App\Models\Town;
 use App\Models\User;
@@ -49,9 +49,21 @@ class TravelService
             throw new \InvalidArgumentException('You are already at this location.');
         }
 
-        // Check energy
-        if (! $user->hasEnergy(self::ENERGY_COST)) {
-            throw new \InvalidArgumentException('Not enough energy to travel.');
+        // Determine if using horse or walking
+        $usingHorse = $user->hasHorseWithMe();
+        $playerHorse = $usingHorse ? $user->horse : null;
+
+        if ($usingHorse) {
+            // Check horse stamina
+            $staminaCost = $playerHorse->stamina_cost;
+            if (!$playerHorse->hasStamina($staminaCost)) {
+                throw new \InvalidArgumentException("Your horse is too tired to travel. Rest at a stable or travel on foot.");
+            }
+        } else {
+            // Check player energy for walking
+            if (! $user->hasEnergy(self::ENERGY_COST)) {
+                throw new \InvalidArgumentException('Not enough energy to travel.');
+            }
         }
 
         // Calculate travel time based on coordinate distance
@@ -64,9 +76,14 @@ class TravelService
             $arrivesAt = now()->addMinutes($travelMinutes);
         }
 
-        return DB::transaction(function () use ($user, $destinationType, $destinationId, $arrivesAt, $destination, $travelMinutes) {
-            // Consume energy
-            $user->consumeEnergy(self::ENERGY_COST);
+        return DB::transaction(function () use ($user, $destinationType, $destinationId, $arrivesAt, $destination, $travelMinutes, $usingHorse, $playerHorse) {
+            if ($usingHorse) {
+                // Consume horse stamina
+                $playerHorse->consumeStamina($playerHorse->stamina_cost);
+            } else {
+                // Consume player energy
+                $user->consumeEnergy(self::ENERGY_COST);
+            }
 
             // Set travel state
             $user->is_traveling = true;
@@ -85,6 +102,7 @@ class TravelService
                 'travel_time_minutes' => $travelMinutes,
                 'arrives_at' => $arrivesAt->toIso8601String(),
                 'started_at' => now()->toIso8601String(),
+                'used_horse' => $usingHorse,
             ];
         });
     }
@@ -216,7 +234,7 @@ class TravelService
 
         $destinations = [];
 
-        // Get all nearby villages
+        // Get all nearby villages (includes hamlets)
         $villages = Village::all();
         foreach ($villages as $village) {
             // Skip current location
@@ -227,32 +245,36 @@ class TravelService
             $distance = $this->calculateDistance($currentCoords, $village->coordinates_x, $village->coordinates_y);
             if ($distance <= self::MAX_TRAVEL_DISTANCE) {
                 $baseTime = $distance / self::DISTANCE_DIVISOR;
+                $locationType = $village->isHamlet() ? 'hamlet' : 'village';
                 $destinations[] = [
-                    'type' => 'village',
+                    'type' => 'village', // Still use 'village' for DB lookup
+                    'display_type' => $locationType,
                     'id' => $village->id,
                     'name' => $village->name,
                     'biome' => $village->biome,
                     'distance' => $distance,
                     'travel_time' => max(1, (int) ceil($baseTime / $speedMultiplier)),
+                    'is_hamlet' => $village->isHamlet(),
                 ];
             }
         }
 
-        // Get all nearby castles
-        $castles = Castle::all();
-        foreach ($castles as $castle) {
-            if ($currentType === 'castle' && $currentId === $castle->id) {
+        // Get all nearby baronies
+        $baronies = Barony::all();
+        foreach ($baronies as $barony) {
+            if ($currentType === 'barony' && $currentId === $barony->id) {
                 continue;
             }
 
-            $distance = $this->calculateDistance($currentCoords, $castle->coordinates_x, $castle->coordinates_y);
+            $distance = $this->calculateDistance($currentCoords, $barony->coordinates_x, $barony->coordinates_y);
             if ($distance <= self::MAX_TRAVEL_DISTANCE) {
                 $baseTime = $distance / self::DISTANCE_DIVISOR;
                 $destinations[] = [
-                    'type' => 'castle',
-                    'id' => $castle->id,
-                    'name' => $castle->name,
-                    'biome' => $castle->biome,
+                    'type' => 'barony',
+                    'display_type' => 'barony',
+                    'id' => $barony->id,
+                    'name' => $barony->name,
+                    'biome' => $barony->biome,
                     'distance' => $distance,
                     'travel_time' => max(1, (int) ceil($baseTime / $speedMultiplier)),
                 ];
@@ -271,6 +293,7 @@ class TravelService
                 $baseTime = $distance / self::DISTANCE_DIVISOR;
                 $destinations[] = [
                     'type' => 'town',
+                    'display_type' => 'town',
                     'id' => $town->id,
                     'name' => $town->name,
                     'biome' => $town->biome,
@@ -351,8 +374,8 @@ class TravelService
         }
 
         return match ($type) {
-            'village' => Village::find($id),
-            'castle' => Castle::find($id),
+            'village', 'hamlet' => Village::find($id),
+            'barony' => Barony::find($id),
             'town' => Town::find($id),
             'kingdom' => Kingdom::find($id),
             default => null,

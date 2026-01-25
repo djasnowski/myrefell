@@ -23,16 +23,14 @@ interface Town extends Location {
     population: number;
 }
 
-interface CastleType extends Location {
+interface BaronyType extends Location {
     kingdom_id: number;
     kingdom_name: string;
-    town_id: number;
-    town_name: string;
 }
 
 interface Village extends Location {
-    castle_id: number;
-    castle_name: string;
+    barony_id: number;
+    barony_name: string;
     kingdom_name: string;
     population: number;
     is_port: boolean;
@@ -59,7 +57,7 @@ interface MapBounds {
 interface MapData {
     kingdoms: Kingdom[];
     towns: Town[];
-    castles: CastleType[];
+    baronies: BaronyType[];
     villages: Village[];
     player: PlayerLocation;
     bounds: MapBounds;
@@ -88,7 +86,7 @@ const biomeColors: Record<string, { terrain: string; accent: string; label: stri
 const iconColors = {
     kingdom: { bg: '#1c1917', icon: '#fbbf24', stroke: '#fbbf24' },
     town: { bg: '#1e3a5f', icon: '#60a5fa', stroke: '#3b82f6' },
-    castle: { bg: '#3d3d3d', icon: '#a8a29e', stroke: '#78716c' },
+    barony: { bg: '#3d3d3d', icon: '#a8a29e', stroke: '#78716c' },
     village: { bg: '#14532d', icon: '#4ade80', stroke: '#22c55e' },
     port: { bg: '#1e3a5f', icon: '#38bdf8', stroke: '#0ea5e9' },
 };
@@ -147,7 +145,7 @@ function generateIslandPath(cx: number, cy: number, index: number): string {
 
 export default function Dashboard() {
     const { map_data } = usePage<PageProps>().props;
-    const { kingdoms, towns, castles, villages, player, bounds } = map_data;
+    const { kingdoms, towns, baronies, villages, player, bounds } = map_data;
 
     const [zoom, setZoom] = useState(1);
     const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -158,7 +156,7 @@ export default function Dashboard() {
     const [mouseCoords, setMouseCoords] = useState<{ x: number; y: number } | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedResult, setSelectedResult] = useState<{ type: string; data: Location } | null>(null);
-    const [clickedLocation, setClickedLocation] = useState<{ type: string; data: Location & { population?: number; is_port?: boolean; kingdom_name?: string; castle_name?: string } } | null>(null);
+    const [clickedLocation, setClickedLocation] = useState<{ type: string; data: Location & { population?: number; is_port?: boolean; kingdom_name?: string; barony_name?: string } } | null>(null);
     const [isTraveling, setIsTraveling] = useState(false);
     const svgRef = useRef<SVGSVGElement>(null);
 
@@ -188,7 +186,7 @@ export default function Dashboard() {
             rumors.push("Folk speak of a healer");
             rumors.push("There's said to be a bank");
             if (isPort) rumors.push("Ships dock at the harbor");
-        } else if (type === 'castle') {
+        } else if (type === 'barony') {
             rumors.push("Knights train in the barracks");
             rumors.push("An arena for combat");
             rumors.push("A secure vault");
@@ -202,7 +200,7 @@ export default function Dashboard() {
         return rumors;
     };
 
-    const handleLocationClick = (type: string, data: Location & { population?: number; is_port?: boolean; kingdom_name?: string; castle_name?: string }) => {
+    const handleLocationClick = (type: string, data: Location & { population?: number; is_port?: boolean; kingdom_name?: string; barony_name?: string }) => {
         setClickedLocation({ type, data });
     };
 
@@ -243,9 +241,9 @@ export default function Dashboard() {
             const dist = calcDistance(t);
             results.push({ type: 'town', data: t, distance: dist, travelTime: Math.max(1, Math.ceil(dist / 10)) });
         });
-        castles.filter(c => c.name.toLowerCase().includes(query)).forEach(c => {
+        baronies.filter(c => c.name.toLowerCase().includes(query)).forEach(c => {
             const dist = calcDistance(c);
-            results.push({ type: 'castle', data: c, distance: dist, travelTime: Math.max(1, Math.ceil(dist / 10)) });
+            results.push({ type: 'barony', data: c, distance: dist, travelTime: Math.max(1, Math.ceil(dist / 10)) });
         });
         villages.filter(v => v.name.toLowerCase().includes(query)).forEach(v => {
             const dist = calcDistance(v);
@@ -253,7 +251,7 @@ export default function Dashboard() {
         });
 
         return results.sort((a, b) => a.distance - b.distance).slice(0, 8);
-    }, [searchQuery, kingdoms, towns, castles, villages, player.coordinates_x, player.coordinates_y]);
+    }, [searchQuery, kingdoms, towns, baronies, villages, player.coordinates_x, player.coordinates_y]);
 
     const handleSelectResult = (result: { type: string; data: Location }) => {
         setSelectedResult(result);
@@ -359,16 +357,16 @@ export default function Dashboard() {
             }
         });
 
-        castles.forEach((c) => {
-            if (kingdomData[c.kingdom_id]) {
-                kingdomData[c.kingdom_id].locations.push({ x: c.coordinates_x, y: c.coordinates_y });
+        baronies.forEach((b) => {
+            if (kingdomData[b.kingdom_id]) {
+                kingdomData[b.kingdom_id].locations.push({ x: b.coordinates_x, y: b.coordinates_y });
             }
         });
 
         villages.forEach((v) => {
-            const castle = castles.find((c) => c.id === v.castle_id);
-            if (castle && kingdomData[castle.kingdom_id]) {
-                kingdomData[castle.kingdom_id].locations.push({ x: v.coordinates_x, y: v.coordinates_y });
+            const barony = baronies.find((b) => b.id === v.barony_id);
+            if (barony && kingdomData[barony.kingdom_id]) {
+                kingdomData[barony.kingdom_id].locations.push({ x: v.coordinates_x, y: v.coordinates_y });
             }
         });
 
@@ -529,7 +527,7 @@ export default function Dashboard() {
         });
 
         return regions;
-    }, [kingdoms, towns, castles, villages]);
+    }, [kingdoms, towns, baronies, villages]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -574,7 +572,7 @@ export default function Dashboard() {
                             {searchResults.map((result, idx) => {
                                 const Icon = result.type === 'kingdom' ? Crown
                                     : result.type === 'town' ? Church
-                                    : result.type === 'castle' ? Castle
+                                    : result.type === 'barony' ? Castle
                                     : result.type === 'port' ? Anchor
                                     : Home;
                                 const color = iconColors[result.type as keyof typeof iconColors]?.icon || iconColors.village.icon;
@@ -633,8 +631,8 @@ export default function Dashboard() {
                                 <span className="font-pixel text-[10px] text-stone-300">Town</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Castle className="h-3.5 w-3.5" style={{ color: iconColors.castle.icon }} />
-                                <span className="font-pixel text-[10px] text-stone-300">Castle</span>
+                                <Castle className="h-3.5 w-3.5" style={{ color: iconColors.barony.icon }} />
+                                <span className="font-pixel text-[10px] text-stone-300">Barony</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Home className="h-3.5 w-3.5" style={{ color: iconColors.village.icon }} />
@@ -676,7 +674,7 @@ export default function Dashboard() {
                         <div className="flex items-center gap-2">
                             {hoveredLocation.type === 'kingdom' && <Crown className="h-5 w-5 flex-shrink-0" style={{ color: iconColors.kingdom.icon }} />}
                             {hoveredLocation.type === 'town' && <Church className="h-5 w-5 flex-shrink-0" style={{ color: iconColors.town.icon }} />}
-                            {hoveredLocation.type === 'castle' && <Castle className="h-5 w-5 flex-shrink-0" style={{ color: iconColors.castle.icon }} />}
+                            {hoveredLocation.type === 'barony' && <Castle className="h-5 w-5 flex-shrink-0" style={{ color: iconColors.barony.icon }} />}
                             {hoveredLocation.type === 'village' && <Home className="h-5 w-5 flex-shrink-0" style={{ color: iconColors.village.icon }} />}
                             {hoveredLocation.type === 'port' && <Anchor className="h-5 w-5 flex-shrink-0" style={{ color: iconColors.port.icon }} />}
                             <span className="font-pixel text-sm leading-none text-amber-300">{hoveredLocation.data.name}</span>
@@ -737,17 +735,17 @@ export default function Dashboard() {
                         );
                     })}
 
-                    {/* Castles - Gray/Stone */}
-                    {castles.map((castle) => {
-                        const colors = iconColors.castle;
+                    {/* Baronies - Gray/Stone */}
+                    {baronies.map((barony) => {
+                        const colors = iconColors.barony;
                         return (
                             <g
-                                key={`castle-${castle.id}`}
-                                transform={`translate(${castle.coordinates_x}, ${transformY(castle.coordinates_y)})`}
+                                key={`barony-${barony.id}`}
+                                transform={`translate(${barony.coordinates_x}, ${transformY(barony.coordinates_y)})`}
                                 className="cursor-pointer"
-                                onMouseEnter={() => setHoveredLocation({ type: 'castle', data: castle })}
+                                onMouseEnter={() => setHoveredLocation({ type: 'barony', data: barony })}
                                 onMouseLeave={() => setHoveredLocation(null)}
-                                onClick={() => handleLocationClick('castle', castle)}
+                                onClick={() => handleLocationClick('barony', barony)}
                             >
                                 <circle r={10} fill={colors.bg} stroke={colors.stroke} strokeWidth={2} />
                                 <Castle x={-7} y={-7} width={14} height={14} color={colors.icon} strokeWidth={1.5} />
@@ -840,7 +838,7 @@ export default function Dashboard() {
                                 <div className="flex items-center gap-2">
                                     {clickedLocation.type === 'kingdom' && <Crown className="h-5 w-5" style={{ color: iconColors.kingdom.icon }} />}
                                     {clickedLocation.type === 'town' && <Church className="h-5 w-5" style={{ color: iconColors.town.icon }} />}
-                                    {clickedLocation.type === 'castle' && <Castle className="h-5 w-5" style={{ color: iconColors.castle.icon }} />}
+                                    {clickedLocation.type === 'barony' && <Castle className="h-5 w-5" style={{ color: iconColors.barony.icon }} />}
                                     {clickedLocation.type === 'village' && <Home className="h-5 w-5" style={{ color: iconColors.village.icon }} />}
                                     {clickedLocation.type === 'port' && <Anchor className="h-5 w-5" style={{ color: iconColors.port.icon }} />}
                                     <span className="font-pixel text-base text-amber-300">{clickedLocation.data.name}</span>

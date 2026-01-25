@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Castle;
+use App\Models\Barony;
 use App\Models\EmploymentJob;
 use App\Models\PlayerEmployment;
 use App\Models\Town;
@@ -38,20 +38,20 @@ class JobController extends Controller
     }
 
     /**
-     * Display jobs available at a castle.
+     * Display jobs available at a barony.
      */
-    public function castleJobs(Request $request, Castle $castle): Response
+    public function baronyJobs(Request $request, Barony $barony): Response
     {
         $user = $request->user();
 
-        // Check if player is at this castle
-        if ($user->current_location_type !== 'castle' || $user->current_location_id !== $castle->id) {
+        // Check if player is at this barony
+        if ($user->current_location_type !== 'barony' || $user->current_location_id !== $barony->id) {
             return Inertia::render('Jobs/NotHere', [
-                'location' => $castle->name,
+                'location' => $barony->name,
             ]);
         }
 
-        return $this->renderJobsPage($user, 'castle', $castle->id, $castle->name);
+        return $this->renderJobsPage($user, 'barony', $barony->id, $barony->name);
     }
 
     /**
@@ -103,7 +103,7 @@ class JobController extends Controller
     {
         $request->validate([
             'job_id' => 'required|exists:employment_jobs,id',
-            'location_type' => 'required|in:village,castle,town',
+            'location_type' => 'required|in:village,barony,town',
             'location_id' => 'required|integer',
         ]);
 

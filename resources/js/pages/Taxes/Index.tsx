@@ -66,7 +66,7 @@ interface PageProps {
     user_salary_history: SalaryRecord[] | null;
     min_tax_rate: number;
     max_tax_rate: number;
-    castle: LocationInfo | null;
+    barony: LocationInfo | null;
     kingdom: LocationInfo | null;
     player: {
         id: number;
@@ -78,7 +78,7 @@ interface PageProps {
 
 const locationIcons: Record<string, typeof Home> = {
     village: Home,
-    castle: Castle,
+    barony: Castle,
     kingdom: Crown,
 };
 
@@ -98,7 +98,7 @@ export default function TaxesIndex() {
         user_salary_history,
         min_tax_rate,
         max_tax_rate,
-        castle,
+        barony,
         kingdom,
     } = usePage<PageProps>().props;
 
@@ -202,7 +202,7 @@ export default function TaxesIndex() {
                                 <div className="font-pixel text-2xl text-yellow-400">{treasury.tax_rate}%</div>
                             </div>
 
-                            {can_configure && (location_type === 'castle' || location_type === 'kingdom') && (
+                            {can_configure && (location_type === 'barony' || location_type === 'kingdom') && (
                                 <div className="border-t border-stone-700 pt-4">
                                     <div className="mb-3 flex items-center gap-2 text-stone-400">
                                         <Settings className="h-4 w-4" />
@@ -245,27 +245,27 @@ export default function TaxesIndex() {
                                 </div>
                             )}
 
-                            {location_type === 'village' && castle && (
+                            {location_type === 'village' && barony && (
                                 <div className="border-t border-stone-700 pt-3 text-stone-500">
                                     <p className="font-pixel text-[10px]">
-                                        Tax rate set by {castle.name} ({castle.tax_rate}%)
+                                        Tax rate set by {barony.name} ({barony.tax_rate}%)
                                     </p>
                                 </div>
                             )}
                         </div>
 
                         {/* Hierarchy Info */}
-                        {(castle || kingdom) && (
+                        {(barony || kingdom) && (
                             <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
                                 <h2 className="mb-3 font-pixel text-sm text-stone-300">Tax Hierarchy</h2>
                                 <div className="space-y-2">
-                                    {castle && (
+                                    {barony && (
                                         <div className="flex items-center justify-between rounded-lg bg-stone-900/50 px-3 py-2">
                                             <div className="flex items-center gap-2">
                                                 <Castle className="h-4 w-4 text-stone-400" />
-                                                <span className="font-pixel text-xs text-stone-300">{castle.name}</span>
+                                                <span className="font-pixel text-xs text-stone-300">{barony.name}</span>
                                             </div>
-                                            <span className="font-pixel text-xs text-yellow-400">{castle.tax_rate}%</span>
+                                            <span className="font-pixel text-xs text-yellow-400">{barony.tax_rate}%</span>
                                         </div>
                                     )}
                                     {kingdom && (

@@ -16,7 +16,7 @@ class VillageController extends Controller
      */
     public function index(): Response
     {
-        $villages = Village::with('castle.kingdom')
+        $villages = Village::with('barony.kingdom')
             ->orderBy('name')
             ->get()
             ->map(fn ($village) => [
@@ -24,15 +24,15 @@ class VillageController extends Controller
                 'name' => $village->name,
                 'description' => $village->description,
                 'biome' => $village->biome,
-                'is_town' => $village->is_town,
                 'population' => $village->population,
-                'castle' => $village->castle ? [
-                    'id' => $village->castle->id,
-                    'name' => $village->castle->name,
+                'is_hamlet' => $village->isHamlet(),
+                'barony' => $village->barony ? [
+                    'id' => $village->barony->id,
+                    'name' => $village->barony->name,
                 ] : null,
-                'kingdom' => $village->castle?->kingdom ? [
-                    'id' => $village->castle->kingdom->id,
-                    'name' => $village->castle->kingdom->name,
+                'kingdom' => $village->barony?->kingdom ? [
+                    'id' => $village->barony->kingdom->id,
+                    'name' => $village->barony->kingdom->name,
                 ] : null,
                 'coordinates' => [
                     'x' => $village->coordinates_x,
@@ -50,7 +50,7 @@ class VillageController extends Controller
      */
     public function show(Request $request, Village $village, MigrationService $migrationService): Response
     {
-        $village->load(['castle.kingdom', 'residents']);
+        $village->load(['barony.kingdom', 'residents', 'parentVillage']);
         $user = $request->user();
 
         $isResident = $user->home_village_id === $village->id;
@@ -64,21 +64,25 @@ class VillageController extends Controller
                 'name' => $village->name,
                 'description' => $village->description,
                 'biome' => $village->biome,
-                'is_town' => $village->is_town,
                 'population' => $village->population,
                 'wealth' => $village->wealth,
+                'is_hamlet' => $village->isHamlet(),
                 'coordinates' => [
                     'x' => $village->coordinates_x,
                     'y' => $village->coordinates_y,
                 ],
-                'castle' => $village->castle ? [
-                    'id' => $village->castle->id,
-                    'name' => $village->castle->name,
-                    'biome' => $village->castle->biome,
+                'barony' => $village->barony ? [
+                    'id' => $village->barony->id,
+                    'name' => $village->barony->name,
+                    'biome' => $village->barony->biome,
                 ] : null,
-                'kingdom' => $village->castle?->kingdom ? [
-                    'id' => $village->castle->kingdom->id,
-                    'name' => $village->castle->kingdom->name,
+                'kingdom' => $village->barony?->kingdom ? [
+                    'id' => $village->barony->kingdom->id,
+                    'name' => $village->barony->kingdom->name,
+                ] : null,
+                'parent_village' => $village->parentVillage ? [
+                    'id' => $village->parentVillage->id,
+                    'name' => $village->parentVillage->name,
                 ] : null,
                 'residents' => $village->residents->map(fn ($resident) => [
                     'id' => $resident->id,

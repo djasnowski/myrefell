@@ -68,28 +68,28 @@ class ChatController extends Controller
     }
 
     /**
-     * Show chat for a specific castle.
+     * Show chat for a specific barony.
      */
-    public function castleChat(Request $request, int $castleId): Response
+    public function baronyChat(Request $request, int $baronyId): Response
     {
         $user = $request->user();
 
-        if ($user->current_location_type !== 'castle' || $user->current_location_id !== $castleId) {
+        if ($user->current_location_type !== 'barony' || $user->current_location_id !== $baronyId) {
             return Inertia::render('Chat/NotHere', [
-                'message' => 'You must be at this castle to view its chat.',
+                'message' => 'You must be at this barony to view its chat.',
             ]);
         }
 
-        $messages = $this->chatService->getLocationMessages('castle', $castleId);
+        $messages = $this->chatService->getLocationMessages('barony', $baronyId);
         $conversations = $this->chatService->getConversations($user);
-        $castle = \App\Models\Castle::findOrFail($castleId);
+        $barony = \App\Models\Barony::findOrFail($baronyId);
 
         return Inertia::render('Chat/Index', [
             'messages' => $messages,
             'conversations' => $conversations,
-            'current_location_type' => 'castle',
-            'current_location_id' => $castleId,
-            'location_name' => $castle->name,
+            'current_location_type' => 'barony',
+            'current_location_id' => $baronyId,
+            'location_name' => $barony->name,
             'max_message_length' => ChatService::MAX_MESSAGE_LENGTH,
         ]);
     }
@@ -129,7 +129,7 @@ class ChatController extends Controller
     {
         $request->validate([
             'content' => 'required|string|max:' . ChatService::MAX_MESSAGE_LENGTH,
-            'location_type' => 'required|string|in:village,castle,kingdom',
+            'location_type' => 'required|string|in:village,barony,kingdom',
             'location_id' => 'required|integer',
         ]);
 
@@ -167,7 +167,7 @@ class ChatController extends Controller
     public function pollLocation(Request $request): JsonResponse
     {
         $request->validate([
-            'location_type' => 'required|string|in:village,castle,kingdom',
+            'location_type' => 'required|string|in:village,barony,kingdom',
             'location_id' => 'required|integer',
             'after_id' => 'required|integer',
         ]);
@@ -256,7 +256,8 @@ class ChatController extends Controller
     {
         return match ($locationType) {
             'village' => \App\Models\Village::find($locationId)?->name ?? 'Unknown Village',
-            'castle' => \App\Models\Castle::find($locationId)?->name ?? 'Unknown Castle',
+            'barony' => \App\Models\Barony::find($locationId)?->name ?? 'Unknown Barony',
+            'town' => \App\Models\Town::find($locationId)?->name ?? 'Unknown Town',
             'kingdom' => \App\Models\Kingdom::find($locationId)?->name ?? 'Unknown Kingdom',
             default => 'Unknown Location',
         };

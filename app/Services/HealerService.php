@@ -14,8 +14,9 @@ class HealerService
 
     /**
      * Location types that have healers.
+     * Note: Hamlets use their parent village's healer.
      */
-    public const VALID_LOCATIONS = ['village', 'castle', 'town'];
+    public const VALID_LOCATIONS = ['village', 'barony', 'town'];
 
     /**
      * Check if user can access a healer at their current location.
@@ -187,7 +188,7 @@ class HealerService
     {
         return match ($locationType) {
             'village' => 'Old Marta',
-            'castle' => 'Sir Edmund',
+            'barony' => 'Sir Edmund',
             'town' => 'Sister Agnes',
             default => 'The Healer',
         };
@@ -200,7 +201,7 @@ class HealerService
     {
         return match ($locationType) {
             'village' => 'Village Healer',
-            'castle' => 'Royal Physician',
+            'barony' => 'Baronial Physician',
             'town' => 'Infirmary Matron',
             default => 'Healer',
         };
@@ -213,7 +214,7 @@ class HealerService
     {
         $modelClass = match ($type) {
             'village' => \App\Models\Village::class,
-            'castle' => \App\Models\Castle::class,
+            'barony' => \App\Models\Barony::class,
             'town' => \App\Models\Town::class,
             default => null,
         };

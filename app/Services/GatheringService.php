@@ -18,7 +18,7 @@ class GatheringService
             'energy_cost' => 5,
             'base_xp' => 15,
             'task_type' => 'mine',
-            'location_types' => ['village', 'castle', 'wilderness'],
+            'location_types' => ['village', 'barony', 'wilderness'],
             'resources' => [
                 ['name' => 'Copper Ore', 'weight' => 60, 'min_level' => 1, 'xp_bonus' => 0],
                 ['name' => 'Tin Ore', 'weight' => 40, 'min_level' => 1, 'xp_bonus' => 5],

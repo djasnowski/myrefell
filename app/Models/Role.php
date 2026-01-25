@@ -15,7 +15,9 @@ class Role extends Model
      */
     public const LOCATION_TYPES = [
         'village' => 'Village',
-        'castle' => 'Castle',
+        'hamlet' => 'Hamlet',
+        'barony' => 'Barony',
+        'town' => 'Town',
         'kingdom' => 'Kingdom',
     ];
 
@@ -31,10 +33,10 @@ class Role extends Model
     ];
 
     /**
-     * Castle roles.
+     * Barony roles.
      */
-    public const CASTLE_ROLES = [
-        'lord',
+    public const BARONY_ROLES = [
+        'baron',
         'steward',
         'marshal',
         'treasurer',

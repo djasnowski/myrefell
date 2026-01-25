@@ -11,6 +11,7 @@ class HorseSeeder extends Seeder
     public function run(): void
     {
         // Create horse types
+        // Better horses have more stamina and lower stamina cost per travel
         $horses = [
             [
                 'name' => 'Draft Horse',
@@ -19,6 +20,8 @@ class HorseSeeder extends Seeder
                 'speed_multiplier' => 2.0,
                 'base_price' => 500,
                 'min_location_type' => 'village',
+                'base_stamina' => 80,
+                'stamina_cost_per_travel' => 15,
                 'rarity' => 80,
             ],
             [
@@ -28,6 +31,8 @@ class HorseSeeder extends Seeder
                 'speed_multiplier' => 2.5,
                 'base_price' => 2000,
                 'min_location_type' => 'village',
+                'base_stamina' => 100,
+                'stamina_cost_per_travel' => 12,
                 'rarity' => 60,
             ],
             [
@@ -37,6 +42,8 @@ class HorseSeeder extends Seeder
                 'speed_multiplier' => 3.0,
                 'base_price' => 5000,
                 'min_location_type' => 'town',
+                'base_stamina' => 120,
+                'stamina_cost_per_travel' => 10,
                 'rarity' => 40,
             ],
             [
@@ -45,7 +52,9 @@ class HorseSeeder extends Seeder
                 'description' => 'A powerful warhorse trained for battle and speed.',
                 'speed_multiplier' => 3.5,
                 'base_price' => 15000,
-                'min_location_type' => 'castle',
+                'min_location_type' => 'barony',
+                'base_stamina' => 150,
+                'stamina_cost_per_travel' => 8,
                 'rarity' => 20,
             ],
             [
@@ -55,6 +64,8 @@ class HorseSeeder extends Seeder
                 'speed_multiplier' => 4.0,
                 'base_price' => 50000,
                 'min_location_type' => 'kingdom',
+                'base_stamina' => 200,
+                'stamina_cost_per_travel' => 5,
                 'rarity' => 5,
             ],
         ];
@@ -66,8 +77,8 @@ class HorseSeeder extends Seeder
             );
         }
 
-        // Add Stable Master role for villages, towns, and castles
-        $stableMasterLocations = ['village', 'town', 'castle'];
+        // Add Stable Master role for villages and baronies
+        $stableMasterLocations = ['village', 'barony'];
 
         foreach ($stableMasterLocations as $locationType) {
             Role::updateOrCreate(
@@ -81,7 +92,7 @@ class HorseSeeder extends Seeder
                     'is_elected' => false,
                     'permissions' => ['sell_horses', 'buy_horses', 'stable_horses'],
                     'bonuses' => ['horse_discount' => 0.1],
-                    'salary' => $locationType === 'village' ? 50 : ($locationType === 'town' ? 100 : 150),
+                    'salary' => $locationType === 'village' ? 50 : 150,
                     'tier' => 1,
                     'is_active' => true,
                     'max_per_location' => 1,

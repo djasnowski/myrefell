@@ -17,7 +17,7 @@ import type { BreadcrumbItem } from '@/types';
 interface Village {
     id: number;
     name: string;
-    castle?: string;
+    barony?: string;
     kingdom?: string;
 }
 
@@ -31,10 +31,10 @@ interface MigrationRequestData {
     to_village: Village;
     status: string;
     elder_approved: boolean | null;
-    lord_approved: boolean | null;
+    baron_approved: boolean | null;
     king_approved: boolean | null;
     needs_elder: boolean;
-    needs_lord: boolean;
+    needs_baron: boolean;
     needs_king: boolean;
     denial_reason: string | null;
     created_at: string;
@@ -89,7 +89,7 @@ function RequestCard({
     isOwn,
 }: {
     request: MigrationRequestData;
-    showApproveButtons?: 'elder' | 'lord' | 'king';
+    showApproveButtons?: 'elder' | 'baron' | 'king';
     onApprove?: (id: number, level: string) => void;
     onDeny?: (id: number, level: string) => void;
     onCancel?: (id: number) => void;
@@ -122,9 +122,9 @@ function RequestCard({
                 <span className="text-amber-300">{request.to_village.name}</span>
             </div>
 
-            {request.to_village.castle && (
+            {request.to_village.barony && (
                 <p className="mb-2 font-pixel text-[10px] text-stone-500">
-                    Castle: {request.to_village.castle}
+                    Barony: {request.to_village.barony}
                     {request.to_village.kingdom && ` | Kingdom: ${request.to_village.kingdom}`}
                 </p>
             )}
@@ -136,8 +136,8 @@ function RequestCard({
                     <ApprovalBadge approved={request.elder_approved} needed={request.needs_elder} />
                 </div>
                 <div className="text-center">
-                    <p className="font-pixel text-[10px] text-stone-500">Lord</p>
-                    <ApprovalBadge approved={request.lord_approved} needed={request.needs_lord} />
+                    <p className="font-pixel text-[10px] text-stone-500">Baron</p>
+                    <ApprovalBadge approved={request.baron_approved} needed={request.needs_baron} />
                 </div>
                 <div className="text-center">
                     <p className="font-pixel text-[10px] text-stone-500">King</p>
@@ -228,9 +228,9 @@ export default function MigrationIndex() {
     };
 
     // Determine which level the current user can approve
-    const getApprovalLevel = (request: MigrationRequestData): 'elder' | 'lord' | 'king' | undefined => {
+    const getApprovalLevel = (request: MigrationRequestData): 'elder' | 'baron' | 'king' | undefined => {
         if (request.needs_elder && request.elder_approved === null) return 'elder';
-        if (request.needs_lord && request.lord_approved === null) return 'lord';
+        if (request.needs_baron && request.baron_approved === null) return 'baron';
         if (request.needs_king && request.king_approved === null) return 'king';
         return undefined;
     };
@@ -252,10 +252,10 @@ export default function MigrationIndex() {
                         <span className="font-pixel text-sm text-stone-400">Current Home:</span>
                         <span className="font-pixel text-lg text-green-300">{current_village?.name || 'None'}</span>
                     </div>
-                    {current_village?.castle && (
+                    {current_village?.barony && (
                         <p className="mt-1 font-pixel text-xs text-stone-500">
                             <Shield className="mr-1 inline h-3 w-3" />
-                            {current_village.castle}
+                            {current_village.barony}
                             {current_village.kingdom && (
                                 <>
                                     <Crown className="mx-1 inline h-3 w-3" />
@@ -312,7 +312,7 @@ export default function MigrationIndex() {
                         <h3 className="font-pixel text-sm text-blue-300">How to Request Migration</h3>
                         <p className="mt-2 text-xs text-stone-400">
                             Visit any village and click "Request to Move Here" to start a migration request.
-                            You'll need approval from the local Elder, Lord, and King (if they exist).
+                            You'll need approval from the local Elder, Baron, and King (if they exist).
                         </p>
                     </div>
                 )}

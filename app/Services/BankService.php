@@ -12,8 +12,9 @@ class BankService
 {
     /**
      * Valid location types for banking.
+     * Note: Hamlets use their parent village's bank.
      */
-    public const VALID_LOCATIONS = ['village', 'castle', 'town'];
+    public const VALID_LOCATIONS = ['village', 'barony', 'town'];
 
     /**
      * Get or create a bank account for a user at their current location.
@@ -25,6 +26,15 @@ class BankService
 
         if (! $this->canAccessBank($user)) {
             return null;
+        }
+
+        // For hamlets, use the parent village's bank
+        if ($locationType === 'village') {
+            $village = \App\Models\Village::find($locationId);
+            if ($village && $village->isHamlet()) {
+                $serviceProvider = $village->getServiceProvider();
+                $locationId = $serviceProvider->id;
+            }
         }
 
         return BankAccount::firstOrCreate(
@@ -240,7 +250,7 @@ class BankService
     {
         $modelClass = match ($type) {
             'village' => \App\Models\Village::class,
-            'castle' => \App\Models\Castle::class,
+            'barony' => \App\Models\Barony::class,
             'town' => \App\Models\Town::class,
             default => null,
         };

@@ -14,7 +14,7 @@ class TownController extends Controller
      */
     public function index(): Response
     {
-        $towns = Town::with('kingdom')
+        $towns = Town::with('barony.kingdom')
             ->orderBy('name')
             ->get()
             ->map(fn ($town) => [
@@ -22,11 +22,14 @@ class TownController extends Controller
                 'name' => $town->name,
                 'description' => $town->description,
                 'biome' => $town->biome,
-                'is_capital' => $town->is_capital,
                 'population' => $town->population,
-                'kingdom' => $town->kingdom ? [
-                    'id' => $town->kingdom->id,
-                    'name' => $town->kingdom->name,
+                'barony' => $town->barony ? [
+                    'id' => $town->barony->id,
+                    'name' => $town->barony->name,
+                ] : null,
+                'kingdom' => $town->barony?->kingdom ? [
+                    'id' => $town->barony->kingdom->id,
+                    'name' => $town->barony->kingdom->name,
                 ] : null,
             ]);
 
@@ -40,7 +43,7 @@ class TownController extends Controller
      */
     public function show(Town $town): Response
     {
-        $town->load(['kingdom', 'mayor', 'castles', 'villages']);
+        $town->load(['barony.kingdom', 'mayor']);
 
         return Inertia::render('Towns/Show', [
             'town' => [
@@ -48,7 +51,6 @@ class TownController extends Controller
                 'name' => $town->name,
                 'description' => $town->description,
                 'biome' => $town->biome,
-                'is_capital' => $town->is_capital,
                 'population' => $town->population,
                 'wealth' => $town->wealth,
                 'tax_rate' => $town->tax_rate,
@@ -56,28 +58,18 @@ class TownController extends Controller
                     'x' => $town->coordinates_x,
                     'y' => $town->coordinates_y,
                 ],
-                'kingdom' => $town->kingdom ? [
-                    'id' => $town->kingdom->id,
-                    'name' => $town->kingdom->name,
+                'barony' => $town->barony ? [
+                    'id' => $town->barony->id,
+                    'name' => $town->barony->name,
+                ] : null,
+                'kingdom' => $town->barony?->kingdom ? [
+                    'id' => $town->barony->kingdom->id,
+                    'name' => $town->barony->kingdom->name,
                 ] : null,
                 'mayor' => $town->mayor ? [
                     'id' => $town->mayor->id,
                     'username' => $town->mayor->username,
                 ] : null,
-                'castles' => $town->castles->map(fn ($castle) => [
-                    'id' => $castle->id,
-                    'name' => $castle->name,
-                    'biome' => $castle->biome,
-                ]),
-                'villages' => $town->villages->map(fn ($village) => [
-                    'id' => $village->id,
-                    'name' => $village->name,
-                    'biome' => $village->biome,
-                    'population' => $village->population,
-                    'is_port' => $village->is_port,
-                ]),
-                'castle_count' => $town->castles->count(),
-                'village_count' => $town->villages->count(),
             ],
             'services' => [
                 ['name' => 'Bank', 'href' => "/towns/{$town->id}/bank", 'description' => 'Deposit and withdraw gold'],
@@ -93,7 +85,7 @@ class TownController extends Controller
     public function hall(Request $request, Town $town): Response
     {
         $user = $request->user();
-        $town->load(['kingdom', 'mayor', 'elections' => function ($query) {
+        $town->load(['barony.kingdom', 'mayor', 'elections' => function ($query) {
             $query->latest()->limit(5);
         }]);
 
@@ -125,9 +117,13 @@ class TownController extends Controller
                 'population' => $town->population,
                 'wealth' => $town->wealth,
                 'tax_rate' => $town->tax_rate,
-                'kingdom' => $town->kingdom ? [
-                    'id' => $town->kingdom->id,
-                    'name' => $town->kingdom->name,
+                'barony' => $town->barony ? [
+                    'id' => $town->barony->id,
+                    'name' => $town->barony->name,
+                ] : null,
+                'kingdom' => $town->barony?->kingdom ? [
+                    'id' => $town->barony->kingdom->id,
+                    'name' => $town->barony->kingdom->name,
                 ] : null,
                 'mayor' => $town->mayor ? [
                     'id' => $town->mayor->id,

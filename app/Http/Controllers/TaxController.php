@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Castle;
+use App\Models\Barony;
 use App\Models\Kingdom;
 use App\Models\Village;
 use App\Services\TaxService;
@@ -31,24 +31,24 @@ class TaxController extends Controller
             ]);
         }
 
-        return $this->renderTaxesPage($user, 'village', $village->id, $village->name, $village->castle);
+        return $this->renderTaxesPage($user, 'village', $village->id, $village->name, $village->barony);
     }
 
     /**
-     * Display taxes at a castle.
+     * Display taxes at a barony.
      */
-    public function castleTaxes(Request $request, Castle $castle): Response
+    public function baronyTaxes(Request $request, Barony $barony): Response
     {
         $user = $request->user();
 
-        // Check if player is at this castle
-        if ($user->current_location_type !== 'castle' || $user->current_location_id !== $castle->id) {
+        // Check if player is at this barony
+        if ($user->current_location_type !== 'barony' || $user->current_location_id !== $barony->id) {
             return Inertia::render('Taxes/NotHere', [
-                'location' => $castle->name,
+                'location' => $barony->name,
             ]);
         }
 
-        return $this->renderTaxesPage($user, 'castle', $castle->id, $castle->name, null, $castle->kingdom);
+        return $this->renderTaxesPage($user, 'barony', $barony->id, $barony->name, null, $barony->kingdom);
     }
 
     /**
@@ -69,7 +69,7 @@ class TaxController extends Controller
         string $locationType,
         int $locationId,
         string $locationName,
-        ?Castle $castle = null,
+        ?Barony $barony = null,
         ?Kingdom $kingdom = null
     ): Response {
         $treasuryInfo = $this->taxService->getTreasuryInfo($locationType, $locationId);
@@ -95,10 +95,10 @@ class TaxController extends Controller
             'user_salary_history' => $userSalaryHistory,
             'min_tax_rate' => TaxService::MIN_TAX_RATE,
             'max_tax_rate' => TaxService::MAX_TAX_RATE,
-            'castle' => $castle ? [
-                'id' => $castle->id,
-                'name' => $castle->name,
-                'tax_rate' => $castle->tax_rate,
+            'barony' => $barony ? [
+                'id' => $barony->id,
+                'name' => $barony->name,
+                'tax_rate' => $barony->tax_rate,
             ] : null,
             'kingdom' => $kingdom ? [
                 'id' => $kingdom->id,
@@ -114,12 +114,12 @@ class TaxController extends Controller
     }
 
     /**
-     * Set the tax rate for a castle or kingdom.
+     * Set the tax rate for a barony or kingdom.
      */
     public function setTaxRate(Request $request): JsonResponse
     {
         $request->validate([
-            'location_type' => 'required|in:castle,kingdom',
+            'location_type' => 'required|in:barony,kingdom',
             'location_id' => 'required|integer',
             'tax_rate' => 'required|numeric|min:0|max:50',
         ]);
@@ -172,7 +172,7 @@ class TaxController extends Controller
     public function treasuryStatus(Request $request): JsonResponse
     {
         $request->validate([
-            'location_type' => 'required|in:village,castle,kingdom',
+            'location_type' => 'required|in:village,barony,kingdom',
             'location_id' => 'required|integer',
         ]);
 

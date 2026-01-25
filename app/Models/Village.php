@@ -15,7 +15,8 @@ class Village extends Model
     protected $fillable = [
         'name',
         'description',
-        'castle_id',
+        'barony_id',
+        'parent_village_id',
         'is_town',
         'population',
         'wealth',
@@ -38,27 +39,35 @@ class Village extends Model
     }
 
     /**
-     * Get the castle this village belongs to.
+     * Get the barony this village belongs to.
      */
-    public function castle(): BelongsTo
+    public function barony(): BelongsTo
     {
-        return $this->belongsTo(Castle::class);
+        return $this->belongsTo(Barony::class);
     }
 
     /**
-     * Get the town this village belongs to (through castle).
+     * Get the parent village (if this is a hamlet).
      */
-    public function town(): ?Town
+    public function parentVillage(): BelongsTo
     {
-        return $this->castle?->town;
+        return $this->belongsTo(Village::class, 'parent_village_id');
     }
 
     /**
-     * Get the kingdom this village belongs to (through castle->town).
+     * Get all hamlets of this village.
+     */
+    public function hamlets(): HasMany
+    {
+        return $this->hasMany(Village::class, 'parent_village_id');
+    }
+
+    /**
+     * Get the kingdom this village belongs to (through barony).
      */
     public function kingdom(): ?Kingdom
     {
-        return $this->castle?->town?->kingdom ?? $this->castle?->kingdom;
+        return $this->barony?->kingdom;
     }
 
     /**
@@ -78,11 +87,19 @@ class Village extends Model
     }
 
     /**
-     * Check if this village is independent (no castle allegiance).
+     * Check if this village is a hamlet (has a parent village).
+     */
+    public function isHamlet(): bool
+    {
+        return $this->parent_village_id !== null;
+    }
+
+    /**
+     * Check if this village is independent (no barony allegiance).
      */
     public function isIndependent(): bool
     {
-        return $this->castle_id === null;
+        return $this->barony_id === null;
     }
 
     /**
@@ -95,9 +112,20 @@ class Village extends Model
 
     /**
      * Get all elections for this village.
+     * Note: Hamlets do not have their own elections.
      */
     public function elections(): MorphMany
     {
         return $this->morphMany(Election::class, 'domain', 'domain_type', 'domain_id');
+    }
+
+    /**
+     * Get the village that provides services to this location.
+     * For hamlets, this returns the parent village.
+     * For regular villages, this returns itself.
+     */
+    public function getServiceProvider(): Village
+    {
+        return $this->isHamlet() ? $this->parentVillage : $this;
     }
 }

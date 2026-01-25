@@ -46,7 +46,8 @@ class DungeonService
     {
         return match ($player->current_location_type) {
             'village' => \App\Models\Village::find($player->current_location_id)?->biome,
-            'castle' => \App\Models\Castle::find($player->current_location_id)?->kingdom?->biome,
+            'barony' => \App\Models\Barony::find($player->current_location_id)?->biome,
+            'town' => \App\Models\Town::find($player->current_location_id)?->biome,
             'kingdom' => \App\Models\Kingdom::find($player->current_location_id)?->biome,
             default => null,
         };

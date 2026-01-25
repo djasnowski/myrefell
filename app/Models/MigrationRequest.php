@@ -21,13 +21,13 @@ class MigrationRequest extends Model
         'from_village_id',
         'to_village_id',
         'elder_approved',
-        'lord_approved',
+        'baron_approved',
         'king_approved',
         'elder_decided_by',
-        'lord_decided_by',
+        'baron_decided_by',
         'king_decided_by',
         'elder_decided_at',
-        'lord_decided_at',
+        'baron_decided_at',
         'king_decided_at',
         'status',
         'denial_reason',
@@ -36,10 +36,10 @@ class MigrationRequest extends Model
 
     protected $casts = [
         'elder_approved' => 'boolean',
-        'lord_approved' => 'boolean',
+        'baron_approved' => 'boolean',
         'king_approved' => 'boolean',
         'elder_decided_at' => 'datetime',
-        'lord_decided_at' => 'datetime',
+        'baron_decided_at' => 'datetime',
         'king_decided_at' => 'datetime',
         'completed_at' => 'datetime',
     ];
@@ -64,9 +64,9 @@ class MigrationRequest extends Model
         return $this->belongsTo(User::class, 'elder_decided_by');
     }
 
-    public function lordDecidedBy(): BelongsTo
+    public function baronDecidedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'lord_decided_by');
+        return $this->belongsTo(User::class, 'baron_decided_by');
     }
 
     public function kingDecidedBy(): BelongsTo
@@ -95,16 +95,16 @@ class MigrationRequest extends Model
     public function checkAllApprovals(): bool
     {
         $toVillage = $this->toVillage;
-        $castle = $toVillage->castle;
-        $kingdom = $castle?->kingdom;
+        $barony = $toVillage->barony;
+        $kingdom = $barony?->kingdom;
 
         // Check elder approval (if destination has an elder)
         if ($this->needsElderApproval() && $this->elder_approved !== true) {
             return false;
         }
 
-        // Check lord approval (if destination castle has a lord)
-        if ($this->needsLordApproval() && $this->lord_approved !== true) {
+        // Check baron approval (if destination barony has a baron)
+        if ($this->needsBaronApproval() && $this->baron_approved !== true) {
             return false;
         }
 
@@ -129,18 +129,18 @@ class MigrationRequest extends Model
     }
 
     /**
-     * Check if lord approval is needed (destination castle has a lord).
+     * Check if baron approval is needed (destination barony has a baron).
      */
-    public function needsLordApproval(): bool
+    public function needsBaronApproval(): bool
     {
-        $castle = $this->toVillage->castle;
-        if (!$castle) {
+        $barony = $this->toVillage->barony;
+        if (!$barony) {
             return false;
         }
 
-        return PlayerRole::where('location_type', 'castle')
-            ->where('location_id', $castle->id)
-            ->whereHas('role', fn ($q) => $q->where('slug', 'lord'))
+        return PlayerRole::where('location_type', 'barony')
+            ->where('location_id', $barony->id)
+            ->whereHas('role', fn ($q) => $q->where('slug', 'baron'))
             ->active()
             ->exists();
     }
@@ -150,7 +150,7 @@ class MigrationRequest extends Model
      */
     public function needsKingApproval(): bool
     {
-        $kingdom = $this->toVillage->castle?->kingdom;
+        $kingdom = $this->toVillage->barony?->kingdom;
         if (!$kingdom) {
             return false;
         }
@@ -171,8 +171,8 @@ class MigrationRequest extends Model
             return 'elder';
         }
 
-        if ($this->needsLordApproval() && $this->lord_approved === null) {
-            return 'lord';
+        if ($this->needsBaronApproval() && $this->baron_approved === null) {
+            return 'baron';
         }
 
         if ($this->needsKingApproval() && $this->king_approved === null) {

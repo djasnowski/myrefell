@@ -341,13 +341,44 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Get the player's travel speed multiplier.
+     * Only applies if horse is with the player (not stabled).
      */
     public function getTravelSpeedMultiplier(): float
     {
-        if (!$this->hasHorse()) {
+        if (!$this->hasHorseWithMe()) {
             return 1.0;
         }
 
         return $this->horse->speed_multiplier;
+    }
+
+    /**
+     * Check if player has a horse with them (not stabled).
+     */
+    public function hasHorseWithMe(): bool
+    {
+        $horse = $this->horse;
+        return $horse && !$horse->is_stabled;
+    }
+
+    /**
+     * Check if player's horse is stabled somewhere.
+     */
+    public function hasStabledHorse(): bool
+    {
+        $horse = $this->horse;
+        return $horse && $horse->is_stabled;
+    }
+
+    /**
+     * Check if horse can be used for travel (has stamina).
+     */
+    public function canUseHorseForTravel(): bool
+    {
+        if (!$this->hasHorseWithMe()) {
+            return false;
+        }
+
+        return $this->horse->isAvailableForTravel();
     }
 }

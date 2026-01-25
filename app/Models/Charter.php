@@ -20,15 +20,15 @@ class Charter extends Model
 
     public const TYPE_VILLAGE = 'village';
     public const TYPE_TOWN = 'town';
-    public const TYPE_CASTLE = 'castle';
+    public const TYPE_BARONY = 'barony';
 
     public const DEFAULT_COST = 1000000;
     public const TOWN_COST = 2500000;
-    public const CASTLE_COST = 5000000;
+    public const BARONY_COST = 5000000;
 
     public const DEFAULT_SIGNATORIES_REQUIRED = 10;
     public const TOWN_SIGNATORIES_REQUIRED = 25;
-    public const CASTLE_SIGNATORIES_REQUIRED = 50;
+    public const BARONY_SIGNATORIES_REQUIRED = 50;
 
     public const APPROVAL_EXPIRY_DAYS = 30;
     public const VULNERABILITY_DAYS = 14;
@@ -54,7 +54,7 @@ class Charter extends Model
         'coordinates_y',
         'biome',
         'founded_village_id',
-        'founded_castle_id',
+        'founded_barony_id',
         'rejection_reason',
     ];
 
@@ -116,11 +116,11 @@ class Charter extends Model
     }
 
     /**
-     * Get the founded castle if applicable.
+     * Get the founded barony if applicable.
      */
-    public function foundedCastle(): BelongsTo
+    public function foundedBarony(): BelongsTo
     {
-        return $this->belongsTo(Castle::class, 'founded_castle_id');
+        return $this->belongsTo(Barony::class, 'founded_barony_id');
     }
 
     /**
@@ -187,7 +187,7 @@ class Charter extends Model
     {
         return match ($type) {
             self::TYPE_TOWN => self::TOWN_COST,
-            self::TYPE_CASTLE => self::CASTLE_COST,
+            self::TYPE_BARONY => self::BARONY_COST,
             default => self::DEFAULT_COST,
         };
     }
@@ -199,7 +199,7 @@ class Charter extends Model
     {
         return match ($type) {
             self::TYPE_TOWN => self::TOWN_SIGNATORIES_REQUIRED,
-            self::TYPE_CASTLE => self::CASTLE_SIGNATORIES_REQUIRED,
+            self::TYPE_BARONY => self::BARONY_SIGNATORIES_REQUIRED,
             default => self::DEFAULT_SIGNATORIES_REQUIRED,
         };
     }

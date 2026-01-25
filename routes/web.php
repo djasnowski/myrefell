@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\BankController;
-use App\Http\Controllers\CastleController;
+use App\Http\Controllers\BaronyController;
 use App\Http\Controllers\CombatController;
 use App\Http\Controllers\DungeonController;
 use App\Http\Controllers\CraftingController;
@@ -27,6 +27,7 @@ use App\Http\Controllers\TaxController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ReligionController;
 use App\Http\Controllers\CharterController;
+use App\Http\Controllers\StableController;
 use App\Http\Controllers\VillageController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -69,11 +70,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // World location routes
     Route::get('kingdoms', [KingdomController::class, 'index'])->name('kingdoms.index');
     Route::get('kingdoms/{kingdom}', [KingdomController::class, 'show'])->name('kingdoms.show');
-    Route::get('kingdoms/{kingdom}/castles', [KingdomController::class, 'castles'])->name('kingdoms.castles');
+    Route::get('kingdoms/{kingdom}/baronies', [KingdomController::class, 'baronies'])->name('kingdoms.baronies');
 
-    Route::get('castles', [CastleController::class, 'index'])->name('castles.index');
-    Route::get('castles/{castle}', [CastleController::class, 'show'])->name('castles.show');
-    Route::get('castles/{castle}/villages', [CastleController::class, 'villages'])->name('castles.villages');
+    Route::get('baronies', [BaronyController::class, 'index'])->name('baronies.index');
+    Route::get('baronies/{barony}', [BaronyController::class, 'show'])->name('baronies.show');
+    Route::get('baronies/{barony}/villages', [BaronyController::class, 'villages'])->name('baronies.villages');
+    Route::get('baronies/{barony}/towns', [BaronyController::class, 'towns'])->name('baronies.towns');
 
     Route::get('towns', [TownController::class, 'index'])->name('towns.index');
     Route::get('towns/{town}', [TownController::class, 'show'])->name('towns.show');
@@ -123,9 +125,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('travel/cancel', [TravelController::class, 'cancel'])->name('travel.cancel');
     Route::post('travel/arrive', [TravelController::class, 'arrive'])->name('travel.arrive');
 
+    // Stable (Horses)
+    Route::get('stable', [StableController::class, 'index'])->name('stable.index');
+    Route::post('stable/buy', [StableController::class, 'buy'])->name('stable.buy');
+    Route::post('stable/sell', [StableController::class, 'sell'])->name('stable.sell');
+    Route::post('stable/rename', [StableController::class, 'rename'])->name('stable.rename');
+    Route::post('stable/stable', [StableController::class, 'stable'])->name('stable.stable');
+    Route::post('stable/retrieve', [StableController::class, 'retrieve'])->name('stable.retrieve');
+    Route::post('stable/rest', [StableController::class, 'rest'])->name('stable.rest');
+
     // Bank
     Route::get('villages/{village}/bank', [BankController::class, 'villageBank'])->name('villages.bank');
-    Route::get('castles/{castle}/bank', [BankController::class, 'castleBank'])->name('castles.bank');
+    Route::get('baronies/{barony}/bank', [BankController::class, 'baronyBank'])->name('baronies.bank');
     Route::get('towns/{town}/bank', [BankController::class, 'townBank'])->name('towns.bank');
     Route::post('bank/deposit', [BankController::class, 'deposit'])->name('bank.deposit');
     Route::post('bank/withdraw', [BankController::class, 'withdraw'])->name('bank.withdraw');
@@ -133,7 +144,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Healer
     Route::get('villages/{village}/healer', [HealerController::class, 'villageHealer'])->name('villages.healer');
-    Route::get('castles/{castle}/infirmary', [HealerController::class, 'castleInfirmary'])->name('castles.infirmary');
+    Route::get('baronies/{barony}/infirmary', [HealerController::class, 'baronyInfirmary'])->name('baronies.infirmary');
     Route::get('towns/{town}/infirmary', [HealerController::class, 'townInfirmary'])->name('towns.infirmary');
     Route::post('healer/heal', [HealerController::class, 'heal'])->name('healer.heal');
     Route::post('healer/heal-amount', [HealerController::class, 'healAmount'])->name('healer.heal-amount');
@@ -171,7 +182,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Jobs
     Route::get('villages/{village}/jobs', [JobController::class, 'villageJobs'])->name('villages.jobs');
-    Route::get('castles/{castle}/jobs', [JobController::class, 'castleJobs'])->name('castles.jobs');
+    Route::get('baronies/{barony}/jobs', [JobController::class, 'baronyJobs'])->name('baronies.jobs');
     Route::get('towns/{town}/jobs', [JobController::class, 'townJobs'])->name('towns.jobs');
     Route::post('jobs/apply', [JobController::class, 'apply'])->name('jobs.apply');
     Route::post('jobs/{employment}/work', [JobController::class, 'work'])->name('jobs.work');
@@ -180,7 +191,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Roles
     Route::get('villages/{village}/roles', [RoleController::class, 'villageRoles'])->name('villages.roles');
-    Route::get('castles/{castle}/roles', [RoleController::class, 'castleRoles'])->name('castles.roles');
+    Route::get('baronies/{barony}/roles', [RoleController::class, 'baronyRoles'])->name('baronies.roles');
     Route::get('kingdoms/{kingdom}/roles', [RoleController::class, 'kingdomRoles'])->name('kingdoms.roles');
     Route::get('roles', [RoleController::class, 'myRoles'])->name('roles.index');
     Route::post('roles/appoint', [RoleController::class, 'appoint'])->name('roles.appoint');
@@ -198,7 +209,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Taxes
     Route::get('villages/{village}/taxes', [TaxController::class, 'villageTaxes'])->name('villages.taxes');
-    Route::get('castles/{castle}/taxes', [TaxController::class, 'castleTaxes'])->name('castles.taxes');
+    Route::get('baronies/{barony}/taxes', [TaxController::class, 'baronyTaxes'])->name('baronies.taxes');
     Route::get('kingdoms/{kingdom}/taxes', [TaxController::class, 'kingdomTaxes'])->name('kingdoms.taxes');
     Route::get('taxes', [TaxController::class, 'myTaxes'])->name('taxes.index');
     Route::post('taxes/set-rate', [TaxController::class, 'setTaxRate'])->name('taxes.set-rate');
@@ -225,7 +236,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Chat
     Route::get('chat', [ChatController::class, 'index'])->name('chat.index');
     Route::get('villages/{village}/chat', [ChatController::class, 'villageChat'])->name('villages.chat');
-    Route::get('castles/{castle}/chat', [ChatController::class, 'castleChat'])->name('castles.chat');
+    Route::get('baronies/{barony}/chat', [ChatController::class, 'baronyChat'])->name('baronies.chat');
     Route::get('chat/private/{user}', [ChatController::class, 'privateChat'])->name('chat.private');
     Route::get('chat/conversations', [ChatController::class, 'conversations'])->name('chat.conversations');
     Route::post('chat/send/location', [ChatController::class, 'sendLocationMessage'])->name('chat.send.location');

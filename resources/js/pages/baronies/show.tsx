@@ -12,7 +12,7 @@ interface Village {
     population: number;
 }
 
-interface Castle {
+interface Barony {
     id: number;
     name: string;
     description: string;
@@ -33,7 +33,7 @@ interface Castle {
 }
 
 interface Props {
-    castle: Castle;
+    barony: Barony;
 }
 
 const biomeColors: Record<string, string> = {
@@ -47,33 +47,33 @@ const biomeColors: Record<string, string> = {
     swamps: 'bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200',
 };
 
-export default function CastleShow({ castle }: Props) {
+export default function BaronyShow({ barony }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Castles', href: '/castles' },
-        { title: castle.name, href: `/castles/${castle.id}` },
+        { title: 'Baronies', href: '/baronies' },
+        { title: barony.name, href: `/baronies/${barony.id}` },
     ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={castle.name} />
+            <Head title={barony.name} />
             <div className="flex flex-col gap-6 p-6">
                 <div className="flex items-start justify-between">
                     <div>
                         <div className="flex items-center gap-3">
                             <h1 className="text-2xl font-bold">
-                                {castle.name}
-                                {castle.is_capital && (
+                                {barony.name}
+                                {barony.is_capital && (
                                     <span className="ml-2 text-sm text-amber-600 dark:text-amber-400">
                                         (Capital)
                                     </span>
                                 )}
                             </h1>
-                            <Badge className={biomeColors[castle.biome] || ''}>
-                                {castle.biome}
+                            <Badge className={biomeColors[barony.biome] || ''}>
+                                {barony.biome}
                             </Badge>
                         </div>
-                        <p className="text-muted-foreground mt-1">{castle.description}</p>
+                        <p className="text-muted-foreground mt-1">{barony.description}</p>
                     </div>
                 </div>
 
@@ -82,9 +82,9 @@ export default function CastleShow({ castle }: Props) {
                         <CardHeader className="pb-2">
                             <CardDescription>Kingdom</CardDescription>
                             <CardTitle className="text-lg">
-                                {castle.kingdom ? (
-                                    <Link href={`/kingdoms/${castle.kingdom.id}`} className="hover:underline">
-                                        {castle.kingdom.name}
+                                {barony.kingdom ? (
+                                    <Link href={`/kingdoms/${barony.kingdom.id}`} className="hover:underline">
+                                        {barony.kingdom.name}
                                     </Link>
                                 ) : (
                                     'Independent'
@@ -95,37 +95,37 @@ export default function CastleShow({ castle }: Props) {
                     <Card>
                         <CardHeader className="pb-2">
                             <CardDescription>Villages</CardDescription>
-                            <CardTitle className="text-lg">{castle.village_count}</CardTitle>
+                            <CardTitle className="text-lg">{barony.village_count}</CardTitle>
                         </CardHeader>
                     </Card>
                     <Card>
                         <CardHeader className="pb-2">
                             <CardDescription>Tax Rate</CardDescription>
-                            <CardTitle className="text-lg">{castle.tax_rate}%</CardTitle>
+                            <CardTitle className="text-lg">{barony.tax_rate}%</CardTitle>
                         </CardHeader>
                     </Card>
                     <Card>
                         <CardHeader className="pb-2">
                             <CardDescription>Coordinates</CardDescription>
-                            <CardTitle className="text-lg">({castle.coordinates.x}, {castle.coordinates.y})</CardTitle>
+                            <CardTitle className="text-lg">({barony.coordinates.x}, {barony.coordinates.y})</CardTitle>
                         </CardHeader>
                     </Card>
                 </div>
 
                 <div className="flex gap-4">
                     <Link
-                        href={`/castles/${castle.id}/roles`}
+                        href={`/baronies/${barony.id}/roles`}
                         className="flex-1 rounded-lg border-2 border-amber-600/50 bg-amber-900/20 p-4 text-center transition hover:bg-amber-800/30"
                     >
                         <span className="font-pixel text-lg text-amber-300">View Roles</span>
-                        <p className="text-sm text-stone-400">See castle officials and positions</p>
+                        <p className="text-sm text-stone-400">See barony officials and positions</p>
                     </Link>
                 </div>
 
                 <div>
                     <h2 className="text-xl font-semibold mb-4">Villages</h2>
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {castle.villages.map((village) => (
+                        {barony.villages.map((village) => (
                             <Link key={village.id} href={`/villages/${village.id}`}>
                                 <Card className="transition-shadow hover:shadow-lg cursor-pointer h-full">
                                     <CardHeader>

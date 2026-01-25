@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Barony;
 use App\Models\Kingdom;
 use App\Models\Town;
 use Illuminate\Database\Seeder;
@@ -13,18 +14,15 @@ class TownSeeder extends Seeder
      */
     public function run(): void
     {
-        $valdoria = Kingdom::where('name', 'Valdoria')->first();
-        $frostholm = Kingdom::where('name', 'Frostholm')->first();
-        $sandmar = Kingdom::where('name', 'Sandmar')->first();
-        $ashenfell = Kingdom::where('name', 'Ashenfell')->first();
+        $baronies = Barony::all()->keyBy('name');
 
-        // Towns are positioned ±100 units from their kingdom center
+        // Towns now belong to baronies, not kingdoms directly
         $towns = [
-            // Valdoria Towns (3) - Kingdom at (200, 200)
+            // Valdoria Towns (3) - under their respective baronies
             [
                 'name' => 'Greenhold Town',
                 'description' => 'The capital town of Valdoria, surrounded by vast farmlands and ancient oak forests.',
-                'kingdom_id' => $valdoria->id,
+                'barony_name' => 'Greenhold',
                 'is_capital' => true,
                 'biome' => 'forest',
                 'tax_rate' => 10.00,
@@ -36,7 +34,7 @@ class TownSeeder extends Seeder
             [
                 'name' => 'Riverwatch Town',
                 'description' => 'A strategic town overlooking the great river that feeds Valdoria\'s farmlands.',
-                'kingdom_id' => $valdoria->id,
+                'barony_name' => 'Riverwatch',
                 'is_capital' => false,
                 'biome' => 'plains',
                 'tax_rate' => 8.00,
@@ -48,7 +46,7 @@ class TownSeeder extends Seeder
             [
                 'name' => 'Thornkeep Town',
                 'description' => 'A town at the edge of the Thornwood, guarding against creatures from the swamps.',
-                'kingdom_id' => $valdoria->id,
+                'barony_name' => 'Thornkeep',
                 'is_capital' => false,
                 'biome' => 'swamps',
                 'tax_rate' => 7.00,
@@ -58,11 +56,11 @@ class TownSeeder extends Seeder
                 'coordinates_y' => 140,
             ],
 
-            // Frostholm Towns (2) - Kingdom at (800, 800)
+            // Frostholm Towns (2)
             [
                 'name' => 'Winterspire Town',
                 'description' => 'The frozen seat of Frostholm\'s power, built into the side of a glacier.',
-                'kingdom_id' => $frostholm->id,
+                'barony_name' => 'Winterspire',
                 'is_capital' => true,
                 'biome' => 'tundra',
                 'tax_rate' => 8.00,
@@ -74,7 +72,7 @@ class TownSeeder extends Seeder
             [
                 'name' => 'Ironpeak Town',
                 'description' => 'A mountain town rich in iron ore, supplying Frostholm\'s legendary smiths.',
-                'kingdom_id' => $frostholm->id,
+                'barony_name' => 'Ironpeak',
                 'is_capital' => false,
                 'biome' => 'mountains',
                 'tax_rate' => 9.00,
@@ -84,11 +82,11 @@ class TownSeeder extends Seeder
                 'coordinates_y' => 760,
             ],
 
-            // Sandmar Towns (3) - Kingdom at (200, 800)
+            // Sandmar Towns (3)
             [
                 'name' => 'Tidekeep Town',
                 'description' => 'The great harbor town of Sandmar, controlling all trade along the coast.',
-                'kingdom_id' => $sandmar->id,
+                'barony_name' => 'Tidekeep',
                 'is_capital' => true,
                 'biome' => 'coastal',
                 'tax_rate' => 12.00,
@@ -100,7 +98,7 @@ class TownSeeder extends Seeder
             [
                 'name' => 'Sunspear Town',
                 'description' => 'A desert town that guards the eastern trade routes through the dunes.',
-                'kingdom_id' => $sandmar->id,
+                'barony_name' => 'Sunspear',
                 'is_capital' => false,
                 'biome' => 'desert',
                 'tax_rate' => 11.00,
@@ -112,7 +110,7 @@ class TownSeeder extends Seeder
             [
                 'name' => 'Oasishold Town',
                 'description' => 'Built around the largest oasis in the desert, a haven for travelers and merchants.',
-                'kingdom_id' => $sandmar->id,
+                'barony_name' => 'Oasishold',
                 'is_capital' => false,
                 'biome' => 'desert',
                 'tax_rate' => 10.00,
@@ -122,11 +120,11 @@ class TownSeeder extends Seeder
                 'coordinates_y' => 740,
             ],
 
-            // Ashenfell Towns (2) - Kingdom at (800, 200)
+            // Ashenfell Towns (2)
             [
                 'name' => 'Embercrown Town',
                 'description' => 'The volcanic capital of Ashenfell, its forges never cool and its fires never dim.',
-                'kingdom_id' => $ashenfell->id,
+                'barony_name' => 'Embercrown',
                 'is_capital' => true,
                 'biome' => 'volcano',
                 'tax_rate' => 15.00,
@@ -138,7 +136,7 @@ class TownSeeder extends Seeder
             [
                 'name' => 'Cinderfall Town',
                 'description' => 'A town built on the ashen plains where volcanic soil yields rare minerals.',
-                'kingdom_id' => $ashenfell->id,
+                'barony_name' => 'Cinderfall',
                 'is_capital' => false,
                 'biome' => 'volcano',
                 'tax_rate' => 13.00,
@@ -150,13 +148,17 @@ class TownSeeder extends Seeder
         ];
 
         foreach ($towns as $townData) {
+            $barony = $baronies[$townData['barony_name']];
             $isCapital = $townData['is_capital'];
+
+            unset($townData['barony_name'], $townData['is_capital']);
+            $townData['barony_id'] = $barony->id;
 
             $town = Town::create($townData);
 
             // Set as capital town for the kingdom
             if ($isCapital) {
-                Kingdom::where('id', $town->kingdom_id)
+                Kingdom::where('id', $barony->kingdom_id)
                     ->update(['capital_town_id' => $town->id]);
             }
         }

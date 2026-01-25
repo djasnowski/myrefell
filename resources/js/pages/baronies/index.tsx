@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
-interface Castle {
+interface Barony {
     id: number;
     name: string;
     description: string;
@@ -23,12 +23,12 @@ interface Castle {
 }
 
 interface Props {
-    castles: Castle[];
+    baronies: Barony[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Castles', href: '/castles' },
+    { title: 'Baronies', href: '/baronies' },
 ];
 
 const biomeColors: Record<string, string> = {
@@ -42,53 +42,53 @@ const biomeColors: Record<string, string> = {
     swamps: 'bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200',
 };
 
-export default function CastlesIndex({ castles }: Props) {
+export default function BaroniesIndex({ baronies }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Castles" />
+            <Head title="Baronies" />
             <div className="flex flex-col gap-6 p-6">
                 <div>
-                    <h1 className="text-2xl font-bold">Castles of Myrefell</h1>
+                    <h1 className="text-2xl font-bold">Baronies of Myrefell</h1>
                     <p className="text-muted-foreground">Strongholds that protect the realm.</p>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {castles.map((castle) => (
-                        <Link key={castle.id} href={`/castles/${castle.id}`}>
+                    {baronies.map((barony) => (
+                        <Link key={barony.id} href={`/baronies/${barony.id}`}>
                             <Card className="transition-shadow hover:shadow-lg cursor-pointer h-full">
                                 <CardHeader>
                                     <div className="flex items-center justify-between">
                                         <CardTitle>
-                                            {castle.name}
-                                            {castle.is_capital && (
+                                            {barony.name}
+                                            {barony.is_capital && (
                                                 <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
                                                     (Capital)
                                                 </span>
                                             )}
                                         </CardTitle>
-                                        <Badge className={biomeColors[castle.biome] || ''}>
-                                            {castle.biome}
+                                        <Badge className={biomeColors[barony.biome] || ''}>
+                                            {barony.biome}
                                         </Badge>
                                     </div>
-                                    <CardDescription>{castle.description}</CardDescription>
+                                    <CardDescription>{barony.description}</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="grid grid-cols-2 gap-4 text-sm">
                                         <div>
                                             <span className="text-muted-foreground">Kingdom:</span>
-                                            <p className="font-medium">{castle.kingdom?.name || 'None'}</p>
+                                            <p className="font-medium">{barony.kingdom?.name || 'None'}</p>
                                         </div>
                                         <div>
                                             <span className="text-muted-foreground">Villages:</span>
-                                            <p className="font-medium">{castle.villages_count}</p>
+                                            <p className="font-medium">{barony.villages_count}</p>
                                         </div>
                                         <div>
                                             <span className="text-muted-foreground">Tax Rate:</span>
-                                            <p className="font-medium">{castle.tax_rate}%</p>
+                                            <p className="font-medium">{barony.tax_rate}%</p>
                                         </div>
                                         <div>
                                             <span className="text-muted-foreground">Coordinates:</span>
-                                            <p className="font-medium">({castle.coordinates.x}, {castle.coordinates.y})</p>
+                                            <p className="font-medium">({barony.coordinates.x}, {barony.coordinates.y})</p>
                                         </div>
                                     </div>
                                 </CardContent>

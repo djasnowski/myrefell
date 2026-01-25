@@ -23,11 +23,11 @@ class HealerController extends Controller
     }
 
     /**
-     * Show the infirmary page for a castle.
+     * Show the infirmary page for a barony.
      */
-    public function castleInfirmary(Request $request, int $castleId): Response
+    public function baronyInfirmary(Request $request, int $baronyId): Response
     {
-        return $this->showHealer($request, 'castle', $castleId);
+        return $this->showHealer($request, 'barony', $baronyId);
     }
 
     /**

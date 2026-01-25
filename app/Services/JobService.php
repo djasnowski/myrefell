@@ -398,13 +398,13 @@ class JobService
                 'cooldown_minutes' => 35,
             ],
 
-            // Castle jobs
+            // Barony jobs
             [
                 'name' => 'Guard Duty',
                 'icon' => 'shield',
-                'description' => 'Stand watch at the castle gates.',
+                'description' => 'Stand watch at the barony gates.',
                 'category' => 'service',
-                'location_type' => 'castle',
+                'location_type' => 'barony',
                 'energy_cost' => 10,
                 'base_wage' => 60,
                 'xp_reward' => 20,
@@ -417,7 +417,7 @@ class JobService
                 'icon' => 'swords',
                 'description' => 'Assist knights with their equipment and training.',
                 'category' => 'service',
-                'location_type' => 'castle',
+                'location_type' => 'barony',
                 'energy_cost' => 12,
                 'base_wage' => 55,
                 'xp_reward' => 18,

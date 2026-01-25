@@ -78,12 +78,15 @@ class StableService
             // Deduct gold
             $user->decrement('gold', $price);
 
-            // Create player horse record
+            // Create player horse record with full stamina
             $playerHorse = PlayerHorse::create([
                 'user_id' => $user->id,
                 'horse_id' => $horse->id,
                 'custom_name' => $customName,
                 'purchase_price' => $price,
+                'stamina' => $horse->base_stamina,
+                'max_stamina' => $horse->base_stamina,
+                'is_stabled' => false,
                 'purchased_at' => now(),
             ]);
 
@@ -165,8 +168,127 @@ class StableService
             'name' => $playerHorse->display_name,
             'type' => $playerHorse->horse->name,
             'speed_multiplier' => $playerHorse->speed_multiplier,
+            'stamina' => $playerHorse->stamina,
+            'max_stamina' => $playerHorse->max_stamina,
+            'stamina_cost' => $playerHorse->stamina_cost,
+            'is_stabled' => $playerHorse->is_stabled,
+            'stabled_location_type' => $playerHorse->stabled_location_type,
+            'stabled_location_id' => $playerHorse->stabled_location_id,
             'sell_price' => $playerHorse->sell_price,
             'purchased_at' => $playerHorse->purchased_at,
         ];
+    }
+
+    /**
+     * Stable the horse at the user's current location.
+     */
+    public function stableHorse(User $user): array
+    {
+        $playerHorse = $user->horse;
+
+        if (!$playerHorse) {
+            return [
+                'success' => false,
+                'message' => "You don't own a horse.",
+            ];
+        }
+
+        if ($playerHorse->is_stabled) {
+            return [
+                'success' => false,
+                'message' => "Your horse is already stabled.",
+            ];
+        }
+
+        $playerHorse->stable($user->current_location_type, $user->current_location_id);
+
+        return [
+            'success' => true,
+            'message' => "Your horse has been stabled here. It will rest and recover stamina.",
+        ];
+    }
+
+    /**
+     * Retrieve horse from stable (must be at same location).
+     */
+    public function retrieveHorse(User $user): array
+    {
+        $playerHorse = $user->horse;
+
+        if (!$playerHorse) {
+            return [
+                'success' => false,
+                'message' => "You don't own a horse.",
+            ];
+        }
+
+        if (!$playerHorse->is_stabled) {
+            return [
+                'success' => false,
+                'message' => "Your horse is already with you.",
+            ];
+        }
+
+        // Check if user is at the stable location
+        if ($playerHorse->stabled_location_type !== $user->current_location_type ||
+            $playerHorse->stabled_location_id !== $user->current_location_id) {
+            return [
+                'success' => false,
+                'message' => "Your horse is stabled elsewhere. Travel there to retrieve it.",
+            ];
+        }
+
+        $playerHorse->retrieve();
+
+        return [
+            'success' => true,
+            'message' => "You retrieved your horse from the stable.",
+        ];
+    }
+
+    /**
+     * Rest horse at stable (costs gold, restores stamina).
+     */
+    public function restHorse(User $user, int $restCost = 50): array
+    {
+        $playerHorse = $user->horse;
+
+        if (!$playerHorse) {
+            return [
+                'success' => false,
+                'message' => "You don't own a horse.",
+            ];
+        }
+
+        if (!$playerHorse->is_stabled) {
+            return [
+                'success' => false,
+                'message' => "Your horse must be stabled to rest.",
+            ];
+        }
+
+        if ($playerHorse->stamina >= $playerHorse->max_stamina) {
+            return [
+                'success' => false,
+                'message' => "Your horse is already fully rested.",
+            ];
+        }
+
+        if ($user->gold < $restCost) {
+            return [
+                'success' => false,
+                'message' => "You need {$restCost} gold to rest your horse.",
+            ];
+        }
+
+        return DB::transaction(function () use ($user, $playerHorse, $restCost) {
+            $user->decrement('gold', $restCost);
+            $playerHorse->fullyRest();
+
+            return [
+                'success' => true,
+                'message' => "Your horse has been fed and rested. Stamina fully restored!",
+            ];
+        });
     }
 }

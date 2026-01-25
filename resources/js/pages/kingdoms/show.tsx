@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
-interface Castle {
+interface Barony {
     id: number;
     name: string;
     biome: string;
@@ -27,8 +27,8 @@ interface Kingdom {
         name: string;
         biome: string;
     } | null;
-    castles: Castle[];
-    castle_count: number;
+    baronies: Barony[];
+    barony_count: number;
     total_villages: number;
 }
 
@@ -76,7 +76,7 @@ export default function KingdomShow({ kingdom }: Props) {
                             <CardDescription>Capital</CardDescription>
                             <CardTitle className="text-lg">
                                 {kingdom.capital ? (
-                                    <Link href={`/castles/${kingdom.capital.id}`} className="hover:underline">
+                                    <Link href={`/towns/${kingdom.capital.id}`} className="hover:underline">
                                         {kingdom.capital.name}
                                     </Link>
                                 ) : (
@@ -87,8 +87,8 @@ export default function KingdomShow({ kingdom }: Props) {
                     </Card>
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardDescription>Castles</CardDescription>
-                            <CardTitle className="text-lg">{kingdom.castle_count}</CardTitle>
+                            <CardDescription>Baronies</CardDescription>
+                            <CardTitle className="text-lg">{kingdom.barony_count}</CardTitle>
                         </CardHeader>
                     </Card>
                     <Card>
@@ -116,29 +116,29 @@ export default function KingdomShow({ kingdom }: Props) {
                 </div>
 
                 <div>
-                    <h2 className="text-xl font-semibold mb-4">Castles</h2>
+                    <h2 className="text-xl font-semibold mb-4">Baronies</h2>
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {kingdom.castles.map((castle) => (
-                            <Link key={castle.id} href={`/castles/${castle.id}`}>
+                        {kingdom.baronies.map((barony) => (
+                            <Link key={barony.id} href={`/baronies/${barony.id}`}>
                                 <Card className="transition-shadow hover:shadow-lg cursor-pointer h-full">
                                     <CardHeader>
                                         <div className="flex items-center justify-between">
                                             <CardTitle className="text-base">
-                                                {castle.name}
-                                                {castle.is_capital && (
+                                                {barony.name}
+                                                {barony.is_capital && (
                                                     <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
                                                         (Capital)
                                                     </span>
                                                 )}
                                             </CardTitle>
-                                            <Badge className={biomeColors[castle.biome] || ''} variant="secondary">
-                                                {castle.biome}
+                                            <Badge className={biomeColors[barony.biome] || ''} variant="secondary">
+                                                {barony.biome}
                                             </Badge>
                                         </div>
                                     </CardHeader>
                                     <CardContent>
                                         <p className="text-sm text-muted-foreground">
-                                            {castle.village_count} {castle.village_count === 1 ? 'village' : 'villages'}
+                                            {barony.village_count} {barony.village_count === 1 ? 'village' : 'villages'}
                                         </p>
                                     </CardContent>
                                 </Card>

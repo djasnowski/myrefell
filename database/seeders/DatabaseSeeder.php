@@ -17,11 +17,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed the world in order (kingdoms -> towns -> castles -> villages)
+        // Seed the world in order (kingdoms -> baronies -> towns -> villages)
         $this->call([
             KingdomSeeder::class,
+            BaronySeeder::class,
             TownSeeder::class,
-            CastleSeeder::class,
             VillageSeeder::class,
             ItemSeeder::class,
             MonsterSeeder::class,
@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             ReligionSeeder::class,
             CharterSeeder::class,
+            HorseSeeder::class,
             DanAdminSeeder::class,
         ]);
 

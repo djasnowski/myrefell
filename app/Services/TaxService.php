@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Castle;
+use App\Models\Barony;
 use App\Models\Kingdom;
 use App\Models\LocationTreasury;
 use App\Models\PlayerRole;
@@ -62,7 +62,7 @@ class TaxService
 
     /**
      * Get the tax rate for a location.
-     * Castles and kingdoms have tax_rate fields; villages use their castle's rate.
+     * Baronies and kingdoms have tax_rate fields; villages use their barony's rate.
      */
     public function getTaxRate(string $locationType, int $locationId): float
     {
@@ -74,21 +74,21 @@ class TaxService
 
         return match ($locationType) {
             'kingdom' => (float) ($location->tax_rate ?? self::DEFAULT_TAX_RATE),
-            'castle' => (float) ($location->tax_rate ?? self::DEFAULT_TAX_RATE),
-            'village' => (float) ($location->castle?->tax_rate ?? self::DEFAULT_TAX_RATE),
+            'barony' => (float) ($location->tax_rate ?? self::DEFAULT_TAX_RATE),
+            'village' => (float) ($location->barony?->tax_rate ?? self::DEFAULT_TAX_RATE),
             default => self::DEFAULT_TAX_RATE,
         };
     }
 
     /**
-     * Set the tax rate for a location (castle or kingdom only).
+     * Set the tax rate for a location (barony or kingdom only).
      */
     public function setTaxRate(string $locationType, int $locationId, float $rate, User $setBy): array
     {
-        if (!in_array($locationType, ['castle', 'kingdom'])) {
+        if (!in_array($locationType, ['barony', 'kingdom'])) {
             return [
                 'success' => false,
-                'message' => 'Tax rates can only be set for castles and kingdoms.',
+                'message' => 'Tax rates can only be set for baronies and kingdoms.',
             ];
         }
 
@@ -126,7 +126,7 @@ class TaxService
 
     /**
      * Collect daily taxes from all players and propagate up the hierarchy.
-     * Flow: Players -> Villages -> Castles -> Kingdoms
+     * Flow: Players -> Villages -> Baronies -> Kingdoms
      */
     public function collectDailyTaxes(): array
     {
@@ -135,18 +135,18 @@ class TaxService
             'players_taxed' => 0,
             'player_tax_total' => 0,
             'village_upstream_total' => 0,
-            'castle_upstream_total' => 0,
+            'barony_upstream_total' => 0,
         ];
 
         DB::transaction(function () use ($today, &$results) {
             // Step 1: Collect taxes from players to their home villages
             $results = array_merge($results, $this->collectPlayerTaxes($today));
 
-            // Step 2: Villages pay taxes to their castles
+            // Step 2: Villages pay taxes to their baronies
             $results['village_upstream_total'] = $this->collectUpstreamTaxes('village', $today);
 
-            // Step 3: Castles pay taxes to their kingdoms
-            $results['castle_upstream_total'] = $this->collectUpstreamTaxes('castle', $today);
+            // Step 3: Baronies pay taxes to their kingdoms
+            $results['barony_upstream_total'] = $this->collectUpstreamTaxes('barony', $today);
         });
 
         return $results;
@@ -163,7 +163,7 @@ class TaxService
         // Get all players with gold who have a home village
         User::where('gold', '>', 0)
             ->whereNotNull('home_village_id')
-            ->with('homeVillage.castle')
+            ->with('homeVillage.barony')
             ->chunk(100, function ($users) use ($taxPeriod, &$playersTaxed, &$totalCollected) {
                 foreach ($users as $user) {
                     $village = $user->homeVillage;
@@ -171,7 +171,7 @@ class TaxService
                         continue;
                     }
 
-                    // Calculate tax based on castle's tax rate
+                    // Calculate tax based on barony's tax rate
                     $taxRate = $this->getTaxRate('village', $village->id);
                     $taxAmount = (int) floor($user->gold * ($taxRate / 100));
 
@@ -214,20 +214,20 @@ class TaxService
     }
 
     /**
-     * Collect upstream taxes (village -> castle -> kingdom).
+     * Collect upstream taxes (village -> barony -> kingdom).
      */
     protected function collectUpstreamTaxes(string $fromLocationType, string $taxPeriod): int
     {
         $totalCollected = 0;
 
         if ($fromLocationType === 'village') {
-            // Villages pay to their castles
-            Village::whereNotNull('castle_id')
-                ->with('castle')
+            // Villages pay to their baronies
+            Village::whereNotNull('barony_id')
+                ->with('barony')
                 ->chunk(100, function ($villages) use ($taxPeriod, &$totalCollected) {
                     foreach ($villages as $village) {
-                        $castle = $village->castle;
-                        if (!$castle) {
+                        $barony = $village->barony;
+                        if (!$barony) {
                             continue;
                         }
 
@@ -236,8 +236,8 @@ class TaxService
                             continue;
                         }
 
-                        // Use castle's tax rate
-                        $taxRate = $this->getTaxRate('castle', $castle->id);
+                        // Use barony's tax rate
+                        $taxRate = $this->getTaxRate('barony', $barony->id);
                         $taxAmount = (int) floor($villageTreasury->balance * ($taxRate / 100));
 
                         if ($taxAmount <= 0) {
@@ -248,15 +248,15 @@ class TaxService
                         $villageTreasury->withdraw(
                             $taxAmount,
                             TreasuryTransaction::TYPE_UPSTREAM_TAX,
-                            "Upstream tax to {$castle->name}",
+                            "Upstream tax to {$barony->name}",
                             null,
-                            'castle',
-                            $castle->id
+                            'barony',
+                            $barony->id
                         );
 
-                        // Deposit to castle
-                        $castleTreasury = $this->getTreasury('castle', $castle->id);
-                        $castleTreasury->deposit(
+                        // Deposit to barony
+                        $baronyTreasury = $this->getTreasury('barony', $barony->id);
+                        $baronyTreasury->deposit(
                             $taxAmount,
                             TreasuryTransaction::TYPE_TAX_INCOME,
                             "Tax from {$village->name}",
@@ -269,8 +269,8 @@ class TaxService
                         TaxCollection::create([
                             'payer_location_type' => 'village',
                             'payer_location_id' => $village->id,
-                            'receiver_location_type' => 'castle',
-                            'receiver_location_id' => $castle->id,
+                            'receiver_location_type' => 'barony',
+                            'receiver_location_id' => $barony->id,
                             'amount' => $taxAmount,
                             'tax_type' => TaxCollection::TYPE_UPSTREAM,
                             'description' => "Village upstream tax",
@@ -280,32 +280,32 @@ class TaxService
                         $totalCollected += $taxAmount;
                     }
                 });
-        } elseif ($fromLocationType === 'castle') {
-            // Castles pay to their kingdoms
-            Castle::whereNotNull('kingdom_id')
+        } elseif ($fromLocationType === 'barony') {
+            // Baronies pay to their kingdoms
+            Barony::whereNotNull('kingdom_id')
                 ->with('kingdom')
-                ->chunk(100, function ($castles) use ($taxPeriod, &$totalCollected) {
-                    foreach ($castles as $castle) {
-                        $kingdom = $castle->kingdom;
+                ->chunk(100, function ($baronies) use ($taxPeriod, &$totalCollected) {
+                    foreach ($baronies as $barony) {
+                        $kingdom = $barony->kingdom;
                         if (!$kingdom) {
                             continue;
                         }
 
-                        $castleTreasury = $this->getTreasury('castle', $castle->id);
-                        if ($castleTreasury->balance <= 0) {
+                        $baronyTreasury = $this->getTreasury('barony', $barony->id);
+                        if ($baronyTreasury->balance <= 0) {
                             continue;
                         }
 
                         // Use kingdom's tax rate
                         $taxRate = $this->getTaxRate('kingdom', $kingdom->id);
-                        $taxAmount = (int) floor($castleTreasury->balance * ($taxRate / 100));
+                        $taxAmount = (int) floor($baronyTreasury->balance * ($taxRate / 100));
 
                         if ($taxAmount <= 0) {
                             continue;
                         }
 
-                        // Withdraw from castle
-                        $castleTreasury->withdraw(
+                        // Withdraw from barony
+                        $baronyTreasury->withdraw(
                             $taxAmount,
                             TreasuryTransaction::TYPE_UPSTREAM_TAX,
                             "Upstream tax to {$kingdom->name}",
@@ -319,21 +319,21 @@ class TaxService
                         $kingdomTreasury->deposit(
                             $taxAmount,
                             TreasuryTransaction::TYPE_TAX_INCOME,
-                            "Tax from {$castle->name}",
+                            "Tax from {$barony->name}",
                             null,
-                            'castle',
-                            $castle->id
+                            'barony',
+                            $barony->id
                         );
 
                         // Record the collection
                         TaxCollection::create([
-                            'payer_location_type' => 'castle',
-                            'payer_location_id' => $castle->id,
+                            'payer_location_type' => 'barony',
+                            'payer_location_id' => $barony->id,
                             'receiver_location_type' => 'kingdom',
                             'receiver_location_id' => $kingdom->id,
                             'amount' => $taxAmount,
                             'tax_type' => TaxCollection::TYPE_UPSTREAM,
-                            'description' => "Castle upstream tax",
+                            'description' => "Barony upstream tax",
                             'tax_period' => $taxPeriod,
                         ]);
 
@@ -500,7 +500,7 @@ class TaxService
     {
         $modelClass = match ($type) {
             'village' => Village::class,
-            'castle' => Castle::class,
+            'barony' => Barony::class,
             'kingdom' => Kingdom::class,
             default => null,
         };
@@ -524,7 +524,7 @@ class TaxService
 
         // Check for appropriate role permission
         $requiredPermission = match ($locationType) {
-            'castle' => 'configure_taxes',
+            'barony' => 'configure_taxes',
             'kingdom' => 'configure_taxes',
             default => null,
         };

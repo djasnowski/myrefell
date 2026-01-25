@@ -42,19 +42,19 @@ class Kingdom extends Model
     }
 
     /**
-     * Get all towns in this kingdom.
+     * Get all baronies in this kingdom.
      */
-    public function towns(): HasMany
+    public function baronies(): HasMany
     {
-        return $this->hasMany(Town::class);
+        return $this->hasMany(Barony::class);
     }
 
     /**
-     * Get all castles in this kingdom (through towns).
+     * Get all towns in this kingdom (through baronies).
      */
-    public function castles(): HasManyThrough
+    public function towns(): HasManyThrough
     {
-        return $this->hasManyThrough(Castle::class, Town::class);
+        return $this->hasManyThrough(Town::class, Barony::class);
     }
 
     /**
@@ -70,7 +70,7 @@ class Kingdom extends Model
      */
     public function villages()
     {
-        return Village::whereIn('castle_id', $this->castles()->pluck('castles.id'));
+        return Village::whereIn('barony_id', $this->baronies()->pluck('baronies.id'));
     }
 
     /**

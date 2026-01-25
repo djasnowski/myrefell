@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Castle;
+use App\Models\Barony;
 use App\Models\Kingdom;
 use App\Models\Town;
 use App\Models\Village;
@@ -29,8 +29,8 @@ class MapController extends Controller
     {
         return [
             'kingdoms' => $this->getKingdoms(),
+            'baronies' => $this->getBaronies(),
             'towns' => $this->getTowns(),
-            'castles' => $this->getCastles(),
             'villages' => $this->getVillages(),
             'player' => $this->getPlayerLocation($user),
             'bounds' => $this->calculateBounds(),
@@ -53,38 +53,37 @@ class MapController extends Controller
     }
 
     /**
+     * Get all baronies with their coordinates.
+     */
+    protected function getBaronies(): array
+    {
+        return Barony::with('kingdom')->get()->map(fn ($barony) => [
+            'id' => $barony->id,
+            'name' => $barony->name,
+            'biome' => $barony->biome,
+            'coordinates_x' => $barony->coordinates_x,
+            'coordinates_y' => $barony->coordinates_y,
+            'kingdom_id' => $barony->kingdom_id,
+            'kingdom_name' => $barony->kingdom?->name,
+            'is_capital' => $barony->isCapitalBarony(),
+        ])->toArray();
+    }
+
+    /**
      * Get all towns with their coordinates.
      */
     protected function getTowns(): array
     {
-        return Town::with('kingdom')->get()->map(fn ($town) => [
+        return Town::with('barony.kingdom')->get()->map(fn ($town) => [
             'id' => $town->id,
             'name' => $town->name,
             'biome' => $town->biome,
             'coordinates_x' => $town->coordinates_x,
             'coordinates_y' => $town->coordinates_y,
-            'kingdom_id' => $town->kingdom_id,
-            'kingdom_name' => $town->kingdom?->name,
-            'is_capital' => $town->is_capital,
+            'barony_id' => $town->barony_id,
+            'barony_name' => $town->barony?->name,
+            'kingdom_name' => $town->barony?->kingdom?->name,
             'population' => $town->population,
-        ])->toArray();
-    }
-
-    /**
-     * Get all castles with their coordinates.
-     */
-    protected function getCastles(): array
-    {
-        return Castle::with('town.kingdom')->get()->map(fn ($castle) => [
-            'id' => $castle->id,
-            'name' => $castle->name,
-            'biome' => $castle->biome,
-            'coordinates_x' => $castle->coordinates_x,
-            'coordinates_y' => $castle->coordinates_y,
-            'kingdom_id' => $castle->kingdom_id,
-            'kingdom_name' => $castle->town?->kingdom?->name,
-            'town_id' => $castle->town_id,
-            'town_name' => $castle->town?->name,
         ])->toArray();
     }
 
@@ -93,17 +92,19 @@ class MapController extends Controller
      */
     protected function getVillages(): array
     {
-        return Village::with('castle.town.kingdom')->get()->map(fn ($village) => [
+        return Village::with('barony.kingdom')->get()->map(fn ($village) => [
             'id' => $village->id,
             'name' => $village->name,
             'biome' => $village->biome,
             'coordinates_x' => $village->coordinates_x,
             'coordinates_y' => $village->coordinates_y,
-            'castle_id' => $village->castle_id,
-            'castle_name' => $village->castle?->name,
-            'kingdom_name' => $village->castle?->town?->kingdom?->name,
+            'barony_id' => $village->barony_id,
+            'barony_name' => $village->barony?->name,
+            'kingdom_name' => $village->barony?->kingdom?->name,
             'population' => $village->population,
             'is_port' => $village->is_port,
+            'is_hamlet' => $village->isHamlet(),
+            'parent_village_id' => $village->parent_village_id,
         ])->toArray();
     }
 
@@ -143,7 +144,7 @@ class MapController extends Controller
 
         $location = match ($type) {
             'village' => Village::find($id),
-            'castle' => Castle::find($id),
+            'barony' => Barony::find($id),
             'town' => Town::find($id),
             'kingdom' => Kingdom::find($id),
             default => null,
@@ -164,8 +165,8 @@ class MapController extends Controller
 
         // Collect all coordinates
         Kingdom::all()->each(fn ($k) => $allCoords->push(['x' => $k->coordinates_x, 'y' => $k->coordinates_y]));
+        Barony::all()->each(fn ($b) => $allCoords->push(['x' => $b->coordinates_x, 'y' => $b->coordinates_y]));
         Town::all()->each(fn ($t) => $allCoords->push(['x' => $t->coordinates_x, 'y' => $t->coordinates_y]));
-        Castle::all()->each(fn ($c) => $allCoords->push(['x' => $c->coordinates_x, 'y' => $c->coordinates_y]));
         Village::all()->each(fn ($v) => $allCoords->push(['x' => $v->coordinates_x, 'y' => $v->coordinates_y]));
 
         if ($allCoords->isEmpty()) {

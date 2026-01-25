@@ -24,7 +24,7 @@ interface Village {
         x: number;
         y: number;
     };
-    castle: {
+    barony: {
         id: number;
         name: string;
         biome: string;
@@ -111,11 +111,11 @@ export default function VillageShow({ village, is_resident, can_migrate, has_pen
                     </Card>
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardDescription>Castle</CardDescription>
+                            <CardDescription>Barony</CardDescription>
                             <CardTitle className="text-lg">
-                                {village.castle ? (
-                                    <Link href={`/castles/${village.castle.id}`} className="hover:underline">
-                                        {village.castle.name}
+                                {village.barony ? (
+                                    <Link href={`/baronies/${village.barony.id}`} className="hover:underline">
+                                        {village.barony.name}
                                     </Link>
                                 ) : (
                                     'None'

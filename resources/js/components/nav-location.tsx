@@ -42,7 +42,7 @@ interface HomeVillage {
     id: number;
     name: string;
     resident_count: number;
-    castle: { id: number; name: string } | null;
+    barony: { id: number; name: string } | null;
     town: { id: number; name: string } | null;
     kingdom: { id: number; name: string } | null;
 }
@@ -85,7 +85,7 @@ interface TravelDestination {
 // Location type icons
 const locationIcons: Record<string, LucideIcon> = {
     village: Home,
-    castle: Castle,
+    barony: Castle,
     town: Church,
     kingdom: Crown,
     wilderness: Trees,
@@ -135,28 +135,28 @@ function getLocationServices(location: LocationData | null): NavItem[] {
             }
             break;
 
-        case 'castle':
+        case 'barony':
             items.push({
                 title: 'Bank',
-                href: `/castles/${location.id}/bank`,
+                href: `/baronies/${location.id}/bank`,
                 icon: Banknote,
                 description: 'Secure vault storage',
             });
             items.push({
                 title: 'Infirmary',
-                href: `/castles/${location.id}/infirmary`,
+                href: `/baronies/${location.id}/infirmary`,
                 icon: Church,
                 description: 'Full medical care',
             });
             items.push({
                 title: 'Barracks',
-                href: `/castles/${location.id}/barracks`,
+                href: `/baronies/${location.id}/barracks`,
                 icon: Shield,
                 description: 'Train combat skills',
             });
             items.push({
                 title: 'Arena',
-                href: `/castles/${location.id}/arena`,
+                href: `/baronies/${location.id}/arena`,
                 icon: Swords,
                 description: 'Fight for glory',
             });

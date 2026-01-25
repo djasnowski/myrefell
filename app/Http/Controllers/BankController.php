@@ -23,11 +23,11 @@ class BankController extends Controller
     }
 
     /**
-     * Show the bank page for a castle.
+     * Show the bank page for a barony.
      */
-    public function castleBank(Request $request, int $castleId): Response
+    public function baronyBank(Request $request, int $baronyId): Response
     {
-        return $this->showBank($request, 'castle', $castleId);
+        return $this->showBank($request, 'barony', $baronyId);
     }
 
     /**

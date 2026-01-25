@@ -210,7 +210,7 @@ class ReligionController extends Controller
         $request->validate([
             'religion_id' => 'required|integer|exists:religions,id',
             'structure_type' => 'required|string|in:shrine,temple,cathedral',
-            'location_type' => 'required|string|in:village,castle,kingdom',
+            'location_type' => 'required|string|in:village,barony,kingdom',
             'location_id' => 'required|integer',
         ]);
 

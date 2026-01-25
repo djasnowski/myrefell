@@ -51,7 +51,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const locationIcons: Record<string, typeof Home> = {
     village: Home,
-    castle: Castle,
+    barony: Castle,
     town: Church,
     wilderness: Trees,
 };
@@ -152,7 +152,7 @@ function DestinationCard({
 
     const bgColors: Record<string, string> = {
         village: 'border-green-600/50 bg-green-900/20 hover:bg-green-900/30',
-        castle: 'border-stone-500/50 bg-stone-800/50 hover:bg-stone-700/50',
+        barony: 'border-stone-500/50 bg-stone-800/50 hover:bg-stone-700/50',
         town: 'border-blue-600/50 bg-blue-900/20 hover:bg-blue-900/30',
         wilderness: 'border-amber-600/50 bg-amber-900/20 hover:bg-amber-900/30',
     };

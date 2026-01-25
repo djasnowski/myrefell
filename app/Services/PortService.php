@@ -62,7 +62,7 @@ class PortService
         }
 
         // Get current kingdom
-        $currentKingdom = $currentPort->castle?->town?->kingdom ?? $currentPort->castle?->kingdom;
+        $currentKingdom = $currentPort->barony?->kingdom;
 
         if (! $currentKingdom) {
             return [];
@@ -70,14 +70,14 @@ class PortService
 
         // Get all ports except current kingdom's port
         return Village::where('is_port', true)
-            ->whereHas('castle.town.kingdom', fn ($q) => $q->where('id', '!=', $currentKingdom->id))
-            ->with('castle.town.kingdom')
+            ->whereHas('barony.kingdom', fn ($q) => $q->where('id', '!=', $currentKingdom->id))
+            ->with('barony.kingdom')
             ->get()
             ->map(fn ($port) => [
                 'id' => $port->id,
                 'name' => $port->name,
-                'kingdom_id' => $port->castle->town->kingdom->id,
-                'kingdom_name' => $port->castle->town->kingdom->name,
+                'kingdom_id' => $port->barony->kingdom->id,
+                'kingdom_name' => $port->barony->kingdom->name,
                 'biome' => $port->biome,
                 'cost' => self::SHIP_COST,
                 'travel_time' => self::SHIP_TRAVEL_TIME,
@@ -120,8 +120,8 @@ class PortService
 
         // Validate destination is in different kingdom
         $currentPort = $this->getCurrentPort($user);
-        $currentKingdom = $currentPort->castle?->town?->kingdom;
-        $destKingdom = $destination->castle?->town?->kingdom;
+        $currentKingdom = $currentPort->barony?->kingdom;
+        $destKingdom = $destination->barony?->kingdom;
 
         if ($currentKingdom && $destKingdom && $currentKingdom->id === $destKingdom->id) {
             return [
@@ -163,7 +163,7 @@ class PortService
                     'type' => 'village',
                     'id' => $destination->id,
                     'name' => $destination->name,
-                    'kingdom' => $destination->castle?->town?->kingdom?->name ?? 'Unknown',
+                    'kingdom' => $destination->barony?->kingdom?->name ?? 'Unknown',
                 ],
                 'travel_time_minutes' => self::SHIP_TRAVEL_TIME,
                 'arrives_at' => $arrivesAt->toIso8601String(),
@@ -184,8 +184,8 @@ class PortService
             return null;
         }
 
-        $currentPort->load('castle.town.kingdom');
-        $kingdom = $currentPort->castle?->town?->kingdom;
+        $currentPort->load('barony.kingdom');
+        $kingdom = $currentPort->barony?->kingdom;
 
         return [
             'port_id' => $currentPort->id,

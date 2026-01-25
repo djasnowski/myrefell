@@ -13,7 +13,7 @@ class DocketService
     /**
      * Valid location types for docket system.
      */
-    public const VALID_LOCATIONS = ['village', 'castle', 'town'];
+    public const VALID_LOCATIONS = ['village', 'barony', 'town'];
 
     /**
      * NPC crafting markup percentage (costs more than player crafting).

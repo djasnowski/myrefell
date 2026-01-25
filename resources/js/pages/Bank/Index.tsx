@@ -41,7 +41,7 @@ interface PageProps {
 
 const locationIcons: Record<string, typeof Home> = {
     village: Home,
-    castle: Castle,
+    barony: Castle,
     town: Church,
 };
 

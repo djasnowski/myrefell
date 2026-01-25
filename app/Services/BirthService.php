@@ -25,7 +25,7 @@ class BirthService
      */
     public function selectBirthVillage(): ?Village
     {
-        $villages = Village::with(['castle.town'])->get();
+        $villages = Village::with(['barony.kingdom'])->get();
 
         if ($villages->isEmpty()) {
             return null;
@@ -35,7 +35,7 @@ class BirthService
         $weightedVillages = [];
 
         foreach ($villages as $village) {
-            $isCapitalVillage = $village->castle?->town?->isCapital() ?? false;
+            $isCapitalVillage = $village->barony?->isCapitalBarony() ?? false;
             $weight = $isCapitalVillage ? self::CAPITAL_VILLAGE_WEIGHT : self::REGULAR_VILLAGE_WEIGHT;
 
             for ($i = 0; $i < $weight; $i++) {
@@ -89,7 +89,7 @@ class BirthService
      */
     public function getVillageWeight(Village $village): int
     {
-        $isCapitalVillage = $village->castle?->town?->isCapital() ?? false;
+        $isCapitalVillage = $village->barony?->isCapitalBarony() ?? false;
 
         return $isCapitalVillage ? self::CAPITAL_VILLAGE_WEIGHT : self::REGULAR_VILLAGE_WEIGHT;
     }
@@ -99,7 +99,7 @@ class BirthService
      */
     public function getCapitalBirthProbability(): float
     {
-        $villages = Village::with(['castle.town'])->get();
+        $villages = Village::with(['barony.kingdom'])->get();
 
         if ($villages->isEmpty()) {
             return 0.0;
@@ -112,7 +112,7 @@ class BirthService
             $weight = $this->getVillageWeight($village);
             $totalWeight += $weight;
 
-            if ($village->castle?->town?->isCapital()) {
+            if ($village->barony?->isCapitalBarony()) {
                 $capitalWeight += $weight;
             }
         }

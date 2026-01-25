@@ -14,8 +14,8 @@ class KingdomController extends Controller
      */
     public function index(): Response
     {
-        $kingdoms = Kingdom::with('capitalCastle')
-            ->withCount('castles')
+        $kingdoms = Kingdom::with('capitalTown')
+            ->withCount('baronies')
             ->orderBy('name')
             ->get()
             ->map(fn ($kingdom) => [
@@ -24,10 +24,10 @@ class KingdomController extends Controller
                 'description' => $kingdom->description,
                 'biome' => $kingdom->biome,
                 'tax_rate' => $kingdom->tax_rate,
-                'castles_count' => $kingdom->castles_count,
-                'capital' => $kingdom->capitalCastle ? [
-                    'id' => $kingdom->capitalCastle->id,
-                    'name' => $kingdom->capitalCastle->name,
+                'baronies_count' => $kingdom->baronies_count,
+                'capital' => $kingdom->capitalTown ? [
+                    'id' => $kingdom->capitalTown->id,
+                    'name' => $kingdom->capitalTown->name,
                 ] : null,
                 'coordinates' => [
                     'x' => $kingdom->coordinates_x,
@@ -45,7 +45,7 @@ class KingdomController extends Controller
      */
     public function show(Kingdom $kingdom): Response
     {
-        $kingdom->load(['capitalCastle', 'castles.villages']);
+        $kingdom->load(['capitalTown', 'baronies.villages', 'baronies.towns']);
 
         return Inertia::render('kingdoms/show', [
             'kingdom' => [
@@ -58,46 +58,49 @@ class KingdomController extends Controller
                     'x' => $kingdom->coordinates_x,
                     'y' => $kingdom->coordinates_y,
                 ],
-                'capital' => $kingdom->capitalCastle ? [
-                    'id' => $kingdom->capitalCastle->id,
-                    'name' => $kingdom->capitalCastle->name,
-                    'biome' => $kingdom->capitalCastle->biome,
+                'capital' => $kingdom->capitalTown ? [
+                    'id' => $kingdom->capitalTown->id,
+                    'name' => $kingdom->capitalTown->name,
+                    'biome' => $kingdom->capitalTown->biome,
                 ] : null,
-                'castles' => $kingdom->castles->map(fn ($castle) => [
-                    'id' => $castle->id,
-                    'name' => $castle->name,
-                    'biome' => $castle->biome,
-                    'is_capital' => $castle->isCapital(),
-                    'village_count' => $castle->villages->count(),
+                'baronies' => $kingdom->baronies->map(fn ($barony) => [
+                    'id' => $barony->id,
+                    'name' => $barony->name,
+                    'biome' => $barony->biome,
+                    'is_capital' => $barony->isCapitalBarony(),
+                    'village_count' => $barony->villages->count(),
+                    'town_count' => $barony->towns->count(),
                 ]),
-                'castle_count' => $kingdom->castles->count(),
-                'total_villages' => $kingdom->castles->sum(fn ($c) => $c->villages->count()),
+                'barony_count' => $kingdom->baronies->count(),
+                'total_villages' => $kingdom->baronies->sum(fn ($b) => $b->villages->count()),
+                'total_towns' => $kingdom->baronies->sum(fn ($b) => $b->towns->count()),
             ],
         ]);
     }
 
     /**
-     * Get castles in a kingdom (for AJAX requests).
+     * Get baronies in a kingdom (for AJAX requests).
      */
-    public function castles(Kingdom $kingdom)
+    public function baronies(Kingdom $kingdom)
     {
-        $castles = $kingdom->castles()
-            ->withCount('villages')
+        $baronies = $kingdom->baronies()
+            ->withCount(['villages', 'towns'])
             ->orderBy('name')
             ->get()
-            ->map(fn ($castle) => [
-                'id' => $castle->id,
-                'name' => $castle->name,
-                'biome' => $castle->biome,
-                'is_capital' => $castle->isCapital(),
-                'villages_count' => $castle->villages_count,
+            ->map(fn ($barony) => [
+                'id' => $barony->id,
+                'name' => $barony->name,
+                'biome' => $barony->biome,
+                'is_capital' => $barony->isCapitalBarony(),
+                'villages_count' => $barony->villages_count,
+                'towns_count' => $barony->towns_count,
             ]);
 
         return response()->json([
             'kingdom_id' => $kingdom->id,
             'kingdom_name' => $kingdom->name,
-            'castles' => $castles,
-            'count' => $castles->count(),
+            'baronies' => $baronies,
+            'count' => $baronies->count(),
         ]);
     }
 }

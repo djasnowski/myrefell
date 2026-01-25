@@ -99,4 +99,52 @@ class StableController extends Controller
 
         return back()->with('success', $result['message']);
     }
+
+    /**
+     * Stable the horse at current location.
+     */
+    public function stable(Request $request)
+    {
+        $user = $request->user();
+
+        $result = $this->stableService->stableHorse($user);
+
+        if (!$result['success']) {
+            return back()->withErrors(['error' => $result['message']]);
+        }
+
+        return back()->with('success', $result['message']);
+    }
+
+    /**
+     * Retrieve horse from stable.
+     */
+    public function retrieve(Request $request)
+    {
+        $user = $request->user();
+
+        $result = $this->stableService->retrieveHorse($user);
+
+        if (!$result['success']) {
+            return back()->withErrors(['error' => $result['message']]);
+        }
+
+        return back()->with('success', $result['message']);
+    }
+
+    /**
+     * Rest horse at stable (pay to restore stamina).
+     */
+    public function rest(Request $request)
+    {
+        $user = $request->user();
+
+        $result = $this->stableService->restHorse($user);
+
+        if (!$result['success']) {
+            return back()->withErrors(['error' => $result['message']]);
+        }
+
+        return back()->with('success', $result['message']);
+    }
 }

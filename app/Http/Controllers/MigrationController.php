@@ -27,7 +27,7 @@ class MigrationController extends Controller
         // Get user's pending request if any
         $pendingRequest = MigrationRequest::where('user_id', $user->id)
             ->pending()
-            ->with(['toVillage.castle.kingdom'])
+            ->with(['toVillage.barony.kingdom'])
             ->first();
 
         // Get requests user can approve (if they hold authority)
@@ -40,8 +40,8 @@ class MigrationController extends Controller
             'current_village' => $currentVillage ? [
                 'id' => $currentVillage->id,
                 'name' => $currentVillage->name,
-                'castle' => $currentVillage->castle?->name,
-                'kingdom' => $currentVillage->castle?->kingdom?->name,
+                'barony' => $currentVillage->barony?->name,
+                'kingdom' => $currentVillage->barony?->kingdom?->name,
             ] : null,
             'pending_request' => $pendingRequest ? $this->formatRequest($pendingRequest) : null,
             'requests_to_approve' => $requestsToApprove->map(fn ($r) => $this->formatRequest($r)),
@@ -89,7 +89,7 @@ class MigrationController extends Controller
     public function approve(Request $request, MigrationRequest $migrationRequest): RedirectResponse
     {
         $request->validate([
-            'level' => 'required|in:elder,lord,king',
+            'level' => 'required|in:elder,baron,king',
         ]);
 
         $user = $request->user();
@@ -108,7 +108,7 @@ class MigrationController extends Controller
     public function deny(Request $request, MigrationRequest $migrationRequest): RedirectResponse
     {
         $request->validate([
-            'level' => 'required|in:elder,lord,king',
+            'level' => 'required|in:elder,baron,king',
             'reason' => 'nullable|string|max:255',
         ]);
 
@@ -140,15 +140,15 @@ class MigrationController extends Controller
             'to_village' => [
                 'id' => $request->toVillage->id,
                 'name' => $request->toVillage->name,
-                'castle' => $request->toVillage->castle?->name,
-                'kingdom' => $request->toVillage->castle?->kingdom?->name,
+                'barony' => $request->toVillage->barony?->name,
+                'kingdom' => $request->toVillage->barony?->kingdom?->name,
             ],
             'status' => $request->status,
             'elder_approved' => $request->elder_approved,
-            'lord_approved' => $request->lord_approved,
+            'baron_approved' => $request->baron_approved,
             'king_approved' => $request->king_approved,
             'needs_elder' => $request->needsElderApproval(),
-            'needs_lord' => $request->needsLordApproval(),
+            'needs_baron' => $request->needsBaronApproval(),
             'needs_king' => $request->needsKingApproval(),
             'denial_reason' => $request->denial_reason,
             'created_at' => $request->created_at->toISOString(),

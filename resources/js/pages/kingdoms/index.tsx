@@ -10,7 +10,7 @@ interface Kingdom {
     description: string;
     biome: string;
     tax_rate: number;
-    castles_count: number;
+    baronies_count: number;
     capital: {
         id: number;
         name: string;
@@ -71,8 +71,8 @@ export default function KingdomsIndex({ kingdoms }: Props) {
                                             <p className="font-medium">{kingdom.capital?.name || 'None'}</p>
                                         </div>
                                         <div>
-                                            <span className="text-muted-foreground">Castles:</span>
-                                            <p className="font-medium">{kingdom.castles_count}</p>
+                                            <span className="text-muted-foreground">Baronies:</span>
+                                            <p className="font-medium">{kingdom.baronies_count}</p>
                                         </div>
                                         <div>
                                             <span className="text-muted-foreground">Tax Rate:</span>

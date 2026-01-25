@@ -20,7 +20,7 @@ class PlayerController extends Controller
     public function dashboard(Request $request): Response
     {
         $player = $request->user();
-        $player->load(['skills', 'homeVillage.castle.kingdom', 'inventory.item']);
+        $player->load(['skills', 'homeVillage.barony.kingdom', 'inventory.item']);
 
         // Get current location info
         $currentLocation = $this->getCurrentLocationInfo($player);
@@ -77,13 +77,13 @@ class PlayerController extends Controller
             'home_village' => $player->homeVillage ? [
                 'id' => $player->homeVillage->id,
                 'name' => $player->homeVillage->name,
-                'castle' => $player->homeVillage->castle ? [
-                    'id' => $player->homeVillage->castle->id,
-                    'name' => $player->homeVillage->castle->name,
+                'barony' => $player->homeVillage->barony ? [
+                    'id' => $player->homeVillage->barony->id,
+                    'name' => $player->homeVillage->barony->name,
                 ] : null,
-                'kingdom' => $player->homeVillage->castle?->kingdom ? [
-                    'id' => $player->homeVillage->castle->kingdom->id,
-                    'name' => $player->homeVillage->castle->kingdom->name,
+                'kingdom' => $player->homeVillage->barony?->kingdom ? [
+                    'id' => $player->homeVillage->barony->kingdom->id,
+                    'name' => $player->homeVillage->barony->kingdom->name,
                 ] : null,
             ] : null,
             'inventory' => [
@@ -104,7 +104,8 @@ class PlayerController extends Controller
 
         $modelClass = match ($player->current_location_type) {
             'village' => \App\Models\Village::class,
-            'castle' => \App\Models\Castle::class,
+            'barony' => \App\Models\Barony::class,
+            'town' => \App\Models\Town::class,
             'kingdom' => \App\Models\Kingdom::class,
             default => null,
         };

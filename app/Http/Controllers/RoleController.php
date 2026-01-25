@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Castle;
+use App\Models\Barony;
 use App\Models\Kingdom;
 use App\Models\PlayerRole;
 use App\Models\Role;
@@ -38,20 +38,20 @@ class RoleController extends Controller
     }
 
     /**
-     * Display roles at a castle.
+     * Display roles at a barony.
      */
-    public function castleRoles(Request $request, Castle $castle): Response
+    public function baronyRoles(Request $request, Barony $barony): Response
     {
         $user = $request->user();
 
-        // Check if player is at this castle
-        if ($user->current_location_type !== 'castle' || $user->current_location_id !== $castle->id) {
+        // Check if player is at this barony
+        if ($user->current_location_type !== 'barony' || $user->current_location_id !== $barony->id) {
             return Inertia::render('Roles/NotHere', [
-                'location' => $castle->name,
+                'location' => $barony->name,
             ]);
         }
 
-        return $this->renderRolesPage($user, 'castle', $castle->id, $castle->name);
+        return $this->renderRolesPage($user, 'barony', $barony->id, $barony->name);
     }
 
     /**
@@ -105,9 +105,9 @@ class RoleController extends Controller
     {
         return match ($locationType) {
             'village' => Village::find($locationId)?->residents()->count() ?? 0,
-            'castle' => Castle::find($locationId)?->villages()
+            'barony' => Barony::find($locationId)?->villages()
                 ->withCount('residents')->get()->sum('residents_count') ?? 0,
-            'kingdom' => \App\Models\User::whereHas('homeVillage.castle', function ($q) use ($locationId) {
+            'kingdom' => \App\Models\User::whereHas('homeVillage.barony', function ($q) use ($locationId) {
                 $q->where('kingdom_id', $locationId);
             })->count(),
             default => 0,
@@ -154,7 +154,7 @@ class RoleController extends Controller
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'role_id' => 'required|exists:roles,id',
-            'location_type' => 'required|in:village,castle,kingdom',
+            'location_type' => 'required|in:village,barony,kingdom',
             'location_id' => 'required|integer',
         ]);
 
@@ -244,7 +244,7 @@ class RoleController extends Controller
     {
         $request->validate([
             'role_id' => 'required|exists:roles,id',
-            'location_type' => 'required|in:village,castle,kingdom',
+            'location_type' => 'required|in:village,barony,kingdom',
             'location_id' => 'required|integer',
         ]);
 

@@ -46,12 +46,12 @@ interface Props {
     costs: {
         village: number;
         town: number;
-        castle: number;
+        barony: number;
     };
     signatoryRequirements: {
         village: number;
         town: number;
-        castle: number;
+        barony: number;
     };
     userGold: number;
 }
@@ -73,7 +73,7 @@ const statusColors: Record<string, string> = {
 const typeColors: Record<string, string> = {
     village: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
     town: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    castle: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+    barony: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
 };
 
 export default function ChartersIndex({ myCharters, kingdoms, costs, signatoryRequirements, userGold }: Props) {
@@ -186,7 +186,7 @@ export default function ChartersIndex({ myCharters, kingdoms, costs, signatoryRe
                                             <SelectContent>
                                                 <SelectItem value="village">Village ({formatGold(costs.village)} gold)</SelectItem>
                                                 <SelectItem value="town">Town ({formatGold(costs.town)} gold)</SelectItem>
-                                                <SelectItem value="castle">Castle ({formatGold(costs.castle)} gold)</SelectItem>
+                                                <SelectItem value="barony">Barony ({formatGold(costs.barony)} gold)</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>

@@ -78,7 +78,7 @@ const tierBadgeColors: Record<number, string> = {
 
 const locationTypeColors: Record<string, string> = {
     village: 'text-green-300',
-    castle: 'text-purple-300',
+    barony: 'text-purple-300',
     kingdom: 'text-amber-300',
 };
 
@@ -237,7 +237,7 @@ export default function MyRoles() {
                             <Crown className="mx-auto mb-3 h-16 w-16 text-stone-600" />
                             <p className="font-pixel text-base text-stone-500">No roles held</p>
                             <p className="font-pixel text-xs text-stone-600">
-                                Visit a village, castle, or kingdom to view available positions.
+                                Visit a village, barony, or kingdom to view available positions.
                             </p>
                         </div>
                     </div>

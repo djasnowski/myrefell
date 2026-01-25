@@ -53,7 +53,7 @@ class RoleService
     /**
      * Self-appoint to a vacant leadership role.
      * Only allowed if:
-     * - You reside at this location (home village, or village belongs to castle/kingdom)
+     * - You reside at this location (home village, or village belongs to barony/kingdom)
      * - Location has < 5 residents/members
      */
     public function selfAppoint(User $user, Role $role, string $locationType, int $locationId): array
@@ -97,8 +97,8 @@ class RoleService
     /**
      * Check if a user resides at a location.
      * - Village: user's home_village_id matches
-     * - Castle: user's home village belongs to this castle
-     * - Kingdom: user's home village's castle belongs to this kingdom
+     * - Barony: user's home village belongs to this barony
+     * - Kingdom: user's home village's barony belongs to this kingdom
      */
     public function userResidesAt(User $user, string $locationType, int $locationId): bool
     {
@@ -110,8 +110,8 @@ class RoleService
 
         return match ($locationType) {
             'village' => $user->home_village_id === $locationId,
-            'castle' => $homeVillage->castle_id === $locationId,
-            'kingdom' => $homeVillage->castle?->kingdom_id === $locationId,
+            'barony' => $homeVillage->barony_id === $locationId,
+            'kingdom' => $homeVillage->barony?->kingdom_id === $locationId,
             default => false,
         };
     }
@@ -123,9 +123,9 @@ class RoleService
     {
         return match ($locationType) {
             'village' => \App\Models\Village::find($locationId)?->residents()->count() ?? 0,
-            'castle' => \App\Models\Castle::find($locationId)?->villages()
+            'barony' => \App\Models\Barony::find($locationId)?->villages()
                 ->withCount('residents')->get()->sum('residents_count') ?? 0,
-            'kingdom' => \App\Models\User::whereHas('homeVillage.castle', function ($q) use ($locationId) {
+            'kingdom' => \App\Models\User::whereHas('homeVillage.barony', function ($q) use ($locationId) {
                 $q->where('kingdom_id', $locationId);
             })->count(),
             default => 0,

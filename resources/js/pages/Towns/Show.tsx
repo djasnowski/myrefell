@@ -14,10 +14,9 @@ interface Town {
     tax_rate: number;
     coordinates: { x: number; y: number };
     kingdom: { id: number; name: string } | null;
+    barony: { id: number; name: string } | null;
     mayor: { id: number; username: string } | null;
-    castles: { id: number; name: string; biome: string }[];
     villages: { id: number; name: string; biome: string; population: number; is_port: boolean }[];
-    castle_count: number;
     village_count: number;
 }
 
@@ -91,13 +90,23 @@ export default function TownShow({ town, services }: Props) {
                     )}
                 </div>
 
-                <div className="grid gap-4 lg:grid-cols-3">
+                <div className="grid gap-4 lg:grid-cols-2">
                     {/* Left Column - Info */}
                     <div className="space-y-4">
                         {/* Stats */}
                         <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
                             <h2 className="mb-3 font-pixel text-sm text-stone-300">Town Info</h2>
                             <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <div className="font-pixel text-[10px] text-stone-500">Barony</div>
+                                    {town.barony ? (
+                                        <Link href={`/baronies/${town.barony.id}`} className="font-pixel text-xs text-purple-400 hover:underline">
+                                            {town.barony.name}
+                                        </Link>
+                                    ) : (
+                                        <span className="font-pixel text-xs text-stone-400">None</span>
+                                    )}
+                                </div>
                                 <div>
                                     <div className="font-pixel text-[10px] text-stone-500">Kingdom</div>
                                     {town.kingdom ? (
@@ -158,35 +167,7 @@ export default function TownShow({ town, services }: Props) {
                         </div>
                     </div>
 
-                    {/* Middle Column - Castles */}
-                    <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
-                        <h2 className="mb-3 font-pixel text-sm text-stone-300">
-                            Castles ({town.castle_count})
-                        </h2>
-                        {town.castles.length > 0 ? (
-                            <div className="space-y-2">
-                                {town.castles.map((castle) => (
-                                    <Link
-                                        key={castle.id}
-                                        href={`/castles/${castle.id}`}
-                                        className="flex items-center gap-3 rounded-lg border border-stone-700 bg-stone-800/50 p-3 transition hover:bg-stone-700/50"
-                                    >
-                                        <Castle className="h-5 w-5 text-stone-400" />
-                                        <div>
-                                            <div className="font-pixel text-xs text-stone-200">{castle.name}</div>
-                                            <div className="font-pixel text-[10px] capitalize text-stone-500">{castle.biome}</div>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="py-8 text-center font-pixel text-xs text-stone-500">
-                                No castles in this town
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Right Column - Villages */}
+                    {/* Middle Column - Villages */}
                     <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
                         <h2 className="mb-3 font-pixel text-sm text-stone-300">
                             Villages ({town.village_count})

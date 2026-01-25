@@ -5,8 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Town extends Model
@@ -16,7 +14,7 @@ class Town extends Model
     protected $fillable = [
         'name',
         'description',
-        'kingdom_id',
+        'barony_id',
         'is_capital',
         'biome',
         'tax_rate',
@@ -40,27 +38,19 @@ class Town extends Model
     }
 
     /**
-     * Get the kingdom this town belongs to.
+     * Get the barony this town belongs to.
      */
-    public function kingdom(): BelongsTo
+    public function barony(): BelongsTo
     {
-        return $this->belongsTo(Kingdom::class);
+        return $this->belongsTo(Barony::class);
     }
 
     /**
-     * Get all castles in this town.
+     * Get the kingdom this town belongs to (through barony).
      */
-    public function castles(): HasMany
+    public function kingdom(): ?Kingdom
     {
-        return $this->hasMany(Castle::class);
-    }
-
-    /**
-     * Get all villages in this town (through castles).
-     */
-    public function villages(): HasManyThrough
-    {
-        return $this->hasManyThrough(Village::class, Castle::class);
+        return $this->barony?->kingdom;
     }
 
     /**

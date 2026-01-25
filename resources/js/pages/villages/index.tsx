@@ -11,7 +11,7 @@ interface Village {
     biome: string;
     is_town: boolean;
     population: number;
-    castle: {
+    barony: {
         id: number;
         name: string;
     } | null;
@@ -82,8 +82,8 @@ export default function VillagesIndex({ villages }: Props) {
                                             <p className="font-medium">{village.population.toLocaleString()}</p>
                                         </div>
                                         <div>
-                                            <span className="text-muted-foreground">Castle:</span>
-                                            <p className="font-medium truncate">{village.castle?.name || 'None'}</p>
+                                            <span className="text-muted-foreground">Barony:</span>
+                                            <p className="font-medium truncate">{village.barony?.name || 'None'}</p>
                                         </div>
                                     </div>
                                 </CardContent>

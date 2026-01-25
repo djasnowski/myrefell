@@ -2,11 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\Castle;
+use App\Models\Barony;
 use App\Models\Charter;
 use App\Models\CharterSignatory;
 use App\Models\Kingdom;
 use App\Models\SettlementRuin;
+use App\Models\Town;
 use App\Models\User;
 use App\Models\Village;
 use Illuminate\Support\Collection;
@@ -179,7 +180,7 @@ class CharterService
         }
 
         // User must be a resident of the kingdom
-        $userKingdom = $user->homeVillage?->castle?->kingdom;
+        $userKingdom = $user->homeVillage?->barony?->kingdom;
         if (!$userKingdom || $userKingdom->id !== $charter->kingdom_id) {
             return [
                 'success' => false,
@@ -361,7 +362,7 @@ class CharterService
             // Create the settlement based on type
             $settlement = match ($charter->settlement_type) {
                 Charter::TYPE_VILLAGE => $this->createVillage($charter, $x, $y, $biome),
-                Charter::TYPE_CASTLE => $this->createCastle($charter, $kingdom, $x, $y, $biome),
+                Charter::TYPE_BARONY => $this->createBarony($charter, $kingdom, $x, $y, $biome),
                 Charter::TYPE_TOWN => $this->createTown($charter, $kingdom, $x, $y, $biome),
                 default => null,
             };
@@ -382,8 +383,8 @@ class CharterService
 
             if ($charter->settlement_type === Charter::TYPE_VILLAGE || $charter->settlement_type === Charter::TYPE_TOWN) {
                 $updateData['founded_village_id'] = $settlement->id;
-            } elseif ($charter->settlement_type === Charter::TYPE_CASTLE) {
-                $updateData['founded_castle_id'] = $settlement->id;
+            } elseif ($charter->settlement_type === Charter::TYPE_BARONY) {
+                $updateData['founded_barony_id'] = $settlement->id;
             }
 
             $charter->update($updateData);
@@ -572,7 +573,7 @@ class CharterService
         return Village::create([
             'name' => $charter->settlement_name,
             'description' => $charter->description ?? "A newly founded village in {$charter->kingdom->name}.",
-            'castle_id' => null, // Independent village
+            'barony_id' => null, // Independent village
             'is_town' => false,
             'population' => 0,
             'wealth' => 0,
@@ -584,17 +585,14 @@ class CharterService
     }
 
     /**
-     * Create a castle from a charter.
+     * Create a barony from a charter.
      */
-    protected function createCastle(Charter $charter, Kingdom $kingdom, int $x, int $y, string $biome): Castle
+    protected function createBarony(Charter $charter, Kingdom $kingdom, int $x, int $y, string $biome): Barony
     {
-        // Find or create a town for the castle
-        $town = $kingdom->towns()->first();
-
-        return Castle::create([
+        return Barony::create([
             'name' => $charter->settlement_name,
-            'description' => $charter->description ?? "A newly founded castle in {$kingdom->name}.",
-            'town_id' => $town?->id,
+            'description' => $charter->description ?? "A newly founded barony in {$kingdom->name}.",
+            'kingdom_id' => $kingdom->id,
             'biome' => $biome,
             'coordinates_x' => $x,
             'coordinates_y' => $y,
@@ -604,17 +602,18 @@ class CharterService
     /**
      * Create a town from a charter.
      */
-    protected function createTown(Charter $charter, Kingdom $kingdom, int $x, int $y, string $biome): Village
+    protected function createTown(Charter $charter, Kingdom $kingdom, int $x, int $y, string $biome): Town
     {
-        return Village::create([
+        // Find or create a barony for the town
+        $barony = $kingdom->baronies()->first();
+
+        return Town::create([
             'name' => $charter->settlement_name,
             'description' => $charter->description ?? "A newly founded town in {$kingdom->name}.",
-            'castle_id' => null,
-            'is_town' => true,
+            'barony_id' => $barony?->id,
             'population' => 0,
             'wealth' => 0,
             'biome' => $biome,
-            'is_port' => false,
             'coordinates_x' => $x,
             'coordinates_y' => $y,
         ]);
@@ -626,7 +625,8 @@ class CharterService
     protected function settlementNameExists(string $name): bool
     {
         return Village::where('name', $name)->exists()
-            || Castle::where('name', $name)->exists()
+            || Barony::where('name', $name)->exists()
+            || Town::where('name', $name)->exists()
             || Charter::whereIn('status', [Charter::STATUS_PENDING, Charter::STATUS_APPROVED, Charter::STATUS_ACTIVE])
                 ->where('settlement_name', $name)
                 ->exists();
@@ -658,16 +658,29 @@ class CharterService
             ];
         }
 
-        // Check minimum distance from existing castles
-        $nearbyCastle = Castle::whereRaw(
+        // Check minimum distance from existing baronies
+        $nearbyBarony = Barony::whereRaw(
             'SQRT(POWER(coordinates_x - ?, 2) + POWER(coordinates_y - ?, 2)) < ?',
             [$x, $y, self::MIN_SETTLEMENT_DISTANCE]
         )->first();
 
-        if ($nearbyCastle) {
+        if ($nearbyBarony) {
             return [
                 'valid' => false,
-                'message' => "Too close to existing castle: {$nearbyCastle->name}. Minimum distance is " . self::MIN_SETTLEMENT_DISTANCE . ' units.',
+                'message' => "Too close to existing barony: {$nearbyBarony->name}. Minimum distance is " . self::MIN_SETTLEMENT_DISTANCE . ' units.',
+            ];
+        }
+
+        // Check minimum distance from existing towns
+        $nearbyTown = Town::whereRaw(
+            'SQRT(POWER(coordinates_x - ?, 2) + POWER(coordinates_y - ?, 2)) < ?',
+            [$x, $y, self::MIN_SETTLEMENT_DISTANCE]
+        )->first();
+
+        if ($nearbyTown) {
+            return [
+                'valid' => false,
+                'message' => "Too close to existing town: {$nearbyTown->name}. Minimum distance is " . self::MIN_SETTLEMENT_DISTANCE . ' units.',
             ];
         }
 
@@ -726,11 +739,11 @@ class CharterService
                     'id' => $charter->foundedVillage->id,
                     'name' => $charter->foundedVillage->name,
                 ];
-            } elseif ($charter->foundedCastle) {
+            } elseif ($charter->foundedBarony) {
                 $data['founded_settlement'] = [
-                    'type' => 'castle',
-                    'id' => $charter->foundedCastle->id,
-                    'name' => $charter->foundedCastle->name,
+                    'type' => 'barony',
+                    'id' => $charter->foundedBarony->id,
+                    'name' => $charter->foundedBarony->name,
                 ];
             }
         }

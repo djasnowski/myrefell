@@ -38,13 +38,13 @@ class CharterController extends Controller
         $costs = [
             'village' => Charter::DEFAULT_COST,
             'town' => Charter::TOWN_COST,
-            'castle' => Charter::CASTLE_COST,
+            'barony' => Charter::BARONY_COST,
         ];
 
         $signatoryRequirements = [
             'village' => Charter::DEFAULT_SIGNATORIES_REQUIRED,
             'town' => Charter::TOWN_SIGNATORIES_REQUIRED,
-            'castle' => Charter::CASTLE_SIGNATORIES_REQUIRED,
+            'barony' => Charter::BARONY_SIGNATORIES_REQUIRED,
         ];
 
         return Inertia::render('charters/index', [
@@ -98,7 +98,7 @@ class CharterController extends Controller
     {
         $validated = $request->validate([
             'settlement_name' => 'required|string|max:100',
-            'settlement_type' => 'required|in:village,town,castle',
+            'settlement_type' => 'required|in:village,town,barony',
             'kingdom_id' => 'required|exists:kingdoms,id',
             'description' => 'nullable|string|max:500',
             'tax_terms' => 'nullable|array',

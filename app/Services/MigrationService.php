@@ -92,11 +92,11 @@ class MigrationService
             ]);
         }
 
-        // If no lord at destination castle, auto-approve lord level
-        if (!$request->needsLordApproval()) {
+        // If no baron at destination barony, auto-approve baron level
+        if (!$request->needsBaronApproval()) {
             $request->update([
-                'lord_approved' => true,
-                'lord_decided_at' => now(),
+                'baron_approved' => true,
+                'baron_decided_at' => now(),
             ]);
         }
 
@@ -261,8 +261,8 @@ class MigrationService
 
         return match ($level) {
             'elder' => $this->isElderOf($user, $toVillage->id),
-            'lord' => $toVillage->castle && $this->isLordOf($user, $toVillage->castle->id),
-            'king' => $toVillage->castle?->kingdom && $this->isKingOf($user, $toVillage->castle->kingdom->id),
+            'baron' => $toVillage->barony && $this->isBaronOf($user, $toVillage->barony->id),
+            'king' => $toVillage->barony?->kingdom && $this->isKingOf($user, $toVillage->barony->kingdom->id),
             default => false,
         };
     }
@@ -281,14 +281,14 @@ class MigrationService
     }
 
     /**
-     * Check if user is lord of a castle.
+     * Check if user is baron of a barony.
      */
-    protected function isLordOf(User $user, int $castleId): bool
+    protected function isBaronOf(User $user, int $baronyId): bool
     {
         return PlayerRole::where('user_id', $user->id)
-            ->where('location_type', 'castle')
-            ->where('location_id', $castleId)
-            ->whereHas('role', fn ($q) => $q->where('slug', 'lord'))
+            ->where('location_type', 'barony')
+            ->where('location_id', $baronyId)
+            ->whereHas('role', fn ($q) => $q->where('slug', 'baron'))
             ->active()
             ->exists();
     }
@@ -318,10 +318,10 @@ class MigrationService
             ->active()
             ->pluck('location_id');
 
-        // Get castles where user is lord
-        $lordCastles = PlayerRole::where('user_id', $user->id)
-            ->where('location_type', 'castle')
-            ->whereHas('role', fn ($q) => $q->where('slug', 'lord'))
+        // Get baronies where user is baron
+        $baronBaronies = PlayerRole::where('user_id', $user->id)
+            ->where('location_type', 'barony')
+            ->whereHas('role', fn ($q) => $q->where('slug', 'baron'))
             ->active()
             ->pluck('location_id');
 
@@ -333,20 +333,20 @@ class MigrationService
             ->pluck('location_id');
 
         return MigrationRequest::pending()
-            ->with(['user', 'fromVillage', 'toVillage.castle.kingdom'])
-            ->where(function ($q) use ($elderVillages, $lordCastles, $kingKingdoms) {
+            ->with(['user', 'fromVillage', 'toVillage.barony.kingdom'])
+            ->where(function ($q) use ($elderVillages, $baronBaronies, $kingKingdoms) {
                 // Elder can approve requests to their village
                 $q->whereIn('to_village_id', $elderVillages)
                     ->whereNull('elder_approved');
             })
-            ->orWhere(function ($q) use ($lordCastles) {
-                // Lord can approve requests to villages in their castle
-                $q->whereHas('toVillage', fn ($vq) => $vq->whereIn('castle_id', $lordCastles))
-                    ->whereNull('lord_approved');
+            ->orWhere(function ($q) use ($baronBaronies) {
+                // Baron can approve requests to villages in their barony
+                $q->whereHas('toVillage', fn ($vq) => $vq->whereIn('barony_id', $baronBaronies))
+                    ->whereNull('baron_approved');
             })
             ->orWhere(function ($q) use ($kingKingdoms) {
                 // King can approve requests to villages in their kingdom
-                $q->whereHas('toVillage.castle', fn ($cq) => $cq->whereIn('kingdom_id', $kingKingdoms))
+                $q->whereHas('toVillage.barony', fn ($bq) => $bq->whereIn('kingdom_id', $kingKingdoms))
                     ->whereNull('king_approved');
             })
             ->get();
