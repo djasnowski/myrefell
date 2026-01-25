@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             JobSeeder::class,
             RoleSeeder::class,
             ReligionSeeder::class,
+            CharterSeeder::class,
             DanAdminSeeder::class,
         ]);
 

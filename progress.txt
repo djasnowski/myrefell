@@ -43,4 +43,4 @@
 - [x] Combat System
 - [x] Dungeons
 - [x] Religion System
-- [ ] Charter System
+- [x] Charter System

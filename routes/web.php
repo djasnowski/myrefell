@@ -26,6 +26,7 @@ use App\Http\Controllers\NoConfidenceController;
 use App\Http\Controllers\TaxController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ReligionController;
+use App\Http\Controllers\CharterController;
 use App\Http\Controllers\VillageController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -247,6 +248,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('religions/build-structure', [ReligionController::class, 'buildStructure'])->name('religions.build-structure');
     Route::post('religions/make-public', [ReligionController::class, 'makePublic'])->name('religions.make-public');
     Route::post('religions/kingdom-status', [ReligionController::class, 'setKingdomStatus'])->name('religions.kingdom-status');
+
+    // Charters
+    Route::get('charters', [CharterController::class, 'index'])->name('charters.index');
+    Route::get('charters/{charter}', [CharterController::class, 'show'])->name('charters.show');
+    Route::get('charters/{charter}/status', [CharterController::class, 'status'])->name('charters.status');
+    Route::get('kingdoms/{kingdom}/charters', [CharterController::class, 'kingdomCharters'])->name('kingdoms.charters');
+    Route::post('charters', [CharterController::class, 'store'])->name('charters.store');
+    Route::post('charters/{charter}/sign', [CharterController::class, 'sign'])->name('charters.sign');
+    Route::post('charters/{charter}/approve', [CharterController::class, 'approve'])->name('charters.approve');
+    Route::post('charters/{charter}/reject', [CharterController::class, 'reject'])->name('charters.reject');
+    Route::post('charters/{charter}/found', [CharterController::class, 'found'])->name('charters.found');
+    Route::post('charters/{charter}/cancel', [CharterController::class, 'cancel'])->name('charters.cancel');
+    Route::post('ruins/{ruin}/reclaim', [CharterController::class, 'reclaim'])->name('ruins.reclaim');
 });
 
 require __DIR__.'/settings.php';
