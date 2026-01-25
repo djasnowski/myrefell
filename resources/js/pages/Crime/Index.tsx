@@ -284,9 +284,10 @@ export default function CrimeIndex() {
                         </h3>
                         <div className="space-y-2">
                             {pending_trials.map((trial) => (
-                                <div
+                                <Link
                                     key={trial.id}
-                                    className="rounded-lg border border-purple-600/50 bg-purple-900/30 p-3"
+                                    href={`/crime/trials/${trial.id}`}
+                                    className="block rounded-lg border border-purple-600/50 bg-purple-900/30 p-3 transition hover:border-purple-500 hover:bg-purple-900/40"
                                 >
                                     <div className="flex items-center justify-between">
                                         <span className="font-pixel text-sm text-purple-300">{trial.crime}</span>
@@ -299,7 +300,7 @@ export default function CrimeIndex() {
                                         {trial.judge && <span>Judge: {trial.judge}</span>}
                                         {trial.scheduled_at && <span>Scheduled: {trial.scheduled_at}</span>}
                                     </div>
-                                </div>
+                                </Link>
                             ))}
                         </div>
                     </div>

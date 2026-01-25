@@ -31,6 +31,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ReligionController;
 use App\Http\Controllers\CharterController;
 use App\Http\Controllers\CrimeController;
+use App\Http\Controllers\TrialController;
 use App\Http\Controllers\SocialClassController;
 use App\Http\Controllers\StableController;
 use App\Http\Controllers\CaravanController;
@@ -378,6 +379,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Judge actions - Trials
     Route::get('crime/trials', [CrimeController::class, 'pendingTrials'])->name('crime.trials');
     Route::post('crime/trial/{trial}/verdict', [CrimeController::class, 'renderVerdict'])->name('crime.trial.verdict');
+
+    // Trial viewer
+    Route::get('crime/trials/{trial}', [TrialController::class, 'show'])->name('crime.trials.show');
+    Route::post('crime/trials/{trial}/defense', [TrialController::class, 'submitDefense'])->name('crime.trials.defense');
 
     // Pardon (King only)
     Route::post('crime/punishment/{punishment}/pardon', [CrimeController::class, 'pardon'])->name('crime.punishment.pardon');
