@@ -348,9 +348,10 @@ export default function Wars() {
                         <div className="mb-1 font-pixel text-[10px] text-stone-400">Active Sieges:</div>
                         <div className="space-y-1">
                             {war.active_sieges.map((siege) => (
-                                <div
+                                <Link
                                     key={siege.id}
-                                    className="flex items-center justify-between rounded bg-stone-900/30 px-2 py-1"
+                                    href={`/warfare/sieges/${siege.id}`}
+                                    className="flex items-center justify-between rounded bg-stone-900/30 px-2 py-1 transition hover:bg-stone-800/50"
                                 >
                                     <div className="flex items-center gap-2">
                                         <Target className="h-3 w-3 text-amber-400" />
@@ -365,7 +366,7 @@ export default function Wars() {
                                         {siege.status}
                                         {siege.has_breach && ' (Breached)'}
                                     </span>
-                                </div>
+                                </Link>
                             ))}
                         </div>
                     </div>

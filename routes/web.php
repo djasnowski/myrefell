@@ -35,6 +35,7 @@ use App\Http\Controllers\TrialController;
 use App\Http\Controllers\SocialClassController;
 use App\Http\Controllers\StableController;
 use App\Http\Controllers\ArmyController;
+use App\Http\Controllers\SiegeController;
 use App\Http\Controllers\WarController;
 use App\Http\Controllers\CaravanController;
 use App\Http\Controllers\TradeRouteController;
@@ -397,6 +398,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Warfare - Wars
     Route::get('warfare/wars', [WarController::class, 'index'])->name('warfare.wars');
+
+    // Warfare - Sieges
+    Route::get('warfare/sieges/{siege}', [SiegeController::class, 'show'])->name('warfare.sieges.show');
+    Route::post('warfare/sieges/{siege}/assault', [SiegeController::class, 'assault'])->name('warfare.sieges.assault');
+    Route::post('warfare/sieges/{siege}/lift', [SiegeController::class, 'lift'])->name('warfare.sieges.lift');
+    Route::post('warfare/sieges/{siege}/build-equipment', [SiegeController::class, 'buildEquipment'])->name('warfare.sieges.build-equipment');
 });
 
 require __DIR__.'/settings.php';

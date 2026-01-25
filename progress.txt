@@ -92,7 +92,7 @@
 - [x] Mercenary companies (hiring, contracts, specializations)
 - [x] UI: Army management screen (view armies, raise army, disband, hire mercenaries)
 - [x] UI: War/battle viewer (wars overview page with war scores, participants, battles, sieges)
-- [ ] UI: Siege interface
+- [x] UI: Siege interface (view siege details, fortification progress, launch assaults, build equipment)
 - [ ] UI: Mercenary hiring (integrated into army management)
 
 ### Phase 6 - World Events (BACKEND COMPLETE)
