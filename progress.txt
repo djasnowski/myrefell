@@ -34,11 +34,11 @@
 
 ### Medium Priority - Economy & Social
 - [x] Tax System
+- [x] Chat System
 
 ## Not Implemented (Priority Order)
 
 ### Medium Priority
-- [ ] Chat System
 - [ ] NPC Crafting & Docket System
 
 ### Lower Priority

@@ -21,6 +21,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\MigrationController;
 use App\Http\Controllers\NoConfidenceController;
 use App\Http\Controllers\TaxController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\VillageController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -187,6 +188,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('taxes', [TaxController::class, 'myTaxes'])->name('taxes.index');
     Route::post('taxes/set-rate', [TaxController::class, 'setTaxRate'])->name('taxes.set-rate');
     Route::get('taxes/treasury-status', [TaxController::class, 'treasuryStatus'])->name('taxes.treasury-status');
+
+    // Chat
+    Route::get('chat', [ChatController::class, 'index'])->name('chat.index');
+    Route::get('villages/{village}/chat', [ChatController::class, 'villageChat'])->name('villages.chat');
+    Route::get('castles/{castle}/chat', [ChatController::class, 'castleChat'])->name('castles.chat');
+    Route::get('chat/private/{user}', [ChatController::class, 'privateChat'])->name('chat.private');
+    Route::get('chat/conversations', [ChatController::class, 'conversations'])->name('chat.conversations');
+    Route::post('chat/send/location', [ChatController::class, 'sendLocationMessage'])->name('chat.send.location');
+    Route::post('chat/send/private', [ChatController::class, 'sendPrivateMessage'])->name('chat.send.private');
+    Route::post('chat/poll/location', [ChatController::class, 'pollLocation'])->name('chat.poll.location');
+    Route::post('chat/poll/private', [ChatController::class, 'pollPrivate'])->name('chat.poll.private');
+    Route::delete('chat/messages/{message}', [ChatController::class, 'deleteMessage'])->name('chat.messages.delete');
 });
 
 require __DIR__.'/settings.php';
