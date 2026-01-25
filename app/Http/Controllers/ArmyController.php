@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Army;
 use App\Models\ArmyUnit;
+use App\Models\Battle;
 use App\Models\MercenaryCompany;
+use App\Models\Town;
+use App\Models\Village;
 use App\Services\ArmyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -184,6 +187,180 @@ class ArmyController extends Controller
     }
 
     /**
+     * Display the specified army.
+     */
+    public function show(Request $request, Army $army): Response
+    {
+        $user = $request->user();
+
+        // Check ownership
+        if ($army->owner_type !== 'player' || $army->owner_id !== $user->id) {
+            abort(403, 'You do not own this army.');
+        }
+
+        // Load relationships
+        $army->load(['commander', 'units', 'supplyLines']);
+
+        // Get battle history
+        $battleHistory = Battle::whereHas('participants', fn ($q) => $q->where('army_id', $army->id))
+            ->with(['participants' => fn ($q) => $q->where('army_id', $army->id)])
+            ->latest('started_at')
+            ->limit(5)
+            ->get()
+            ->map(fn ($battle) => [
+                'id' => $battle->id,
+                'name' => $battle->name,
+                'status' => $battle->status,
+                'outcome' => $battle->participants->first()?->outcome,
+                'casualties' => $battle->participants->first()?->casualties ?? 0,
+                'started_at' => $battle->started_at?->toISOString(),
+                'ended_at' => $battle->ended_at?->toISOString(),
+            ]);
+
+        // Get nearby settlements for movement
+        $nearbySettlements = $this->getNearbySettlements($army);
+
+        // Get available recruits (only if at a settlement)
+        $canRecruit = in_array($army->location_type, ['village', 'town']);
+
+        return Inertia::render('Warfare/ArmyShow', [
+            'army' => $this->mapArmyDetail($army),
+            'supply_line' => $army->supplyLines->first() ? $this->mapSupplyLine($army->supplyLines->first()) : null,
+            'battle_history' => $battleHistory->toArray(),
+            'nearby_settlements' => $nearbySettlements,
+            'unit_types' => $this->getUnitTypeInfo(),
+            'recruitment_costs' => ArmyService::RECRUITMENT_COSTS,
+            'can_recruit' => $canRecruit,
+        ]);
+    }
+
+    /**
+     * Map army to detailed array for show page.
+     */
+    private function mapArmyDetail(Army $army): array
+    {
+        $data = $this->mapArmy($army);
+        $data['supplies_days_remaining'] = $army->daily_supply_cost > 0
+            ? (int) floor($army->supplies / $army->daily_supply_cost)
+            : $army->supplies;
+        return $data;
+    }
+
+    /**
+     * Map supply line to array.
+     */
+    private function mapSupplyLine($supplyLine): array
+    {
+        return [
+            'id' => $supplyLine->id,
+            'source' => [
+                'type' => $supplyLine->source_type,
+                'id' => $supplyLine->source_id,
+                'name' => $supplyLine->source?->name ?? 'Unknown',
+            ],
+            'status' => $supplyLine->status,
+            'supply_rate' => $supplyLine->supply_rate,
+            'effective_rate' => $supplyLine->effective_supply_rate,
+            'distance' => $supplyLine->distance,
+            'safety' => $supplyLine->safety,
+        ];
+    }
+
+    /**
+     * Get nearby settlements for army movement.
+     */
+    private function getNearbySettlements(Army $army): array
+    {
+        $settlements = [];
+
+        // Get current location coordinates
+        $currentX = null;
+        $currentY = null;
+
+        if ($army->location_type === 'village') {
+            $location = Village::find($army->location_id);
+            $currentX = $location?->coordinates_x;
+            $currentY = $location?->coordinates_y;
+        } elseif ($army->location_type === 'town') {
+            $location = Town::find($army->location_id);
+            $currentX = $location?->coordinates_x;
+            $currentY = $location?->coordinates_y;
+        }
+
+        // If we have coordinates, find nearby settlements
+        if ($currentX !== null && $currentY !== null) {
+            // Get nearby villages (within 5 units)
+            $villages = Village::whereNotNull('coordinates_x')
+                ->whereNotNull('coordinates_y')
+                ->where(function ($query) use ($army) {
+                    $query->where('id', '!=', $army->location_id)
+                        ->orWhere(fn ($q) => $q->where($army->location_type, '!=', 'village'));
+                })
+                ->get()
+                ->map(function ($village) use ($currentX, $currentY) {
+                    $distance = sqrt(pow($village->coordinates_x - $currentX, 2) + pow($village->coordinates_y - $currentY, 2));
+                    return [
+                        'type' => 'village',
+                        'id' => $village->id,
+                        'name' => $village->name,
+                        'distance' => round($distance, 1),
+                        'travel_days' => max(1, (int) ceil($distance / 2)),
+                    ];
+                })
+                ->filter(fn ($s) => $s['distance'] <= 10)
+                ->sortBy('distance')
+                ->take(5)
+                ->values();
+
+            // Get nearby towns (within 5 units)
+            $towns = Town::whereNotNull('coordinates_x')
+                ->whereNotNull('coordinates_y')
+                ->where(function ($query) use ($army) {
+                    $query->where('id', '!=', $army->location_id)
+                        ->orWhere(fn ($q) => $q->where($army->location_type, '!=', 'town'));
+                })
+                ->get()
+                ->map(function ($town) use ($currentX, $currentY) {
+                    $distance = sqrt(pow($town->coordinates_x - $currentX, 2) + pow($town->coordinates_y - $currentY, 2));
+                    return [
+                        'type' => 'town',
+                        'id' => $town->id,
+                        'name' => $town->name,
+                        'distance' => round($distance, 1),
+                        'travel_days' => max(1, (int) ceil($distance / 2)),
+                    ];
+                })
+                ->filter(fn ($s) => $s['distance'] <= 10)
+                ->sortBy('distance')
+                ->take(5)
+                ->values();
+
+            $settlements = $villages->merge($towns)->sortBy('distance')->take(8)->values()->toArray();
+        } else {
+            // Fallback: just get some villages and towns
+            $villages = Village::limit(4)->get()->map(fn ($v) => [
+                'type' => 'village',
+                'id' => $v->id,
+                'name' => $v->name,
+                'distance' => null,
+                'travel_days' => 2,
+            ]);
+
+            $towns = Town::limit(4)->get()->map(fn ($t) => [
+                'type' => 'town',
+                'id' => $t->id,
+                'name' => $t->name,
+                'distance' => null,
+                'travel_days' => 2,
+            ]);
+
+            $settlements = $villages->merge($towns)->take(8)->toArray();
+        }
+
+        return $settlements;
+    }
+
+    /**
      * Store a newly created army.
      */
     public function store(Request $request): JsonResponse
@@ -294,6 +471,129 @@ class ArmyController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Hired {$company->name} for {$contractDays} days!",
+        ]);
+    }
+
+    /**
+     * Recruit soldiers into an army.
+     */
+    public function recruit(Request $request, Army $army): JsonResponse
+    {
+        $user = $request->user();
+
+        // Check ownership
+        if ($army->owner_type !== 'player' || $army->owner_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not own this army.',
+            ], 403);
+        }
+
+        // Must be at a settlement to recruit
+        if (!in_array($army->location_type, ['village', 'town'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Army must be at a settlement to recruit soldiers.',
+            ], 400);
+        }
+
+        // Cannot recruit while in battle
+        if ($army->status === Army::STATUS_IN_BATTLE) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot recruit while in battle.',
+            ], 400);
+        }
+
+        $validated = $request->validate([
+            'unit_type' => 'required|string|in:' . implode(',', [
+                ArmyUnit::TYPE_LEVY,
+                ArmyUnit::TYPE_MILITIA,
+                ArmyUnit::TYPE_MEN_AT_ARMS,
+                ArmyUnit::TYPE_KNIGHTS,
+                ArmyUnit::TYPE_ARCHERS,
+                ArmyUnit::TYPE_CROSSBOWMEN,
+                ArmyUnit::TYPE_CAVALRY,
+                ArmyUnit::TYPE_SIEGE_ENGINEERS,
+            ]),
+            'count' => 'required|integer|min:1|max:100',
+        ]);
+
+        $cost = $this->armyService->getRecruitmentCost($validated['unit_type'], $validated['count']);
+
+        if ($user->gold < $cost) {
+            return response()->json([
+                'success' => false,
+                'message' => "Not enough gold. You need {$cost}g to recruit these soldiers.",
+            ], 400);
+        }
+
+        $user->decrement('gold', $cost);
+        $this->armyService->recruitUnit($army, $validated['unit_type'], $validated['count']);
+
+        $unitName = $this->getUnitTypeInfo()[$validated['unit_type']]['name'] ?? $validated['unit_type'];
+
+        return response()->json([
+            'success' => true,
+            'message' => "Recruited {$validated['count']} {$unitName} for {$cost}g.",
+        ]);
+    }
+
+    /**
+     * Move an army to a new location.
+     */
+    public function move(Request $request, Army $army): JsonResponse
+    {
+        $user = $request->user();
+
+        // Check ownership
+        if ($army->owner_type !== 'player' || $army->owner_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not own this army.',
+            ], 403);
+        }
+
+        // Cannot move while in battle
+        if ($army->status === Army::STATUS_IN_BATTLE) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot move army while in battle.',
+            ], 400);
+        }
+
+        // Cannot move while already marching
+        if ($army->status === Army::STATUS_MARCHING) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Army is already marching.',
+            ], 400);
+        }
+
+        $validated = $request->validate([
+            'location_type' => 'required|string|in:village,town',
+            'location_id' => 'required|integer',
+        ]);
+
+        // Verify destination exists
+        $destination = match ($validated['location_type']) {
+            'village' => Village::find($validated['location_id']),
+            'town' => Town::find($validated['location_id']),
+            default => null,
+        };
+
+        if (!$destination) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid destination.',
+            ], 400);
+        }
+
+        $this->armyService->moveArmy($army, $validated['location_type'], $validated['location_id']);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Army is now marching to {$destination->name}.",
         ]);
     }
 }

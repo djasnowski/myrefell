@@ -91,6 +91,7 @@
 - [x] War goals and peace treaties (casus belli, war score, truces)
 - [x] Mercenary companies (hiring, contracts, specializations)
 - [x] UI: Army management screen (view armies, raise army, disband, hire mercenaries)
+- [x] UI: Army detail page (view army, unit composition, recruit, move, supply line, battle history)
 - [x] UI: War/battle viewer (wars overview page with war scores, participants, battles, sieges)
 - [x] UI: Siege interface (view siege details, fortification progress, launch assaults, build equipment)
 - [x] UI: Mercenary hiring (integrated into army management)

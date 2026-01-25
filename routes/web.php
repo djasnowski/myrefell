@@ -400,8 +400,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Warfare - Armies
     Route::get('warfare/armies', [ArmyController::class, 'index'])->name('warfare.armies');
+    Route::get('warfare/armies/{army}', [ArmyController::class, 'show'])->name('warfare.armies.show');
     Route::post('warfare/armies', [ArmyController::class, 'store'])->name('warfare.armies.store');
     Route::post('warfare/armies/{army}/disband', [ArmyController::class, 'disband'])->name('warfare.armies.disband');
+    Route::post('warfare/armies/{army}/recruit', [ArmyController::class, 'recruit'])->name('warfare.armies.recruit');
+    Route::post('warfare/armies/{army}/move', [ArmyController::class, 'move'])->name('warfare.armies.move');
     Route::post('warfare/mercenaries/{company}/hire', [ArmyController::class, 'hireMercenary'])->name('warfare.mercenaries.hire');
 
     // Warfare - Wars

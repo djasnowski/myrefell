@@ -169,14 +169,14 @@ return Inertia::render('Trade/Tariffs', [
 ```
 
 **Features:**
-- [ ] Army name, commander, location
-- [ ] Unit composition table (levy, men-at-arms, knights, archers, cavalry)
-- [ ] Recruit more units form (if at settlement)
-- [ ] Morale and supply status bars
-- [ ] Supply line info (source, status, days remaining)
-- [ ] Movement orders (select destination, march)
-- [ ] Disband army button
-- [ ] Battle history list
+- [x] Army name, commander, location
+- [x] Unit composition table (levy, men-at-arms, knights, archers, cavalry)
+- [x] Recruit more units form (if at settlement)
+- [x] Morale and supply status bars
+- [x] Supply line info (source, status, days remaining)
+- [x] Movement orders (select destination, march)
+- [x] Disband army button
+- [x] Battle history list
 
 **Props needed:**
 ```php
