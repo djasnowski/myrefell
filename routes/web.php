@@ -25,6 +25,7 @@ use App\Http\Controllers\MigrationController;
 use App\Http\Controllers\NoConfidenceController;
 use App\Http\Controllers\TaxController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\ReligionController;
 use App\Http\Controllers\VillageController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -231,6 +232,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('chat/poll/location', [ChatController::class, 'pollLocation'])->name('chat.poll.location');
     Route::post('chat/poll/private', [ChatController::class, 'pollPrivate'])->name('chat.poll.private');
     Route::delete('chat/messages/{message}', [ChatController::class, 'deleteMessage'])->name('chat.messages.delete');
+
+    // Religions
+    Route::get('religions', [ReligionController::class, 'index'])->name('religions.index');
+    Route::get('religions/structures', [ReligionController::class, 'structures'])->name('religions.structures');
+    Route::get('religions/{religion}', [ReligionController::class, 'show'])->name('religions.show');
+    Route::post('religions/create-cult', [ReligionController::class, 'createCult'])->name('religions.create-cult');
+    Route::post('religions/join', [ReligionController::class, 'join'])->name('religions.join');
+    Route::post('religions/leave', [ReligionController::class, 'leave'])->name('religions.leave');
+    Route::post('religions/action', [ReligionController::class, 'performAction'])->name('religions.action');
+    Route::post('religions/promote', [ReligionController::class, 'promote'])->name('religions.promote');
+    Route::post('religions/demote', [ReligionController::class, 'demote'])->name('religions.demote');
+    Route::post('religions/convert', [ReligionController::class, 'convertToReligion'])->name('religions.convert');
+    Route::post('religions/build-structure', [ReligionController::class, 'buildStructure'])->name('religions.build-structure');
+    Route::post('religions/make-public', [ReligionController::class, 'makePublic'])->name('religions.make-public');
+    Route::post('religions/kingdom-status', [ReligionController::class, 'setKingdomStatus'])->name('religions.kingdom-status');
 });
 
 require __DIR__.'/settings.php';

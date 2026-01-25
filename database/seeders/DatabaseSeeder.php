@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             QuestSeeder::class,
             JobSeeder::class,
             RoleSeeder::class,
+            ReligionSeeder::class,
             DanAdminSeeder::class,
         ]);
 

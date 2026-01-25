@@ -42,5 +42,5 @@
 ### Lower Priority
 - [x] Combat System
 - [x] Dungeons
-- [ ] Religion System
+- [x] Religion System
 - [ ] Charter System
