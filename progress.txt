@@ -50,11 +50,11 @@
 - [x] Calendar/Seasons System
 - [x] Seasonal effects on gathering
 - [x] NPC aging and death
+- [x] NPC reproduction
 
 ## Next Priority Tasks
 
 ### Phase 2 - Living World Foundation (continued)
-- [ ] NPC reproduction
 - [ ] Basic food consumption
 
 ### Phase 3 - Economic Depth

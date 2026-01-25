@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LocationNpc extends Model
 {
@@ -26,6 +27,21 @@ class LocationNpc extends Model
     public const ADULT_AGE = 16;
 
     /**
+     * Minimum age for reproduction.
+     */
+    public const MIN_REPRODUCTION_AGE = 18;
+
+    /**
+     * Maximum age for reproduction (women only).
+     */
+    public const MAX_REPRODUCTION_AGE = 45;
+
+    /**
+     * Minimum years between having children.
+     */
+    public const BIRTH_COOLDOWN_YEARS = 2;
+
+    /**
      * Available personality traits.
      */
     public const PERSONALITY_TRAITS = [
@@ -43,6 +59,11 @@ class LocationNpc extends Model
         'location_id',
         'npc_name',
         'family_name',
+        'gender',
+        'spouse_id',
+        'parent1_id',
+        'parent2_id',
+        'last_birth_year',
         'npc_description',
         'npc_icon',
         'is_active',
@@ -57,6 +78,7 @@ class LocationNpc extends Model
             'is_active' => 'boolean',
             'birth_year' => 'integer',
             'death_year' => 'integer',
+            'last_birth_year' => 'integer',
             'personality_traits' => 'array',
         ];
     }
@@ -67,6 +89,54 @@ class LocationNpc extends Model
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    /**
+     * Get the NPC's spouse.
+     */
+    public function spouse(): BelongsTo
+    {
+        return $this->belongsTo(LocationNpc::class, 'spouse_id');
+    }
+
+    /**
+     * Get the NPC's first parent.
+     */
+    public function parent1(): BelongsTo
+    {
+        return $this->belongsTo(LocationNpc::class, 'parent1_id');
+    }
+
+    /**
+     * Get the NPC's second parent.
+     */
+    public function parent2(): BelongsTo
+    {
+        return $this->belongsTo(LocationNpc::class, 'parent2_id');
+    }
+
+    /**
+     * Get all children of this NPC.
+     */
+    public function childrenAsParent1(): HasMany
+    {
+        return $this->hasMany(LocationNpc::class, 'parent1_id');
+    }
+
+    /**
+     * Get all children of this NPC (as second parent).
+     */
+    public function childrenAsParent2(): HasMany
+    {
+        return $this->hasMany(LocationNpc::class, 'parent2_id');
+    }
+
+    /**
+     * Get all children of this NPC (both parent1 and parent2).
+     */
+    public function getAllChildren(): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->childrenAsParent1->merge($this->childrenAsParent2);
     }
 
     /**
@@ -310,5 +380,132 @@ class LocationNpc extends Model
         $minBirthYear = $currentYear - self::MIN_DEATH_AGE;
 
         return $query->where('birth_year', '<=', $minBirthYear);
+    }
+
+    /**
+     * Check if NPC is married.
+     */
+    public function isMarried(): bool
+    {
+        return $this->spouse_id !== null;
+    }
+
+    /**
+     * Check if NPC is of reproductive age.
+     */
+    public function isOfReproductiveAge(int $currentYear): bool
+    {
+        $age = $this->getAge($currentYear);
+
+        if ($age < self::MIN_REPRODUCTION_AGE) {
+            return false;
+        }
+
+        // Women have a max age for reproduction
+        if ($this->gender === 'female' && $age > self::MAX_REPRODUCTION_AGE) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if NPC can have a child this year (not on cooldown).
+     */
+    public function canHaveChild(int $currentYear): bool
+    {
+        if (! $this->isAlive()) {
+            return false;
+        }
+
+        if (! $this->isOfReproductiveAge($currentYear)) {
+            return false;
+        }
+
+        if ($this->last_birth_year === null) {
+            return true;
+        }
+
+        return ($currentYear - $this->last_birth_year) >= self::BIRTH_COOLDOWN_YEARS;
+    }
+
+    /**
+     * Marry another NPC (updates both NPCs).
+     */
+    public function marry(LocationNpc $spouse): void
+    {
+        $this->update(['spouse_id' => $spouse->id]);
+        $spouse->update(['spouse_id' => $this->id]);
+    }
+
+    /**
+     * Generate a random first name.
+     */
+    public static function generateFirstName(string $gender): string
+    {
+        $maleNames = [
+            'William', 'Henry', 'John', 'Thomas', 'Robert', 'Richard', 'Edward',
+            'Geoffrey', 'Walter', 'Ralph', 'Hugh', 'Simon', 'Peter', 'Roger',
+            'Gilbert', 'Stephen', 'Adam', 'Nicholas', 'Alexander', 'Philip',
+        ];
+
+        $femaleNames = [
+            'Alice', 'Matilda', 'Joan', 'Agnes', 'Margaret', 'Emma', 'Isabella',
+            'Eleanor', 'Cecily', 'Beatrice', 'Mabel', 'Avice', 'Edith', 'Hawise',
+            'Juliana', 'Margery', 'Petronilla', 'Sybil', 'Rose', 'Lucy',
+        ];
+
+        $names = $gender === 'female' ? $femaleNames : $maleNames;
+
+        return $names[array_rand($names)];
+    }
+
+    /**
+     * Scope to unmarried NPCs.
+     */
+    public function scopeUnmarried($query)
+    {
+        return $query->whereNull('spouse_id');
+    }
+
+    /**
+     * Scope to married NPCs.
+     */
+    public function scopeMarried($query)
+    {
+        return $query->whereNotNull('spouse_id');
+    }
+
+    /**
+     * Scope to NPCs of reproductive age.
+     */
+    public function scopeOfReproductiveAge($query, int $currentYear)
+    {
+        $maxBirthYear = $currentYear - self::MIN_REPRODUCTION_AGE;
+        $minBirthYearFemale = $currentYear - self::MAX_REPRODUCTION_AGE;
+
+        return $query->where('birth_year', '<=', $maxBirthYear)
+            ->where(function ($q) use ($minBirthYearFemale) {
+                $q->where('gender', 'male')
+                    ->orWhere(function ($q2) use ($minBirthYearFemale) {
+                        $q2->where('gender', 'female')
+                            ->where('birth_year', '>=', $minBirthYearFemale);
+                    });
+            });
+    }
+
+    /**
+     * Scope to NPCs that can have children (not on cooldown).
+     */
+    public function scopeCanReproduce($query, int $currentYear)
+    {
+        $cooldownYear = $currentYear - self::BIRTH_COOLDOWN_YEARS;
+
+        return $query->alive()
+            ->ofReproductiveAge($currentYear)
+            ->where(function ($q) use ($cooldownYear) {
+                $q->whereNull('last_birth_year')
+                    ->orWhere('last_birth_year', '<=', $cooldownYear);
+            });
     }
 }

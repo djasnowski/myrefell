@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Jobs\AgeNpcs;
+use App\Jobs\ProcessNpcReproduction;
 use App\Models\WorldState;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -49,8 +50,9 @@ class CalendarService
                     $state->current_year++;
                     Log::info("World time: Year {$state->current_year} has begun!");
 
-                    // Trigger NPC aging on new year
+                    // Trigger NPC lifecycle events on new year
                     AgeNpcs::dispatch();
+                    ProcessNpcReproduction::dispatch();
                 }
 
                 $state->current_season = WorldState::SEASONS[$nextSeasonIndex];

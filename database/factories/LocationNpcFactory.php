@@ -24,6 +24,11 @@ class LocationNpcFactory extends Factory
             'location_id' => 1,
             'npc_name' => 'Elder Ironforge',
             'family_name' => 'Ironforge',
+            'gender' => $this->faker->randomElement(['male', 'female']),
+            'spouse_id' => null,
+            'parent1_id' => null,
+            'parent2_id' => null,
+            'last_birth_year' => null,
             'npc_description' => 'The village elder.',
             'npc_icon' => 'crown',
             'is_active' => true,
@@ -89,6 +94,57 @@ class LocationNpcFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'personality_traits' => $traits,
+        ]);
+    }
+
+    /**
+     * Create a male NPC.
+     */
+    public function male(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'gender' => 'male',
+        ]);
+    }
+
+    /**
+     * Create a female NPC.
+     */
+    public function female(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'gender' => 'female',
+        ]);
+    }
+
+    /**
+     * Create an NPC of reproductive age (18-45).
+     */
+    public function ofReproductiveAge(int $currentYear = 50): static
+    {
+        $age = rand(LocationNpc::MIN_REPRODUCTION_AGE, LocationNpc::MAX_REPRODUCTION_AGE - 5);
+
+        return $this->age($age, $currentYear);
+    }
+
+    /**
+     * Create an NPC with a spouse.
+     */
+    public function withSpouse(LocationNpc $spouse): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'spouse_id' => $spouse->id,
+        ]);
+    }
+
+    /**
+     * Create an NPC with parents.
+     */
+    public function withParents(LocationNpc $parent1, LocationNpc $parent2): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'parent1_id' => $parent1->id,
+            'parent2_id' => $parent2->id,
         ]);
     }
 }
