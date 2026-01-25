@@ -30,6 +30,7 @@ use App\Http\Controllers\TaxController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ReligionController;
 use App\Http\Controllers\CharterController;
+use App\Http\Controllers\CrimeController;
 use App\Http\Controllers\SocialClassController;
 use App\Http\Controllers\StableController;
 use App\Http\Controllers\TrainingController;
@@ -345,6 +346,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('social-class/ennoblement-requests', [SocialClassController::class, 'ennoblementRequests'])->name('social-class.ennoblement-requests');
     Route::post('social-class/ennoblement/{ennoblementRequest}/approve', [SocialClassController::class, 'approveEnnoblement'])->name('social-class.ennoblement.approve');
     Route::post('social-class/ennoblement/{ennoblementRequest}/deny', [SocialClassController::class, 'denyEnnoblement'])->name('social-class.ennoblement.deny');
+
+    // Crime & Law
+    Route::get('crime', [CrimeController::class, 'index'])->name('crime.index');
+    Route::get('crime/types', [CrimeController::class, 'crimeTypes'])->name('crime.types');
+    Route::get('crime/bounties', [CrimeController::class, 'bountyBoard'])->name('crime.bounties');
+    Route::post('crime/accuse', [CrimeController::class, 'accuse'])->name('crime.accuse');
+    Route::post('crime/accusation/{accusation}/withdraw', [CrimeController::class, 'withdrawAccusation'])->name('crime.accusation.withdraw');
+    Route::post('crime/bounty', [CrimeController::class, 'postBounty'])->name('crime.bounty.post');
+    Route::post('crime/bounty/{bounty}/cancel', [CrimeController::class, 'cancelBounty'])->name('crime.bounty.cancel');
+
+    // Judge actions - Accusations
+    Route::get('crime/accusations', [CrimeController::class, 'pendingAccusations'])->name('crime.accusations');
+    Route::post('crime/accusation/{accusation}/review', [CrimeController::class, 'reviewAccusation'])->name('crime.accusation.review');
+
+    // Judge actions - Trials
+    Route::get('crime/trials', [CrimeController::class, 'pendingTrials'])->name('crime.trials');
+    Route::post('crime/trial/{trial}/verdict', [CrimeController::class, 'renderVerdict'])->name('crime.trial.verdict');
+
+    // Pardon (King only)
+    Route::post('crime/punishment/{punishment}/pardon', [CrimeController::class, 'pardon'])->name('crime.punishment.pardon');
 });
 
 require __DIR__.'/settings.php';
