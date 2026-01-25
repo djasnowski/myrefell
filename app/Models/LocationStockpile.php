@@ -15,12 +15,16 @@ class LocationStockpile extends Model
         'location_id',
         'item_id',
         'quantity',
+        'weeks_stored',
+        'last_decay_at',
     ];
 
     protected function casts(): array
     {
         return [
             'quantity' => 'integer',
+            'weeks_stored' => 'integer',
+            'last_decay_at' => 'datetime',
         ];
     }
 
@@ -39,7 +43,7 @@ class LocationStockpile extends Model
     {
         return match ($this->location_type) {
             'village' => Village::find($this->location_id),
-            'castle' => Castle::find($this->location_id),
+            'barony' => Barony::find($this->location_id),
             'town' => Town::find($this->location_id),
             default => null,
         };
@@ -105,7 +109,50 @@ class LocationStockpile extends Model
                 'location_id' => $locationId,
                 'item_id' => $itemId,
             ],
-            ['quantity' => 0]
+            ['quantity' => 0, 'weeks_stored' => 0]
         );
+    }
+
+    /**
+     * Increment the weeks stored counter.
+     */
+    public function incrementWeeksStored(): bool
+    {
+        $this->weeks_stored++;
+
+        return $this->save();
+    }
+
+    /**
+     * Reset the weeks stored counter (when new items are added).
+     */
+    public function resetWeeksStored(): bool
+    {
+        $this->weeks_stored = 0;
+
+        return $this->save();
+    }
+
+    /**
+     * Check if the item has been stored long enough to spoil.
+     */
+    public function hasSpoiled(): bool
+    {
+        $item = $this->item;
+        if (! $item || ! $item->isPerishable() || $item->spoil_after_weeks === null) {
+            return false;
+        }
+
+        return $this->weeks_stored >= $item->spoil_after_weeks;
+    }
+
+    /**
+     * Scope to get stockpiles with perishable items.
+     */
+    public function scopeWithPerishableItems($query)
+    {
+        return $query->whereHas('item', function ($q) {
+            $q->where('is_perishable', true);
+        });
     }
 }

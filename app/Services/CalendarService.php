@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Jobs\AgeNpcs;
 use App\Jobs\ProcessFoodConsumption;
 use App\Jobs\ProcessNpcReproduction;
+use App\Jobs\ProcessResourceDecay;
 use App\Models\WorldState;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -65,6 +66,9 @@ class CalendarService
 
             // Process food consumption every week
             ProcessFoodConsumption::dispatch();
+
+            // Process resource decay every week
+            ProcessResourceDecay::dispatch();
 
             Log::info("World time advanced: {$oldDate} -> {$state->getFormattedDate()}");
 

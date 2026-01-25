@@ -45,6 +45,10 @@ class Item extends Model
         'required_skill',
         'required_skill_level',
         'base_value',
+        'is_perishable',
+        'decay_rate_per_week',
+        'spoil_after_weeks',
+        'decays_into',
     ];
 
     protected function casts(): array
@@ -61,6 +65,9 @@ class Item extends Model
             'required_level' => 'integer',
             'required_skill_level' => 'integer',
             'base_value' => 'integer',
+            'is_perishable' => 'boolean',
+            'decay_rate_per_week' => 'integer',
+            'spoil_after_weeks' => 'integer',
         ];
     }
 
@@ -110,5 +117,67 @@ class Item extends Model
     public function getCombatPowerAttribute(): int
     {
         return $this->atk_bonus + $this->str_bonus + $this->def_bonus;
+    }
+
+    /**
+     * Check if this item is perishable.
+     */
+    public function isPerishable(): bool
+    {
+        return $this->is_perishable;
+    }
+
+    /**
+     * Check if this item decays over time (loses quantity).
+     */
+    public function decaysOverTime(): bool
+    {
+        return $this->is_perishable && $this->decay_rate_per_week > 0;
+    }
+
+    /**
+     * Check if this item spoils after a certain time (transforms into another item).
+     */
+    public function spoilsAfterTime(): bool
+    {
+        return $this->is_perishable && $this->spoil_after_weeks !== null;
+    }
+
+    /**
+     * Get the item this transforms into when spoiled.
+     */
+    public function getSpoiledItem(): ?self
+    {
+        if (! $this->decays_into) {
+            return null;
+        }
+
+        return self::where('name', $this->decays_into)->first();
+    }
+
+    /**
+     * Scope to get perishable items.
+     */
+    public function scopePerishable($query)
+    {
+        return $query->where('is_perishable', true);
+    }
+
+    /**
+     * Scope to get items that decay over time.
+     */
+    public function scopeDecaying($query)
+    {
+        return $query->where('is_perishable', true)
+            ->where('decay_rate_per_week', '>', 0);
+    }
+
+    /**
+     * Scope to get items that spoil after time.
+     */
+    public function scopeSpoiling($query)
+    {
+        return $query->where('is_perishable', true)
+            ->whereNotNull('spoil_after_weeks');
     }
 }

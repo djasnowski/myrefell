@@ -20,6 +20,8 @@ class PlayerInventory extends Model
         'slot_number',
         'quantity',
         'is_equipped',
+        'weeks_stored',
+        'last_decay_at',
     ];
 
     protected function casts(): array
@@ -28,6 +30,8 @@ class PlayerInventory extends Model
             'slot_number' => 'integer',
             'quantity' => 'integer',
             'is_equipped' => 'boolean',
+            'weeks_stored' => 'integer',
+            'last_decay_at' => 'datetime',
         ];
     }
 
@@ -90,5 +94,48 @@ class PlayerInventory extends Model
         }
 
         return true;
+    }
+
+    /**
+     * Increment the weeks stored counter.
+     */
+    public function incrementWeeksStored(): bool
+    {
+        $this->weeks_stored++;
+
+        return $this->save();
+    }
+
+    /**
+     * Reset the weeks stored counter (when new items are added).
+     */
+    public function resetWeeksStored(): bool
+    {
+        $this->weeks_stored = 0;
+
+        return $this->save();
+    }
+
+    /**
+     * Check if the item has been stored long enough to spoil.
+     */
+    public function hasSpoiled(): bool
+    {
+        $item = $this->item;
+        if (! $item || ! $item->isPerishable() || $item->spoil_after_weeks === null) {
+            return false;
+        }
+
+        return $this->weeks_stored >= $item->spoil_after_weeks;
+    }
+
+    /**
+     * Scope to get inventory slots with perishable items.
+     */
+    public function scopeWithPerishableItems($query)
+    {
+        return $query->whereHas('item', function ($q) {
+            $q->where('is_perishable', true);
+        });
     }
 }
