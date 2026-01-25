@@ -49,11 +49,11 @@
 ### Phase 2 - Living World Foundation
 - [x] Calendar/Seasons System
 - [x] Seasonal effects on gathering
+- [x] NPC aging and death
 
 ## Next Priority Tasks
 
 ### Phase 2 - Living World Foundation (continued)
-- [ ] NPC aging and death
 - [ ] NPC reproduction
 - [ ] Basic food consumption
 
