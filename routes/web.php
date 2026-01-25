@@ -30,6 +30,7 @@ use App\Http\Controllers\TaxController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ReligionController;
 use App\Http\Controllers\CharterController;
+use App\Http\Controllers\SocialClassController;
 use App\Http\Controllers\StableController;
 use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\VillageController;
@@ -326,6 +327,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('guilds/set-membership-fee', [GuildController::class, 'setMembershipFee'])->name('guilds.set-membership-fee');
     Route::post('guilds/set-weekly-dues', [GuildController::class, 'setWeeklyDues'])->name('guilds.set-weekly-dues');
     Route::post('guilds/set-public-status', [GuildController::class, 'setPublicStatus'])->name('guilds.set-public-status');
+
+    // Social Class
+    Route::get('social-class', [SocialClassController::class, 'index'])->name('social-class.index');
+    Route::post('social-class/manumission', [SocialClassController::class, 'requestManumission'])->name('social-class.manumission');
+    Route::post('social-class/manumission/{manumissionRequest}/cancel', [SocialClassController::class, 'cancelManumission'])->name('social-class.manumission.cancel');
+    Route::post('social-class/ennoblement', [SocialClassController::class, 'requestEnnoblement'])->name('social-class.ennoblement');
+    Route::post('social-class/ennoblement/{ennoblementRequest}/cancel', [SocialClassController::class, 'cancelEnnoblement'])->name('social-class.ennoblement.cancel');
+    Route::post('social-class/burgher', [SocialClassController::class, 'becomeBurgher'])->name('social-class.burgher');
+
+    // Baron admin - Manumission requests
+    Route::get('social-class/manumission-requests', [SocialClassController::class, 'manumissionRequests'])->name('social-class.manumission-requests');
+    Route::post('social-class/manumission/{manumissionRequest}/approve', [SocialClassController::class, 'approveManumission'])->name('social-class.manumission.approve');
+    Route::post('social-class/manumission/{manumissionRequest}/deny', [SocialClassController::class, 'denyManumission'])->name('social-class.manumission.deny');
+
+    // King admin - Ennoblement requests
+    Route::get('social-class/ennoblement-requests', [SocialClassController::class, 'ennoblementRequests'])->name('social-class.ennoblement-requests');
+    Route::post('social-class/ennoblement/{ennoblementRequest}/approve', [SocialClassController::class, 'approveEnnoblement'])->name('social-class.ennoblement.approve');
+    Route::post('social-class/ennoblement/{ennoblementRequest}/deny', [SocialClassController::class, 'denyEnnoblement'])->name('social-class.ennoblement.deny');
 });
 
 require __DIR__.'/settings.php';

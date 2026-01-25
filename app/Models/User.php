@@ -18,6 +18,26 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasFactory, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
 
     /**
+     * Social class constants.
+     */
+    public const CLASS_SERF = 'serf';
+    public const CLASS_FREEMAN = 'freeman';
+    public const CLASS_BURGHER = 'burgher';
+    public const CLASS_NOBLE = 'noble';
+    public const CLASS_CLERGY = 'clergy';
+
+    /**
+     * Social class hierarchy (higher = more privileged).
+     */
+    public const CLASS_HIERARCHY = [
+        self::CLASS_SERF => 1,
+        self::CLASS_FREEMAN => 2,
+        self::CLASS_BURGHER => 3,
+        self::CLASS_CLERGY => 3,
+        self::CLASS_NOBLE => 4,
+    ];
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
@@ -28,6 +48,11 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'is_admin',
         'gender',
+        'social_class',
+        'bound_to_barony_id',
+        'labor_days_owed',
+        'labor_days_completed',
+        'last_obligation_check',
         'home_village_id',
         'current_location_type',
         'current_location_id',
@@ -75,6 +100,9 @@ class User extends Authenticatable implements MustVerifyEmail
             'is_traveling' => 'boolean',
             'travel_started_at' => 'datetime',
             'travel_arrives_at' => 'datetime',
+            'labor_days_owed' => 'integer',
+            'labor_days_completed' => 'integer',
+            'last_obligation_check' => 'date',
         ];
     }
 
@@ -382,5 +410,196 @@ class User extends Authenticatable implements MustVerifyEmail
         }
 
         return $this->horse->isAvailableForTravel();
+    }
+
+    // ==================== SOCIAL CLASS METHODS ====================
+
+    /**
+     * Get the barony this serf is bound to.
+     */
+    public function boundBarony(): BelongsTo
+    {
+        return $this->belongsTo(Barony::class, 'bound_to_barony_id');
+    }
+
+    /**
+     * Get manumission requests made by this user.
+     */
+    public function manumissionRequests(): HasMany
+    {
+        return $this->hasMany(ManumissionRequest::class, 'serf_id');
+    }
+
+    /**
+     * Get ennoblement requests made by this user.
+     */
+    public function ennoblementRequests(): HasMany
+    {
+        return $this->hasMany(EnnoblementRequest::class, 'requester_id');
+    }
+
+    /**
+     * Get social class change history.
+     */
+    public function socialClassHistory(): HasMany
+    {
+        return $this->hasMany(SocialClassHistory::class);
+    }
+
+    /**
+     * Check if user is a serf.
+     */
+    public function isSerf(): bool
+    {
+        return $this->social_class === self::CLASS_SERF;
+    }
+
+    /**
+     * Check if user is a freeman.
+     */
+    public function isFreeman(): bool
+    {
+        return $this->social_class === self::CLASS_FREEMAN;
+    }
+
+    /**
+     * Check if user is a burgher.
+     */
+    public function isBurgher(): bool
+    {
+        return $this->social_class === self::CLASS_BURGHER;
+    }
+
+    /**
+     * Check if user is a noble.
+     */
+    public function isNoble(): bool
+    {
+        return $this->social_class === self::CLASS_NOBLE;
+    }
+
+    /**
+     * Check if user is clergy.
+     */
+    public function isClergy(): bool
+    {
+        return $this->social_class === self::CLASS_CLERGY;
+    }
+
+    /**
+     * Get the social class rank (1-4).
+     */
+    public function getSocialClassRank(): int
+    {
+        return self::CLASS_HIERARCHY[$this->social_class] ?? 1;
+    }
+
+    /**
+     * Check if user can vote in elections.
+     * Serfs cannot vote.
+     */
+    public function canVote(): bool
+    {
+        return !$this->isSerf();
+    }
+
+    /**
+     * Check if user can join guilds.
+     * Only burghers and above can join guilds.
+     */
+    public function canJoinGuild(): bool
+    {
+        return in_array($this->social_class, [
+            self::CLASS_BURGHER,
+            self::CLASS_NOBLE,
+        ]);
+    }
+
+    /**
+     * Check if user can hold high office (Baron, King).
+     * Only nobles can hold high office.
+     */
+    public function canHoldHighOffice(): bool
+    {
+        return $this->isNoble();
+    }
+
+    /**
+     * Check if user can freely travel (leave their land).
+     * Serfs need permission to leave their barony.
+     */
+    public function canFreelyTravel(): bool
+    {
+        return !$this->isSerf();
+    }
+
+    /**
+     * Check if user can own land/property.
+     * Serfs have limited property rights.
+     */
+    public function canOwnProperty(): bool
+    {
+        return !$this->isSerf();
+    }
+
+    /**
+     * Check if user can own a business.
+     * Burghers and above can own businesses.
+     */
+    public function canOwnBusiness(): bool
+    {
+        return in_array($this->social_class, [
+            self::CLASS_BURGHER,
+            self::CLASS_NOBLE,
+        ]);
+    }
+
+    /**
+     * Check if serf has completed their labor obligations.
+     */
+    public function hasCompletedLaborObligations(): bool
+    {
+        if (!$this->isSerf()) {
+            return true;
+        }
+
+        return $this->labor_days_completed >= $this->labor_days_owed;
+    }
+
+    /**
+     * Get remaining labor days owed.
+     */
+    public function getRemainingLaborDays(): int
+    {
+        if (!$this->isSerf()) {
+            return 0;
+        }
+
+        return max(0, $this->labor_days_owed - $this->labor_days_completed);
+    }
+
+    /**
+     * Complete a labor day.
+     */
+    public function completeLaborDay(): void
+    {
+        if ($this->isSerf() && $this->labor_days_completed < $this->labor_days_owed) {
+            $this->increment('labor_days_completed');
+        }
+    }
+
+    /**
+     * Get the display name for the social class.
+     */
+    public function getSocialClassDisplayAttribute(): string
+    {
+        return match ($this->social_class) {
+            self::CLASS_SERF => 'Serf',
+            self::CLASS_FREEMAN => 'Freeman',
+            self::CLASS_BURGHER => 'Burgher',
+            self::CLASS_NOBLE => 'Noble',
+            self::CLASS_CLERGY => 'Clergy',
+            default => 'Unknown',
+        };
     }
 }
