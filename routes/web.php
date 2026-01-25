@@ -33,6 +33,7 @@ use App\Http\Controllers\CharterController;
 use App\Http\Controllers\CrimeController;
 use App\Http\Controllers\SocialClassController;
 use App\Http\Controllers\StableController;
+use App\Http\Controllers\TradeRouteController;
 use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\VillageController;
 use App\Http\Controllers\MarketController;
@@ -311,6 +312,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('businesses/{business}/add-stock', [BusinessController::class, 'addStock'])->name('businesses.add-stock');
     Route::post('businesses/{business}/remove-stock', [BusinessController::class, 'removeStock'])->name('businesses.remove-stock');
     Route::get('businesses-status', [BusinessController::class, 'status'])->name('businesses.status');
+
+    // Trade Routes
+    Route::get('trade/routes', [TradeRouteController::class, 'index'])->name('trade.routes');
+    Route::post('trade/routes', [TradeRouteController::class, 'store'])->name('trade.routes.store');
 
     // Guilds
     Route::get('guilds', [GuildController::class, 'index'])->name('guilds.index');
