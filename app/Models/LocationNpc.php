@@ -70,6 +70,7 @@ class LocationNpc extends Model
         'birth_year',
         'death_year',
         'personality_traits',
+        'weeks_without_food',
     ];
 
     protected function casts(): array
@@ -80,6 +81,7 @@ class LocationNpc extends Model
             'death_year' => 'integer',
             'last_birth_year' => 'integer',
             'personality_traits' => 'array',
+            'weeks_without_food' => 'integer',
         ];
     }
 

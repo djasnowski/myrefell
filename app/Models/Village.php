@@ -20,6 +20,8 @@ class Village extends Model
         'is_town',
         'population',
         'wealth',
+        'granary_capacity',
+        'last_food_check_week',
         'biome',
         'is_port',
         'coordinates_x',
@@ -33,6 +35,8 @@ class Village extends Model
             'is_port' => 'boolean',
             'population' => 'integer',
             'wealth' => 'integer',
+            'granary_capacity' => 'integer',
+            'last_food_check_week' => 'integer',
             'coordinates_x' => 'integer',
             'coordinates_y' => 'integer',
         ];

@@ -35,6 +35,7 @@ class LocationNpcFactory extends Factory
             'birth_year' => 1,
             'death_year' => null,
             'personality_traits' => ['ambitious'],
+            'weeks_without_food' => 0,
         ];
     }
 

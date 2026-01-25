@@ -369,6 +369,18 @@ class ItemSeeder extends Seeder
                 'base_value' => 50,
             ],
 
+            // Grain (base food for village stockpiles)
+            [
+                'name' => 'Grain',
+                'description' => 'A sack of grain. The staple food of the realm.',
+                'type' => 'resource',
+                'subtype' => 'grain',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 1000,
+                'base_value' => 2,
+            ],
+
             // === CONSUMABLES ===
             // Food
             [

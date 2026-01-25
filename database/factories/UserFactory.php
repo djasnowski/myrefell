@@ -37,6 +37,7 @@ class UserFactory extends Factory
             'max_hp' => 10,
             'energy' => 10,
             'max_energy' => 150,
+            'weeks_without_food' => 0,
             'gold' => 100, // Starting gold
             'is_traveling' => false,
             'two_factor_secret' => null,

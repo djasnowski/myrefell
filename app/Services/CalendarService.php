@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Jobs\AgeNpcs;
+use App\Jobs\ProcessFoodConsumption;
 use App\Jobs\ProcessNpcReproduction;
 use App\Models\WorldState;
 use Illuminate\Support\Facades\DB;
@@ -61,6 +62,9 @@ class CalendarService
 
             $state->last_tick_at = now();
             $state->save();
+
+            // Process food consumption every week
+            ProcessFoodConsumption::dispatch();
 
             Log::info("World time advanced: {$oldDate} -> {$state->getFormattedDate()}");
 

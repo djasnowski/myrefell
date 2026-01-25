@@ -51,11 +51,9 @@
 - [x] Seasonal effects on gathering
 - [x] NPC aging and death
 - [x] NPC reproduction
+- [x] Basic food consumption
 
 ## Next Priority Tasks
-
-### Phase 2 - Living World Foundation (continued)
-- [ ] Basic food consumption
 
 ### Phase 3 - Economic Depth
 - [ ] Dynamic market prices
