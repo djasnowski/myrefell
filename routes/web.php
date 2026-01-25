@@ -31,6 +31,7 @@ use App\Http\Controllers\CharterController;
 use App\Http\Controllers\StableController;
 use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\VillageController;
+use App\Http\Controllers\MarketController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -143,6 +144,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('bank/deposit', [BankController::class, 'deposit'])->name('bank.deposit');
     Route::post('bank/withdraw', [BankController::class, 'withdraw'])->name('bank.withdraw');
     Route::get('bank/balance', [BankController::class, 'balance'])->name('bank.balance');
+
+    // Market
+    Route::get('villages/{village}/market', [MarketController::class, 'villageMarket'])->name('villages.market');
+    Route::get('baronies/{barony}/market', [MarketController::class, 'baronyMarket'])->name('baronies.market');
+    Route::get('towns/{town}/market', [MarketController::class, 'townMarket'])->name('towns.market');
+    Route::post('market/buy', [MarketController::class, 'buy'])->name('market.buy');
+    Route::post('market/sell', [MarketController::class, 'sell'])->name('market.sell');
+    Route::get('market/prices', [MarketController::class, 'prices'])->name('market.prices');
 
     // Healer
     Route::get('villages/{village}/healer', [HealerController::class, 'villageHealer'])->name('villages.healer');

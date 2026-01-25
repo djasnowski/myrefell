@@ -56,7 +56,7 @@
 ## Next Priority Tasks
 
 ### Phase 3 - Economic Depth
-- [ ] Dynamic market prices
+- [x] Dynamic market prices
 - [ ] Player-owned businesses
 - [ ] Player-run guilds
 - [ ] Resource decay/consumption
