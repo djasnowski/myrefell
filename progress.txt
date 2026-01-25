@@ -61,3 +61,35 @@
 - [x] Player-run guilds
 - [x] Resource decay/consumption
 - [ ] Trade caravans
+
+### Phase 4 - Political Systems
+- [x] Elections and roles
+- [x] No-confidence votes
+- [x] Social class system (serf/freeman/burgher/noble/clergy)
+- [x] Class-based rights and restrictions
+- [x] Manumission system (serf freedom)
+- [x] Ennoblement system (nobility requests)
+- [x] Laws and crime types
+- [x] Court hierarchy (village/barony/kingdom/church)
+- [x] Trial system with verdicts
+- [x] Punishments (fine/jail/exile/outlawry/execution)
+- [x] Bounty system
+- [ ] Legitimacy system
+
+### Phase 5 - Warfare (DEFERRED)
+- [ ] Army recruitment
+- [ ] Battle resolution (daily ticks)
+- [ ] Supply lines
+- [ ] Siege mechanics
+- [ ] War goals and peace treaties
+
+### Phase 6 - World Events
+- [ ] Festivals and tournaments
+- [ ] Disease spread
+- [ ] Natural disasters
+- [ ] Infrastructure construction
+
+### Unimplemented PRD Parts
+- [ ] Part 12: Marriage and Dynasties
+- [ ] Part 13: Festivals and Events
+- [ ] Part 14: Infrastructure and Construction
