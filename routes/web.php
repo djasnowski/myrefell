@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BankController;
+use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\BaronyController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CombatController;
@@ -291,6 +292,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('charters/{charter}/found', [CharterController::class, 'found'])->name('charters.found');
     Route::post('charters/{charter}/cancel', [CharterController::class, 'cancel'])->name('charters.cancel');
     Route::post('ruins/{ruin}/reclaim', [CharterController::class, 'reclaim'])->name('ruins.reclaim');
+
+    // Businesses
+    Route::get('businesses', [BusinessController::class, 'myBusinesses'])->name('businesses.index');
+    Route::get('businesses/{business}', [BusinessController::class, 'show'])->name('businesses.show');
+    Route::get('villages/{village}/businesses', [BusinessController::class, 'villageBusinesses'])->name('villages.businesses');
+    Route::get('towns/{town}/businesses', [BusinessController::class, 'townBusinesses'])->name('towns.businesses');
+    Route::get('baronies/{barony}/businesses', [BusinessController::class, 'baronyBusinesses'])->name('baronies.businesses');
+    Route::post('businesses/establish', [BusinessController::class, 'establish'])->name('businesses.establish');
+    Route::post('businesses/{business}/close', [BusinessController::class, 'close'])->name('businesses.close');
+    Route::post('businesses/{business}/deposit', [BusinessController::class, 'deposit'])->name('businesses.deposit');
+    Route::post('businesses/{business}/withdraw', [BusinessController::class, 'withdraw'])->name('businesses.withdraw');
+    Route::post('businesses/{business}/hire', [BusinessController::class, 'hire'])->name('businesses.hire');
+    Route::post('businesses/{business}/employees/{employee}/fire', [BusinessController::class, 'fire'])->name('businesses.fire');
+    Route::post('businesses/{business}/add-stock', [BusinessController::class, 'addStock'])->name('businesses.add-stock');
+    Route::post('businesses/{business}/remove-stock', [BusinessController::class, 'removeStock'])->name('businesses.remove-stock');
+    Route::get('businesses-status', [BusinessController::class, 'status'])->name('businesses.status');
 });
 
 require __DIR__.'/settings.php';

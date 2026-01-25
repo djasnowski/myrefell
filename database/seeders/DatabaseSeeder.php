@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             ReligionSeeder::class,
             CharterSeeder::class,
             HorseSeeder::class,
+            BusinessTypeSeeder::class,
             DanAdminSeeder::class,
         ]);
 

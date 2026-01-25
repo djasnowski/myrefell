@@ -134,6 +134,22 @@ class LocationNpc extends Model
     }
 
     /**
+     * Get business employment records for this NPC.
+     */
+    public function businessEmployment(): HasMany
+    {
+        return $this->hasMany(BusinessEmployee::class, 'location_npc_id');
+    }
+
+    /**
+     * Get the NPC's full name.
+     */
+    public function getNameAttribute(): string
+    {
+        return $this->npc_name;
+    }
+
+    /**
      * Get all children of this NPC (both parent1 and parent2).
      */
     public function getAllChildren(): \Illuminate\Database\Eloquent\Collection
