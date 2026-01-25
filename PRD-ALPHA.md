@@ -498,14 +498,14 @@ return Inertia::render('Warfare/PeaceNegotiation', [
 ```
 
 **Features:**
-- [ ] Festival name, type, location
-- [ ] Date range (start/end)
-- [ ] Description and activities available
-- [ ] Participation rewards
-- [ ] Current participants list
-- [ ] Join/leave festival button
-- [ ] Activity participation buttons
-- [ ] Your rewards earned
+- [x] Festival name, type, location
+- [x] Date range (start/end)
+- [x] Description and activities available
+- [x] Participation rewards
+- [x] Current participants list
+- [x] Join/leave festival button
+- [x] Activity participation buttons
+- [x] Your rewards earned
 
 **Props needed:**
 ```php

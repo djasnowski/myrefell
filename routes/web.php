@@ -292,7 +292,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Events (Festivals, Tournaments, Royal Events)
     Route::get('events', [EventController::class, 'index'])->name('events.index');
+    Route::get('events/festivals/{festival}', [EventController::class, 'showFestival'])->name('events.festivals.show');
     Route::post('events/festivals/{festival}/join', [EventController::class, 'joinFestival'])->name('events.festivals.join');
+    Route::post('events/festivals/{festival}/leave', [EventController::class, 'leaveFestival'])->name('events.festivals.leave');
     Route::post('events/tournaments/{tournament}/register', [EventController::class, 'registerForTournament'])->name('events.tournaments.register');
 
     // Charters

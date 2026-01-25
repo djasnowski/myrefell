@@ -81,6 +81,90 @@ class EventController extends Controller
     }
 
     /**
+     * Show festival detail page.
+     */
+    public function showFestival(Request $request, Festival $festival): Response
+    {
+        $user = $request->user();
+
+        // Load all relationships
+        $festival->load(['festivalType', 'organizer', 'participants.user', 'tournaments.tournamentType', 'tournaments.competitors']);
+
+        // Get participant info for current user
+        $userParticipation = $festival->participants()
+            ->where('user_id', $user->id)
+            ->first();
+
+        // Format participants with details
+        $participants = $festival->participants->map(fn($p) => [
+            'id' => $p->id,
+            'user_id' => $p->user_id,
+            'username' => $p->user?->username ?? 'Unknown',
+            'role' => $p->role,
+            'gold_spent' => $p->gold_spent ?? 0,
+            'gold_earned' => $p->gold_earned ?? 0,
+            'activities_completed' => $p->activities_completed ?? [],
+            'joined_at' => $p->created_at?->toISOString(),
+        ]);
+
+        // Format tournaments
+        $tournaments = $festival->tournaments->map(fn($t) => $this->formatTournament($t, $user));
+
+        // Calculate festival duration in days
+        $durationDays = $festival->starts_at && $festival->ends_at
+            ? $festival->starts_at->diffInDays($festival->ends_at) + 1
+            : $festival->festivalType->duration_days ?? 1;
+
+        // Calculate current day of festival if active
+        $currentDay = null;
+        if ($festival->status === Festival::STATUS_ACTIVE && $festival->starts_at) {
+            $currentDay = now()->diffInDays($festival->starts_at) + 1;
+        }
+
+        return Inertia::render('Events/FestivalShow', [
+            'festival' => [
+                'id' => $festival->id,
+                'name' => $festival->name,
+                'type' => [
+                    'id' => $festival->festivalType->id,
+                    'name' => $festival->festivalType->name,
+                    'category' => $festival->festivalType->category,
+                    'description' => $festival->festivalType->description,
+                    'activities' => $festival->festivalType->activities ?? [],
+                    'bonuses' => $festival->festivalType->bonuses ?? [],
+                    'season' => $festival->festivalType->season,
+                ],
+                'status' => $festival->status,
+                'location_type' => $festival->location_type,
+                'location_id' => $festival->location_id,
+                'location_name' => $festival->location?->name ?? 'Unknown',
+                'starts_at' => $festival->starts_at?->toISOString(),
+                'ends_at' => $festival->ends_at?->toISOString(),
+                'starts_at_formatted' => $festival->starts_at?->format('M j, Y'),
+                'ends_at_formatted' => $festival->ends_at?->format('M j, Y'),
+                'organizer_id' => $festival->organized_by_user_id,
+                'organizer_name' => $festival->organizer?->username,
+                'budget' => $festival->budget ?? 0,
+                'attendance_count' => $festival->attendance_count ?? $festival->participants->count(),
+                'results' => $festival->results ?? [],
+                'duration_days' => $durationDays,
+                'current_day' => $currentDay,
+            ],
+            'participants' => $participants->toArray(),
+            'tournaments' => $tournaments->toArray(),
+            'is_participating' => $userParticipation !== null,
+            'user_participation' => $userParticipation ? [
+                'role' => $userParticipation->role,
+                'gold_spent' => $userParticipation->gold_spent ?? 0,
+                'gold_earned' => $userParticipation->gold_earned ?? 0,
+                'activities_completed' => $userParticipation->activities_completed ?? [],
+            ] : null,
+            'user_gold' => $user->gold,
+            'user_combat_level' => $user->combat_level ?? 1,
+        ]);
+    }
+
+    /**
      * Join a festival.
      */
     public function joinFestival(Request $request, Festival $festival): JsonResponse
@@ -96,6 +180,42 @@ class EventController extends Controller
         );
 
         return response()->json($result);
+    }
+
+    /**
+     * Leave a festival.
+     */
+    public function leaveFestival(Request $request, Festival $festival): JsonResponse
+    {
+        $user = $request->user();
+
+        // Check if user is participating
+        $participant = FestivalParticipant::where('festival_id', $festival->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$participant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not participating in this festival.',
+            ]);
+        }
+
+        // Cannot leave if festival is completed
+        if ($festival->status === Festival::STATUS_COMPLETED) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot leave a completed festival.',
+            ]);
+        }
+
+        // Delete participation
+        $participant->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'You have left the festival.',
+        ]);
     }
 
     /**
