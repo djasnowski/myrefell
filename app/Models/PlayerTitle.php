@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class PlayerTitle extends Model
@@ -74,6 +75,8 @@ class PlayerTitle extends Model
         'is_active',
         'granted_at',
         'revoked_at',
+        'legitimacy',
+        'months_in_office',
     ];
 
     protected function casts(): array
@@ -83,6 +86,8 @@ class PlayerTitle extends Model
             'is_active' => 'boolean',
             'granted_at' => 'datetime',
             'revoked_at' => 'datetime',
+            'legitimacy' => 'integer',
+            'months_in_office' => 'integer',
         ];
     }
 
@@ -108,6 +113,14 @@ class PlayerTitle extends Model
     public function domain(): MorphTo
     {
         return $this->morphTo('domain', 'domain_type', 'domain_id');
+    }
+
+    /**
+     * Get legitimacy events for this title.
+     */
+    public function legitimacyEvents(): MorphMany
+    {
+        return $this->morphMany(LegitimacyEvent::class, 'holder');
     }
 
     /**

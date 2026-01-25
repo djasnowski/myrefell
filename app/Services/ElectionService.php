@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\DB;
 
 class ElectionService
 {
+    public function __construct(
+        protected LegitimacyService $legitimacyService
+    ) {}
+{
     /**
      * Minimum residents required for election (below this, self-appointment is allowed).
      */
@@ -330,7 +334,13 @@ class ElectionService
             'acquisition_method' => $election->is_self_appointment ? 'appointment' : 'election',
             'is_active' => true,
             'granted_at' => now(),
+            'legitimacy' => 50, // Start at base legitimacy
         ]);
+
+        // Apply legitimacy based on election results
+        if (!$election->is_self_appointment) {
+            $this->legitimacyService->handleElectionResult($playerTitle, $election);
+        }
 
         // Update user's primary title if this is higher tier
         if ($tier > ($user->title_tier ?? 0)) {
@@ -578,6 +588,18 @@ class ElectionService
                 $vote->finalized_at = now();
                 $vote->notes = "Vote failed: {$vote->votes_for} for removal, {$vote->votes_against} against.";
                 $vote->save();
+
+                // Apply legitimacy bonus for surviving the vote
+                $playerTitle = PlayerTitle::where('user_id', $vote->target_player_id)
+                    ->where('domain_type', $vote->domain_type)
+                    ->where('domain_id', $vote->domain_id)
+                    ->where('title', $vote->target_role)
+                    ->where('is_active', true)
+                    ->first();
+
+                if ($playerTitle) {
+                    $this->legitimacyService->handleNoConfidenceSurvived($playerTitle, $vote);
+                }
             }
 
             return $vote;

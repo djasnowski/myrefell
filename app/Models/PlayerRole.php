@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PlayerRole extends Model
 {
@@ -31,6 +32,8 @@ class PlayerRole extends Model
         'removed_by_user_id',
         'removal_reason',
         'total_salary_earned',
+        'legitimacy',
+        'months_in_office',
     ];
 
     protected function casts(): array
@@ -40,6 +43,8 @@ class PlayerRole extends Model
             'expires_at' => 'datetime',
             'removed_at' => 'datetime',
             'total_salary_earned' => 'integer',
+            'legitimacy' => 'integer',
+            'months_in_office' => 'integer',
         ];
     }
 
@@ -73,6 +78,14 @@ class PlayerRole extends Model
     public function removedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'removed_by_user_id');
+    }
+
+    /**
+     * Get legitimacy events for this role.
+     */
+    public function legitimacyEvents(): HasMany
+    {
+        return $this->hasMany(LegitimacyEvent::class);
     }
 
     /**
