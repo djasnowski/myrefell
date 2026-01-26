@@ -82,7 +82,7 @@
 - [x] UI: Social class display and manumission requests
 - [x] UI: Crime accusation form (file accusations against other players)
 - [x] UI: Court/trial interface (view trial details, submit defense)
-- [ ] UI: Bounty board
+- [x] UI: Bounty board
 
 ### Phase 5 - Warfare (BACKEND COMPLETE)
 - [x] Army recruitment (levies, militia, knights, archers, cavalry, siege engineers)
@@ -129,8 +129,4 @@
 
 ## Remaining UI Work
 
-### Phase 4 - Political Systems
-- [x] UI: Social class display and manumission requests
-- [ ] UI: Bounty board
-
-All other UI has been implemented.
+All planned UI has been implemented.
