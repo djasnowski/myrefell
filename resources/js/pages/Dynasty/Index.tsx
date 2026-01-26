@@ -402,13 +402,13 @@ export default function DynastyIndex({
                                 Quick Links
                             </h2>
                             <div className="grid grid-cols-2 gap-2">
-                                <button
-                                    disabled
-                                    className="flex items-center gap-2 rounded-lg border border-stone-700 bg-stone-800/30 p-2 font-pixel text-xs text-stone-500 opacity-50"
+                                <Link
+                                    href="/dynasty/tree"
+                                    className="flex items-center gap-2 rounded-lg border border-green-600/50 bg-green-900/20 p-2 font-pixel text-xs text-green-400 transition hover:bg-green-900/30"
                                 >
                                     <Users className="h-4 w-4" />
                                     Family Tree
-                                </button>
+                                </Link>
                                 <button
                                     disabled
                                     className="flex items-center gap-2 rounded-lg border border-stone-700 bg-stone-800/30 p-2 font-pixel text-xs text-stone-500 opacity-50"

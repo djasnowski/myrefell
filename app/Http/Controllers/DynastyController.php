@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Dynasty;
 use App\Models\DynastyEvent;
 use App\Models\DynastyMember;
+use App\Models\Marriage;
 use App\Services\DynastyService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -147,6 +148,90 @@ class DynastyController extends Controller
         ]);
 
         return redirect()->route('dynasty.index')->with('success', 'Dynasty updated successfully!');
+    }
+
+    /**
+     * Display dynasty family tree.
+     */
+    public function tree(Request $request): Response
+    {
+        $user = $request->user();
+
+        if (!$user->dynasty_id) {
+            return redirect()->route('dynasty.index');
+        }
+
+        $dynasty = Dynasty::with('currentHead')->find($user->dynasty_id);
+
+        // Get all dynasty members with relationships
+        $members = DynastyMember::where('dynasty_id', $dynasty->id)
+            ->with(['father', 'mother', 'user'])
+            ->orderBy('generation')
+            ->orderBy('birth_order')
+            ->get();
+
+        // Get all marriages involving dynasty members
+        $memberIds = $members->pluck('id')->toArray();
+        $marriages = Marriage::where(function ($q) use ($memberIds) {
+            $q->whereIn('spouse1_id', $memberIds)
+                ->orWhereIn('spouse2_id', $memberIds);
+        })
+            ->with(['spouse1', 'spouse2'])
+            ->get();
+
+        // Get player's dynasty member record
+        $playerMember = $members->firstWhere('user_id', $user->id);
+
+        return Inertia::render('Dynasty/Tree', [
+            'dynasty' => [
+                'id' => $dynasty->id,
+                'name' => $dynasty->name,
+                'motto' => $dynasty->motto,
+                'prestige' => $dynasty->prestige,
+                'generations' => $dynasty->generations,
+                'head_id' => $dynasty->current_head_id,
+            ],
+            'members' => $members->map(fn ($member) => $this->mapTreeMember($member, $dynasty)),
+            'marriages' => $marriages->map(fn ($marriage) => [
+                'id' => $marriage->id,
+                'spouse1_id' => $marriage->spouse1_id,
+                'spouse2_id' => $marriage->spouse2_id,
+                'status' => $marriage->status,
+                'wedding_date' => $marriage->wedding_date?->format('Y'),
+            ]),
+            'player_member_id' => $playerMember?->id,
+        ]);
+    }
+
+    /**
+     * Map dynasty member for tree view.
+     */
+    private function mapTreeMember(DynastyMember $member, Dynasty $dynasty): array
+    {
+        return [
+            'id' => $member->id,
+            'name' => $member->full_name,
+            'first_name' => $member->first_name,
+            'gender' => $member->gender,
+            'generation' => $member->generation,
+            'birth_order' => $member->birth_order,
+            'father_id' => $member->father_id,
+            'mother_id' => $member->mother_id,
+            'status' => $member->status,
+            'is_alive' => $member->isAlive(),
+            'is_heir' => $member->is_heir,
+            'is_head' => $member->user_id && $dynasty->current_head_id === $member->user_id,
+            'is_player' => $member->user_id !== null,
+            'is_legitimate' => $member->is_legitimate,
+            'is_disinherited' => $member->is_disinherited,
+            'birth_year' => $member->birth_date?->format('Y'),
+            'death_year' => $member->death_date?->format('Y'),
+            'age' => $member->age,
+            'user' => $member->user ? [
+                'id' => $member->user->id,
+                'name' => $member->user->username,
+            ] : null,
+        ];
     }
 
     /**

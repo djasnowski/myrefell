@@ -813,14 +813,14 @@ return Inertia::render('Dynasty/Index', [
 ```
 
 **Features:**
-- [ ] Visual tree layout (parents, siblings, children)
-- [ ] Member cards with name, birth/death, spouse
-- [ ] Marriage lines connecting families
-- [ ] Generation labels
-- [ ] Click member for detail popup
-- [ ] Zoom/pan controls for large trees
-- [ ] Highlight player's position
-- [ ] Filter by living/deceased
+- [x] Visual tree layout (parents, siblings, children)
+- [x] Member cards with name, birth/death, spouse
+- [x] Marriage lines connecting families
+- [x] Generation labels
+- [x] Click member for detail popup
+- [x] Zoom/pan controls for large trees
+- [x] Highlight player's position
+- [x] Filter by living/deceased
 
 **Props needed:**
 ```php

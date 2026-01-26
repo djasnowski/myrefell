@@ -118,7 +118,7 @@
 - [x] Birth recording with legitimacy
 - [x] Dynasty alliances (marriage, pact, blood oath)
 - [x] UI: Dynasty overview page (founding, prestige, members, events)
-- [ ] UI: Dynasty/family tree view
+- [x] UI: Dynasty/family tree view
 - [x] UI: Marriage proposal interface
 - [x] UI: Succession/heir display
 

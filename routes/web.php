@@ -437,6 +437,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dynasty', [DynastyController::class, 'index'])->name('dynasty.index');
     Route::post('dynasty', [DynastyController::class, 'found'])->name('dynasty.found');
     Route::put('dynasty', [DynastyController::class, 'update'])->name('dynasty.update');
+    Route::get('dynasty/tree', [DynastyController::class, 'tree'])->name('dynasty.tree');
 
     // Marriage Proposals
     Route::get('dynasty/proposals', [MarriageController::class, 'proposals'])->name('dynasty.proposals');
