@@ -881,14 +881,14 @@ return Inertia::render('Dynasty/Tree', [
 ```
 
 **Features:**
-- [ ] Incoming proposals section
-- [ ] Proposer, proposed match, dowry offered
-- [ ] Accept/reject buttons with confirmation
-- [ ] Outgoing proposals section
-- [ ] Status (pending, accepted, rejected)
-- [ ] Withdraw button for pending
-- [ ] Make new proposal link
-- [ ] Marriage history section
+- [x] Incoming proposals section
+- [x] Proposer, proposed match, dowry offered
+- [x] Accept/reject buttons with confirmation
+- [x] Outgoing proposals section
+- [x] Status (pending, accepted, rejected)
+- [x] Withdraw button for pending
+- [x] Make new proposal link
+- [x] Marriage history section
 
 **Props needed:**
 ```php

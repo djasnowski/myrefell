@@ -44,6 +44,7 @@ use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\VillageController;
 use App\Http\Controllers\MarketController;
 use App\Http\Controllers\DynastyController;
+use App\Http\Controllers\MarriageController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -426,6 +427,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dynasty', [DynastyController::class, 'index'])->name('dynasty.index');
     Route::post('dynasty', [DynastyController::class, 'found'])->name('dynasty.found');
     Route::put('dynasty', [DynastyController::class, 'update'])->name('dynasty.update');
+
+    // Marriage Proposals
+    Route::get('dynasty/proposals', [MarriageController::class, 'proposals'])->name('dynasty.proposals');
+    Route::post('dynasty/proposals/{proposal}/accept', [MarriageController::class, 'accept'])->name('dynasty.proposals.accept');
+    Route::post('dynasty/proposals/{proposal}/reject', [MarriageController::class, 'reject'])->name('dynasty.proposals.reject');
+    Route::post('dynasty/proposals/{proposal}/withdraw', [MarriageController::class, 'withdraw'])->name('dynasty.proposals.withdraw');
 });
 
 require __DIR__.'/settings.php';

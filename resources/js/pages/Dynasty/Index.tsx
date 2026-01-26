@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     Crown,
     Heart,
@@ -416,13 +416,13 @@ export default function DynastyIndex({
                                     <History className="h-4 w-4" />
                                     History
                                 </button>
-                                <button
-                                    disabled
-                                    className="flex items-center gap-2 rounded-lg border border-stone-700 bg-stone-800/30 p-2 font-pixel text-xs text-stone-500 opacity-50"
+                                <Link
+                                    href="/dynasty/proposals"
+                                    className="flex items-center gap-2 rounded-lg border border-pink-600/50 bg-pink-900/20 p-2 font-pixel text-xs text-pink-400 transition hover:bg-pink-900/30"
                                 >
                                     <Heart className="h-4 w-4" />
                                     Marriages
-                                </button>
+                                </Link>
                                 <button
                                     disabled
                                     className="flex items-center gap-2 rounded-lg border border-stone-700 bg-stone-800/30 p-2 font-pixel text-xs text-stone-500 opacity-50"

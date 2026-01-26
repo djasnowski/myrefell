@@ -119,7 +119,7 @@
 - [x] Dynasty alliances (marriage, pact, blood oath)
 - [x] UI: Dynasty overview page (founding, prestige, members, events)
 - [ ] UI: Dynasty/family tree view
-- [ ] UI: Marriage proposal interface
+- [x] UI: Marriage proposal interface
 - [ ] UI: Succession/heir display
 
 ## Backend Complete - UI Needed
