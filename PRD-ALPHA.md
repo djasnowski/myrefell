@@ -961,14 +961,14 @@ return Inertia::render('Dynasty/Proposals', [
 ```
 
 **Features:**
-- [ ] Select dynasty member to marry off
-- [ ] Search eligible candidates (age, unmarried)
-- [ ] Filter by dynasty, kingdom, class
-- [ ] View candidate stats/traits
-- [ ] Set dowry amount
-- [ ] Add message to proposal
-- [ ] Preview alliance implications
-- [ ] Submit proposal button
+- [x] Select dynasty member to marry off
+- [x] Search eligible candidates (age, unmarried)
+- [x] Filter by dynasty, kingdom, class
+- [x] View candidate stats/traits
+- [x] Set dowry amount
+- [x] Add message to proposal
+- [x] Preview alliance implications
+- [x] Submit proposal button
 
 **Props needed:**
 ```php

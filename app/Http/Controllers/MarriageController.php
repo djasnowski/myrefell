@@ -139,6 +139,166 @@ class MarriageController extends Controller
     }
 
     /**
+     * Show the propose marriage form.
+     */
+    public function proposeForm(Request $request): Response
+    {
+        $user = $request->user();
+
+        if (!$user->dynasty_id) {
+            return Inertia::render('Dynasty/ProposeMarriage', [
+                'has_dynasty' => false,
+                'eligible_members' => [],
+                'candidates' => [],
+                'dynasties' => [],
+                'player_gold' => $user->gold ?? 0,
+            ]);
+        }
+
+        $dynasty = Dynasty::find($user->dynasty_id);
+
+        // Get eligible members from our dynasty (unmarried, age >= 14, alive)
+        $eligibleMembers = DynastyMember::where('dynasty_id', $dynasty->id)
+            ->alive()
+            ->whereRaw('TIMESTAMPDIFF(YEAR, birth_date, NOW()) >= 14')
+            ->where(function ($q) {
+                $q->whereDoesntHave('marriagesAsSpouse1', fn ($q) => $q->where('status', 'active'))
+                    ->whereDoesntHave('marriagesAsSpouse2', fn ($q) => $q->where('status', 'active'));
+            })
+            ->get()
+            ->map(fn ($member) => [
+                'id' => $member->id,
+                'name' => $member->full_name,
+                'first_name' => $member->first_name,
+                'age' => $member->age,
+                'gender' => $member->gender,
+                'generation' => $member->generation,
+            ]);
+
+        // Get candidate members from other dynasties (unmarried, age >= 14, alive)
+        $candidates = DynastyMember::where('dynasty_id', '!=', $dynasty->id)
+            ->alive()
+            ->whereRaw('TIMESTAMPDIFF(YEAR, birth_date, NOW()) >= 14')
+            ->where(function ($q) {
+                $q->whereDoesntHave('marriagesAsSpouse1', fn ($q) => $q->where('status', 'active'))
+                    ->whereDoesntHave('marriagesAsSpouse2', fn ($q) => $q->where('status', 'active'));
+            })
+            ->with('dynasty')
+            ->get()
+            ->map(fn ($member) => [
+                'id' => $member->id,
+                'name' => $member->full_name,
+                'first_name' => $member->first_name,
+                'age' => $member->age,
+                'gender' => $member->gender,
+                'generation' => $member->generation,
+                'dynasty_id' => $member->dynasty_id,
+                'dynasty_name' => $member->dynasty?->name,
+                'dynasty_prestige' => $member->dynasty?->prestige ?? 0,
+            ]);
+
+        // Get distinct dynasties for filtering
+        $dynasties = Dynasty::where('id', '!=', $dynasty->id)
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($d) => [
+                'id' => $d->id,
+                'name' => $d->name,
+                'prestige' => $d->prestige,
+            ]);
+
+        return Inertia::render('Dynasty/ProposeMarriage', [
+            'has_dynasty' => true,
+            'dynasty_name' => $dynasty->name,
+            'eligible_members' => $eligibleMembers->toArray(),
+            'candidates' => $candidates->toArray(),
+            'dynasties' => $dynasties->toArray(),
+            'player_gold' => $user->gold ?? 0,
+            'is_head' => $dynasty->current_head_id === $user->id,
+        ]);
+    }
+
+    /**
+     * Store a new marriage proposal.
+     */
+    public function store(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'proposer_member_id' => 'required|exists:dynasty_members,id',
+            'proposed_member_id' => 'required|exists:dynasty_members,id',
+            'offered_dowry' => 'nullable|integer|min:0',
+            'message' => 'nullable|string|max:500',
+        ]);
+
+        if (!$user->dynasty_id) {
+            return back()->with('error', 'You must have a dynasty to propose marriage.');
+        }
+
+        $dynasty = Dynasty::find($user->dynasty_id);
+
+        // Validate proposer is from our dynasty
+        $proposer = DynastyMember::find($validated['proposer_member_id']);
+        if (!$proposer || $proposer->dynasty_id !== $dynasty->id) {
+            return back()->with('error', 'Invalid proposer selected.');
+        }
+
+        // Validate proposer can marry
+        if (!$proposer->canMarry()) {
+            return back()->with('error', 'This dynasty member cannot marry (already married, too young, or not alive).');
+        }
+
+        // Validate proposed is from different dynasty
+        $proposed = DynastyMember::find($validated['proposed_member_id']);
+        if (!$proposed) {
+            return back()->with('error', 'Invalid candidate selected.');
+        }
+
+        if ($proposed->dynasty_id === $dynasty->id) {
+            return back()->with('error', 'Cannot propose marriage to a member of your own dynasty.');
+        }
+
+        // Validate proposed can marry
+        if (!$proposed->canMarry()) {
+            return back()->with('error', 'This candidate cannot marry (already married, too young, or not alive).');
+        }
+
+        // Check if there's already a pending proposal between these members
+        $existingProposal = MarriageProposal::where(function ($q) use ($proposer, $proposed) {
+            $q->where('proposer_member_id', $proposer->id)
+                ->where('proposed_member_id', $proposed->id);
+        })->orWhere(function ($q) use ($proposer, $proposed) {
+            $q->where('proposer_member_id', $proposed->id)
+                ->where('proposed_member_id', $proposer->id);
+        })->pending()->exists();
+
+        if ($existingProposal) {
+            return back()->with('error', 'A pending proposal already exists between these members.');
+        }
+
+        // Check dowry
+        $offeredDowry = $validated['offered_dowry'] ?? 0;
+        if ($offeredDowry > 0 && ($user->gold ?? 0) < $offeredDowry) {
+            return back()->with('error', 'You do not have enough gold for this dowry.');
+        }
+
+        // Create proposal
+        MarriageProposal::create([
+            'proposer_member_id' => $proposer->id,
+            'proposed_member_id' => $proposed->id,
+            'proposer_guardian_id' => $user->id,
+            'proposed_guardian_id' => $proposed->dynasty?->current_head_id,
+            'status' => MarriageProposal::STATUS_PENDING,
+            'offered_dowry' => $offeredDowry,
+            'message' => $validated['message'] ?? null,
+            'expires_at' => now()->addDays(14),
+        ]);
+
+        return redirect()->route('dynasty.proposals')->with('success', 'Marriage proposal sent successfully!');
+    }
+
+    /**
      * Withdraw a pending outgoing proposal.
      */
     public function withdraw(Request $request, MarriageProposal $proposal)

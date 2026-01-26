@@ -441,6 +441,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Marriage Proposals
     Route::get('dynasty/proposals', [MarriageController::class, 'proposals'])->name('dynasty.proposals');
+    Route::get('dynasty/proposals/create', [MarriageController::class, 'proposeForm'])->name('dynasty.proposals.create');
+    Route::post('dynasty/proposals', [MarriageController::class, 'store'])->name('dynasty.proposals.store');
     Route::post('dynasty/proposals/{proposal}/accept', [MarriageController::class, 'accept'])->name('dynasty.proposals.accept');
     Route::post('dynasty/proposals/{proposal}/reject', [MarriageController::class, 'reject'])->name('dynasty.proposals.reject');
     Route::post('dynasty/proposals/{proposal}/withdraw', [MarriageController::class, 'withdraw'])->name('dynasty.proposals.withdraw');
