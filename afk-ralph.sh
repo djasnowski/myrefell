@@ -19,14 +19,16 @@ for ((i=1; i<=$1; i++)); do
   git pull origin $MAIN_BRANCH 2>/dev/null || true
 
   # Run Claude to pick and implement a feature
-  result=$(docker sandbox run claude --permission-mode acceptEdits -p "@PRD-UI.md @progress.txt \
-  1. Find the highest-priority unimplemented UI task in PRD-UI.md (follow Wave order: Wave 1 first, then 2, 3, 4). \
-  2. Implement the feature (controllers, routes, React pages following the wireframes and specs). \
-  3. Run tests: sail artisan test && npm run build. \
-  4. Update progress.txt marking what was completed. \
-  5. Commit your changes with a descriptive message. \
-  ONLY WORK ON A SINGLE PAGE/FEATURE. \
-  If all UI tasks are complete, output <promise>COMPLETE</promise>.")
+  result=$(docker sandbox run claude --permission-mode acceptEdits -p "@PRD-ALPHA.md @progress.txt \
+  1. Find the next uncompleted task in PRD-ALPHA.md (follow Wave order: Wave 1 first, then 2, 3, 4). \
+  2. Implement the task: add routes to web.php, create/extend controller, create React page. \
+  3. Follow the feature checklist and props specification in the task. \
+  4. Run tests: sail artisan test && npm run build. \
+  5. Mark the task complete in PRD-ALPHA.md by changing [ ] to [x]. \
+  6. Update progress.txt if needed. \
+  7. Commit your changes with a descriptive message. \
+  ONLY WORK ON A SINGLE TASK. \
+  If all tasks are complete, output <promise>COMPLETE</promise>.")
 
   echo "$result"
 

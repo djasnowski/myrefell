@@ -8,6 +8,7 @@ import {
     ClipboardList,
     Clock,
     Crown,
+    Gavel,
     Home,
     Loader2,
     Mail,
@@ -16,6 +17,7 @@ import {
     Shield,
     Swords,
     Trees,
+    Truck,
     Users,
     type LucideIcon,
 } from 'lucide-react';
@@ -120,6 +122,12 @@ function getLocationServices(location: LocationData | null): NavItem[] {
                 description: 'Find work and quests',
             });
             items.push({
+                title: 'Court',
+                href: '/crime',
+                icon: Gavel,
+                description: 'Justice and bounties',
+            });
+            items.push({
                 title: 'Residents',
                 href: `/villages/${location.id}/residents`,
                 icon: Users,
@@ -160,6 +168,24 @@ function getLocationServices(location: LocationData | null): NavItem[] {
                 icon: Swords,
                 description: 'Fight for glory',
             });
+            items.push({
+                title: 'Court',
+                href: '/crime',
+                icon: Gavel,
+                description: 'Justice and bounties',
+            });
+            items.push({
+                title: 'Armies',
+                href: '/warfare/armies',
+                icon: Shield,
+                description: 'Raise and command forces',
+            });
+            items.push({
+                title: 'Trade Routes',
+                href: '/trade/routes',
+                icon: Truck,
+                description: 'Caravan routes',
+            });
             break;
 
         case 'town':
@@ -178,6 +204,30 @@ function getLocationServices(location: LocationData | null): NavItem[] {
                 href: `/towns/${location.id}/hall`,
                 icon: Crown,
                 description: 'Civic affairs',
+            });
+            items.push({
+                title: 'Court',
+                href: '/crime',
+                icon: Gavel,
+                description: 'Justice and bounties',
+            });
+            items.push({
+                title: 'Armies',
+                href: '/warfare/armies',
+                icon: Shield,
+                description: 'Military forces',
+            });
+            items.push({
+                title: 'Wars',
+                href: '/warfare/wars',
+                icon: Swords,
+                description: 'Active conflicts',
+            });
+            items.push({
+                title: 'Trade Routes',
+                href: '/trade/routes',
+                icon: Truck,
+                description: 'Caravan routes',
             });
             break;
     }
@@ -220,6 +270,7 @@ function getCommonServices(location: LocationData | null, homeVillage: HomeVilla
 
     return items;
 }
+
 
 function formatTime(seconds: number): string {
     const mins = Math.floor(seconds / 60);
