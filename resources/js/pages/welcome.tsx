@@ -193,11 +193,11 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                 <ul className="space-y-3">
                                     <li className="flex items-center gap-3 text-stone-300">
                                         <Shield className="h-5 w-5 text-stone-600" />
-                                        <span>Combat stats: Attack, Strength, Defense</span>
+                                        <span>3 combat skills: Attack, Strength, Defense</span>
                                     </li>
                                     <li className="flex items-center gap-3 text-stone-300">
                                         <Hammer className="h-5 w-5 text-stone-600" />
-                                        <span>9 skills: Mining, Smithing, Crafting, and more</span>
+                                        <span>6 trade skills: Mining, Fishing, Smithing, more</span>
                                     </li>
                                     <li className="flex items-center gap-3 text-stone-300">
                                         <Heart className="h-5 w-5 text-stone-600" />
@@ -460,15 +460,15 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
 
                         <div className="grid grid-cols-3 gap-4 md:grid-cols-5 lg:grid-cols-9">
                             {[
+                                { icon: Swords, name: 'Attack', color: 'red' },
+                                { icon: Shield, name: 'Strength', color: 'orange' },
+                                { icon: Heart, name: 'Defense', color: 'pink' },
                                 { icon: Pickaxe, name: 'Mining', color: 'stone' },
-                                { icon: Hammer, name: 'Smithing', color: 'orange' },
-                                { icon: Trees, name: 'Woodcutting', color: 'green' },
-                                { icon: Hammer, name: 'Crafting', color: 'amber' },
                                 { icon: Anchor, name: 'Fishing', color: 'blue' },
+                                { icon: Trees, name: 'Woodcutting', color: 'green' },
                                 { icon: Wheat, name: 'Cooking', color: 'yellow' },
-                                { icon: Mountain, name: 'Foraging', color: 'emerald' },
-                                { icon: Swords, name: 'Combat', color: 'red' },
-                                { icon: Shield, name: 'Riding', color: 'purple' },
+                                { icon: Hammer, name: 'Smithing', color: 'orange' },
+                                { icon: Hammer, name: 'Crafting', color: 'amber' },
                             ].map((skill) => (
                                 <div
                                     key={skill.name}
