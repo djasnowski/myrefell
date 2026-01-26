@@ -122,9 +122,8 @@ class HandleInertiaRequests extends Middleware
             ];
         }
 
-        // Check for guild membership
+        // Check for guild membership (if in table, they're a member)
         $guildMember = \App\Models\GuildMember::where('user_id', $player->id)
-            ->where('status', 'active')
             ->with('guild')
             ->first();
         if ($guildMember?->guild) {
