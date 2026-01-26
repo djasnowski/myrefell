@@ -670,4 +670,245 @@ class WarController extends Controller
             default => "War between {$attackerName} and {$defenderName}",
         };
     }
+
+    /**
+     * Show the peace negotiation form.
+     */
+    public function peaceForm(Request $request, War $war): Response
+    {
+        $user = $request->user();
+
+        // Load all related data
+        $war->load([
+            'attackerKingdom',
+            'defenderKingdom',
+            'participants',
+            'goals',
+        ]);
+
+        // Check if user can offer peace (is war leader)
+        $userParticipant = $war->participants
+            ->where('participant_type', 'player')
+            ->where('participant_id', $user->id)
+            ->first();
+
+        $isWarLeader = $userParticipant && $userParticipant->is_war_leader;
+        $userSide = $userParticipant?->side;
+
+        // Redirect if not a war leader or war is not active
+        if (!$isWarLeader || !$war->isActive()) {
+            return Inertia::render('Warfare/PeaceNegotiation', [
+                'war' => $this->mapWar($war, $user, true),
+                'can_negotiate' => false,
+                'error' => !$isWarLeader
+                    ? 'Only war leaders can negotiate peace.'
+                    : 'This war has already ended.',
+                'war_score' => [
+                    'attacker' => $war->attacker_war_score,
+                    'defender' => $war->defender_war_score,
+                ],
+                'user_side' => $userSide,
+                'territories' => [],
+                'player_gold' => $user->gold,
+                'enemy_gold' => 0,
+                'truce_options' => $this->getTruceOptions(),
+            ]);
+        }
+
+        // Get transferable territories based on war goals and current occupation
+        $territories = $this->getTransferableTerritories($war, $userSide);
+
+        // Calculate enemy's approximate gold for payment limits
+        $enemySide = $userSide === 'attacker' ? 'defender' : 'attacker';
+        $enemyGold = $this->estimateEnemyGold($war, $enemySide);
+
+        return Inertia::render('Warfare/PeaceNegotiation', [
+            'war' => $this->mapWar($war, $user, true),
+            'can_negotiate' => true,
+            'war_score' => [
+                'attacker' => $war->attacker_war_score,
+                'defender' => $war->defender_war_score,
+            ],
+            'user_side' => $userSide,
+            'territories' => $territories,
+            'player_gold' => $user->gold,
+            'enemy_gold' => $enemyGold,
+            'truce_options' => $this->getTruceOptions(),
+        ]);
+    }
+
+    /**
+     * Offer peace terms.
+     */
+    public function offerPeace(Request $request, War $war, WarService $warService): JsonResponse
+    {
+        $user = $request->user();
+
+        // Check if user can offer peace
+        $userParticipant = $war->participants()
+            ->where('participant_type', 'player')
+            ->where('participant_id', $user->id)
+            ->first();
+
+        if (!$userParticipant || !$userParticipant->is_war_leader) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only war leaders can offer peace.',
+            ], 403);
+        }
+
+        if (!$war->isActive()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This war has already ended.',
+            ], 400);
+        }
+
+        $validated = $request->validate([
+            'treaty_type' => 'required|in:white_peace,surrender,negotiated',
+            'winner_side' => 'nullable|in:attacker,defender',
+            'territory_changes' => 'nullable|array',
+            'gold_payment' => 'nullable|integer|min:0|max:100000',
+            'truce_days' => 'required|integer|min:30|max:3650',
+        ]);
+
+        $userSide = $userParticipant->side;
+
+        // For white peace, no winner
+        if ($validated['treaty_type'] === 'white_peace') {
+            $validated['winner_side'] = null;
+            $validated['territory_changes'] = [];
+            $validated['gold_payment'] = 0;
+        }
+
+        // For surrender, the side offering surrender loses
+        if ($validated['treaty_type'] === 'surrender') {
+            $validated['winner_side'] = $userSide === 'attacker' ? 'defender' : 'attacker';
+        }
+
+        try {
+            $treaty = $warService->offerPeace(
+                $war,
+                $validated['treaty_type'],
+                $validated['winner_side'],
+                $validated['territory_changes'] ?? [],
+                $validated['gold_payment'] ?? 0,
+                $validated['truce_days']
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Peace treaty has been signed. The war is over.',
+                'treaty_id' => $treaty->id,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Respond to a peace offer (accept/reject).
+     */
+    public function respondToPeace(Request $request, War $war, int $treaty): JsonResponse
+    {
+        // For the current simplified implementation, peace is directly signed
+        // This endpoint is a placeholder for future functionality where peace offers
+        // can be pending and require acceptance from the other side
+        return response()->json([
+            'success' => false,
+            'message' => 'Peace response system not yet implemented.',
+        ], 501);
+    }
+
+    /**
+     * Get transferable territories for peace negotiations.
+     */
+    private function getTransferableTerritories(War $war, string $userSide): array
+    {
+        $territories = [];
+
+        // Get baronies involved in the war
+        $attackerKingdomId = $war->attacker_kingdom_id;
+        $defenderKingdomId = $war->defender_kingdom_id;
+
+        // If user is winning, they can demand enemy territories
+        $isWinning = ($userSide === 'attacker' && $war->attacker_war_score > $war->defender_war_score)
+            || ($userSide === 'defender' && $war->defender_war_score > $war->attacker_war_score);
+
+        // Get enemy baronies that can be demanded
+        $enemyKingdomId = $userSide === 'attacker' ? $defenderKingdomId : $attackerKingdomId;
+        if ($enemyKingdomId) {
+            $enemyBaronies = Barony::where('kingdom_id', $enemyKingdomId)
+                ->get()
+                ->map(fn ($b) => [
+                    'id' => $b->id,
+                    'type' => 'barony',
+                    'name' => $b->name,
+                    'can_demand' => $isWinning,
+                    'direction' => 'to_you', // Enemy cedes to you
+                ]);
+            $territories = array_merge($territories, $enemyBaronies->toArray());
+        }
+
+        // Get your baronies that could be ceded (if losing)
+        $yourKingdomId = $userSide === 'attacker' ? $attackerKingdomId : $defenderKingdomId;
+        if ($yourKingdomId) {
+            $yourBaronies = Barony::where('kingdom_id', $yourKingdomId)
+                ->get()
+                ->map(fn ($b) => [
+                    'id' => $b->id,
+                    'type' => 'barony',
+                    'name' => $b->name,
+                    'can_demand' => !$isWinning,
+                    'direction' => 'from_you', // You cede to enemy
+                ]);
+            $territories = array_merge($territories, $yourBaronies->toArray());
+        }
+
+        return $territories;
+    }
+
+    /**
+     * Estimate enemy's gold based on their kingdom/barony treasury.
+     */
+    private function estimateEnemyGold(War $war, string $enemySide): int
+    {
+        // Get the enemy's primary entity
+        if ($enemySide === 'attacker') {
+            if ($war->attacker_type === 'kingdom') {
+                $kingdom = Kingdom::find($war->attacker_id);
+                return $kingdom?->treasury ?? 0;
+            } elseif ($war->attacker_type === 'barony') {
+                $barony = Barony::find($war->attacker_id);
+                return $barony?->treasury ?? 0;
+            }
+        } else {
+            if ($war->defender_type === 'kingdom') {
+                $kingdom = Kingdom::find($war->defender_id);
+                return $kingdom?->treasury ?? 0;
+            } elseif ($war->defender_type === 'barony') {
+                $barony = Barony::find($war->defender_id);
+                return $barony?->treasury ?? 0;
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Get available truce duration options.
+     */
+    private function getTruceOptions(): array
+    {
+        return [
+            ['value' => 90, 'label' => '3 months'],
+            ['value' => 180, 'label' => '6 months'],
+            ['value' => 365, 'label' => '1 year'],
+            ['value' => 730, 'label' => '2 years'],
+            ['value' => 1825, 'label' => '5 years'],
+        ];
+    }
 }

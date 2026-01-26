@@ -434,14 +434,14 @@ return Inertia::render('Warfare/DeclareWar', [
 ```
 
 **Features:**
-- [ ] Current war score display
-- [ ] Territory changes selector (cede provinces)
-- [ ] Gold payment slider
-- [ ] Truce duration selector
-- [ ] Calculate acceptance likelihood
-- [ ] Send peace offer button
-- [ ] View incoming peace offers
-- [ ] Accept/reject/counter offer buttons
+- [x] Current war score display
+- [x] Territory changes selector (cede provinces)
+- [x] Gold payment slider
+- [x] Truce duration selector
+- [x] Calculate acceptance likelihood
+- [x] Send peace offer button
+- [x] View incoming peace offers
+- [x] Accept/reject/counter offer buttons
 
 **Props needed:**
 ```php
