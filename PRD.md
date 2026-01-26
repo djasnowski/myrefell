@@ -1,4 +1,4 @@
-# Myrefell PRD v3 - Medieval World MMO
+# Myrefell PRD - Medieval World MMO
 
 ## Vision
 
@@ -330,11 +330,6 @@ Guilds are **player-founded and player-run** economic organizations:
 | Regional demand | Affects base price |
 | Season | Some goods seasonal |
 | War | Disrupts trade, raises prices |
-
-### Currency
-
-- **MVP:** Single gold currency
-- **Future:** Kingdom-specific currencies with exchange rates, inflation/deflation mechanics
 
 ### Taxes
 
@@ -844,9 +839,9 @@ High dynasty reputation → easier elections, better marriages, more legitimacy.
 
 ---
 
-## Part 16: Implemented Features
+## Part 16: Implemented Systems
 
-### Models (115+ total)
+### Models (115+)
 
 **Core Player:**
 User, PlayerSkill, PlayerInventory, Item, PlayerTitle, BankAccount, BankTransaction
@@ -893,173 +888,17 @@ Dynasty, DynastyMember, DynastyEvent, DynastyAlliance, Marriage, MarriageProposa
 **Other:**
 Quest, PlayerQuest, DailyTask, PlayerDailyTask, Message, Charter, CharterSignatory, SettlementRuin, Horse, PlayerHorse, WorldState
 
-### Services (38 total)
+### Services (38+)
 
 **Core:**
 EnergyService, InventoryService, BirthService, BankService, HealerService, GatheringService, CraftingService, DailyTaskService, QuestService, PortService, JobService, RoleService, MigrationService, ElectionService, TaxService, ChatService, DocketService, LootService, CombatService, DungeonService, ReligionService, CharterService, TravelService, StableService, SocialClassService, CrimeService
 
-**New Systems:**
+**Advanced Systems:**
 LegitimacyService, CaravanService, FestivalService, DiseaseService, DisasterService, ArmyService, WarService, BattleService, SiegeService, DynastyService, MarriageService
 
 ---
 
-## Part 17: Development Priorities
-
-### Phase 1: Core Player Loop - COMPLETE
-
-**Goal:** Playable daily loop with training, work, and local interaction.
-
-| Feature | Status |
-|---------|--------|
-| Combat stat training (ATK/STR/DEF) | Done |
-| Daily tasks | Done |
-| Jobs and wages | Done |
-| Local chat | Done |
-| Settlement residency | Done |
-
-### Phase 2: Living World Foundation - COMPLETE
-
-**Goal:** Time passes, seasons change, NPCs live and die.
-
-| Feature | Status |
-|---------|--------|
-| Calendar/seasons (48-week year) | Done |
-| Seasonal effects on travel/gathering | Done |
-| NPC aging and death | Done |
-| NPC reproduction and families | Done |
-| Basic food consumption | Done |
-| Resource decay/spoilage | Done |
-
-### Phase 3: Economic Depth - BACKEND COMPLETE
-
-**Goal:** Scarcity-based economy with player ownership.
-
-| Feature | Backend | UI |
-|---------|---------|-----|
-| Dynamic market prices (supply/demand) | ✅ Done | ✅ Done |
-| Player-owned businesses | ✅ Done | ✅ Done |
-| Player-run guilds | ✅ Done | ✅ Done |
-| Resource decay/consumption | ✅ Done | ✅ Done |
-| Trade caravans | ✅ Done | ❌ Needed |
-
-**UI Needed for Trade Caravans:**
-- Trade route viewer (map with routes between settlements)
-- Caravan management page (create, load goods, dispatch)
-- Caravan tracking (status, location, ETA)
-- Tariff configuration (for rulers)
-- Caravan event notifications
-
-### Phase 4: Political Systems - BACKEND COMPLETE
-
-**Goal:** Meaningful governance with consequences.
-
-| Feature | Backend | UI |
-|---------|---------|-----|
-| Elections and roles | ✅ Done | ✅ Done |
-| No-confidence votes | ✅ Done | ✅ Done |
-| Social class system | ✅ Done | ❌ Partial |
-| Manumission system | ✅ Done | ❌ Needed |
-| Ennoblement system | ✅ Done | ❌ Needed |
-| Laws and crime types | ✅ Done | ❌ Needed |
-| Court/trial system | ✅ Done | ❌ Needed |
-| Punishments | ✅ Done | ❌ Needed |
-| Bounty system | ✅ Done | ❌ Needed |
-| Legitimacy system | ✅ Done | ❌ Needed |
-
-**UI Needed for Political Systems:**
-- Social class display in player profile
-- Manumission request form (serf → freeman)
-- Ennoblement petition form (freeman → noble)
-- Crime accusation interface
-- Court/trial viewer (evidence, defense, verdict)
-- Punishment status display (jail time, exile status)
-- Bounty board (view/post bounties)
-- Ruler legitimacy indicator in settlement view
-
-### Phase 5: Warfare - BACKEND COMPLETE
-
-**Goal:** Strategic, logistics-driven conflict.
-
-| Feature | Backend | UI |
-|---------|---------|-----|
-| Army recruitment | ✅ Done | ❌ Needed |
-| Battle resolution (daily ticks) | ✅ Done | ❌ Needed |
-| Supply lines | ✅ Done | ❌ Needed |
-| Siege mechanics | ✅ Done | ❌ Needed |
-| War goals and peace treaties | ✅ Done | ❌ Needed |
-| Mercenary companies | ✅ Done | ❌ Needed |
-
-**UI Needed for Warfare:**
-- Army management page (raise, recruit units, disband)
-- Army composition viewer (unit types, counts, stats)
-- War declaration interface (casus belli selection, war goals)
-- Active wars list with war score
-- Battle viewer (participants, daily results, casualties)
-- Battle log/history
-- Siege interface (equipment, assault options, garrison status)
-- Supply line management (establish, view status)
-- Peace treaty negotiation screen
-- Mercenary hiring interface
-
-### Phase 6: World Events - BACKEND COMPLETE
-
-**Goal:** Dynamic events that shake up the world.
-
-| Feature | Backend | UI |
-|---------|---------|-----|
-| Festivals and tournaments | ✅ Done | ❌ Needed |
-| Disease spread | ✅ Done | ❌ Needed |
-| Natural disasters | ✅ Done | ❌ Needed |
-| Infrastructure construction | ✅ Done | ❌ Needed |
-
-**UI Needed for World Events:**
-- Festival calendar (upcoming events)
-- Festival participation interface
-- Tournament registration and bracket view
-- Tournament match viewer (combat results)
-- Royal event announcements (coronations, weddings)
-- Disease/health status in player profile
-- Outbreak warning notifications
-- Quarantine order display
-- Active disasters list for settlement
-- Disaster damage report
-- Building construction interface (select type, assign workers)
-- Construction progress tracker
-- Building list with condition/maintenance status
-
-### Phase 7: Marriage and Dynasties - BACKEND COMPLETE
-
-**Goal:** Family lineages and inheritance systems.
-
-| Feature | Backend | UI |
-|---------|---------|-----|
-| Dynasty founding | ✅ Done | ❌ Needed |
-| Dynasty members/lineage | ✅ Done | ❌ Needed |
-| Succession rules | ✅ Done | ❌ Needed |
-| Marriage proposals | ✅ Done | ❌ Needed |
-| Marriage/divorce | ✅ Done | ❌ Needed |
-| Children and births | ✅ Done | ❌ Needed |
-| Dynasty alliances | ✅ Done | ❌ Needed |
-| Inheritance claims | ✅ Done | ❌ Needed |
-
-**UI Needed for Marriage and Dynasties:**
-- Dynasty overview page (name, motto, prestige, members count)
-- Family tree visualization
-- Dynasty member list with lineage info
-- Succession rules configuration (for dynasty head)
-- Heir indicator
-- Marriage proposal form (dowry, terms)
-- Incoming proposals list
-- Marriage status in player profile
-- Spouse display
-- Children list
-- Dynasty alliance viewer
-- Dynasty event history/chronicle
-- Inheritance claim management
-
----
-
-## Part 18: Technical Standards
+## Part 17: Technical Standards
 
 ### File Conventions
 
@@ -1100,6 +939,64 @@ sail artisan schedule:run      # Run scheduled jobs
 
 ---
 
+## Part 18: UI Design System
+
+### File Structure
+```
+resources/js/
+├── pages/{Feature}/Index.tsx      # Main feature page
+├── pages/{Feature}/Show.tsx       # Detail view
+├── pages/{Feature}/NotHere.tsx    # Location-gated fallback
+├── components/ui/                 # Reusable UI components
+└── layouts/app-layout.tsx         # Main layout wrapper
+```
+
+### Page Template
+```tsx
+import { Head, usePage } from '@inertiajs/react';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
+
+interface PageProps {
+    // Define props from controller
+    [key: string]: unknown;
+}
+
+export default function FeaturePage() {
+    const { ...props } = usePage<PageProps>().props;
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Feature', href: '#' },
+    ];
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Feature" />
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-y-auto p-4">
+                {/* Content */}
+            </div>
+        </AppLayout>
+    );
+}
+```
+
+### Visual Design
+
+- **Font:** `font-pixel` for headers and labels
+- **Colors:** Stone/amber/green/red/purple palette on dark backgrounds
+- **Cards:** `rounded-xl border-2 border-{color}-500/50 bg-{color}-900/20 p-4`
+- **Buttons:** `rounded border-2 border-{color}-600/50 bg-{color}-900/20 px-4 py-2 font-pixel text-xs`
+- **Status badges:** `rounded px-1.5 py-0.5 font-pixel text-[10px]`
+
+### Available UI Components
+- `alert`, `avatar`, `badge`, `breadcrumb`, `button`, `card`
+- `checkbox`, `collapsible`, `dialog`, `dropdown-menu`
+- `icon`, `input`, `label`, `select`, `separator`
+- `sheet`, `sidebar`, `skeleton`, `spinner`, `textarea`, `toggle`, `tooltip`
+
+---
+
 ## Part 19: What Makes Myrefell Different
 
 ### vs. Traditional MMOs
@@ -1130,100 +1027,3 @@ sail artisan schedule:run      # Run scheduled jobs
 | Simple combat clicks | RPG stat training |
 | Countries pre-exist | Player-founded settlements possible |
 | NPCs don't exist | NPCs live full lives |
-
----
-
-## Appendix: Key Data Models
-
-### Combat Stats (User Extension)
-
-```php
-// Migration
-$table->integer('attack_xp')->default(0);
-$table->integer('strength_xp')->default(0);
-$table->integer('defense_xp')->default(0);
-
-// User model accessors
-public function getAttackLevelAttribute(): int {
-    return $this->calculateLevel($this->attack_xp);
-}
-```
-
-### Legitimacy (PlayerRole Extension)
-
-```php
-// Add to player_roles or create ruler_stats table
-$table->integer('legitimacy')->default(50); // 0-100
-
-// Events that modify legitimacy
-- Election won by large margin: +20
-- Election won by small margin: +5
-- Time in office: +1/month (max +20)
-- Won war: +10
-- Lost war: -20
-- Church support: +15
-- Church opposition: -25
-- Scandal exposed: -10 to -30
-```
-
-### Army System
-
-```php
-Schema::create('armies', function (Blueprint $table) {
-    $table->id();
-    $table->morphs('owner'); // Kingdom or player
-    $table->foreignId('commander_id')->nullable()->constrained('users');
-    $table->morphs('location');
-    $table->enum('status', ['mustering', 'marching', 'besieging', 'fighting', 'disbanded']);
-    $table->integer('morale')->default(100);
-    $table->integer('supplies')->default(100); // Days of food
-    $table->timestamps();
-});
-
-Schema::create('army_units', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('army_id')->constrained()->cascadeOnDelete();
-    $table->enum('unit_type', ['levy', 'men_at_arms', 'knights', 'archers', 'mercenary']);
-    $table->integer('count');
-    $table->integer('equipment_quality')->default(50);
-    $table->timestamps();
-});
-```
-
-### NPC Lifecycle
-
-```php
-Schema::create('npcs', function (Blueprint $table) {
-    $table->id();
-    $table->string('name');
-    $table->string('family_name');
-    $table->enum('gender', ['male', 'female']);
-    $table->integer('birth_year');
-    $table->integer('death_year')->nullable();
-    $table->foreignId('home_village_id')->constrained('villages');
-    $table->foreignId('spouse_id')->nullable()->constrained('npcs');
-    $table->json('personality_traits'); // ['greedy', 'ambitious']
-    $table->timestamps();
-});
-
-Schema::create('npc_families', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('npc_id')->constrained()->cascadeOnDelete();
-    $table->foreignId('parent1_id')->nullable()->constrained('npcs');
-    $table->foreignId('parent2_id')->nullable()->constrained('npcs');
-    $table->timestamps();
-});
-```
-
-### World State
-
-```php
-Schema::create('world_state', function (Blueprint $table) {
-    $table->id();
-    $table->integer('current_year')->default(1);
-    $table->enum('current_season', ['spring', 'summer', 'autumn', 'winter']);
-    $table->integer('current_week')->default(1); // 1-12 within season
-    $table->timestamp('last_tick_at');
-    $table->timestamps();
-});
-```
