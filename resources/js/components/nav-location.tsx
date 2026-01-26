@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
     Anchor,
+    Award,
     Banknote,
     Calendar,
     Castle,
@@ -256,6 +257,12 @@ function getCommonServices(location: LocationData | null, homeVillage: HomeVilla
             href: location.id ? `/${location.type}s/${location.id}/events` : '/events',
             icon: Calendar,
             description: 'Local happenings',
+        });
+        items.push({
+            title: 'Social Status',
+            href: '/social-class',
+            icon: Award,
+            description: 'Your standing in society',
         });
     }
 

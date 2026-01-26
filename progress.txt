@@ -79,7 +79,7 @@
 - [x] Bounty system
 - [x] Legitimacy system (events, modifiers, decay)
 - [x] UI: Legitimacy display on settlement pages (villages, baronies, kingdoms)
-- [ ] UI: Social class display and manumission requests
+- [x] UI: Social class display and manumission requests
 - [x] UI: Crime accusation form (file accusations against other players)
 - [x] UI: Court/trial interface (view trial details, submit defense)
 - [ ] UI: Bounty board
@@ -130,7 +130,7 @@
 ## Remaining UI Work
 
 ### Phase 4 - Political Systems
-- [ ] UI: Social class display and manumission requests
+- [x] UI: Social class display and manumission requests
 - [ ] UI: Bounty board
 
 All other UI has been implemented.
