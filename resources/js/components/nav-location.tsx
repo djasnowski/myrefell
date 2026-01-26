@@ -25,11 +25,13 @@ import {
     Pickaxe,
     ScrollText,
     Shield,
+    Sparkles,
     Store,
     Swords,
     Trees,
     Truck,
     Users,
+    UsersRound,
     type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -72,11 +74,20 @@ interface TravelStatus {
     has_arrived: boolean;
 }
 
+interface PlayerContext {
+    dynasty?: { id: number; name: string };
+    guild?: { id: number; name: string };
+    business?: { id: number; name: string };
+    religion?: { id: number; name: string };
+    army?: { id: number; name: string };
+}
+
 interface SidebarData {
     location: LocationData | null;
     home_village: HomeVillage | null;
     travel: TravelStatus | null;
     nearby_destinations: TravelDestination[];
+    context: PlayerContext;
 }
 
 interface NavItem {
@@ -353,6 +364,58 @@ function getCommonServices(location: LocationData | null): NavItem[] {
     return items;
 }
 
+// Get contextual items based on player's affiliations
+function getContextualItems(context: PlayerContext): NavItem[] {
+    const items: NavItem[] = [];
+
+    if (context.dynasty) {
+        items.push({
+            title: 'My Dynasty',
+            href: `/dynasties/${context.dynasty.id}`,
+            icon: Crown,
+            description: context.dynasty.name,
+        });
+    }
+
+    if (context.guild) {
+        items.push({
+            title: 'My Guild',
+            href: `/guilds/${context.guild.id}`,
+            icon: UsersRound,
+            description: context.guild.name,
+        });
+    }
+
+    if (context.business) {
+        items.push({
+            title: 'My Business',
+            href: `/businesses/${context.business.id}`,
+            icon: Store,
+            description: context.business.name,
+        });
+    }
+
+    if (context.religion) {
+        items.push({
+            title: 'My Faith',
+            href: `/religions/${context.religion.id}`,
+            icon: Sparkles,
+            description: context.religion.name,
+        });
+    }
+
+    if (context.army) {
+        items.push({
+            title: 'My Army',
+            href: `/warfare/armies/${context.army.id}`,
+            icon: Shield,
+            description: context.army.name,
+        });
+    }
+
+    return items;
+}
+
 
 function formatTime(seconds: number): string {
     const mins = Math.floor(seconds / 60);
@@ -418,12 +481,13 @@ export function NavLocation() {
 
     if (!sidebar) return null;
 
-    const { location, home_village, travel, nearby_destinations } = sidebar;
+    const { location, home_village, travel, nearby_destinations, context } = sidebar;
     const services = getLocationServices(location);
     const travelDestinations = nearby_destinations || [];
     const commonServices = getCommonServices(location);
     const playerActions = getPlayerActions();
     const activities = getActivities(location);
+    const contextualItems = getContextualItems(context || {});
 
     const LocationIcon = location ? locationIcons[location.type] || MapPin : MapPin;
 
@@ -580,6 +644,29 @@ export function NavLocation() {
                     <SidebarGroupLabel>Services</SidebarGroupLabel>
                     <SidebarMenu>
                         {commonServices.map((item) => (
+                            <SidebarMenuItem key={item.title}>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={isCurrentUrl(item.href)}
+                                    tooltip={{ children: item.description || item.title }}
+                                >
+                                    <Link href={item.href} prefetch>
+                                        <item.icon className="h-4 w-4" />
+                                        <span>{item.title}</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        ))}
+                    </SidebarMenu>
+                </SidebarGroup>
+            )}
+
+            {/* Contextual Items (Dynasty, Guild, Business, Religion, Army) */}
+            {contextualItems.length > 0 && (
+                <SidebarGroup className="px-2 py-0">
+                    <SidebarGroupLabel>Affiliations</SidebarGroupLabel>
+                    <SidebarMenu>
+                        {contextualItems.map((item) => (
                             <SidebarMenuItem key={item.title}>
                                 <SidebarMenuButton
                                     asChild

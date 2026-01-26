@@ -100,7 +100,63 @@ class HandleInertiaRequests extends Middleware
             ] : null,
             'travel' => $this->travelService->getTravelStatus($player),
             'nearby_destinations' => $this->travelService->getAvailableDestinations($player),
+            'context' => $this->getPlayerContext($player),
         ];
+    }
+
+    /**
+     * Get player context for conditional sidebar items.
+     */
+    protected function getPlayerContext($player): array
+    {
+        $context = [];
+
+        // Check for dynasty membership
+        $dynastyMember = $player->dynastyMembership()->with('dynasty')->first();
+        if ($dynastyMember) {
+            $context['dynasty'] = [
+                'id' => $dynastyMember->dynasty->id,
+                'name' => $dynastyMember->dynasty->name,
+            ];
+        }
+
+        // Check for guild membership
+        $guildMember = $player->guildMemberships()->with('guild')->where('status', 'active')->first();
+        if ($guildMember) {
+            $context['guild'] = [
+                'id' => $guildMember->guild->id,
+                'name' => $guildMember->guild->name,
+            ];
+        }
+
+        // Check for business ownership
+        $business = $player->businesses()->first();
+        if ($business) {
+            $context['business'] = [
+                'id' => $business->id,
+                'name' => $business->name,
+            ];
+        }
+
+        // Check for religion membership
+        $religionMember = $player->religionMembership()->with('religion')->first();
+        if ($religionMember) {
+            $context['religion'] = [
+                'id' => $religionMember->religion->id,
+                'name' => $religionMember->religion->name,
+            ];
+        }
+
+        // Check for army command
+        $army = $player->commandedArmies()->first();
+        if ($army) {
+            $context['army'] = [
+                'id' => $army->id,
+                'name' => $army->name,
+            ];
+        }
+
+        return $context;
     }
 
     /**
