@@ -104,10 +104,10 @@ return Inertia::render('Trade/CaravanShow', [
 ```
 
 **Features:**
-- [ ] List routes passing through player's territory
-- [ ] Set tariff rate (0-50%) per route
-- [ ] View tariff revenue collected
-- [ ] Revenue history/summary
+- [x] List routes passing through player's territory
+- [x] Set tariff rate (0-50%) per route
+- [x] View tariff revenue collected
+- [x] Revenue history/summary
 
 **Props needed:**
 ```php

@@ -40,6 +40,7 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\SiegeController;
 use App\Http\Controllers\WarController;
 use App\Http\Controllers\CaravanController;
+use App\Http\Controllers\TariffController;
 use App\Http\Controllers\TradeRouteController;
 use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\VillageController;
@@ -345,6 +346,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('trade/caravans/{caravan}/unload', [CaravanController::class, 'unload'])->name('trade.caravans.unload');
     Route::post('trade/caravans/{caravan}/disband', [CaravanController::class, 'disband'])->name('trade.caravans.disband');
     Route::post('trade/caravans/{caravan}/remove-goods', [CaravanController::class, 'removeGoods'])->name('trade.caravans.remove-goods');
+
+    // Tariffs
+    Route::get('trade/tariffs', [TariffController::class, 'index'])->name('trade.tariffs');
+    Route::post('trade/tariffs', [TariffController::class, 'store'])->name('trade.tariffs.store');
+    Route::put('trade/tariffs/{tariff}', [TariffController::class, 'update'])->name('trade.tariffs.update');
 
     // Guilds
     Route::get('guilds', [GuildController::class, 'index'])->name('guilds.index');

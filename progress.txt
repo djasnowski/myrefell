@@ -63,6 +63,7 @@
 - [x] Trade caravans (routes, caravans, goods, events, tariffs)
 - [x] UI: Trade Routes Index page (view available routes, create new routes)
 - [x] UI: Caravan management screens (loading, dispatch, tracking)
+- [x] UI: Tariff management page (set tariff rates, view revenue)
 
 ### Phase 4 - Political Systems (BACKEND COMPLETE)
 - [x] Elections and roles
