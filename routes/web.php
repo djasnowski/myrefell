@@ -35,6 +35,7 @@ use App\Http\Controllers\TrialController;
 use App\Http\Controllers\SocialClassController;
 use App\Http\Controllers\StableController;
 use App\Http\Controllers\ArmyController;
+use App\Http\Controllers\BattleController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\SiegeController;
 use App\Http\Controllers\WarController;
@@ -423,6 +424,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('warfare/sieges/{siege}/assault', [SiegeController::class, 'assault'])->name('warfare.sieges.assault');
     Route::post('warfare/sieges/{siege}/lift', [SiegeController::class, 'lift'])->name('warfare.sieges.lift');
     Route::post('warfare/sieges/{siege}/build-equipment', [SiegeController::class, 'buildEquipment'])->name('warfare.sieges.build-equipment');
+
+    // Warfare - Battles
+    Route::get('warfare/battles/{battle}', [BattleController::class, 'show'])->name('warfare.battles.show');
 
     // Dynasty
     Route::get('dynasty', [DynastyController::class, 'index'])->name('dynasty.index');

@@ -299,15 +299,15 @@ return Inertia::render('Warfare/WarShow', [
 ```
 
 **Features:**
-- [ ] Battle name, location, terrain type
-- [ ] Status (ongoing, attacker_victory, defender_victory)
-- [ ] Attacker vs Defender force comparison
-- [ ] Initial strength, current strength, casualties
-- [ ] Morale bars for both sides
-- [ ] Terrain modifier display
-- [ ] Day-by-day battle log
-- [ ] Commander names
-- [ ] Link back to war
+- [x] Battle name, location, terrain type
+- [x] Status (ongoing, attacker_victory, defender_victory)
+- [x] Attacker vs Defender force comparison
+- [x] Initial strength, current strength, casualties
+- [x] Morale bars for both sides
+- [x] Terrain modifier display
+- [x] Day-by-day battle log
+- [x] Commander names
+- [x] Link back to war
 
 **Props needed:**
 ```php
