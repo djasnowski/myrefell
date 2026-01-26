@@ -1,14 +1,20 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     Anchor,
+    Baby,
     Building,
+    Calendar,
     Castle,
     Church,
+    CloudRain,
     Coins,
     Crown,
+    Eye,
     Hammer,
     Heart,
+    HeartPulse,
     Home,
+    Mail,
     MapPin,
     Mountain,
     PartyPopper,
@@ -18,6 +24,8 @@ import {
     Shield,
     Ship,
     Skull,
+    Snowflake,
+    Sun,
     Swords,
     Trees,
     Trophy,
@@ -337,6 +345,103 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                     <p className="text-sm text-stone-400">{path.desc}</p>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Living Simulation */}
+                <section className="py-24">
+                    <div className="mx-auto max-w-7xl px-6">
+                        <div className="mb-16 text-center">
+                            <h2 className="mb-4 font-[Cinzel] text-3xl font-bold text-stone-100 md:text-4xl">
+                                A World That <span className="text-amber-500">Lives Without You</span>
+                            </h2>
+                            <p className="mx-auto max-w-2xl text-stone-400">
+                                Unlike other games, Myrefell's world doesn't pause. NPCs live full lives, information travels realistically, and seasons change the landscape.
+                            </p>
+                        </div>
+
+                        <div className="grid gap-8 md:grid-cols-3">
+                            {/* Living NPCs */}
+                            <div className="rounded-2xl border border-stone-800 bg-stone-900/50 p-8">
+                                <div className="mb-6 flex items-center gap-3">
+                                    <div className="rounded-lg bg-emerald-900/50 p-3">
+                                        <Users className="h-6 w-6 text-emerald-400" />
+                                    </div>
+                                    <h3 className="font-[Cinzel] text-xl font-bold">Living NPCs</h3>
+                                </div>
+                                <p className="mb-6 text-stone-400">
+                                    NPCs aren't static vendors. They're people with lives of their own.
+                                </p>
+                                <ul className="space-y-3">
+                                    <li className="flex items-center gap-3 text-stone-300">
+                                        <Baby className="h-5 w-5 text-stone-600" />
+                                        <span>Born, age, marry, have children, die</span>
+                                    </li>
+                                    <li className="flex items-center gap-3 text-stone-300">
+                                        <Hammer className="h-5 w-5 text-stone-600" />
+                                        <span>Hold jobs and fill vacant roles</span>
+                                    </li>
+                                    <li className="flex items-center gap-3 text-stone-300">
+                                        <MapPin className="h-5 w-5 text-stone-600" />
+                                        <span>Migrate to find work or family</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            {/* Information Flow */}
+                            <div className="rounded-2xl border border-stone-800 bg-stone-900/50 p-8">
+                                <div className="mb-6 flex items-center gap-3">
+                                    <div className="rounded-lg bg-blue-900/50 p-3">
+                                        <Mail className="h-6 w-6 text-blue-400" />
+                                    </div>
+                                    <h3 className="font-[Cinzel] text-xl font-bold">Slow Information</h3>
+                                </div>
+                                <p className="mb-6 text-stone-400">
+                                    No global chat. News travels at the speed of messengers.
+                                </p>
+                                <ul className="space-y-3">
+                                    <li className="flex items-center gap-3 text-stone-300">
+                                        <Users className="h-5 w-5 text-stone-600" />
+                                        <span>Local chat only in your settlement</span>
+                                    </li>
+                                    <li className="flex items-center gap-3 text-stone-300">
+                                        <Scroll className="h-5 w-5 text-stone-600" />
+                                        <span>Distant news may be delayed or false</span>
+                                    </li>
+                                    <li className="flex items-center gap-3 text-stone-300">
+                                        <Eye className="h-5 w-5 text-stone-600" />
+                                        <span>Spies gather intelligence faster</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            {/* Dynamic World */}
+                            <div className="rounded-2xl border border-stone-800 bg-stone-900/50 p-8">
+                                <div className="mb-6 flex items-center gap-3">
+                                    <div className="rounded-lg bg-purple-900/50 p-3">
+                                        <Calendar className="h-6 w-6 text-purple-400" />
+                                    </div>
+                                    <h3 className="font-[Cinzel] text-xl font-bold">Dynamic World</h3>
+                                </div>
+                                <p className="mb-6 text-stone-400">
+                                    Seasons change, disasters strike, diseases spread.
+                                </p>
+                                <ul className="space-y-3">
+                                    <li className="flex items-center gap-3 text-stone-300">
+                                        <Sun className="h-5 w-5 text-stone-600" />
+                                        <span>4 seasons affect travel, farming, combat</span>
+                                    </li>
+                                    <li className="flex items-center gap-3 text-stone-300">
+                                        <CloudRain className="h-5 w-5 text-stone-600" />
+                                        <span>Droughts, floods, fires, earthquakes</span>
+                                    </li>
+                                    <li className="flex items-center gap-3 text-stone-300">
+                                        <HeartPulse className="h-5 w-5 text-stone-600" />
+                                        <span>Plagues spread through trade routes</span>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </section>
