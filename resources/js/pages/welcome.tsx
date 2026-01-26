@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     Anchor,
+    Building,
     Castle,
     Church,
     Coins,
@@ -10,13 +11,16 @@ import {
     Home,
     MapPin,
     Mountain,
+    PartyPopper,
     Pickaxe,
     Scale,
     Scroll,
     Shield,
+    Ship,
     Skull,
     Swords,
     Trees,
+    Trophy,
     Users,
     Vote,
     Wheat,
@@ -271,43 +275,55 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                             </p>
                         </div>
 
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                             {[
                                 {
                                     icon: Coins,
                                     title: 'Economic Magnate',
-                                    desc: 'Own businesses, control trade routes, and become the wealthiest merchant in the realm.',
+                                    desc: 'Own businesses, run caravans, set tariffs, and dominate trade.',
                                     color: 'yellow',
                                 },
                                 {
                                     icon: Swords,
                                     title: 'Military Commander',
-                                    desc: 'Train your combat skills, lead armies, and become a legendary war hero.',
+                                    desc: 'Raise armies, declare wars, siege castles, and conquer kingdoms.',
                                     color: 'red',
                                 },
                                 {
                                     icon: Crown,
                                     title: 'Political Leader',
-                                    desc: 'Win elections, hold office, climb the ranks from Elder to Baron to King.',
+                                    desc: 'Win elections, hold office, climb from Elder to King.',
                                     color: 'amber',
                                 },
                                 {
                                     icon: Church,
                                     title: 'Religious Prophet',
-                                    desc: 'Found a cult, grow it into a religion, and become the spiritual leader of nations.',
+                                    desc: 'Found a cult, grow it into a religion, become spiritual leader.',
                                     color: 'purple',
                                 },
                                 {
                                     icon: Skull,
                                     title: 'Criminal Mastermind',
-                                    desc: 'Build an underworld empire, evade the law, and control the shadows.',
+                                    desc: 'Build an underworld empire and control the shadows.',
                                     color: 'stone',
                                 },
                                 {
                                     icon: Users,
                                     title: 'Dynasty Builder',
-                                    desc: 'Marry strategically, raise heirs, and build a legacy that spans generations.',
+                                    desc: 'Marry strategically, raise heirs, build a lasting legacy.',
                                     color: 'emerald',
+                                },
+                                {
+                                    icon: Ship,
+                                    title: 'Trade Baron',
+                                    desc: 'Send caravans across the realm and profit from tariffs.',
+                                    color: 'blue',
+                                },
+                                {
+                                    icon: Trophy,
+                                    title: 'Tournament Champion',
+                                    desc: 'Compete in tournaments, win glory, and earn renown.',
+                                    color: 'orange',
                                 },
                             ].map((path) => (
                                 <div
@@ -409,24 +425,36 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                             {[
                                 {
-                                    title: 'Player-Driven Economy',
-                                    desc: 'No NPC vendors with infinite stock. All goods are crafted by players, prices emerge from supply and demand.',
+                                    title: 'Full Warfare System',
+                                    desc: 'Raise armies, declare wars, siege settlements, fight battles. Negotiate peace with territory transfers and gold demands.',
                                 },
                                 {
-                                    title: 'Living NPCs',
-                                    desc: 'NPCs are not static shopkeepers. They age, marry, have children, migrate, and die. They fill roles when no player wants them.',
+                                    title: 'Dynasty & Marriage',
+                                    desc: 'Found dynasties, arrange marriages, manage succession. Build a family tree that spans generations.',
+                                },
+                                {
+                                    title: 'Trade Caravans',
+                                    desc: 'Send caravans across the realm, set tariffs on routes through your territory, profit from trade.',
+                                },
+                                {
+                                    title: 'Festivals & Tournaments',
+                                    desc: 'Attend festivals as performer or vendor, compete in tournament brackets for glory and prizes.',
+                                },
+                                {
+                                    title: 'Building Construction',
+                                    desc: 'Construct buildings in your settlements, manage repairs, expand your infrastructure.',
                                 },
                                 {
                                     title: 'Real Elections',
-                                    desc: 'Every government position is elected by players. Campaign for office, vote in elections, or stage a no-confidence vote.',
+                                    desc: 'Every government position is elected by players. Campaign for office or stage a no-confidence vote.',
                                 },
                                 {
                                     title: 'Meaningful Law',
-                                    desc: 'Commit crimes, face trials, receive punishments. Courts with judges, evidence, and verdicts. Bounty hunters and outlaws.',
+                                    desc: 'Commit crimes, face trials, receive punishments. Courts with judges, evidence, and verdicts.',
                                 },
                                 {
                                     title: 'Player-Founded Religions',
-                                    desc: 'Start a cult, grow it into a religion, define its beliefs. Religions grant bonuses and can excommunicate rulers.',
+                                    desc: 'Start a cult, grow it into a religion, define its beliefs. Religions grant bonuses and political power.',
                                 },
                                 {
                                     title: 'No Pay-to-Win',

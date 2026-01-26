@@ -23,12 +23,16 @@ interface PortInfo {
     harbormaster_name: string;
     harbormaster_title: string;
     gold: number;
-    ship_cost: number;
+    base_ship_cost: number;
     destinations: Destination[];
 }
 
 interface PageProps {
     port_info: PortInfo;
+    flash?: {
+        success?: string;
+        error?: string;
+    };
     [key: string]: unknown;
 }
 
@@ -37,10 +41,10 @@ function formatNumber(n: number): string {
 }
 
 export default function PortIndex() {
-    const { port_info } = usePage<PageProps>().props;
+    const { port_info, flash } = usePage<PageProps>().props;
     const [loading, setLoading] = useState<number | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(flash?.error || null);
+    const [success, setSuccess] = useState<string | null>(flash?.success || null);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -48,34 +52,23 @@ export default function PortIndex() {
         { title: 'Harbor', href: '#' },
     ];
 
-    const handleBookPassage = async (destinationId: number) => {
+    const handleBookPassage = (destinationId: number) => {
         setLoading(destinationId);
         setError(null);
         setSuccess(null);
 
-        try {
-            const response = await fetch('/port/book', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify({ destination_id: destinationId }),
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                setSuccess(data.message);
-                router.reload({ only: ['port_info', 'sidebar'] });
-            } else {
-                setError(data.message);
-            }
-        } catch {
-            setError('An error occurred');
-        } finally {
-            setLoading(null);
-        }
+        router.post('/port/book', { destination_id: destinationId }, {
+            preserveScroll: true,
+            onError: (errors) => {
+                setError(Object.values(errors)[0] as string || 'An error occurred');
+                setLoading(null);
+            },
+            onFinish: () => {
+                // Only reset loading if we're still on the page (error case)
+                // On success we redirect to dashboard
+                setLoading(null);
+            },
+        });
     };
 
     return (
@@ -110,7 +103,7 @@ export default function PortIndex() {
                         </div>
                         <p className="font-pixel text-xs leading-relaxed text-stone-300">
                             {port_info.destinations.length > 0
-                                ? `"Welcome to ${port_info.port_name}, traveler! Looking to sail to distant lands? I can arrange passage for ${formatNumber(port_info.ship_cost)} gold."`
+                                ? `"Welcome to ${port_info.port_name}, traveler! Looking to sail to distant lands? Passage starts at ${formatNumber(port_info.base_ship_cost)} gold, depending on distance."`
                                 : '"Ahoy! Unfortunately, no ships are departing at this time. Check back later."'}
                         </p>
                     </div>
@@ -138,7 +131,7 @@ export default function PortIndex() {
                         </div>
                         <div className="mt-2 text-right">
                             <span className="font-pixel text-[10px] text-stone-500">
-                                Passage costs {formatNumber(port_info.ship_cost)} gold
+                                Cost varies by distance (from {formatNumber(port_info.base_ship_cost)} gold)
                             </span>
                         </div>
                     </div>
@@ -216,7 +209,7 @@ export default function PortIndex() {
                     {/* Info */}
                     <div className="mt-6 text-center">
                         <p className="font-pixel text-[10px] text-stone-500">
-                            Ship travel takes {port_info.destinations[0]?.travel_time || 10} minutes regardless of distance
+                            Travel time varies based on distance between ports
                         </p>
                     </div>
                 </div>

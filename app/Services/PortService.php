@@ -9,14 +9,24 @@ use Illuminate\Support\Facades\DB;
 class PortService
 {
     /**
-     * Cost for ship travel between kingdoms.
+     * Base cost for ship travel.
      */
-    public const SHIP_COST = 5000;
+    public const BASE_SHIP_COST = 4513;
 
     /**
-     * Travel time in minutes for ship travel.
+     * Gold per minute of travel time.
      */
-    public const SHIP_TRAVEL_TIME = 10;
+    public const GOLD_PER_MINUTE = 100;
+
+    /**
+     * Base travel time in minutes for ship travel.
+     */
+    public const BASE_SHIP_TRAVEL_TIME = 5;
+
+    /**
+     * Minutes per 100 units of distance.
+     */
+    public const MINUTES_PER_100_DISTANCE = 2;
 
     /**
      * Check if user can access the port at their current location.
@@ -51,6 +61,27 @@ class PortService
     }
 
     /**
+     * Calculate travel time between two ports based on distance.
+     */
+    public function calculateTravelTime(Village $from, Village $to): int
+    {
+        $distance = sqrt(
+            pow($to->coordinates_x - $from->coordinates_x, 2) +
+            pow($to->coordinates_y - $from->coordinates_y, 2)
+        );
+
+        return (int) ceil(self::BASE_SHIP_TRAVEL_TIME + ($distance / 100) * self::MINUTES_PER_100_DISTANCE);
+    }
+
+    /**
+     * Calculate cost based on travel time.
+     */
+    public function calculateCost(int $travelTime): int
+    {
+        return self::BASE_SHIP_COST + ($travelTime * self::GOLD_PER_MINUTE);
+    }
+
+    /**
      * Get available ship destinations from the current port.
      */
     public function getAvailableDestinations(User $user): array
@@ -73,15 +104,18 @@ class PortService
             ->whereHas('barony.kingdom', fn ($q) => $q->where('id', '!=', $currentKingdom->id))
             ->with('barony.kingdom')
             ->get()
-            ->map(fn ($port) => [
-                'id' => $port->id,
-                'name' => $port->name,
-                'kingdom_id' => $port->barony->kingdom->id,
-                'kingdom_name' => $port->barony->kingdom->name,
-                'biome' => $port->biome,
-                'cost' => self::SHIP_COST,
-                'travel_time' => self::SHIP_TRAVEL_TIME,
-            ])
+            ->map(function ($port) use ($currentPort) {
+                $travelTime = $this->calculateTravelTime($currentPort, $port);
+                return [
+                    'id' => $port->id,
+                    'name' => $port->name,
+                    'kingdom_id' => $port->barony->kingdom->id,
+                    'kingdom_name' => $port->barony->kingdom->name,
+                    'biome' => $port->biome,
+                    'cost' => $this->calculateCost($travelTime),
+                    'travel_time' => $travelTime,
+                ];
+            })
             ->toArray();
     }
 
@@ -130,23 +164,27 @@ class PortService
             ];
         }
 
+        $currentPort = $this->getCurrentPort($user);
+        $travelTime = $this->calculateTravelTime($currentPort, $destination);
+        $cost = $this->calculateCost($travelTime);
+
         // Validate has enough gold
-        if ($user->gold < self::SHIP_COST) {
+        if ($user->gold < $cost) {
             return [
                 'success' => false,
-                'message' => 'Not enough gold. Ship passage costs ' . number_format(self::SHIP_COST) . ' gold.',
+                'message' => 'Not enough gold. Ship passage costs ' . number_format($cost) . ' gold.',
             ];
         }
 
-        return DB::transaction(function () use ($user, $destination) {
+        return DB::transaction(function () use ($user, $destination, $travelTime, $cost) {
             // Deduct gold
-            $user->decrement('gold', self::SHIP_COST);
+            $user->decrement('gold', $cost);
 
             // Set travel state (dev mode: 2 seconds for testing)
             if (app()->environment('local') && TravelService::DEV_TRAVEL_SECONDS !== null) {
                 $arrivesAt = now()->addSeconds(TravelService::DEV_TRAVEL_SECONDS);
             } else {
-                $arrivesAt = now()->addMinutes(self::SHIP_TRAVEL_TIME);
+                $arrivesAt = now()->addMinutes($travelTime);
             }
 
             $user->is_traveling = true;
@@ -165,9 +203,9 @@ class PortService
                     'name' => $destination->name,
                     'kingdom' => $destination->barony?->kingdom?->name ?? 'Unknown',
                 ],
-                'travel_time_minutes' => self::SHIP_TRAVEL_TIME,
+                'travel_time_minutes' => $travelTime,
                 'arrives_at' => $arrivesAt->toIso8601String(),
-                'cost' => self::SHIP_COST,
+                'cost' => $cost,
                 'gold_remaining' => $user->fresh()->gold,
             ];
         });
@@ -196,7 +234,7 @@ class PortService
             'harbormaster_name' => $this->getHarbormasterName($kingdom?->name ?? ''),
             'harbormaster_title' => 'Harbormaster',
             'gold' => $user->gold,
-            'ship_cost' => self::SHIP_COST,
+            'base_ship_cost' => self::BASE_SHIP_COST,
             'destinations' => $this->getAvailableDestinations($user),
         ];
     }

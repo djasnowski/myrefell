@@ -166,6 +166,89 @@ Non-territorial power structures that overlay the political hierarchy. Players m
 - Boss fight on final floor with best loot
 - Minimum combat level requirements
 
+### Warfare System
+
+**Armies**:
+- Recruit soldiers when at settlements
+- Manage army morale and supply lines
+- View unit composition with attack/defense stats
+- Issue movement orders to nearby settlements
+- Track battle history per army
+
+**Wars**:
+- Declare war with a casus belli (claim, conquest, etc.)
+- Track war scores for attackers vs defenders
+- Manage participant lists and contribution scores
+- Set war goals with completion tracking
+- Siege settlements and fight field battles
+
+**Battles**:
+- Day-by-day battle log with casualty details
+- Terrain and weather modifiers affect outcomes
+- Track morale, initial strength, and remaining forces
+- Commander bonuses for both sides
+
+**Peace Negotiations**:
+- Negotiate treaty terms with war score leverage
+- Territory transfer options
+- Gold payment demands
+- Truce duration settings
+- Acceptance likelihood calculation
+
+### Dynasty & Marriage
+
+**Dynasties**:
+- Found a dynasty to track your lineage
+- View prestige, rank, and living members
+- Manage succession settings (primogeniture, ultimogeniture, etc.)
+- Designate heirs and track generations
+- Visual family tree with marriage connections
+
+**Marriage**:
+- Propose marriages between dynasty members
+- Set dowry amounts and write proposal messages
+- Accept, reject, or withdraw proposals
+- Marriage history tracking
+- Strategic alliances through marriage
+
+### Trade & Caravans
+
+**Caravans**:
+- Hire caravans to transport goods between settlements
+- Load/unload goods with quantity selection
+- Track caravan status (loading, in transit, arrived)
+- Event log showing bandit attacks, weather delays
+- Progress bars for in-transit caravans
+
+**Tariffs**:
+- Set tariff rates (0-50%) on trade routes through your territory
+- Per-item or general tariff rates
+- Revenue tracking (weekly, monthly, total)
+- View routes passing through your settlements
+
+### Events & Festivals
+
+**Festivals**:
+- Attend festivals as attendee, performer, or vendor
+- Participate in festival activities
+- Earn festival bonuses during events
+- Date-based progression (scheduled → active → completed)
+
+**Tournaments**:
+- Register for tournament competitions
+- Visual bracket display showing matchups
+- Track competitors and their progress
+- Withdraw from tournaments if needed
+
+### Buildings
+
+**Construction**:
+- View existing buildings and their condition
+- Start new construction projects with resource requirements
+- Track construction progress
+- Repair damaged buildings
+- Cancel in-progress construction
+
 ### Chat System
 - **Location chat**: Talk with players in your village, barony, or kingdom
 - **Private messaging**: Direct player-to-player communication

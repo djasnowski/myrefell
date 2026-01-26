@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Home, Loader2, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -52,6 +52,10 @@ interface Props {
     can_migrate: boolean;
     has_pending_request: boolean;
     current_user_id: number;
+    flash?: {
+        success?: string;
+        error?: string;
+    };
 }
 
 const biomeColors: Record<string, string> = {
@@ -66,6 +70,7 @@ const biomeColors: Record<string, string> = {
 };
 
 export default function VillageShow({ village, is_resident, can_migrate, has_pending_request, current_user_id }: Props) {
+    const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
     const [loading, setLoading] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -104,6 +109,17 @@ export default function VillageShow({ village, is_resident, can_migrate, has_pen
                     </div>
                 </div>
 
+                {flash?.success && (
+                    <div className="rounded-lg border-2 border-green-600/50 bg-green-900/20 px-4 py-3">
+                        <p className="font-pixel text-green-300">{flash.success}</p>
+                    </div>
+                )}
+                {flash?.error && (
+                    <div className="rounded-lg border-2 border-red-600/50 bg-red-900/20 px-4 py-3">
+                        <p className="font-pixel text-red-300">{flash.error}</p>
+                    </div>
+                )}
+
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                     <Card>
                         <CardHeader className="pb-2">
@@ -136,7 +152,9 @@ export default function VillageShow({ village, is_resident, can_migrate, has_pen
                     <Card>
                         <CardHeader className="pb-2">
                             <CardDescription>Population</CardDescription>
-                            <CardTitle className="text-lg">{village.population.toLocaleString()}</CardTitle>
+                            <CardTitle className="text-lg">
+                                {(village.resident_count === 0 ? 0 : village.population).toLocaleString()}
+                            </CardTitle>
                         </CardHeader>
                     </Card>
                     <Card>
@@ -194,7 +212,9 @@ export default function VillageShow({ village, is_resident, can_migrate, has_pen
                         ) : (
                             <MapPin className="h-5 w-5 text-blue-300" />
                         )}
-                        <span className="font-pixel text-lg text-blue-300">Request to Settle Here</span>
+                        <span className="font-pixel text-lg text-blue-300">
+                            {village.resident_count === 0 ? 'Settle Here' : 'Request to Settle Here'}
+                        </span>
                     </button>
                 ) : (
                     <div className="rounded-lg border-2 border-stone-600/50 bg-stone-800/50 p-4">
@@ -203,11 +223,11 @@ export default function VillageShow({ village, is_resident, can_migrate, has_pen
                     </div>
                 )}
 
-                <div>
-                    <h2 className="text-xl font-semibold mb-4">
-                        Residents ({village.resident_count})
-                    </h2>
-                    {village.residents.length > 0 ? (
+                {village.resident_count > 0 && (
+                    <div>
+                        <h2 className="text-xl font-semibold mb-4">
+                            Residents ({village.resident_count})
+                        </h2>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                             {village.residents.map((resident) => (
                                 <Card key={resident.id}>
@@ -220,14 +240,8 @@ export default function VillageShow({ village, is_resident, can_migrate, has_pen
                                 </Card>
                             ))}
                         </div>
-                    ) : (
-                        <Card>
-                            <CardContent className="py-8 text-center text-muted-foreground">
-                                No adventurers have settled in this village yet.
-                            </CardContent>
-                        </Card>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
         </AppLayout>
     );

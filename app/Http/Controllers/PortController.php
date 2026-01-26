@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Village;
 use App\Services\PortService;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -52,7 +52,7 @@ class PortController extends Controller
     /**
      * Book passage to a destination port.
      */
-    public function book(Request $request): JsonResponse
+    public function book(Request $request): RedirectResponse
     {
         $request->validate([
             'destination_id' => 'required|integer|exists:villages,id',
@@ -61,6 +61,10 @@ class PortController extends Controller
         $user = $request->user();
         $result = $this->portService->bookPassage($user, $request->input('destination_id'));
 
-        return response()->json($result, $result['success'] ? 200 : 422);
+        if ($result['success']) {
+            return redirect()->route('dashboard')->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
     }
 }
