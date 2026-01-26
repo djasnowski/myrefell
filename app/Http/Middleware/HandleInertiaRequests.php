@@ -112,8 +112,10 @@ class HandleInertiaRequests extends Middleware
         $context = [];
 
         // Check for dynasty membership
-        $dynastyMember = $player->dynastyMembership()->with('dynasty')->first();
-        if ($dynastyMember) {
+        $dynastyMember = \App\Models\DynastyMember::where('user_id', $player->id)
+            ->with('dynasty')
+            ->first();
+        if ($dynastyMember?->dynasty) {
             $context['dynasty'] = [
                 'id' => $dynastyMember->dynasty->id,
                 'name' => $dynastyMember->dynasty->name,
@@ -121,8 +123,11 @@ class HandleInertiaRequests extends Middleware
         }
 
         // Check for guild membership
-        $guildMember = $player->guildMemberships()->with('guild')->where('status', 'active')->first();
-        if ($guildMember) {
+        $guildMember = \App\Models\GuildMember::where('user_id', $player->id)
+            ->where('status', 'active')
+            ->with('guild')
+            ->first();
+        if ($guildMember?->guild) {
             $context['guild'] = [
                 'id' => $guildMember->guild->id,
                 'name' => $guildMember->guild->name,
@@ -130,7 +135,7 @@ class HandleInertiaRequests extends Middleware
         }
 
         // Check for business ownership
-        $business = $player->businesses()->first();
+        $business = \App\Models\PlayerBusiness::where('user_id', $player->id)->first();
         if ($business) {
             $context['business'] = [
                 'id' => $business->id,
@@ -139,8 +144,10 @@ class HandleInertiaRequests extends Middleware
         }
 
         // Check for religion membership
-        $religionMember = $player->religionMembership()->with('religion')->first();
-        if ($religionMember) {
+        $religionMember = \App\Models\ReligionMember::where('user_id', $player->id)
+            ->with('religion')
+            ->first();
+        if ($religionMember?->religion) {
             $context['religion'] = [
                 'id' => $religionMember->religion->id,
                 'name' => $religionMember->religion->name,
@@ -148,7 +155,7 @@ class HandleInertiaRequests extends Middleware
         }
 
         // Check for army command
-        $army = $player->commandedArmies()->first();
+        $army = \App\Models\Army::where('commander_id', $player->id)->first();
         if ($army) {
             $context['army'] = [
                 'id' => $army->id,
