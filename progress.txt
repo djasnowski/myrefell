@@ -105,7 +105,7 @@
 - [x] UI: Festival/tournament participation (Events Calendar page)
 - [x] UI: Tournament detail page with bracket display (TournamentShow.tsx)
 - [x] UI: Disease/health status display (HealthStatusWidget on dashboard)
-- [ ] UI: Building construction interface
+- [x] UI: Building construction interface
 
 ### Part 12 - Marriage and Dynasties (BACKEND COMPLETE)
 - [x] Dynasty system (founding, prestige, members, history)

@@ -649,14 +649,14 @@ return Inertia::render('Events/TournamentShow', [
 ```
 
 **Features:**
-- [ ] Current location's existing buildings with conditions
-- [ ] Repair button for damaged buildings
-- [ ] Under construction section with progress bars
-- [ ] Available buildings to construct
-- [ ] Resource requirements display
-- [ ] Construction time estimate
-- [ ] Start construction button
-- [ ] Cancel project option
+- [x] Current location's existing buildings with conditions
+- [x] Repair button for damaged buildings
+- [x] Under construction section with progress bars
+- [x] Available buildings to construct
+- [x] Resource requirements display
+- [x] Construction time estimate
+- [x] Start construction button
+- [x] Cancel project option
 
 **Props needed:**
 ```php

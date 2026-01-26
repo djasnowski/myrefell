@@ -48,6 +48,7 @@ use App\Http\Controllers\MarketController;
 use App\Http\Controllers\DynastyController;
 use App\Http\Controllers\MarriageController;
 use App\Http\Controllers\SuccessionController;
+use App\Http\Controllers\BuildingController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -457,6 +458,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dynasty/succession', [SuccessionController::class, 'index'])->name('dynasty.succession');
     Route::put('dynasty/succession', [SuccessionController::class, 'update'])->name('dynasty.succession.update');
     Route::post('dynasty/succession/disinherit/{member}', [SuccessionController::class, 'disinherit'])->name('dynasty.succession.disinherit');
+
+    // Buildings
+    Route::get('buildings', [BuildingController::class, 'index'])->name('buildings.index');
+    Route::post('buildings', [BuildingController::class, 'store'])->name('buildings.store');
+    Route::post('buildings/{building}/repair', [BuildingController::class, 'repair'])->name('buildings.repair');
+    Route::post('buildings/projects/{project}/cancel', [BuildingController::class, 'cancel'])->name('buildings.cancel');
 });
 
 require __DIR__.'/settings.php';
