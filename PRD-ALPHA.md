@@ -1044,13 +1044,13 @@ return Inertia::render('Dynasty/ProposeMarriage', [
 ```
 
 **Features:**
-- [ ] Current succession type (primogeniture, etc.)
-- [ ] Gender law setting
-- [ ] Bastard inheritance setting
-- [ ] Minimum age setting
-- [ ] Current line of succession (ordered list)
-- [ ] Change rules button (prestige cost)
-- [ ] Disinherit member button (prestige cost)
+- [x] Current succession type (primogeniture, etc.)
+- [x] Gender law setting
+- [x] Bastard inheritance setting
+- [x] Minimum age setting
+- [x] Current line of succession (ordered list)
+- [x] Change rules button (prestige cost)
+- [x] Disinherit member button (prestige cost)
 
 **Props needed:**
 ```php

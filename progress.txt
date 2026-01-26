@@ -120,7 +120,7 @@
 - [x] UI: Dynasty overview page (founding, prestige, members, events)
 - [ ] UI: Dynasty/family tree view
 - [x] UI: Marriage proposal interface
-- [ ] UI: Succession/heir display
+- [x] UI: Succession/heir display
 
 ## Backend Complete - UI Needed
 

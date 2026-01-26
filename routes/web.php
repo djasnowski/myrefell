@@ -45,6 +45,7 @@ use App\Http\Controllers\VillageController;
 use App\Http\Controllers\MarketController;
 use App\Http\Controllers\DynastyController;
 use App\Http\Controllers\MarriageController;
+use App\Http\Controllers\SuccessionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -433,6 +434,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('dynasty/proposals/{proposal}/accept', [MarriageController::class, 'accept'])->name('dynasty.proposals.accept');
     Route::post('dynasty/proposals/{proposal}/reject', [MarriageController::class, 'reject'])->name('dynasty.proposals.reject');
     Route::post('dynasty/proposals/{proposal}/withdraw', [MarriageController::class, 'withdraw'])->name('dynasty.proposals.withdraw');
+
+    // Succession
+    Route::get('dynasty/succession', [SuccessionController::class, 'index'])->name('dynasty.succession');
+    Route::put('dynasty/succession', [SuccessionController::class, 'update'])->name('dynasty.succession.update');
+    Route::post('dynasty/succession/disinherit/{member}', [SuccessionController::class, 'disinherit'])->name('dynasty.succession.disinherit');
 });
 
 require __DIR__.'/settings.php';

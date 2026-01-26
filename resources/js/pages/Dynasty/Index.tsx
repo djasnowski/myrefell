@@ -423,16 +423,16 @@ export default function DynastyIndex({
                                     <Heart className="h-4 w-4" />
                                     Marriages
                                 </Link>
-                                <button
-                                    disabled
-                                    className="flex items-center gap-2 rounded-lg border border-stone-700 bg-stone-800/30 p-2 font-pixel text-xs text-stone-500 opacity-50"
+                                <Link
+                                    href="/dynasty/succession"
+                                    className="flex items-center gap-2 rounded-lg border border-purple-600/50 bg-purple-900/20 p-2 font-pixel text-xs text-purple-400 transition hover:bg-purple-900/30"
                                 >
                                     <Shield className="h-4 w-4" />
                                     Succession
-                                </button>
+                                </Link>
                             </div>
                             <p className="mt-2 text-center font-pixel text-[10px] text-stone-600">
-                                Coming soon...
+                                More features coming soon...
                             </p>
                         </div>
                     </div>
