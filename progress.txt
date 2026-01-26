@@ -123,10 +123,14 @@
 - [x] UI: Marriage proposal interface
 - [x] UI: Succession/heir display
 
-## Backend Complete - UI Needed
+### Navigation & UI Infrastructure
+- [x] Location-based sidebar navigation (Court, Armies, Wars, Trade Routes per location type)
+- [x] PRD-ALPHA.md task tracking document with wireframes
 
-All backend systems (migrations, models, services) are implemented.
-The following UI work remains:
-- Controllers and routes for new systems
-- Livewire/Blade components for user interaction
-- Integration with existing game UI
+## Remaining UI Work
+
+### Phase 4 - Political Systems
+- [ ] UI: Social class display and manumission requests
+- [ ] UI: Bounty board
+
+All other UI has been implemented.
