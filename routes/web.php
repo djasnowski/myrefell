@@ -43,6 +43,7 @@ use App\Http\Controllers\TradeRouteController;
 use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\VillageController;
 use App\Http\Controllers\MarketController;
+use App\Http\Controllers\DynastyController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -420,6 +421,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('warfare/sieges/{siege}/assault', [SiegeController::class, 'assault'])->name('warfare.sieges.assault');
     Route::post('warfare/sieges/{siege}/lift', [SiegeController::class, 'lift'])->name('warfare.sieges.lift');
     Route::post('warfare/sieges/{siege}/build-equipment', [SiegeController::class, 'buildEquipment'])->name('warfare.sieges.build-equipment');
+
+    // Dynasty
+    Route::get('dynasty', [DynastyController::class, 'index'])->name('dynasty.index');
+    Route::post('dynasty', [DynastyController::class, 'found'])->name('dynasty.found');
+    Route::put('dynasty', [DynastyController::class, 'update'])->name('dynasty.update');
 });
 
 require __DIR__.'/settings.php';

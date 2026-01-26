@@ -747,14 +747,14 @@ return Inertia::render('Buildings/Index', [
 ```
 
 **Features:**
-- [ ] Dynasty name, motto, crest display
-- [ ] Prestige score and rank
-- [ ] Member count, generations, founding date
-- [ ] Current head and heir
-- [ ] Quick links to tree, history, alliances
-- [ ] Living members list with ages and status
-- [ ] Found dynasty button (if no dynasty)
-- [ ] Edit dynasty button (if head)
+- [x] Dynasty name, motto, crest display
+- [x] Prestige score and rank
+- [x] Member count, generations, founding date
+- [x] Current head and heir
+- [x] Quick links to tree, history, alliances
+- [x] Living members list with ages and status
+- [x] Found dynasty button (if no dynasty)
+- [x] Edit dynasty button (if head)
 
 **Props needed:**
 ```php
