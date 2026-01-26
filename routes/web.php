@@ -418,6 +418,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Warfare - Wars
     Route::get('warfare/wars', [WarController::class, 'index'])->name('warfare.wars');
     Route::get('warfare/wars/{war}', [WarController::class, 'show'])->name('warfare.wars.show');
+    Route::get('warfare/declare', [WarController::class, 'declareForm'])->name('warfare.declare');
+    Route::post('warfare/declare', [WarController::class, 'declare'])->name('warfare.declare.store');
 
     // Warfare - Sieges
     Route::get('warfare/sieges/{siege}', [SiegeController::class, 'show'])->name('warfare.sieges.show');

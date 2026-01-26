@@ -366,13 +366,13 @@ return Inertia::render('Warfare/BattleShow', [
 ```
 
 **Features:**
-- [ ] Target selection (kingdom or barony dropdown)
-- [ ] Casus belli selection with descriptions
-- [ ] War goal selection based on casus belli
-- [ ] Legitimacy impact preview
-- [ ] Allied kingdoms who might join
-- [ ] Enemy strength estimate
-- [ ] Confirm declaration button
+- [x] Target selection (kingdom or barony dropdown)
+- [x] Casus belli selection with descriptions
+- [x] War goal selection based on casus belli
+- [x] Legitimacy impact preview
+- [x] Allied kingdoms who might join
+- [x] Enemy strength estimate
+- [x] Confirm declaration button
 
 **Props needed:**
 ```php

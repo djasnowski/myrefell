@@ -2,10 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Army;
+use App\Models\Barony;
 use App\Models\Battle;
+use App\Models\Kingdom;
 use App\Models\Siege;
 use App\Models\War;
+use App\Models\WarGoal;
 use App\Models\WarParticipant;
+use App\Services\WarService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -296,5 +302,372 @@ class WarController extends Controller
             'has_breach' => $siege->has_breach,
             'started_at' => $siege->started_at?->toISOString(),
         ];
+    }
+
+    /**
+     * Show the declare war form.
+     */
+    public function declareForm(Request $request): Response
+    {
+        $user = $request->user();
+
+        // Get potential targets (kingdoms and baronies the user is not part of)
+        $userKingdom = Kingdom::where('king_user_id', $user->id)->first();
+        $userBarony = Barony::where('baron_user_id', $user->id)->first();
+
+        // Get all kingdoms except the user's own
+        $kingdoms = Kingdom::with('king')
+            ->when($userKingdom, fn ($q) => $q->where('id', '!=', $userKingdom->id))
+            ->get()
+            ->map(fn ($k) => $this->mapTarget($k, 'kingdom'));
+
+        // Get all baronies except the user's own
+        $baronies = Barony::with(['baron', 'kingdom'])
+            ->when($userBarony, fn ($q) => $q->where('id', '!=', $userBarony->id))
+            ->get()
+            ->map(fn ($b) => $this->mapTarget($b, 'barony'));
+
+        // Casus belli types with descriptions and legitimacy impact
+        $casusBelliTypes = [
+            [
+                'value' => War::CASUS_BELLI_CONQUEST,
+                'label' => 'Conquest',
+                'description' => 'Take territory by force',
+                'legitimacy_impact' => -20,
+            ],
+            [
+                'value' => War::CASUS_BELLI_CLAIM,
+                'label' => 'Pressing Claim',
+                'description' => 'You have a legal claim to territory',
+                'legitimacy_impact' => -5,
+            ],
+            [
+                'value' => War::CASUS_BELLI_HOLY_WAR,
+                'label' => 'Holy War',
+                'description' => 'Religious differences justify conquest',
+                'legitimacy_impact' => 10,
+            ],
+            [
+                'value' => War::CASUS_BELLI_RAID,
+                'label' => 'Raid',
+                'description' => 'Plunder enemy territory for resources',
+                'legitimacy_impact' => -10,
+            ],
+            [
+                'value' => War::CASUS_BELLI_REBELLION,
+                'label' => 'Rebellion',
+                'description' => 'Rise against your liege',
+                'legitimacy_impact' => -15,
+            ],
+        ];
+
+        // War goal types
+        $warGoalTypes = [
+            [
+                'value' => WarGoal::TYPE_CONQUER_TERRITORY,
+                'label' => 'Conquer Territory',
+                'description' => 'Take control of a barony or settlement',
+            ],
+            [
+                'value' => WarGoal::TYPE_SUBJUGATION,
+                'label' => 'Subjugation',
+                'description' => 'Force the enemy to become your vassal',
+            ],
+            [
+                'value' => WarGoal::TYPE_RAID,
+                'label' => 'Raid',
+                'description' => 'Plunder gold and resources',
+            ],
+            [
+                'value' => WarGoal::TYPE_HUMILIATE,
+                'label' => 'Humiliate',
+                'description' => 'Damage enemy prestige and reputation',
+            ],
+        ];
+
+        // Get player's armies
+        $playerArmies = Army::where('commander_id', $user->id)
+            ->operational()
+            ->with('units')
+            ->get()
+            ->map(fn ($a) => [
+                'id' => $a->id,
+                'name' => $a->name,
+                'total_troops' => $a->total_troops,
+                'total_attack' => $a->total_attack,
+                'total_defense' => $a->total_defense,
+                'status' => $a->status,
+            ]);
+
+        // Calculate total military strength
+        $totalTroops = $playerArmies->sum('total_troops');
+        $totalAttack = $playerArmies->sum('total_attack');
+
+        // Get potential allies (kingdoms/baronies that might join based on relationships)
+        // For simplicity, showing friendly kingdoms (not at war with user)
+        $potentialAllies = Kingdom::whereNotIn('id', function ($query) use ($user) {
+            $query->select('attacker_kingdom_id')
+                ->from('wars')
+                ->whereIn('status', [War::STATUS_ACTIVE, War::STATUS_ATTACKER_WINNING, War::STATUS_DEFENDER_WINNING])
+                ->where('defender_type', 'player')
+                ->where('defender_id', $user->id);
+        })
+            ->when($userKingdom, fn ($q) => $q->where('id', '!=', $userKingdom->id))
+            ->limit(5)
+            ->get()
+            ->map(fn ($k) => [
+                'id' => $k->id,
+                'type' => 'kingdom',
+                'name' => $k->name,
+                'estimated_troops' => $this->estimateKingdomTroops($k),
+                'likelihood' => 'may join',
+            ]);
+
+        return Inertia::render('Warfare/DeclareWar', [
+            'potential_targets' => [
+                'kingdoms' => $kingdoms->toArray(),
+                'baronies' => $baronies->toArray(),
+            ],
+            'casus_belli_types' => $casusBelliTypes,
+            'war_goal_types' => $warGoalTypes,
+            'player_armies' => $playerArmies->toArray(),
+            'player_strength' => [
+                'total_troops' => $totalTroops,
+                'total_attack' => $totalAttack,
+            ],
+            'potential_allies' => $potentialAllies->toArray(),
+            'user_kingdom' => $userKingdom ? [
+                'id' => $userKingdom->id,
+                'name' => $userKingdom->name,
+            ] : null,
+            'user_barony' => $userBarony ? [
+                'id' => $userBarony->id,
+                'name' => $userBarony->name,
+                'kingdom_id' => $userBarony->kingdom_id,
+            ] : null,
+        ]);
+    }
+
+    /**
+     * Declare war.
+     */
+    public function declare(Request $request, WarService $warService): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'target_type' => 'required|in:kingdom,barony',
+            'target_id' => 'required|integer',
+            'casus_belli' => 'required|in:claim,conquest,rebellion,holy_war,raid',
+            'war_goals' => 'required|array|min:1',
+            'war_goals.*' => 'in:conquer_territory,subjugation,independence,raid,humiliate',
+            'war_name' => 'nullable|string|max:255',
+        ]);
+
+        // Determine attacker type and ID
+        $userKingdom = Kingdom::where('king_user_id', $user->id)->first();
+        $userBarony = Barony::where('baron_user_id', $user->id)->first();
+
+        // Validate user can declare war
+        if (!$userKingdom && !$userBarony) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You must rule a kingdom or barony to declare war.',
+            ], 403);
+        }
+
+        // Determine attacker info
+        if ($userKingdom) {
+            $attackerType = 'kingdom';
+            $attackerId = $userKingdom->id;
+            $attackerKingdomId = $userKingdom->id;
+        } else {
+            $attackerType = 'barony';
+            $attackerId = $userBarony->id;
+            $attackerKingdomId = $userBarony->kingdom_id;
+        }
+
+        // Get defender info
+        $defenderType = $validated['target_type'];
+        $defenderId = $validated['target_id'];
+        $defenderKingdomId = null;
+
+        if ($defenderType === 'kingdom') {
+            $defender = Kingdom::find($defenderId);
+            if (!$defender) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Target kingdom not found.',
+                ], 404);
+            }
+            $defenderKingdomId = $defender->id;
+            $defenderName = $defender->name;
+        } else {
+            $defender = Barony::find($defenderId);
+            if (!$defender) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Target barony not found.',
+                ], 404);
+            }
+            $defenderKingdomId = $defender->kingdom_id;
+            $defenderName = $defender->name;
+        }
+
+        // Check for existing truce
+        if ($warService->hasActiveTruce($attackerType, $attackerId, $defenderType, $defenderId)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot declare war: an active truce exists with this target.',
+            ], 400);
+        }
+
+        // Check if already at war with target
+        $existingWar = War::active()
+            ->where(function ($q) use ($attackerType, $attackerId, $defenderType, $defenderId) {
+                $q->where(function ($q) use ($attackerType, $attackerId, $defenderType, $defenderId) {
+                    $q->where('attacker_type', $attackerType)
+                        ->where('attacker_id', $attackerId)
+                        ->where('defender_type', $defenderType)
+                        ->where('defender_id', $defenderId);
+                })->orWhere(function ($q) use ($attackerType, $attackerId, $defenderType, $defenderId) {
+                    $q->where('attacker_type', $defenderType)
+                        ->where('attacker_id', $defenderId)
+                        ->where('defender_type', $attackerType)
+                        ->where('defender_id', $attackerId);
+                });
+            })
+            ->exists();
+
+        if ($existingWar) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are already at war with this target.',
+            ], 400);
+        }
+
+        // Generate war name if not provided
+        $warName = $validated['war_name'] ?? $this->generateWarName(
+            $userKingdom?->name ?? $userBarony?->name ?? $user->username,
+            $defenderName,
+            $validated['casus_belli']
+        );
+
+        try {
+            // Create the war
+            $war = $warService->declareWar(
+                $warName,
+                $validated['casus_belli'],
+                $attackerType,
+                $attackerId,
+                $defenderType,
+                $defenderId,
+                $attackerKingdomId,
+                $defenderKingdomId
+            );
+
+            // Add war goals
+            foreach ($validated['war_goals'] as $goalType) {
+                $warService->addWarGoal(
+                    $war,
+                    $goalType,
+                    $attackerType,
+                    $attackerId,
+                    $defenderType,
+                    $defenderId,
+                    100
+                );
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'War has been declared!',
+                'war_id' => $war->id,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Map target (kingdom or barony) for frontend.
+     */
+    private function mapTarget($entity, string $type): array
+    {
+        if ($type === 'kingdom') {
+            return [
+                'id' => $entity->id,
+                'type' => 'kingdom',
+                'name' => $entity->name,
+                'ruler_name' => $entity->king?->username ?? 'No Ruler',
+                'estimated_troops' => $this->estimateKingdomTroops($entity),
+                'allies' => $this->getKingdomAllies($entity),
+            ];
+        }
+
+        return [
+            'id' => $entity->id,
+            'type' => 'barony',
+            'name' => $entity->name,
+            'ruler_name' => $entity->baron?->username ?? 'No Baron',
+            'kingdom_name' => $entity->kingdom?->name ?? 'Independent',
+            'kingdom_id' => $entity->kingdom_id,
+            'estimated_troops' => $this->estimateBaronyTroops($entity),
+            'allies' => [],
+        ];
+    }
+
+    /**
+     * Estimate kingdom military strength.
+     */
+    private function estimateKingdomTroops(Kingdom $kingdom): int
+    {
+        return Army::where('owner_type', 'kingdom')
+            ->where('owner_id', $kingdom->id)
+            ->operational()
+            ->withSum('units', 'count')
+            ->get()
+            ->sum('units_sum_count') ?? 0;
+    }
+
+    /**
+     * Estimate barony military strength.
+     */
+    private function estimateBaronyTroops(Barony $barony): int
+    {
+        return Army::where('owner_type', 'barony')
+            ->where('owner_id', $barony->id)
+            ->operational()
+            ->withSum('units', 'count')
+            ->get()
+            ->sum('units_sum_count') ?? 0;
+    }
+
+    /**
+     * Get kingdom allies (simplified).
+     */
+    private function getKingdomAllies(Kingdom $kingdom): array
+    {
+        // Get allied kingdoms through marriage alliances or pacts
+        // Simplified for now - could be expanded with DynastyAlliance model
+        return [];
+    }
+
+    /**
+     * Generate a war name based on casus belli.
+     */
+    private function generateWarName(string $attackerName, string $defenderName, string $casusBelli): string
+    {
+        return match ($casusBelli) {
+            War::CASUS_BELLI_CONQUEST => "{$attackerName}'s Conquest of {$defenderName}",
+            War::CASUS_BELLI_CLAIM => "War for {$defenderName}",
+            War::CASUS_BELLI_HOLY_WAR => "Holy War against {$defenderName}",
+            War::CASUS_BELLI_REBELLION => "{$attackerName}'s Rebellion",
+            War::CASUS_BELLI_RAID => "{$attackerName}'s Raid on {$defenderName}",
+            default => "War between {$attackerName} and {$defenderName}",
+        };
     }
 }
