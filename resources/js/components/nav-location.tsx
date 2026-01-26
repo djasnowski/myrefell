@@ -2,20 +2,30 @@ import { Link, router, usePage } from '@inertiajs/react';
 import {
     Anchor,
     Award,
+    Axe,
+    Backpack,
     Banknote,
+    BarChart3,
+    Briefcase,
     Calendar,
     Castle,
     Church,
     ClipboardList,
     Clock,
     Crown,
+    Dumbbell,
+    Flame,
     Gavel,
+    Hammer,
     Home,
     Loader2,
     Mail,
+    Map,
     MapPin,
+    Pickaxe,
     ScrollText,
     Shield,
+    Store,
     Swords,
     Trees,
     Truck,
@@ -241,8 +251,82 @@ function getDestinationIcon(type: string): LucideIcon {
     return locationIcons[type] || MapPin;
 }
 
+// Get player actions (always visible)
+function getPlayerActions(): NavItem[] {
+    return [
+        {
+            title: 'Skills',
+            href: '/skills',
+            icon: BarChart3,
+            description: 'View your skill levels',
+        },
+        {
+            title: 'Inventory',
+            href: '/inventory',
+            icon: Backpack,
+            description: 'Your items and equipment',
+        },
+        {
+            title: 'Quests',
+            href: '/quests',
+            icon: ScrollText,
+            description: 'Active quest log',
+        },
+        {
+            title: 'Daily Tasks',
+            href: '/daily-tasks',
+            icon: ClipboardList,
+            description: 'Earn daily rewards',
+        },
+        {
+            title: 'World Map',
+            href: '/travel',
+            icon: Map,
+            description: 'Travel the realm',
+        },
+    ];
+}
+
+// Get activities available at location
+function getActivities(location: LocationData | null): NavItem[] {
+    const items: NavItem[] = [];
+
+    if (!location || location.type === 'wilderness') {
+        // Wilderness only allows gathering
+        items.push({
+            title: 'Gathering',
+            href: '/gathering',
+            icon: Pickaxe,
+            description: 'Mine, fish, or chop wood',
+        });
+        return items;
+    }
+
+    // All settlements have training and gathering
+    items.push({
+        title: 'Training',
+        href: '/training',
+        icon: Dumbbell,
+        description: 'Train combat skills',
+    });
+    items.push({
+        title: 'Gathering',
+        href: '/gathering',
+        icon: Pickaxe,
+        description: 'Mine, fish, or chop wood',
+    });
+    items.push({
+        title: 'Crafting',
+        href: '/crafting',
+        icon: Hammer,
+        description: 'Create items',
+    });
+
+    return items;
+}
+
 // Get common services
-function getCommonServices(location: LocationData | null, homeVillage: HomeVillage | null): NavItem[] {
+function getCommonServices(location: LocationData | null): NavItem[] {
     const items: NavItem[] = [];
 
     if (location && location.type !== 'wilderness') {
@@ -263,15 +347,6 @@ function getCommonServices(location: LocationData | null, homeVillage: HomeVilla
             href: '/social-class',
             icon: Award,
             description: 'Your standing in society',
-        });
-    }
-
-    if (homeVillage && location && location.type === 'village' && location.id === homeVillage.id) {
-        items.push({
-            title: 'Daily Tasks',
-            href: '/daily-tasks',
-            icon: ClipboardList,
-            description: 'Earn rewards',
         });
     }
 
@@ -346,7 +421,9 @@ export function NavLocation() {
     const { location, home_village, travel, nearby_destinations } = sidebar;
     const services = getLocationServices(location);
     const travelDestinations = nearby_destinations || [];
-    const commonServices = getCommonServices(location, home_village);
+    const commonServices = getCommonServices(location);
+    const playerActions = getPlayerActions();
+    const activities = getActivities(location);
 
     const LocationIcon = location ? locationIcons[location.type] || MapPin : MapPin;
 
@@ -429,6 +506,50 @@ export function NavLocation() {
                     </div>
                 </Link>
             </div>
+
+            {/* Player Actions - Always visible */}
+            <SidebarGroup className="px-2 py-0">
+                <SidebarGroupLabel>You</SidebarGroupLabel>
+                <SidebarMenu>
+                    {playerActions.map((item) => (
+                        <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={isCurrentUrl(item.href)}
+                                tooltip={{ children: item.description || item.title }}
+                            >
+                                <Link href={item.href} prefetch>
+                                    <item.icon className="h-4 w-4" />
+                                    <span>{item.title}</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    ))}
+                </SidebarMenu>
+            </SidebarGroup>
+
+            {/* Activities */}
+            {activities.length > 0 && (
+                <SidebarGroup className="px-2 py-0">
+                    <SidebarGroupLabel>Activities</SidebarGroupLabel>
+                    <SidebarMenu>
+                        {activities.map((item) => (
+                            <SidebarMenuItem key={item.title}>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={isCurrentUrl(item.href)}
+                                    tooltip={{ children: item.description || item.title }}
+                                >
+                                    <Link href={item.href} prefetch>
+                                        <item.icon className="h-4 w-4" />
+                                        <span>{item.title}</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        ))}
+                    </SidebarMenu>
+                </SidebarGroup>
+            )}
 
             {/* Services at this location */}
             {services.length > 0 && (
