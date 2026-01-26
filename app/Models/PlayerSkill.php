@@ -14,6 +14,8 @@ class PlayerSkill extends Model
         'attack',
         'strength',
         'defense',
+        'range',
+        'hitpoints',
         'mining',
         'fishing',
         'woodcutting',
@@ -22,7 +24,7 @@ class PlayerSkill extends Model
         'crafting',
     ];
 
-    public const COMBAT_SKILLS = ['attack', 'strength', 'defense'];
+    public const COMBAT_SKILLS = ['attack', 'strength', 'defense', 'range', 'hitpoints'];
 
     public const MAX_LEVEL = 99;
 

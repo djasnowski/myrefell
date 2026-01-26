@@ -6,8 +6,10 @@ import {
     Calendar,
     Castle,
     Church,
+    CircleHelp,
     CloudRain,
     Coins,
+    Crosshair,
     Crown,
     Eye,
     Hammer,
@@ -144,7 +146,7 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                 <div className="text-sm text-stone-500">Kingdoms</div>
                             </div>
                             <div className="rounded-xl border border-stone-800 bg-stone-900/50 p-4">
-                                <div className="text-3xl font-bold text-amber-500">9</div>
+                                <div className="text-3xl font-bold text-amber-500">11</div>
                                 <div className="text-sm text-stone-500">Skills to Master</div>
                             </div>
                             <div className="rounded-xl border border-stone-800 bg-stone-900/50 p-4">
@@ -193,11 +195,11 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                 <ul className="space-y-3">
                                     <li className="flex items-center gap-3 text-stone-300">
                                         <Shield className="h-5 w-5 text-stone-600" />
-                                        <span>3 combat skills: Attack, Strength, Defense</span>
+                                        <span>5 combat skills: Attack, Strength, Defense, Range, Hitpoints</span>
                                     </li>
                                     <li className="flex items-center gap-3 text-stone-300">
                                         <Hammer className="h-5 w-5 text-stone-600" />
-                                        <span>6 trade skills: Mining, Fishing, Smithing, more</span>
+                                        <span>6 trade skills: Mining, Fishing, Smithing, and more</span>
                                     </li>
                                     <li className="flex items-center gap-3 text-stone-300">
                                         <Heart className="h-5 w-5 text-stone-600" />
@@ -451,24 +453,27 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                     <div className="mx-auto max-w-7xl px-6">
                         <div className="mb-16 text-center">
                             <h2 className="mb-4 font-[Cinzel] text-3xl font-bold text-stone-100 md:text-4xl">
-                                Master <span className="text-amber-500">9 Skills</span>
+                                Master <span className="text-amber-500">11 Skills</span>
                             </h2>
                             <p className="mx-auto max-w-2xl text-stone-400">
-                                Every skill opens new opportunities. Mine ore, forge weapons, catch fish, and craft your legacy.
+                                Every skill opens new opportunities. Train combat, mine ore, forge weapons, and craft your legacy.
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4 md:grid-cols-5 lg:grid-cols-9">
+                        <div className="grid grid-cols-3 gap-4 md:grid-cols-4 lg:grid-cols-6">
                             {[
                                 { icon: Swords, name: 'Attack', color: 'red' },
                                 { icon: Shield, name: 'Strength', color: 'orange' },
                                 { icon: Heart, name: 'Defense', color: 'pink' },
+                                { icon: Crosshair, name: 'Range', color: 'emerald' },
+                                { icon: HeartPulse, name: 'Hitpoints', color: 'rose' },
                                 { icon: Pickaxe, name: 'Mining', color: 'stone' },
                                 { icon: Anchor, name: 'Fishing', color: 'blue' },
                                 { icon: Trees, name: 'Woodcutting', color: 'green' },
                                 { icon: Wheat, name: 'Cooking', color: 'yellow' },
                                 { icon: Hammer, name: 'Smithing', color: 'orange' },
                                 { icon: Hammer, name: 'Crafting', color: 'amber' },
+                                { icon: CircleHelp, name: '???', color: 'purple' },
                             ].map((skill) => (
                                 <div
                                     key={skill.name}
