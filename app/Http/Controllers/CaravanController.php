@@ -198,10 +198,20 @@ class CaravanController extends Controller
             ]);
 
         // Get player's current location for creating caravans
+        $locationName = 'Unknown';
+        if ($user->current_location_type && $user->current_location_id) {
+            $locationModel = match ($user->current_location_type) {
+                'village' => \App\Models\Village::find($user->current_location_id),
+                'town' => \App\Models\Town::find($user->current_location_id),
+                'barony' => \App\Models\Barony::find($user->current_location_id),
+                default => null,
+            };
+            $locationName = $locationModel?->name ?? 'Unknown';
+        }
         $currentLocation = [
-            'type' => $user->location_type,
-            'id' => $user->location_id,
-            'name' => $user->location?->name ?? 'Unknown',
+            'type' => $user->current_location_type,
+            'id' => $user->current_location_id,
+            'name' => $locationName,
         ];
 
         return Inertia::render('Trade/Caravans', [
@@ -282,8 +292,8 @@ class CaravanController extends Controller
         $result = $this->caravanService->createCaravan(
             owner: $user,
             name: $validated['name'],
-            locationType: $user->location_type,
-            locationId: $user->location_id,
+            locationType: $user->current_location_type,
+            locationId: $user->current_location_id,
             guards: $validated['guards'] ?? 0
         );
 

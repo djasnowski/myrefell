@@ -35,6 +35,8 @@ class TrainingController extends Controller
             'combat_stats' => $combatStats,
             'player_energy' => $user->energy,
             'max_energy' => $user->max_energy,
+            'player_hp' => $user->hp,
+            'max_hp' => $user->max_hp,
         ]);
     }
 

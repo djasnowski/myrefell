@@ -21,7 +21,7 @@ class MapController extends Controller
     {
         $user = $request->user();
 
-        return Inertia::render('dashboard', [
+        return Inertia::render('Travel/Map', [
             'map_data' => $this->getMapData($user),
             'health_data' => $this->getHealthData($user),
         ]);

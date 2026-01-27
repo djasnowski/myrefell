@@ -40,8 +40,8 @@ class DynastyService
                 'dynasty_id' => $dynasty->id,
                 'user_id' => $founder->id,
                 'member_type' => 'player',
-                'first_name' => $founder->name,
-                'gender' => 'male', // Default, should be from user profile
+                'first_name' => $founder->username,
+                'gender' => $founder->gender ?? 'male',
                 'generation' => 1,
                 'birth_order' => 1,
                 'is_legitimate' => true,
@@ -71,7 +71,7 @@ class DynastyService
                 'member_id' => $member->id,
                 'event_type' => DynastyEvent::TYPE_ACHIEVEMENT,
                 'title' => 'Dynasty Founded',
-                'description' => "The {$name} dynasty was founded by {$founder->name}.",
+                'description' => "The {$name} dynasty was founded by {$founder->username}.",
                 'prestige_change' => 100,
                 'occurred_at' => now(),
             ]);

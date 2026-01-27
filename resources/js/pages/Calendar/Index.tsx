@@ -77,7 +77,7 @@ export default function CalendarIndex() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Calendar" />
             <div className="flex h-full flex-1 flex-col p-4">
-                <div className="mx-auto w-full max-w-2xl">
+                <div className="w-full">
                     {/* Header */}
                     <div
                         className={`mb-6 rounded-xl border-2 ${config.border} bg-gradient-to-br ${config.gradient} p-6`}

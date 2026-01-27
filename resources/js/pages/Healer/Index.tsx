@@ -125,7 +125,7 @@ export default function HealerIndex() {
                     </div>
                 </div>
 
-                <div className="mx-auto w-full max-w-2xl">
+                <div className="w-full">
                     {/* Healer Introduction */}
                     <div className="mb-6 rounded-xl border-2 border-stone-700 bg-stone-800/50 p-6">
                         <div className="mb-4 flex items-center gap-4">

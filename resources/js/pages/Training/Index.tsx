@@ -1,5 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUp, Dumbbell, Loader2, Shield, Sword, Zap } from 'lucide-react';
+import { ArrowUp, Dumbbell, Heart, Loader2, Shield, Sword, Zap } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -58,6 +58,8 @@ interface PageProps {
     combat_stats: CombatStats;
     player_energy: number;
     max_energy: number;
+    player_hp: number;
+    max_hp: number;
     [key: string]: unknown;
 }
 
@@ -86,11 +88,12 @@ const exerciseColors: Record<string, { bg: string; border: string; text: string 
 };
 
 export default function TrainingIndex() {
-    const { exercises, combat_stats, player_energy, max_energy } = usePage<PageProps>().props;
+    const { exercises, combat_stats, player_energy, max_energy, player_hp, max_hp } = usePage<PageProps>().props;
     const [loading, setLoading] = useState<string | null>(null);
     const [result, setResult] = useState<TrainResult | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(player_energy);
     const [currentStats, setCurrentStats] = useState(combat_stats);
+    const [currentHp, setCurrentHp] = useState(player_hp);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -201,22 +204,41 @@ export default function TrainingIndex() {
                         </div>
                     </div>
 
-                    {/* Energy Bar */}
-                    <div className="mb-6 rounded-lg border border-stone-700 bg-stone-800/50 p-3">
-                        <div className="mb-1 flex items-center justify-between">
-                            <div className="flex items-center gap-1 font-pixel text-xs text-yellow-400">
-                                <Zap className="h-3 w-3" />
-                                Energy
+                    {/* HP and Energy Bars */}
+                    <div className="mb-6 grid grid-cols-2 gap-3">
+                        <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
+                            <div className="mb-1 flex items-center justify-between">
+                                <div className="flex items-center gap-1 font-pixel text-xs text-red-400">
+                                    <Heart className="h-3 w-3" />
+                                    HP
+                                </div>
+                                <div className="font-pixel text-xs text-stone-400">
+                                    {currentHp} / {max_hp}
+                                </div>
                             </div>
-                            <div className="font-pixel text-xs text-stone-400">
-                                {currentEnergy} / {max_energy}
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
+                                <div
+                                    className="h-full bg-gradient-to-r from-red-600 to-red-400 transition-all"
+                                    style={{ width: `${(currentHp / max_hp) * 100}%` }}
+                                />
                             </div>
                         </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
-                            <div
-                                className="h-full bg-gradient-to-r from-yellow-600 to-yellow-400 transition-all"
-                                style={{ width: `${(currentEnergy / max_energy) * 100}%` }}
-                            />
+                        <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
+                            <div className="mb-1 flex items-center justify-between">
+                                <div className="flex items-center gap-1 font-pixel text-xs text-yellow-400">
+                                    <Zap className="h-3 w-3" />
+                                    Energy
+                                </div>
+                                <div className="font-pixel text-xs text-stone-400">
+                                    {currentEnergy} / {max_energy}
+                                </div>
+                            </div>
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
+                                <div
+                                    className="h-full bg-gradient-to-r from-yellow-600 to-yellow-400 transition-all"
+                                    style={{ width: `${(currentEnergy / max_energy) * 100}%` }}
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -283,34 +305,29 @@ export default function TrainingIndex() {
                             return (
                                 <div
                                     key={exercise.id}
-                                    className={`rounded-xl border-2 bg-gradient-to-br ${colors.bg} ${colors.border} p-4`}
+                                    className={`rounded-xl border-2 bg-gradient-to-br ${colors.bg} ${colors.border} px-4 py-6`}
                                 >
                                     <div className="flex items-start gap-4">
                                         <div className="rounded-lg bg-stone-800/50 p-3">
                                             <Icon className={`h-8 w-8 ${colors.text}`} />
                                         </div>
                                         <div className="flex-1">
-                                            <div className="flex items-center justify-between">
-                                                <div>
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div className="flex-1">
                                                     <h3 className={`font-pixel text-lg ${colors.text}`}>
                                                         {exercise.name}
                                                     </h3>
-                                                    <p className="font-pixel text-[10px] text-stone-400">
+                                                    <p className="max-w-md py-1 font-pixel text-[10px] text-stone-400">
                                                         {exercise.description}
                                                     </p>
                                                 </div>
-                                                <div className="text-right">
-                                                    <div className="font-pixel text-sm text-stone-300">
-                                                        Level {stat.level}
-                                                    </div>
-                                                    <div className="font-pixel text-[10px] text-stone-500">
-                                                        {stat.xp_to_next_level.toLocaleString()} XP to next
-                                                    </div>
+                                                <div className="whitespace-nowrap font-pixel text-lg text-stone-300">
+                                                    Level {stat.level}
                                                 </div>
                                             </div>
 
-                                            {/* Progress bar */}
-                                            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-stone-700">
+                                            {/* Progress bar with XP info */}
+                                            <div className="relative mt-2 h-4 w-full overflow-hidden rounded-full bg-stone-700">
                                                 <div
                                                     className={`h-full transition-all ${
                                                         exercise.id === 'attack'
@@ -321,6 +338,9 @@ export default function TrainingIndex() {
                                                     }`}
                                                     style={{ width: `${stat.progress}%` }}
                                                 />
+                                                <div className="absolute inset-0 flex items-center justify-center font-pixel text-[10px] text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
+                                                    {stat.xp_to_next_level.toLocaleString()} XP to lvl {stat.level + 1}
+                                                </div>
                                             </div>
 
                                             <div className="mt-3 flex items-center justify-between">

@@ -1,27 +1,22 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
     Anchor,
-    Award,
-    Axe,
     Backpack,
     Banknote,
     BarChart3,
-    Briefcase,
-    Calendar,
     Castle,
     Church,
     ClipboardList,
     Clock,
     Crown,
     Dumbbell,
-    Flame,
     Gavel,
     Hammer,
     Home,
     Loader2,
-    Mail,
     Map,
     MapPin,
+    MessageCircle,
     Pickaxe,
     ScrollText,
     Shield,
@@ -115,16 +110,54 @@ const locationIcons: Record<string, LucideIcon> = {
     wilderness: Trees,
 };
 
-// Get buildings/services at current location
-function getLocationServices(location: LocationData | null): NavItem[] {
+// Get everything available at current location (merged: services, activities, common)
+function getLocationItems(location: LocationData | null): NavItem[] {
     const items: NavItem[] = [];
 
-    if (!location || location.type === 'wilderness') {
+    if (!location) {
         return items;
     }
 
+    // Wilderness - only gathering
+    if (location.type === 'wilderness') {
+        items.push({
+            title: 'Gathering',
+            href: '/gathering',
+            icon: Pickaxe,
+            description: 'Mine, fish, or chop wood',
+        });
+        return items;
+    }
+
+    // All settlements have these activities
+    items.push({
+        title: 'Training',
+        href: '/training',
+        icon: Dumbbell,
+        description: 'Train combat skills',
+    });
+    items.push({
+        title: 'Gathering',
+        href: '/gathering',
+        icon: Pickaxe,
+        description: 'Mine, fish, or chop wood',
+    });
+    items.push({
+        title: 'Crafting',
+        href: '/crafting',
+        icon: Hammer,
+        description: 'Create items',
+    });
+
+    // Location-specific services
     switch (location.type) {
         case 'village':
+            items.push({
+                title: 'Market',
+                href: `/villages/${location.id}/market`,
+                icon: Store,
+                description: 'Buy and sell goods',
+            });
             items.push({
                 title: 'Bank',
                 href: `/villages/${location.id}/bank`,
@@ -144,28 +177,40 @@ function getLocationServices(location: LocationData | null): NavItem[] {
                 description: 'Find work and quests',
             });
             items.push({
-                title: 'Court',
-                href: '/crime',
-                icon: Gavel,
-                description: 'Justice and bounties',
-            });
-            items.push({
                 title: 'Residents',
                 href: `/villages/${location.id}/residents`,
                 icon: Users,
                 description: 'People who live here',
+            });
+            items.push({
+                title: 'Chat',
+                href: '/chat',
+                icon: MessageCircle,
+                description: 'Talk with others',
+            });
+            items.push({
+                title: 'Court',
+                href: '/crime',
+                icon: Gavel,
+                description: 'Justice and bounties',
             });
             if (location.is_port) {
                 items.push({
                     title: 'Harbor',
                     href: `/villages/${location.id}/port`,
                     icon: Anchor,
-                    description: 'Book passage to other kingdoms',
+                    description: 'Book passage overseas',
                 });
             }
             break;
 
         case 'barony':
+            items.push({
+                title: 'Market',
+                href: `/baronies/${location.id}/market`,
+                icon: Store,
+                description: 'Buy and sell goods',
+            });
             items.push({
                 title: 'Bank',
                 href: `/baronies/${location.id}/bank`,
@@ -179,16 +224,16 @@ function getLocationServices(location: LocationData | null): NavItem[] {
                 description: 'Full medical care',
             });
             items.push({
-                title: 'Barracks',
-                href: `/baronies/${location.id}/barracks`,
-                icon: Shield,
-                description: 'Train combat skills',
-            });
-            items.push({
                 title: 'Arena',
                 href: `/baronies/${location.id}/arena`,
                 icon: Swords,
                 description: 'Fight for glory',
+            });
+            items.push({
+                title: 'Chat',
+                href: '/chat',
+                icon: MessageCircle,
+                description: 'Talk with others',
             });
             items.push({
                 title: 'Court',
@@ -212,20 +257,34 @@ function getLocationServices(location: LocationData | null): NavItem[] {
 
         case 'town':
             items.push({
+                title: 'Market',
+                href: `/towns/${location.id}/market`,
+                icon: Store,
+                description: 'Buy and sell goods',
+            });
+            items.push({
                 title: 'Bank',
                 href: `/towns/${location.id}/bank`,
                 icon: Banknote,
+                description: 'Secure vault',
             });
             items.push({
                 title: 'Infirmary',
                 href: `/towns/${location.id}/infirmary`,
                 icon: Church,
+                description: 'Full medical care',
             });
             items.push({
                 title: 'Town Hall',
                 href: `/towns/${location.id}/hall`,
                 icon: Crown,
                 description: 'Civic affairs',
+            });
+            items.push({
+                title: 'Chat',
+                href: '/chat',
+                icon: MessageCircle,
+                description: 'Talk with others',
             });
             items.push({
                 title: 'Court',
@@ -262,20 +321,26 @@ function getDestinationIcon(type: string): LucideIcon {
     return locationIcons[type] || MapPin;
 }
 
-// Get player actions (always visible)
+// Get player actions (always visible regardless of location)
 function getPlayerActions(): NavItem[] {
     return [
         {
-            title: 'Skills',
-            href: '/skills',
-            icon: BarChart3,
-            description: 'View your skill levels',
+            title: 'World Map',
+            href: '/travel',
+            icon: Map,
+            description: 'Travel the realm',
         },
         {
             title: 'Inventory',
             href: '/inventory',
             icon: Backpack,
             description: 'Your items and equipment',
+        },
+        {
+            title: 'Skills',
+            href: '/skills',
+            icon: BarChart3,
+            description: 'View your skill levels',
         },
         {
             title: 'Quests',
@@ -289,80 +354,9 @@ function getPlayerActions(): NavItem[] {
             icon: ClipboardList,
             description: 'Earn daily rewards',
         },
-        {
-            title: 'World Map',
-            href: '/travel',
-            icon: Map,
-            description: 'Travel the realm',
-        },
     ];
 }
 
-// Get activities available at location
-function getActivities(location: LocationData | null): NavItem[] {
-    const items: NavItem[] = [];
-
-    if (!location || location.type === 'wilderness') {
-        // Wilderness only allows gathering
-        items.push({
-            title: 'Gathering',
-            href: '/gathering',
-            icon: Pickaxe,
-            description: 'Mine, fish, or chop wood',
-        });
-        return items;
-    }
-
-    // All settlements have training and gathering
-    items.push({
-        title: 'Training',
-        href: '/training',
-        icon: Dumbbell,
-        description: 'Train combat skills',
-    });
-    items.push({
-        title: 'Gathering',
-        href: '/gathering',
-        icon: Pickaxe,
-        description: 'Mine, fish, or chop wood',
-    });
-    items.push({
-        title: 'Crafting',
-        href: '/crafting',
-        icon: Hammer,
-        description: 'Create items',
-    });
-
-    return items;
-}
-
-// Get common services
-function getCommonServices(location: LocationData | null): NavItem[] {
-    const items: NavItem[] = [];
-
-    if (location && location.type !== 'wilderness') {
-        items.push({
-            title: 'Mailbox',
-            href: '/mail',
-            icon: Mail,
-            description: 'Messages by bird',
-        });
-        items.push({
-            title: 'Events',
-            href: location.id ? `/${location.type}s/${location.id}/events` : '/events',
-            icon: Calendar,
-            description: 'Local happenings',
-        });
-        items.push({
-            title: 'Social Status',
-            href: '/social-class',
-            icon: Award,
-            description: 'Your standing in society',
-        });
-    }
-
-    return items;
-}
 
 // Get contextual items based on player's affiliations
 function getContextualItems(context: PlayerContext): NavItem[] {
@@ -482,11 +476,9 @@ export function NavLocation() {
     if (!sidebar) return null;
 
     const { location, home_village, travel, nearby_destinations, context } = sidebar;
-    const services = getLocationServices(location);
     const travelDestinations = nearby_destinations || [];
-    const commonServices = getCommonServices(location);
     const playerActions = getPlayerActions();
-    const activities = getActivities(location);
+    const locationItems = getLocationItems(location);
     const contextualItems = getContextualItems(context || {});
 
     const LocationIcon = location ? locationIcons[location.type] || MapPin : MapPin;
@@ -592,58 +584,12 @@ export function NavLocation() {
                 </SidebarMenu>
             </SidebarGroup>
 
-            {/* Activities */}
-            {activities.length > 0 && (
-                <SidebarGroup className="px-2 py-0">
-                    <SidebarGroupLabel>Activities</SidebarGroupLabel>
-                    <SidebarMenu>
-                        {activities.map((item) => (
-                            <SidebarMenuItem key={item.title}>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={isCurrentUrl(item.href)}
-                                    tooltip={{ children: item.description || item.title }}
-                                >
-                                    <Link href={item.href} prefetch>
-                                        <item.icon className="h-4 w-4" />
-                                        <span>{item.title}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        ))}
-                    </SidebarMenu>
-                </SidebarGroup>
-            )}
-
-            {/* Services at this location */}
-            {services.length > 0 && (
+            {/* Everything at this location */}
+            {locationItems.length > 0 && (
                 <SidebarGroup className="px-2 py-0">
                     <SidebarGroupLabel>Here</SidebarGroupLabel>
                     <SidebarMenu>
-                        {services.map((item) => (
-                            <SidebarMenuItem key={item.title}>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={isCurrentUrl(item.href)}
-                                    tooltip={{ children: item.description || item.title }}
-                                >
-                                    <Link href={item.href} prefetch>
-                                        <item.icon className="h-4 w-4" />
-                                        <span>{item.title}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        ))}
-                    </SidebarMenu>
-                </SidebarGroup>
-            )}
-
-            {/* Common Services */}
-            {commonServices.length > 0 && (
-                <SidebarGroup className="px-2 py-0">
-                    <SidebarGroupLabel>Services</SidebarGroupLabel>
-                    <SidebarMenu>
-                        {commonServices.map((item) => (
+                        {locationItems.map((item) => (
                             <SidebarMenuItem key={item.title}>
                                 <SidebarMenuButton
                                     asChild

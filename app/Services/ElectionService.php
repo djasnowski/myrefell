@@ -20,7 +20,7 @@ class ElectionService
     public function __construct(
         protected LegitimacyService $legitimacyService
     ) {}
-{
+
     /**
      * Minimum residents required for election (below this, self-appointment is allowed).
      */

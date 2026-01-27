@@ -6,11 +6,14 @@ import {
     BicepsFlexed,
     Fish,
     Hammer,
+    Heart,
     Pickaxe,
     Scissors,
     Shield,
     Sword,
+    Target,
     TreeDeciduous,
+    Wheat,
 } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -27,12 +30,15 @@ interface SidebarData {
     skills: Skill[];
 }
 
-const skillOrder = ['attack', 'strength', 'defense', 'mining', 'fishing', 'woodcutting', 'cooking', 'smithing', 'crafting'];
+const skillOrder = ['attack', 'strength', 'defense', 'hitpoints', 'range', 'farming', 'mining', 'fishing', 'woodcutting', 'cooking', 'smithing', 'crafting'];
 
 const skillIcons: Record<string, LucideIcon> = {
+    hitpoints: Heart,
     attack: Sword,
     strength: BicepsFlexed,
     defense: Shield,
+    range: Target,
+    farming: Wheat,
     mining: Pickaxe,
     fishing: Fish,
     woodcutting: TreeDeciduous,

@@ -151,7 +151,7 @@ export default function ProposeMarriage({
             <AppLayout breadcrumbs={breadcrumbs}>
                 <Head title="Propose Marriage" />
                 <div className="flex h-full flex-1 flex-col overflow-auto p-4">
-                    <div className="mx-auto w-full max-w-2xl">
+                    <div className="w-full">
                         <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-6 text-center">
                             <Heart className="mx-auto mb-4 h-12 w-12 text-stone-600" />
                             <h2 className="mb-2 font-pixel text-lg text-stone-300">No Dynasty</h2>

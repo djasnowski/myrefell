@@ -70,7 +70,7 @@ export default function Residents() {
                 </div>
 
                 {/* Residents List */}
-                <div className="mx-auto w-full max-w-2xl">
+                <div className="w-full">
                     {residents.length > 0 ? (
                         <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
                             <div className="space-y-2">

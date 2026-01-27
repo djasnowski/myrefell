@@ -8,6 +8,7 @@ import {
     Home,
     Loader2,
     Package,
+    Search,
     ShoppingCart,
     Store,
     TrendingDown,
@@ -80,9 +81,9 @@ function formatGold(amount: number): string {
 
 function getPriceIndicator(modifier: number) {
     if (modifier > 1.1) {
-        return { icon: TrendingUp, color: 'text-red-400', label: 'High' };
+        return { icon: TrendingUp, color: 'text-red-400', label: 'High', tooltip: 'Price is high due to low supply or season' };
     } else if (modifier < 0.9) {
-        return { icon: TrendingDown, color: 'text-green-400', label: 'Low' };
+        return { icon: TrendingDown, color: 'text-green-400', label: 'Low', tooltip: 'Price is low due to high supply or season' };
     }
     return null;
 }
@@ -109,6 +110,7 @@ export default function MarketIndex() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [filterType, setFilterType] = useState<string>('all');
+    const [searchQuery, setSearchQuery] = useState('');
 
     const LocationIcon = locationIcons[market_info.location_type] || Home;
 
@@ -119,8 +121,13 @@ export default function MarketIndex() {
     ];
 
     const filteredBuyItems = market_prices.filter((item) => {
-        if (filterType === 'all') return true;
-        return item.item_type === filterType;
+        const matchesType = filterType === 'all' || item.item_type === filterType;
+        const matchesSearch = !searchQuery || item.item_name.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesType && matchesSearch;
+    });
+
+    const filteredSellItems = sellable_items.filter((item) => {
+        return !searchQuery || item.item_name.toLowerCase().includes(searchQuery.toLowerCase());
     });
 
     const handleBuy = async () => {
@@ -287,6 +294,18 @@ export default function MarketIndex() {
                             </button>
                         </div>
 
+                        {/* Search */}
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
+                            <input
+                                type="text"
+                                placeholder="Search items..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full rounded-lg border-2 border-stone-600 bg-stone-900 py-2 pl-10 pr-4 font-pixel text-sm text-stone-200 placeholder-stone-500 focus:border-emerald-600 focus:outline-none"
+                            />
+                        </div>
+
                         {/* Filter (Buy tab only) */}
                         {activeTab === 'buy' && (
                             <div className="flex gap-2 flex-wrap">
@@ -324,10 +343,13 @@ export default function MarketIndex() {
                                                         setError(null);
                                                         setSuccess(null);
                                                     }}
-                                                    className={`flex w-full items-center justify-between p-3 text-left transition ${
+                                                    className={`flex w-full items-center gap-3 p-3 text-left transition ${
                                                         isSelected ? 'bg-emerald-900/20' : 'hover:bg-stone-700/50'
                                                     }`}
                                                 >
+                                                    <span className="font-pixel text-xs text-stone-500 w-10">
+                                                        x{item.supply_quantity}
+                                                    </span>
                                                     <div className="flex-1">
                                                         <div className="flex items-center gap-2">
                                                             <span className="font-pixel text-sm text-stone-200">{item.item_name}</span>
@@ -335,22 +357,14 @@ export default function MarketIndex() {
                                                                 {item.item_type}
                                                             </span>
                                                             {priceIndicator && (
-                                                                <priceIndicator.icon className={`h-3 w-3 ${priceIndicator.color}`} />
+                                                                <span title={priceIndicator.tooltip} className="cursor-help">
+                                                                    <priceIndicator.icon className={`h-3 w-3 ${priceIndicator.color}`} />
+                                                                </span>
                                                             )}
                                                         </div>
-                                                        <div className="flex items-center gap-3 mt-1">
-                                                            <span className="font-pixel text-[10px] text-stone-500">
-                                                                Stock: {item.supply_quantity}
-                                                            </span>
-                                                        </div>
                                                     </div>
-                                                    <div className="text-right">
-                                                        <div className="font-pixel text-sm text-yellow-400">{formatGold(item.buy_price)} g</div>
-                                                        {item.buy_price !== item.base_price && (
-                                                            <div className="font-pixel text-[10px] text-stone-500 line-through">
-                                                                {formatGold(item.base_price)} g
-                                                            </div>
-                                                        )}
+                                                    <div className="font-pixel text-sm text-yellow-400">
+                                                        {formatGold(item.buy_price)}g
                                                     </div>
                                                 </button>
                                             );
@@ -362,9 +376,9 @@ export default function MarketIndex() {
                                         <p className="font-pixel text-xs text-stone-500">No items available</p>
                                     </div>
                                 )
-                            ) : sellable_items.length > 0 ? (
+                            ) : filteredSellItems.length > 0 ? (
                                 <div className="divide-y divide-stone-700">
-                                    {sellable_items.map((item) => {
+                                    {filteredSellItems.map((item) => {
                                         const isSelected = selectedItem && 'inventory_id' in selectedItem && selectedItem.inventory_id === item.inventory_id;
 
                                         return (
@@ -376,10 +390,13 @@ export default function MarketIndex() {
                                                     setError(null);
                                                     setSuccess(null);
                                                 }}
-                                                className={`flex w-full items-center justify-between p-3 text-left transition ${
+                                                className={`flex w-full items-center gap-3 p-3 text-left transition ${
                                                     isSelected ? 'bg-amber-900/20' : 'hover:bg-stone-700/50'
                                                 }`}
                                             >
+                                                <span className="font-pixel text-xs text-stone-500 w-10">
+                                                    x{item.quantity}
+                                                </span>
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2">
                                                         <span className="font-pixel text-sm text-stone-200">{item.item_name}</span>
@@ -387,11 +404,8 @@ export default function MarketIndex() {
                                                             {item.item_type}
                                                         </span>
                                                     </div>
-                                                    <div className="font-pixel text-[10px] text-stone-500 mt-1">
-                                                        Quantity: {item.quantity}
-                                                    </div>
                                                 </div>
-                                                <div className="font-pixel text-sm text-yellow-400">{formatGold(item.sell_price)} g</div>
+                                                <div className="font-pixel text-sm text-yellow-400">{formatGold(item.sell_price)}g</div>
                                             </button>
                                         );
                                     })}
@@ -432,8 +446,8 @@ export default function MarketIndex() {
                                         <div className="font-pixel text-sm text-stone-200">{selectedItem.item_name}</div>
                                         <div className="mt-1 font-pixel text-[10px] text-stone-500">
                                             {'buy_price' in selectedItem
-                                                ? `Buy: ${formatGold(selectedItem.buy_price)} g each`
-                                                : `Sell: ${formatGold(selectedItem.sell_price)} g each`}
+                                                ? `Buy: ${formatGold(selectedItem.buy_price)}g each`
+                                                : `Sell: ${formatGold(selectedItem.sell_price)}g each`}
                                         </div>
                                         {'quantity' in selectedItem && (
                                             <div className="mt-1 font-pixel text-[10px] text-stone-500">
@@ -479,7 +493,7 @@ export default function MarketIndex() {
                                     {/* Total */}
                                     <div className="mb-4 flex items-center justify-between rounded-lg bg-stone-900/50 p-3">
                                         <span className="font-pixel text-xs text-stone-400">Total</span>
-                                        <span className="font-pixel text-lg text-yellow-400">{formatGold(calculateTotal())} g</span>
+                                        <span className="font-pixel text-lg text-yellow-400">{formatGold(calculateTotal())}g</span>
                                     </div>
 
                                     {/* Action Button */}

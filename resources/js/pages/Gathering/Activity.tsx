@@ -135,7 +135,7 @@ export default function GatheringActivity() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={activity.name} />
             <div className="flex h-full flex-1 flex-col p-4">
-                <div className="mx-auto w-full max-w-2xl">
+                <div className="w-full">
                     {/* Header Card */}
                     <div className={`mb-6 rounded-xl border-2 bg-gradient-to-br p-6 ${bgColor}`}>
                         <div className="flex items-center gap-4">

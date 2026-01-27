@@ -64,6 +64,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'gold',
         'primary_title',
         'title_tier',
+        'dynasty_id',
+        'dynasty_member_id',
+        'spouse_id',
     ];
 
     /**
@@ -219,7 +222,7 @@ class User extends Authenticatable implements MustVerifyEmail
         $skill = $this->skills()->where('skill_name', $skillName)->first();
 
         // Combat skills start at 5, others at 1
-        $default = in_array($skillName, ['attack', 'strength', 'defense']) ? 5 : 1;
+        $default = in_array($skillName, PlayerSkill::COMBAT_SKILLS) ? 5 : 1;
 
         return $skill?->level ?? $default;
     }

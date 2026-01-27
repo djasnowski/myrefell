@@ -119,7 +119,7 @@ export default function QuestLog() {
                     </div>
                 </div>
 
-                <div className="mx-auto w-full max-w-2xl space-y-4">
+                <div className="w-full space-y-4">
                     {/* Completed Quests Ready to Claim */}
                     {completed_quests.length > 0 && (
                         <div className="rounded-xl border-2 border-green-600/50 bg-green-900/20 p-4">

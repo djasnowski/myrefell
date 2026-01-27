@@ -56,40 +56,40 @@ function ItemTooltip({ item, quantity, isEquipped }: { item: Item; quantity: num
     const hasStats = item.atk_bonus || item.str_bonus || item.def_bonus || item.hp_bonus;
 
     return (
-        <div className="absolute bottom-full left-1/2 z-50 mb-2 w-48 -translate-x-1/2 rounded border-2 border-stone-600 bg-stone-900 p-2 shadow-lg">
-            <div className="mb-1 font-pixel text-[8px] capitalize text-amber-400">{item.name}</div>
-            <div className="mb-1 font-pixel text-[6px] capitalize text-stone-400">
+        <div className="absolute top-full left-1/2 z-[100] mt-2 w-56 -translate-x-1/2 rounded border-2 border-stone-600 bg-stone-900 p-3 shadow-lg">
+            <div className="mb-1 font-pixel text-sm capitalize text-amber-400">{item.name}</div>
+            <div className="mb-1 font-pixel text-xs capitalize text-stone-400">
                 {item.rarity} {item.type}
                 {item.subtype && ` - ${item.subtype}`}
             </div>
-            {item.description && <div className="mb-2 text-[10px] text-stone-300">{item.description}</div>}
+            {item.description && <div className="mb-2 text-sm text-stone-300">{item.description}</div>}
             {hasStats && (
-                <div className="mb-2 space-y-0.5 border-t border-stone-700 pt-1">
+                <div className="mb-2 space-y-1 border-t border-stone-700 pt-2">
                     {item.atk_bonus > 0 && (
-                        <div className="font-pixel text-[6px] text-red-400">+{item.atk_bonus} Attack</div>
+                        <div className="font-pixel text-xs text-red-400">+{item.atk_bonus} Attack</div>
                     )}
                     {item.str_bonus > 0 && (
-                        <div className="font-pixel text-[6px] text-orange-400">+{item.str_bonus} Strength</div>
+                        <div className="font-pixel text-xs text-orange-400">+{item.str_bonus} Strength</div>
                     )}
                     {item.def_bonus > 0 && (
-                        <div className="font-pixel text-[6px] text-blue-400">+{item.def_bonus} Defense</div>
+                        <div className="font-pixel text-xs text-blue-400">+{item.def_bonus} Defense</div>
                     )}
                     {item.hp_bonus > 0 && (
-                        <div className="font-pixel text-[6px] text-green-400">+{item.hp_bonus} HP</div>
+                        <div className="font-pixel text-xs text-green-400">+{item.hp_bonus} HP</div>
                     )}
                 </div>
             )}
-            <div className="flex items-center justify-between border-t border-stone-700 pt-1">
-                <span className="flex items-center gap-1 font-pixel text-[6px] text-amber-300">
-                    <GoldIcon className="h-3 w-3" /> {item.base_value}
+            <div className="flex items-center justify-between border-t border-stone-700 pt-2">
+                <span className="flex items-center gap-1 font-pixel text-xs text-amber-300">
+                    <GoldIcon className="h-4 w-4" /> {item.base_value}
                 </span>
-                {quantity > 1 && <span className="font-pixel text-[6px] text-stone-400">x{quantity}</span>}
+                {quantity > 1 && <span className="font-pixel text-xs text-stone-400">x{quantity}</span>}
             </div>
             {isEquipped && (
-                <div className="mt-1 font-pixel text-[6px] text-green-400">✓ Equipped</div>
+                <div className="mt-1 font-pixel text-xs text-green-400">✓ Equipped</div>
             )}
             {/* Arrow */}
-            <div className="absolute left-1/2 top-full -translate-x-1/2 border-8 border-transparent border-t-stone-600" />
+            <div className="absolute left-1/2 bottom-full -translate-x-1/2 border-8 border-transparent border-b-stone-600" />
         </div>
     );
 }
@@ -129,7 +129,7 @@ function InventorySlotComponent({
 
     return (
         <div
-            className={`relative aspect-square cursor-pointer rounded border-2 transition-all ${
+            className={`relative h-14 w-14 cursor-pointer rounded border-2 transition-all ${
                 slot
                     ? `${rarityColors[slot.item.rarity]} hover:brightness-110`
                     : 'border-stone-700 bg-stone-800/30 hover:border-stone-600'
@@ -147,16 +147,16 @@ function InventorySlotComponent({
                     <div className="flex h-full items-center justify-center">
                         {(() => {
                             const Icon = getItemIcon(slot.item.type, slot.item.subtype);
-                            return <Icon className="h-6 w-6 text-stone-300" />;
+                            return <Icon className="h-7 w-7 text-stone-300" />;
                         })()}
                     </div>
                     {slot.quantity > 1 && (
-                        <div className="absolute bottom-0.5 right-0.5 font-pixel text-[8px] text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
+                        <div className="absolute bottom-0.5 right-1 font-pixel text-[10px] text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
                             {slot.quantity}
                         </div>
                     )}
                     {slot.is_equipped && (
-                        <div className="absolute left-0.5 top-0.5 font-pixel text-[8px] text-green-400">E</div>
+                        <div className="absolute left-1 top-0.5 font-pixel text-[10px] text-green-400">E</div>
                     )}
                     {showTooltip && (
                         <ItemTooltip item={slot.item} quantity={slot.quantity} isEquipped={slot.is_equipped} />
@@ -210,9 +210,9 @@ export default function Inventory() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Inventory" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
+            <div className="flex h-full flex-1 flex-col gap-3 p-4">
                 {/* Header */}
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border-2 border-amber-700 bg-gradient-to-b from-stone-800 to-stone-900 p-4 shadow-lg">
+                <div className="flex items-center justify-between rounded-lg border-2 border-amber-700 bg-gradient-to-b from-stone-800 to-stone-900 px-4 py-2 shadow-lg">
                     <div>
                         <h1 className="font-pixel text-lg text-amber-400">Inventory</h1>
                         <p className="font-pixel text-[10px] text-stone-400">
@@ -225,10 +225,10 @@ export default function Inventory() {
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-4 lg:flex-row">
+                <div className="flex flex-1 flex-col gap-3 lg:flex-row">
                     {/* Inventory Grid */}
-                    <div className="flex-1 rounded-lg border-2 border-stone-600 bg-stone-800/80 p-4">
-                        <div className="grid grid-cols-7 gap-2">
+                    <div className="flex-1 rounded-lg border-2 border-stone-600 bg-stone-800/80 p-3">
+                        <div className="flex flex-wrap gap-1">
                             {slots.map((slot, index) => (
                                 <InventorySlotComponent
                                     key={index}
@@ -243,7 +243,7 @@ export default function Inventory() {
                     </div>
 
                     {/* Item Details Panel */}
-                    <div className="w-full rounded-lg border-2 border-stone-600 bg-stone-800/80 p-4 lg:w-64">
+                    <div className="w-full rounded-lg border-2 border-stone-600 bg-stone-800/80 p-3 lg:w-56">
                         <h2 className="mb-4 font-pixel text-xs text-amber-400">Item Details</h2>
 
                         {selectedItem ? (
@@ -342,18 +342,6 @@ export default function Inventory() {
                     </div>
                 </div>
 
-                {/* Legend */}
-                <div className="rounded-lg border-2 border-stone-600 bg-stone-800/80 p-4">
-                    <h3 className="mb-2 font-pixel text-[10px] text-amber-400">Item Rarity</h3>
-                    <div className="flex flex-wrap gap-4">
-                        {Object.entries(rarityColors).map(([rarity, classes]) => (
-                            <div key={rarity} className="flex items-center gap-2">
-                                <div className={`h-4 w-4 rounded border-2 ${classes}`} />
-                                <span className="font-pixel text-[8px] capitalize text-stone-300">{rarity}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
             </div>
         </AppLayout>
     );

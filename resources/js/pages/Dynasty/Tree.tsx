@@ -444,7 +444,7 @@ export default function DynastyTree({
                 {/* Member detail panel */}
                 {selectedMember && (
                     <div className="border-t border-stone-700 bg-stone-800/80 p-4">
-                        <div className="mx-auto max-w-2xl">
+                        <div className="w-full">
                             <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-4">
                                     <div

@@ -122,44 +122,42 @@ class MarketService
     }
 
     /**
-     * Get all market prices for a location.
+     * Get all market prices for a location (only items in stock).
      */
     public function getMarketPrices(string $locationType, int $locationId): Collection
     {
-        // Get tradeable items (resources and consumables primarily)
-        $tradeableItems = Item::whereIn('type', ['resource', 'consumable', 'tool', 'misc'])
-            ->whereNotNull('base_value')
-            ->where('base_value', '>', 0)
-            ->get();
-
         $worldState = WorldState::current();
 
-        return $tradeableItems->map(function ($item) use ($locationType, $locationId, $worldState) {
-            $marketPrice = MarketPrice::getOrCreate($locationType, $locationId, $item);
+        // Get stockpiles with items in stock at this location
+        $stockpiles = LocationStockpile::atLocation($locationType, $locationId)
+            ->where('quantity', '>', 0)
+            ->with('item')
+            ->get();
 
-            // Update price with current modifiers
-            $this->updatePrice($marketPrice, $worldState);
+        return $stockpiles
+            ->filter(fn ($stockpile) => $stockpile->item && in_array($stockpile->item->type, ['resource', 'consumable', 'tool', 'misc']))
+            ->map(function ($stockpile) use ($locationType, $locationId, $worldState) {
+                $item = $stockpile->item;
+                $marketPrice = MarketPrice::getOrCreate($locationType, $locationId, $item);
 
-            // Get stockpile quantity
-            $stockpile = LocationStockpile::atLocation($locationType, $locationId)
-                ->forItem($item->id)
-                ->first();
+                // Update price with current modifiers
+                $this->updatePrice($marketPrice, $worldState);
 
-            return [
-                'item_id' => $item->id,
-                'item_name' => $item->name,
-                'item_type' => $item->type,
-                'item_description' => $item->description,
-                'base_price' => $marketPrice->base_price,
-                'buy_price' => $marketPrice->buy_price,
-                'sell_price' => $marketPrice->sell_price,
-                'current_price' => $marketPrice->current_price,
-                'supply_quantity' => $stockpile?->quantity ?? 0,
-                'demand_level' => $marketPrice->demand_level,
-                'seasonal_modifier' => $marketPrice->seasonal_modifier,
-                'supply_modifier' => $marketPrice->supply_modifier,
-            ];
-        });
+                return [
+                    'item_id' => $item->id,
+                    'item_name' => $item->name,
+                    'item_type' => $item->type,
+                    'item_description' => $item->description,
+                    'base_price' => $marketPrice->base_price,
+                    'buy_price' => $marketPrice->buy_price,
+                    'sell_price' => $marketPrice->sell_price,
+                    'current_price' => $marketPrice->current_price,
+                    'supply_quantity' => $stockpile->quantity,
+                    'demand_level' => $marketPrice->demand_level,
+                    'seasonal_modifier' => $marketPrice->seasonal_modifier,
+                    'supply_modifier' => $marketPrice->supply_modifier,
+                ];
+            });
     }
 
     /**
