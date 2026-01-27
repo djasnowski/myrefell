@@ -101,7 +101,6 @@ export default function DynastyIndex({
             name: dynastyName,
             motto: dynastyMotto || null,
         }, {
-            preserveScroll: true,
             onFinish: () => setFounding(false),
         });
     };
@@ -147,7 +146,7 @@ export default function DynastyIndex({
             <AppLayout breadcrumbs={breadcrumbs}>
                 <Head title="Found a Dynasty" />
                 <div className="flex h-full flex-1 flex-col overflow-auto p-4">
-                    <div className="mx-auto w-full max-w-2xl">
+                    <div className="w-full">
                         <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-6">
                             <div className="mb-6 flex items-center gap-3">
                                 <div className="rounded-lg bg-amber-900/30 p-3">
@@ -409,13 +408,13 @@ export default function DynastyIndex({
                                     <Users className="h-4 w-4" />
                                     Family Tree
                                 </Link>
-                                <button
-                                    disabled
-                                    className="flex items-center gap-2 rounded-lg border border-stone-700 bg-stone-800/30 p-2 font-pixel text-xs text-stone-500 opacity-50"
+                                <Link
+                                    href="/dynasty/history"
+                                    className="flex items-center gap-2 rounded-lg border border-amber-600/50 bg-amber-900/20 p-2 font-pixel text-xs text-amber-400 transition hover:bg-amber-900/30"
                                 >
                                     <History className="h-4 w-4" />
                                     History
-                                </button>
+                                </Link>
                                 <Link
                                     href="/dynasty/proposals"
                                     className="flex items-center gap-2 rounded-lg border border-pink-600/50 bg-pink-900/20 p-2 font-pixel text-xs text-pink-400 transition hover:bg-pink-900/30"
@@ -424,16 +423,20 @@ export default function DynastyIndex({
                                     Marriages
                                 </Link>
                                 <Link
-                                    href="/dynasty/succession"
-                                    className="flex items-center gap-2 rounded-lg border border-purple-600/50 bg-purple-900/20 p-2 font-pixel text-xs text-purple-400 transition hover:bg-purple-900/30"
+                                    href="/dynasty/alliances"
+                                    className="flex items-center gap-2 rounded-lg border border-blue-600/50 bg-blue-900/20 p-2 font-pixel text-xs text-blue-400 transition hover:bg-blue-900/30"
                                 >
                                     <Shield className="h-4 w-4" />
-                                    Succession
+                                    Alliances
                                 </Link>
                             </div>
-                            <p className="mt-2 text-center font-pixel text-[10px] text-stone-600">
-                                More features coming soon...
-                            </p>
+                            <Link
+                                href="/dynasty/succession"
+                                className="mt-2 flex items-center justify-center gap-2 rounded-lg border border-purple-600/50 bg-purple-900/20 p-2 font-pixel text-xs text-purple-400 transition hover:bg-purple-900/30"
+                            >
+                                <Crown className="h-4 w-4" />
+                                Succession Settings
+                            </Link>
                         </div>
                     </div>
 

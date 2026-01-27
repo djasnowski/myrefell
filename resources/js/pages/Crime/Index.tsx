@@ -108,7 +108,14 @@ export default function CrimeIndex() {
                         <h1 className="font-pixel text-2xl text-amber-400">Criminal Record</h1>
                         <p className="font-pixel text-sm text-stone-400">Your standing with the law</p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
+                        <Link
+                            href="/crime/court"
+                            className="flex items-center gap-2 rounded-lg border border-purple-600/50 bg-purple-900/20 px-3 py-2 font-pixel text-xs text-purple-300 transition hover:bg-purple-800/30"
+                        >
+                            <Scale className="h-4 w-4" />
+                            Court Docket
+                        </Link>
                         <Link
                             href="/crime/accuse"
                             className="flex items-center gap-2 rounded-lg border border-red-600/50 bg-red-900/20 px-3 py-2 font-pixel text-xs text-red-300 transition hover:bg-red-800/30"

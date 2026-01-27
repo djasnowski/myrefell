@@ -50,6 +50,10 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $player,
             ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'sidebar' => $player ? $this->getSidebarData($player) : null,
         ];
@@ -101,6 +105,40 @@ class HandleInertiaRequests extends Middleware
             'travel' => $this->travelService->getTravelStatus($player),
             'nearby_destinations' => $this->travelService->getAvailableDestinations($player),
             'context' => $this->getPlayerContext($player),
+            'health' => $this->getHealthData($player),
+        ];
+    }
+
+    /**
+     * Get player health data including active disease infections.
+     */
+    protected function getHealthData($player): array
+    {
+        $infection = null;
+
+        try {
+            $activeInfection = \App\Models\DiseaseInfection::where('user_id', $player->id)
+                ->active()
+                ->with('diseaseType')
+                ->first();
+
+            if ($activeInfection) {
+                $infection = [
+                    'id' => $activeInfection->id,
+                    'disease_name' => $activeInfection->diseaseType?->name ?? 'Unknown Disease',
+                    'status' => $activeInfection->status,
+                    'severity' => $activeInfection->severity_modifier > 1.5 ? 'severe' : ($activeInfection->severity_modifier > 1 ? 'moderate' : 'mild'),
+                    'days_infected' => $activeInfection->days_infected,
+                    'is_treated' => $activeInfection->is_treated,
+                ];
+            }
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Table may not exist yet
+        }
+
+        return [
+            'infection' => $infection,
+            'is_healthy' => $infection === null,
         ];
     }
 
@@ -212,12 +250,52 @@ class HandleInertiaRequests extends Middleware
             return null;
         }
 
+        $locationType = $player->current_location_type;
+        $isTownOrVillage = in_array($locationType, ['village', 'town']);
+        $isTown = $locationType === 'town';
+
         return [
-            'type' => $player->current_location_type,
+            'type' => $locationType,
             'id' => $location->id,
             'name' => $location->name,
             'biome' => $location->biome ?? 'unknown',
             'is_port' => $location->is_port ?? false,
+            // Location features - what's available here
+            'features' => [
+                'market' => $isTownOrVillage,
+                'bank' => $isTown, // Only towns have banks
+                'training' => $isTownOrVillage,
+                'jobs' => $isTownOrVillage,
+                'tavern' => $isTownOrVillage,
+                'crafting' => $isTownOrVillage,
+                'port' => $location->is_port ?? false,
+                'dungeon' => $this->hasDungeonNearby($location, $locationType),
+                'guilds' => $isTown,
+                'elections' => $isTownOrVillage,
+            ],
         ];
+    }
+
+    /**
+     * Check if there's a dungeon accessible from this location.
+     * Dungeons are biome-based, so we check if there's a dungeon matching the location's biome.
+     */
+    protected function hasDungeonNearby($location, string $locationType): bool
+    {
+        if (!in_array($locationType, ['village', 'town'])) {
+            return false;
+        }
+
+        $biome = $location->biome ?? null;
+        if (!$biome) {
+            return false;
+        }
+
+        try {
+            return \App\Models\Dungeon::where('biome', $biome)->exists();
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Table may not exist yet
+            return false;
+        }
     }
 }

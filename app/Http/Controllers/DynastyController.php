@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Dynasty;
+use App\Models\DynastyAlliance;
 use App\Models\DynastyEvent;
 use App\Models\DynastyMember;
 use App\Models\Marriage;
@@ -362,6 +363,205 @@ class DynastyController extends Controller
                 'id' => $event->member->id,
                 'name' => $event->member->full_name,
             ] : null,
+        ];
+    }
+
+    /**
+     * Display dynasty history page.
+     */
+    public function history(Request $request): Response
+    {
+        $user = $request->user();
+
+        if (!$user->dynasty_id) {
+            return redirect()->route('dynasty.index');
+        }
+
+        $dynasty = Dynasty::find($user->dynasty_id);
+        $filter = $request->get('filter');
+
+        $eventsQuery = DynastyEvent::where('dynasty_id', $dynasty->id)
+            ->with('member')
+            ->orderBy('occurred_at', 'desc');
+
+        if ($filter) {
+            $eventsQuery->where('event_type', $filter);
+        }
+
+        $events = $eventsQuery->paginate(20);
+
+        // Calculate stats
+        $stats = [
+            'total_events' => DynastyEvent::where('dynasty_id', $dynasty->id)->count(),
+            'births' => DynastyEvent::where('dynasty_id', $dynasty->id)->where('event_type', 'birth')->count(),
+            'deaths' => DynastyEvent::where('dynasty_id', $dynasty->id)->where('event_type', 'death')->count(),
+            'marriages' => DynastyEvent::where('dynasty_id', $dynasty->id)->where('event_type', 'marriage')->count(),
+            'total_prestige_gained' => DynastyEvent::where('dynasty_id', $dynasty->id)
+                ->where('prestige_change', '>', 0)
+                ->sum('prestige_change'),
+            'total_prestige_lost' => abs(DynastyEvent::where('dynasty_id', $dynasty->id)
+                ->where('prestige_change', '<', 0)
+                ->sum('prestige_change')),
+        ];
+
+        return Inertia::render('Dynasty/History', [
+            'dynasty' => [
+                'id' => $dynasty->id,
+                'name' => $dynasty->name,
+                'prestige' => $dynasty->prestige,
+                'founded_at' => $dynasty->founded_at?->format('Y'),
+            ],
+            'events' => [
+                'data' => $events->map(fn ($event) => [
+                    'id' => $event->id,
+                    'type' => $event->event_type,
+                    'title' => $event->title,
+                    'description' => $event->description,
+                    'prestige_change' => $event->prestige_change,
+                    'occurred_at' => $event->occurred_at?->format('M j, Y'),
+                    'year' => $event->occurred_at?->year ?? 0,
+                    'member' => $event->member ? [
+                        'id' => $event->member->id,
+                        'name' => $event->member->full_name,
+                    ] : null,
+                ]),
+                'current_page' => $events->currentPage(),
+                'last_page' => $events->lastPage(),
+                'total' => $events->total(),
+            ],
+            'stats' => $stats,
+            'filter' => $filter,
+        ]);
+    }
+
+    /**
+     * Display dynasty alliances page.
+     */
+    public function alliances(Request $request): Response
+    {
+        $user = $request->user();
+
+        if (!$user->dynasty_id) {
+            return redirect()->route('dynasty.index');
+        }
+
+        $dynasty = Dynasty::find($user->dynasty_id);
+
+        $activeAlliances = DynastyAlliance::involving($dynasty->id)
+            ->active()
+            ->with(['dynasty1', 'dynasty2', 'marriage.spouse1', 'marriage.spouse2'])
+            ->get()
+            ->map(fn ($alliance) => $this->mapAlliance($alliance, $dynasty));
+
+        $pastAlliances = DynastyAlliance::involving($dynasty->id)
+            ->where(function ($q) {
+                $q->where('status', '!=', DynastyAlliance::STATUS_ACTIVE)
+                    ->orWhere(function ($q2) {
+                        $q2->whereNotNull('expires_at')
+                            ->where('expires_at', '<=', now());
+                    });
+            })
+            ->with(['dynasty1', 'dynasty2', 'marriage.spouse1', 'marriage.spouse2'])
+            ->orderBy('ended_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(fn ($alliance) => $this->mapAlliance($alliance, $dynasty));
+
+        return Inertia::render('Dynasty/Alliances', [
+            'dynasty' => [
+                'id' => $dynasty->id,
+                'name' => $dynasty->name,
+                'prestige' => $dynasty->prestige,
+            ],
+            'active_alliances' => $activeAlliances,
+            'past_alliances' => $pastAlliances,
+            'is_head' => $dynasty->current_head_id === $user->id,
+        ]);
+    }
+
+    /**
+     * Break an alliance.
+     */
+    public function breakAlliance(Request $request, DynastyAlliance $alliance)
+    {
+        $user = $request->user();
+
+        if (!$user->dynasty_id) {
+            return back()->with('error', 'You do not have a dynasty.');
+        }
+
+        $dynasty = Dynasty::find($user->dynasty_id);
+
+        // Must be dynasty head
+        if ($dynasty->current_head_id !== $user->id) {
+            return back()->with('error', 'Only the dynasty head can break alliances.');
+        }
+
+        // Must be involved in the alliance
+        if ($alliance->dynasty1_id !== $dynasty->id && $alliance->dynasty2_id !== $dynasty->id) {
+            return back()->with('error', 'Your dynasty is not part of this alliance.');
+        }
+
+        // Can't break marriage alliances while marriage is active
+        if ($alliance->alliance_type === DynastyAlliance::TYPE_MARRIAGE && $alliance->marriage?->isActive()) {
+            return back()->with('error', 'Cannot break a marriage alliance while the marriage is active.');
+        }
+
+        // Calculate prestige penalty
+        $prestigePenalty = match ($alliance->alliance_type) {
+            DynastyAlliance::TYPE_BLOOD_OATH => 500,
+            DynastyAlliance::TYPE_PACT => 100,
+            default => 50,
+        };
+
+        $alliance->update([
+            'status' => DynastyAlliance::STATUS_BROKEN,
+            'ended_at' => now(),
+        ]);
+
+        $dynasty->decrement('prestige', $prestigePenalty);
+
+        // Record event
+        DynastyEvent::create([
+            'dynasty_id' => $dynasty->id,
+            'event_type' => 'alliance',
+            'title' => 'Alliance Broken',
+            'description' => "Broke {$alliance->alliance_type} alliance with House " . $alliance->getOtherDynasty($dynasty)?->name,
+            'prestige_change' => -$prestigePenalty,
+            'occurred_at' => now(),
+        ]);
+
+        return back()->with('success', 'Alliance broken. You lost ' . $prestigePenalty . ' prestige.');
+    }
+
+    /**
+     * Map alliance for frontend.
+     */
+    private function mapAlliance(DynastyAlliance $alliance, Dynasty $myDynasty): array
+    {
+        $otherDynasty = $alliance->getOtherDynasty($myDynasty);
+
+        return [
+            'id' => $alliance->id,
+            'type' => $alliance->alliance_type,
+            'status' => $alliance->isActive() ? 'active' : $alliance->status,
+            'other_dynasty' => [
+                'id' => $otherDynasty?->id,
+                'name' => $otherDynasty?->name ?? 'Unknown',
+                'prestige' => $otherDynasty?->prestige ?? 0,
+                'head' => $otherDynasty?->currentHead?->username,
+            ],
+            'marriage' => $alliance->marriage ? [
+                'id' => $alliance->marriage->id,
+                'spouse1' => $alliance->marriage->spouse1?->full_name ?? 'Unknown',
+                'spouse2' => $alliance->marriage->spouse2?->full_name ?? 'Unknown',
+            ] : null,
+            'terms' => $alliance->terms,
+            'formed_at' => $alliance->formed_at?->format('M j, Y'),
+            'expires_at' => $alliance->expires_at?->format('M j, Y'),
+            'ended_at' => $alliance->ended_at?->format('M j, Y'),
+            'can_break' => $alliance->alliance_type !== DynastyAlliance::TYPE_MARRIAGE
+                || !$alliance->marriage?->isActive(),
         ];
     }
 }

@@ -281,6 +281,128 @@ class CrimeController extends Controller
     }
 
     /**
+     * View court docket (pending trials in jurisdiction).
+     */
+    public function court(Request $request): Response
+    {
+        $user = $request->user();
+        $courtFilter = $request->get('court');
+
+        // Get user's jurisdiction (current village -> barony -> kingdom)
+        $village = $user->currentVillage;
+        $barony = $village?->barony;
+        $kingdom = $barony?->kingdom ?? $village?->kingdom;
+
+        // Build query for trials in user's jurisdiction
+        $trialsQuery = Trial::pending()
+            ->with(['defendant', 'judge', 'crime.crimeType'])
+            ->where(function ($q) use ($village, $barony, $kingdom) {
+                // Village level trials
+                if ($village) {
+                    $q->orWhere(function ($vq) use ($village) {
+                        $vq->where('location_type', 'village')
+                            ->where('location_id', $village->id);
+                    });
+                }
+                // Barony level trials
+                if ($barony) {
+                    $q->orWhere(function ($bq) use ($barony) {
+                        $bq->where('location_type', 'barony')
+                            ->where('location_id', $barony->id);
+                    });
+                }
+                // Kingdom level trials
+                if ($kingdom) {
+                    $q->orWhere(function ($kq) use ($kingdom) {
+                        $kq->where('location_type', 'kingdom')
+                            ->where('location_id', $kingdom->id);
+                    });
+                }
+            })
+            ->orderBy('scheduled_at');
+
+        // Apply court filter
+        if ($courtFilter) {
+            $trialsQuery->where('court_level', $courtFilter);
+        }
+
+        $trials = $trialsQuery->paginate(15);
+
+        // Calculate stats
+        $statsQuery = Trial::pending()
+            ->where(function ($q) use ($village, $barony, $kingdom) {
+                if ($village) {
+                    $q->orWhere(function ($vq) use ($village) {
+                        $vq->where('location_type', 'village')
+                            ->where('location_id', $village->id);
+                    });
+                }
+                if ($barony) {
+                    $q->orWhere(function ($bq) use ($barony) {
+                        $bq->where('location_type', 'barony')
+                            ->where('location_id', $barony->id);
+                    });
+                }
+                if ($kingdom) {
+                    $q->orWhere(function ($kq) use ($kingdom) {
+                        $kq->where('location_type', 'kingdom')
+                            ->where('location_id', $kingdom->id);
+                    });
+                }
+            });
+
+        $stats = [
+            'total_pending' => (clone $statsQuery)->count(),
+            'village_trials' => (clone $statsQuery)->where('court_level', 'village')->count(),
+            'barony_trials' => (clone $statsQuery)->where('court_level', 'barony')->count(),
+            'kingdom_trials' => (clone $statsQuery)->where('court_level', 'kingdom')->count(),
+            'scheduled_today' => (clone $statsQuery)->whereDate('scheduled_at', today())->count(),
+        ];
+
+        return Inertia::render('Crime/Court', [
+            'trials' => [
+                'data' => $trials->map(fn($t) => [
+                    'id' => $t->id,
+                    'defendant' => [
+                        'id' => $t->defendant->id,
+                        'username' => $t->defendant->username,
+                    ],
+                    'crime' => [
+                        'name' => $t->crime->crimeType->name,
+                        'severity' => $t->crime->crimeType->severity,
+                        'description' => $t->crime->description,
+                    ],
+                    'court_level' => $t->court_level,
+                    'court_display' => $t->court_display,
+                    'location' => [
+                        'id' => $t->location_id,
+                        'name' => $t->getLocation()?->name ?? 'Unknown',
+                        'type' => $t->location_type,
+                    ],
+                    'judge' => $t->judge ? [
+                        'id' => $t->judge->id,
+                        'username' => $t->judge->username,
+                    ] : null,
+                    'status' => $t->status,
+                    'status_display' => $t->status_display,
+                    'scheduled_at' => $t->scheduled_at?->format('M j, Y g:i A'),
+                    'started_at' => $t->started_at?->format('M j, Y g:i A'),
+                ]),
+                'current_page' => $trials->currentPage(),
+                'last_page' => $trials->lastPage(),
+                'total' => $trials->total(),
+            ],
+            'stats' => $stats,
+            'filter' => $courtFilter,
+            'current_location' => [
+                'village' => $village ? ['id' => $village->id, 'name' => $village->name] : null,
+                'barony' => $barony ? ['id' => $barony->id, 'name' => $barony->name] : null,
+                'kingdom' => $kingdom ? ['id' => $kingdom->id, 'name' => $kingdom->name] : null,
+            ],
+        ]);
+    }
+
+    /**
      * View bounty board (active bounties).
      */
     public function bountyBoard(Request $request): Response

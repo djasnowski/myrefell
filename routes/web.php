@@ -74,7 +74,7 @@ if (app()->environment('local')) {
 }
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', [MapController::class, 'index'])->name('dashboard');
+    Route::get('dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
     Route::get('api/player/stats', [PlayerController::class, 'stats'])->name('player.stats');
 
     // Skills
@@ -139,7 +139,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('daily-tasks/{task}/progress', [DailyTaskController::class, 'progress'])->name('daily-tasks.progress');
 
     // Travel
-    Route::get('travel', [TravelController::class, 'index'])->name('travel.index');
+    Route::get('travel', [MapController::class, 'index'])->name('travel.index');
     Route::get('travel/status', [TravelController::class, 'status'])->name('travel.status');
     Route::post('travel/start', [TravelController::class, 'start'])->name('travel.start');
     Route::post('travel/cancel', [TravelController::class, 'cancel'])->name('travel.cancel');
@@ -390,6 +390,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Crime & Law
     Route::get('crime', [CrimeController::class, 'index'])->name('crime.index');
+    Route::get('crime/court', [CrimeController::class, 'court'])->name('crime.court');
     Route::get('crime/types', [CrimeController::class, 'crimeTypes'])->name('crime.types');
     Route::get('crime/bounties', [CrimeController::class, 'bountyBoard'])->name('crime.bounties');
     Route::get('crime/accuse', [CrimeController::class, 'accuseForm'])->name('crime.accuse.form');
@@ -445,6 +446,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('dynasty', [DynastyController::class, 'found'])->name('dynasty.found');
     Route::put('dynasty', [DynastyController::class, 'update'])->name('dynasty.update');
     Route::get('dynasty/tree', [DynastyController::class, 'tree'])->name('dynasty.tree');
+    Route::get('dynasty/history', [DynastyController::class, 'history'])->name('dynasty.history');
+    Route::get('dynasty/alliances', [DynastyController::class, 'alliances'])->name('dynasty.alliances');
+    Route::post('dynasty/alliances/{alliance}/break', [DynastyController::class, 'breakAlliance'])->name('dynasty.alliances.break');
 
     // Marriage Proposals
     Route::get('dynasty/proposals', [MarriageController::class, 'proposals'])->name('dynasty.proposals');

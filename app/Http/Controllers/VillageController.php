@@ -2,49 +2,39 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Disaster;
 use App\Models\MigrationRequest;
 use App\Models\PlayerRole;
 use App\Models\Role;
 use App\Models\Village;
 use App\Services\MigrationService;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class VillageController extends Controller
 {
     /**
-     * Display a listing of all villages.
+     * Redirect to player's current location or home village.
+     * No global village directory - information is situational.
      */
-    public function index(): Response
+    public function index(Request $request)
     {
-        $villages = Village::with('barony.kingdom')
-            ->orderBy('name')
-            ->get()
-            ->map(fn ($village) => [
-                'id' => $village->id,
-                'name' => $village->name,
-                'description' => $village->description,
-                'biome' => $village->biome,
-                'population' => $village->population,
-                'is_hamlet' => $village->isHamlet(),
-                'barony' => $village->barony ? [
-                    'id' => $village->barony->id,
-                    'name' => $village->barony->name,
-                ] : null,
-                'kingdom' => $village->barony?->kingdom ? [
-                    'id' => $village->barony->kingdom->id,
-                    'name' => $village->barony->kingdom->name,
-                ] : null,
-                'coordinates' => [
-                    'x' => $village->coordinates_x,
-                    'y' => $village->coordinates_y,
-                ],
-            ]);
+        $user = $request->user();
 
-        return Inertia::render('villages/index', [
-            'villages' => $villages,
-        ]);
+        // Redirect to current location if it's a village
+        if ($user->current_location_type === 'village' && $user->current_location_id) {
+            return redirect()->route('villages.show', $user->current_location_id);
+        }
+
+        // Otherwise redirect to home village
+        if ($user->home_village_id) {
+            return redirect()->route('villages.show', $user->home_village_id);
+        }
+
+        // Fallback to travel/map
+        return redirect()->route('travel.index');
     }
 
     /**
@@ -119,7 +109,37 @@ class VillageController extends Controller
             'can_migrate' => $migrationService->canMigrate($user),
             'has_pending_request' => $hasPendingRequest,
             'current_user_id' => $user->id,
+            'disasters' => $this->getActiveDisasters($village),
         ]);
+    }
+
+    /**
+     * Get active disasters for a location.
+     */
+    protected function getActiveDisasters(Village $village): array
+    {
+        try {
+            $disasters = Disaster::active()
+                ->where('location_type', 'village')
+                ->where('location_id', $village->id)
+                ->with('disasterType')
+                ->get();
+
+            return $disasters->map(fn ($disaster) => [
+                'id' => $disaster->id,
+                'type' => $disaster->disasterType?->slug ?? 'unknown',
+                'name' => $disaster->disasterType?->name ?? 'Unknown Disaster',
+                'severity' => $disaster->severity,
+                'status' => $disaster->status,
+                'started_at' => $disaster->started_at?->diffForHumans(),
+                'days_active' => $disaster->started_at ? now()->diffInDays($disaster->started_at) + 1 : 1,
+                'buildings_damaged' => $disaster->buildings_damaged,
+                'casualties' => $disaster->casualties,
+            ])->toArray();
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Table may not exist yet
+            return [];
+        }
     }
 
     /**

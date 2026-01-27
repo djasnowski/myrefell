@@ -1,12 +1,13 @@
 import { Form, Head } from '@inertiajs/react';
+import { Mars, Venus } from 'lucide-react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 import AuthLayout from '@/layouts/auth-layout';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
@@ -67,21 +68,38 @@ export default function Register() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="gender">Gender</Label>
+                                <Label>Gender</Label>
                                 <input type="hidden" name="gender" value={gender} />
-                                <Select
-                                    value={gender}
-                                    onValueChange={setGender}
-                                    required
-                                >
-                                    <SelectTrigger tabIndex={3}>
-                                        <SelectValue placeholder="Select your character's gender" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="male">Male</SelectItem>
-                                        <SelectItem value="female">Female</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        type="button"
+                                        tabIndex={3}
+                                        onClick={() => setGender('male')}
+                                        className={cn(
+                                            'flex items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium transition-colors',
+                                            gender === 'male'
+                                                ? 'border-primary bg-primary/10 text-primary'
+                                                : 'border-input bg-white/5 dark:bg-white/10 text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                                        )}
+                                    >
+                                        <Mars className="size-4" />
+                                        Male
+                                    </button>
+                                    <button
+                                        type="button"
+                                        tabIndex={3}
+                                        onClick={() => setGender('female')}
+                                        className={cn(
+                                            'flex items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium transition-colors',
+                                            gender === 'female'
+                                                ? 'border-primary bg-primary/10 text-primary'
+                                                : 'border-input bg-white/5 dark:bg-white/10 text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                                        )}
+                                    >
+                                        <Venus className="size-4" />
+                                        Female
+                                    </button>
+                                </div>
                                 <InputError message={errors.gender} />
                             </div>
 
