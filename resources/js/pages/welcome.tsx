@@ -543,7 +543,7 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                 { title: 'Political Legitimacy', desc: 'Rulers gain and lose legitimacy. Scandals, lost wars, and church opposition can trigger rebellion.' },
                                 { title: 'Food & Famine', desc: 'Villages must maintain food stockpiles. Shortages cause starvation, emigration, and death.' },
                                 { title: 'Found Settlements', desc: 'Petition the King for a charter, gather signatories, and found your own village from nothing.' },
-                                { title: 'No Pay-to-Win', desc: 'Cosmetics only. No stat boosts, no power items, no skipping progression. Your success is earned.' },
+                                { title: 'Earn Your Legacy', desc: 'Every title, every conquest, every alliance — built through your own skill, strategy, and determination.' },
                             ].map((feature) => (
                                 <div
                                     key={feature.title}
@@ -636,16 +636,104 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                 </section>
 
                 {/* Footer */}
-                <footer className="relative border-t border-border/50 py-12">
+                <footer className="relative border-t-2 border-primary/30 bg-card/60 backdrop-blur-sm pt-16 pb-8">
                     <div className="mx-auto max-w-7xl px-6">
-                        <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-                            <div className="flex items-center gap-2">
-                                <Crown className="h-6 w-6 text-primary" />
-                                <span className="font-[Cinzel] text-lg font-bold text-muted-foreground">Myrefell</span>
+                        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4 mb-12">
+                            {/* Brand */}
+                            <div>
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Crown className="h-7 w-7 text-primary" />
+                                    <span className="font-[Cinzel] text-xl font-bold text-foreground">Myrefell</span>
+                                </div>
+                                <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                                    A persistent medieval world where every choice matters. Rise from peasant to king through skill, strategy, and diplomacy.
+                                </p>
+                                <p className="text-xs text-muted-foreground/60">
+                                    Your legacy is earned.
+                                </p>
                             </div>
-                            <p className="text-sm text-muted-foreground">
-                                A medieval world where your choices matter.
-                            </p>
+
+                            {/* Game */}
+                            <div>
+                                <h4 className="font-[Cinzel] font-bold text-foreground mb-4">Game</h4>
+                                <ul className="space-y-2">
+                                    <li>
+                                        <Link href="/features" className="text-sm text-muted-foreground transition hover:text-primary">
+                                            Features
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link href={register()} className="text-sm text-muted-foreground transition hover:text-primary">
+                                            Create a Character
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link href={login()} className="text-sm text-muted-foreground transition hover:text-primary">
+                                            Sign In
+                                        </Link>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            {/* Support */}
+                            <div>
+                                <h4 className="font-[Cinzel] font-bold text-foreground mb-4">Support</h4>
+                                <ul className="space-y-2">
+                                    <li className="flex items-center gap-2">
+                                        <Mail className="h-4 w-4 text-muted-foreground" />
+                                        <a href="mailto:support@myrefell.com" className="text-sm text-muted-foreground transition hover:text-primary">
+                                            support@myrefell.com
+                                        </a>
+                                    </li>
+                                    <li className="flex items-center gap-2">
+                                        <Shield className="h-4 w-4 text-muted-foreground" />
+                                        <a href="mailto:abuse@myrefell.com" className="text-sm text-muted-foreground transition hover:text-primary">
+                                            Report Cheating
+                                        </a>
+                                    </li>
+                                    <li className="flex items-center gap-2">
+                                        <Scale className="h-4 w-4 text-muted-foreground" />
+                                        <a href="mailto:appeals@myrefell.com" className="text-sm text-muted-foreground transition hover:text-primary">
+                                            Ban Appeals
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            {/* Legal */}
+                            <div>
+                                <h4 className="font-[Cinzel] font-bold text-foreground mb-4">Legal</h4>
+                                <ul className="space-y-2">
+                                    <li>
+                                        <Link href="/terms" className="text-sm text-muted-foreground transition hover:text-primary">
+                                            Terms of Service
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link href="/privacy" className="text-sm text-muted-foreground transition hover:text-primary">
+                                            Privacy Policy
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link href="/rules" className="text-sm text-muted-foreground transition hover:text-primary">
+                                            Game Rules
+                                        </Link>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="flex items-center gap-3 w-full mb-6">
+                            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                            <div className="w-1.5 h-1.5 rotate-45 bg-primary/30" />
+                            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                        </div>
+
+                        {/* Bottom bar */}
+                        <div className="flex flex-col items-center justify-between gap-3 md:flex-row text-xs text-muted-foreground/60">
+                            <p>&copy; {new Date().getFullYear()} Myrefell. All rights reserved.</p>
+                            <p>Made with dedication for the medieval RPG community.</p>
                         </div>
                     </div>
                 </footer>

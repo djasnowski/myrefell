@@ -222,7 +222,10 @@ export default function TrialShow() {
                 </div>
 
                 {/* Verdict (if concluded) */}
-                {isConcluded && trial.verdict && (
+                {isConcluded && trial.verdict && (() => {
+                    const vc = verdictColors[trial.verdict] || verdictColors.dismissed;
+                    const VerdictIcon = vc.icon;
+                    return (
                     <div
                         className={`rounded-xl border-2 p-4 ${
                             trial.verdict === 'guilty'
@@ -234,31 +237,13 @@ export default function TrialShow() {
                     >
                         <div className="flex items-center gap-3">
                             <div
-                                className={`rounded-lg p-3 ${
-                                    trial.verdict === 'guilty'
-                                        ? 'bg-red-800/50'
-                                        : trial.verdict === 'not_guilty'
-                                          ? 'bg-green-800/50'
-                                          : 'bg-stone-700/50'
-                                }`}
+                                className={`rounded-lg p-3 ${vc.bg}`}
                             >
-                                {trial.verdict === 'guilty' ? (
-                                    <XCircle className="h-6 w-6 text-red-300" />
-                                ) : trial.verdict === 'not_guilty' ? (
-                                    <CheckCircle className="h-6 w-6 text-green-300" />
-                                ) : (
-                                    <Shield className="h-6 w-6 text-stone-300" />
-                                )}
+                                <VerdictIcon className={`h-6 w-6 ${vc.text}`} />
                             </div>
                             <div className="flex-1">
                                 <h2
-                                    className={`font-pixel text-lg ${
-                                        trial.verdict === 'guilty'
-                                            ? 'text-red-300'
-                                            : trial.verdict === 'not_guilty'
-                                              ? 'text-green-300'
-                                              : 'text-stone-300'
-                                    }`}
+                                    className={`font-pixel text-lg ${vc.text}`}
                                 >
                                     Verdict: {trial.verdict_display}
                                 </h2>
@@ -282,7 +267,8 @@ export default function TrialShow() {
                             </div>
                         )}
                     </div>
-                )}
+                    );
+                })()}
 
                 {/* Parties */}
                 <div className="grid gap-4 md:grid-cols-2">

@@ -37,6 +37,8 @@ export function AppSidebar() {
                     <NavPlayerInfo />
                 </div>
 
+                <SidebarSeparator />
+
                 {/* Location-aware Navigation */}
                 <NavLocation />
             </SidebarContent>

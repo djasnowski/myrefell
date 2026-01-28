@@ -176,13 +176,18 @@ export function CompactActivityFeed({
 
     return (
         <div className={cn('space-y-1', className)}>
-            {displayActivities.map((activity) => (
-                <div key={activity.id} className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground">{activity.username}</span>
-                    <span className="truncate">{formatDescription(activity.description, activity.username)}</span>
-                    <span className="ml-auto flex-shrink-0">{activity.time_ago}</span>
-                </div>
-            ))}
+            {displayActivities.map((activity) => {
+                const Icon = activityType ? activityIcons[activityType] || MapPin : MapPin;
+                const colorClass = activityType ? activityColors[activityType] || 'text-muted-foreground' : 'text-muted-foreground';
+                return (
+                    <div key={activity.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Icon className={cn('h-3 w-3 flex-shrink-0', colorClass)} />
+                        <span className="font-medium text-foreground">{activity.username}</span>
+                        <span className="truncate">{formatDescription(activity.description, activity.username)}</span>
+                        <span className="ml-auto flex-shrink-0">{activity.time_ago}</span>
+                    </div>
+                );
+            })}
         </div>
     );
 }

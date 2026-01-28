@@ -193,6 +193,17 @@ export function LegitimacyDisplay({
                     style={{ width: `${legitimacy}%` }}
                 />
             </div>
+            {/* High legitimacy indicators */}
+            {legitimacy >= 70 && (
+                <div className="mt-2 flex items-center gap-1">
+                    {legitimacy >= 90 && <Award className="h-3 w-3 text-amber-400" />}
+                    {legitimacy >= 70 && <Star className="h-3 w-3 text-amber-400" />}
+                    {legitimacy >= 50 && <ThumbsUp className="h-3 w-3 text-stone-500" />}
+                    <span className="font-pixel text-[8px] text-stone-500">
+                        {legitimacy >= 90 ? 'Legendary status' : 'Highly regarded'}
+                    </span>
+                </div>
+            )}
         </div>
     );
 }

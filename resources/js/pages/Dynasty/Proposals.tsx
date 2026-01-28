@@ -218,7 +218,9 @@ export default function Proposals({
                         </div>
                         <div>
                             <h1 className="font-pixel text-xl text-pink-400">Marriage Proposals</h1>
-                            <p className="font-pixel text-xs text-stone-500">House {dynasty_name}</p>
+                            <p className="font-pixel text-xs text-stone-500">
+                            House {dynasty_name} {is_head && '— Head of House'}
+                        </p>
                         </div>
                     </div>
                     {can_propose && (
@@ -300,7 +302,7 @@ export default function Proposals({
                                                     <>
                                                         <button
                                                             onClick={() => handleAccept(proposal.id)}
-                                                            disabled={processing === proposal.id}
+                                                            disabled={!is_head || processing === proposal.id}
                                                             className="flex items-center gap-1 rounded border border-green-600/50 bg-green-900/20 px-3 py-1.5 font-pixel text-xs text-green-400 transition hover:bg-green-900/40 disabled:opacity-50"
                                                         >
                                                             <Check className="h-3 w-3" />
@@ -308,12 +310,17 @@ export default function Proposals({
                                                         </button>
                                                         <button
                                                             onClick={() => handleReject(proposal.id)}
-                                                            disabled={processing === proposal.id}
+                                                            disabled={!is_head || processing === proposal.id}
                                                             className="flex items-center gap-1 rounded border border-red-600/50 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-400 transition hover:bg-red-900/40 disabled:opacity-50"
                                                         >
                                                             <X className="h-3 w-3" />
                                                             Reject
                                                         </button>
+                                                        {!is_head && (
+                                                            <p className="font-pixel text-[10px] text-stone-500">
+                                                                Only the dynasty head can respond
+                                                            </p>
+                                                        )}
                                                     </>
                                                 )}
                                             </div>

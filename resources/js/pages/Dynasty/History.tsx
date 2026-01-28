@@ -78,7 +78,13 @@ export default function DynastyHistory({
         { title: 'History', href: '/dynasty/history' },
     ];
 
-    const getEventIcon = (type: string) => {
+    const getEventIcon = (type: string): React.ReactNode => {
+        if (type === 'succession') {
+            return <Crown className="h-5 w-5 text-amber-400" />;
+        }
+        if (type === 'alliance') {
+            return <Shield className="h-5 w-5 text-blue-400" />;
+        }
         const found = EVENT_TYPES.find(t => t.value === type);
         return found?.icon || '📌';
     };

@@ -1,9 +1,4 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import HealthStatusWidget from '@/components/widgets/health-status-widget';
-import TutorialModal from '@/components/tutorial-modal';
-import type { BreadcrumbItem } from '@/types';
 import {
     Anchor,
     ArrowRight,
@@ -35,6 +30,11 @@ import {
     UsersRound,
     Vote,
 } from 'lucide-react';
+import { useState } from 'react';
+import TutorialModal from '@/components/tutorial-modal';
+import HealthStatusWidget from '@/components/widgets/health-status-widget';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
 
 interface LocationFeatures {
     market: boolean;

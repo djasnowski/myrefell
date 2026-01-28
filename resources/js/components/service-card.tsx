@@ -40,6 +40,7 @@ const iconMap: Record<string, LucideIcon> = {
     briefcase: Briefcase,
     ship: Anchor,
     beer: Beer,
+    banknote: Banknote,
     shield: Shield,
     'building-columns': Building2,
     hospital: Church,
@@ -58,6 +59,7 @@ export function ServiceCard({
 
     const content = (
         <div
+            data-service-id={serviceId}
             className={cn(
                 'group relative flex flex-col items-center gap-2 rounded-lg border p-4 text-center transition-all',
                 disabled

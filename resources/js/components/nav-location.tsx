@@ -137,6 +137,16 @@ function getLocationItems(location: LocationData | null, farm: FarmData | null, 
         return items;
     }
 
+    // If the player has a role at this location, add a roles link
+    if (context?.has_role_at_location) {
+        items.push({
+            title: 'My Role',
+            href: buildLocationUrl(location, 'roles'),
+            icon: Shield,
+            description: 'Manage your official duties',
+        });
+    }
+
     // Wilderness - only gathering
     if (location.type === 'wilderness') {
         items.push({
@@ -310,7 +320,6 @@ function TravelingIndicator({ travel }: { travel: TravelStatus }) {
     const [arriving, setArriving] = useState(false);
 
     useEffect(() => {
-        setRemaining(travel.remaining_seconds);
         const interval = setInterval(() => {
             setRemaining((prev) => {
                 const newVal = Math.max(0, prev - 1);
@@ -328,7 +337,7 @@ function TravelingIndicator({ travel }: { travel: TravelStatus }) {
             });
         }, 1000);
         return () => clearInterval(interval);
-    }, [travel.remaining_seconds, arriving]);
+    }, [arriving]);
 
     const Icon = locationIcons[travel.destination.type] || MapPin;
 
@@ -365,6 +374,16 @@ export function NavLocation() {
     const playerActions = getPlayerActions();
     const locationItems = getLocationItems(location, farm, context);
     const contextualItems = getContextualItems(context || {});
+
+    // Add home village link if player is away from home
+    if (home_village && location && (location.type !== 'village' || location.id !== home_village.id)) {
+        playerActions.push({
+            title: 'Home Village',
+            href: `/villages/${home_village.id}`,
+            icon: Home,
+            description: home_village.name,
+        });
+    }
 
     const LocationIcon = location ? locationIcons[location.type] || MapPin : MapPin;
 
@@ -421,7 +440,7 @@ export function NavLocation() {
     if (travel?.is_traveling) {
         return (
             <div className="px-2">
-                <TravelingIndicator travel={travel} />
+                <TravelingIndicator key={travel.remaining_seconds} travel={travel} />
             </div>
         );
     }

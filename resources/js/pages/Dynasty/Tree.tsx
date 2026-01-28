@@ -436,6 +436,13 @@ export default function DynastyTree({
                                 <p className="font-pixel text-sm text-stone-500">
                                     No members to display
                                 </p>
+                                <Link
+                                    href="/dynasty/proposals/create"
+                                    className="mt-4 inline-flex items-center gap-1 rounded border border-stone-600 bg-stone-800 px-3 py-1.5 font-pixel text-xs text-stone-400 transition hover:bg-stone-700"
+                                >
+                                    <Plus className="h-3 w-3" />
+                                    Propose Marriage
+                                </Link>
                             </div>
                         )}
                     </div>
@@ -587,16 +594,24 @@ export default function DynastyTree({
                                     {(() => {
                                         const spouse = getSpouse(selectedMember.id);
                                         if (spouse) {
+                                            const marriage = getMarriage(selectedMember.id, spouse.id);
                                             return (
-                                                <button
-                                                    onClick={() => setSelectedMember(spouse)}
-                                                    className="flex w-full items-center gap-2 rounded border border-pink-600/50 bg-pink-900/20 px-2 py-1 text-left transition hover:bg-pink-900/30"
-                                                >
-                                                    <Heart className="h-3 w-3 text-pink-400" />
-                                                    <span className="font-pixel text-[10px] text-stone-300">
-                                                        {spouse.first_name}
-                                                    </span>
-                                                </button>
+                                                <div>
+                                                    <button
+                                                        onClick={() => setSelectedMember(spouse)}
+                                                        className="flex w-full items-center gap-2 rounded border border-pink-600/50 bg-pink-900/20 px-2 py-1 text-left transition hover:bg-pink-900/30"
+                                                    >
+                                                        <Heart className="h-3 w-3 text-pink-400" />
+                                                        <span className="font-pixel text-[10px] text-stone-300">
+                                                            {spouse.first_name}
+                                                        </span>
+                                                    </button>
+                                                    {marriage?.wedding_date && (
+                                                        <p className="mt-1 font-pixel text-[8px] text-stone-500">
+                                                            Wed: {marriage.wedding_date}
+                                                        </p>
+                                                    )}
+                                                </div>
                                             );
                                         }
                                         return (

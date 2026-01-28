@@ -155,7 +155,7 @@ export default function BattleShow() {
 
     const formatModifiers = (modifiers: Record<string, number>) => {
         return Object.entries(modifiers)
-            .filter(([_, value]) => value !== 0)
+            .filter(([, value]) => value !== 0)
             .map(([key, value]) => ({
                 name: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
                 value: value > 0 ? `+${value}%` : `${value}%`,
@@ -194,7 +194,10 @@ export default function BattleShow() {
                                         {battle.location.name}
                                     </span>
                                     <span>|</span>
-                                    <span>{battleTypeLabels[battle.battle_type] || battle.battle_type}</span>
+                                    <span className="flex items-center gap-1">
+                                        <Target className="h-3 w-3" />
+                                        {battleTypeLabels[battle.battle_type] || battle.battle_type}
+                                    </span>
                                 </div>
                             </div>
                         </div>

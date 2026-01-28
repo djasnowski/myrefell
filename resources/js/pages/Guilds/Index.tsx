@@ -416,7 +416,7 @@ export default function GuildsIndex() {
                                     )}
 
                                     <div className="mb-3 space-y-1 font-pixel text-xs text-stone-400">
-                                        <div className="flex items-center gap-1">
+                                        <div className="flex items-center gap-1" title={skillIcons[guild.primary_skill] || guild.primary_skill}>
                                             <span className="text-amber-400 capitalize">{guild.skill_display}</span> Guild
                                         </div>
                                         <div className="flex items-center gap-1">

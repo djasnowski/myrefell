@@ -198,7 +198,9 @@ export default function ProposeMarriage({
                     </div>
                     <div>
                         <h1 className="font-pixel text-xl text-pink-400">Propose Marriage</h1>
-                        <p className="font-pixel text-xs text-stone-500">House {dynasty_name}</p>
+                        <p className="font-pixel text-xs text-stone-500">
+                            House {dynasty_name} {is_head && '— Head of House'}
+                        </p>
                     </div>
                 </div>
 

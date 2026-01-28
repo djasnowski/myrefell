@@ -1,5 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { Check, Coins, Crown, FileText, Loader2, MapPin, User, X } from 'lucide-react';
+import { Check, Coins, Crown, FileText, Loader2, MapPin, X } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -68,7 +68,7 @@ function RequestCard({
             <div className="mb-3 flex items-start justify-between">
                 <div className="flex items-center gap-3">
                     <div className="rounded-lg bg-purple-800/50 p-2">
-                        <User className="h-5 w-5 text-purple-300" />
+                        <FileText className="h-5 w-5 text-purple-300" />
                     </div>
                     <div>
                         <h3 className="font-pixel text-sm text-purple-300">{request.requester.username}</h3>
@@ -84,7 +84,7 @@ function RequestCard({
             </div>
 
             <div className="mb-3 flex items-center gap-2">
-                <Crown className="h-4 w-4 text-amber-400" />
+                <MapPin className="h-4 w-4 text-amber-400" />
                 <span className="font-pixel text-xs text-amber-300">{request.kingdom.name}</span>
             </div>
 
@@ -109,7 +109,7 @@ function RequestCard({
                         onClick={() => setShowResponse(true)}
                         className="flex flex-1 items-center justify-center gap-2 rounded border-2 border-purple-600/50 bg-purple-900/20 px-3 py-2 font-pixel text-xs text-purple-300 transition hover:bg-purple-800/30"
                     >
-                        <Crown className="h-4 w-4" />
+                        <Check className="h-4 w-4" />
                         Grant Title
                     </button>
                     <button

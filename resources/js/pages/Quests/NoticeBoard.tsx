@@ -191,9 +191,27 @@ export default function NoticeBoard() {
                                 <div className="space-y-3">
                                     {active_quests.map((pq) => (
                                         <div key={pq.id} className="rounded-lg bg-stone-900/50 p-3">
-                                            <div className="mb-2 flex items-center gap-2">
-                                                <QuestIcon icon={pq.icon} className="h-4 w-4 text-amber-400" />
-                                                <span className="font-pixel text-xs text-amber-300">{pq.name}</span>
+                                            <div className="mb-2 flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <QuestIcon icon={pq.icon} className="h-4 w-4 text-amber-400" />
+                                                    <span className="font-pixel text-xs text-amber-300">{pq.name}</span>
+                                                </div>
+                                                <button
+                                                    className="rounded p-0.5 text-stone-600 transition hover:bg-stone-800 hover:text-red-400"
+                                                    title="Abandon quest"
+                                                    onClick={() => {
+                                                        if (confirm(`Abandon quest "${pq.name}"?`)) {
+                                                            fetch(`/quests/${pq.id}/abandon`, {
+                                                                method: 'POST',
+                                                                headers: {
+                                                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                                                                },
+                                                            }).then(() => router.reload({ only: ['available_quests', 'active_quests', 'completed_quests', 'sidebar'] }));
+                                                        }
+                                                    }}
+                                                >
+                                                    <X className="h-3.5 w-3.5" />
+                                                </button>
                                             </div>
                                             <p className="mb-2 font-pixel text-[10px] text-stone-400">{pq.objective}</p>
                                             <div className="mb-1 flex justify-between font-pixel text-[10px] text-stone-500">

@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { Crown, Shield } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RulerDisplay } from '@/components/ui/legitimacy-badge';
@@ -133,6 +134,23 @@ export default function DuchyShow({ duchy, roles, current_user_id, is_duke }: Pr
                         </CardHeader>
                     </Card>
                 </div>
+
+                {/* Duke Authority Banner */}
+                {is_duke && (
+                    <div className="flex items-center gap-3 rounded-lg border border-amber-600/30 bg-amber-900/10 px-4 py-3">
+                        <Crown className="h-5 w-5 text-amber-400" />
+                        <div className="flex-1">
+                            <div className="font-pixel text-sm text-amber-300">You are the Duke</div>
+                            <div className="text-xs text-stone-400">Manage duchy affairs, oversee baronies, appoint court positions</div>
+                        </div>
+                        <div className="flex gap-2">
+                            <Link href={`/duchies/${duchy.id}/roles`} className="flex items-center gap-1 rounded border border-stone-600 bg-stone-800 px-3 py-1.5 font-pixel text-xs text-stone-300 transition hover:bg-stone-700">
+                                <Shield className="h-3 w-3" />
+                                Roles
+                            </Link>
+                        </div>
+                    </div>
+                )}
 
                 {/* Duke / Ruler */}
                 <RulerDisplay

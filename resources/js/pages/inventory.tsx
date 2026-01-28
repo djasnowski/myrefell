@@ -293,7 +293,10 @@ export default function Inventory() {
 
                     {/* Item Details Panel */}
                     <div className="w-full rounded-lg border-2 border-stone-600 bg-stone-800/80 p-3 lg:w-56">
-                        <h2 className="mb-4 font-pixel text-xs text-amber-400">Item Details</h2>
+                        <h2 className="mb-4 flex items-center gap-1 font-pixel text-xs text-amber-400">
+                            Item Details
+                            <HelpCircle className="h-3 w-3 text-stone-500" />
+                        </h2>
 
                         {selectedItem ? (
                             <div className="space-y-4">

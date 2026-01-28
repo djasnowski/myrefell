@@ -1,21 +1,15 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Anchor,
-    Banknote,
-    Church,
     Coins,
     Crown,
-    Gavel,
     Home,
     Loader2,
     MapPin,
-    MessageCircle,
     Mountain,
     Palmtree,
-    ScrollText,
     Shield,
     Snowflake,
-    Store,
     Sun,
     Swords,
     TreePine,
@@ -26,11 +20,11 @@ import {
     type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
+import { ActivityFeed } from '@/components/activity-feed';
+import { ServicesGrid } from '@/components/service-card';
 import DisasterWidget from '@/components/widgets/disaster-widget';
 import { LegitimacyDisplay } from '@/components/widgets/legitimacy-badge';
-import { ServicesGrid } from '@/components/service-card';
-import { ActivityFeed } from '@/components/activity-feed';
+import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
 interface Resident {

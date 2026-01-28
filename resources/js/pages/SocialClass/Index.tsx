@@ -294,6 +294,17 @@ function EnnoblementForm({
     return (
         <form onSubmit={handleSubmit} className="space-y-3">
             <div>
+                <label className="mb-1 block font-pixel text-xs text-stone-400">Kingdom</label>
+                <input
+                    type="number"
+                    value={kingdomId}
+                    onChange={(e) => setKingdomId(Number(e.target.value))}
+                    min={1}
+                    className="w-full rounded border border-stone-600 bg-stone-800 p-2 font-pixel text-xs text-stone-200"
+                />
+            </div>
+
+            <div>
                 <label className="mb-1 block font-pixel text-xs text-stone-400">Request Type</label>
                 <select
                     value={requestType}
@@ -492,6 +503,45 @@ export default function SocialClassIndex() {
                         <RightBadge name="Own Property" has={rights.can_own_property} />
                         <RightBadge name="Hold High Office" has={rights.can_hold_high_office} />
                         <RightBadge name="Travel Freely" has={rights.can_freely_travel} />
+                    </div>
+
+                    {/* Class Traits */}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                        {isSerf && (
+                            <span className="flex items-center gap-1 rounded bg-red-900/30 px-2 py-1 font-pixel text-[10px] text-red-300">
+                                <Ban className="h-3 w-3" /> Bound to Land
+                            </span>
+                        )}
+                        {rights.can_vote && (
+                            <span className="flex items-center gap-1 rounded bg-blue-900/30 px-2 py-1 font-pixel text-[10px] text-blue-300">
+                                <Vote className="h-3 w-3" /> Voter
+                            </span>
+                        )}
+                        {rights.can_own_business && (
+                            <span className="flex items-center gap-1 rounded bg-green-900/30 px-2 py-1 font-pixel text-[10px] text-green-300">
+                                <Briefcase className="h-3 w-3" /> Business Rights
+                            </span>
+                        )}
+                        {rights.can_hold_high_office && (
+                            <span className="flex items-center gap-1 rounded bg-purple-900/30 px-2 py-1 font-pixel text-[10px] text-purple-300">
+                                <Gavel className="h-3 w-3" /> Office Holder
+                            </span>
+                        )}
+                        {isNoble && (
+                            <span className="flex items-center gap-1 rounded bg-amber-900/30 px-2 py-1 font-pixel text-[10px] text-amber-300">
+                                <Swords className="h-3 w-3" /> Noble Arms
+                            </span>
+                        )}
+                        {rights.can_join_guild && (
+                            <span className="flex items-center gap-1 rounded bg-stone-700/50 px-2 py-1 font-pixel text-[10px] text-stone-300">
+                                <Users className="h-3 w-3" /> Guild Member
+                            </span>
+                        )}
+                        {!isSerf && (
+                            <span className="flex items-center gap-1 rounded bg-pink-900/30 px-2 py-1 font-pixel text-[10px] text-pink-300">
+                                <Heart className="h-3 w-3" /> Free Citizen
+                            </span>
+                        )}
                     </div>
                 </div>
 

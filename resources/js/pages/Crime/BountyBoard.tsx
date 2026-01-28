@@ -125,14 +125,46 @@ export default function BountyBoard() {
                                 {/* Reason */}
                                 <p className="mb-3 text-xs text-stone-400">{bounty.reason}</p>
 
+                                {/* Location */}
+                                <div className="mb-2 flex items-center gap-1 text-[10px] text-stone-500">
+                                    <MapPin className="h-3 w-3" />
+                                    Last seen in the area
+                                </div>
+
                                 {/* Posted By */}
-                                <div className="flex items-center justify-between text-[10px] text-stone-500">
+                                <div className="mb-3 flex items-center justify-between text-[10px] text-stone-500">
                                     <span>
                                         Posted by:{' '}
                                         {bounty.posted_by ? bounty.posted_by.username : 'Authority'}
                                     </span>
                                     {bounty.expires_at && <span>Expires: {bounty.expires_at}</span>}
                                 </div>
+
+                                {/* Claim Button */}
+                                <button
+                                    onClick={() => {
+                                        setClaimingId(bounty.id);
+                                        router.post(`/crime/bounties/${bounty.id}/claim`, {}, {
+                                            preserveScroll: true,
+                                            onSuccess: () => router.reload(),
+                                            onFinish: () => setClaimingId(null),
+                                        });
+                                    }}
+                                    disabled={claimingId === bounty.id}
+                                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-amber-600/50 bg-amber-900/30 px-3 py-2 font-pixel text-xs text-amber-300 transition hover:bg-amber-800/50 disabled:opacity-50"
+                                >
+                                    {claimingId === bounty.id ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Claiming...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Target className="h-4 w-4" />
+                                            Accept Bounty
+                                        </>
+                                    )}
+                                </button>
                             </div>
                         ))}
                     </div>

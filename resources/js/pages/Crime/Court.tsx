@@ -7,7 +7,6 @@ import {
     ChevronRight,
     Clock,
     Crown,
-    Filter,
     Gavel,
     MapPin,
     Scale,
@@ -218,6 +217,7 @@ export default function Court({
                             <div className="font-pixel text-[10px] text-stone-500">Royal Court</div>
                         </div>
                         <div className="rounded-lg border border-amber-600/50 bg-amber-900/20 p-3 text-center">
+                            <Clock className="mx-auto mb-1 h-4 w-4 text-amber-400" />
                             <div className="font-pixel text-lg text-amber-400">{stats.scheduled_today}</div>
                             <div className="font-pixel text-[10px] text-stone-500">Today</div>
                         </div>
@@ -226,7 +226,7 @@ export default function Court({
                     {/* Filter */}
                     <div className="mb-4 rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
                         <div className="flex items-center gap-2 mb-3">
-                            <Filter className="h-4 w-4 text-stone-400" />
+                            <Search className="h-4 w-4 text-stone-400" />
                             <span className="font-pixel text-xs text-stone-400">Filter by Court</span>
                         </div>
                         <div className="flex flex-wrap gap-2">

@@ -25,11 +25,11 @@ import {
     Wheat,
     type LucideIcon,
 } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
+import { ActivityFeed } from '@/components/activity-feed';
+import { ServicesGrid } from '@/components/service-card';
 import DisasterWidget from '@/components/widgets/disaster-widget';
 import { LegitimacyDisplay } from '@/components/widgets/legitimacy-badge';
-import { ServicesGrid } from '@/components/service-card';
-import { ActivityFeed } from '@/components/activity-feed';
+import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
 interface Visitor {
@@ -221,6 +221,64 @@ export default function TownShow({ town, services, recent_activity, roles, visit
                         )}
                     </div>
                 </div>
+
+                {/* Mayor Actions */}
+                {is_mayor && (
+                    <div className="flex items-center gap-3 rounded-lg border border-amber-600/30 bg-amber-900/10 px-4 py-3">
+                        <Gavel className="h-5 w-5 text-amber-400" />
+                        <div className="flex-1">
+                            <div className="font-pixel text-sm text-amber-300">You are the Mayor</div>
+                            <div className="text-xs text-stone-400">Manage town affairs, set tax rates, appoint officials</div>
+                        </div>
+                        <div className="flex gap-2">
+                            <Link href={`/towns/${town.id}/roles`} className="flex items-center gap-1 rounded border border-stone-600 bg-stone-800 px-3 py-1.5 font-pixel text-xs text-stone-300 transition hover:bg-stone-700">
+                                <Briefcase className="h-3 w-3" />
+                                Roles
+                            </Link>
+                            <Link href={`/towns/${town.id}/treasury`} className="flex items-center gap-1 rounded border border-stone-600 bg-stone-800 px-3 py-1.5 font-pixel text-xs text-stone-300 transition hover:bg-stone-700">
+                                <Banknote className="h-3 w-3" />
+                                Treasury
+                            </Link>
+                        </div>
+                    </div>
+                )}
+
+                {/* Town Quick Info */}
+                <div className="flex flex-wrap gap-2">
+                    {town.tax_rate > 0 && (
+                        <span className="flex items-center gap-1 rounded-full border border-stone-700 bg-stone-800/50 px-3 py-1 text-xs text-stone-400">
+                            <Store className="h-3 w-3" />
+                            Tax: {town.tax_rate}%
+                        </span>
+                    )}
+                    {town.barony && (
+                        <Link href={`/baronies/${town.barony.id}`} className="flex items-center gap-1 rounded-full border border-stone-700 bg-stone-800/50 px-3 py-1 text-xs text-stone-400 transition hover:text-stone-300">
+                            <Building2 className="h-3 w-3" />
+                            {town.barony.name}
+                        </Link>
+                    )}
+                    {services.some(s => s.id === 'church' || s.id === 'shrine') && (
+                        <span className="flex items-center gap-1 rounded-full border border-stone-700 bg-stone-800/50 px-3 py-1 text-xs text-stone-400">
+                            <Church className="h-3 w-3" />
+                            Has Shrine
+                        </span>
+                    )}
+                    {services.some(s => s.id === 'market') && (
+                        <span className="flex items-center gap-1 rounded-full border border-stone-700 bg-stone-800/50 px-3 py-1 text-xs text-stone-400">
+                            <ScrollText className="h-3 w-3" />
+                            Market Open
+                        </span>
+                    )}
+                </div>
+
+                {/* Chat Link */}
+                <Link
+                    href={`/chat?location=town-${town.id}`}
+                    className="flex items-center gap-2 rounded-lg border border-stone-700 bg-stone-800/30 px-4 py-2 text-sm text-stone-400 transition hover:bg-stone-800/50"
+                >
+                    <MessageCircle className="h-4 w-4" />
+                    Town Chat
+                </Link>
 
                 {/* Flash Messages */}
                 {flash?.success && (

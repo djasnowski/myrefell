@@ -127,6 +127,11 @@ export default function TrainingIndex() {
                     setCurrentEnergy(data.energy_remaining);
                 }
 
+                // Update HP if training caused any HP change
+                if (player_hp > 0) {
+                    setCurrentHp(player_hp);
+                }
+
                 // Update the stat that was trained
                 if (data.skill && data.skill_progress !== undefined && data.xp_to_next_level !== undefined) {
                     const skillKey = data.skill as 'attack' | 'strength' | 'defense';
@@ -155,8 +160,16 @@ export default function TrainingIndex() {
                 }
             }
 
-            // Reload sidebar data
-            router.reload({ only: ['sidebar'] });
+            // Reload sidebar data and sync HP
+            router.reload({
+                only: ['sidebar', 'player_hp'],
+                onSuccess: (page) => {
+                    const props = page.props as PageProps;
+                    if (props.player_hp !== undefined) {
+                        setCurrentHp(props.player_hp);
+                    }
+                },
+            });
         } catch {
             setResult({ success: false, message: 'An error occurred' });
         } finally {

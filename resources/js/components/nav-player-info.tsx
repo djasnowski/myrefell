@@ -1,7 +1,7 @@
 import { usePage } from '@inertiajs/react';
+import * as LucideIcons from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSidebar } from '@/components/ui/sidebar';
-import * as LucideIcons from 'lucide-react';
 
 interface SidebarData {
     player: {
@@ -64,10 +64,8 @@ function EnergyTimer({ secondsUntilNext }: { secondsUntilNext: number | null }) 
 
     useEffect(() => {
         if (secondsUntilNext === null) {
-            setSeconds(0);
             return;
         }
-        setSeconds(secondsUntilNext);
         const interval = setInterval(() => {
             setSeconds((prev) => {
                 if (prev <= 1) {
@@ -169,7 +167,7 @@ export function NavPlayerInfo() {
                 <StatBar current={energy_info.current} max={energy_info.max} color="bg-gradient-to-r from-yellow-600 to-yellow-400" />
                 {!energy_info.at_max && (
                     <div className="mt-0.5 text-right">
-                        <EnergyTimer secondsUntilNext={energy_info.seconds_until_next} />
+                        <EnergyTimer key={energy_info.seconds_until_next} secondsUntilNext={energy_info.seconds_until_next} />
                     </div>
                 )}
             </div>

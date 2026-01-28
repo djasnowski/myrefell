@@ -106,7 +106,10 @@ export default function CrimeIndex() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="font-pixel text-2xl text-amber-400">Criminal Record</h1>
-                        <p className="font-pixel text-sm text-stone-400">Your standing with the law</p>
+                        <p className="flex items-center gap-1 font-pixel text-sm text-stone-400">
+                            <User className="h-3 w-3" />
+                            {player.username}'s standing with the law
+                        </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <Link

@@ -78,6 +78,9 @@ interface PageProps {
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'World Map', href: '/travel' }];
 
+// Kingdoms to merge into one landmass (keeping distinct biome regions)
+const MERGED_KINGDOMS = ['Sandmar', 'Frostholm', 'Ashenfell'];
+
 // Biome terrain colors
 const biomeColors: Record<string, { terrain: string; accent: string; label: string }> = {
     forest: { terrain: '#1a4d1a', accent: '#2d7a2d', label: 'Forest' },
@@ -105,50 +108,6 @@ const DEEP_WATER_COLOR = '#0f2840';
 
 function getBiomeColor(biome: string): { terrain: string; accent: string } {
     return biomeColors[biome] || { terrain: '#3d3d3d', accent: '#5c5c5c' };
-}
-
-// Generate unique island shape based on kingdom index
-function generateIslandPath(cx: number, cy: number, index: number): string {
-    const baseRadius = 160;
-    const points: string[] = [];
-
-    // Different shape parameters for each kingdom
-    const shapeParams = [
-        { segments: 16, freq1: 2.3, freq2: 3.7, amp1: 0.25, amp2: 0.15 }, // Rounded blob
-        { segments: 14, freq1: 1.8, freq2: 4.2, amp1: 0.3, amp2: 0.1 },  // Elongated
-        { segments: 18, freq1: 3.1, freq2: 2.4, amp1: 0.2, amp2: 0.2 },  // Star-ish
-        { segments: 12, freq1: 2.7, freq2: 1.9, amp1: 0.35, amp2: 0.12 }, // Organic
-    ];
-
-    const params = shapeParams[index % shapeParams.length];
-
-    for (let i = 0; i < params.segments; i++) {
-        const angle = (i / params.segments) * Math.PI * 2;
-        const variation = 0.7 +
-            Math.sin(angle * params.freq1 + index) * params.amp1 +
-            Math.cos(angle * params.freq2 + index * 0.5) * params.amp2;
-        const r = baseRadius * variation;
-        const px = cx + Math.cos(angle) * r;
-        const py = cy + Math.sin(angle) * r;
-
-        if (i === 0) {
-            points.push(`M ${px} ${py}`);
-        } else {
-            // Use quadratic curves for smoother edges
-            const prevAngle = ((i - 1) / params.segments) * Math.PI * 2;
-            const midAngle = (angle + prevAngle) / 2;
-            const midVariation = 0.7 +
-                Math.sin(midAngle * params.freq1 + index) * params.amp1 +
-                Math.cos(midAngle * params.freq2 + index * 0.5) * params.amp2;
-            const midR = baseRadius * midVariation * 1.05;
-            const cpx = cx + Math.cos(midAngle) * midR;
-            const cpy = cy + Math.sin(midAngle) * midR;
-            points.push(`Q ${cpx} ${cpy} ${px} ${py}`);
-        }
-    }
-    points.push('Z');
-
-    return points.join(' ');
 }
 
 export default function Dashboard() {
@@ -345,9 +304,6 @@ export default function Dashboard() {
 
     const transformY = (y: number) => -y;
 
-    // Kingdoms to merge into one landmass (keeping distinct biome regions)
-    const MERGED_KINGDOMS = ['Sandmar', 'Frostholm', 'Ashenfell'];
-
     // Generate terrain - large kingdom islands that encompass all locations
     const terrainRegions = useMemo(() => {
         const regions: JSX.Element[] = [];
@@ -379,10 +335,6 @@ export default function Dashboard() {
         });
 
         // Separate merged kingdoms from standalone ones
-        const mergedKingdomIds = Object.values(kingdomData)
-            .filter((d) => MERGED_KINGDOMS.includes(d.kingdom.name))
-            .map((d) => d.kingdom.id);
-
         const standaloneKingdoms = Object.values(kingdomData).filter(
             (d) => !MERGED_KINGDOMS.includes(d.kingdom.name)
         );
@@ -808,6 +760,16 @@ export default function Dashboard() {
                             </g>
                         );
                     })}
+
+                    {/* Selected search result indicator */}
+                    {selectedResult && (
+                        <g transform={`translate(${selectedResult.data.coordinates_x}, ${transformY(selectedResult.data.coordinates_y)})`}>
+                            <circle r={22} fill="none" stroke="#38bdf8" strokeWidth={2} strokeDasharray="6 3">
+                                <animate attributeName="r" from="18" to="30" dur="2s" repeatCount="indefinite" />
+                                <animate attributeName="opacity" from="1" to="0" dur="2s" repeatCount="indefinite" />
+                            </circle>
+                        </g>
+                    )}
 
                     {/* Player location - single pulsing ring */}
                     <g transform={`translate(${player.coordinates_x}, ${transformY(player.coordinates_y)})`}>
