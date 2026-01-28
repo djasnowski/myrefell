@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EmploymentJob extends Model
@@ -24,8 +25,10 @@ class EmploymentJob extends Model
      */
     public const LOCATION_TYPES = [
         'village' => 'Village',
-        'castle' => 'Castle',
         'town' => 'Town',
+        'barony' => 'Barony',
+        'duchy' => 'Duchy',
+        'kingdom' => 'Kingdom',
     ];
 
     protected $fillable = [
@@ -44,6 +47,11 @@ class EmploymentJob extends Model
         'cooldown_minutes',
         'is_active',
         'max_workers',
+        'supervisor_role_slug',
+        'supervisor_cut_percent',
+        'produces_item',
+        'production_chance',
+        'production_quantity',
     ];
 
     protected function casts(): array
@@ -57,7 +65,58 @@ class EmploymentJob extends Model
             'cooldown_minutes' => 'integer',
             'is_active' => 'boolean',
             'max_workers' => 'integer',
+            'supervisor_cut_percent' => 'integer',
+            'production_chance' => 'integer',
+            'production_quantity' => 'integer',
         ];
+    }
+
+    /**
+     * Get the supervising role for this job.
+     */
+    public function getSupervisorRole(): ?Role
+    {
+        if (!$this->supervisor_role_slug) {
+            return null;
+        }
+
+        return Role::where('slug', $this->supervisor_role_slug)->first();
+    }
+
+    /**
+     * Get the supervisor (player holding the role) at a specific location.
+     */
+    public function getSupervisorAtLocation(string $locationType, int $locationId): ?User
+    {
+        if (!$this->supervisor_role_slug) {
+            return null;
+        }
+
+        $role = $this->getSupervisorRole();
+        if (!$role) {
+            return null;
+        }
+
+        $playerRole = PlayerRole::active()
+            ->where('role_id', $role->id)
+            ->where('location_type', $locationType)
+            ->where('location_id', $locationId)
+            ->with('user')
+            ->first();
+
+        return $playerRole?->user;
+    }
+
+    /**
+     * Get the item this job produces.
+     */
+    public function getProducedItem(): ?Item
+    {
+        if (!$this->produces_item) {
+            return null;
+        }
+
+        return Item::where('name', $this->produces_item)->first();
     }
 
     /**

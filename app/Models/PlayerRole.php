@@ -119,7 +119,9 @@ class PlayerRole extends Model
     {
         return match ($this->location_type) {
             'village' => Village::find($this->location_id),
+            'town' => Town::find($this->location_id),
             'barony' => Barony::find($this->location_id),
+            'duchy' => Duchy::find($this->location_id),
             'kingdom' => Kingdom::find($this->location_id),
             default => null,
         };

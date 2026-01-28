@@ -1,5 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { ShieldOff, Sword, Trash2 } from 'lucide-react';
+import { Apple, Droplets, Package, ShieldOff, Sword, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { getItemIcon, GoldIcon, HelpCircle } from '@/lib/item-icons';
@@ -19,6 +19,7 @@ interface Item {
     str_bonus: number;
     def_bonus: number;
     hp_bonus: number;
+    energy_bonus: number;
     base_value: number;
 }
 
@@ -53,7 +54,7 @@ const rarityColors: Record<string, string> = {
 
 
 function ItemTooltip({ item, quantity, isEquipped }: { item: Item; quantity: number; isEquipped: boolean }) {
-    const hasStats = item.atk_bonus || item.str_bonus || item.def_bonus || item.hp_bonus;
+    const hasStats = item.atk_bonus || item.str_bonus || item.def_bonus || item.hp_bonus || item.energy_bonus;
 
     return (
         <div className="absolute top-full left-1/2 z-[100] mt-2 w-56 -translate-x-1/2 rounded border-2 border-stone-600 bg-stone-900 p-3 shadow-lg">
@@ -76,6 +77,9 @@ function ItemTooltip({ item, quantity, isEquipped }: { item: Item; quantity: num
                     )}
                     {item.hp_bonus > 0 && (
                         <div className="font-pixel text-xs text-green-400">+{item.hp_bonus} HP</div>
+                    )}
+                    {item.energy_bonus > 0 && (
+                        <div className="font-pixel text-xs text-yellow-400">+{item.energy_bonus} Energy</div>
                     )}
                 </div>
             )}
@@ -181,7 +185,12 @@ export default function Inventory() {
         router.post(
             '/inventory/move',
             { from_slot: fromSlot, to_slot: toSlot },
-            { preserveScroll: true }
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+            }
         );
     };
 
@@ -189,7 +198,12 @@ export default function Inventory() {
         if (selectedSlot === null || !slots[selectedSlot]) return;
 
         if (confirm(`Drop ${slots[selectedSlot]!.item.name}?`)) {
-            router.post('/inventory/drop', { slot: selectedSlot }, { preserveScroll: true });
+            router.post('/inventory/drop', { slot: selectedSlot }, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+            });
             setSelectedSlot(null);
         }
     };
@@ -199,10 +213,45 @@ export default function Inventory() {
         const item = slots[selectedSlot]!;
 
         if (item.is_equipped) {
-            router.post('/inventory/unequip', { slot: selectedSlot }, { preserveScroll: true });
+            router.post('/inventory/unequip', { slot: selectedSlot }, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+            });
         } else if (item.item.equipment_slot) {
-            router.post('/inventory/equip', { slot: selectedSlot }, { preserveScroll: true });
+            router.post('/inventory/equip', { slot: selectedSlot }, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+            });
         }
+    };
+
+    const handleConsume = () => {
+        if (selectedSlot === null || !slots[selectedSlot]) return;
+
+        router.post('/inventory/consume', { slot: selectedSlot }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                router.reload();
+            },
+        });
+    };
+
+    const getConsumeLabel = (item: Item): { label: string; icon: typeof Apple } => {
+        if (item.subtype === 'food') {
+            return { label: 'Eat', icon: Apple };
+        }
+        if (item.subtype === 'potion') {
+            return { label: 'Drink', icon: Droplets };
+        }
+        return { label: 'Use', icon: Package };
+    };
+
+    const isConsumable = (item: Item): boolean => {
+        return item.type === 'consumable' && (item.hp_bonus > 0 || item.energy_bonus > 0);
     };
 
     const usedSlots = slots.filter(Boolean).length;
@@ -274,7 +323,8 @@ export default function Inventory() {
                                 {(selectedItem.item.atk_bonus > 0 ||
                                     selectedItem.item.str_bonus > 0 ||
                                     selectedItem.item.def_bonus > 0 ||
-                                    selectedItem.item.hp_bonus > 0) && (
+                                    selectedItem.item.hp_bonus > 0 ||
+                                    selectedItem.item.energy_bonus > 0) && (
                                     <div className="space-y-1 border-t border-stone-700 pt-2">
                                         {selectedItem.item.atk_bonus > 0 && (
                                             <div className="font-pixel text-[8px] text-red-400">
@@ -294,6 +344,11 @@ export default function Inventory() {
                                         {selectedItem.item.hp_bonus > 0 && (
                                             <div className="font-pixel text-[8px] text-green-400">
                                                 +{selectedItem.item.hp_bonus} HP
+                                            </div>
+                                        )}
+                                        {selectedItem.item.energy_bonus > 0 && (
+                                            <div className="font-pixel text-[8px] text-yellow-400">
+                                                +{selectedItem.item.energy_bonus} Energy
                                             </div>
                                         )}
                                     </div>
@@ -328,6 +383,17 @@ export default function Inventory() {
                                             )}
                                         </button>
                                     )}
+                                    {isConsumable(selectedItem.item) && (() => {
+                                        const { label, icon: ConsumeIcon } = getConsumeLabel(selectedItem.item);
+                                        return (
+                                            <button
+                                                onClick={handleConsume}
+                                                className="flex w-full items-center justify-center gap-1 rounded border-2 border-amber-600 bg-amber-900/30 px-3 py-1.5 font-pixel text-[8px] text-amber-300 transition hover:bg-amber-800/50"
+                                            >
+                                                <ConsumeIcon className="h-3 w-3" /> {label}
+                                            </button>
+                                        );
+                                    })()}
                                     <button
                                         onClick={handleDrop}
                                         className="flex w-full items-center justify-center gap-1 rounded border-2 border-red-600 bg-red-900/30 px-3 py-1.5 font-pixel text-[8px] text-red-300 transition hover:bg-red-800/50"

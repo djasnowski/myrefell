@@ -8,6 +8,7 @@ use App\Http\Controllers\CombatController;
 use App\Http\Controllers\DungeonController;
 use App\Http\Controllers\CraftingController;
 use App\Http\Controllers\DocketController;
+use App\Http\Controllers\FarmingController;
 use App\Http\Controllers\GatheringController;
 use App\Http\Controllers\GuildController;
 use App\Http\Controllers\HealerController;
@@ -45,10 +46,13 @@ use App\Http\Controllers\TradeRouteController;
 use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\VillageController;
 use App\Http\Controllers\MarketController;
+use App\Http\Controllers\RoleStockingController;
 use App\Http\Controllers\DynastyController;
 use App\Http\Controllers\MarriageController;
 use App\Http\Controllers\SuccessionController;
+use App\Http\Controllers\BlessingController;
 use App\Http\Controllers\BuildingController;
+use App\Http\Controllers\DuchyController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -74,7 +78,14 @@ if (app()->environment('local')) {
 }
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
+    Route::get('dashboard', fn () => Inertia::render('dashboard', [
+        'showTutorial' => auth()->user()->show_tutorial ?? false,
+    ]))->name('dashboard');
+
+    Route::post('tutorial/dismiss', function () {
+        auth()->user()->update(['show_tutorial' => false]);
+        return back();
+    })->name('tutorial.dismiss');
     Route::get('api/player/stats', [PlayerController::class, 'stats'])->name('player.stats');
 
     // Skills
@@ -86,11 +97,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('inventory/drop', [InventoryController::class, 'drop'])->name('inventory.drop');
     Route::post('inventory/equip', [InventoryController::class, 'equip'])->name('inventory.equip');
     Route::post('inventory/unequip', [InventoryController::class, 'unequip'])->name('inventory.unequip');
+    Route::post('inventory/consume', [InventoryController::class, 'consume'])->name('inventory.consume');
 
     // World location routes
     Route::get('kingdoms', [KingdomController::class, 'index'])->name('kingdoms.index');
     Route::get('kingdoms/{kingdom}', [KingdomController::class, 'show'])->name('kingdoms.show');
     Route::get('kingdoms/{kingdom}/baronies', [KingdomController::class, 'baronies'])->name('kingdoms.baronies');
+
+    Route::get('duchies', [DuchyController::class, 'index'])->name('duchies.index');
+    Route::get('duchies/{duchy}', [DuchyController::class, 'show'])->name('duchies.show');
+    Route::get('duchies/{duchy}/baronies', [DuchyController::class, 'baronies'])->name('duchies.baronies');
 
     Route::get('baronies', [BaronyController::class, 'index'])->name('baronies.index');
     Route::get('baronies/{barony}', [BaronyController::class, 'show'])->name('baronies.show');
@@ -170,17 +186,37 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('market/sell', [MarketController::class, 'sell'])->name('market.sell');
     Route::get('market/prices', [MarketController::class, 'prices'])->name('market.prices');
 
+    // Role Stocking
+    Route::get('market/stock', [RoleStockingController::class, 'index'])->name('market.stock');
+    Route::post('market/stock', [RoleStockingController::class, 'stock'])->name('market.stock.submit');
+
     // Healer
     Route::get('villages/{village}/healer', [HealerController::class, 'villageHealer'])->name('villages.healer');
     Route::get('baronies/{barony}/infirmary', [HealerController::class, 'baronyInfirmary'])->name('baronies.infirmary');
     Route::get('towns/{town}/infirmary', [HealerController::class, 'townInfirmary'])->name('towns.infirmary');
     Route::post('healer/heal', [HealerController::class, 'heal'])->name('healer.heal');
     Route::post('healer/heal-amount', [HealerController::class, 'healAmount'])->name('healer.heal-amount');
+    Route::post('healer/treat-disease', [HealerController::class, 'treatDisease'])->name('healer.treat-disease');
 
     // Gathering
     Route::get('gathering', [GatheringController::class, 'index'])->name('gathering.index');
     Route::get('gathering/{activity}', [GatheringController::class, 'show'])->name('gathering.show');
     Route::post('gathering/gather', [GatheringController::class, 'gather'])->name('gathering.gather');
+
+    // Farming
+    Route::get('farming', [FarmingController::class, 'index'])->name('farming.index');
+    Route::post('farming/buy-plot', [FarmingController::class, 'buyPlot'])->name('farming.buy-plot');
+    Route::post('farming/{plot}/plant', [FarmingController::class, 'plant'])->name('farming.plant');
+    Route::post('farming/{plot}/water', [FarmingController::class, 'water'])->name('farming.water');
+    Route::post('farming/{plot}/tend', [FarmingController::class, 'tend'])->name('farming.tend');
+    Route::post('farming/{plot}/harvest', [FarmingController::class, 'harvest'])->name('farming.harvest');
+    Route::post('farming/{plot}/clear', [FarmingController::class, 'clear'])->name('farming.clear');
+
+    // Shrine & Blessings
+    Route::get('shrine', [BlessingController::class, 'index'])->name('shrine.index');
+    Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
+    Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
+    Route::get('shrine/active', [BlessingController::class, 'getActiveBlessings'])->name('shrine.active');
 
     // Training (Combat Stats)
     Route::get('training', [TrainingController::class, 'index'])->name('training.index');
@@ -216,15 +252,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Jobs
     Route::get('villages/{village}/jobs', [JobController::class, 'villageJobs'])->name('villages.jobs');
     Route::get('baronies/{barony}/jobs', [JobController::class, 'baronyJobs'])->name('baronies.jobs');
+    Route::get('duchies/{duchy}/jobs', [JobController::class, 'duchyJobs'])->name('duchies.jobs');
+    Route::get('kingdoms/{kingdom}/jobs', [JobController::class, 'kingdomJobs'])->name('kingdoms.jobs');
     Route::get('towns/{town}/jobs', [JobController::class, 'townJobs'])->name('towns.jobs');
     Route::post('jobs/apply', [JobController::class, 'apply'])->name('jobs.apply');
     Route::post('jobs/{employment}/work', [JobController::class, 'work'])->name('jobs.work');
     Route::post('jobs/{employment}/quit', [JobController::class, 'quit'])->name('jobs.quit');
     Route::get('jobs/status', [JobController::class, 'status'])->name('jobs.status');
+    Route::post('jobs/{employment}/fire', [JobController::class, 'fire'])->name('jobs.fire');
+    Route::get('jobs/supervised-workers', [JobController::class, 'supervisedWorkers'])->name('jobs.supervised-workers');
 
     // Roles
     Route::get('villages/{village}/roles', [RoleController::class, 'villageRoles'])->name('villages.roles');
+    Route::get('towns/{town}/roles', [RoleController::class, 'townRoles'])->name('towns.roles');
     Route::get('baronies/{barony}/roles', [RoleController::class, 'baronyRoles'])->name('baronies.roles');
+    Route::get('duchies/{duchy}/roles', [RoleController::class, 'duchyRoles'])->name('duchies.roles');
     Route::get('kingdoms/{kingdom}/roles', [RoleController::class, 'kingdomRoles'])->name('kingdoms.roles');
     Route::get('roles', [RoleController::class, 'myRoles'])->name('roles.index');
     Route::post('roles/appoint', [RoleController::class, 'appoint'])->name('roles.appoint');

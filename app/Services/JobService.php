@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\EmploymentJob;
+use App\Models\LocationStockpile;
 use App\Models\PlayerEmployment;
 use App\Models\User;
 use Illuminate\Support\Collection;
@@ -15,8 +16,14 @@ class JobService
      */
     public const MAX_CONCURRENT_JOBS = 2;
 
+    /**
+     * Default supervisor cut percentage if not specified.
+     */
+    public const DEFAULT_SUPERVISOR_CUT = 10;
+
     public function __construct(
-        protected EnergyService $energyService
+        protected EnergyService $energyService,
+        protected InventoryService $inventoryService
     ) {}
 
     /**
@@ -168,6 +175,110 @@ class JobService
     }
 
     /**
+     * Fire a worker (supervisor action).
+     */
+    public function fireWorker(User $supervisor, PlayerEmployment $employment, ?string $reason = null): array
+    {
+        $job = $employment->job;
+
+        // Check if the job has a supervisor role
+        if (!$job->supervisor_role_slug) {
+            return [
+                'success' => false,
+                'message' => 'This job does not have a supervisor role.',
+            ];
+        }
+
+        // Check if the supervisor holds the correct role at this location
+        $expectedSupervisor = $job->getSupervisorAtLocation(
+            $employment->location_type,
+            $employment->location_id
+        );
+
+        if (!$expectedSupervisor || $expectedSupervisor->id !== $supervisor->id) {
+            return [
+                'success' => false,
+                'message' => 'You are not the supervisor for this job at this location.',
+            ];
+        }
+
+        // Can't fire yourself
+        if ($employment->user_id === $supervisor->id) {
+            return [
+                'success' => false,
+                'message' => 'You cannot fire yourself.',
+            ];
+        }
+
+        if ($employment->status !== PlayerEmployment::STATUS_EMPLOYED) {
+            return [
+                'success' => false,
+                'message' => 'This worker is not currently employed.',
+            ];
+        }
+
+        $worker = $employment->user;
+        $jobName = $job->name;
+
+        $employment->update([
+            'status' => PlayerEmployment::STATUS_FIRED,
+            'fired_by' => $supervisor->id,
+            'fired_at' => now(),
+            'fired_reason' => $reason,
+        ]);
+
+        return [
+            'success' => true,
+            'message' => "You have fired {$worker->username} from their position as {$jobName}.",
+            'worker' => [
+                'id' => $worker->id,
+                'username' => $worker->username,
+            ],
+        ];
+    }
+
+    /**
+     * Get all workers at a location that the supervisor oversees.
+     */
+    public function getSupervisedWorkers(User $supervisor, string $locationType, int $locationId): Collection
+    {
+        // Get all jobs this supervisor oversees at this location
+        $supervisorRoleSlugs = $supervisor->playerRoles()
+            ->active()
+            ->where('location_type', $locationType)
+            ->where('location_id', $locationId)
+            ->with('role')
+            ->get()
+            ->pluck('role.slug')
+            ->toArray();
+
+        if (empty($supervisorRoleSlugs)) {
+            return collect();
+        }
+
+        // Get jobs that this supervisor role oversees
+        $jobIds = EmploymentJob::whereIn('supervisor_role_slug', $supervisorRoleSlugs)
+            ->pluck('id');
+
+        // Get all employed workers for those jobs at this location
+        return PlayerEmployment::whereIn('employment_job_id', $jobIds)
+            ->where('location_type', $locationType)
+            ->where('location_id', $locationId)
+            ->where('status', PlayerEmployment::STATUS_EMPLOYED)
+            ->with(['user', 'job'])
+            ->get()
+            ->map(fn ($pe) => [
+                'employment_id' => $pe->id,
+                'user_id' => $pe->user_id,
+                'username' => $pe->user->username,
+                'job_name' => $pe->job->name,
+                'hired_at' => $pe->hired_at->toISOString(),
+                'times_worked' => $pe->times_worked,
+                'total_earnings' => $pe->total_earnings,
+            ]);
+    }
+
+    /**
      * Work at a job.
      */
     public function work(User $user, PlayerEmployment $employment): array
@@ -219,8 +330,26 @@ class JobService
             // Consume energy
             $this->energyService->consumeEnergy($user, $job->energy_cost);
 
-            // Pay wages
-            $user->increment('gold', $job->base_wage);
+            // Calculate supervisor cut
+            $supervisorCut = 0;
+            $supervisor = null;
+            $supervisorCutPercent = $job->supervisor_cut_percent ?? self::DEFAULT_SUPERVISOR_CUT;
+
+            if ($job->supervisor_role_slug) {
+                $supervisor = $job->getSupervisorAtLocation($employment->location_type, $employment->location_id);
+                if ($supervisor && $supervisor->id !== $user->id) {
+                    $supervisorCut = (int) floor($job->base_wage * $supervisorCutPercent / 100);
+                }
+            }
+
+            // Pay wages (minus supervisor cut)
+            $workerWage = $job->base_wage - $supervisorCut;
+            $user->increment('gold', $workerWage);
+
+            // Pay supervisor their cut
+            if ($supervisor && $supervisorCut > 0) {
+                $supervisor->increment('gold', $supervisorCut);
+            }
 
             // Award XP
             $xpAwarded = null;
@@ -235,20 +364,56 @@ class JobService
                 }
             }
 
+            // Check for production
+            $produced = null;
+            if ($job->produces_item && $job->production_chance > 0) {
+                if (mt_rand(1, 100) <= $job->production_chance) {
+                    $item = $job->getProducedItem();
+                    if ($item) {
+                        $quantity = $job->production_quantity ?? 1;
+
+                        // Add to location stockpile
+                        $stockpile = LocationStockpile::getOrCreate(
+                            $employment->location_type,
+                            $employment->location_id,
+                            $item->id
+                        );
+                        $stockpile->addQuantity($quantity);
+
+                        $produced = [
+                            'item' => $item->name,
+                            'quantity' => $quantity,
+                        ];
+                    }
+                }
+            }
+
             // Update employment record
             $employment->update([
                 'last_worked_at' => now(),
                 'times_worked' => $employment->times_worked + 1,
-                'total_earnings' => $employment->total_earnings + $job->base_wage,
+                'total_earnings' => $employment->total_earnings + $workerWage,
             ]);
+
+            // Build message
+            $message = "You worked as a {$job->name} and earned {$workerWage} gold!";
+            if ($supervisorCut > 0 && $supervisor) {
+                $message .= " ({$supervisorCut}g paid to your supervisor)";
+            }
+            if ($produced) {
+                $message .= " You produced {$produced['quantity']}x {$produced['item']} for the stockpile.";
+            }
 
             return [
                 'success' => true,
-                'message' => "You worked as a {$job->name} and earned {$job->base_wage} gold!",
+                'message' => $message,
                 'rewards' => [
-                    'gold' => $job->base_wage,
+                    'gold' => $workerWage,
+                    'supervisor_cut' => $supervisorCut,
+                    'supervisor' => $supervisor?->username,
                     'xp' => $xpAwarded,
                     'energy_used' => $job->energy_cost,
+                    'produced' => $produced,
                 ],
             ];
         });
@@ -318,7 +483,9 @@ class JobService
     public static function seedDefaultJobs(): void
     {
         $jobs = [
-            // Service jobs (available at villages, towns)
+            // ===================
+            // VILLAGE JOBS
+            // ===================
             [
                 'name' => 'Cook',
                 'icon' => 'utensils',
@@ -330,6 +497,11 @@ class JobService
                 'xp_reward' => 15,
                 'xp_skill' => 'cooking',
                 'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'innkeeper',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Cooked Meat',
+                'production_chance' => 25,
+                'production_quantity' => 1,
             ],
             [
                 'name' => 'Cleaner',
@@ -342,6 +514,8 @@ class JobService
                 'xp_reward' => 10,
                 'xp_skill' => null,
                 'cooldown_minutes' => 20,
+                'supervisor_role_slug' => 'elder',
+                'supervisor_cut_percent' => 10,
             ],
             [
                 'name' => 'Stable Hand',
@@ -354,6 +528,8 @@ class JobService
                 'xp_reward' => 12,
                 'xp_skill' => null,
                 'cooldown_minutes' => 25,
+                'supervisor_role_slug' => 'elder',
+                'supervisor_cut_percent' => 10,
             ],
             [
                 'name' => 'Farmhand',
@@ -366,9 +542,12 @@ class JobService
                 'xp_reward' => 15,
                 'xp_skill' => 'foraging',
                 'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'master_farmer',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Wheat',
+                'production_chance' => 30,
+                'production_quantity' => 2,
             ],
-
-            // Skilled jobs (require skills)
             [
                 'name' => 'Miner',
                 'icon' => 'pickaxe',
@@ -382,6 +561,11 @@ class JobService
                 'required_skill' => 'mining',
                 'required_skill_level' => 5,
                 'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'miner',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Iron Ore',
+                'production_chance' => 35,
+                'production_quantity' => 1,
             ],
             [
                 'name' => 'Lumberjack',
@@ -396,9 +580,16 @@ class JobService
                 'required_skill' => 'woodcutting',
                 'required_skill_level' => 5,
                 'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'forester',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Oak Logs',
+                'production_chance' => 35,
+                'production_quantity' => 2,
             ],
 
-            // Barony jobs
+            // ===================
+            // BARONY JOBS
+            // ===================
             [
                 'name' => 'Guard Duty',
                 'icon' => 'shield',
@@ -411,6 +602,8 @@ class JobService
                 'xp_skill' => 'defense',
                 'required_level' => 5,
                 'cooldown_minutes' => 40,
+                'supervisor_role_slug' => 'marshal',
+                'supervisor_cut_percent' => 10,
             ],
             [
                 'name' => 'Squire',
@@ -424,9 +617,727 @@ class JobService
                 'xp_skill' => 'attack',
                 'required_level' => 3,
                 'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'marshal',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Servant',
+                'icon' => 'sparkles',
+                'description' => 'Clean chambers and serve the nobility.',
+                'category' => 'service',
+                'location_type' => 'barony',
+                'energy_cost' => 8,
+                'base_wage' => 40,
+                'xp_reward' => 10,
+                'xp_skill' => null,
+                'cooldown_minutes' => 25,
+                'supervisor_role_slug' => 'steward',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Page',
+                'icon' => 'scroll',
+                'description' => 'Run messages and assist nobles with daily tasks.',
+                'category' => 'service',
+                'location_type' => 'barony',
+                'energy_cost' => 10,
+                'base_wage' => 45,
+                'xp_reward' => 12,
+                'xp_skill' => null,
+                'cooldown_minutes' => 20,
+                'supervisor_role_slug' => 'steward',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Herald',
+                'icon' => 'megaphone',
+                'description' => 'Make announcements and assist with ceremonies.',
+                'category' => 'service',
+                'location_type' => 'barony',
+                'energy_cost' => 8,
+                'base_wage' => 55,
+                'xp_reward' => 14,
+                'xp_skill' => null,
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'steward',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Barony Stable Hand',
+                'icon' => 'horse',
+                'description' => 'Care for the horses and maintain the stables.',
+                'category' => 'service',
+                'location_type' => 'barony',
+                'energy_cost' => 12,
+                'base_wage' => 50,
+                'xp_reward' => 15,
+                'xp_skill' => null,
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'castellan',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Mason',
+                'icon' => 'brick-wall',
+                'description' => 'Repair and maintain the castle walls and structures.',
+                'category' => 'labor',
+                'location_type' => 'barony',
+                'energy_cost' => 16,
+                'base_wage' => 75,
+                'xp_reward' => 22,
+                'xp_skill' => 'crafting',
+                'cooldown_minutes' => 40,
+                'supervisor_role_slug' => 'castellan',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Stone Block',
+                'production_chance' => 20,
+                'production_quantity' => 1,
+            ],
+            [
+                'name' => 'Groundskeeper',
+                'icon' => 'tree-deciduous',
+                'description' => 'Maintain the castle grounds and gardens.',
+                'category' => 'labor',
+                'location_type' => 'barony',
+                'energy_cost' => 12,
+                'base_wage' => 45,
+                'xp_reward' => 14,
+                'xp_skill' => null,
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'castellan',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Kitchen Hand',
+                'icon' => 'chef-hat',
+                'description' => 'Assist in the castle kitchen preparing meals.',
+                'category' => 'labor',
+                'location_type' => 'barony',
+                'energy_cost' => 10,
+                'base_wage' => 45,
+                'xp_reward' => 15,
+                'xp_skill' => 'cooking',
+                'cooldown_minutes' => 25,
+                'supervisor_role_slug' => 'master_cook',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Cooked Meat',
+                'production_chance' => 20,
+                'production_quantity' => 1,
+            ],
+            [
+                'name' => 'Armorer',
+                'icon' => 'shield-check',
+                'description' => 'Maintain and repair weapons and armor for the garrison.',
+                'category' => 'skilled',
+                'location_type' => 'barony',
+                'energy_cost' => 14,
+                'base_wage' => 80,
+                'xp_reward' => 28,
+                'xp_skill' => 'smithing',
+                'required_skill' => 'smithing',
+                'required_skill_level' => 10,
+                'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'marshal',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Iron Bar',
+                'production_chance' => 25,
+                'production_quantity' => 1,
+            ],
+            [
+                'name' => "Falconer's Assistant",
+                'icon' => 'bird',
+                'description' => 'Care for and train hunting birds for the nobility.',
+                'category' => 'skilled',
+                'location_type' => 'barony',
+                'energy_cost' => 10,
+                'base_wage' => 60,
+                'xp_reward' => 18,
+                'xp_skill' => 'range',
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'marshal',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Huntsman',
+                'icon' => 'crosshair',
+                'description' => 'Assist with hunts and track game for the lord.',
+                'category' => 'skilled',
+                'location_type' => 'barony',
+                'energy_cost' => 14,
+                'base_wage' => 65,
+                'xp_reward' => 22,
+                'xp_skill' => 'range',
+                'required_skill' => 'range',
+                'required_skill_level' => 5,
+                'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'marshal',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Raw Meat',
+                'production_chance' => 30,
+                'production_quantity' => 1,
+            ],
+            [
+                'name' => 'Castle Cook',
+                'icon' => 'soup',
+                'description' => 'Prepare fine meals for the baron and his guests.',
+                'category' => 'skilled',
+                'location_type' => 'barony',
+                'energy_cost' => 12,
+                'base_wage' => 70,
+                'xp_reward' => 25,
+                'xp_skill' => 'cooking',
+                'required_skill' => 'cooking',
+                'required_skill_level' => 10,
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'master_cook',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Cooked Meat',
+                'production_chance' => 30,
+                'production_quantity' => 1,
+            ],
+            [
+                'name' => "Chronicler's Assistant",
+                'icon' => 'book-open',
+                'description' => 'Record events and maintain the castle archives.',
+                'category' => 'skilled',
+                'location_type' => 'barony',
+                'energy_cost' => 8,
+                'base_wage' => 65,
+                'xp_reward' => 16,
+                'xp_skill' => null,
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'court_chaplain',
+                'supervisor_cut_percent' => 10,
             ],
 
-            // Town jobs
+            // ===================
+            // DUCHY JOBS
+            // ===================
+            [
+                'name' => 'Ducal Guard',
+                'icon' => 'shield',
+                'description' => 'Elite guard protecting the Duke and his court.',
+                'category' => 'service',
+                'location_type' => 'duchy',
+                'energy_cost' => 12,
+                'base_wage' => 90,
+                'xp_reward' => 28,
+                'xp_skill' => 'defense',
+                'required_level' => 10,
+                'cooldown_minutes' => 40,
+                'supervisor_role_slug' => 'duchy_marshal',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Ducal Servant',
+                'icon' => 'sparkles',
+                'description' => 'Serve in the Duke\'s personal household.',
+                'category' => 'service',
+                'location_type' => 'duchy',
+                'energy_cost' => 10,
+                'base_wage' => 60,
+                'xp_reward' => 15,
+                'xp_skill' => null,
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'duchy_chancellor',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Diplomatic Courier',
+                'icon' => 'mail',
+                'description' => 'Carry sensitive messages between noble courts.',
+                'category' => 'service',
+                'location_type' => 'duchy',
+                'energy_cost' => 14,
+                'base_wage' => 75,
+                'xp_reward' => 20,
+                'xp_skill' => null,
+                'required_level' => 5,
+                'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'duchy_chancellor',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Court Attendant',
+                'icon' => 'crown',
+                'description' => 'Assist with court functions and ceremonies.',
+                'category' => 'service',
+                'location_type' => 'duchy',
+                'energy_cost' => 10,
+                'base_wage' => 65,
+                'xp_reward' => 16,
+                'xp_skill' => null,
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'duchy_chancellor',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Palace Stable Master',
+                'icon' => 'horse',
+                'description' => 'Oversee the Duke\'s prized horses and stables.',
+                'category' => 'service',
+                'location_type' => 'duchy',
+                'energy_cost' => 12,
+                'base_wage' => 70,
+                'xp_reward' => 18,
+                'xp_skill' => null,
+                'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'duchy_marshal',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Palace Groundskeeper',
+                'icon' => 'tree-deciduous',
+                'description' => 'Maintain the grand gardens and grounds of the ducal palace.',
+                'category' => 'labor',
+                'location_type' => 'duchy',
+                'energy_cost' => 14,
+                'base_wage' => 65,
+                'xp_reward' => 18,
+                'xp_skill' => null,
+                'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'duchy_chancellor',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Construction Foreman',
+                'icon' => 'hard-hat',
+                'description' => 'Oversee building projects throughout the duchy.',
+                'category' => 'labor',
+                'location_type' => 'duchy',
+                'energy_cost' => 16,
+                'base_wage' => 95,
+                'xp_reward' => 25,
+                'xp_skill' => 'crafting',
+                'required_skill' => 'crafting',
+                'required_skill_level' => 10,
+                'cooldown_minutes' => 40,
+                'supervisor_role_slug' => 'duchy_chancellor',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Stone Block',
+                'production_chance' => 25,
+                'production_quantity' => 1,
+            ],
+            [
+                'name' => 'Palace Kitchen Staff',
+                'icon' => 'chef-hat',
+                'description' => 'Work in the grand kitchens preparing feasts.',
+                'category' => 'labor',
+                'location_type' => 'duchy',
+                'energy_cost' => 12,
+                'base_wage' => 60,
+                'xp_reward' => 18,
+                'xp_skill' => 'cooking',
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'duchy_chef',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Cooked Meat',
+                'production_chance' => 25,
+                'production_quantity' => 1,
+            ],
+            [
+                'name' => 'Ducal Armorer',
+                'icon' => 'shield-check',
+                'description' => 'Craft and maintain the finest arms and armor for the Duke\'s forces.',
+                'category' => 'skilled',
+                'location_type' => 'duchy',
+                'energy_cost' => 16,
+                'base_wage' => 110,
+                'xp_reward' => 35,
+                'xp_skill' => 'smithing',
+                'required_skill' => 'smithing',
+                'required_skill_level' => 20,
+                'cooldown_minutes' => 40,
+                'supervisor_role_slug' => 'duchy_marshal',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Steel Bar',
+                'production_chance' => 30,
+                'production_quantity' => 1,
+            ],
+            [
+                'name' => 'Court Musician',
+                'icon' => 'music',
+                'description' => 'Entertain the court with music and song.',
+                'category' => 'skilled',
+                'location_type' => 'duchy',
+                'energy_cost' => 10,
+                'base_wage' => 80,
+                'xp_reward' => 20,
+                'xp_skill' => null,
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'duchy_chancellor',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Master Huntsman',
+                'icon' => 'crosshair',
+                'description' => 'Lead grand hunts for the Duke and his guests.',
+                'category' => 'skilled',
+                'location_type' => 'duchy',
+                'energy_cost' => 16,
+                'base_wage' => 90,
+                'xp_reward' => 30,
+                'xp_skill' => 'range',
+                'required_skill' => 'range',
+                'required_skill_level' => 15,
+                'cooldown_minutes' => 40,
+                'supervisor_role_slug' => 'master_of_hunts',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Raw Meat',
+                'production_chance' => 40,
+                'production_quantity' => 2,
+            ],
+            [
+                'name' => 'Ducal Chef',
+                'icon' => 'soup',
+                'description' => 'Prepare elaborate feasts for the Duke\'s banquets.',
+                'category' => 'skilled',
+                'location_type' => 'duchy',
+                'energy_cost' => 14,
+                'base_wage' => 100,
+                'xp_reward' => 32,
+                'xp_skill' => 'cooking',
+                'required_skill' => 'cooking',
+                'required_skill_level' => 20,
+                'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'duchy_chef',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Cooked Meat',
+                'production_chance' => 40,
+                'production_quantity' => 2,
+            ],
+            [
+                'name' => "Cartographer's Assistant",
+                'icon' => 'map',
+                'description' => 'Help create and maintain maps of the duchy.',
+                'category' => 'skilled',
+                'location_type' => 'duchy',
+                'energy_cost' => 10,
+                'base_wage' => 85,
+                'xp_reward' => 22,
+                'xp_skill' => null,
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'duchy_chancellor',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Treasury Clerk',
+                'icon' => 'coins',
+                'description' => 'Manage the duchy\'s finances and tax records.',
+                'category' => 'skilled',
+                'location_type' => 'duchy',
+                'energy_cost' => 10,
+                'base_wage' => 95,
+                'xp_reward' => 24,
+                'xp_skill' => null,
+                'required_level' => 8,
+                'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'duchy_treasurer',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Court Physician Assistant',
+                'icon' => 'heart-pulse',
+                'description' => 'Assist the duchy physician with treatments and remedies.',
+                'category' => 'skilled',
+                'location_type' => 'duchy',
+                'energy_cost' => 12,
+                'base_wage' => 90,
+                'xp_reward' => 26,
+                'xp_skill' => 'crafting',
+                'required_skill' => 'crafting',
+                'required_skill_level' => 10,
+                'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'duchy_physician',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Healing Potion',
+                'production_chance' => 20,
+                'production_quantity' => 1,
+            ],
+
+            // ===================
+            // KINGDOM JOBS
+            // ===================
+            [
+                'name' => 'Royal Guard',
+                'icon' => 'shield',
+                'description' => 'Elite protector of the King and the royal family.',
+                'category' => 'service',
+                'location_type' => 'kingdom',
+                'energy_cost' => 14,
+                'base_wage' => 130,
+                'xp_reward' => 35,
+                'xp_skill' => 'defense',
+                'required_level' => 15,
+                'cooldown_minutes' => 45,
+                'supervisor_role_slug' => 'lord_marshal',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Royal Servant',
+                'icon' => 'sparkles',
+                'description' => 'Serve in the King\'s personal household with honor.',
+                'category' => 'service',
+                'location_type' => 'kingdom',
+                'energy_cost' => 10,
+                'base_wage' => 85,
+                'xp_reward' => 20,
+                'xp_skill' => null,
+                'required_level' => 5,
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'royal_steward',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Royal Courier',
+                'icon' => 'mail',
+                'description' => 'Carry royal decrees and sensitive documents across the realm.',
+                'category' => 'service',
+                'location_type' => 'kingdom',
+                'energy_cost' => 16,
+                'base_wage' => 100,
+                'xp_reward' => 25,
+                'xp_skill' => null,
+                'required_level' => 10,
+                'cooldown_minutes' => 40,
+                'supervisor_role_slug' => 'royal_steward',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Royal Herald',
+                'icon' => 'megaphone',
+                'description' => 'Announce royal proclamations and represent the crown.',
+                'category' => 'service',
+                'location_type' => 'kingdom',
+                'energy_cost' => 10,
+                'base_wage' => 90,
+                'xp_reward' => 22,
+                'xp_skill' => null,
+                'required_level' => 8,
+                'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'royal_herald',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Royal Stable Master',
+                'icon' => 'horse',
+                'description' => 'Oversee the King\'s prized warhorses and royal steeds.',
+                'category' => 'service',
+                'location_type' => 'kingdom',
+                'energy_cost' => 12,
+                'base_wage' => 95,
+                'xp_reward' => 24,
+                'xp_skill' => null,
+                'required_level' => 5,
+                'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'royal_steward',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Throne Room Attendant',
+                'icon' => 'crown',
+                'description' => 'Attend to visitors and maintain order in the throne room.',
+                'category' => 'service',
+                'location_type' => 'kingdom',
+                'energy_cost' => 10,
+                'base_wage' => 80,
+                'xp_reward' => 18,
+                'xp_skill' => null,
+                'required_level' => 5,
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'royal_steward',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Royal Groundskeeper',
+                'icon' => 'tree-deciduous',
+                'description' => 'Maintain the magnificent royal palace gardens.',
+                'category' => 'labor',
+                'location_type' => 'kingdom',
+                'energy_cost' => 14,
+                'base_wage' => 85,
+                'xp_reward' => 22,
+                'xp_skill' => null,
+                'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'royal_steward',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Royal Kitchen Staff',
+                'icon' => 'chef-hat',
+                'description' => 'Work in the grand royal kitchens preparing feasts.',
+                'category' => 'labor',
+                'location_type' => 'kingdom',
+                'energy_cost' => 12,
+                'base_wage' => 80,
+                'xp_reward' => 22,
+                'xp_skill' => 'cooking',
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'royal_chef',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Cooked Meat',
+                'production_chance' => 30,
+                'production_quantity' => 2,
+            ],
+            [
+                'name' => 'Royal Construction Overseer',
+                'icon' => 'hard-hat',
+                'description' => 'Supervise grand construction projects across the kingdom.',
+                'category' => 'labor',
+                'location_type' => 'kingdom',
+                'energy_cost' => 18,
+                'base_wage' => 130,
+                'xp_reward' => 35,
+                'xp_skill' => 'crafting',
+                'required_skill' => 'crafting',
+                'required_skill_level' => 20,
+                'cooldown_minutes' => 45,
+                'supervisor_role_slug' => 'royal_steward',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Stone Block',
+                'production_chance' => 30,
+                'production_quantity' => 2,
+            ],
+            [
+                'name' => 'Royal Armorer',
+                'icon' => 'shield-check',
+                'description' => 'Forge legendary weapons and armor for the King\'s elite.',
+                'category' => 'skilled',
+                'location_type' => 'kingdom',
+                'energy_cost' => 18,
+                'base_wage' => 150,
+                'xp_reward' => 45,
+                'xp_skill' => 'smithing',
+                'required_skill' => 'smithing',
+                'required_skill_level' => 30,
+                'cooldown_minutes' => 45,
+                'supervisor_role_slug' => 'lord_marshal',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Steel Bar',
+                'production_chance' => 35,
+                'production_quantity' => 1,
+            ],
+            [
+                'name' => 'Royal Chef',
+                'icon' => 'soup',
+                'description' => 'Prepare exquisite meals fit for royalty.',
+                'category' => 'skilled',
+                'location_type' => 'kingdom',
+                'energy_cost' => 14,
+                'base_wage' => 135,
+                'xp_reward' => 40,
+                'xp_skill' => 'cooking',
+                'required_skill' => 'cooking',
+                'required_skill_level' => 30,
+                'cooldown_minutes' => 40,
+                'supervisor_role_slug' => 'royal_chef',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Cooked Meat',
+                'production_chance' => 45,
+                'production_quantity' => 2,
+            ],
+            [
+                'name' => 'Court Composer',
+                'icon' => 'music',
+                'description' => 'Create magnificent music for royal ceremonies and celebrations.',
+                'category' => 'skilled',
+                'location_type' => 'kingdom',
+                'energy_cost' => 12,
+                'base_wage' => 110,
+                'xp_reward' => 28,
+                'xp_skill' => null,
+                'required_level' => 10,
+                'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'royal_steward',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Royal Treasurer\'s Assistant',
+                'icon' => 'coins',
+                'description' => 'Help manage the kingdom\'s vast treasury and finances.',
+                'category' => 'skilled',
+                'location_type' => 'kingdom',
+                'energy_cost' => 12,
+                'base_wage' => 125,
+                'xp_reward' => 30,
+                'xp_skill' => null,
+                'required_level' => 12,
+                'cooldown_minutes' => 40,
+                'supervisor_role_slug' => 'royal_treasurer',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Royal Physician\'s Assistant',
+                'icon' => 'heart-pulse',
+                'description' => 'Assist in caring for the royal family\'s health.',
+                'category' => 'skilled',
+                'location_type' => 'kingdom',
+                'energy_cost' => 14,
+                'base_wage' => 120,
+                'xp_reward' => 32,
+                'xp_skill' => 'crafting',
+                'required_skill' => 'crafting',
+                'required_skill_level' => 20,
+                'cooldown_minutes' => 40,
+                'supervisor_role_slug' => 'royal_physician',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Healing Potion',
+                'production_chance' => 25,
+                'production_quantity' => 1,
+            ],
+            [
+                'name' => 'Royal Cartographer',
+                'icon' => 'map',
+                'description' => 'Map the entire kingdom and chart new territories.',
+                'category' => 'skilled',
+                'location_type' => 'kingdom',
+                'energy_cost' => 12,
+                'base_wage' => 115,
+                'xp_reward' => 28,
+                'xp_skill' => null,
+                'required_level' => 10,
+                'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'royal_steward',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Master of Ceremonies Assistant',
+                'icon' => 'party-popper',
+                'description' => 'Help organize grand royal events and celebrations.',
+                'category' => 'skilled',
+                'location_type' => 'kingdom',
+                'energy_cost' => 12,
+                'base_wage' => 105,
+                'xp_reward' => 26,
+                'xp_skill' => null,
+                'required_level' => 8,
+                'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'royal_steward',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Royal Huntmaster',
+                'icon' => 'crosshair',
+                'description' => 'Lead the King\'s legendary hunts across the realm.',
+                'category' => 'skilled',
+                'location_type' => 'kingdom',
+                'energy_cost' => 18,
+                'base_wage' => 125,
+                'xp_reward' => 38,
+                'xp_skill' => 'range',
+                'required_skill' => 'range',
+                'required_skill_level' => 25,
+                'cooldown_minutes' => 45,
+                'supervisor_role_slug' => 'royal_steward',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Raw Meat',
+                'production_chance' => 50,
+                'production_quantity' => 3,
+            ],
+
+            // ===================
+            // TOWN JOBS
+            // ===================
             [
                 'name' => 'Market Vendor',
                 'icon' => 'store',
@@ -438,6 +1349,92 @@ class JobService
                 'xp_reward' => 15,
                 'xp_skill' => null,
                 'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'market_warden',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Inn Server',
+                'icon' => 'beer',
+                'description' => 'Serve food and drinks to weary travelers at the inn.',
+                'category' => 'service',
+                'location_type' => 'town',
+                'energy_cost' => 10,
+                'base_wage' => 50,
+                'xp_reward' => 12,
+                'xp_skill' => null,
+                'cooldown_minutes' => 25,
+                'supervisor_role_slug' => 'head_chef',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Bank Clerk',
+                'icon' => 'landmark',
+                'description' => 'Handle deposits, withdrawals, and financial records.',
+                'category' => 'service',
+                'location_type' => 'town',
+                'energy_cost' => 8,
+                'base_wage' => 65,
+                'xp_reward' => 15,
+                'xp_skill' => null,
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'town_clerk',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Courier',
+                'icon' => 'mail',
+                'description' => 'Deliver messages and small packages throughout town.',
+                'category' => 'service',
+                'location_type' => 'town',
+                'energy_cost' => 12,
+                'base_wage' => 45,
+                'xp_reward' => 18,
+                'xp_skill' => null,
+                'cooldown_minutes' => 20,
+                'supervisor_role_slug' => 'mayor',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Dockworker',
+                'icon' => 'anchor',
+                'description' => 'Load and unload cargo from ships at the harbor.',
+                'category' => 'labor',
+                'location_type' => 'town',
+                'energy_cost' => 15,
+                'base_wage' => 70,
+                'xp_reward' => 20,
+                'xp_skill' => 'strength',
+                'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'harbormaster',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Warehouse Worker',
+                'icon' => 'package',
+                'description' => 'Organize and move goods in the town warehouses.',
+                'category' => 'labor',
+                'location_type' => 'town',
+                'energy_cost' => 14,
+                'base_wage' => 60,
+                'xp_reward' => 18,
+                'xp_skill' => 'strength',
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'harbormaster',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Street Sweeper',
+                'icon' => 'trash-2',
+                'description' => 'Keep the town streets clean and tidy.',
+                'category' => 'labor',
+                'location_type' => 'town',
+                'energy_cost' => 10,
+                'base_wage' => 35,
+                'xp_reward' => 10,
+                'xp_skill' => null,
+                'cooldown_minutes' => 25,
+                'supervisor_role_slug' => 'mayor',
+                'supervisor_cut_percent' => 10,
             ],
             [
                 'name' => 'Blacksmith Assistant',
@@ -452,6 +1449,95 @@ class JobService
                 'required_skill' => 'smithing',
                 'required_skill_level' => 5,
                 'cooldown_minutes' => 35,
+                'supervisor_role_slug' => 'master_blacksmith',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Iron Bar',
+                'production_chance' => 25,
+                'production_quantity' => 1,
+            ],
+            [
+                'name' => 'Apothecary Assistant',
+                'icon' => 'flask-conical',
+                'description' => 'Help the alchemist prepare potions and remedies.',
+                'category' => 'skilled',
+                'location_type' => 'town',
+                'energy_cost' => 10,
+                'base_wage' => 70,
+                'xp_reward' => 22,
+                'xp_skill' => 'crafting',
+                'required_skill' => 'crafting',
+                'required_skill_level' => 3,
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'alchemist',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Healing Potion',
+                'production_chance' => 15,
+                'production_quantity' => 1,
+            ],
+            [
+                'name' => "Jeweler's Apprentice",
+                'icon' => 'gem',
+                'description' => 'Learn the art of jewelry making under a master jeweler.',
+                'category' => 'skilled',
+                'location_type' => 'town',
+                'energy_cost' => 10,
+                'base_wage' => 65,
+                'xp_reward' => 20,
+                'xp_skill' => 'crafting',
+                'required_skill' => 'crafting',
+                'required_skill_level' => 5,
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'master_jeweler',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => "Tailor's Assistant",
+                'icon' => 'scissors',
+                'description' => 'Help create and mend clothing and fabric goods.',
+                'category' => 'skilled',
+                'location_type' => 'town',
+                'energy_cost' => 8,
+                'base_wage' => 55,
+                'xp_reward' => 18,
+                'xp_skill' => 'crafting',
+                'required_skill' => 'crafting',
+                'required_skill_level' => 3,
+                'cooldown_minutes' => 25,
+                'supervisor_role_slug' => 'master_tailor',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => "Scribe's Assistant",
+                'icon' => 'pen-tool',
+                'description' => 'Copy documents and assist with record keeping.',
+                'category' => 'skilled',
+                'location_type' => 'town',
+                'energy_cost' => 8,
+                'base_wage' => 60,
+                'xp_reward' => 15,
+                'xp_skill' => null,
+                'cooldown_minutes' => 25,
+                'supervisor_role_slug' => 'scribe',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Brewery Worker',
+                'icon' => 'wine',
+                'description' => 'Assist in brewing ales, meads, and other beverages.',
+                'category' => 'skilled',
+                'location_type' => 'town',
+                'energy_cost' => 12,
+                'base_wage' => 60,
+                'xp_reward' => 20,
+                'xp_skill' => 'cooking',
+                'required_skill' => 'cooking',
+                'required_skill_level' => 5,
+                'cooldown_minutes' => 30,
+                'supervisor_role_slug' => 'brewmaster',
+                'supervisor_cut_percent' => 10,
+                'produces_item' => 'Ale',
+                'production_chance' => 25,
+                'production_quantity' => 1,
             ],
         ];
 

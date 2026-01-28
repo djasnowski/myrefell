@@ -391,6 +391,59 @@ class ItemSeeder extends Seeder
                 'is_perishable' => true,
                 'decay_rate_per_week' => 1,
             ],
+            [
+                'name' => 'Flour',
+                'description' => 'Ground flour from grain. Used for baking bread and pies.',
+                'type' => 'resource',
+                'subtype' => 'grain',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 5,
+            ],
+            [
+                'name' => 'Raw Meat',
+                'description' => 'Fresh raw meat from hunting. Will spoil if not cooked.',
+                'type' => 'resource',
+                'subtype' => 'meat',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 12,
+                'is_perishable' => true,
+                'spoil_after_weeks' => 2,
+                'decays_into' => 'Spoiled Food',
+            ],
+            [
+                'name' => 'Wood',
+                'description' => 'A bundle of common wood logs.',
+                'type' => 'resource',
+                'subtype' => 'wood',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 3,
+            ],
+            [
+                'name' => 'Oak Wood',
+                'description' => 'Sturdy oak logs, good for construction.',
+                'type' => 'resource',
+                'subtype' => 'wood',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 8,
+            ],
+            [
+                'name' => 'Willow Wood',
+                'description' => 'Flexible willow logs, good for bows and fishing rods.',
+                'type' => 'resource',
+                'subtype' => 'wood',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 6,
+            ],
 
             // Spoiled Food (result of decay)
             [
@@ -476,6 +529,20 @@ class ItemSeeder extends Seeder
                 'spoil_after_weeks' => 6,
                 'decays_into' => 'Spoiled Food',
             ],
+            [
+                'name' => 'Cooked Meat',
+                'description' => 'A cooked piece of meat. Heals 12 HP.',
+                'type' => 'consumable',
+                'subtype' => 'food',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 50,
+                'hp_bonus' => 12,
+                'base_value' => 25,
+                'is_perishable' => true,
+                'spoil_after_weeks' => 4,
+                'decays_into' => 'Spoiled Food',
+            ],
 
             // Potions
             [
@@ -519,7 +586,66 @@ class ItemSeeder extends Seeder
                 'rarity' => 'rare',
                 'stackable' => true,
                 'max_stack' => 10,
+                'energy_bonus' => 10,
                 'base_value' => 500,
+            ],
+
+            // Medical supplies
+            [
+                'name' => 'Bandage',
+                'description' => 'Clean linen bandages for treating wounds. Heals 8 HP.',
+                'type' => 'consumable',
+                'subtype' => 'medical',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 50,
+                'hp_bonus' => 8,
+                'base_value' => 10,
+            ],
+            [
+                'name' => 'Medicine',
+                'description' => 'Herbal medicine that speeds recovery. Heals 20 HP.',
+                'type' => 'consumable',
+                'subtype' => 'medical',
+                'rarity' => 'uncommon',
+                'stackable' => true,
+                'max_stack' => 20,
+                'hp_bonus' => 20,
+                'base_value' => 50,
+            ],
+            [
+                'name' => 'Antidote',
+                'description' => 'Cures poison and removes toxins from the body.',
+                'type' => 'consumable',
+                'subtype' => 'medical',
+                'rarity' => 'uncommon',
+                'stackable' => true,
+                'max_stack' => 20,
+                'base_value' => 75,
+            ],
+            [
+                'name' => 'Healing Potion',
+                'description' => 'A potent healing draught prepared by a physician. Heals 40 HP.',
+                'type' => 'consumable',
+                'subtype' => 'medical',
+                'rarity' => 'rare',
+                'stackable' => true,
+                'max_stack' => 10,
+                'hp_bonus' => 40,
+                'base_value' => 150,
+            ],
+
+            // Feast items
+            [
+                'name' => 'Feast Platter',
+                'description' => 'A grand platter of assorted meats, cheeses, and delicacies. Heals 50 HP and provides a temporary buff.',
+                'type' => 'consumable',
+                'subtype' => 'food',
+                'rarity' => 'rare',
+                'stackable' => true,
+                'max_stack' => 5,
+                'hp_bonus' => 50,
+                'base_value' => 200,
             ],
 
             // === TOOLS ===
@@ -605,6 +731,16 @@ class ItemSeeder extends Seeder
             ],
 
             // === MISC ===
+            [
+                'name' => 'Nails',
+                'description' => 'Metal nails for construction and crafting.',
+                'type' => 'misc',
+                'subtype' => 'material',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 500,
+                'base_value' => 1,
+            ],
             [
                 'name' => 'Bones',
                 'description' => 'Bones from a defeated creature.',
@@ -708,7 +844,10 @@ class ItemSeeder extends Seeder
         ];
 
         foreach ($items as $item) {
-            Item::create($item);
+            Item::updateOrCreate(
+                ['name' => $item['name']],
+                $item
+            );
         }
     }
 }

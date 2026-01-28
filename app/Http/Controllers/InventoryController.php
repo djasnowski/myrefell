@@ -37,6 +37,7 @@ class InventoryController extends Controller
                         'str_bonus' => $slot->item->str_bonus,
                         'def_bonus' => $slot->item->def_bonus,
                         'hp_bonus' => $slot->item->hp_bonus,
+                        'energy_bonus' => $slot->item->energy_bonus,
                         'base_value' => $slot->item->base_value,
                     ],
                     'quantity' => $slot->quantity,
@@ -161,5 +162,76 @@ class InventoryController extends Controller
         $slot->update(['is_equipped' => false]);
 
         return back();
+    }
+
+    /**
+     * Consume an item (eat food, drink potion, use medical supplies).
+     */
+    public function consume(Request $request)
+    {
+        $request->validate([
+            'slot' => 'required|integer|min:0|max:27',
+        ]);
+
+        $player = $request->user();
+        $slot = $player->inventory()->with('item')->where('slot_number', $request->slot)->first();
+
+        if (!$slot) {
+            return back()->withErrors(['error' => 'No item in that slot.']);
+        }
+
+        $item = $slot->item;
+
+        if (!$item->isConsumable()) {
+            return back()->withErrors(['error' => 'This item cannot be consumed.']);
+        }
+
+        // Check if item has any effect
+        if ($item->hp_bonus <= 0 && $item->energy_bonus <= 0) {
+            return back()->withErrors(['error' => 'This item has no consumable effect.']);
+        }
+
+        $messages = [];
+
+        // Apply HP restoration
+        if ($item->hp_bonus > 0) {
+            $oldHp = $player->hp;
+            $newHp = min($player->hp + $item->hp_bonus, $player->max_hp);
+            $healed = $newHp - $oldHp;
+
+            if ($healed > 0) {
+                $player->hp = $newHp;
+                $messages[] = "Restored {$healed} HP";
+            } else {
+                $messages[] = "HP already full";
+            }
+        }
+
+        // Apply energy restoration
+        if ($item->energy_bonus > 0) {
+            $oldEnergy = $player->energy;
+            $newEnergy = min($player->energy + $item->energy_bonus, $player->max_energy);
+            $restored = $newEnergy - $oldEnergy;
+
+            if ($restored > 0) {
+                $player->energy = $newEnergy;
+                $messages[] = "Restored {$restored} energy";
+            } else {
+                $messages[] = "Energy already full";
+            }
+        }
+
+        $player->save();
+
+        // Remove one item from the stack
+        if ($slot->quantity > 1) {
+            $slot->decrement('quantity');
+        } else {
+            $slot->delete();
+        }
+
+        $message = "Used {$item->name}. " . implode(', ', $messages) . ".";
+
+        return back()->with('success', $message);
     }
 }

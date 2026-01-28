@@ -47,6 +47,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'password',
         'is_admin',
+        'show_tutorial',
         'gender',
         'social_class',
         'bound_to_barony_id',
@@ -92,6 +93,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
+            'show_tutorial' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
             'hp' => 'integer',
             'max_hp' => 'integer',
@@ -354,6 +356,27 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(PlayerEmployment::class)
             ->where('status', PlayerEmployment::STATUS_EMPLOYED);
+    }
+
+    /**
+     * Get all role assignments for this user.
+     */
+    public function playerRoles(): HasMany
+    {
+        return $this->hasMany(PlayerRole::class);
+    }
+
+    /**
+     * Get active role assignments for this user.
+     */
+    public function activePlayerRoles(): HasMany
+    {
+        return $this->hasMany(PlayerRole::class)
+            ->where('status', PlayerRole::STATUS_ACTIVE)
+            ->where(function ($q) {
+                $q->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            });
     }
 
     /**

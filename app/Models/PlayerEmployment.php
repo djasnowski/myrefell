@@ -13,6 +13,7 @@ class PlayerEmployment extends Model
     public const STATUS_EMPLOYED = 'employed';
     public const STATUS_ON_BREAK = 'on_break';
     public const STATUS_QUIT = 'quit';
+    public const STATUS_FIRED = 'fired';
 
     protected $table = 'player_employment';
 
@@ -26,6 +27,9 @@ class PlayerEmployment extends Model
         'last_worked_at',
         'times_worked',
         'total_earnings',
+        'fired_by',
+        'fired_at',
+        'fired_reason',
     ];
 
     protected function casts(): array
@@ -36,6 +40,8 @@ class PlayerEmployment extends Model
             'last_worked_at' => 'datetime',
             'times_worked' => 'integer',
             'total_earnings' => 'integer',
+            'fired_by' => 'integer',
+            'fired_at' => 'datetime',
         ];
     }
 
@@ -80,6 +86,22 @@ class PlayerEmployment extends Model
     }
 
     /**
+     * Check if player was fired.
+     */
+    public function wasFired(): bool
+    {
+        return $this->status === self::STATUS_FIRED;
+    }
+
+    /**
+     * Get the supervisor who fired this worker.
+     */
+    public function firedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'fired_by');
+    }
+
+    /**
      * Check if player can work (cooldown has passed).
      */
     public function canWork(): bool
@@ -116,12 +138,14 @@ class PlayerEmployment extends Model
     /**
      * Get the location model (polymorphic).
      */
-    public function getLocationAttribute(): Village|Barony|Town|null
+    public function getLocationAttribute(): Village|Barony|Town|Duchy|Kingdom|null
     {
         return match ($this->location_type) {
             'village' => Village::find($this->location_id),
             'barony' => Barony::find($this->location_id),
             'town' => Town::find($this->location_id),
+            'duchy' => Duchy::find($this->location_id),
+            'kingdom' => Kingdom::find($this->location_id),
             default => null,
         };
     }

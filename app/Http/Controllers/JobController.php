@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Barony;
+use App\Models\Duchy;
 use App\Models\EmploymentJob;
+use App\Models\Kingdom;
 use App\Models\PlayerEmployment;
 use App\Models\Town;
 use App\Models\Village;
@@ -72,6 +74,40 @@ class JobController extends Controller
     }
 
     /**
+     * Display jobs available at a duchy.
+     */
+    public function duchyJobs(Request $request, Duchy $duchy): Response
+    {
+        $user = $request->user();
+
+        // Check if player is at this duchy
+        if ($user->current_location_type !== 'duchy' || $user->current_location_id !== $duchy->id) {
+            return Inertia::render('Jobs/NotHere', [
+                'location' => $duchy->name,
+            ]);
+        }
+
+        return $this->renderJobsPage($user, 'duchy', $duchy->id, $duchy->name);
+    }
+
+    /**
+     * Display jobs available at a kingdom.
+     */
+    public function kingdomJobs(Request $request, Kingdom $kingdom): Response
+    {
+        $user = $request->user();
+
+        // Check if player is at this kingdom
+        if ($user->current_location_type !== 'kingdom' || $user->current_location_id !== $kingdom->id) {
+            return Inertia::render('Jobs/NotHere', [
+                'location' => $kingdom->name,
+            ]);
+        }
+
+        return $this->renderJobsPage($user, 'kingdom', $kingdom->id, $kingdom->name);
+    }
+
+    /**
      * Render the jobs page for any location type.
      */
     protected function renderJobsPage($user, string $locationType, int $locationId, string $locationName): Response
@@ -103,7 +139,7 @@ class JobController extends Controller
     {
         $request->validate([
             'job_id' => 'required|exists:employment_jobs,id',
-            'location_type' => 'required|in:village,barony,town',
+            'location_type' => 'required|in:village,town,barony,duchy,kingdom',
             'location_id' => 'required|integer',
         ]);
 
@@ -170,6 +206,52 @@ class JobController extends Controller
             'employment' => $employment,
             'job_count' => $employment->count(),
             'max_jobs' => JobService::MAX_CONCURRENT_JOBS,
+        ]);
+    }
+
+    /**
+     * Fire a worker (supervisor action).
+     */
+    public function fire(Request $request, PlayerEmployment $employment): RedirectResponse|JsonResponse
+    {
+        $request->validate([
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        $supervisor = $request->user();
+        $result = $this->jobService->fireWorker($supervisor, $employment, $request->reason);
+
+        if ($request->wantsJson()) {
+            return response()->json($result, $result['success'] ? 200 : 422);
+        }
+
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
+    }
+
+    /**
+     * Get workers supervised by the current user at a location.
+     */
+    public function supervisedWorkers(Request $request): JsonResponse
+    {
+        $request->validate([
+            'location_type' => 'required|in:village,town,barony,duchy,kingdom',
+            'location_id' => 'required|integer',
+        ]);
+
+        $supervisor = $request->user();
+        $workers = $this->jobService->getSupervisedWorkers(
+            $supervisor,
+            $request->location_type,
+            $request->location_id
+        );
+
+        return response()->json([
+            'workers' => $workers,
+            'count' => $workers->count(),
         ]);
     }
 }
