@@ -21,9 +21,12 @@ class DatabaseSeeder extends Seeder
         $this->call([
             KingdomSeeder::class,
             BaronySeeder::class,
+            DuchySeeder::class,
             TownSeeder::class,
             VillageSeeder::class,
             ItemSeeder::class,
+            CropTypeSeeder::class,
+            BlessingTypeSeeder::class,
             MonsterSeeder::class,
             DailyTaskSeeder::class,
             QuestSeeder::class,
