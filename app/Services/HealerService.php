@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\DiseaseInfection;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -11,6 +12,11 @@ class HealerService
      * Base cost per HP to heal.
      */
     public const COST_PER_HP = 2;
+
+    /**
+     * Base cost to treat a disease.
+     */
+    public const DISEASE_TREATMENT_BASE_COST = 50;
 
     /**
      * Location types that have healers.
@@ -220,5 +226,124 @@ class HealerService
         };
 
         return $modelClass ? $modelClass::find($id) : null;
+    }
+
+    /**
+     * Get active disease infection for a user.
+     */
+    public function getActiveInfection(User $user): ?DiseaseInfection
+    {
+        return DiseaseInfection::where('user_id', $user->id)
+            ->active()
+            ->with('diseaseType')
+            ->first();
+    }
+
+    /**
+     * Get disease treatment cost.
+     */
+    public function getDiseaseTreatmentCost(DiseaseInfection $infection): int
+    {
+        $baseCost = self::DISEASE_TREATMENT_BASE_COST;
+        $severityMultiplier = 1 + (abs($infection->severity_modifier) / 100);
+        $daysMultiplier = 1 + ($infection->days_infected * 0.1);
+
+        return (int) ($baseCost * $severityMultiplier * $daysMultiplier);
+    }
+
+    /**
+     * Treat a disease infection.
+     */
+    public function treatDisease(User $user, DiseaseInfection $infection): array
+    {
+        if (!$this->canAccessHealer($user)) {
+            return [
+                'success' => false,
+                'message' => 'You cannot access a healer here.',
+            ];
+        }
+
+        if ($infection->user_id !== $user->id) {
+            return [
+                'success' => false,
+                'message' => 'This infection does not belong to you.',
+            ];
+        }
+
+        if (!$infection->isActive()) {
+            return [
+                'success' => false,
+                'message' => 'This infection is no longer active.',
+            ];
+        }
+
+        if ($infection->is_treated) {
+            return [
+                'success' => false,
+                'message' => 'You are already receiving treatment for this disease.',
+            ];
+        }
+
+        $cost = $this->getDiseaseTreatmentCost($infection);
+
+        if ($user->gold < $cost) {
+            return [
+                'success' => false,
+                'message' => "You don't have enough gold. Treatment costs {$cost} gold.",
+            ];
+        }
+
+        return DB::transaction(function () use ($user, $infection, $cost) {
+            $user->decrement('gold', $cost);
+            $infection->update(['is_treated' => true]);
+
+            return [
+                'success' => true,
+                'message' => "Treatment begun for {$infection->diseaseType->name}. Recovery should be faster.",
+                'cost' => $cost,
+                'gold_remaining' => $user->fresh()->gold,
+            ];
+        });
+    }
+
+    /**
+     * Get disease info for healer page.
+     */
+    public function getDiseaseInfo(User $user): ?array
+    {
+        $infection = $this->getActiveInfection($user);
+
+        if (!$infection) {
+            return null;
+        }
+
+        return [
+            'id' => $infection->id,
+            'disease_name' => $infection->diseaseType->name,
+            'description' => $infection->diseaseType->description,
+            'status' => $infection->status,
+            'severity' => $this->getSeverityLabel($infection),
+            'days_infected' => $infection->days_infected,
+            'is_treated' => $infection->is_treated,
+            'treatment_cost' => $this->getDiseaseTreatmentCost($infection),
+            'is_contagious' => $infection->diseaseType->is_contagious,
+            'symptoms' => $infection->diseaseType->symptoms ?? [],
+        ];
+    }
+
+    /**
+     * Get severity label.
+     */
+    protected function getSeverityLabel(DiseaseInfection $infection): string
+    {
+        $modifier = $infection->severity_modifier;
+
+        return match (true) {
+            $modifier <= -15 => 'mild',
+            $modifier <= -5 => 'minor',
+            $modifier <= 5 => 'moderate',
+            $modifier <= 15 => 'severe',
+            default => 'critical',
+        };
     }
 }

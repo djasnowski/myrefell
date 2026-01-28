@@ -2,10 +2,10 @@ import { Link } from '@inertiajs/react';
 import {
     Activity,
     AlertTriangle,
+    Bug,
     Heart,
     Pill,
     Thermometer,
-    Virus,
 } from 'lucide-react';
 
 interface DiseaseInfection {
@@ -28,7 +28,7 @@ const STATUS_CONFIG = {
         color: 'text-yellow-400',
         bg: 'bg-yellow-900/30',
         border: 'border-yellow-600/50',
-        icon: Virus,
+        icon: Bug,
     },
     symptomatic: {
         label: 'Symptomatic',

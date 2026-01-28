@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Building2, Clock, Coins, Crown, Gavel, ScrollText, Users, Vote } from 'lucide-react';
+import { AlertTriangle, Building2, Clock, Coins, Crown, Flame, Gavel, ScrollText, Skull, Users, Vote } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -252,6 +252,51 @@ export default function TownHall({ town, active_election, recent_elections, can_
                             <ScrollText className="mx-auto mb-2 h-8 w-8 text-stone-600" />
                             <div className="font-pixel text-xs text-stone-500">No decrees have been issued.</div>
                             <div className="font-pixel text-[10px] text-stone-600">The mayor may issue decrees that affect the town.</div>
+                        </div>
+                    </div>
+
+                    {/* Town Chronicle - Historical Events */}
+                    <div className="mt-4 rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
+                        <h2 className="mb-4 flex items-center gap-2 font-pixel text-sm text-stone-300">
+                            <ScrollText className="h-4 w-4 text-stone-400" />
+                            Town Chronicle
+                        </h2>
+                        <div className="space-y-3">
+                            <div className="rounded-lg border border-stone-700/50 bg-stone-900/30 p-3">
+                                <div className="mb-2 flex items-center gap-2">
+                                    <Skull className="h-4 w-4 text-stone-500" />
+                                    <span className="font-pixel text-[10px] text-stone-500">Year 847</span>
+                                </div>
+                                <p className="font-pixel text-[10px] leading-relaxed text-stone-400 italic">
+                                    "The Sweating Sickness claimed twelve souls before the quarantine was lifted.
+                                    The old healer says it spreads through the air itself. May the gods spare us from another outbreak."
+                                </p>
+                            </div>
+                            <div className="rounded-lg border border-stone-700/50 bg-stone-900/30 p-3">
+                                <div className="mb-2 flex items-center gap-2">
+                                    <Flame className="h-4 w-4 text-orange-500/50" />
+                                    <span className="font-pixel text-[10px] text-stone-500">Year 842</span>
+                                </div>
+                                <p className="font-pixel text-[10px] leading-relaxed text-stone-400 italic">
+                                    "Fire took the old granary and three houses on the eastern road.
+                                    The bucket brigade saved what they could. We rebuilt, as we always do."
+                                </p>
+                            </div>
+                            <div className="rounded-lg border border-stone-700/50 bg-stone-900/30 p-3">
+                                <div className="mb-2 flex items-center gap-2">
+                                    <AlertTriangle className="h-4 w-4 text-blue-500/50" />
+                                    <span className="font-pixel text-[10px] text-stone-500">Year 839</span>
+                                </div>
+                                <p className="font-pixel text-[10px] leading-relaxed text-stone-400 italic">
+                                    "The spring floods washed out the lower fields and damaged the mill.
+                                    Some say it was the worst flooding in living memory. The river takes what it will."
+                                </p>
+                            </div>
+                        </div>
+                        <div className="mt-3 text-center">
+                            <span className="font-pixel text-[9px] text-stone-600">
+                                May the chronicle remain quiet in the days ahead...
+                            </span>
                         </div>
                     </div>
                 </div>

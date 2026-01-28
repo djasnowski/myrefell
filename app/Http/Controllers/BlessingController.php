@@ -7,6 +7,7 @@ use App\Models\BlessingType;
 use App\Models\Duchy;
 use App\Models\Kingdom;
 use App\Models\LocationActivityLog;
+use App\Models\BlessingRequest;
 use App\Models\PlayerBlessing;
 use App\Models\PlayerRole;
 use App\Models\PlayerSkill;
@@ -25,7 +26,7 @@ class BlessingController extends Controller
     /**
      * Show the blessing shrine/church page (location-scoped).
      */
-    public function index(Request $request, Village|Town|Barony|Duchy|Kingdom $village = null, Town $town = null, Barony $barony = null, Duchy $duchy = null, Kingdom $kingdom = null): Response
+    public function index(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null): Response
     {
         $user = $request->user();
         $location = $village ?? $town ?? $barony ?? $duchy ?? $kingdom;
@@ -77,6 +78,24 @@ class BlessingController extends Controller
                 ->limit(50)
                 ->get();
 
+            // Get pending blessing requests at this location
+            $pendingRequests = BlessingRequest::where('status', 'pending')
+                ->where('location_type', $user->current_location_type)
+                ->where('location_id', $user->current_location_id)
+                ->with(['user:id,username', 'blessingType'])
+                ->orderBy('created_at', 'asc')
+                ->get()
+                ->map(fn ($req) => [
+                    'id' => $req->id,
+                    'user_id' => $req->user_id,
+                    'username' => $req->user->username,
+                    'blessing_type_id' => $req->blessing_type_id,
+                    'blessing_name' => $req->blessingType->name,
+                    'blessing_icon' => $req->blessingType->icon,
+                    'message' => $req->message,
+                    'created_at' => $req->created_at->diffForHumans(),
+                ]);
+
             $priestData = [
                 'prayer_level' => $prayerLevel,
                 'prayer_xp' => $prayerSkill?->xp ?? 0,
@@ -84,13 +103,32 @@ class BlessingController extends Controller
                 'available_blessings' => $availableBlessings,
                 'nearby_players' => $nearbyPlayers,
                 'blessings_given_today' => $this->getBlessingsGivenToday($user),
+                'pending_requests' => $pendingRequests,
             ];
         }
+
+        // Get recent blessings at this location (public)
+        $recentBlessings = PlayerBlessing::where('location_type', $user->current_location_type)
+            ->where('location_id', $user->current_location_id)
+            ->whereNotNull('granted_by')
+            ->with(['user:id,username', 'grantedBy:id,username', 'blessingType'])
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(fn ($blessing) => [
+                'id' => $blessing->id,
+                'recipient' => $blessing->user->username,
+                'granted_by' => $blessing->grantedBy->username,
+                'blessing_name' => $blessing->blessingType->name,
+                'blessing_icon' => $blessing->blessingType->icon,
+                'time_ago' => $blessing->created_at->diffForHumans(),
+            ]);
 
         $data = [
             'active_blessings' => $activeBlessings,
             'is_priest' => $isPriest,
             'priest_data' => $priestData,
+            'recent_blessings' => $recentBlessings,
             'energy' => $user->energy,
             'gold' => $user->gold,
             'current_user_id' => $user->id,
@@ -309,6 +347,91 @@ class BlessingController extends Controller
         $message = "Your prayers have been answered! {$blessingType->name} granted. (+{$xpGained} Prayer XP)";
 
         return back()->with('success', $message);
+    }
+
+    /**
+     * Approve a blessing request.
+     */
+    public function approveRequest(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null, ?BlessingRequest $blessingRequest = null): RedirectResponse
+    {
+        if (!$blessingRequest) {
+            return back()->withErrors(['error' => 'Blessing request not found.']);
+        }
+        $user = $request->user();
+
+        // Verify user is a priest at this location
+        if (!$this->isPriestAtLocation($user)) {
+            return back()->withErrors(['error' => 'You must be a Priest to approve blessings.']);
+        }
+
+        // Verify request is at priest's location
+        if ($blessingRequest->location_type !== $user->current_location_type ||
+            $blessingRequest->location_id !== $user->current_location_id) {
+            return back()->withErrors(['error' => 'This request is not at your location.']);
+        }
+
+        if (!$blessingRequest->isPending()) {
+            return back()->withErrors(['error' => 'This request has already been handled.']);
+        }
+
+        // Check priest has enough energy
+        $blessingType = $blessingRequest->blessingType;
+        if ($user->energy < $blessingType->energy_cost) {
+            return back()->withErrors([
+                'error' => "You need {$blessingType->energy_cost} energy to give this blessing.",
+            ]);
+        }
+
+        // Deduct energy from priest
+        $user->decrement('energy', $blessingType->energy_cost);
+
+        // Approve and create the blessing
+        $blessing = $blessingRequest->approve($user);
+
+        // Award prayer XP to priest
+        $prayerSkill = PlayerSkill::where('player_id', $user->id)
+            ->where('skill_name', 'prayer')
+            ->first();
+        $xpGained = 10 + ($blessingType->prayer_level_required * 2);
+        if ($prayerSkill) {
+            $prayerSkill->addXp($xpGained);
+        }
+
+        return back()->with('success', "Blessed {$blessingRequest->user->username} with {$blessingType->name}! (+{$xpGained} Prayer XP)");
+    }
+
+    /**
+     * Deny a blessing request.
+     */
+    public function denyRequest(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null, ?BlessingRequest $blessingRequest = null): RedirectResponse
+    {
+        if (!$blessingRequest) {
+            return back()->withErrors(['error' => 'Blessing request not found.']);
+        }
+        $user = $request->user();
+
+        // Verify user is a priest at this location
+        if (!$this->isPriestAtLocation($user)) {
+            return back()->withErrors(['error' => 'You must be a Priest to deny blessings.']);
+        }
+
+        // Verify request is at priest's location
+        if ($blessingRequest->location_type !== $user->current_location_type ||
+            $blessingRequest->location_id !== $user->current_location_id) {
+            return back()->withErrors(['error' => 'This request is not at your location.']);
+        }
+
+        if (!$blessingRequest->isPending()) {
+            return back()->withErrors(['error' => 'This request has already been handled.']);
+        }
+
+        $validated = $request->validate([
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        $blessingRequest->deny($user, $validated['reason'] ?? null);
+
+        return back()->with('success', "Denied blessing request from {$blessingRequest->user->username}.");
     }
 
     /**

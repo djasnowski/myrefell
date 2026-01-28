@@ -1,6 +1,8 @@
 import { Head, Link, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import HealthStatusWidget from '@/components/widgets/health-status-widget';
+import TutorialModal from '@/components/tutorial-modal';
 import type { BreadcrumbItem } from '@/types';
 import {
     Anchor,
@@ -91,7 +93,8 @@ interface SidebarData {
 }
 
 export default function Dashboard() {
-    const { sidebar } = usePage<{ sidebar: SidebarData }>().props;
+    const { sidebar, showTutorial } = usePage<{ sidebar: SidebarData; showTutorial: boolean }>().props;
+    const [tutorialOpen, setTutorialOpen] = useState(showTutorial);
 
     const player = sidebar?.player;
     const location = sidebar?.location;
@@ -189,6 +192,14 @@ export default function Dashboard() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Getting Started" />
+
+            {/* Tutorial Modal */}
+            {tutorialOpen && (
+                <TutorialModal
+                    playerName={player?.username ?? 'Traveler'}
+                    onClose={() => setTutorialOpen(false)}
+                />
+            )}
 
             <div className="space-y-6 p-6">
                 {/* Health Alert */}

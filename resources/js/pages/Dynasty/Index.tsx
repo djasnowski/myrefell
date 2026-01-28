@@ -101,6 +101,9 @@ export default function DynastyIndex({
             name: dynastyName,
             motto: dynastyMotto || null,
         }, {
+            onSuccess: () => {
+                router.reload();
+            },
             onFinish: () => setFounding(false),
         });
     };
@@ -110,6 +113,9 @@ export default function DynastyIndex({
             motto: newMotto || null,
         }, {
             preserveScroll: true,
+            onSuccess: () => {
+                router.reload();
+            },
             onFinish: () => setEditing(false),
         });
     };

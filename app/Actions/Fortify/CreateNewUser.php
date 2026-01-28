@@ -41,7 +41,7 @@ class CreateNewUser implements CreatesNewUsers
                 'gender' => $input['gender'],
                 'hp' => 10,
                 'max_hp' => 10,
-                'energy' => 10,
+                'energy' => 150,
                 'max_energy' => 150,
                 'gold' => 100, // Starting gold
             ]);

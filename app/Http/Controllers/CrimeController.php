@@ -154,17 +154,30 @@ class CrimeController extends Controller
 
         // Get players in the same location that can be accused
         $playersInLocation = User::where('id', '!=', $user->id)
-            ->where('current_village_id', $user->current_village_id)
+            ->where('current_location_type', $user->current_location_type)
+            ->where('current_location_id', $user->current_location_id)
             ->get()
             ->map(fn($p) => [
                 'id' => $p->id,
                 'username' => $p->username,
             ]);
 
+        // Resolve location name
+        $locationName = 'Unknown';
+        if ($user->current_location_type && $user->current_location_id) {
+            $location = match ($user->current_location_type) {
+                'village' => \App\Models\Village::find($user->current_location_id),
+                'barony' => \App\Models\Barony::find($user->current_location_id),
+                'town' => \App\Models\Town::find($user->current_location_id),
+                default => null,
+            };
+            $locationName = $location?->name ?? 'Unknown';
+        }
+
         return Inertia::render('Crime/Accuse', [
             'crime_types' => $crimeTypes,
             'players_in_location' => $playersInLocation,
-            'current_location' => $user->currentVillage?->name ?? 'Unknown',
+            'current_location' => $locationName,
         ]);
     }
 

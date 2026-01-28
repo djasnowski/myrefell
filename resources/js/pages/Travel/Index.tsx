@@ -202,17 +202,30 @@ export default function TravelIndex() {
             },
             {
                 preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
                 onFinish: () => setTraveling(false),
             }
         );
     };
 
     const handleCancel = () => {
-        router.post('/travel/cancel', {}, { preserveScroll: true });
+        router.post('/travel/cancel', {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                router.reload();
+            },
+        });
     };
 
     const handleArrive = () => {
-        router.post('/travel/arrive', {}, { preserveScroll: true });
+        router.post('/travel/arrive', {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                router.reload();
+            },
+        });
     };
 
     const dismissArrival = () => {

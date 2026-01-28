@@ -2,12 +2,13 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     ArrowLeft,
+    ChevronDown,
     FileText,
     Gavel,
     Search,
     User,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -58,6 +59,19 @@ export default function Accuse() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [crimeDropdownOpen, setCrimeDropdownOpen] = useState(false);
+    const crimeDropdownRef = useRef<HTMLDivElement>(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (crimeDropdownRef.current && !crimeDropdownRef.current.contains(event.target as Node)) {
+                setCrimeDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const filteredPlayers = players_in_location.filter((p) =>
         p.username.toLowerCase().includes(searchTerm.toLowerCase())
@@ -217,18 +231,75 @@ export default function Accuse() {
                             Crime Type <span className="text-red-400">*</span>
                         </label>
 
-                        <select
-                            value={formData.crime_type_slug}
-                            onChange={(e) => setFormData({ ...formData, crime_type_slug: e.target.value })}
-                            className="w-full rounded border border-stone-600 bg-stone-800 px-3 py-2 font-pixel text-sm text-white focus:border-amber-500 focus:outline-none"
-                        >
-                            <option value="">-- Select a crime --</option>
-                            {crime_types.map((ct) => (
-                                <option key={ct.slug} value={ct.slug}>
-                                    {ct.name} ({ct.severity_display})
-                                </option>
-                            ))}
-                        </select>
+                        {/* Custom Crime Type Dropdown */}
+                        <div className="relative" ref={crimeDropdownRef}>
+                            <button
+                                type="button"
+                                onClick={() => setCrimeDropdownOpen(!crimeDropdownOpen)}
+                                className="flex w-full items-center justify-between rounded border border-stone-600 bg-stone-800 px-3 py-2 font-pixel text-sm text-white focus:border-amber-500 focus:outline-none"
+                            >
+                                {selectedCrime ? (
+                                    <div className="flex items-center gap-2">
+                                        <span
+                                            className={`h-2.5 w-2.5 rounded-full ${
+                                                severityColors[selectedCrime.severity]?.bg.replace('/30', '') || 'bg-stone-500'
+                                            }`}
+                                            style={{
+                                                backgroundColor:
+                                                    selectedCrime.severity === 'minor' ? '#4ade80' :
+                                                    selectedCrime.severity === 'moderate' ? '#facc15' :
+                                                    selectedCrime.severity === 'major' ? '#fb923c' :
+                                                    selectedCrime.severity === 'capital' ? '#f87171' : '#78716c'
+                                            }}
+                                        />
+                                        <span>{selectedCrime.name}</span>
+                                    </div>
+                                ) : (
+                                    <span className="text-stone-500">-- Select a crime --</span>
+                                )}
+                                <ChevronDown className={`h-4 w-4 text-stone-400 transition-transform ${crimeDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {crimeDropdownOpen && (
+                                <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded border border-stone-600 bg-stone-800 shadow-lg">
+                                    {crime_types.map((ct) => (
+                                        <button
+                                            key={ct.slug}
+                                            type="button"
+                                            onClick={() => {
+                                                setFormData({ ...formData, crime_type_slug: ct.slug });
+                                                setCrimeDropdownOpen(false);
+                                            }}
+                                            className={`flex w-full items-center gap-3 px-3 py-2 text-left transition hover:bg-stone-700 ${
+                                                formData.crime_type_slug === ct.slug ? 'bg-stone-700/50' : ''
+                                            }`}
+                                        >
+                                            <span
+                                                className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
+                                                style={{
+                                                    backgroundColor:
+                                                        ct.severity === 'minor' ? '#4ade80' :
+                                                        ct.severity === 'moderate' ? '#facc15' :
+                                                        ct.severity === 'major' ? '#fb923c' :
+                                                        ct.severity === 'capital' ? '#f87171' : '#78716c'
+                                                }}
+                                            />
+                                            <div className="flex-1">
+                                                <div className="font-pixel text-sm text-white">{ct.name}</div>
+                                                <div className="font-pixel text-[10px] text-stone-500">{ct.description}</div>
+                                            </div>
+                                            <span
+                                                className={`rounded px-1.5 py-0.5 font-pixel text-[10px] ${
+                                                    severityColors[ct.severity]?.bg || 'bg-stone-700'
+                                                } ${severityColors[ct.severity]?.text || 'text-stone-300'}`}
+                                            >
+                                                {ct.severity_display}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
 
                         {/* Selected Crime Details */}
                         {selectedCrime && (

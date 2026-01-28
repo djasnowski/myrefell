@@ -413,6 +413,9 @@ export default function BuildingsIndex() {
             },
             {
                 preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
                 onFinish: () => setBuildingLoading(null),
             }
         );
@@ -425,6 +428,9 @@ export default function BuildingsIndex() {
             {},
             {
                 preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
                 onFinish: () => setRepairingId(null),
             }
         );
@@ -437,6 +443,9 @@ export default function BuildingsIndex() {
             {},
             {
                 preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
                 onFinish: () => setCancellingId(null),
             }
         );

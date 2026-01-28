@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { useSidebar } from '@/components/ui/sidebar';
+import * as LucideIcons from 'lucide-react';
 
 interface SidebarData {
     player: {
@@ -15,6 +16,20 @@ interface SidebarData {
         combat_level: number;
         primary_title: string | null;
         title_tier: number | null;
+        role: {
+            name: string;
+            slug: string;
+            icon: string | null;
+            location_name: string;
+            location_type: string;
+            location_id: number;
+            pending_count: number;
+        } | null;
+        job: {
+            name: string;
+            icon: string | null;
+            wage: number;
+        } | null;
     };
     energy_info: {
         current: number;
@@ -23,6 +38,16 @@ interface SidebarData {
         regen_rate: number;
         seconds_until_next: number | null;
     };
+}
+
+function getIconComponent(iconName: string | null): React.ComponentType<{ className?: string }> | null {
+    if (!iconName) return null;
+    // Convert kebab-case to PascalCase (e.g., "chef-hat" -> "ChefHat")
+    const pascalCase = iconName
+        .split('-')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join('');
+    return (LucideIcons as Record<string, React.ComponentType<{ className?: string }>>)[pascalCase] || null;
 }
 
 function StatBar({ current, max, color }: { current: number; max: number; color: string }) {
@@ -154,6 +179,41 @@ export function NavPlayerInfo() {
                 <span className="text-sm">🪙</span>
                 <span className="font-pixel text-sm text-amber-300">{player.gold.toLocaleString()}</span>
             </div>
+
+            {/* Role & Job */}
+            {(player.role || player.job) && (
+                <div className="mt-2 space-y-1">
+                    {player.role && (() => {
+                        const RoleIcon = getIconComponent(player.role.icon) || LucideIcons.Crown;
+                        return (
+                            <div className="relative flex items-center gap-1.5 rounded border border-purple-600/30 bg-purple-900/20 px-2 py-1">
+                                <RoleIcon className="mr-1 h-5 w-5 flex-shrink-0 text-purple-400" />
+                                <div className="min-w-0 flex-1">
+                                    <div className="truncate font-pixel text-[10px] text-purple-300">{player.role.name}</div>
+                                    <div className="truncate font-pixel text-[8px] text-purple-400/60">{player.role.location_name}</div>
+                                </div>
+                                {player.role.pending_count > 0 && (
+                                    <div className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 font-pixel text-[9px] text-white">
+                                        {player.role.pending_count > 9 ? '9+' : player.role.pending_count}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })()}
+                    {player.job && (() => {
+                        const JobIcon = getIconComponent(player.job.icon) || LucideIcons.Hammer;
+                        return (
+                            <div className="flex items-center gap-1.5 rounded border border-blue-600/30 bg-blue-900/20 px-2 py-1">
+                                <JobIcon className="mr-1 h-5 w-5 flex-shrink-0 text-blue-400" />
+                                <div className="min-w-0 flex-1">
+                                    <div className="truncate font-pixel text-[10px] text-blue-300">{player.job.name}</div>
+                                    <div className="truncate font-pixel text-[8px] text-blue-400/60">{player.job.wage}g/work</div>
+                                </div>
+                            </div>
+                        );
+                    })()}
+                </div>
+            )}
         </div>
     );
 }

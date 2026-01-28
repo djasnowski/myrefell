@@ -51,6 +51,15 @@ class ReligiousAction extends Model
         self::ACTION_PILGRIMAGE => 1440, // 24 hours
     ];
 
+    // Prayer skill XP rewards
+    public const PRAYER_XP = [
+        self::ACTION_PRAYER => 5,
+        self::ACTION_DONATION => 0, // Based on gold amount
+        self::ACTION_RITUAL => 15,
+        self::ACTION_SACRIFICE => 25,
+        self::ACTION_PILGRIMAGE => 50,
+    ];
+
     protected $fillable = [
         'user_id',
         'religion_id',
@@ -129,5 +138,13 @@ class ReligiousAction extends Model
     public static function getCooldown(string $actionType): int
     {
         return self::COOLDOWNS[$actionType] ?? 0;
+    }
+
+    /**
+     * Get prayer XP for an action type.
+     */
+    public static function getPrayerXp(string $actionType): int
+    {
+        return self::PRAYER_XP[$actionType] ?? 0;
     }
 }

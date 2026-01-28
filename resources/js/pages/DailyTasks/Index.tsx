@@ -196,11 +196,21 @@ export default function DailyTasksIndex() {
     const { tasks, stats } = usePage<PageProps>().props;
 
     const handleClaim = (taskId: number) => {
-        router.post(`/daily-tasks/${taskId}/claim`, {}, { preserveScroll: true });
+        router.post(`/daily-tasks/${taskId}/claim`, {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                router.reload();
+            },
+        });
     };
 
     const handleProgress = (taskId: number) => {
-        router.post(`/daily-tasks/${taskId}/progress`, { amount: 1 }, { preserveScroll: true });
+        router.post(`/daily-tasks/${taskId}/progress`, { amount: 1 }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                router.reload();
+            },
+        });
     };
 
     return (

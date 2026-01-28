@@ -33,7 +33,8 @@ class DatabaseSeeder extends Seeder
             CharterSeeder::class,
             HorseSeeder::class,
             BusinessTypeSeeder::class,
-            MarketStockSeeder::class,
+            DisasterTypeSeeder::class,
+            DiseaseTypeSeeder::class,
             DanAdminSeeder::class,
         ]);
 

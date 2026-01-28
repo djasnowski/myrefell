@@ -2,17 +2,25 @@ import { Head, router, usePage } from '@inertiajs/react';
 import {
     ArrowDown,
     ArrowUp,
+    Beer,
+    Beef,
     Castle,
     Church,
     Coins,
+    Fish,
     Home,
     Loader2,
     Package,
+    Pickaxe,
     Search,
     ShoppingCart,
     Store,
+    TreeDeciduous,
     TrendingDown,
     TrendingUp,
+    Wheat,
+    Wrench,
+    type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
@@ -100,6 +108,17 @@ function getItemTypeColor(type: string): string {
             return 'text-stone-400';
     }
 }
+
+// Role suggestions for when market is empty
+const roleStockSuggestions: { role: string; icon: LucideIcon; items: string; color: string }[] = [
+    { role: 'Miner', icon: Pickaxe, items: 'Ores (Copper, Iron, Coal, Gold)', color: 'text-slate-400' },
+    { role: 'Blacksmith', icon: Wrench, items: 'Bars, Tools, Weapons', color: 'text-orange-400' },
+    { role: 'Fisherman', icon: Fish, items: 'Raw Fish, Fishing Gear', color: 'text-blue-400' },
+    { role: 'Baker', icon: Wheat, items: 'Flour, Bread, Meat Pies', color: 'text-amber-400' },
+    { role: 'Forester', icon: TreeDeciduous, items: 'Wood, Oak, Willow', color: 'text-green-400' },
+    { role: 'Innkeeper', icon: Beer, items: 'Cooked Food', color: 'text-yellow-400' },
+    { role: 'Hunter/Butcher', icon: Beef, items: 'Raw Meat, Leather', color: 'text-red-400' },
+];
 
 export default function MarketIndex() {
     const { market_info, market_prices, sellable_items, recent_transactions } = usePage<PageProps>().props;
@@ -371,9 +390,33 @@ export default function MarketIndex() {
                                         })}
                                     </div>
                                 ) : (
-                                    <div className="py-12 text-center">
-                                        <Store className="mx-auto mb-2 h-8 w-8 text-stone-600" />
-                                        <p className="font-pixel text-xs text-stone-500">No items available</p>
+                                    <div className="p-4">
+                                        <div className="mb-4 text-center">
+                                            <Store className="mx-auto mb-2 h-8 w-8 text-stone-600" />
+                                            <p className="font-pixel text-sm text-stone-400">No items available</p>
+                                            <p className="font-pixel text-xs text-stone-500">
+                                                The market needs role holders to stock goods
+                                            </p>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <p className="font-pixel text-xs text-stone-500 mb-2">Roles that can stock:</p>
+                                            {roleStockSuggestions.map((suggestion) => (
+                                                <div
+                                                    key={suggestion.role}
+                                                    className="flex items-center gap-3 rounded-lg bg-stone-900/50 px-3 py-2"
+                                                >
+                                                    <suggestion.icon className={`h-4 w-4 ${suggestion.color}`} />
+                                                    <div className="flex-1">
+                                                        <span className={`font-pixel text-xs ${suggestion.color}`}>
+                                                            {suggestion.role}
+                                                        </span>
+                                                        <span className="font-pixel text-xs text-stone-500 ml-2">
+                                                            - {suggestion.items}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )
                             ) : filteredSellItems.length > 0 ? (

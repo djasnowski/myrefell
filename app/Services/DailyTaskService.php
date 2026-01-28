@@ -359,6 +359,20 @@ class DailyTaskService
                 'xp_skill' => 'strength',
                 'weight' => 100,
             ],
+            [
+                'name' => 'Daily Devotion',
+                'icon' => 'church',
+                'description' => 'Pray at the shrine to honor the gods.',
+                'category' => 'service',
+                'task_type' => 'pray',
+                'target_type' => 'action',
+                'target_identifier' => null,
+                'target_amount' => 1,
+                'gold_reward' => 10,
+                'xp_reward' => 25,
+                'xp_skill' => 'prayer',
+                'weight' => 100,
+            ],
         ];
 
         foreach ($tasks as $taskData) {

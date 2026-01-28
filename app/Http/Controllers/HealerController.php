@@ -59,9 +59,11 @@ class HealerController extends Controller
         }
 
         $healerInfo = $this->healerService->getHealerInfo($user);
+        $diseaseInfo = $this->healerService->getDiseaseInfo($user);
 
         return Inertia::render('Healer/Index', [
             'healer_info' => $healerInfo,
+            'disease_info' => $diseaseInfo,
         ]);
     }
 
@@ -91,6 +93,26 @@ class HealerController extends Controller
 
         $user = $request->user();
         $result = $this->healerService->heal($user, $request->input('amount'));
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Treat a disease infection.
+     */
+    public function treatDisease(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $infection = $this->healerService->getActiveInfection($user);
+
+        if (!$infection) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have an active disease infection.',
+            ], 422);
+        }
+
+        $result = $this->healerService->treatDisease($user, $infection);
 
         return response()->json($result, $result['success'] ? 200 : 422);
     }

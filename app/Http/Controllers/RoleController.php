@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Barony;
+use App\Models\Duchy;
 use App\Models\Kingdom;
 use App\Models\PlayerRole;
 use App\Models\Role;
+use App\Models\Town;
 use App\Models\Village;
 use App\Services\RoleService;
 use Illuminate\Http\JsonResponse;
@@ -38,6 +40,23 @@ class RoleController extends Controller
     }
 
     /**
+     * Display roles at a town.
+     */
+    public function townRoles(Request $request, Town $town): Response
+    {
+        $user = $request->user();
+
+        // Check if player is at this town
+        if ($user->current_location_type !== 'town' || $user->current_location_id !== $town->id) {
+            return Inertia::render('Roles/NotHere', [
+                'location' => $town->name,
+            ]);
+        }
+
+        return $this->renderRolesPage($user, 'town', $town->id, $town->name);
+    }
+
+    /**
      * Display roles at a barony.
      */
     public function baronyRoles(Request $request, Barony $barony): Response
@@ -52,6 +71,23 @@ class RoleController extends Controller
         }
 
         return $this->renderRolesPage($user, 'barony', $barony->id, $barony->name);
+    }
+
+    /**
+     * Display roles at a duchy.
+     */
+    public function duchyRoles(Request $request, Duchy $duchy): Response
+    {
+        $user = $request->user();
+
+        // Check if player is at this duchy
+        if ($user->current_location_type !== 'duchy' || $user->current_location_id !== $duchy->id) {
+            return Inertia::render('Roles/NotHere', [
+                'location' => $duchy->name,
+            ]);
+        }
+
+        return $this->renderRolesPage($user, 'duchy', $duchy->id, $duchy->name);
     }
 
     /**
@@ -105,8 +141,13 @@ class RoleController extends Controller
     {
         return match ($locationType) {
             'village' => Village::find($locationId)?->residents()->count() ?? 0,
+            'town' => Town::find($locationId)?->visitors()->count() ?? 0,
             'barony' => Barony::find($locationId)?->villages()
                 ->withCount('residents')->get()->sum('residents_count') ?? 0,
+            'duchy' => Duchy::find($locationId)?->baronies()
+                ->with('villages')->get()
+                ->flatMap->villages
+                ->sum(fn ($v) => $v->residents()->count()) ?? 0,
             'kingdom' => \App\Models\User::whereHas('homeVillage.barony', function ($q) use ($locationId) {
                 $q->where('kingdom_id', $locationId);
             })->count(),
@@ -154,7 +195,7 @@ class RoleController extends Controller
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'role_id' => 'required|exists:roles,id',
-            'location_type' => 'required|in:village,barony,kingdom',
+            'location_type' => 'required|in:village,town,barony,duchy,kingdom',
             'location_id' => 'required|integer',
         ]);
 
@@ -244,7 +285,7 @@ class RoleController extends Controller
     {
         $request->validate([
             'role_id' => 'required|exists:roles,id',
-            'location_type' => 'required|in:village,barony,kingdom',
+            'location_type' => 'required|in:village,town,barony,duchy,kingdom',
             'location_id' => 'required|integer',
         ]);
 

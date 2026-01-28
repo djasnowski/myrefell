@@ -67,6 +67,9 @@ export default function ElectionShow({ election, candidates, user_state }: Props
         setVoting(true);
         router.post(`/elections/${election.id}/vote`, { candidate_id: candidateId }, {
             preserveScroll: true,
+            onSuccess: () => {
+                router.reload();
+            },
             onFinish: () => setVoting(false),
         });
     };
@@ -75,6 +78,9 @@ export default function ElectionShow({ election, candidates, user_state }: Props
         setDeclaring(true);
         router.post(`/elections/${election.id}/candidacy`, { platform }, {
             preserveScroll: true,
+            onSuccess: () => {
+                router.reload();
+            },
             onFinish: () => {
                 setDeclaring(false);
                 setShowDeclareForm(false);
@@ -86,6 +92,9 @@ export default function ElectionShow({ election, candidates, user_state }: Props
     const handleWithdraw = () => {
         router.delete(`/elections/${election.id}/candidacy`, {
             preserveScroll: true,
+            onSuccess: () => {
+                router.reload();
+            },
         });
     };
 

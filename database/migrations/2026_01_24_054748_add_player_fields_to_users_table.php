@@ -30,7 +30,7 @@ return new class extends Migration
             // Player stats
             $table->unsignedSmallInteger('hp')->default(10)->after('current_location_id');
             $table->unsignedSmallInteger('max_hp')->default(10)->after('hp');
-            $table->unsignedSmallInteger('energy')->default(10)->after('max_hp');
+            $table->unsignedSmallInteger('energy')->default(150)->after('max_hp');
             $table->unsignedSmallInteger('max_energy')->default(150)->after('energy');
             $table->unsignedBigInteger('gold')->default(0)->after('max_energy');
 

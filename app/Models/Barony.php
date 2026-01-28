@@ -15,6 +15,7 @@ class Barony extends Model
         'name',
         'description',
         'kingdom_id',
+        'duchy_id',
         'baron_user_id',
         'biome',
         'tax_rate',
@@ -37,6 +38,14 @@ class Barony extends Model
     public function kingdom(): BelongsTo
     {
         return $this->belongsTo(Kingdom::class);
+    }
+
+    /**
+     * Get the duchy this barony belongs to.
+     */
+    public function duchy(): BelongsTo
+    {
+        return $this->belongsTo(Duchy::class);
     }
 
     /**

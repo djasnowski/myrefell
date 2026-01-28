@@ -35,6 +35,7 @@ class DailyTask extends Model
         'deliver' => 'Deliver items',
         'visit' => 'Visit location',
         'train' => 'Train skill',
+        'pray' => 'Pray at shrine',
     ];
 
     protected $fillable = [

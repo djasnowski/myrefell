@@ -99,6 +99,9 @@ export default function Succession({
         setSaving(true);
         router.put('/dynasty/succession', formData, {
             preserveScroll: true,
+            onSuccess: () => {
+                router.reload();
+            },
             onFinish: () => {
                 setSaving(false);
                 setShowChangeModal(false);
@@ -113,6 +116,9 @@ export default function Succession({
             reason: disinheritReason || null,
         }, {
             preserveScroll: true,
+            onSuccess: () => {
+                router.reload();
+            },
             onFinish: () => {
                 setSaving(false);
                 setShowDisinheritModal(null);

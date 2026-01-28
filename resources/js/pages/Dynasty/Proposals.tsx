@@ -113,6 +113,7 @@ export default function Proposals({
             preserveScroll: true,
             onSuccess: () => {
                 setSuccess('Proposal accepted! The wedding has taken place.');
+                router.reload();
             },
             onError: (errors) => {
                 setError(Object.values(errors).flat().join(', ') || 'Failed to accept proposal');
@@ -129,6 +130,7 @@ export default function Proposals({
             preserveScroll: true,
             onSuccess: () => {
                 setSuccess('Proposal rejected.');
+                router.reload();
             },
             onError: (errors) => {
                 setError(Object.values(errors).flat().join(', ') || 'Failed to reject proposal');
@@ -145,6 +147,7 @@ export default function Proposals({
             preserveScroll: true,
             onSuccess: () => {
                 setSuccess('Proposal withdrawn.');
+                router.reload();
             },
             onError: (errors) => {
                 setError(Object.values(errors).flat().join(', ') || 'Failed to withdraw proposal');

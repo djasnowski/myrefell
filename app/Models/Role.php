@@ -18,6 +18,7 @@ class Role extends Model
         'hamlet' => 'Hamlet',
         'barony' => 'Barony',
         'town' => 'Town',
+        'duchy' => 'Duchy',
         'kingdom' => 'Kingdom',
     ];
 
@@ -41,6 +42,53 @@ class Role extends Model
         'marshal',
         'treasurer',
         'jailsman',
+        'physician',
+        'master_cook',
+        'castellan',
+        'court_chaplain',
+    ];
+
+    /**
+     * Town roles.
+     */
+    public const TOWN_ROLES = [
+        'mayor',
+        'town_guard_captain',
+        'guildmaster',
+        'magistrate',
+        'harbormaster',
+        'town_clerk',
+        'market_warden',
+        'town_physician',
+        'head_chef',
+        'town_crier',
+        // Skilled trades
+        'master_blacksmith',
+        'weaponsmith',
+        'armorsmith',
+        'master_jeweler',
+        'master_tailor',
+        'master_carpenter',
+        'alchemist',
+        'tanner',
+        'scribe',
+        'master_miner',
+        'master_fisher',
+        'brewmaster',
+    ];
+
+    /**
+     * Duchy roles.
+     */
+    public const DUCHY_ROLES = [
+        'duke',
+        'duchy_chancellor',
+        'duchy_marshal',
+        'duchy_treasurer',
+        'duchy_physician',
+        'duchy_chef',
+        'high_priest',
+        'master_of_hunts',
     ];
 
     /**
@@ -51,6 +99,14 @@ class Role extends Model
         'chancellor',
         'general',
         'royal_treasurer',
+        'archbishop',
+        'royal_steward',
+        'lord_marshal',
+        'master_of_laws',
+        'spymaster',
+        'royal_herald',
+        'royal_physician',
+        'royal_chef',
     ];
 
     protected $fillable = [

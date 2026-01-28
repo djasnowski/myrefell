@@ -6,12 +6,16 @@ use App\Models\Dynasty;
 use App\Models\DynastyMember;
 use App\Models\Marriage;
 use App\Models\MarriageProposal;
+use App\Services\MarriageService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class MarriageController extends Controller
 {
+    public function __construct(
+        protected MarriageService $marriageService
+    ) {}
     /**
      * Display marriage proposals page.
      */
@@ -94,25 +98,14 @@ class MarriageController extends Controller
             return back()->with('error', 'This proposal can no longer be accepted.');
         }
 
-        // Create the marriage
-        $marriage = Marriage::create([
-            'spouse1_id' => $proposal->proposer_member_id,
-            'spouse2_id' => $proposal->proposed_member_id,
-            'status' => Marriage::STATUS_ACTIVE,
-            'marriage_type' => Marriage::TYPE_STANDARD,
-            'dowry_amount' => $proposal->offered_dowry,
-            'dowry_items' => $proposal->offered_items,
-            'contract_terms' => $proposal->requested_terms,
-            'wedding_date' => now(),
-        ]);
+        try {
+            // Use the service to properly create marriage with alliances and events
+            $marriage = $this->marriageService->acceptProposal($proposal);
 
-        // Update proposal status
-        $proposal->update([
-            'status' => MarriageProposal::STATUS_ACCEPTED,
-            'responded_at' => now(),
-        ]);
-
-        return redirect()->route('dynasty.proposals')->with('success', 'Marriage proposal accepted! The wedding has taken place.');
+            return redirect()->route('dynasty.proposals')->with('success', 'Marriage proposal accepted! The wedding has taken place.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     /**
@@ -130,12 +123,12 @@ class MarriageController extends Controller
             return back()->with('error', 'This proposal can no longer be rejected.');
         }
 
-        $proposal->update([
-            'status' => MarriageProposal::STATUS_REJECTED,
-            'responded_at' => now(),
-        ]);
-
-        return redirect()->route('dynasty.proposals')->with('success', 'Marriage proposal rejected.');
+        try {
+            $this->marriageService->rejectProposal($proposal);
+            return redirect()->route('dynasty.proposals')->with('success', 'Marriage proposal rejected.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     /**
@@ -283,19 +276,21 @@ class MarriageController extends Controller
             return back()->with('error', 'You do not have enough gold for this dowry.');
         }
 
-        // Create proposal
-        MarriageProposal::create([
-            'proposer_member_id' => $proposer->id,
-            'proposed_member_id' => $proposed->id,
-            'proposer_guardian_id' => $user->id,
-            'proposed_guardian_id' => $proposed->dynasty?->current_head_id,
-            'status' => MarriageProposal::STATUS_PENDING,
-            'offered_dowry' => $offeredDowry,
-            'message' => $validated['message'] ?? null,
-            'expires_at' => now()->addDays(14),
-        ]);
+        try {
+            // Use the service to create proposal
+            $this->marriageService->propose(
+                $proposer,
+                $proposed,
+                $offeredDowry,
+                [],
+                $validated['message'] ?? null,
+                14
+            );
 
-        return redirect()->route('dynasty.proposals')->with('success', 'Marriage proposal sent successfully!');
+            return redirect()->route('dynasty.proposals')->with('success', 'Marriage proposal sent successfully!');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     /**

@@ -66,6 +66,18 @@ class HandleInertiaRequests extends Middleware
     {
         $player->load(['skills', 'homeVillage.barony.kingdom']);
 
+        // Get active role
+        $activeRole = \App\Models\PlayerRole::where('user_id', $player->id)
+            ->active()
+            ->with('role')
+            ->first();
+
+        // Get active employment
+        $activeEmployment = \App\Models\PlayerEmployment::where('user_id', $player->id)
+            ->where('status', 'employed')
+            ->with('job')
+            ->first();
+
         return [
             'player' => [
                 'id' => $player->id,
@@ -79,6 +91,20 @@ class HandleInertiaRequests extends Middleware
                 'combat_level' => $player->combat_level,
                 'primary_title' => $player->primary_title,
                 'title_tier' => $player->title_tier,
+                'role' => $activeRole ? [
+                    'name' => $activeRole->role->name,
+                    'slug' => $activeRole->role->slug,
+                    'icon' => $activeRole->role->icon ?? null,
+                    'location_name' => $activeRole->location_name,
+                    'location_type' => $activeRole->location_type,
+                    'location_id' => $activeRole->location_id,
+                    'pending_count' => $this->getRolePendingCount($activeRole),
+                ] : null,
+                'job' => $activeEmployment ? [
+                    'name' => $activeEmployment->job->name,
+                    'icon' => $activeEmployment->job->icon ?? null,
+                    'wage' => $activeEmployment->job->base_wage,
+                ] : null,
             ],
             'energy_info' => $this->energyService->getRegenInfo($player),
             'skills' => $player->skills->map(fn ($skill) => [
@@ -106,6 +132,7 @@ class HandleInertiaRequests extends Middleware
             'nearby_destinations' => $this->travelService->getAvailableDestinations($player),
             'context' => $this->getPlayerContext($player),
             'health' => $this->getHealthData($player),
+            'farm' => $this->getFarmData($player),
         ];
     }
 
@@ -200,6 +227,17 @@ class HandleInertiaRequests extends Middleware
             ];
         }
 
+        // Check for active roles at current location
+        if ($player->current_location_type && $player->current_location_id) {
+            $hasRoleAtLocation = \App\Models\PlayerRole::where('user_id', $player->id)
+                ->where('location_type', $player->current_location_type)
+                ->where('location_id', $player->current_location_id)
+                ->where('status', 'active')
+                ->exists();
+
+            $context['has_role_at_location'] = $hasRoleAtLocation;
+        }
+
         return $context;
     }
 
@@ -226,6 +264,7 @@ class HandleInertiaRequests extends Middleware
             'village' => \App\Models\Village::class,
             'barony' => \App\Models\Barony::class,
             'town' => \App\Models\Town::class,
+            'duchy' => \App\Models\Duchy::class,
             'kingdom' => \App\Models\Kingdom::class,
             'wilderness' => null,
             default => null,
@@ -297,5 +336,163 @@ class HandleInertiaRequests extends Middleware
             // Table may not exist yet
             return false;
         }
+    }
+
+    /**
+     * Get farm data for the player at their current location.
+     * Farming only shows if player has crops planted at this location.
+     */
+    protected function getFarmData($player): ?array
+    {
+        // FarmPlot model may not exist yet
+        if (!class_exists(\App\Models\FarmPlot::class)) {
+            return null;
+        }
+
+        if (!$player->current_location_type || !$player->current_location_id) {
+            return null;
+        }
+
+        try {
+            $plots = \App\Models\FarmPlot::where('user_id', $player->id)
+                ->where('location_type', $player->current_location_type)
+                ->where('location_id', $player->current_location_id)
+                ->get();
+
+            if ($plots->isEmpty()) {
+                return null;
+            }
+
+            $cropsReady = $plots->filter(fn ($plot) => $plot->isReadyToHarvest())->count();
+
+            return [
+                'has_crops' => true,
+                'crops_ready' => $cropsReady,
+                'total_plots' => $plots->count(),
+            ];
+        } catch (\Throwable $e) {
+            // Model or table may not exist yet
+            return null;
+        }
+    }
+
+    /**
+     * Get pending action count for a player's role.
+     */
+    protected function getRolePendingCount(\App\Models\PlayerRole $playerRole): int
+    {
+        $count = 0;
+        $slug = $playerRole->role->slug;
+        $locationType = $playerRole->location_type;
+        $locationId = $playerRole->location_id;
+
+        try {
+            // Village Elder - migration requests, accusations
+            if ($slug === 'elder') {
+                $count += \App\Models\MigrationRequest::where('status', 'pending')
+                    ->where('to_village_id', $locationId)
+                    ->whereNull('elder_decided_at')
+                    ->count();
+
+                $count += \App\Models\Accusation::where('status', 'pending')
+                    ->where('location_type', 'village')
+                    ->where('location_id', $locationId)
+                    ->count();
+            }
+
+            // Blacksmith - crafting orders
+            if (in_array($slug, ['blacksmith', 'master_blacksmith', 'weaponsmith', 'armorsmith'])) {
+                $count += \App\Models\CraftingOrder::where('status', 'pending')
+                    ->where('location_type', $locationType)
+                    ->where('location_id', $locationId)
+                    ->count();
+            }
+
+            // Guard Captain - accusations, bounties
+            if (in_array($slug, ['guard_captain', 'town_guard_captain'])) {
+                $count += \App\Models\Accusation::where('status', 'pending')
+                    ->where('location_type', $locationType)
+                    ->where('location_id', $locationId)
+                    ->count();
+            }
+
+            // Baron - migration requests (barony level), manumission requests
+            if ($slug === 'baron') {
+                // Get all villages in this barony
+                $villageIds = \App\Models\Village::where('barony_id', $locationId)->pluck('id');
+
+                $count += \App\Models\MigrationRequest::where('status', 'pending')
+                    ->whereIn('to_village_id', $villageIds)
+                    ->whereNotNull('elder_decided_at')
+                    ->whereNull('baron_decided_at')
+                    ->count();
+
+                $count += \App\Models\ManumissionRequest::where('status', 'pending')
+                    ->where('barony_id', $locationId)
+                    ->count();
+
+                $count += \App\Models\Accusation::where('status', 'pending')
+                    ->where('location_type', 'barony')
+                    ->where('location_id', $locationId)
+                    ->count();
+            }
+
+            // Jailsman - prisoners needing attention
+            if ($slug === 'jailsman') {
+                $count += \App\Models\Punishment::where('status', 'pending')
+                    ->where('location_type', $locationType)
+                    ->where('location_id', $locationId)
+                    ->count();
+            }
+
+            // Mayor - town matters
+            if ($slug === 'mayor') {
+                $count += \App\Models\Accusation::where('status', 'pending')
+                    ->where('location_type', 'town')
+                    ->where('location_id', $locationId)
+                    ->count();
+            }
+
+            // Magistrate - accusations, trials
+            if ($slug === 'magistrate') {
+                $count += \App\Models\Accusation::where('status', 'pending')
+                    ->where('location_type', 'town')
+                    ->where('location_id', $locationId)
+                    ->count();
+
+                $count += \App\Models\Trial::whereIn('status', ['scheduled', 'in_progress', 'awaiting_verdict'])
+                    ->where('location_type', 'town')
+                    ->where('location_id', $locationId)
+                    ->count();
+            }
+
+            // Healer/Priest - blessings (if applicable)
+            if (in_array($slug, ['healer', 'priest', 'court_chaplain', 'high_priest', 'archbishop'])) {
+                // Check for blessing requests if the model exists
+                if (class_exists(\App\Models\BlessingRequest::class)) {
+                    $count += \App\Models\BlessingRequest::where('status', 'pending')
+                        ->where('location_type', $locationType)
+                        ->where('location_id', $locationId)
+                        ->count();
+                }
+            }
+
+            // King - kingdom-wide matters
+            if ($slug === 'king') {
+                $count += \App\Models\Charter::where('status', 'pending')->count();
+
+                if (class_exists(\App\Models\EnnoblementRequest::class)) {
+                    $count += \App\Models\EnnoblementRequest::where('status', 'pending')
+                        ->where('kingdom_id', $locationId)
+                        ->count();
+                }
+            }
+
+        } catch (\Throwable $e) {
+            // Tables may not exist yet
+            return 0;
+        }
+
+        return $count;
     }
 }

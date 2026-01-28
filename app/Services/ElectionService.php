@@ -289,11 +289,14 @@ class ElectionService
             return $user->home_village_id === $domain->id;
         }
 
-        // Town/Mayor election: user's home village must be in the town
+        // Town/Mayor election: user's home village must be in the same barony as the town
         if ($election->domain_type === 'town') {
-            $townVillageIds = $domain->villages()->pluck('villages.id');
+            if (!$domain->barony) {
+                return false;
+            }
+            $baronyVillageIds = $domain->barony->villages()->pluck('id');
 
-            return $townVillageIds->contains($user->home_village_id);
+            return $baronyVillageIds->contains($user->home_village_id);
         }
 
         // Kingdom election: user's home village must be in the kingdom
@@ -371,7 +374,10 @@ class ElectionService
         }
 
         if ($election->domain_type === 'town') {
-            return User::whereIn('home_village_id', $domain->villages()->pluck('villages.id'))->count();
+            if (!$domain->barony) {
+                return 0;
+            }
+            return User::whereIn('home_village_id', $domain->barony->villages()->pluck('id'))->count();
         }
 
         if ($election->domain_type === 'kingdom') {
@@ -679,11 +685,14 @@ class ElectionService
             return $user->home_village_id === $domain->id;
         }
 
-        // Town: user's home village must be in the town
+        // Town: user's home village must be in the same barony as the town
         if ($domainType === 'town') {
-            $townVillageIds = $domain->villages()->pluck('villages.id');
+            if (!$domain->barony) {
+                return false;
+            }
+            $baronyVillageIds = $domain->barony->villages()->pluck('id');
 
-            return $townVillageIds->contains($user->home_village_id);
+            return $baronyVillageIds->contains($user->home_village_id);
         }
 
         // Kingdom: user's home village must be in the kingdom
@@ -723,7 +732,10 @@ class ElectionService
         }
 
         if ($domainType === 'town') {
-            return User::whereIn('home_village_id', $domain->villages()->pluck('villages.id'))->count();
+            if (!$domain->barony) {
+                return 0;
+            }
+            return User::whereIn('home_village_id', $domain->barony->villages()->pluck('id'))->count();
         }
 
         if ($domainType === 'kingdom') {

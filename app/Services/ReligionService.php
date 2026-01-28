@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Belief;
 use App\Models\Kingdom;
 use App\Models\KingdomReligion;
+use App\Models\PlayerSkill;
 use App\Models\Religion;
 use App\Models\ReligionMember;
 use App\Models\ReligiousAction;
@@ -18,7 +19,8 @@ class ReligionService
 {
     public function __construct(
         protected EnergyService $energyService,
-        protected BankService $bankService
+        protected BankService $bankService,
+        protected DailyTaskService $dailyTaskService
     ) {}
 
     /**
@@ -359,6 +361,23 @@ class ReligionService
             // Add devotion to membership
             $membership->addDevotion($devotionGained);
 
+            // Award Prayer XP
+            $basePrayerXp = ReligiousAction::getPrayerXp($actionType);
+            if ($actionType === ReligiousAction::ACTION_DONATION) {
+                // 1 Prayer XP per 25 gold donated
+                $basePrayerXp = (int) floor($goldSpent / 25);
+            }
+            $prayerXpGained = (int) floor($basePrayerXp * $multiplier);
+
+            $prayerSkill = null;
+            if ($prayerXpGained > 0) {
+                $prayerSkill = PlayerSkill::firstOrCreate(
+                    ['player_id' => $player->id, 'skill_name' => 'prayer'],
+                    ['level' => 1, 'xp' => 0]
+                );
+                $prayerSkill->addXp($prayerXpGained);
+            }
+
             $actionName = match ($actionType) {
                 ReligiousAction::ACTION_PRAYER => 'prayed',
                 ReligiousAction::ACTION_DONATION => 'donated',
@@ -368,13 +387,33 @@ class ReligionService
                 default => 'performed an action',
             };
 
+            $message = "You {$actionName} and gained {$devotionGained} devotion.";
+            if ($prayerXpGained > 0) {
+                $message .= " (+{$prayerXpGained} Prayer XP)";
+            }
+
+            // Record daily task progress for prayer-related actions
+            if (in_array($actionType, [
+                ReligiousAction::ACTION_PRAYER,
+                ReligiousAction::ACTION_RITUAL,
+                ReligiousAction::ACTION_SACRIFICE,
+                ReligiousAction::ACTION_PILGRIMAGE,
+            ])) {
+                $this->dailyTaskService->recordProgress($player, 'pray');
+            }
+
             return [
                 'success' => true,
-                'message' => "You {$actionName} and gained {$devotionGained} devotion.",
+                'message' => $message,
                 'data' => [
                     'devotion_gained' => $devotionGained,
                     'total_devotion' => $membership->fresh()->devotion,
                     'gold_spent' => $goldSpent,
+                    'prayer_xp_gained' => $prayerXpGained,
+                    'prayer_skill' => $prayerSkill ? [
+                        'level' => $prayerSkill->level,
+                        'xp' => $prayerSkill->xp,
+                    ] : null,
                 ],
             ];
         });

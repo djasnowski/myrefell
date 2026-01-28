@@ -136,7 +136,7 @@ export default function ProposeMarriage({
             message: message || null,
         }, {
             onSuccess: () => {
-                // Redirect is handled by controller
+                router.reload();
             },
             onError: (errors) => {
                 setError(Object.values(errors).flat().join(', ') || 'Failed to send proposal');

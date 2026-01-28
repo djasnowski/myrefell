@@ -3,7 +3,10 @@
 use App\Jobs\AdvanceWorldTime;
 use App\Jobs\CollectDailyTaxes;
 use App\Jobs\DistributeSalaries;
+use App\Jobs\ExpireMarriageProposals;
 use App\Jobs\FinalizeElections;
+use App\Jobs\ProcessDiseases;
+use App\Jobs\ProcessDisasters;
 use App\Jobs\RegenerateEnergy;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -27,3 +30,12 @@ Schedule::job(new DistributeSalaries)->dailyAt('00:15');
 
 // World time advancement - daily at midnight (1 real day = 1 game week)
 Schedule::job(new AdvanceWorldTime)->dailyAt('00:00');
+
+// Disaster processing - daily at 06:00 (check for new disasters, process ongoing)
+Schedule::job(new ProcessDisasters)->dailyAt('06:00');
+
+// Disease processing - daily at 06:30 (infection progression, spread, recovery)
+Schedule::job(new ProcessDiseases)->dailyAt('06:30');
+
+// Marriage proposal expiration - daily at 00:30
+Schedule::job(new ExpireMarriageProposals)->dailyAt('00:30');

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Town extends Model
@@ -16,6 +17,7 @@ class Town extends Model
         'description',
         'barony_id',
         'is_capital',
+        'is_port',
         'biome',
         'tax_rate',
         'population',
@@ -29,6 +31,7 @@ class Town extends Model
     {
         return [
             'is_capital' => 'boolean',
+            'is_port' => 'boolean',
             'tax_rate' => 'decimal:2',
             'population' => 'integer',
             'wealth' => 'integer',
@@ -43,6 +46,14 @@ class Town extends Model
     public function barony(): BelongsTo
     {
         return $this->belongsTo(Barony::class);
+    }
+
+    /**
+     * Get the duchy this town belongs to (through barony).
+     */
+    public function duchy(): ?Duchy
+    {
+        return $this->barony?->duchy;
     }
 
     /**
@@ -62,6 +73,15 @@ class Town extends Model
     }
 
     /**
+     * Get players currently visiting this town.
+     */
+    public function visitors(): HasMany
+    {
+        return $this->hasMany(User::class, 'current_location_id')
+            ->where('current_location_type', 'town');
+    }
+
+    /**
      * Check if this town is the capital of its kingdom.
      */
     public function isCapital(): bool
@@ -70,10 +90,26 @@ class Town extends Model
     }
 
     /**
+     * Check if this town is a port.
+     */
+    public function isPort(): bool
+    {
+        return $this->is_port ?? false;
+    }
+
+    /**
      * Get all elections for this town.
      */
     public function elections(): MorphMany
     {
         return $this->morphMany(Election::class, 'domain', 'domain_type', 'domain_id');
+    }
+
+    /**
+     * Get all disasters affecting this town.
+     */
+    public function disasters(): MorphMany
+    {
+        return $this->morphMany(Disaster::class, 'location');
     }
 }

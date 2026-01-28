@@ -86,6 +86,9 @@ export default function DynastyAlliances({
     const handleBreakAlliance = (allianceId: number) => {
         setBreaking(allianceId);
         router.post(`/dynasty/alliances/${allianceId}/break`, {}, {
+            onSuccess: () => {
+                router.reload();
+            },
             onFinish: () => {
                 setBreaking(null);
                 setConfirmBreak(null);

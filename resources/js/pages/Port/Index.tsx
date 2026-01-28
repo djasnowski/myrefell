@@ -59,6 +59,9 @@ export default function PortIndex() {
 
         router.post('/port/book', { destination_id: destinationId }, {
             preserveScroll: true,
+            onSuccess: () => {
+                router.reload();
+            },
             onError: (errors) => {
                 setError(Object.values(errors)[0] as string || 'An error occurred');
                 setLoading(null);

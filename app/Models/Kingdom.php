@@ -42,6 +42,14 @@ class Kingdom extends Model
     }
 
     /**
+     * Get all duchies in this kingdom.
+     */
+    public function duchies(): HasMany
+    {
+        return $this->hasMany(Duchy::class);
+    }
+
+    /**
      * Get all baronies in this kingdom.
      */
     public function baronies(): HasMany

@@ -38,6 +38,22 @@ class TrainingService
             'base_xp' => 25,
             'location_types' => ['village', 'town', 'barony'],
         ],
+        'hitpoints' => [
+            'name' => 'Endurance Training',
+            'description' => 'Run laps, swim, and build cardiovascular endurance to increase your vitality.',
+            'skill' => 'hitpoints',
+            'energy_cost' => 12,
+            'base_xp' => 20,
+            'location_types' => ['village', 'town', 'barony'],
+        ],
+        'range' => [
+            'name' => 'Archery Practice',
+            'description' => 'Practice with bows and crossbows at the training range.',
+            'skill' => 'range',
+            'energy_cost' => 10,
+            'base_xp' => 25,
+            'location_types' => ['village', 'town', 'barony'],
+        ],
     ];
 
     public function __construct(
