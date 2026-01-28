@@ -64,6 +64,12 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
+Route::get('/features', function () {
+    return Inertia::render('Features/Index', [
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
+})->name('features');
+
 // Dev auto-login route (only available in local environment)
 if (app()->environment('local')) {
     Route::get('/dev/login', function () {
@@ -241,6 +247,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
         Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
+        Route::post('shrine/request/{blessingRequest}/approve', [BlessingController::class, 'approveRequest'])->name('shrine.approve');
+        Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
         Route::get('tavern', [TavernController::class, 'index'])->name('tavern');
         Route::post('tavern/rest', [TavernController::class, 'rest'])->name('tavern.rest');
     });
@@ -254,6 +262,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
         Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
+        Route::post('shrine/request/{blessingRequest}/approve', [BlessingController::class, 'approveRequest'])->name('shrine.approve');
+        Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
     });
 
     // Location-scoped services: Baronies
@@ -265,6 +275,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
         Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
+        Route::post('shrine/request/{blessingRequest}/approve', [BlessingController::class, 'approveRequest'])->name('shrine.approve');
+        Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
     });
 
     // Location-scoped services: Duchies
@@ -274,6 +286,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
         Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
+        Route::post('shrine/request/{blessingRequest}/approve', [BlessingController::class, 'approveRequest'])->name('shrine.approve');
+        Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
     });
 
     // Location-scoped services: Kingdoms
@@ -283,6 +297,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
         Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
+        Route::post('shrine/request/{blessingRequest}/approve', [BlessingController::class, 'approveRequest'])->name('shrine.approve');
+        Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
     });
 
     // Crafting Docket

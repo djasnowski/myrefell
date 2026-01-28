@@ -95,6 +95,12 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                             <span className="font-[Cinzel] text-2xl font-bold tracking-wide text-primary">Myrefell</span>
                         </Link>
                         <div className="flex items-center gap-4">
+                            <Link
+                                href="/features"
+                                className="px-4 py-2 text-muted-foreground transition hover:text-primary"
+                            >
+                                Features
+                            </Link>
                             {auth.user ? (
                                 <Link
                                     href={dashboard()}
@@ -531,6 +537,12 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                 { title: 'Real Elections', desc: 'Every government position is elected by players. Campaign for office or stage a no-confidence vote.' },
                                 { title: 'Meaningful Law', desc: 'Commit crimes, face trials, receive punishments. Courts with judges, evidence, and verdicts.' },
                                 { title: 'Player-Founded Religions', desc: 'Start a cult, grow it into a religion, define its beliefs. Religions grant bonuses and political power.' },
+                                { title: 'Dungeons & Bosses', desc: 'Explore multi-floor dungeons, fight monsters and bosses for loot. Die and lose everything you found.' },
+                                { title: 'Horses & Travel', desc: 'Buy and stable horses to travel faster. Manage their stamina or leave them at the stable to rest.' },
+                                { title: 'Local Banking', desc: 'Your wealth is where you leave it. Gold stored in one town stays there until you return.' },
+                                { title: 'Political Legitimacy', desc: 'Rulers gain and lose legitimacy. Scandals, lost wars, and church opposition can trigger rebellion.' },
+                                { title: 'Food & Famine', desc: 'Villages must maintain food stockpiles. Shortages cause starvation, emigration, and death.' },
+                                { title: 'Found Settlements', desc: 'Petition the King for a charter, gather signatories, and found your own village from nothing.' },
                                 { title: 'No Pay-to-Win', desc: 'Cosmetics only. No stat boosts, no power items, no skipping progression. Your success is earned.' },
                             ].map((feature) => (
                                 <div
