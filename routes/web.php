@@ -70,6 +70,24 @@ Route::get('/features', function () {
     ]);
 })->name('features');
 
+Route::get('/privacy', function () {
+    return Inertia::render('Privacy/Index', [
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
+})->name('privacy');
+
+Route::get('/terms', function () {
+    return Inertia::render('Terms/Index', [
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
+})->name('terms');
+
+Route::get('/rules', function () {
+    return Inertia::render('Rules/Index', [
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
+})->name('rules');
+
 // Dev auto-login route (only available in local environment)
 if (app()->environment('local')) {
     Route::get('/dev/login', function () {
