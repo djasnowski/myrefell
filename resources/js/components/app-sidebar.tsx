@@ -1,5 +1,4 @@
 import { Link } from '@inertiajs/react';
-import { Home } from 'lucide-react';
 import { NavLocation } from '@/components/nav-location';
 import { NavPlayerInfo } from '@/components/nav-player-info';
 import { NavSkills } from '@/components/nav-skills';
@@ -37,22 +36,6 @@ export function AppSidebar() {
                 <div className="px-2 py-2">
                     <NavPlayerInfo />
                 </div>
-
-                <SidebarSeparator />
-
-                {/* Dashboard Link */}
-                <SidebarMenu className="px-2">
-                    <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                            <Link href={dashboard()}>
-                                <Home className="h-4 w-4" />
-                                <span>Dashboard</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-
-                <SidebarSeparator />
 
                 {/* Location-aware Navigation */}
                 <NavLocation />

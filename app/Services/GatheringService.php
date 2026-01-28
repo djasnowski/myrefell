@@ -3,12 +3,22 @@
 namespace App\Services;
 
 use App\Models\Item;
+use App\Models\LocationActivityLog;
 use App\Models\User;
 use App\Models\WorldState;
 use Illuminate\Support\Facades\DB;
 
 class GatheringService
 {
+    /**
+     * Map gathering activities to bonus activity types.
+     */
+    public const ACTIVITY_BONUS_MAP = [
+        'mining' => 'mining',
+        'fishing' => 'fishing',
+        'woodcutting' => 'woodcutting',
+    ];
+
     /**
      * Gathering activities configuration.
      */
@@ -64,7 +74,8 @@ class GatheringService
 
     public function __construct(
         protected InventoryService $inventoryService,
-        protected DailyTaskService $dailyTaskService
+        protected DailyTaskService $dailyTaskService,
+        protected TownBonusService $townBonusService
     ) {}
 
     /**
@@ -130,7 +141,7 @@ class GatheringService
     /**
      * Perform a gathering action.
      */
-    public function gather(User $user, string $activity): array
+    public function gather(User $user, string $activity, ?string $locationType = null, ?int $locationId = null): array
     {
         $config = self::ACTIVITIES[$activity] ?? null;
 
@@ -183,7 +194,11 @@ class GatheringService
             ];
         }
 
-        return DB::transaction(function () use ($user, $config, $resource, $item, $activity) {
+        // Use provided location or fall back to user's current location
+        $locationType = $locationType ?? $user->current_location_type;
+        $locationId = $locationId ?? $user->current_location_id;
+
+        return DB::transaction(function () use ($user, $config, $resource, $item, $activity, $locationType, $locationId) {
             // Consume energy
             $user->consumeEnergy($config['energy_cost']);
 
@@ -191,12 +206,26 @@ class GatheringService
             $seasonalModifier = $this->getSeasonalModifier();
             $quantity = $this->calculateYield($seasonalModifier);
 
+            // Apply town bonus for yield
+            $bonusActivity = self::ACTIVITY_BONUS_MAP[$activity] ?? $activity;
+            $yieldBonus = $this->townBonusService->getYieldBonus($user, $bonusActivity);
+            $bonusQuantity = $this->townBonusService->calculateBonusQuantity($yieldBonus, $quantity);
+            $totalQuantity = $quantity + $bonusQuantity;
+
             // Add item to inventory
-            $this->inventoryService->addItem($user, $item, $quantity);
+            $this->inventoryService->addItem($user, $item, $totalQuantity);
+
+            // Calculate and contribute to town stockpile
+            $contributionRate = $this->townBonusService->getContributionRate($user, $bonusActivity);
+            $contribution = $this->townBonusService->calculateContribution($contributionRate, $totalQuantity);
+            $contributedToStockpile = false;
+            if ($contribution > 0) {
+                $contributedToStockpile = $this->townBonusService->contributeToStockpile($user, $item->id, $contribution);
+            }
 
             // Award XP (scaled by quantity for bonus yields)
             $baseXp = $config['base_xp'] + $resource['xp_bonus'];
-            $xpAwarded = (int) ceil($baseXp * $quantity);
+            $xpAwarded = (int) ceil($baseXp * $totalQuantity);
             $skill = $user->skills()->where('skill_name', $config['skill'])->first();
             $leveledUp = false;
 
@@ -207,11 +236,38 @@ class GatheringService
             }
 
             // Record daily task progress
-            $this->dailyTaskService->recordProgress($user, $config['task_type'], $item->name, $quantity);
+            $this->dailyTaskService->recordProgress($user, $config['task_type'], $item->name, $totalQuantity);
 
-            $message = $quantity > 1
-                ? "You gathered {$quantity}x {$item->name}!"
+            // Log activity at location
+            if ($locationType && $locationId) {
+                try {
+                    LocationActivityLog::log(
+                        userId: $user->id,
+                        locationType: $locationType,
+                        locationId: $locationId,
+                        activityType: LocationActivityLog::TYPE_GATHERING,
+                        description: "{$user->username} gathered {$totalQuantity}x {$item->name}",
+                        activitySubtype: $activity,
+                        metadata: [
+                            'item' => $item->name,
+                            'quantity' => $totalQuantity,
+                            'xp_gained' => $xpAwarded,
+                            'skill' => $config['skill'],
+                            'leveled_up' => $leveledUp,
+                        ]
+                    );
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // Table may not exist yet
+                }
+            }
+
+            $message = $totalQuantity > 1
+                ? "You gathered {$totalQuantity}x {$item->name}!"
                 : "You gathered {$item->name}!";
+
+            if ($contributedToStockpile && $contribution > 0) {
+                $message .= " ({$contribution} contributed to town stockpile)";
+            }
 
             return [
                 'success' => true,
@@ -220,12 +276,16 @@ class GatheringService
                     'name' => $item->name,
                     'description' => $item->description,
                 ],
-                'quantity' => $quantity,
+                'quantity' => $totalQuantity,
+                'base_quantity' => $quantity,
+                'bonus_quantity' => $bonusQuantity,
                 'xp_awarded' => $xpAwarded,
                 'skill' => $config['skill'],
                 'leveled_up' => $leveledUp,
                 'energy_remaining' => $user->fresh()->energy,
                 'seasonal_bonus' => $quantity > 1,
+                'role_bonus' => $bonusQuantity > 0,
+                'stockpile_contribution' => $contribution,
             ];
         });
     }
@@ -310,6 +370,11 @@ class GatheringService
         $worldState = WorldState::current();
         $seasonalModifier = $worldState->getGatheringModifier();
 
+        // Get role bonuses
+        $bonusActivity = self::ACTIVITY_BONUS_MAP[$activity] ?? $activity;
+        $yieldBonus = $this->townBonusService->getYieldBonus($user, $bonusActivity);
+        $contributionRate = $this->townBonusService->getContributionRate($user, $bonusActivity);
+
         return [
             'id' => $activity,
             'name' => $config['name'],
@@ -325,6 +390,10 @@ class GatheringService
             'free_slots' => $this->inventoryService->freeSlots($user),
             'seasonal_modifier' => $seasonalModifier,
             'current_season' => $worldState->current_season,
+            'yield_bonus' => $yieldBonus,
+            'yield_bonus_percent' => round($yieldBonus * 100),
+            'contribution_rate' => $contributionRate,
+            'contribution_rate_percent' => round($contributionRate * 100),
         ];
     }
 

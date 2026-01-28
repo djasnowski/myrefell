@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Item;
+use App\Models\LocationActivityLog;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -70,8 +71,117 @@ class CraftingService
             ],
             'output' => ['name' => 'Nails', 'quantity' => 10],
         ],
+        'bronze_pickaxe' => [
+            'name' => 'Bronze Pickaxe',
+            'category' => 'smithing',
+            'skill' => 'smithing',
+            'required_level' => 5,
+            'xp_reward' => 15,
+            'energy_cost' => 4,
+            'task_type' => 'smith',
+            'materials' => [
+                ['name' => 'Bronze Bar', 'quantity' => 2],
+                ['name' => 'Wood', 'quantity' => 1],
+            ],
+            'output' => ['name' => 'Bronze Pickaxe', 'quantity' => 1],
+        ],
+        'iron_pickaxe' => [
+            'name' => 'Iron Pickaxe',
+            'category' => 'smithing',
+            'skill' => 'smithing',
+            'required_level' => 20,
+            'xp_reward' => 30,
+            'energy_cost' => 5,
+            'task_type' => 'smith',
+            'materials' => [
+                ['name' => 'Iron Bar', 'quantity' => 2],
+                ['name' => 'Oak Wood', 'quantity' => 1],
+            ],
+            'output' => ['name' => 'Iron Pickaxe', 'quantity' => 1],
+        ],
+        'steel_pickaxe' => [
+            'name' => 'Steel Pickaxe',
+            'category' => 'smithing',
+            'skill' => 'smithing',
+            'required_level' => 35,
+            'xp_reward' => 50,
+            'energy_cost' => 6,
+            'task_type' => 'smith',
+            'materials' => [
+                ['name' => 'Steel Bar', 'quantity' => 2],
+                ['name' => 'Oak Wood', 'quantity' => 1],
+            ],
+            'output' => ['name' => 'Steel Pickaxe', 'quantity' => 1],
+        ],
+        'hammer' => [
+            'name' => 'Hammer',
+            'category' => 'smithing',
+            'skill' => 'smithing',
+            'required_level' => 1,
+            'xp_reward' => 10,
+            'energy_cost' => 3,
+            'task_type' => 'smith',
+            'materials' => [
+                ['name' => 'Bronze Bar', 'quantity' => 1],
+                ['name' => 'Wood', 'quantity' => 1],
+            ],
+            'output' => ['name' => 'Hammer', 'quantity' => 1],
+        ],
+        'fishing_rod' => [
+            'name' => 'Fishing Rod',
+            'category' => 'smithing',
+            'skill' => 'smithing',
+            'required_level' => 5,
+            'xp_reward' => 12,
+            'energy_cost' => 3,
+            'task_type' => 'smith',
+            'materials' => [
+                ['name' => 'Willow Wood', 'quantity' => 1],
+                ['name' => 'Thread', 'quantity' => 2],
+            ],
+            'output' => ['name' => 'Fishing Rod', 'quantity' => 1],
+        ],
+        'fishing_net' => [
+            'name' => 'Fishing Net',
+            'category' => 'crafting',
+            'skill' => 'crafting',
+            'required_level' => 5,
+            'xp_reward' => 15,
+            'energy_cost' => 4,
+            'task_type' => 'craft',
+            'materials' => [
+                ['name' => 'Thread', 'quantity' => 5],
+            ],
+            'output' => ['name' => 'Fishing Net', 'quantity' => 1],
+        ],
 
         // Cooking recipes
+        'flour' => [
+            'name' => 'Flour',
+            'category' => 'cooking',
+            'skill' => 'cooking',
+            'required_level' => 1,
+            'xp_reward' => 5,
+            'energy_cost' => 2,
+            'task_type' => 'cook',
+            'materials' => [
+                ['name' => 'Grain', 'quantity' => 2],
+            ],
+            'output' => ['name' => 'Flour', 'quantity' => 1],
+        ],
+        'bread' => [
+            'name' => 'Bread',
+            'category' => 'cooking',
+            'skill' => 'cooking',
+            'required_level' => 1,
+            'xp_reward' => 8,
+            'energy_cost' => 2,
+            'task_type' => 'cook',
+            'materials' => [
+                ['name' => 'Flour', 'quantity' => 1],
+            ],
+            'output' => ['name' => 'Bread', 'quantity' => 1],
+        ],
         'cooked_shrimp' => [
             'name' => 'Cooked Shrimp',
             'category' => 'cooking',
@@ -111,18 +221,45 @@ class CraftingService
             ],
             'output' => ['name' => 'Cooked Salmon', 'quantity' => 1],
         ],
-        'bread' => [
-            'name' => 'Bread',
+        'cooked_lobster' => [
+            'name' => 'Cooked Lobster',
             'category' => 'cooking',
             'skill' => 'cooking',
-            'required_level' => 1,
-            'xp_reward' => 8,
+            'required_level' => 30,
+            'xp_reward' => 50,
+            'energy_cost' => 4,
+            'task_type' => 'cook',
+            'materials' => [
+                ['name' => 'Raw Lobster', 'quantity' => 1],
+            ],
+            'output' => ['name' => 'Cooked Lobster', 'quantity' => 1],
+        ],
+        'cooked_meat' => [
+            'name' => 'Cooked Meat',
+            'category' => 'cooking',
+            'skill' => 'cooking',
+            'required_level' => 5,
+            'xp_reward' => 15,
             'energy_cost' => 2,
             'task_type' => 'cook',
             'materials' => [
-                ['name' => 'Flour', 'quantity' => 1],
+                ['name' => 'Raw Meat', 'quantity' => 1],
             ],
-            'output' => ['name' => 'Bread', 'quantity' => 1],
+            'output' => ['name' => 'Cooked Meat', 'quantity' => 1],
+        ],
+        'meat_pie' => [
+            'name' => 'Meat Pie',
+            'category' => 'cooking',
+            'skill' => 'cooking',
+            'required_level' => 15,
+            'xp_reward' => 35,
+            'energy_cost' => 4,
+            'task_type' => 'cook',
+            'materials' => [
+                ['name' => 'Flour', 'quantity' => 1],
+                ['name' => 'Raw Meat', 'quantity' => 1],
+            ],
+            'output' => ['name' => 'Meat Pie', 'quantity' => 1],
         ],
 
         // Crafting recipes
@@ -161,7 +298,8 @@ class CraftingService
 
     public function __construct(
         protected InventoryService $inventoryService,
-        protected DailyTaskService $dailyTaskService
+        protected DailyTaskService $dailyTaskService,
+        protected TownBonusService $townBonusService
     ) {}
 
     /**
@@ -248,6 +386,11 @@ class CraftingService
             ];
         }
 
+        // Get role bonuses for this recipe's category
+        $bonusActivity = $this->townBonusService->getCraftingActivity($recipe['category']);
+        $yieldBonus = $this->townBonusService->getYieldBonus($user, $bonusActivity);
+        $contributionRate = $this->townBonusService->getContributionRate($user, $bonusActivity);
+
         return [
             'id' => $id,
             'name' => $recipe['name'],
@@ -261,6 +404,10 @@ class CraftingService
             'can_make' => $canMake,
             'is_locked' => $isLocked,
             'current_level' => $skillLevel,
+            'yield_bonus' => $yieldBonus,
+            'yield_bonus_percent' => round($yieldBonus * 100),
+            'contribution_rate' => $contributionRate,
+            'contribution_rate_percent' => round($contributionRate * 100),
         ];
     }
 
@@ -304,7 +451,7 @@ class CraftingService
     /**
      * Craft an item.
      */
-    public function craft(User $user, string $recipeId): array
+    public function craft(User $user, string $recipeId, ?string $locationType = null, ?int $locationId = null): array
     {
         $recipe = self::RECIPES[$recipeId] ?? null;
 
@@ -364,7 +511,11 @@ class CraftingService
             ];
         }
 
-        return DB::transaction(function () use ($user, $recipe, $outputItem) {
+        // Use provided location or fall back to user's current location
+        $locationType = $locationType ?? $user->current_location_type;
+        $locationId = $locationId ?? $user->current_location_id;
+
+        return DB::transaction(function () use ($user, $recipe, $outputItem, $recipeId, $locationType, $locationId) {
             // Consume energy
             $user->consumeEnergy($recipe['energy_cost']);
 
@@ -374,16 +525,32 @@ class CraftingService
                 $this->inventoryService->removeItem($user, $item, $material['quantity']);
             }
 
-            // Add output item
-            $this->inventoryService->addItem($user, $outputItem, $recipe['output']['quantity']);
+            // Calculate base quantity and apply town bonus
+            $baseQuantity = $recipe['output']['quantity'];
+            $bonusActivity = $this->townBonusService->getCraftingActivity($recipe['category']);
+            $yieldBonus = $this->townBonusService->getYieldBonus($user, $bonusActivity);
+            $bonusQuantity = $this->townBonusService->calculateBonusQuantity($yieldBonus, $baseQuantity);
+            $totalQuantity = $baseQuantity + $bonusQuantity;
 
-            // Award XP
+            // Add output item
+            $this->inventoryService->addItem($user, $outputItem, $totalQuantity);
+
+            // Calculate and contribute to town stockpile
+            $contributionRate = $this->townBonusService->getContributionRate($user, $bonusActivity);
+            $contribution = $this->townBonusService->calculateContribution($contributionRate, $totalQuantity);
+            $contributedToStockpile = false;
+            if ($contribution > 0) {
+                $contributedToStockpile = $this->townBonusService->contributeToStockpile($user, $outputItem->id, $contribution);
+            }
+
+            // Award XP (scaled by total quantity)
+            $xpAwarded = (int) ceil($recipe['xp_reward'] * ($totalQuantity / max(1, $baseQuantity)));
             $skill = $user->skills()->where('skill_name', $recipe['skill'])->first();
             $leveledUp = false;
 
             if ($skill) {
                 $oldLevel = $skill->level;
-                $skill->addXp($recipe['xp_reward']);
+                $skill->addXp($xpAwarded);
                 $leveledUp = $skill->fresh()->level > $oldLevel;
             }
 
@@ -393,21 +560,53 @@ class CraftingService
                     $user,
                     $recipe['task_type'],
                     $outputItem->name,
-                    $recipe['output']['quantity']
+                    $totalQuantity
                 );
+            }
+
+            // Log activity at location
+            if ($locationType && $locationId) {
+                try {
+                    LocationActivityLog::log(
+                        userId: $user->id,
+                        locationType: $locationType,
+                        locationId: $locationId,
+                        activityType: LocationActivityLog::TYPE_CRAFTING,
+                        description: "{$user->username} crafted {$totalQuantity}x {$outputItem->name}",
+                        activitySubtype: $recipeId,
+                        metadata: [
+                            'item' => $outputItem->name,
+                            'quantity' => $totalQuantity,
+                            'xp_gained' => $xpAwarded,
+                            'skill' => $recipe['skill'],
+                            'leveled_up' => $leveledUp,
+                        ]
+                    );
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // Table may not exist yet
+                }
+            }
+
+            $message = "Crafted {$totalQuantity}x {$recipe['output']['name']}!";
+            if ($contributedToStockpile && $contribution > 0) {
+                $message .= " ({$contribution} contributed to town stockpile)";
             }
 
             return [
                 'success' => true,
-                'message' => "Crafted {$recipe['output']['quantity']}x {$recipe['output']['name']}!",
+                'message' => $message,
                 'item' => [
                     'name' => $outputItem->name,
-                    'quantity' => $recipe['output']['quantity'],
+                    'quantity' => $totalQuantity,
+                    'base_quantity' => $baseQuantity,
+                    'bonus_quantity' => $bonusQuantity,
                 ],
-                'xp_awarded' => $recipe['xp_reward'],
+                'xp_awarded' => $xpAwarded,
                 'skill' => $recipe['skill'],
                 'leveled_up' => $leveledUp,
                 'energy_remaining' => $user->fresh()->energy,
+                'role_bonus' => $bonusQuantity > 0,
+                'stockpile_contribution' => $contribution,
             ];
         });
     }
@@ -421,6 +620,9 @@ class CraftingService
             return null;
         }
 
+        // Get role bonuses for all crafting categories
+        $bonuses = $this->townBonusService->getBonusInfo($user);
+
         return [
             'can_craft' => true,
             'recipes' => $this->getAvailableRecipes($user),
@@ -428,6 +630,7 @@ class CraftingService
             'player_energy' => $user->energy,
             'max_energy' => $user->max_energy,
             'free_slots' => $this->inventoryService->freeSlots($user),
+            'role_bonuses' => $bonuses,
         ];
     }
 }

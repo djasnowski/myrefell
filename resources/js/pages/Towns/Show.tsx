@@ -1,215 +1,440 @@
-import { Head, Link } from '@inertiajs/react';
-import { Anchor, Banknote, Building2, Castle, Church, Crown, Home, MapPin, Users } from 'lucide-react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import {
+    Anchor,
+    Banknote,
+    Briefcase,
+    Building2,
+    Church,
+    Coins,
+    Crown,
+    Gavel,
+    MapPin,
+    MessageCircle,
+    Mountain,
+    Palmtree,
+    ScrollText,
+    Shield,
+    Snowflake,
+    Store,
+    Sun,
+    Swords,
+    TreePine,
+    Trees,
+    Users,
+    Waves,
+    Wheat,
+    type LucideIcon,
+} from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
+import DisasterWidget from '@/components/widgets/disaster-widget';
+import { LegitimacyDisplay } from '@/components/widgets/legitimacy-badge';
+import { ServicesGrid } from '@/components/service-card';
+import { ActivityFeed } from '@/components/activity-feed';
 import type { BreadcrumbItem } from '@/types';
+
+interface Visitor {
+    id: number;
+    username: string;
+    combat_level: number;
+}
+
+interface Ruler {
+    id: number;
+    username: string;
+    primary_title?: string | null;
+    legitimacy?: number;
+}
+
+interface Role {
+    id: number;
+    name: string;
+    slug: string;
+    description: string;
+    tier: number;
+    salary: number;
+    is_elected: boolean;
+    holder: {
+        id: number;
+        username: string;
+        legitimacy: number;
+        appointed_at: string;
+    } | null;
+}
 
 interface Town {
     id: number;
     name: string;
     description: string;
     biome: string;
-    is_capital: boolean;
+    is_capital?: boolean;
+    is_port?: boolean;
     population: number;
     wealth: number;
     tax_rate: number;
+    visitor_count: number;
     coordinates: { x: number; y: number };
     kingdom: { id: number; name: string } | null;
-    barony: { id: number; name: string } | null;
-    mayor: { id: number; username: string } | null;
-    villages: { id: number; name: string; biome: string; population: number; is_port: boolean }[];
-    village_count: number;
+    duchy: { id: number; name: string } | null;
+    barony: { id: number; name: string; biome: string } | null;
+    mayor: Ruler | null;
 }
 
-interface Service {
+interface Disaster {
+    id: number;
+    type: string;
     name: string;
-    href: string;
+    severity: 'minor' | 'moderate' | 'severe' | 'catastrophic';
+    status: 'active' | 'ending';
+    started_at: string;
+    days_active: number;
+    buildings_damaged: number;
+    casualties: number;
+}
+
+interface ServiceInfo {
+    id: string;
+    name: string;
     description: string;
+    icon: string;
+    route: string;
+}
+
+interface ActivityLogEntry {
+    id: number;
+    username: string;
+    description: string;
+    activity_type: string;
+    subtype: string | null;
+    metadata: Record<string, unknown> | null;
+    created_at: string;
+    time_ago: string;
 }
 
 interface Props {
     town: Town;
-    services: Service[];
+    services: ServiceInfo[];
+    recent_activity: ActivityLogEntry[];
+    roles: Role[];
+    visitors: Visitor[];
+    is_visitor: boolean;
+    is_mayor: boolean;
+    current_user_id: number;
+    disasters?: Disaster[];
 }
 
-const biomeColors: Record<string, { bg: string; text: string }> = {
-    plains: { bg: 'bg-green-900/30', text: 'text-green-400' },
-    forest: { bg: 'bg-emerald-900/30', text: 'text-emerald-400' },
-    tundra: { bg: 'bg-blue-900/30', text: 'text-blue-400' },
-    coastal: { bg: 'bg-cyan-900/30', text: 'text-cyan-400' },
-    desert: { bg: 'bg-amber-900/30', text: 'text-amber-400' },
-    volcano: { bg: 'bg-red-900/30', text: 'text-red-400' },
-    mountains: { bg: 'bg-slate-900/30', text: 'text-slate-400' },
-    swamps: { bg: 'bg-lime-900/30', text: 'text-lime-400' },
+const biomeConfig: Record<string, { icon: LucideIcon; color: string; bg: string; border: string }> = {
+    plains: { icon: Wheat, color: 'text-green-400', bg: 'bg-green-900/30', border: 'border-green-600/50' },
+    forest: { icon: Trees, color: 'text-emerald-400', bg: 'bg-emerald-900/30', border: 'border-emerald-600/50' },
+    tundra: { icon: Snowflake, color: 'text-cyan-400', bg: 'bg-cyan-900/30', border: 'border-cyan-600/50' },
+    coastal: { icon: Waves, color: 'text-blue-400', bg: 'bg-blue-900/30', border: 'border-blue-600/50' },
+    desert: { icon: Sun, color: 'text-amber-400', bg: 'bg-amber-900/30', border: 'border-amber-600/50' },
+    volcano: { icon: Mountain, color: 'text-red-400', bg: 'bg-red-900/30', border: 'border-red-600/50' },
+    mountains: { icon: Mountain, color: 'text-slate-400', bg: 'bg-slate-900/30', border: 'border-slate-600/50' },
+    swamps: { icon: TreePine, color: 'text-lime-400', bg: 'bg-lime-900/30', border: 'border-lime-600/50' },
+    tropical: { icon: Palmtree, color: 'text-teal-400', bg: 'bg-teal-900/30', border: 'border-teal-600/50' },
 };
 
-const serviceIcons: Record<string, typeof Banknote> = {
-    Bank: Banknote,
-    Infirmary: Church,
-    'Town Hall': Building2,
-};
+export default function TownShow({ town, services, recent_activity, roles, visitors, is_visitor, is_mayor, current_user_id, disasters = [] }: Props) {
+    const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
 
-export default function TownShow({ town, services }: Props) {
+    const biome = biomeConfig[town.biome] || biomeConfig.plains;
+    const BiomeIcon = biome.icon;
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
         { title: 'Towns', href: '/towns' },
         { title: town.name, href: `/towns/${town.id}` },
     ];
 
-    const biome = biomeColors[town.biome] || { bg: 'bg-stone-900/30', text: 'text-stone-400' };
+    // Filter to show only key roles (tier 3+) in the summary
+    const keyRoles = roles.filter(r => r.tier >= 3).slice(0, 4);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={town.name} />
-            <div className="flex h-full flex-1 flex-col overflow-auto p-4">
-                {/* Header */}
-                <div className="mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className={`rounded-lg p-3 ${biome.bg}`}>
-                            <Church className={`h-8 w-8 ${biome.text}`} />
+            <div className="flex flex-col gap-6 p-6">
+                {/* Hero Header */}
+                <div className={`rounded-xl border-2 ${biome.border} ${biome.bg} p-6`}>
+                    <div className="flex items-start gap-4">
+                        <div className={`rounded-xl ${biome.bg} border ${biome.border} p-4`}>
+                            <BiomeIcon className={`h-12 w-12 ${biome.color}`} />
                         </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="font-pixel text-2xl text-stone-200">{town.name}</h1>
+                        <div className="flex-1">
+                            <div className="flex items-center gap-3">
+                                <h1 className="font-[Cinzel] text-3xl font-bold text-stone-100">
+                                    {town.name}
+                                </h1>
                                 {town.is_capital && (
-                                    <span className="flex items-center gap-1 rounded-full bg-amber-900/50 px-2 py-0.5 font-pixel text-[10px] text-amber-400">
+                                    <span className="flex items-center gap-1 rounded-full bg-amber-900/50 px-2 py-0.5 text-xs text-amber-400">
                                         <Crown className="h-3 w-3" />
                                         Capital
                                     </span>
                                 )}
+                                {town.is_port && (
+                                    <span className="flex items-center gap-1 rounded-full bg-blue-900/50 px-2 py-0.5 text-xs text-blue-400">
+                                        <Anchor className="h-3 w-3" />
+                                        Port
+                                    </span>
+                                )}
+                                <span className={`rounded-full ${biome.bg} border ${biome.border} px-3 py-0.5 text-xs capitalize ${biome.color}`}>
+                                    {town.biome}
+                                </span>
                             </div>
-                            <div className="flex items-center gap-2 font-pixel text-xs text-stone-500">
-                                <span className={`capitalize ${biome.text}`}>{town.biome}</span>
-                                <span>•</span>
-                                <MapPin className="h-3 w-3" />
-                                <span>({town.coordinates.x}, {town.coordinates.y})</span>
-                            </div>
-                        </div>
-                    </div>
-                    {town.description && (
-                        <p className="mt-3 font-pixel text-xs leading-relaxed text-stone-400">{town.description}</p>
-                    )}
-                </div>
+                            <p className="mt-2 text-stone-400">{town.description}</p>
 
-                <div className="grid gap-4 lg:grid-cols-2">
-                    {/* Left Column - Info */}
-                    <div className="space-y-4">
-                        {/* Stats */}
-                        <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
-                            <h2 className="mb-3 font-pixel text-sm text-stone-300">Town Info</h2>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <div className="font-pixel text-[10px] text-stone-500">Barony</div>
-                                    {town.barony ? (
-                                        <Link href={`/baronies/${town.barony.id}`} className="font-pixel text-xs text-purple-400 hover:underline">
-                                            {town.barony.name}
-                                        </Link>
-                                    ) : (
-                                        <span className="font-pixel text-xs text-stone-400">None</span>
-                                    )}
-                                </div>
-                                <div>
-                                    <div className="font-pixel text-[10px] text-stone-500">Kingdom</div>
-                                    {town.kingdom ? (
-                                        <Link href={`/kingdoms/${town.kingdom.id}`} className="font-pixel text-xs text-amber-400 hover:underline">
+                            {/* Hierarchy */}
+                            <div className="mt-3 flex items-center gap-2 text-sm">
+                                {town.kingdom && (
+                                    <>
+                                        <Link href={`/kingdoms/${town.kingdom.id}`} className="text-amber-400 hover:underline">
                                             {town.kingdom.name}
                                         </Link>
-                                    ) : (
-                                        <span className="font-pixel text-xs text-stone-400">None</span>
-                                    )}
-                                </div>
-                                <div>
-                                    <div className="font-pixel text-[10px] text-stone-500">Mayor</div>
-                                    {town.mayor ? (
-                                        <span className="font-pixel text-xs text-stone-300">{town.mayor.username}</span>
-                                    ) : (
-                                        <span className="font-pixel text-xs text-stone-500">Vacant</span>
-                                    )}
-                                </div>
-                                <div>
-                                    <div className="font-pixel text-[10px] text-stone-500">Population</div>
-                                    <div className="flex items-center gap-1">
-                                        <Users className="h-3 w-3 text-stone-500" />
-                                        <span className="font-pixel text-xs text-stone-300">{town.population.toLocaleString()}</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="font-pixel text-[10px] text-stone-500">Wealth</div>
-                                    <span className="font-pixel text-xs text-yellow-400">{town.wealth.toLocaleString()} gold</span>
-                                </div>
-                                <div>
-                                    <div className="font-pixel text-[10px] text-stone-500">Tax Rate</div>
-                                    <span className="font-pixel text-xs text-stone-300">{(town.tax_rate * 100).toFixed(0)}%</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Services */}
-                        <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
-                            <h2 className="mb-3 font-pixel text-sm text-stone-300">Services</h2>
-                            <div className="space-y-2">
-                                {services.map((service) => {
-                                    const Icon = serviceIcons[service.name] || Building2;
-                                    return (
-                                        <Link
-                                            key={service.name}
-                                            href={service.href}
-                                            className="flex items-center gap-3 rounded-lg border border-stone-700 bg-stone-800/50 p-3 transition hover:bg-stone-700/50"
-                                        >
-                                            <Icon className="h-5 w-5 text-blue-400" />
-                                            <div>
-                                                <div className="font-pixel text-xs text-stone-200">{service.name}</div>
-                                                <div className="font-pixel text-[10px] text-stone-500">{service.description}</div>
-                                            </div>
+                                        <span className="text-stone-600">›</span>
+                                    </>
+                                )}
+                                {town.duchy && (
+                                    <>
+                                        <Link href={`/duchies/${town.duchy.id}`} className="text-purple-400 hover:underline">
+                                            {town.duchy.name}
                                         </Link>
-                                    );
-                                })}
+                                        <span className="text-stone-600">›</span>
+                                    </>
+                                )}
+                                {town.barony && (
+                                    <>
+                                        <Link href={`/baronies/${town.barony.id}`} className="text-stone-300 hover:underline">
+                                            {town.barony.name}
+                                        </Link>
+                                        <span className="text-stone-600">›</span>
+                                    </>
+                                )}
+                                <span className="text-stone-500">{town.name}</span>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Middle Column - Villages */}
-                    <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
-                        <h2 className="mb-3 font-pixel text-sm text-stone-300">
-                            Villages ({town.village_count})
-                        </h2>
-                        {town.villages.length > 0 ? (
-                            <div className="max-h-96 space-y-2 overflow-y-auto">
-                                {town.villages.map((village) => (
-                                    <Link
-                                        key={village.id}
-                                        href={`/villages/${village.id}`}
-                                        className="flex items-center gap-3 rounded-lg border border-stone-700 bg-stone-800/50 p-3 transition hover:bg-stone-700/50"
-                                    >
-                                        {village.is_port ? (
-                                            <Anchor className="h-5 w-5 text-blue-400" />
-                                        ) : (
-                                            <Home className="h-5 w-5 text-green-400" />
-                                        )}
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="truncate font-pixel text-xs text-stone-200">{village.name}</span>
-                                                {village.is_port && (
-                                                    <span className="rounded bg-blue-900/50 px-1.5 py-0.5 font-pixel text-[8px] text-blue-400">
-                                                        Port
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-2 font-pixel text-[10px] text-stone-500">
-                                                <span className="capitalize">{village.biome}</span>
-                                                <span>•</span>
-                                                <span>{village.population.toLocaleString()} pop</span>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="py-8 text-center font-pixel text-xs text-stone-500">
-                                No villages in this town
+                        {/* Visitor badge */}
+                        {is_visitor && (
+                            <div className="flex items-center gap-2 rounded-lg border border-blue-600/50 bg-blue-900/30 px-3 py-2">
+                                <MapPin className="h-4 w-4 text-blue-400" />
+                                <span className="font-pixel text-xs text-blue-400">You Are Here</span>
                             </div>
                         )}
                     </div>
                 </div>
+
+                {/* Flash Messages */}
+                {flash?.success && (
+                    <div className="rounded-lg border border-green-600/50 bg-green-900/20 px-4 py-3">
+                        <p className="font-pixel text-sm text-green-300">{flash.success}</p>
+                    </div>
+                )}
+                {flash?.error && (
+                    <div className="rounded-lg border border-red-600/50 bg-red-900/20 px-4 py-3">
+                        <p className="font-pixel text-sm text-red-300">{flash.error}</p>
+                    </div>
+                )}
+
+                {/* Disaster Alert */}
+                {disasters.length > 0 && (
+                    <DisasterWidget disasters={disasters} />
+                )}
+
+                {/* Stats Row */}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
+                        <Users className="mx-auto mb-2 h-6 w-6 text-blue-400" />
+                        <div className="font-pixel text-2xl text-stone-100">
+                            {town.visitor_count}
+                        </div>
+                        <div className="text-xs text-stone-500">Visitors</div>
+                    </div>
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
+                        <Users className="mx-auto mb-2 h-6 w-6 text-stone-400" />
+                        <div className="font-pixel text-2xl text-stone-100">
+                            {town.population.toLocaleString()}
+                        </div>
+                        <div className="text-xs text-stone-500">NPCs</div>
+                    </div>
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
+                        <Coins className="mx-auto mb-2 h-6 w-6 text-amber-400" />
+                        <div className="font-pixel text-2xl text-amber-300">
+                            {town.wealth.toLocaleString()}
+                        </div>
+                        <div className="text-xs text-stone-500">Treasury</div>
+                    </div>
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
+                        <MapPin className="mx-auto mb-2 h-6 w-6 text-stone-400" />
+                        <div className="font-pixel text-lg text-stone-300">
+                            {town.coordinates.x}, {town.coordinates.y}
+                        </div>
+                        <div className="text-xs text-stone-500">Coordinates</div>
+                    </div>
+                </div>
+
+                {/* Services Grid */}
+                {services && services.length > 0 && (
+                    <div>
+                        <h2 className="mb-3 font-pixel text-sm text-stone-400">Services</h2>
+                        <ServicesGrid
+                            services={services}
+                            locationType="town"
+                            locationId={town.id}
+                            isPort={town.is_port}
+                        />
+                    </div>
+                )}
+
+                {/* Recent Activity */}
+                {recent_activity && recent_activity.length > 0 && (
+                    <div>
+                        <ActivityFeed
+                            activities={recent_activity}
+                            title="Recent Activity"
+                            emptyMessage="No recent activity in this town"
+                            maxHeight="250px"
+                        />
+                    </div>
+                )}
+
+                {/* Leadership Section */}
+                <div className="grid gap-4 md:grid-cols-2">
+                    {/* Mayor */}
+                    <div className="rounded-xl border border-amber-600/30 bg-amber-900/10 p-4">
+                        <div className="mb-3 flex items-center gap-2">
+                            <Crown className="h-5 w-5 text-amber-400" />
+                            <h3 className="font-pixel text-sm text-amber-400">Mayor</h3>
+                        </div>
+                        {town.mayor ? (
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <div className="font-pixel text-lg text-stone-100">
+                                            {town.mayor.username}
+                                            {town.mayor.id === current_user_id && (
+                                                <span className="ml-2 text-xs text-amber-400">(You)</span>
+                                            )}
+                                        </div>
+                                        {town.mayor.primary_title && (
+                                            <div className="text-xs capitalize text-stone-500">{town.mayor.primary_title}</div>
+                                        )}
+                                    </div>
+                                </div>
+                                {town.mayor.legitimacy !== undefined && (
+                                    <LegitimacyDisplay
+                                        legitimacy={town.mayor.legitimacy}
+                                        roleName="Mayor"
+                                    />
+                                )}
+                            </div>
+                        ) : (
+                            <div className="text-stone-500">
+                                <p className="font-pixel">Position Vacant</p>
+                                <p className="mt-1 text-xs">No mayor has been elected</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Roles Link */}
+                    <Link
+                        href={`/towns/${town.id}/roles`}
+                        className="flex items-center justify-between rounded-xl border border-stone-600/30 bg-stone-800/30 p-4 transition hover:bg-stone-800/50"
+                    >
+                        <div className="flex items-center gap-3">
+                            <Shield className="h-8 w-8 text-stone-400" />
+                            <div>
+                                <div className="font-pixel text-stone-200">Town Officials</div>
+                                <div className="text-xs text-stone-500">View all {roles.length} positions</div>
+                            </div>
+                        </div>
+                        <span className="text-stone-500">›</span>
+                    </Link>
+                </div>
+
+                {/* Key Roles Preview */}
+                {keyRoles.length > 0 && (
+                    <div>
+                        <h2 className="mb-3 font-pixel text-sm text-stone-400">Key Officials</h2>
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                            {keyRoles.map((role) => (
+                                <div
+                                    key={role.id}
+                                    className={`rounded-lg border p-3 ${
+                                        role.holder ? 'border-amber-600/30 bg-amber-900/10' : 'border-stone-700 bg-stone-800/30'
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <span className="font-pixel text-xs text-stone-400">{role.name}</span>
+                                        <span className="rounded bg-stone-700 px-1.5 py-0.5 text-[10px] text-stone-400">
+                                            T{role.tier}
+                                        </span>
+                                    </div>
+                                    {role.holder ? (
+                                        <div className="mt-2">
+                                            <div className="font-pixel text-sm text-stone-200">{role.holder.username}</div>
+                                            <div className="text-[10px] text-stone-500">{role.holder.appointed_at}</div>
+                                        </div>
+                                    ) : (
+                                        <div className="mt-2 font-pixel text-xs text-stone-600 italic">Vacant</div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Visitors */}
+                {visitors.length > 0 && (
+                    <div>
+                        <div className="mb-3 flex items-center justify-between">
+                            <h2 className="font-pixel text-sm text-stone-400">
+                                Visitors ({town.visitor_count})
+                            </h2>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                            {visitors.map((visitor) => (
+                                <div
+                                    key={visitor.id}
+                                    className="flex items-center gap-3 rounded-lg border border-stone-700 bg-stone-800/30 p-3"
+                                >
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-700">
+                                        <Users className="h-5 w-5 text-stone-400" />
+                                    </div>
+                                    <div>
+                                        <div className="font-pixel text-sm text-stone-200">
+                                            {visitor.username}
+                                            {visitor.id === current_user_id && (
+                                                <span className="ml-1 text-xs text-blue-400">(You)</span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-1 text-xs text-stone-500">
+                                            <Swords className="h-3 w-3" />
+                                            Combat Lv. {visitor.combat_level}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {town.visitor_count > 12 && (
+                            <p className="mt-2 text-center text-xs text-stone-500">
+                                +{town.visitor_count - 12} more visitors
+                            </p>
+                        )}
+                    </div>
+                )}
+
+                {/* Port indicator */}
+                {town.is_port && (
+                    <Link
+                        href={`/towns/${town.id}/port`}
+                        className="flex items-center gap-4 rounded-xl border border-blue-600/30 bg-blue-900/10 p-4 transition hover:bg-blue-900/20"
+                    >
+                        <Anchor className="h-8 w-8 text-blue-400" />
+                        <div>
+                            <div className="font-pixel text-blue-300">Harbor</div>
+                            <div className="text-xs text-stone-400">Book passage to distant lands</div>
+                        </div>
+                    </Link>
+                )}
             </div>
         </AppLayout>
     );

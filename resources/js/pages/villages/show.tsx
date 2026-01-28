@@ -29,6 +29,8 @@ import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import DisasterWidget from '@/components/widgets/disaster-widget';
 import { LegitimacyDisplay } from '@/components/widgets/legitimacy-badge';
+import { ServicesGrid } from '@/components/service-card';
+import { ActivityFeed } from '@/components/activity-feed';
 import type { BreadcrumbItem } from '@/types';
 
 interface Resident {
@@ -51,6 +53,7 @@ interface Village {
     biome: string;
     is_town: boolean;
     is_hamlet?: boolean;
+    is_port?: boolean;
     population: number;
     wealth: number;
     coordinates: {
@@ -75,6 +78,25 @@ interface Village {
     elder?: Ruler | null;
 }
 
+interface ServiceInfo {
+    id: string;
+    name: string;
+    description: string;
+    icon: string;
+    route: string;
+}
+
+interface ActivityLogEntry {
+    id: number;
+    username: string;
+    description: string;
+    activity_type: string;
+    subtype: string | null;
+    metadata: Record<string, unknown> | null;
+    created_at: string;
+    time_ago: string;
+}
+
 interface Disaster {
     id: number;
     type: string;
@@ -89,6 +111,8 @@ interface Disaster {
 
 interface Props {
     village: Village;
+    services: ServiceInfo[];
+    recent_activity: ActivityLogEntry[];
     is_resident: boolean;
     can_migrate: boolean;
     has_pending_request: boolean;
@@ -112,7 +136,7 @@ const biomeConfig: Record<string, { icon: LucideIcon; color: string; bg: string;
     tropical: { icon: Palmtree, color: 'text-teal-400', bg: 'bg-teal-900/30', border: 'border-teal-600/50' },
 };
 
-export default function VillageShow({ village, is_resident, can_migrate, has_pending_request, current_user_id, disasters = [] }: Props) {
+export default function VillageShow({ village, services, recent_activity, is_resident, can_migrate, has_pending_request, current_user_id, disasters = [] }: Props) {
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
     const [loading, setLoading] = useState(false);
 
@@ -130,15 +154,6 @@ export default function VillageShow({ village, is_resident, can_migrate, has_pen
             onFinish: () => setLoading(false),
         });
     };
-
-    const quickActions = [
-        { title: 'Market', href: `/villages/${village.id}/market`, icon: Store, color: 'amber' },
-        { title: 'Bank', href: `/villages/${village.id}/bank`, icon: Banknote, color: 'green' },
-        { title: 'Healer', href: `/villages/${village.id}/healer`, icon: Church, color: 'red' },
-        { title: 'Notice Board', href: `/villages/${village.id}/quests`, icon: ScrollText, color: 'purple' },
-        { title: 'Chat', href: '/chat', icon: MessageCircle, color: 'blue' },
-        { title: 'Court', href: '/crime', icon: Gavel, color: 'stone' },
-    ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -253,32 +268,30 @@ export default function VillageShow({ village, is_resident, can_migrate, has_pen
                     </div>
                 </div>
 
-                {/* Quick Actions */}
-                <div>
-                    <h2 className="mb-3 font-pixel text-sm text-stone-400">Services</h2>
-                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-                        {quickActions.map((action) => {
-                            const colorClasses: Record<string, string> = {
-                                amber: 'border-amber-600/30 bg-amber-900/20 text-amber-400 hover:bg-amber-900/40',
-                                green: 'border-green-600/30 bg-green-900/20 text-green-400 hover:bg-green-900/40',
-                                red: 'border-red-600/30 bg-red-900/20 text-red-400 hover:bg-red-900/40',
-                                purple: 'border-purple-600/30 bg-purple-900/20 text-purple-400 hover:bg-purple-900/40',
-                                blue: 'border-blue-600/30 bg-blue-900/20 text-blue-400 hover:bg-blue-900/40',
-                                stone: 'border-stone-600/30 bg-stone-800/50 text-stone-400 hover:bg-stone-700/50',
-                            };
-                            return (
-                                <Link
-                                    key={action.title}
-                                    href={action.href}
-                                    className={`flex flex-col items-center gap-2 rounded-lg border p-3 transition ${colorClasses[action.color]}`}
-                                >
-                                    <action.icon className="h-6 w-6" />
-                                    <span className="font-pixel text-xs">{action.title}</span>
-                                </Link>
-                            );
-                        })}
+                {/* Services Grid */}
+                {services && services.length > 0 && (
+                    <div>
+                        <h2 className="mb-3 font-pixel text-sm text-stone-400">Services</h2>
+                        <ServicesGrid
+                            services={services}
+                            locationType="village"
+                            locationId={village.id}
+                            isPort={village.is_port}
+                        />
                     </div>
-                </div>
+                )}
+
+                {/* Recent Activity */}
+                {recent_activity && recent_activity.length > 0 && (
+                    <div>
+                        <ActivityFeed
+                            activities={recent_activity}
+                            title="Recent Activity"
+                            emptyMessage="No recent activity in this village"
+                            maxHeight="250px"
+                        />
+                    </div>
+                )}
 
                 {/* Leadership Section */}
                 <div className="grid gap-4 md:grid-cols-2">

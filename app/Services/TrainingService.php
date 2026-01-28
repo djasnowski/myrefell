@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\LocationActivityLog;
 use App\Models\PlayerSkill;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -95,7 +96,7 @@ class TrainingService
     /**
      * Perform a training exercise.
      */
-    public function train(User $user, string $exercise): array
+    public function train(User $user, string $exercise, ?string $locationType = null, ?int $locationId = null): array
     {
         $config = self::EXERCISES[$exercise] ?? null;
 
@@ -120,7 +121,11 @@ class TrainingService
             ];
         }
 
-        return DB::transaction(function () use ($user, $config, $exercise) {
+        // Use provided location or fall back to user's current location
+        $locationType = $locationType ?? $user->current_location_type;
+        $locationId = $locationId ?? $user->current_location_id;
+
+        return DB::transaction(function () use ($user, $config, $exercise, $locationType, $locationId) {
             // Consume energy
             $user->consumeEnergy($config['energy_cost']);
 
@@ -147,6 +152,28 @@ class TrainingService
 
             // Record daily task progress for training
             $this->dailyTaskService->recordProgress($user, 'train', $config['skill'], 1);
+
+            // Log activity at location
+            if ($locationType && $locationId) {
+                try {
+                    LocationActivityLog::log(
+                        userId: $user->id,
+                        locationType: $locationType,
+                        locationId: $locationId,
+                        activityType: LocationActivityLog::TYPE_TRAINING,
+                        description: "{$user->username} trained {$config['name']}",
+                        activitySubtype: $exercise,
+                        metadata: [
+                            'xp_gained' => $xpAwarded,
+                            'skill' => $config['skill'],
+                            'leveled_up' => $leveledUp,
+                            'new_level' => $newLevel,
+                        ]
+                    );
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // Table may not exist yet
+                }
+            }
 
             return [
                 'success' => true,

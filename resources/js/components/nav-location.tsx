@@ -1,8 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
-    Anchor,
     Backpack,
-    Banknote,
     BarChart3,
     Castle,
     Church,
@@ -16,17 +14,14 @@ import {
     Loader2,
     Map,
     MapPin,
-    MessageCircle,
     Pickaxe,
     ScrollText,
     Shield,
     Sparkles,
     Store,
-    Swords,
     Trees,
-    Truck,
-    Users,
     UsersRound,
+    Wheat,
     type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -75,6 +70,13 @@ interface PlayerContext {
     business?: { id: number; name: string };
     religion?: { id: number; name: string };
     army?: { id: number; name: string };
+    has_role_at_location?: boolean;
+}
+
+interface FarmData {
+    has_crops: boolean;
+    crops_ready: number;
+    total_plots: number;
 }
 
 interface SidebarData {
@@ -83,6 +85,7 @@ interface SidebarData {
     travel: TravelStatus | null;
     nearby_destinations: TravelDestination[];
     context: PlayerContext;
+    farm: FarmData | null;
 }
 
 interface NavItem {
@@ -106,12 +109,28 @@ const locationIcons: Record<string, LucideIcon> = {
     village: Home,
     barony: Castle,
     town: Church,
+    duchy: Crown,
     kingdom: Crown,
     wilderness: Trees,
 };
 
+// Location type to URL path mapping (handles irregular plurals)
+const locationPaths: Record<string, string> = {
+    village: 'villages',
+    barony: 'baronies',
+    town: 'towns',
+    duchy: 'duchies',
+    kingdom: 'kingdoms',
+};
+
+// Build location-scoped URL for a service
+function buildLocationUrl(location: LocationData, service: string): string {
+    const basePath = locationPaths[location.type] || location.type + 's';
+    return `/${basePath}/${location.id}/${service}`;
+}
+
 // Get everything available at current location (merged: services, activities, common)
-function getLocationItems(location: LocationData | null): NavItem[] {
+function getLocationItems(location: LocationData | null, farm: FarmData | null, context?: PlayerContext): NavItem[] {
     const items: NavItem[] = [];
 
     if (!location) {
@@ -129,188 +148,54 @@ function getLocationItems(location: LocationData | null): NavItem[] {
         return items;
     }
 
-    // All settlements have these activities
-    items.push({
-        title: 'Training',
-        href: '/training',
-        icon: Dumbbell,
-        description: 'Train combat skills',
-    });
-    items.push({
-        title: 'Gathering',
-        href: '/gathering',
-        icon: Pickaxe,
-        description: 'Mine, fish, or chop wood',
-    });
-    items.push({
-        title: 'Crafting',
-        href: '/crafting',
-        icon: Hammer,
-        description: 'Create items',
-    });
+    // Activities available at settlements - now location-scoped
+    if (['village', 'town', 'barony', 'duchy', 'kingdom'].includes(location.type)) {
+        items.push({
+            title: 'Training',
+            href: buildLocationUrl(location, 'training'),
+            icon: Dumbbell,
+            description: 'Train combat skills',
+        });
+    }
 
-    // Location-specific services
-    switch (location.type) {
-        case 'village':
-            items.push({
-                title: 'Market',
-                href: `/villages/${location.id}/market`,
-                icon: Store,
-                description: 'Buy and sell goods',
-            });
-            items.push({
-                title: 'Bank',
-                href: `/villages/${location.id}/bank`,
-                icon: Banknote,
-                description: 'Deposit and withdraw gold',
-            });
-            items.push({
-                title: 'Healer',
-                href: `/villages/${location.id}/healer`,
-                icon: Church,
-                description: 'Restore your health',
-            });
-            items.push({
-                title: 'Notice Board',
-                href: `/villages/${location.id}/quests`,
-                icon: ScrollText,
-                description: 'Find work and quests',
-            });
-            items.push({
-                title: 'Residents',
-                href: `/villages/${location.id}/residents`,
-                icon: Users,
-                description: 'People who live here',
-            });
-            items.push({
-                title: 'Chat',
-                href: '/chat',
-                icon: MessageCircle,
-                description: 'Talk with others',
-            });
-            items.push({
-                title: 'Court',
-                href: '/crime',
-                icon: Gavel,
-                description: 'Justice and bounties',
-            });
-            if (location.is_port) {
-                items.push({
-                    title: 'Harbor',
-                    href: `/villages/${location.id}/port`,
-                    icon: Anchor,
-                    description: 'Book passage overseas',
-                });
-            }
-            break;
+    // Gathering only in villages
+    if (location.type === 'village') {
+        items.push({
+            title: 'Gathering',
+            href: buildLocationUrl(location, 'gathering'),
+            icon: Pickaxe,
+            description: 'Mine, fish, or chop wood',
+        });
+    }
 
-        case 'barony':
-            items.push({
-                title: 'Market',
-                href: `/baronies/${location.id}/market`,
-                icon: Store,
-                description: 'Buy and sell goods',
-            });
-            items.push({
-                title: 'Bank',
-                href: `/baronies/${location.id}/bank`,
-                icon: Banknote,
-                description: 'Secure vault storage',
-            });
-            items.push({
-                title: 'Infirmary',
-                href: `/baronies/${location.id}/infirmary`,
-                icon: Church,
-                description: 'Full medical care',
-            });
-            items.push({
-                title: 'Arena',
-                href: `/baronies/${location.id}/arena`,
-                icon: Swords,
-                description: 'Fight for glory',
-            });
-            items.push({
-                title: 'Chat',
-                href: '/chat',
-                icon: MessageCircle,
-                description: 'Talk with others',
-            });
-            items.push({
-                title: 'Court',
-                href: '/crime',
-                icon: Gavel,
-                description: 'Justice and bounties',
-            });
-            items.push({
-                title: 'Armies',
-                href: '/warfare/armies',
-                icon: Shield,
-                description: 'Raise and command forces',
-            });
-            items.push({
-                title: 'Trade Routes',
-                href: '/trade/routes',
-                icon: Truck,
-                description: 'Caravan routes',
-            });
-            break;
+    // Crafting in villages, towns, and baronies
+    if (['village', 'town', 'barony'].includes(location.type)) {
+        items.push({
+            title: 'Crafting',
+            href: buildLocationUrl(location, 'crafting'),
+            icon: Hammer,
+            description: 'Create items',
+        });
+    }
 
-        case 'town':
-            items.push({
-                title: 'Market',
-                href: `/towns/${location.id}/market`,
-                icon: Store,
-                description: 'Buy and sell goods',
-            });
-            items.push({
-                title: 'Bank',
-                href: `/towns/${location.id}/bank`,
-                icon: Banknote,
-                description: 'Secure vault',
-            });
-            items.push({
-                title: 'Infirmary',
-                href: `/towns/${location.id}/infirmary`,
-                icon: Church,
-                description: 'Full medical care',
-            });
-            items.push({
-                title: 'Town Hall',
-                href: `/towns/${location.id}/hall`,
-                icon: Crown,
-                description: 'Civic affairs',
-            });
-            items.push({
-                title: 'Chat',
-                href: '/chat',
-                icon: MessageCircle,
-                description: 'Talk with others',
-            });
-            items.push({
-                title: 'Court',
-                href: '/crime',
-                icon: Gavel,
-                description: 'Justice and bounties',
-            });
-            items.push({
-                title: 'Armies',
-                href: '/warfare/armies',
-                icon: Shield,
-                description: 'Military forces',
-            });
-            items.push({
-                title: 'Wars',
-                href: '/warfare/wars',
-                icon: Swords,
-                description: 'Active conflicts',
-            });
-            items.push({
-                title: 'Trade Routes',
-                href: '/trade/routes',
-                icon: Truck,
-                description: 'Caravan routes',
-            });
-            break;
+    // Farming - only shows if player has crops at this location
+    if (farm?.has_crops) {
+        items.push({
+            title: farm.crops_ready > 0 ? `Farming (${farm.crops_ready})` : 'Farming',
+            href: '/farming',
+            icon: Wheat,
+            description: farm.crops_ready > 0 ? `${farm.crops_ready} crops ready to harvest` : 'Tend to your crops',
+        });
+    }
+
+    // Court is always available at settlements
+    if (['village', 'town', 'barony', 'duchy', 'kingdom'].includes(location.type)) {
+        items.push({
+            title: 'Court',
+            href: '/crime',
+            icon: Gavel,
+            description: 'Justice and bounties',
+        });
     }
 
     return items;
@@ -475,10 +360,10 @@ export function NavLocation() {
 
     if (!sidebar) return null;
 
-    const { location, home_village, travel, nearby_destinations, context } = sidebar;
+    const { location, home_village, travel, nearby_destinations, context, farm } = sidebar;
     const travelDestinations = nearby_destinations || [];
     const playerActions = getPlayerActions();
-    const locationItems = getLocationItems(location);
+    const locationItems = getLocationItems(location, farm, context);
     const contextualItems = getContextualItems(context || {});
 
     const LocationIcon = location ? locationIcons[location.type] || MapPin : MapPin;
@@ -544,9 +429,9 @@ export function NavLocation() {
     return (
         <>
             {/* Current Location Header */}
-            <div className="mb-2 px-2">
+            <div className="px-2">
                 <Link
-                    href={location?.id ? `/${location.type}s/${location.id}` : '/dashboard'}
+                    href={location?.id && locationPaths[location.type] ? `/${locationPaths[location.type]}/${location.id}` : '/dashboard'}
                     className="flex items-center gap-2 rounded-md border border-sidebar-border bg-sidebar-accent/30 px-2 py-1.5 transition-colors hover:bg-sidebar-accent/50"
                 >
                     <LocationIcon className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
@@ -585,9 +470,8 @@ export function NavLocation() {
             </SidebarGroup>
 
             {/* Everything at this location */}
-            {locationItems.length > 0 && (
+            {locationItems.length > 0 && location && (
                 <SidebarGroup className="px-2 py-0">
-                    <SidebarGroupLabel>Here</SidebarGroupLabel>
                     <SidebarMenu>
                         {locationItems.map((item) => (
                             <SidebarMenuItem key={item.title}>
@@ -635,7 +519,7 @@ export function NavLocation() {
                 <SidebarGroup className="px-2 py-0">
                     <SidebarGroupLabel>Nearby ({travelDestinations.length})</SidebarGroupLabel>
                     <SidebarMenu>
-                        {travelDestinations.slice(0, 6).map((dest) => {
+                        {travelDestinations.slice(0, 5).map((dest) => {
                             const isLoading = travelingTo === `${dest.type}-${dest.id}`;
                             const Icon = getDestinationIcon(dest.type);
                             return (

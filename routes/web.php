@@ -23,6 +23,7 @@ use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\PortController;
 use App\Http\Controllers\SkillsController;
 use App\Http\Controllers\TownController;
+use App\Http\Controllers\TavernController;
 use App\Http\Controllers\TravelController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\MigrationController;
@@ -198,8 +199,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('healer/heal-amount', [HealerController::class, 'healAmount'])->name('healer.heal-amount');
     Route::post('healer/treat-disease', [HealerController::class, 'treatDisease'])->name('healer.treat-disease');
 
-    // Gathering
-    Route::get('gathering', [GatheringController::class, 'index'])->name('gathering.index');
+    // Gathering - Legacy routes (redirect to location-scoped)
+    Route::get('gathering', [GatheringController::class, 'legacyIndex'])->name('gathering.index');
     Route::get('gathering/{activity}', [GatheringController::class, 'show'])->name('gathering.show');
     Route::post('gathering/gather', [GatheringController::class, 'gather'])->name('gathering.gather');
 
@@ -218,15 +219,71 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
     Route::get('shrine/active', [BlessingController::class, 'getActiveBlessings'])->name('shrine.active');
 
-    // Training (Combat Stats)
-    Route::get('training', [TrainingController::class, 'index'])->name('training.index');
+    // Training (Combat Stats) - Legacy routes (redirect to location-scoped)
+    Route::get('training', [TrainingController::class, 'legacyIndex'])->name('training.index');
     Route::post('training/train', [TrainingController::class, 'train'])->name('training.train');
     Route::get('training/status', [TrainingController::class, 'status'])->name('training.status');
 
-    // Crafting
-    Route::get('crafting', [CraftingController::class, 'index'])->name('crafting.index');
+    // Crafting - Legacy routes (redirect to location-scoped)
+    Route::get('crafting', [CraftingController::class, 'legacyIndex'])->name('crafting.index');
     Route::post('crafting/craft', [CraftingController::class, 'craft'])->name('crafting.craft');
     Route::get('crafting/recipe/{recipe}', [CraftingController::class, 'recipe'])->name('crafting.recipe');
+
+    // Location-scoped services: Villages
+    Route::prefix('villages/{village}')->name('villages.')->middleware('at.location')->group(function () {
+        Route::get('training', [TrainingController::class, 'index'])->name('training');
+        Route::post('training/train', [TrainingController::class, 'train'])->name('training.train');
+        Route::get('gathering', [GatheringController::class, 'index'])->name('gathering');
+        Route::post('gathering/gather', [GatheringController::class, 'gather'])->name('gathering.gather');
+        Route::get('gathering/{activity}', [GatheringController::class, 'show'])->name('gathering.show');
+        Route::get('crafting', [CraftingController::class, 'index'])->name('crafting');
+        Route::post('crafting/craft', [CraftingController::class, 'craft'])->name('crafting.craft');
+        Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
+        Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
+        Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
+        Route::get('tavern', [TavernController::class, 'index'])->name('tavern');
+        Route::post('tavern/rest', [TavernController::class, 'rest'])->name('tavern.rest');
+    });
+
+    // Location-scoped services: Towns
+    Route::prefix('towns/{town}')->name('towns.')->middleware('at.location')->group(function () {
+        Route::get('training', [TrainingController::class, 'index'])->name('training');
+        Route::post('training/train', [TrainingController::class, 'train'])->name('training.train');
+        Route::get('crafting', [CraftingController::class, 'index'])->name('crafting');
+        Route::post('crafting/craft', [CraftingController::class, 'craft'])->name('crafting.craft');
+        Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
+        Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
+        Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
+    });
+
+    // Location-scoped services: Baronies
+    Route::prefix('baronies/{barony}')->name('baronies.')->middleware('at.location')->group(function () {
+        Route::get('training', [TrainingController::class, 'index'])->name('training');
+        Route::post('training/train', [TrainingController::class, 'train'])->name('training.train');
+        Route::get('crafting', [CraftingController::class, 'index'])->name('crafting');
+        Route::post('crafting/craft', [CraftingController::class, 'craft'])->name('crafting.craft');
+        Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
+        Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
+        Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
+    });
+
+    // Location-scoped services: Duchies
+    Route::prefix('duchies/{duchy}')->name('duchies.')->middleware('at.location')->group(function () {
+        Route::get('training', [TrainingController::class, 'index'])->name('training');
+        Route::post('training/train', [TrainingController::class, 'train'])->name('training.train');
+        Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
+        Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
+        Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
+    });
+
+    // Location-scoped services: Kingdoms
+    Route::prefix('kingdoms/{kingdom}')->name('kingdoms.')->middleware('at.location')->group(function () {
+        Route::get('training', [TrainingController::class, 'index'])->name('training');
+        Route::post('training/train', [TrainingController::class, 'train'])->name('training.train');
+        Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
+        Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
+        Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
+    });
 
     // Crafting Docket
     Route::get('docket', [DocketController::class, 'index'])->name('docket.index');

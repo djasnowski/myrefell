@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Config\LocationServices;
 use App\Models\Disaster;
+use App\Models\LocationActivityLog;
 use App\Models\MigrationRequest;
 use App\Models\PlayerRole;
 use App\Models\Role;
@@ -71,12 +73,19 @@ class VillageController extends Controller
             }
         }
 
+        // Get available services for this village
+        $services = LocationServices::getServicesForLocation('village', $village->is_port ?? false);
+
+        // Get recent activity at this location
+        $recentActivity = $this->getRecentActivity($village);
+
         return Inertia::render('villages/show', [
             'village' => [
                 'id' => $village->id,
                 'name' => $village->name,
                 'description' => $village->description,
                 'biome' => $village->biome,
+                'is_port' => $village->is_port ?? false,
                 'population' => $village->population,
                 'wealth' => $village->wealth,
                 'is_hamlet' => $village->isHamlet(),
@@ -105,12 +114,41 @@ class VillageController extends Controller
                 'resident_count' => $village->residents->count(),
                 'elder' => $elder,
             ],
+            'services' => array_values(array_map(fn ($service, $id) => array_merge($service, ['id' => $id]), $services, array_keys($services))),
+            'recent_activity' => $recentActivity,
             'is_resident' => $isResident,
             'can_migrate' => $migrationService->canMigrate($user),
             'has_pending_request' => $hasPendingRequest,
             'current_user_id' => $user->id,
             'disasters' => $this->getActiveDisasters($village),
         ]);
+    }
+
+    /**
+     * Get recent activity for a village.
+     */
+    protected function getRecentActivity(Village $village): array
+    {
+        try {
+            return LocationActivityLog::atLocation('village', $village->id)
+                ->recent(15)
+                ->with('user:id,username')
+                ->get()
+                ->map(fn ($log) => [
+                    'id' => $log->id,
+                    'username' => $log->user->username ?? 'Unknown',
+                    'description' => $log->description,
+                    'activity_type' => $log->activity_type,
+                    'subtype' => $log->activity_subtype,
+                    'metadata' => $log->metadata,
+                    'created_at' => $log->created_at->toIso8601String(),
+                    'time_ago' => $log->created_at->diffForHumans(),
+                ])
+                ->toArray();
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Table may not exist yet
+            return [];
+        }
     }
 
     /**

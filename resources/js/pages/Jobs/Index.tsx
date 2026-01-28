@@ -1,12 +1,26 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import {
+    Anchor,
     Axe,
+    Beef,
+    Beer,
+    Box,
     Briefcase,
+    Church,
     Clock,
+    Crosshair,
+    Croissant,
+    Filter,
+    Flame,
+    Grid3x3,
     Hammer,
     HardHat,
+    HeartPulse,
     Loader2,
+    Moon,
+    Package,
     Pickaxe,
+    Search,
     Shield,
     Sparkles,
     Store,
@@ -15,7 +29,7 @@ import {
     Wheat,
     Zap,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -82,7 +96,7 @@ interface PageProps {
 const iconMap: Record<string, typeof Briefcase> = {
     utensils: Utensils,
     sparkles: Sparkles,
-    horse: HardHat, // Using HardHat as substitute
+    horse: HardHat,
     wheat: Wheat,
     pickaxe: Pickaxe,
     axe: Axe,
@@ -91,12 +105,38 @@ const iconMap: Record<string, typeof Briefcase> = {
     store: Store,
     hammer: Hammer,
     briefcase: Briefcase,
+    flame: Flame,
+    package: Package,
+    moon: Moon,
+    'heart-pulse': HeartPulse,
+    anchor: Anchor,
+    'grid-3x3': Grid3x3,
+    candle: Flame,
+    church: Church,
+    croissant: Croissant,
+    beef: Beef,
+    crosshair: Crosshair,
+    box: Box,
+    beer: Beer,
 };
 
 const categoryColors: Record<string, string> = {
     service: 'border-purple-500/50 bg-purple-900/20',
     labor: 'border-amber-500/50 bg-amber-900/20',
     skilled: 'border-blue-500/50 bg-blue-900/20',
+};
+
+const skillIcons: Record<string, typeof Briefcase> = {
+    range: Crosshair,
+    mining: Pickaxe,
+    woodcutting: Axe,
+    fishing: Anchor,
+    smithing: Hammer,
+    cooking: Utensils,
+    crafting: Hammer,
+    defense: Shield,
+    attack: Swords,
+    prayer: Church,
 };
 
 function JobCard({
@@ -111,71 +151,90 @@ function JobCard({
     canApply: boolean;
 }) {
     const Icon = iconMap[job.icon] || Briefcase;
+    const SkillIcon = job.required_skill ? skillIcons[job.required_skill] || Briefcase : null;
 
     return (
         <div className={`rounded-xl border-2 ${categoryColors[job.category] || 'border-stone-600/50 bg-stone-800/50'} p-4`}>
+            {/* Header */}
             <div className="mb-3 flex items-start justify-between">
-                <div className="flex items-center gap-2">
-                    <div className="rounded-lg bg-stone-800/50 p-2">
-                        <Icon className="h-5 w-5 text-stone-300" />
+                <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-stone-800/50 p-2.5">
+                        <Icon className="h-6 w-6 text-stone-300" />
                     </div>
                     <div>
-                        <h3 className="font-pixel text-sm text-amber-300">{job.name}</h3>
-                        <span className="font-pixel text-[10px] text-stone-400">{job.category_display}</span>
+                        <h3 className="font-pixel text-base text-amber-300">{job.name}</h3>
+                        <div className="flex items-center gap-2">
+                            <span className="font-pixel text-xs text-stone-400">{job.category_display}</span>
+                            {job.required_skill && SkillIcon && (
+                                <>
+                                    <span className="text-stone-600">•</span>
+                                    <div className="flex items-center gap-1">
+                                        <SkillIcon className="h-3 w-3 text-orange-400" />
+                                        <span className="font-pixel text-xs text-orange-400">
+                                            Lv.{job.required_skill_level}
+                                        </span>
+                                    </div>
+                                </>
+                            )}
+                            {job.required_level > 1 && (
+                                <>
+                                    <span className="text-stone-600">•</span>
+                                    <div className="flex items-center gap-1">
+                                        <Shield className="h-3 w-3 text-orange-400" />
+                                        <span className="font-pixel text-xs text-orange-400">
+                                            Lv.{job.required_level}
+                                        </span>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
-                <div className="text-right">
+                <div className="rounded-lg bg-stone-800/50 px-2 py-1">
                     <span className="font-pixel text-xs text-stone-400">
                         {job.current_workers}/{job.max_workers} workers
                     </span>
                 </div>
             </div>
 
-            <p className="mb-3 text-sm text-stone-300">{job.description}</p>
+            {/* Description */}
+            <p className="mb-4 text-sm text-stone-300">{job.description}</p>
 
-            <div className="mb-3 grid grid-cols-2 gap-2 rounded-lg bg-stone-800/50 p-2">
-                <div className="flex items-center gap-1">
-                    <span className="font-pixel text-[10px] text-stone-400">Wage:</span>
-                    <span className="font-pixel text-xs text-amber-300">{job.base_wage}g</span>
+            {/* Stats Grid */}
+            <div className="mb-4 grid grid-cols-3 gap-2">
+                <div className="rounded-lg bg-stone-800/50 p-2.5 text-center">
+                    <div className="font-pixel text-lg text-amber-300">{job.base_wage}g</div>
+                    <div className="font-pixel text-[10px] text-stone-500">Wage</div>
                 </div>
-                <div className="flex items-center gap-1">
-                    <Zap className="h-3 w-3 text-yellow-400" />
-                    <span className="font-pixel text-xs text-stone-300">{job.energy_cost}</span>
-                </div>
-                {job.xp_reward > 0 && job.xp_skill && (
-                    <div className="col-span-2 flex items-center gap-1">
-                        <span className="font-pixel text-[10px] text-stone-400">XP:</span>
-                        <span className="font-pixel text-xs text-emerald-300">
-                            +{job.xp_reward} {job.xp_skill}
-                        </span>
+                <div className="rounded-lg bg-stone-800/50 p-2.5 text-center">
+                    <div className="flex items-center justify-center gap-1">
+                        <Zap className="h-4 w-4 text-yellow-400" />
+                        <span className="font-pixel text-lg text-yellow-300">{job.energy_cost}</span>
                     </div>
-                )}
-                <div className="col-span-2 flex items-center gap-1">
-                    <Clock className="h-3 w-3 text-stone-400" />
-                    <span className="font-pixel text-[10px] text-stone-400">{job.cooldown_minutes}min cooldown</span>
+                    <div className="font-pixel text-[10px] text-stone-500">Energy</div>
+                </div>
+                <div className="rounded-lg bg-stone-800/50 p-2.5 text-center">
+                    <div className="flex items-center justify-center gap-1">
+                        <Clock className="h-4 w-4 text-stone-400" />
+                        <span className="font-pixel text-lg text-stone-300">{job.cooldown_minutes}m</span>
+                    </div>
+                    <div className="font-pixel text-[10px] text-stone-500">Cooldown</div>
                 </div>
             </div>
 
-            {(job.required_skill || job.required_level > 1) && (
-                <div className="mb-3 rounded-lg bg-stone-900/50 p-2">
-                    <span className="font-pixel text-[10px] text-stone-500">Requirements:</span>
-                    <div className="mt-1 flex flex-wrap gap-2">
-                        {job.required_level > 1 && (
-                            <span className="font-pixel text-[10px] text-stone-400">Combat Lv.{job.required_level}</span>
-                        )}
-                        {job.required_skill && (
-                            <span className="font-pixel text-[10px] text-stone-400">
-                                {job.required_skill} Lv.{job.required_skill_level}
-                            </span>
-                        )}
-                    </div>
+            {/* XP Reward */}
+            {job.xp_reward > 0 && job.xp_skill && (
+                <div className="mb-3 flex items-center justify-center gap-2 rounded-lg bg-emerald-900/30 p-2">
+                    <span className="font-pixel text-sm text-emerald-300">
+                        +{job.xp_reward} {job.xp_skill} XP
+                    </span>
                 </div>
             )}
 
             <button
                 onClick={onApply}
                 disabled={loading || !canApply}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-green-600 bg-green-900/30 px-4 py-2 font-pixel text-xs text-green-300 transition hover:bg-green-800/50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-green-600 bg-green-900/30 px-4 py-2.5 font-pixel text-sm text-green-300 transition hover:bg-green-800/50 disabled:cursor-not-allowed disabled:opacity-50"
             >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Apply for Job'}
             </button>
@@ -284,6 +343,29 @@ export default function JobsIndex() {
     const [applyLoading, setApplyLoading] = useState<number | null>(null);
     const [workLoading, setWorkLoading] = useState<number | null>(null);
     const [quitLoading, setQuitLoading] = useState<number | null>(null);
+    const [categoryFilter, setCategoryFilter] = useState<string>('all');
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredJobs = useMemo(() => {
+        return available_jobs.filter((job) => {
+            const matchesCategory = categoryFilter === 'all' || job.category === categoryFilter;
+            const matchesSearch =
+                searchQuery === '' ||
+                job.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                job.description.toLowerCase().includes(searchQuery.toLowerCase());
+            return matchesCategory && matchesSearch;
+        });
+    }, [available_jobs, categoryFilter, searchQuery]);
+
+    const categoryCounts = useMemo(() => {
+        const counts: Record<string, number> = { all: available_jobs.length, service: 0, labor: 0, skilled: 0 };
+        available_jobs.forEach((job) => {
+            if (counts[job.category] !== undefined) {
+                counts[job.category]++;
+            }
+        });
+        return counts;
+    }, [available_jobs]);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -304,6 +386,9 @@ export default function JobsIndex() {
             },
             {
                 preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
                 onFinish: () => setApplyLoading(null),
             }
         );
@@ -316,6 +401,9 @@ export default function JobsIndex() {
             {},
             {
                 preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
                 onFinish: () => setWorkLoading(null),
             }
         );
@@ -328,6 +416,9 @@ export default function JobsIndex() {
             {},
             {
                 preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
                 onFinish: () => setQuitLoading(null),
             }
         );
@@ -381,7 +472,70 @@ export default function JobsIndex() {
 
                 {/* Available Jobs Section */}
                 <div>
-                    <h2 className="mb-3 font-pixel text-lg text-amber-300">Available Positions</h2>
+                    <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <h2 className="font-pixel text-lg text-amber-300">Available Positions</h2>
+
+                        {/* Filters */}
+                        <div className="flex flex-wrap items-center gap-2">
+                            {/* Search */}
+                            <div className="relative">
+                                <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
+                                <input
+                                    type="text"
+                                    placeholder="Search jobs..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full min-w-[200px] sm:w-64 rounded-lg border-2 border-stone-600/50 bg-stone-800/50 py-1.5 pl-8 pr-3 font-pixel text-xs text-stone-200 placeholder-stone-500 focus:border-amber-500/50 focus:outline-none"
+                                />
+                            </div>
+
+                            {/* Category Filter */}
+                            <div className="flex items-center gap-1 rounded-lg border-2 border-stone-600/50 bg-stone-800/50 p-1">
+                                <Filter className="ml-1 h-4 w-4 text-stone-500" />
+                                <button
+                                    onClick={() => setCategoryFilter('all')}
+                                    className={`rounded px-2 py-1 font-pixel text-[10px] transition ${
+                                        categoryFilter === 'all'
+                                            ? 'bg-amber-600 text-white'
+                                            : 'text-stone-400 hover:text-stone-200'
+                                    }`}
+                                >
+                                    All ({categoryCounts.all})
+                                </button>
+                                <button
+                                    onClick={() => setCategoryFilter('service')}
+                                    className={`rounded px-2 py-1 font-pixel text-[10px] transition ${
+                                        categoryFilter === 'service'
+                                            ? 'bg-purple-600 text-white'
+                                            : 'text-stone-400 hover:text-purple-300'
+                                    }`}
+                                >
+                                    Service ({categoryCounts.service})
+                                </button>
+                                <button
+                                    onClick={() => setCategoryFilter('labor')}
+                                    className={`rounded px-2 py-1 font-pixel text-[10px] transition ${
+                                        categoryFilter === 'labor'
+                                            ? 'bg-amber-600 text-white'
+                                            : 'text-stone-400 hover:text-amber-300'
+                                    }`}
+                                >
+                                    Labor ({categoryCounts.labor})
+                                </button>
+                                <button
+                                    onClick={() => setCategoryFilter('skilled')}
+                                    className={`rounded px-2 py-1 font-pixel text-[10px] transition ${
+                                        categoryFilter === 'skilled'
+                                            ? 'bg-blue-600 text-white'
+                                            : 'text-stone-400 hover:text-blue-300'
+                                    }`}
+                                >
+                                    Skilled ({categoryCounts.skilled})
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     {!canApplyForMore && (
                         <div className="mb-4 rounded-lg border-2 border-amber-600/50 bg-amber-900/20 p-3">
                             <p className="font-pixel text-xs text-amber-300">
@@ -389,9 +543,9 @@ export default function JobsIndex() {
                             </p>
                         </div>
                     )}
-                    {available_jobs.length > 0 ? (
+                    {filteredJobs.length > 0 ? (
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {available_jobs.map((job) => (
+                            {filteredJobs.map((job) => (
                                 <JobCard
                                     key={job.id}
                                     job={job}
@@ -407,11 +561,25 @@ export default function JobsIndex() {
                                 <div className="mb-3 text-6xl">
                                     <Briefcase className="mx-auto h-16 w-16 text-stone-600" />
                                 </div>
-                                <p className="font-pixel text-base text-stone-500">No positions available</p>
+                                <p className="font-pixel text-base text-stone-500">
+                                    {available_jobs.length > 0 ? 'No matching jobs' : 'No positions available'}
+                                </p>
                                 <p className="font-pixel text-xs text-stone-600">
-                                    {current_employment.length > 0
-                                        ? 'You already have all available jobs here.'
-                                        : 'Check back later or try another location.'}
+                                    {available_jobs.length > 0 ? (
+                                        <button
+                                            onClick={() => {
+                                                setCategoryFilter('all');
+                                                setSearchQuery('');
+                                            }}
+                                            className="text-amber-400 hover:underline"
+                                        >
+                                            Clear filters
+                                        </button>
+                                    ) : current_employment.length > 0 ? (
+                                        'You already have all available jobs here.'
+                                    ) : (
+                                        'Check back later or try another location.'
+                                    )}
                                 </p>
                             </div>
                         </div>
