@@ -67,4 +67,24 @@ class UserFactory extends Factory
             'two_factor_confirmed_at' => now(),
         ]);
     }
+
+    /**
+     * Indicate that the user is an admin.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_admin' => true,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is banned.
+     */
+    public function banned(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'banned_at' => now(),
+        ]);
+    }
 }

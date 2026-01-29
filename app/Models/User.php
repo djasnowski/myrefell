@@ -22,9 +22,13 @@ class User extends Authenticatable implements MustVerifyEmail
      * Social class constants.
      */
     public const CLASS_SERF = 'serf';
+
     public const CLASS_FREEMAN = 'freeman';
+
     public const CLASS_BURGHER = 'burgher';
+
     public const CLASS_NOBLE = 'noble';
+
     public const CLASS_CLERGY = 'clergy';
 
     /**
@@ -48,6 +52,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'password',
         'is_admin',
+        'banned_at',
+        'registration_ip',
+        'last_login_ip',
+        'last_login_at',
         'show_tutorial',
         'gender',
         'social_class',
@@ -94,6 +102,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
+            'banned_at' => 'datetime',
+            'last_login_at' => 'datetime',
             'show_tutorial' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
             'hp' => 'integer',
@@ -170,6 +180,30 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isAdmin(): bool
     {
         return $this->is_admin === true;
+    }
+
+    /**
+     * Get all bans for this user.
+     */
+    public function bans(): HasMany
+    {
+        return $this->hasMany(UserBan::class);
+    }
+
+    /**
+     * Get the most recent ban record for this user.
+     */
+    public function latestBan(): HasOne
+    {
+        return $this->hasOne(UserBan::class)->latestOfMany('banned_at');
+    }
+
+    /**
+     * Check if user is currently banned.
+     */
+    public function isBanned(): bool
+    {
+        return $this->banned_at !== null;
     }
 
     /**
@@ -402,7 +436,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getTravelSpeedMultiplier(): float
     {
-        if (!$this->hasHorseWithMe()) {
+        if (! $this->hasHorseWithMe()) {
             return 1.0;
         }
 
@@ -415,7 +449,8 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasHorseWithMe(): bool
     {
         $horse = $this->horse;
-        return $horse && !$horse->is_stabled;
+
+        return $horse && ! $horse->is_stabled;
     }
 
     /**
@@ -424,6 +459,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasStabledHorse(): bool
     {
         $horse = $this->horse;
+
         return $horse && $horse->is_stabled;
     }
 
@@ -432,7 +468,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function canUseHorseForTravel(): bool
     {
-        if (!$this->hasHorseWithMe()) {
+        if (! $this->hasHorseWithMe()) {
             return false;
         }
 
@@ -551,7 +587,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function canVote(): bool
     {
-        return !$this->isSerf();
+        return ! $this->isSerf();
     }
 
     /**
@@ -581,7 +617,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function canFreelyTravel(): bool
     {
-        return !$this->isSerf();
+        return ! $this->isSerf();
     }
 
     /**
@@ -590,7 +626,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function canOwnProperty(): bool
     {
-        return !$this->isSerf();
+        return ! $this->isSerf();
     }
 
     /**
@@ -610,7 +646,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function hasCompletedLaborObligations(): bool
     {
-        if (!$this->isSerf()) {
+        if (! $this->isSerf()) {
             return true;
         }
 
@@ -622,7 +658,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getRemainingLaborDays(): int
     {
-        if (!$this->isSerf()) {
+        if (! $this->isSerf()) {
             return 0;
         }
 

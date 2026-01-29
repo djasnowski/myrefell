@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsurePlayerAtLocation;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Route middleware aliases
         $middleware->alias([
+            'admin' => EnsureAdmin::class,
             'at.location' => EnsurePlayerAtLocation::class,
         ]);
     })

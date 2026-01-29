@@ -1,59 +1,61 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\ArmyController;
 use App\Http\Controllers\BankController;
-use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\BaronyController;
+use App\Http\Controllers\BattleController;
+use App\Http\Controllers\BlessingController;
+use App\Http\Controllers\BuildingController;
+use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\CaravanController;
+use App\Http\Controllers\CharterController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CombatController;
-use App\Http\Controllers\DungeonController;
 use App\Http\Controllers\CraftingController;
+use App\Http\Controllers\CrimeController;
+use App\Http\Controllers\DailyTaskController;
 use App\Http\Controllers\DocketController;
+use App\Http\Controllers\DuchyController;
+use App\Http\Controllers\DungeonController;
+use App\Http\Controllers\DynastyController;
+use App\Http\Controllers\ElectionController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\FarmingController;
 use App\Http\Controllers\GatheringController;
 use App\Http\Controllers\GuildController;
 use App\Http\Controllers\HealerController;
-use App\Http\Controllers\JobController;
-use App\Http\Controllers\QuestController;
-use App\Http\Controllers\DailyTaskController;
-use App\Http\Controllers\ElectionController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\JobController;
 use App\Http\Controllers\KingdomController;
 use App\Http\Controllers\MapController;
-use App\Http\Controllers\PlayerController;
-use App\Http\Controllers\PortController;
-use App\Http\Controllers\SkillsController;
-use App\Http\Controllers\TownController;
-use App\Http\Controllers\TavernController;
-use App\Http\Controllers\TravelController;
-use App\Http\Controllers\RoleController;
+use App\Http\Controllers\MarketController;
+use App\Http\Controllers\MarriageController;
 use App\Http\Controllers\MigrationController;
 use App\Http\Controllers\NoConfidenceController;
-use App\Http\Controllers\TaxController;
-use App\Http\Controllers\ChatController;
+use App\Http\Controllers\PlayerController;
+use App\Http\Controllers\PortController;
+use App\Http\Controllers\QuestController;
 use App\Http\Controllers\ReligionController;
-use App\Http\Controllers\CharterController;
-use App\Http\Controllers\CrimeController;
-use App\Http\Controllers\TrialController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\RoleStockingController;
+use App\Http\Controllers\SiegeController;
+use App\Http\Controllers\SkillsController;
 use App\Http\Controllers\SocialClassController;
 use App\Http\Controllers\StableController;
-use App\Http\Controllers\ArmyController;
-use App\Http\Controllers\BattleController;
-use App\Http\Controllers\EventController;
-use App\Http\Controllers\SiegeController;
-use App\Http\Controllers\WarController;
-use App\Http\Controllers\CaravanController;
+use App\Http\Controllers\SuccessionController;
 use App\Http\Controllers\TariffController;
+use App\Http\Controllers\TavernController;
+use App\Http\Controllers\TaxController;
+use App\Http\Controllers\TownController;
 use App\Http\Controllers\TradeRouteController;
 use App\Http\Controllers\TrainingController;
+use App\Http\Controllers\TravelController;
+use App\Http\Controllers\TrialController;
 use App\Http\Controllers\VillageController;
-use App\Http\Controllers\MarketController;
-use App\Http\Controllers\RoleStockingController;
-use App\Http\Controllers\DynastyController;
-use App\Http\Controllers\MarriageController;
-use App\Http\Controllers\SuccessionController;
-use App\Http\Controllers\BlessingController;
-use App\Http\Controllers\BuildingController;
-use App\Http\Controllers\DuchyController;
+use App\Http\Controllers\WarController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -95,6 +97,7 @@ if (app()->environment('local')) {
 
         if ($user) {
             auth()->login($user);
+
             return redirect()->route('dashboard');
         }
 
@@ -109,6 +112,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('tutorial/dismiss', function () {
         auth()->user()->update(['show_tutorial' => false]);
+
         return back();
     })->name('tutorial.dismiss');
     Route::get('api/player/stats', [PlayerController::class, 'stats'])->name('player.stats');
@@ -602,5 +606,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('buildings/{building}/repair', [BuildingController::class, 'repair'])->name('buildings.repair');
     Route::post('buildings/projects/{project}/cancel', [BuildingController::class, 'cancel'])->name('buildings.cancel');
 });
+
+// Admin routes
+Route::middleware(['auth', 'verified', 'admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+        Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('users.show');
+        Route::get('/users/{user}/edit', [AdminUserController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
+        Route::post('/users/{user}/ban', [AdminUserController::class, 'ban'])->name('users.ban');
+        Route::post('/users/{user}/unban', [AdminUserController::class, 'unban'])->name('users.unban');
+    });
 
 require __DIR__.'/settings.php';

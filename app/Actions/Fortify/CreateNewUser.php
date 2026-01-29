@@ -4,8 +4,8 @@ namespace App\Actions\Fortify;
 
 use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
-use App\Models\User;
 use App\Models\PlayerSkill;
+use App\Models\User;
 use App\Services\BirthService;
 use App\Services\InventoryService;
 use Illuminate\Support\Facades\DB;
@@ -44,6 +44,7 @@ class CreateNewUser implements CreatesNewUsers
                 'energy' => 150,
                 'max_energy' => 150,
                 'gold' => 100, // Starting gold
+                'registration_ip' => request()->ip(),
             ]);
 
             // Create initial skills for the player
