@@ -197,6 +197,7 @@ export default function Dashboard() {
             {tutorialOpen && (
                 <TutorialModal
                     playerName={player?.username ?? 'Traveler'}
+                    location={location}
                     onClose={() => setTutorialOpen(false)}
                 />
             )}

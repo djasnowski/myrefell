@@ -17,13 +17,34 @@ import {
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
+interface LocationInfo {
+    name: string;
+    biome: string;
+}
+
 interface Props {
     playerName: string;
+    location?: LocationInfo | null;
     onClose: () => void;
 }
 
-export default function TutorialModal({ playerName, onClose }: Props) {
+const biomeDescriptions: Record<string, string> = {
+    plains: 'Rolling golden grasslands stretch to the horizon, dotted with wildflowers swaying in the gentle breeze. The open sky feels endless here.',
+    tundra: 'A harsh frozen landscape greets you, where the biting wind carries flurries of snow across the icy ground. Survival here demands resilience.',
+    coastal: 'The salty sea air fills your lungs as waves crash against the shore. Seabirds cry overhead and fishing boats bob in the harbor.',
+    volcano: 'The air is thick with ash and the distant rumble of the mountain reminds you of the fire sleeping beneath. Heat rises from the blackened earth.',
+    forest: 'Ancient trees tower above you, their canopy filtering sunlight into dancing shadows. The rustle of leaves and chirping birds fill the woodland.',
+    desert: 'Sun-scorched sands shimmer under the relentless heat. Dunes roll endlessly, hiding oases and secrets beneath their golden waves.',
+    swamp: 'Murky waters and twisted trees surround you, the air thick with the smell of decay and buzzing insects. Watch your step here.',
+    mountain: 'Jagged peaks pierce the clouds above, their slopes covered in pine and stone. The thin air carries the distant cry of eagles.',
+};
+
+export default function TutorialModal({ playerName, location, onClose }: Props) {
     const [step, setStep] = useState(0);
+
+    const locationName = location?.name ?? 'an unknown village';
+    const biome = location?.biome ?? 'plains';
+    const biomeDescription = biomeDescriptions[biome] ?? biomeDescriptions.plains;
 
     const handleDismiss = () => {
         router.post('/tutorial/dismiss', {}, {
@@ -33,9 +54,9 @@ export default function TutorialModal({ playerName, onClose }: Props) {
     };
 
     const steps = [
-        // Step 1: Welcome
+        // Step 1: Welcome - Dynamic based on location
         {
-            title: 'Welcome to Myrefell',
+            title: 'You Awaken',
             content: (
                 <div className="space-y-4">
                     <div className="flex justify-center">
@@ -44,13 +65,13 @@ export default function TutorialModal({ playerName, onClose }: Props) {
                         </div>
                     </div>
                     <p className="text-center text-muted-foreground">
-                        Greetings, <span className="font-semibold text-foreground">{playerName}</span>. You have arrived in the medieval world of Myrefell.
+                        You wake in <span className="font-semibold text-foreground">{locationName}</span> with only the faintest memory of how you arrived...
+                    </p>
+                    <p className="text-center text-sm italic text-muted-foreground/80">
+                        {biomeDescription}
                     </p>
                     <p className="text-center text-muted-foreground">
-                        You begin your journey as a <span className="font-semibold text-primary">peasant</span> — the lowest rung of society. But every king was once a commoner, and every dynasty began with a single person.
-                    </p>
-                    <p className="text-center text-sm text-muted-foreground/70">
-                        Your choices will shape your destiny.
+                        You are <span className="font-semibold text-foreground">{playerName}</span>, a <span className="font-semibold text-primary">peasant</span> — the lowest rung of society. But every king was once a commoner.
                     </p>
                 </div>
             ),

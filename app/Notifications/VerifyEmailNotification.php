@@ -16,7 +16,7 @@ class VerifyEmailNotification extends VerifyEmail
     /**
      * Get the mail representation of the notification.
      */
-    public function toMail(object $notifiable): MailMessage
+    public function toMail($notifiable): MailMessage
     {
         $verificationUrl = $this->verificationUrl($notifiable);
 
@@ -31,7 +31,7 @@ class VerifyEmailNotification extends VerifyEmail
     /**
      * Get the verification URL for the given notifiable.
      */
-    protected function verificationUrl(object $notifiable): string
+    protected function verificationUrl($notifiable): string
     {
         return URL::temporarySignedRoute(
             'verification.verify',

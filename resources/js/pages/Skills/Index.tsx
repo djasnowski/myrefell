@@ -4,8 +4,10 @@ import type {
 import {
     Beef,
     BicepsFlexed,
+    Crosshair,
     Fish,
     Hammer,
+    Heart,
     Pickaxe,
     Scissors,
     Shield,
@@ -13,6 +15,7 @@ import {
     Sword,
     TreeDeciduous,
     Trophy,
+    Wheat,
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -57,6 +60,9 @@ const skillIcons: Record<string, LucideIcon> = {
     attack: Sword,
     strength: BicepsFlexed,
     defense: Shield,
+    hitpoints: Heart,
+    range: Crosshair,
+    farming: Wheat,
     mining: Pickaxe,
     fishing: Fish,
     woodcutting: TreeDeciduous,
@@ -69,6 +75,9 @@ const skillDescriptions: Record<string, string> = {
     attack: 'Determines accuracy in combat and unlocks better weapons',
     strength: 'Increases maximum damage dealt in combat',
     defense: 'Reduces damage taken and unlocks better armor',
+    hitpoints: 'Determines your maximum health and survival',
+    range: 'Accuracy and power with bows and ranged weapons',
+    farming: 'Grow crops, tend fields, and harvest produce',
     mining: 'Allows mining of better ores and increases yield',
     fishing: 'Catch rarer fish and find better fishing spots',
     woodcutting: 'Chop higher-tier trees and harvest faster',
