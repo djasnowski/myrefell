@@ -64,6 +64,11 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
     return (
         <>
             <Head title="Myrefell - Medieval World MMO">
+                <meta
+                    name="description"
+                    content="Rise from peasant to king in Myrefell, a persistent medieval world MMO. Train 12 skills, climb the social ladder, wage wars, found dynasties, and shape history through politics and faith."
+                />
+                <link rel="canonical" href="https://myrefell.com/" />
                 <link rel="preconnect" href="https://fonts.bunny.net" />
                 <link href="https://fonts.bunny.net/css?family=cinzel:400,700&family=inter:400,500,600" rel="stylesheet" />
             </Head>
