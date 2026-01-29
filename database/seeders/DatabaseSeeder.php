@@ -2,16 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Services\BirthService;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    public function __construct(
-        protected BirthService $birthService
-    ) {}
-
     /**
      * Seed the application's database.
      */
@@ -38,16 +32,10 @@ class DatabaseSeeder extends Seeder
             BusinessTypeSeeder::class,
             DisasterTypeSeeder::class,
             DiseaseTypeSeeder::class,
-            DanAdminSeeder::class,
+            BuildingAndDisasterSeeder::class,
+            CrimeTypeSeeder::class,
+            DungeonSeeder::class,
+            FestivalAndTournamentSeeder::class,
         ]);
-
-        // Create a test user and assign via BirthService
-        $user = User::factory()->create([
-            'username' => 'testuser',
-            'email' => 'test@example.com',
-        ]);
-
-        // Use BirthService to assign home village and title
-        $this->birthService->assignNewPlayer($user);
     }
 }
