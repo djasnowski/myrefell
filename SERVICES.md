@@ -748,3 +748,55 @@ When writing Pest tests for these services:
 7. **Dynasty**: DynastyService, MarriageService
 8. **Military**: ArmyService, WarService, BattleService, SiegeService
 9. **Religion**: ReligionService
+
+## Unit Test Checklist
+
+(Checked = test file exists under `tests/Unit/Services`)
+
+- [x] EnergyService — tests/Unit/Services/EnergyServiceTest.php
+- [x] InventoryService — tests/Unit/Services/InventoryServiceTest.php
+- [x] StableService — tests/Unit/Services/StableServiceTest.php
+- [x] TravelService — tests/Unit/Services/TravelServiceTest.php
+- [x] BirthService — tests/Unit/Services/BirthServiceTest.php
+- [x] CombatService — tests/Unit/Services/CombatServiceTest.php
+- [x] DungeonService — tests/Unit/Services/DungeonServiceTest.php
+- [x] LootService — tests/Unit/Services/LootServiceTest.php
+- [x] BankService — tests/Unit/Services/BankServiceTest.php
+- [x] TaxService — tests/Unit/Services/TaxServiceTest.php
+- [x] MarketService — tests/Unit/Services/MarketServiceTest.php
+- [x] CaravanService — tests/Unit/Services/CaravanServiceTest.php
+- [x] BusinessService — tests/Unit/Services/BusinessServiceTest.php
+- [x] PortService — tests/Unit/Services/PortServiceTest.php
+- [x] TrainingService — tests/Unit/Services/TrainingServiceTest.php
+- [x] GatheringService — tests/Unit/Services/GatheringServiceTest.php
+- [x] CraftingService — tests/Unit/Services/CraftingServiceTest.php
+- [x] DailyTaskService — tests/Unit/Services/DailyTaskServiceTest.php
+- [x] QuestService — tests/Unit/Services/QuestServiceTest.php
+- [x] ChatService — tests/Unit/Services/ChatServiceTest.php
+- [x] MigrationService — tests/Unit/Services/MigrationServiceTest.php
+- [x] CharterService — tests/Unit/Services/CharterServiceTest.php
+- [x] SocialClassService — tests/Unit/Services/SocialClassServiceTest.php
+- [x] CrimeService — tests/Unit/Services/CrimeServiceTest.php
+- [x] LegitimacyService — tests/Unit/Services/LegitimacyServiceTest.php
+- [x] GuildService — tests/Unit/Services/GuildServiceTest.php
+- [x] NpcLifecycleService — tests/Unit/Services/NpcLifecycleServiceTest.php
+- [x] NpcReproductionService — tests/Unit/Services/NpcReproductionServiceTest.php
+- [x] FoodConsumptionService — tests/Unit/Services/FoodConsumptionServiceTest.php
+- [x] CalendarService — tests/Unit/Services/CalendarServiceTest.php
+- [x] ResourceDecayService — tests/Unit/Services/ResourceDecayServiceTest.php
+- [x] DisasterService — tests/Unit/Services/DisasterServiceTest.php
+- [x] DiseaseService — tests/Unit/Services/DiseaseServiceTest.php
+- [x] FestivalService — tests/Unit/Services/FestivalServiceTest.php
+- [x] HealerService — tests/Unit/Services/HealerServiceTest.php
+- [x] TownBonusService — tests/Unit/Services/TownBonusServiceTest.php
+- [x] ArmyService — tests/Unit/Services/ArmyServiceTest.php
+- [x] WarService — tests/Unit/Services/WarServiceTest.php
+- [x] BattleService — tests/Unit/Services/BattleServiceTest.php
+- [x] SiegeService — tests/Unit/Services/SiegeServiceTest.php
+- [x] DynastyService — tests/Unit/Services/DynastyServiceTest.php
+- [x] MarriageService — tests/Unit/Services/MarriageServiceTest.php
+- [x] RoleService — tests/Unit/Services/RoleServiceTest.php
+- [x] ElectionService — tests/Unit/Services/ElectionServiceTest.php
+- [x] RoleStockingService — tests/Unit/Services/RoleStockingServiceTest.php
+- [x] JobService — tests/Unit/Services/JobServiceTest.php
+- [x] ReligionService — tests/Unit/Services/ReligionServiceTest.php
