@@ -1,5 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { Coins, Gauge, Heart, ShoppingCart, Sparkles } from 'lucide-react';
+import { Coins, Gauge, Heart, ShoppingCart, Sparkles, Zap } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,32 +32,93 @@ interface UserHorse {
     sell_value: number;
 }
 
+interface LocationContext {
+    type: string;
+    id: number;
+    name: string;
+}
+
 interface PageProps {
     stock: HorseStock[];
     userHorse: UserHorse | null;
     locationType: string;
     userGold: number;
+    location?: LocationContext;
     [key: string]: unknown;
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Stable', href: '/stable' },
-];
-
-const rarityColors: Record<string, string> = {
-    common: 'border-stone-500/50 bg-stone-900/20 text-stone-400',
-    uncommon: 'border-green-500/50 bg-green-900/20 text-green-400',
-    rare: 'border-blue-500/50 bg-blue-900/20 text-blue-400',
-    epic: 'border-purple-500/50 bg-purple-900/20 text-purple-400',
-    legendary: 'border-amber-500/50 bg-amber-900/20 text-amber-400',
+const rarityConfig: Record<string, { border: string; bg: string; badge: string; glow: string; icon: string }> = {
+    common: {
+        border: 'border-stone-600/50',
+        bg: 'bg-gradient-to-br from-stone-900/80 to-stone-950/90',
+        badge: 'bg-stone-700 text-stone-300',
+        glow: '',
+        icon: 'text-stone-500',
+    },
+    uncommon: {
+        border: 'border-green-600/50',
+        bg: 'bg-gradient-to-br from-green-950/40 to-stone-950/90',
+        badge: 'bg-green-900/80 text-green-300',
+        glow: 'shadow-green-900/20 shadow-lg',
+        icon: 'text-green-500',
+    },
+    rare: {
+        border: 'border-blue-500/50',
+        bg: 'bg-gradient-to-br from-blue-950/40 to-stone-950/90',
+        badge: 'bg-blue-900/80 text-blue-300',
+        glow: 'shadow-blue-900/30 shadow-lg',
+        icon: 'text-blue-400',
+    },
+    epic: {
+        border: 'border-purple-500/50',
+        bg: 'bg-gradient-to-br from-purple-950/40 to-stone-950/90',
+        badge: 'bg-purple-900/80 text-purple-300',
+        glow: 'shadow-purple-900/40 shadow-xl',
+        icon: 'text-purple-400',
+    },
+    legendary: {
+        border: 'border-amber-400/60',
+        bg: 'bg-gradient-to-br from-amber-950/50 to-stone-950/90',
+        badge: 'bg-amber-900/80 text-amber-300',
+        glow: 'shadow-amber-900/50 shadow-xl',
+        icon: 'text-amber-400',
+    },
 };
 
+const locationTypeToPlural: Record<string, string> = {
+    town: 'towns',
+    barony: 'baronies',
+    duchy: 'duchies',
+    kingdom: 'kingdoms',
+};
+
+function getBreadcrumbs(location?: LocationContext): BreadcrumbItem[] {
+    const crumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
+
+    if (location) {
+        const plural = locationTypeToPlural[location.type] || `${location.type}s`;
+        crumbs.push({
+            title: location.name,
+            href: `/${plural}/${location.id}`,
+        });
+        crumbs.push({
+            title: 'Stables',
+            href: `/${plural}/${location.id}/stables`,
+        });
+    } else {
+        crumbs.push({ title: 'Stables', href: '/stable' });
+    }
+
+    return crumbs;
+}
+
 export default function StableIndex() {
-    const { stock, userHorse, locationType, userGold } = usePage<PageProps>().props;
+    const { stock, userHorse, userGold, location } = usePage<PageProps>().props;
     const [buyingId, setBuyingId] = useState<number | null>(null);
     const [customName, setCustomName] = useState('');
     const [loading, setLoading] = useState(false);
+
+    const breadcrumbs = getBreadcrumbs(location);
 
     const handleBuy = (horse: HorseStock) => {
         setLoading(true);
@@ -98,7 +159,7 @@ export default function StableIndex() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Stable" />
+            <Head title={location ? `Stables - ${location.name}` : 'Stables'} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
@@ -109,7 +170,7 @@ export default function StableIndex() {
                         </div>
                         <div>
                             <h1 className="font-[Cinzel] text-2xl font-bold text-stone-100">
-                                Stable
+                                {location ? `${location.name} Stables` : 'Stables'}
                             </h1>
                             <p className="text-sm text-stone-400">
                                 Buy and manage your horse
@@ -183,107 +244,132 @@ export default function StableIndex() {
                             </p>
                         </div>
                     ) : (
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {stock.map((horse) => (
-                                <div
-                                    key={horse.id}
-                                    className={`rounded-xl border p-4 ${rarityColors[horse.rarity] || rarityColors.common}`}
-                                >
-                                    <div className="flex items-start justify-between">
-                                        <div>
-                                            <h3 className="font-[Cinzel] font-semibold text-stone-100">
-                                                {horse.name}
-                                            </h3>
-                                            <p className="text-sm text-stone-400">{horse.breed}</p>
-                                        </div>
-                                        <span className="rounded px-2 py-0.5 text-xs capitalize">
-                                            {horse.rarity}
-                                        </span>
-                                    </div>
+                        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                            {stock.map((horse) => {
+                                const rarity = rarityConfig[horse.rarity] || rarityConfig.common;
+                                const canAfford = userGold >= horse.price;
+                                const canBuy = canAfford && !userHorse;
 
-                                    {horse.description && (
-                                        <p className="mt-2 text-sm text-stone-400">
-                                            {horse.description}
-                                        </p>
-                                    )}
-
-                                    <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-                                        <div className="rounded bg-stone-900/50 p-2">
-                                            <span className="flex items-center gap-1 text-stone-500">
-                                                <Gauge className="size-3" />
-                                                Speed
-                                            </span>
-                                            <span className="text-stone-100">
-                                                {horse.speed_multiplier}x
+                                return (
+                                    <div
+                                        key={horse.id}
+                                        className={`group relative overflow-hidden rounded-xl border-2 ${rarity.border} ${rarity.bg} ${rarity.glow} transition-all duration-300 hover:scale-[1.02]`}
+                                    >
+                                        {/* Rarity Badge */}
+                                        <div className="absolute right-3 top-3">
+                                            <span className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium capitalize ${rarity.badge}`}>
+                                                {horse.rarity === 'legendary' && <Sparkles className="size-3" />}
+                                                {horse.rarity}
                                             </span>
                                         </div>
-                                        <div className="rounded bg-stone-900/50 p-2">
-                                            <span className="flex items-center gap-1 text-stone-500">
-                                                <Heart className="size-3" />
-                                                Stamina
-                                            </span>
-                                            <span className="text-stone-100">
-                                                {horse.max_stamina}
-                                            </span>
-                                        </div>
-                                    </div>
 
-                                    <div className="mt-3 flex items-center justify-between border-t border-stone-800 pt-3">
-                                        <span className="flex items-center gap-1 text-lg font-semibold text-amber-400">
-                                            <Coins className="size-4" />
-                                            {horse.price.toLocaleString()}
-                                        </span>
-
-                                        {buyingId === horse.id ? (
-                                            <div className="flex items-center gap-2">
-                                                <Input
-                                                    placeholder="Name (optional)"
-                                                    value={customName}
-                                                    onChange={(e) => setCustomName(e.target.value)}
-                                                    className="h-8 w-32 border-stone-700 bg-stone-900/50 text-sm"
-                                                />
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => handleBuy(horse)}
-                                                    disabled={loading || userGold < horse.price || !!userHorse}
-                                                >
-                                                    Confirm
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    onClick={() => {
-                                                        setBuyingId(null);
-                                                        setCustomName('');
-                                                    }}
-                                                >
-                                                    Cancel
-                                                </Button>
+                                        {/* Horse Icon & Name */}
+                                        <div className="p-5 pb-3">
+                                            <div className="flex items-start gap-3">
+                                                <div className={`rounded-lg bg-stone-900/60 p-2.5 ${rarity.icon}`}>
+                                                    <Gauge className="size-6" />
+                                                </div>
+                                                <div className="flex-1 pt-0.5">
+                                                    <h3 className="font-[Cinzel] text-lg font-bold text-stone-100">
+                                                        {horse.name}
+                                                    </h3>
+                                                    <p className="text-sm text-stone-500">{horse.breed}</p>
+                                                </div>
                                             </div>
-                                        ) : (
-                                            <Button
-                                                size="sm"
-                                                onClick={() => setBuyingId(horse.id)}
-                                                disabled={userGold < horse.price || !!userHorse}
-                                            >
-                                                <ShoppingCart className="size-4" />
-                                                Buy
-                                            </Button>
-                                        )}
-                                    </div>
 
-                                    {userHorse && (
-                                        <p className="mt-2 text-xs text-stone-500">
-                                            Sell your current horse first
-                                        </p>
-                                    )}
-                                    {userGold < horse.price && !userHorse && (
-                                        <p className="mt-2 text-xs text-red-400">
-                                            Not enough gold
-                                        </p>
-                                    )}
-                                </div>
-                            ))}
+                                            {horse.description && (
+                                                <p className="mt-3 text-sm leading-relaxed text-stone-400">
+                                                    {horse.description}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Stats */}
+                                        <div className="mx-5 grid grid-cols-2 gap-3">
+                                            <div className="rounded-lg bg-stone-900/60 p-3">
+                                                <div className="flex items-center gap-1.5 text-xs font-medium text-stone-500">
+                                                    <Zap className="size-3.5 text-blue-400" />
+                                                    Speed
+                                                </div>
+                                                <div className="mt-1 font-[Cinzel] text-xl font-bold text-stone-100">
+                                                    {horse.speed_multiplier}x
+                                                </div>
+                                                <div className="text-xs text-stone-600">travel speed</div>
+                                            </div>
+                                            <div className="rounded-lg bg-stone-900/60 p-3">
+                                                <div className="flex items-center gap-1.5 text-xs font-medium text-stone-500">
+                                                    <Heart className="size-3.5 text-red-400" />
+                                                    Stamina
+                                                </div>
+                                                <div className="mt-1 font-[Cinzel] text-xl font-bold text-stone-100">
+                                                    {horse.max_stamina}
+                                                </div>
+                                                <div className="text-xs text-stone-600">max endurance</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Price & Buy */}
+                                        <div className="mt-4 border-t border-stone-800/50 bg-stone-950/40 p-4">
+                                            {buyingId === horse.id ? (
+                                                <div className="space-y-3">
+                                                    <Input
+                                                        placeholder="Give your horse a name (optional)"
+                                                        value={customName}
+                                                        onChange={(e) => setCustomName(e.target.value)}
+                                                        className="border-stone-700 bg-stone-900/80 text-sm"
+                                                    />
+                                                    <div className="flex gap-2">
+                                                        <Button
+                                                            className="flex-1"
+                                                            onClick={() => handleBuy(horse)}
+                                                            disabled={loading || !canBuy}
+                                                        >
+                                                            <Coins className="size-4" />
+                                                            Purchase for {horse.price.toLocaleString()}g
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            onClick={() => {
+                                                                setBuyingId(null);
+                                                                setCustomName('');
+                                                            }}
+                                                        >
+                                                            Cancel
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <div className="flex items-center gap-1.5 text-2xl font-bold text-amber-400">
+                                                            <Coins className="size-5" />
+                                                            {horse.price.toLocaleString()}
+                                                        </div>
+                                                        {!canAfford && (
+                                                            <p className="mt-0.5 text-xs text-red-400">
+                                                                Not enough gold
+                                                            </p>
+                                                        )}
+                                                        {userHorse && canAfford && (
+                                                            <p className="mt-0.5 text-xs text-stone-500">
+                                                                Sell your horse first
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <Button
+                                                        onClick={() => setBuyingId(horse.id)}
+                                                        disabled={!canBuy}
+                                                        className={canBuy ? 'bg-amber-600 hover:bg-amber-500' : ''}
+                                                    >
+                                                        <ShoppingCart className="size-4" />
+                                                        Buy
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>

@@ -128,8 +128,8 @@ class ChatController extends Controller
     public function sendLocationMessage(Request $request): JsonResponse
     {
         $request->validate([
-            'content' => 'required|string|max:' . ChatService::MAX_MESSAGE_LENGTH,
-            'location_type' => 'required|string|in:village,barony,kingdom',
+            'content' => 'required|string|max:'.ChatService::MAX_MESSAGE_LENGTH,
+            'location_type' => 'required|string|in:village,town,barony,duchy,kingdom',
             'location_id' => 'required|integer',
         ]);
 
@@ -150,7 +150,7 @@ class ChatController extends Controller
     public function sendPrivateMessage(Request $request): JsonResponse
     {
         $request->validate([
-            'content' => 'required|string|max:' . ChatService::MAX_MESSAGE_LENGTH,
+            'content' => 'required|string|max:'.ChatService::MAX_MESSAGE_LENGTH,
             'recipient_id' => 'required|exists:users,id',
         ]);
 
@@ -167,7 +167,7 @@ class ChatController extends Controller
     public function pollLocation(Request $request): JsonResponse
     {
         $request->validate([
-            'location_type' => 'required|string|in:village,barony,kingdom',
+            'location_type' => 'required|string|in:village,town,barony,duchy,kingdom',
             'location_id' => 'required|integer',
             'after_id' => 'required|integer',
         ]);

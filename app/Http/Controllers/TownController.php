@@ -14,43 +14,6 @@ use Inertia\Response;
 class TownController extends Controller
 {
     /**
-     * Display a listing of all towns.
-     */
-    public function index(): Response
-    {
-        $towns = Town::with(['barony.duchy.kingdom', 'barony.kingdom'])
-            ->withCount('visitors')
-            ->orderBy('name')
-            ->get()
-            ->map(fn ($town) => [
-                'id' => $town->id,
-                'name' => $town->name,
-                'description' => $town->description,
-                'biome' => $town->biome,
-                'is_capital' => $town->is_capital,
-                'is_port' => $town->is_port,
-                'population' => $town->population,
-                'visitors_count' => $town->visitors_count,
-                'barony' => $town->barony ? [
-                    'id' => $town->barony->id,
-                    'name' => $town->barony->name,
-                ] : null,
-                'duchy' => $town->barony?->duchy ? [
-                    'id' => $town->barony->duchy->id,
-                    'name' => $town->barony->duchy->name,
-                ] : null,
-                'kingdom' => $town->barony?->kingdom ? [
-                    'id' => $town->barony->kingdom->id,
-                    'name' => $town->barony->kingdom->name,
-                ] : null,
-            ]);
-
-        return Inertia::render('Towns/Index', [
-            'towns' => $towns,
-        ]);
-    }
-
-    /**
      * Display the specified town.
      */
     public function show(Request $request, Town $town): Response
@@ -279,7 +242,7 @@ class TownController extends Controller
                 'candidate_count' => $activeElection->candidates()->count(),
             ] : null,
             'recent_elections' => $recentElections,
-            'can_start_election' => !$activeElection && $town->mayor_user_id !== $user->id,
+            'can_start_election' => ! $activeElection && $town->mayor_user_id !== $user->id,
             'is_mayor' => $town->mayor_user_id === $user->id,
         ]);
     }

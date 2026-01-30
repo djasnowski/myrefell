@@ -142,7 +142,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('baronies/{barony}/villages', [BaronyController::class, 'villages'])->name('baronies.villages');
     Route::get('baronies/{barony}/towns', [BaronyController::class, 'towns'])->name('baronies.towns');
 
-    Route::get('towns', [TownController::class, 'index'])->name('towns.index');
     Route::get('towns/{town}', [TownController::class, 'show'])->name('towns.show');
     Route::get('towns/{town}/hall', [TownController::class, 'hall'])->name('towns.hall');
 
@@ -190,8 +189,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('travel/cancel', [TravelController::class, 'cancel'])->name('travel.cancel');
     Route::post('travel/arrive', [TravelController::class, 'arrive'])->name('travel.arrive');
 
-    // Stable (Horses)
-    Route::get('stable', [StableController::class, 'index'])->name('stable.index');
+    // Stable (Horses) - Legacy route redirects to location-scoped
+    Route::get('stable', [StableController::class, 'legacyIndex'])->name('stable.index');
+    // Global POST routes (use user's current_location)
     Route::post('stable/buy', [StableController::class, 'buy'])->name('stable.buy');
     Route::post('stable/sell', [StableController::class, 'sell'])->name('stable.sell');
     Route::post('stable/rename', [StableController::class, 'rename'])->name('stable.rename');
@@ -286,6 +286,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
         Route::post('shrine/request/{blessingRequest}/approve', [BlessingController::class, 'approveRequest'])->name('shrine.approve');
         Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
+        Route::get('stables', [StableController::class, 'index'])->name('stables');
     });
 
     // Location-scoped services: Baronies
@@ -299,6 +300,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
         Route::post('shrine/request/{blessingRequest}/approve', [BlessingController::class, 'approveRequest'])->name('shrine.approve');
         Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
+        Route::get('stables', [StableController::class, 'index'])->name('stables');
     });
 
     // Location-scoped services: Duchies
@@ -310,6 +312,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
         Route::post('shrine/request/{blessingRequest}/approve', [BlessingController::class, 'approveRequest'])->name('shrine.approve');
         Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
+        Route::get('stables', [StableController::class, 'index'])->name('stables');
     });
 
     // Location-scoped services: Kingdoms
@@ -321,6 +324,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
         Route::post('shrine/request/{blessingRequest}/approve', [BlessingController::class, 'approveRequest'])->name('shrine.approve');
         Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
+        Route::get('stables', [StableController::class, 'index'])->name('stables');
     });
 
     // Crafting Docket

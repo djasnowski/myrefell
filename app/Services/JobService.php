@@ -182,7 +182,7 @@ class JobService
         $job = $employment->job;
 
         // Check if the job has a supervisor role
-        if (!$job->supervisor_role_slug) {
+        if (! $job->supervisor_role_slug) {
             return [
                 'success' => false,
                 'message' => 'This job does not have a supervisor role.',
@@ -195,7 +195,7 @@ class JobService
             $employment->location_id
         );
 
-        if (!$expectedSupervisor || $expectedSupervisor->id !== $supervisor->id) {
+        if (! $expectedSupervisor || $expectedSupervisor->id !== $supervisor->id) {
             return [
                 'success' => false,
                 'message' => 'You are not the supervisor for this job at this location.',
@@ -1017,7 +1017,7 @@ class JobService
                 'xp_reward' => 15,
                 'xp_skill' => null,
                 'cooldown_minutes' => 30,
-                'supervisor_role_slug' => 'castellan',
+                'supervisor_role_slug' => 'castle_stablemaster',
                 'supervisor_cut_percent' => 10,
             ],
             [
@@ -1324,7 +1324,7 @@ class JobService
                 'xp_reward' => 18,
                 'xp_skill' => null,
                 'cooldown_minutes' => 35,
-                'supervisor_role_slug' => 'duchy_marshal',
+                'supervisor_role_slug' => 'ducal_stablemaster',
                 'supervisor_cut_percent' => 10,
             ],
             [
@@ -1572,7 +1572,7 @@ class JobService
                 'xp_skill' => null,
                 'required_level' => 5,
                 'cooldown_minutes' => 35,
-                'supervisor_role_slug' => 'royal_steward',
+                'supervisor_role_slug' => 'royal_stablemaster',
                 'supervisor_cut_percent' => 10,
             ],
             [
@@ -1834,6 +1834,20 @@ class JobService
                 'xp_skill' => null,
                 'cooldown_minutes' => 20,
                 'supervisor_role_slug' => 'mayor',
+                'supervisor_cut_percent' => 10,
+            ],
+            [
+                'name' => 'Town Stable Hand',
+                'icon' => 'horse',
+                'description' => 'Care for horses and maintain the town stables.',
+                'category' => 'service',
+                'location_type' => 'town',
+                'energy_cost' => 10,
+                'base_wage' => 45,
+                'xp_reward' => 14,
+                'xp_skill' => null,
+                'cooldown_minutes' => 28,
+                'supervisor_role_slug' => 'stablemaster',
                 'supervisor_cut_percent' => 10,
             ],
             [
