@@ -1,5 +1,7 @@
 import { Head, Link } from "@inertiajs/react";
 import {
+    AlertTriangle,
+    ArrowRight,
     Building2,
     Coins,
     Home,
@@ -7,7 +9,9 @@ import {
     Mountain,
     Palmtree,
     Route,
+    Settings,
     Shield,
+    Skull,
     Snowflake,
     Sun,
     TreePine,
@@ -94,9 +98,28 @@ interface ActivityLogEntry {
     time_ago: string;
 }
 
+interface TradeRouteInfo {
+    id: number;
+    name: string;
+    origin: {
+        type: string;
+        id: number;
+        name: string;
+    };
+    destination: {
+        type: string;
+        id: number;
+        name: string;
+    };
+    distance: number;
+    base_travel_days: number;
+    danger_level: string;
+}
+
 interface Props {
     barony: Barony;
     services: ServiceInfo[];
+    trade_routes: TradeRouteInfo[];
     recent_activity: ActivityLogEntry[];
     current_user_id: number;
     is_baron: boolean;
@@ -163,6 +186,7 @@ const biomeConfig: Record<string, { icon: LucideIcon; color: string; bg: string;
 export default function BaronyShow({
     barony,
     services,
+    trade_routes,
     recent_activity,
     current_user_id,
     is_baron,
@@ -300,20 +324,74 @@ export default function BaronyShow({
                             </div>
                         </div>
                     </Link>
-                    {is_baron && (
-                        <Link
-                            href={`/baronies/${barony.id}/trade-routes`}
-                            className="flex items-center gap-4 rounded-xl border border-emerald-600/30 bg-emerald-900/10 p-4 transition hover:bg-emerald-900/20"
-                        >
-                            <Route className="h-8 w-8 text-emerald-400" />
-                            <div>
-                                <div className="font-pixel text-emerald-300">Trade Routes</div>
-                                <div className="text-xs text-stone-400">
-                                    Manage caravan routes for your barony
-                                </div>
+
+                    {/* Trade Routes Section */}
+                    <div className="rounded-xl border border-emerald-600/30 bg-emerald-900/10 p-4">
+                        <div className="mb-3 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Route className="h-5 w-5 text-emerald-400" />
+                                <span className="font-pixel text-emerald-300">Trade Routes</span>
+                                <span className="text-xs text-stone-500">
+                                    ({trade_routes.length})
+                                </span>
                             </div>
-                        </Link>
-                    )}
+                            {is_baron && (
+                                <Link
+                                    href={`/baronies/${barony.id}/trade-routes`}
+                                    className="flex items-center gap-1 rounded border border-emerald-600/50 bg-emerald-900/30 px-2 py-1 text-xs text-emerald-300 transition hover:bg-emerald-800/50"
+                                >
+                                    <Settings className="h-3 w-3" />
+                                    Manage
+                                </Link>
+                            )}
+                        </div>
+                        {trade_routes.length > 0 ? (
+                            <div className="space-y-2">
+                                {trade_routes.slice(0, 4).map((route) => (
+                                    <div
+                                        key={route.id}
+                                        className="flex items-center justify-between rounded border border-stone-700/50 bg-stone-800/30 px-3 py-2 text-sm"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <Link
+                                                href={`/${route.origin.type}s/${route.origin.id}`}
+                                                className="text-stone-300 hover:text-amber-400"
+                                            >
+                                                {route.origin.name}
+                                            </Link>
+                                            <ArrowRight className="h-3 w-3 text-stone-600" />
+                                            <Link
+                                                href={`/${route.destination.type}s/${route.destination.id}`}
+                                                className="text-stone-300 hover:text-amber-400"
+                                            >
+                                                {route.destination.name}
+                                            </Link>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs text-stone-500">
+                                                {route.base_travel_days}d
+                                            </span>
+                                            {route.danger_level === "dangerous" && (
+                                                <AlertTriangle className="h-3 w-3 text-amber-400" />
+                                            )}
+                                            {route.danger_level === "perilous" && (
+                                                <Skull className="h-3 w-3 text-red-400" />
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                                {trade_routes.length > 4 && (
+                                    <div className="text-center text-xs text-stone-500">
+                                        +{trade_routes.length - 4} more routes
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <p className="text-center text-xs text-stone-500">
+                                No trade routes established
+                            </p>
+                        )}
+                    </div>
                 </div>
 
                 {/* Recent Activity */}

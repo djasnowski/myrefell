@@ -6,6 +6,7 @@ use App\Config\LocationServices;
 use App\Models\Barony;
 use App\Models\PlayerRole;
 use App\Models\Role;
+use App\Models\TradeRoute;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -84,6 +85,45 @@ class BaronyController extends Controller
         // Get services available at barony level
         $services = LocationServices::getServicesForLocation('barony');
 
+        // Get trade routes involving settlements in this barony
+        $villageIds = $barony->villages->pluck('id')->toArray();
+        $townIds = $barony->towns->pluck('id')->toArray();
+
+        $tradeRoutes = TradeRoute::active()
+            ->where(function ($query) use ($villageIds, $townIds) {
+                $query->where(function ($q) use ($villageIds) {
+                    $q->where('origin_type', 'village')
+                        ->whereIn('origin_id', $villageIds);
+                })->orWhere(function ($q) use ($townIds) {
+                    $q->where('origin_type', 'town')
+                        ->whereIn('origin_id', $townIds);
+                })->orWhere(function ($q) use ($villageIds) {
+                    $q->where('destination_type', 'village')
+                        ->whereIn('destination_id', $villageIds);
+                })->orWhere(function ($q) use ($townIds) {
+                    $q->where('destination_type', 'town')
+                        ->whereIn('destination_id', $townIds);
+                });
+            })
+            ->get()
+            ->map(fn ($route) => [
+                'id' => $route->id,
+                'name' => $route->name,
+                'origin' => [
+                    'type' => $route->origin_type,
+                    'id' => $route->origin_id,
+                    'name' => $route->origin?->name ?? 'Unknown',
+                ],
+                'destination' => [
+                    'type' => $route->destination_type,
+                    'id' => $route->destination_id,
+                    'name' => $route->destination?->name ?? 'Unknown',
+                ],
+                'distance' => $route->distance,
+                'base_travel_days' => $route->base_travel_days,
+                'danger_level' => $route->danger_level,
+            ]);
+
         // TODO: Activity logging not yet implemented
         $recentActivity = collect([]);
 
@@ -126,6 +166,7 @@ class BaronyController extends Controller
                 'baron' => $baron,
             ],
             'services' => array_values(array_map(fn ($service, $id) => array_merge($service, ['id' => $id]), $services, array_keys($services))),
+            'trade_routes' => $tradeRoutes,
             'recent_activity' => $recentActivity,
             'current_user_id' => $user->id,
             'is_baron' => $isBaron,
