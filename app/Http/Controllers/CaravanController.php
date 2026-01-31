@@ -6,6 +6,7 @@ use App\Models\Caravan;
 use App\Models\Item;
 use App\Models\TradeRoute;
 use App\Services\CaravanService;
+use App\Services\InventoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,7 +15,8 @@ use Inertia\Response;
 class CaravanController extends Controller
 {
     public function __construct(
-        protected CaravanService $caravanService
+        protected CaravanService $caravanService,
+        protected InventoryService $inventoryService
     ) {}
 
     /**
@@ -459,7 +461,7 @@ class CaravanController extends Controller
 
         $goods = $caravan->goods()->where('item_id', $validated['item_id'])->first();
 
-        if (!$goods || $goods->quantity < $validated['quantity']) {
+        if (! $goods || $goods->quantity < $validated['quantity']) {
             return response()->json([
                 'success' => false,
                 'message' => 'Insufficient goods in caravan.',
@@ -467,15 +469,7 @@ class CaravanController extends Controller
         }
 
         // Return to player inventory
-        $existingInventory = $user->inventory()->where('item_id', $validated['item_id'])->first();
-        if ($existingInventory) {
-            $existingInventory->increment('quantity', $validated['quantity']);
-        } else {
-            $user->inventory()->create([
-                'item_id' => $validated['item_id'],
-                'quantity' => $validated['quantity'],
-            ]);
-        }
+        $this->inventoryService->addItem($user, $validated['item_id'], $validated['quantity']);
 
         // Remove from caravan
         if ($goods->quantity === $validated['quantity']) {

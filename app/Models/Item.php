@@ -50,6 +50,7 @@ class Item extends Model
         'decay_rate_per_week',
         'spoil_after_weeks',
         'decays_into',
+        'is_tradeable',
     ];
 
     protected function casts(): array
@@ -70,6 +71,7 @@ class Item extends Model
             'is_perishable' => 'boolean',
             'decay_rate_per_week' => 'integer',
             'spoil_after_weeks' => 'integer',
+            'is_tradeable' => 'boolean',
         ];
     }
 

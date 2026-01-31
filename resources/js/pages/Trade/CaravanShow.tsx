@@ -8,6 +8,7 @@ import {
     Check,
     Clock,
     Coins,
+    Info,
     MapPin,
     Minus,
     Package,
@@ -15,6 +16,7 @@ import {
     Route,
     Shield,
     Truck,
+    X,
     XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -144,6 +146,7 @@ export default function CaravanShow() {
     const [isUnloading, setIsUnloading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const [showTradeRouteInfo, setShowTradeRouteInfo] = useState(false);
 
     const status = statusColors[caravan.status] || statusColors.preparing;
     const selectedInventoryItem = inventory.find((item) => item.id === selectedItem);
@@ -694,6 +697,13 @@ export default function CaravanShow() {
                                         <p className="font-pixel text-sm text-stone-500">
                                             No trade routes available from this location.
                                         </p>
+                                        <button
+                                            onClick={() => setShowTradeRouteInfo(true)}
+                                            className="mt-2 inline-flex items-center gap-1 font-pixel text-xs text-amber-400 transition hover:text-amber-300"
+                                        >
+                                            <Info className="h-3 w-3" />
+                                            How are trade routes created?
+                                        </button>
                                     </div>
                                 )}
                             </div>
@@ -777,6 +787,67 @@ export default function CaravanShow() {
                         </div>
                     </div>
                 </div>
+
+                {/* Trade Route Info Modal */}
+                {showTradeRouteInfo && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div
+                            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                            onClick={() => setShowTradeRouteInfo(false)}
+                        />
+                        <div className="relative w-full max-w-lg rounded-xl border-2 border-amber-500/50 bg-stone-900 p-6 shadow-xl">
+                            <button
+                                onClick={() => setShowTradeRouteInfo(false)}
+                                className="absolute right-3 top-3 rounded p-1 text-stone-400 transition hover:bg-stone-800 hover:text-stone-200"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+
+                            <div className="mb-4 flex items-center gap-3">
+                                <div className="rounded-lg bg-amber-900/30 p-2">
+                                    <Route className="h-6 w-6 text-amber-400" />
+                                </div>
+                                <h3 className="font-pixel text-lg text-amber-300">Creating Trade Routes</h3>
+                            </div>
+
+                            <div className="space-y-4 font-pixel text-sm text-stone-300">
+                                <p>
+                                    Trade routes connect settlements and allow caravans to travel safely between them.
+                                </p>
+
+                                <div className="rounded-lg bg-stone-800/50 p-3">
+                                    <h4 className="mb-2 text-amber-400">Who can create trade routes?</h4>
+                                    <p className="text-stone-400">
+                                        Only <span className="text-amber-300">Baronies</span> and{' '}
+                                        <span className="text-amber-300">Kingdoms</span> have the authority to establish
+                                        official trade routes between settlements within their territory.
+                                    </p>
+                                </div>
+
+                                <div className="rounded-lg bg-stone-800/50 p-3">
+                                    <h4 className="mb-2 text-amber-400">How to request a trade route</h4>
+                                    <ul className="list-inside list-disc space-y-1 text-stone-400">
+                                        <li>Petition your local Baron or King</li>
+                                        <li>Routes require settlements at both ends</li>
+                                        <li>Longer routes are more dangerous</li>
+                                    </ul>
+                                </div>
+
+                                <p className="text-xs text-stone-500">
+                                    Once a trade route is established from this location, it will appear in the
+                                    dispatch menu above.
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={() => setShowTradeRouteInfo(false)}
+                                className="mt-4 w-full rounded bg-amber-600 py-2 font-pixel text-sm text-white transition hover:bg-amber-500"
+                            >
+                                Got it
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </AppLayout>
     );
