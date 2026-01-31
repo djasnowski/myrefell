@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Barony;
 use App\Models\Caravan;
-use App\Models\Kingdom;
+use App\Models\PlayerRole;
+use App\Models\Role;
 use App\Models\Town;
 use App\Models\TradeRoute;
 use App\Models\Village;
@@ -71,19 +71,18 @@ class TradeRouteController extends Controller
      */
     private function canManageRoutes($user): bool
     {
-        // Check if user is a baron
-        $isBaronOfAny = Barony::where('baron_user_id', $user->id)->exists();
-        if ($isBaronOfAny) {
-            return true;
+        // Get baron and king role IDs
+        $rulerRoles = Role::whereIn('slug', ['baron', 'king'])->pluck('id');
+
+        if ($rulerRoles->isEmpty()) {
+            return false;
         }
 
-        // Check if user is a king
-        $isKingOfAny = Kingdom::where('king_user_id', $user->id)->exists();
-        if ($isKingOfAny) {
-            return true;
-        }
-
-        return false;
+        // Check if user holds any baron or king role
+        return PlayerRole::where('user_id', $user->id)
+            ->whereIn('role_id', $rulerRoles)
+            ->active()
+            ->exists();
     }
 
     /**

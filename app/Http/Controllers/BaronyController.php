@@ -49,28 +49,28 @@ class BaronyController extends Controller
      */
     public function show(Request $request, Barony $barony): Response
     {
-        $barony->load(['kingdom', 'villages', 'towns', 'baron']);
+        $barony->load(['kingdom', 'villages', 'towns']);
         $user = $request->user();
 
-        // Get the baron's role assignment for legitimacy
+        // Get the baron from player_roles table (the authoritative source)
         $baron = null;
-        if ($barony->baron) {
-            $baronRole = Role::where('slug', 'baron')->first();
-            $baronAssignment = null;
-            if ($baronRole) {
-                $baronAssignment = PlayerRole::active()
-                    ->where('role_id', $baronRole->id)
-                    ->where('location_type', 'barony')
-                    ->where('location_id', $barony->id)
-                    ->first();
-            }
+        $baronRole = Role::where('slug', 'baron')->first();
+        if ($baronRole) {
+            $baronAssignment = PlayerRole::active()
+                ->where('role_id', $baronRole->id)
+                ->where('location_type', 'barony')
+                ->where('location_id', $barony->id)
+                ->with('user')
+                ->first();
 
-            $baron = [
-                'id' => $barony->baron->id,
-                'username' => $barony->baron->username,
-                'primary_title' => $barony->baron->primary_title,
-                'legitimacy' => $baronAssignment?->legitimacy ?? 50,
-            ];
+            if ($baronAssignment) {
+                $baron = [
+                    'id' => $baronAssignment->user->id,
+                    'username' => $baronAssignment->user->username,
+                    'primary_title' => $baronAssignment->user->primary_title,
+                    'legitimacy' => $baronAssignment->legitimacy ?? 50,
+                ];
+            }
         }
 
         return Inertia::render('baronies/show', [
