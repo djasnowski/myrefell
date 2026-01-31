@@ -5,14 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class TradeRoute extends Model
 {
     use HasFactory;
 
     public const DANGER_SAFE = 'safe';
+
     public const DANGER_MODERATE = 'moderate';
+
     public const DANGER_DANGEROUS = 'dangerous';
+
     public const DANGER_PERILOUS = 'perilous';
 
     protected $fillable = [
@@ -69,6 +73,22 @@ class TradeRoute extends Model
     public function caravans(): HasMany
     {
         return $this->hasMany(Caravan::class);
+    }
+
+    /**
+     * Get the origin settlement (polymorphic).
+     */
+    public function originSettlement(): MorphTo
+    {
+        return $this->morphTo('originSettlement', 'origin_type', 'origin_id');
+    }
+
+    /**
+     * Get the destination settlement (polymorphic).
+     */
+    public function destinationSettlement(): MorphTo
+    {
+        return $this->morphTo('destinationSettlement', 'destination_type', 'destination_id');
     }
 
     /**
