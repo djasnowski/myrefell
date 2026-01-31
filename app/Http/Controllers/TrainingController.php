@@ -58,7 +58,7 @@ class TrainingController extends Controller
      */
     protected function renderIndex($user, $location, ?string $locationType): Response
     {
-        if (!$this->trainingService->canTrain($user)) {
+        if (! $this->trainingService->canTrain($user)) {
             return Inertia::render('Training/NotAvailable', [
                 'message' => 'There are no training grounds at your current location. Travel to a village, town, or barony to train.',
             ]);
@@ -111,18 +111,28 @@ class TrainingController extends Controller
     /**
      * Perform a training exercise.
      */
-    public function train(Request $request): JsonResponse
+    public function train(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null): JsonResponse
     {
         $request->validate([
-            'exercise' => 'required|string|in:attack,strength,defense',
+            'exercise' => 'required|string|in:attack,strength,defense,hitpoints,range',
         ]);
+
+        $location = $village ?? $town ?? $barony ?? $duchy ?? $kingdom;
+        $locationType = match (true) {
+            $location instanceof Village => 'village',
+            $location instanceof Town => 'town',
+            $location instanceof Barony => 'barony',
+            $location instanceof Duchy => 'duchy',
+            $location instanceof Kingdom => 'kingdom',
+            default => null,
+        };
 
         $user = $request->user();
         $result = $this->trainingService->train(
             $user,
             $request->input('exercise'),
-            $user->current_location_type,
-            $user->current_location_id
+            $locationType ?? $user->current_location_type,
+            $location?->id ?? $user->current_location_id
         );
 
         return response()->json($result, $result['success'] ? 200 : 422);

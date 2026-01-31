@@ -17,21 +17,12 @@ class TavernController extends Controller
     /**
      * Show the tavern page.
      */
-    public function index(Request $request, $village = null, $town = null): Response
+    public function index(Request $request, ?Village $village = null, ?Town $town = null): Response
     {
         $user = $request->user();
 
-        // Resolve model from ID if needed
-        $location = null;
-        $locationType = null;
-
-        if ($village) {
-            $location = $village instanceof Village ? $village : Village::find($village);
-            $locationType = 'village';
-        } elseif ($town) {
-            $location = $town instanceof Town ? $town : Town::find($town);
-            $locationType = 'town';
-        }
+        $location = $village ?? $town;
+        $locationType = $this->getLocationType($location);
 
         // Get recent activity at this location (rumors/gossip)
         $recentActivity = [];
@@ -81,7 +72,7 @@ class TavernController extends Controller
     /**
      * Rest at the tavern to restore energy.
      */
-    public function rest(Request $request)
+    public function rest(Request $request, ?Village $village = null, ?Town $town = null)
     {
         $user = $request->user();
         $restCost = 10;

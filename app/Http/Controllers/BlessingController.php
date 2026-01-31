@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Barony;
+use App\Models\BlessingRequest;
 use App\Models\BlessingType;
 use App\Models\Duchy;
 use App\Models\Kingdom;
 use App\Models\LocationActivityLog;
-use App\Models\BlessingRequest;
 use App\Models\PlayerBlessing;
 use App\Models\PlayerRole;
 use App\Models\PlayerSkill;
@@ -173,12 +173,12 @@ class BlessingController extends Controller
     /**
      * Priest grants a blessing to a player.
      */
-    public function bless(Request $request): RedirectResponse
+    public function bless(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null): RedirectResponse
     {
         $user = $request->user();
 
         // Verify user is a priest at this location
-        if (!$this->isPriestAtLocation($user)) {
+        if (! $this->isPriestAtLocation($user)) {
             return back()->withErrors(['error' => 'You must be a Priest to give blessings.']);
         }
 
@@ -244,6 +244,7 @@ class BlessingController extends Controller
 
             if ($recentBlessing) {
                 $waitTime = $blessingType->cooldown_minutes - now()->diffInMinutes($recentBlessing->created_at);
+
                 return back()->withErrors([
                     'error' => "You must wait {$waitTime} more minutes before giving this blessing again.",
                 ]);
@@ -288,7 +289,7 @@ class BlessingController extends Controller
     /**
      * Player requests a blessing (self-service at shrine when no priest).
      */
-    public function pray(Request $request): RedirectResponse
+    public function pray(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null): RedirectResponse
     {
         $user = $request->user();
 
@@ -354,13 +355,13 @@ class BlessingController extends Controller
      */
     public function approveRequest(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null, ?BlessingRequest $blessingRequest = null): RedirectResponse
     {
-        if (!$blessingRequest) {
+        if (! $blessingRequest) {
             return back()->withErrors(['error' => 'Blessing request not found.']);
         }
         $user = $request->user();
 
         // Verify user is a priest at this location
-        if (!$this->isPriestAtLocation($user)) {
+        if (! $this->isPriestAtLocation($user)) {
             return back()->withErrors(['error' => 'You must be a Priest to approve blessings.']);
         }
 
@@ -370,7 +371,7 @@ class BlessingController extends Controller
             return back()->withErrors(['error' => 'This request is not at your location.']);
         }
 
-        if (!$blessingRequest->isPending()) {
+        if (! $blessingRequest->isPending()) {
             return back()->withErrors(['error' => 'This request has already been handled.']);
         }
 
@@ -405,13 +406,13 @@ class BlessingController extends Controller
      */
     public function denyRequest(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null, ?BlessingRequest $blessingRequest = null): RedirectResponse
     {
-        if (!$blessingRequest) {
+        if (! $blessingRequest) {
             return back()->withErrors(['error' => 'Blessing request not found.']);
         }
         $user = $request->user();
 
         // Verify user is a priest at this location
-        if (!$this->isPriestAtLocation($user)) {
+        if (! $this->isPriestAtLocation($user)) {
             return back()->withErrors(['error' => 'You must be a Priest to deny blessings.']);
         }
 
@@ -421,7 +422,7 @@ class BlessingController extends Controller
             return back()->withErrors(['error' => 'This request is not at your location.']);
         }
 
-        if (!$blessingRequest->isPending()) {
+        if (! $blessingRequest->isPending()) {
             return back()->withErrors(['error' => 'This request has already been handled.']);
         }
 
@@ -457,13 +458,13 @@ class BlessingController extends Controller
      */
     protected function isPriestAtLocation(User $user): bool
     {
-        if (!$user->current_location_type || !$user->current_location_id) {
+        if (! $user->current_location_type || ! $user->current_location_id) {
             return false;
         }
 
         try {
             $priestRole = Role::where('slug', 'priest')->first();
-            if (!$priestRole) {
+            if (! $priestRole) {
                 return false;
             }
 

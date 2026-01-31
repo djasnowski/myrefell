@@ -102,18 +102,21 @@ class CraftingController extends Controller
     /**
      * Craft an item.
      */
-    public function craft(Request $request): JsonResponse
+    public function craft(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null): JsonResponse
     {
         $request->validate([
             'recipe' => 'required|string',
         ]);
 
+        $location = $village ?? $town ?? $barony;
+        $locationType = $this->getLocationType($location);
+
         $user = $request->user();
         $result = $this->craftingService->craft(
             $user,
             $request->input('recipe'),
-            $user->current_location_type,
-            $user->current_location_id
+            $locationType ?? $user->current_location_type,
+            $location?->id ?? $user->current_location_id
         );
 
         return response()->json($result, $result['success'] ? 200 : 422);
