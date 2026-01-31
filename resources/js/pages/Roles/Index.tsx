@@ -580,9 +580,12 @@ export default function RolesIndex() {
     const currentUserRole = user_roles.length > 0 ? user_roles[0] : undefined;
 
     // Pluralize location type correctly for URL
-    const locationTypePlural = location_type === 'barony' ? 'baronies'
-        : location_type === 'duchy' ? 'duchies'
-        : `${location_type}s`;
+    const locationTypePlural =
+        location_type === "barony"
+            ? "baronies"
+            : location_type === "duchy"
+              ? "duchies"
+              : `${location_type}s`;
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },

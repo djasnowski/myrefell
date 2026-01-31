@@ -151,9 +151,13 @@ export default function BaronyShow({ barony, current_user_id, is_baron }: Props)
                         >
                             <div className="flex items-center justify-center gap-2">
                                 <Route className="h-5 w-5 text-emerald-300" />
-                                <span className="font-pixel text-lg text-emerald-300">Trade Routes</span>
+                                <span className="font-pixel text-lg text-emerald-300">
+                                    Trade Routes
+                                </span>
                             </div>
-                            <p className="text-sm text-stone-400">Manage caravan routes for your barony</p>
+                            <p className="text-sm text-stone-400">
+                                Manage caravan routes for your barony
+                            </p>
                         </Link>
                     )}
                 </div>

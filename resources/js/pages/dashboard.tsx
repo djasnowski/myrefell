@@ -117,7 +117,14 @@ export default function Dashboard() {
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
-        ...(location ? [{ title: location.name, href: `/${pluralizeLocationType(location.type)}/${location.id}` }] : []),
+        ...(location
+            ? [
+                  {
+                      title: location.name,
+                      href: `/${pluralizeLocationType(location.type)}/${location.id}`,
+                  },
+              ]
+            : []),
     ];
 
     const quickActions = [

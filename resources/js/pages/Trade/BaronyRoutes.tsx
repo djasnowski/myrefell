@@ -1,5 +1,15 @@
 import { Head, Link, router, usePage } from "@inertiajs/react";
-import { AlertTriangle, ArrowLeft, ArrowRight, MapPin, Plus, Route, Shield, Truck, X } from "lucide-react";
+import {
+    AlertTriangle,
+    ArrowLeft,
+    ArrowRight,
+    MapPin,
+    Plus,
+    Route,
+    Shield,
+    Truck,
+    X,
+} from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import type { BreadcrumbItem } from "@/types";
@@ -181,7 +191,9 @@ export default function BaronyTradeRoutes() {
                         <div className="flex items-center gap-3">
                             <Route className="h-8 w-8 text-emerald-400" />
                             <div>
-                                <h1 className="font-pixel text-2xl text-emerald-400">Trade Routes</h1>
+                                <h1 className="font-pixel text-2xl text-emerald-400">
+                                    Trade Routes
+                                </h1>
                                 <p className="font-pixel text-sm text-stone-400">
                                     Manage caravan routes for {barony.name}
                                 </p>
@@ -245,13 +257,20 @@ export default function BaronyTradeRoutes() {
                                     Origin (within {barony.name})
                                 </label>
                                 <select
-                                    value={formData.origin_type && formData.origin_id ? `${formData.origin_type}:${formData.origin_id}` : ""}
+                                    value={
+                                        formData.origin_type && formData.origin_id
+                                            ? `${formData.origin_type}:${formData.origin_id}`
+                                            : ""
+                                    }
                                     onChange={(e) => handleOriginChange(e.target.value)}
                                     className="w-full rounded border border-stone-600 bg-stone-800 px-3 py-2 font-pixel text-sm text-white focus:border-emerald-500 focus:outline-none"
                                 >
                                     <option value="">-- Select Origin --</option>
                                     {barony_locations.map((loc) => (
-                                        <option key={`${loc.type}:${loc.id}`} value={`${loc.type}:${loc.id}`}>
+                                        <option
+                                            key={`${loc.type}:${loc.id}`}
+                                            value={`${loc.type}:${loc.id}`}
+                                        >
                                             {loc.name} ({loc.type})
                                         </option>
                                     ))}
@@ -265,13 +284,20 @@ export default function BaronyTradeRoutes() {
                                     Destination
                                 </label>
                                 <select
-                                    value={formData.destination_type && formData.destination_id ? `${formData.destination_type}:${formData.destination_id}` : ""}
+                                    value={
+                                        formData.destination_type && formData.destination_id
+                                            ? `${formData.destination_type}:${formData.destination_id}`
+                                            : ""
+                                    }
                                     onChange={(e) => handleDestinationChange(e.target.value)}
                                     className="w-full rounded border border-stone-600 bg-stone-800 px-3 py-2 font-pixel text-sm text-white focus:border-emerald-500 focus:outline-none"
                                 >
                                     <option value="">-- Select Destination --</option>
                                     {all_locations.map((loc) => (
-                                        <option key={`${loc.type}:${loc.id}`} value={`${loc.type}:${loc.id}`}>
+                                        <option
+                                            key={`${loc.type}:${loc.id}`}
+                                            value={`${loc.type}:${loc.id}`}
+                                        >
                                             {loc.name} ({loc.type})
                                         </option>
                                     ))}
