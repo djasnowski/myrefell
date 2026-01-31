@@ -146,7 +146,7 @@ class TravelController extends Controller
         }
 
         // Force arrival by setting arrives_at to now
-        $user->update(['traveling_arrives_at' => now()->subSecond()]);
+        $user->update(['travel_arrives_at' => now()->subSecond()]);
 
         // Check arrival to complete the travel
         $this->travelService->checkArrival($user);
