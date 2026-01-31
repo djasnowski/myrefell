@@ -547,7 +547,7 @@ class JobService
                 'energy_cost' => 12,
                 'base_wage' => 50,
                 'xp_reward' => 15,
-                'xp_skill' => 'foraging',
+                'xp_skill' => 'farming',
                 'cooldown_minutes' => 30,
                 'supervisor_role_slug' => 'master_farmer',
                 'supervisor_cut_percent' => 10,

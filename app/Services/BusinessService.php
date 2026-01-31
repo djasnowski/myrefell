@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\BusinessEmployee;
-use App\Models\BusinessProductionOrder;
 use App\Models\BusinessType;
 use App\Models\Item;
 use App\Models\LocationNpc;
@@ -431,7 +430,7 @@ class BusinessService
 
         $item = Item::find($itemId);
 
-        return DB::transaction(function () use ($user, $business, $playerInv, $item, $quantity) {
+        return DB::transaction(function () use ($business, $playerInv, $item, $quantity) {
             // Remove from player inventory
             $playerInv->decrement('quantity', $quantity);
             if ($playerInv->quantity <= 0) {
@@ -760,7 +759,7 @@ class BusinessService
                 'purchase_cost' => 350,
                 'weekly_upkeep' => 15,
                 'max_employees' => 4,
-                'primary_skill' => 'foraging',
+                'primary_skill' => 'farming',
                 'required_skill_level' => 8,
                 'produces' => ['food', 'materials'],
             ],
