@@ -17,6 +17,15 @@ class TitleType extends Model
 
     public const CATEGORY_ROYALTY = 'royalty';
 
+    // Progression types
+    public const PROGRESSION_AUTOMATIC = 'automatic';
+
+    public const PROGRESSION_PETITION = 'petition';
+
+    public const PROGRESSION_APPOINTMENT = 'appointment';
+
+    public const PROGRESSION_SPECIAL = 'special';
+
     protected $fillable = [
         'name',
         'slug',
@@ -27,6 +36,13 @@ class TitleType extends Model
         'limit_per_domain',
         'limit_per_superior',
         'granted_by',
+        'progression_type',
+        'requirements',
+        'can_purchase',
+        'purchase_cost',
+        'service_days_required',
+        'service_title_slug',
+        'requires_ceremony',
         'style_of_address',
         'female_variant',
         'description',
@@ -41,8 +57,95 @@ class TitleType extends Model
             'is_landed' => 'boolean',
             'limit_per_domain' => 'integer',
             'limit_per_superior' => 'integer',
+            'requirements' => 'array',
+            'can_purchase' => 'boolean',
+            'purchase_cost' => 'integer',
+            'service_days_required' => 'integer',
+            'requires_ceremony' => 'boolean',
             'prestige_bonus' => 'integer',
             'is_active' => 'boolean',
+        ];
+    }
+
+    /**
+     * Check if this title can be automatically granted.
+     */
+    public function isAutomatic(): bool
+    {
+        return $this->progression_type === self::PROGRESSION_AUTOMATIC;
+    }
+
+    /**
+     * Check if this title requires a petition.
+     */
+    public function requiresPetition(): bool
+    {
+        return $this->progression_type === self::PROGRESSION_PETITION;
+    }
+
+    /**
+     * Check if this title is appointment-only.
+     */
+    public function isAppointmentOnly(): bool
+    {
+        return $this->progression_type === self::PROGRESSION_APPOINTMENT;
+    }
+
+    /**
+     * Check if this title has special rules.
+     */
+    public function hasSpecialRules(): bool
+    {
+        return $this->progression_type === self::PROGRESSION_SPECIAL;
+    }
+
+    /**
+     * Check if a user meets the requirements for this title.
+     */
+    public function userMeetsRequirements(User $user): array
+    {
+        $requirements = $this->requirements ?? [];
+        $met = [];
+        $unmet = [];
+
+        foreach ($requirements as $key => $value) {
+            if ($key === 'or_conditions') {
+                // At least one OR condition must be met
+                $orMet = false;
+                foreach ($value as $condition) {
+                    // Check each condition - this is simplified, would need full implementation
+                    $orMet = true; // Placeholder
+                }
+                if ($orMet) {
+                    $met['or_conditions'] = true;
+                } else {
+                    $unmet['or_conditions'] = $value;
+                }
+
+                continue;
+            }
+
+            $passes = match ($key) {
+                'min_gold' => $user->gold >= $value,
+                'min_combat_level' => ($user->attack + $user->strength + $user->defense) / 3 >= $value,
+                'min_title_tier' => $user->title_tier >= $value,
+                'current_title' => $user->primary_title === $value,
+                'social_class' => $user->social_class === $value,
+                'owns_property' => $user->homeVillage !== null, // Simplified
+                default => true, // Unknown requirements pass by default
+            };
+
+            if ($passes) {
+                $met[$key] = $value;
+            } else {
+                $unmet[$key] = $value;
+            }
+        }
+
+        return [
+            'meets_all' => empty($unmet),
+            'met' => $met,
+            'unmet' => $unmet,
         ];
     }
 
