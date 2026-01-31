@@ -1,5 +1,7 @@
 import { Link, usePage } from "@inertiajs/react";
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from "lucide-react";
+import { BookOpen, Folder, LayoutGrid, Menu, Search, Sparkles } from "lucide-react";
+import { useState } from "react";
+import ChangelogModal from "@/components/changelog-modal";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -57,6 +59,8 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
     const { auth } = page.props;
     const getInitials = useInitials();
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
+    const [showChangelog, setShowChangelog] = useState(false);
+
     return (
         <>
             <div className="border-b border-sidebar-border/80">
@@ -151,6 +155,23 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
 
                     <div className="ml-auto flex items-center space-x-2">
                         <div className="relative flex items-center space-x-1">
+                            <TooltipProvider delayDuration={0}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="group h-9 w-9 cursor-pointer"
+                                            onClick={() => setShowChangelog(true)}
+                                        >
+                                            <Sparkles className="!size-5 opacity-80 group-hover:opacity-100 text-amber-500" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>What's New</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -211,6 +232,9 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </div>
                 </div>
             )}
+
+            {/* Changelog Modal */}
+            {showChangelog && <ChangelogModal onClose={() => setShowChangelog(false)} />}
         </>
     );
 }

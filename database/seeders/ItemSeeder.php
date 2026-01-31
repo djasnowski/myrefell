@@ -8,93 +8,141 @@ use Illuminate\Database\Seeder;
 class ItemSeeder extends Seeder
 {
     /**
+     * Metal tiers configuration for smithed items.
+     */
+    private const METAL_TIERS = [
+        'Bronze' => ['base_level' => 1, 'multiplier' => 1.0, 'rarity' => 'common', 'bar_value' => 15],
+        'Iron' => ['base_level' => 15, 'multiplier' => 1.5, 'rarity' => 'common', 'bar_value' => 40],
+        'Steel' => ['base_level' => 30, 'multiplier' => 2.0, 'rarity' => 'uncommon', 'bar_value' => 100],
+        'Mithril' => ['base_level' => 45, 'multiplier' => 3.0, 'rarity' => 'uncommon', 'bar_value' => 300],
+        'Celestial' => ['base_level' => 60, 'multiplier' => 4.0, 'rarity' => 'rare', 'bar_value' => 800],
+        'Oria' => ['base_level' => 75, 'multiplier' => 5.0, 'rarity' => 'epic', 'bar_value' => 1500],
+    ];
+
+    /**
+     * Smithable item templates.
+     * Each has: bars required, level offset, type, slot, base stats.
+     */
+    private const SMITHABLE_ITEMS = [
+        // Weapons (11 types)
+        'Dagger' => ['bars' => 1, 'offset' => 0, 'type' => 'weapon', 'subtype' => 'dagger', 'slot' => 'weapon', 'atk' => 4, 'str' => 2, 'def' => 0],
+        'Axe' => ['bars' => 1, 'offset' => 1, 'type' => 'weapon', 'subtype' => 'axe', 'slot' => 'weapon', 'atk' => 6, 'str' => 4, 'def' => 0],
+        'Mace' => ['bars' => 1, 'offset' => 2, 'type' => 'weapon', 'subtype' => 'mace', 'slot' => 'weapon', 'atk' => 5, 'str' => 6, 'def' => 0],
+        'Sword' => ['bars' => 1, 'offset' => 4, 'type' => 'weapon', 'subtype' => 'sword', 'slot' => 'weapon', 'atk' => 8, 'str' => 5, 'def' => 0],
+        'Scimitar' => ['bars' => 2, 'offset' => 5, 'type' => 'weapon', 'subtype' => 'scimitar', 'slot' => 'weapon', 'atk' => 10, 'str' => 6, 'def' => 0],
+        'Spear' => ['bars' => 1, 'offset' => 5, 'type' => 'weapon', 'subtype' => 'spear', 'slot' => 'weapon', 'atk' => 7, 'str' => 4, 'def' => 0],
+        'Longsword' => ['bars' => 2, 'offset' => 6, 'type' => 'weapon', 'subtype' => 'longsword', 'slot' => 'weapon', 'atk' => 12, 'str' => 8, 'def' => 0],
+        'Warhammer' => ['bars' => 3, 'offset' => 9, 'type' => 'weapon', 'subtype' => 'warhammer', 'slot' => 'weapon', 'atk' => 8, 'str' => 14, 'def' => 0],
+        'Battleaxe' => ['bars' => 3, 'offset' => 10, 'type' => 'weapon', 'subtype' => 'battleaxe', 'slot' => 'weapon', 'atk' => 14, 'str' => 10, 'def' => 0],
+        'Claws' => ['bars' => 2, 'offset' => 13, 'type' => 'weapon', 'subtype' => 'claws', 'slot' => 'weapon', 'atk' => 16, 'str' => 4, 'def' => 0],
+        '2h Sword' => ['bars' => 3, 'offset' => 14, 'type' => 'weapon', 'subtype' => '2hsword', 'slot' => 'weapon', 'atk' => 18, 'str' => 12, 'def' => 0],
+        // Armor (8 types)
+        'Medium Helm' => ['bars' => 1, 'offset' => 3, 'type' => 'armor', 'subtype' => 'helmet', 'slot' => 'head', 'atk' => 0, 'str' => 0, 'def' => 4],
+        'Full Helm' => ['bars' => 2, 'offset' => 7, 'type' => 'armor', 'subtype' => 'helmet', 'slot' => 'head', 'atk' => 0, 'str' => 0, 'def' => 8],
+        'Sq Shield' => ['bars' => 2, 'offset' => 8, 'type' => 'armor', 'subtype' => 'shield', 'slot' => 'shield', 'atk' => 0, 'str' => 0, 'def' => 10],
+        'Chainbody' => ['bars' => 3, 'offset' => 11, 'type' => 'armor', 'subtype' => 'chest', 'slot' => 'chest', 'atk' => 0, 'str' => 0, 'def' => 14],
+        'Kiteshield' => ['bars' => 3, 'offset' => 12, 'type' => 'armor', 'subtype' => 'shield', 'slot' => 'shield', 'atk' => 0, 'str' => 0, 'def' => 16],
+        'Platelegs' => ['bars' => 3, 'offset' => 16, 'type' => 'armor', 'subtype' => 'legs', 'slot' => 'legs', 'atk' => 0, 'str' => 0, 'def' => 12],
+        'Plateskirt' => ['bars' => 3, 'offset' => 16, 'type' => 'armor', 'subtype' => 'legs', 'slot' => 'legs', 'atk' => 0, 'str' => 0, 'def' => 12],
+        'Platebody' => ['bars' => 5, 'offset' => 18, 'type' => 'armor', 'subtype' => 'chest', 'slot' => 'chest', 'atk' => 0, 'str' => 0, 'def' => 22],
+        // Ammunition (4 types) - stackable
+        'Dart Tips' => ['bars' => 1, 'offset' => 4, 'type' => 'misc', 'subtype' => 'ammunition', 'slot' => null, 'atk' => 2, 'str' => 1, 'def' => 0, 'stackable' => true, 'output_qty' => 10],
+        'Arrowtips' => ['bars' => 1, 'offset' => 5, 'type' => 'misc', 'subtype' => 'ammunition', 'slot' => null, 'atk' => 2, 'str' => 1, 'def' => 0, 'stackable' => true, 'output_qty' => 15],
+        'Javelin Tips' => ['bars' => 1, 'offset' => 6, 'type' => 'misc', 'subtype' => 'ammunition', 'slot' => null, 'atk' => 3, 'str' => 2, 'def' => 0, 'stackable' => true, 'output_qty' => 5],
+        'Throwing Knives' => ['bars' => 1, 'offset' => 7, 'type' => 'weapon', 'subtype' => 'throwing', 'slot' => 'weapon', 'atk' => 3, 'str' => 2, 'def' => 0, 'stackable' => true, 'output_qty' => 5],
+    ];
+
+    /**
+     * Generate all smithed items for all metal tiers.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function generateSmithedItems(): array
+    {
+        $items = [];
+
+        foreach (self::METAL_TIERS as $metal => $tierData) {
+            foreach (self::SMITHABLE_ITEMS as $itemName => $itemData) {
+                $level = $tierData['base_level'] + $itemData['offset'];
+                $multiplier = $tierData['multiplier'];
+                $isStackable = $itemData['stackable'] ?? false;
+
+                $item = [
+                    'name' => "{$metal} {$itemName}",
+                    'description' => $this->generateDescription($metal, $itemName, $itemData['type']),
+                    'type' => $itemData['type'],
+                    'subtype' => $itemData['subtype'],
+                    'rarity' => $tierData['rarity'],
+                    'stackable' => $isStackable,
+                    'required_level' => $level,
+                    'base_value' => $this->calculateValue($tierData['bar_value'], $itemData['bars'], $multiplier),
+                ];
+
+                if ($isStackable) {
+                    $item['max_stack'] = 1000;
+                }
+
+                if ($itemData['slot']) {
+                    $item['equipment_slot'] = $itemData['slot'];
+                }
+
+                if ($itemData['atk'] > 0) {
+                    $item['atk_bonus'] = (int) round($itemData['atk'] * $multiplier);
+                }
+
+                if ($itemData['str'] > 0) {
+                    $item['str_bonus'] = (int) round($itemData['str'] * $multiplier);
+                }
+
+                if ($itemData['def'] > 0) {
+                    $item['def_bonus'] = (int) round($itemData['def'] * $multiplier);
+                }
+
+                $items[] = $item;
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * Generate a description for a smithed item.
+     */
+    private function generateDescription(string $metal, string $itemName, string $type): string
+    {
+        $metalDescriptions = [
+            'Bronze' => 'A basic',
+            'Iron' => 'A sturdy',
+            'Steel' => 'A well-crafted',
+            'Mithril' => 'A gleaming',
+            'Celestial' => 'A radiant',
+            'Oria' => 'A divine',
+        ];
+
+        $typeWord = $type === 'armor' ? 'piece of armor' : ($type === 'weapon' ? 'weapon' : 'item');
+        $prefix = $metalDescriptions[$metal] ?? 'A';
+
+        return "{$prefix} {$metal} {$itemName}. A formidable {$typeWord}.";
+    }
+
+    /**
+     * Calculate base value for a smithed item.
+     */
+    private function calculateValue(int $barValue, int $bars, float $multiplier): int
+    {
+        return (int) round($barValue * $bars * $multiplier * 1.5);
+    }
+
+    /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        $items = [
-            // === WEAPONS ===
-            // Daggers
-            [
-                'name' => 'Bronze Dagger',
-                'description' => 'A small but quick bronze dagger.',
-                'type' => 'weapon',
-                'subtype' => 'dagger',
-                'rarity' => 'common',
-                'stackable' => false,
-                'atk_bonus' => 3,
-                'str_bonus' => 1,
-                'equipment_slot' => 'weapon',
-                'required_level' => 1,
-                'base_value' => 35,
-            ],
-            [
-                'name' => 'Iron Dagger',
-                'description' => 'A sharp iron dagger.',
-                'type' => 'weapon',
-                'subtype' => 'dagger',
-                'rarity' => 'common',
-                'stackable' => false,
-                'atk_bonus' => 6,
-                'str_bonus' => 2,
-                'equipment_slot' => 'weapon',
-                'required_level' => 5,
-                'base_value' => 80,
-            ],
+        // Generate smithed items programmatically
+        $smithedItems = $this->generateSmithedItems();
 
-            // Swords
-            [
-                'name' => 'Bronze Sword',
-                'description' => 'A basic sword forged from bronze.',
-                'type' => 'weapon',
-                'subtype' => 'sword',
-                'rarity' => 'common',
-                'stackable' => false,
-                'atk_bonus' => 4,
-                'str_bonus' => 2,
-                'equipment_slot' => 'weapon',
-                'required_level' => 1,
-                'base_value' => 50,
-            ],
-            [
-                'name' => 'Iron Sword',
-                'description' => 'A sturdy sword made of iron.',
-                'type' => 'weapon',
-                'subtype' => 'sword',
-                'rarity' => 'common',
-                'stackable' => false,
-                'atk_bonus' => 8,
-                'str_bonus' => 4,
-                'equipment_slot' => 'weapon',
-                'required_level' => 10,
-                'base_value' => 150,
-            ],
-            [
-                'name' => 'Steel Sword',
-                'description' => 'A well-crafted steel blade.',
-                'type' => 'weapon',
-                'subtype' => 'sword',
-                'rarity' => 'uncommon',
-                'stackable' => false,
-                'atk_bonus' => 15,
-                'str_bonus' => 8,
-                'equipment_slot' => 'weapon',
-                'required_level' => 25,
-                'base_value' => 500,
-            ],
-            [
-                'name' => 'Mithril Blade',
-                'description' => 'A gleaming blade forged from rare mithril.',
-                'type' => 'weapon',
-                'subtype' => 'sword',
-                'rarity' => 'rare',
-                'stackable' => false,
-                'atk_bonus' => 25,
-                'str_bonus' => 15,
-                'equipment_slot' => 'weapon',
-                'required_level' => 50,
-                'base_value' => 2500,
-            ],
+        $items = [
+            // === LEGACY WEAPONS (kept for backwards compatibility) ===
             [
                 'name' => 'Dragon Slayer',
                 'description' => 'A legendary sword said to have felled dragons.',
@@ -110,36 +158,7 @@ class ItemSeeder extends Seeder
                 'base_value' => 25000,
             ],
 
-            // Axes
-            [
-                'name' => 'Bronze Axe',
-                'description' => 'A bronze axe good for combat and woodcutting.',
-                'type' => 'weapon',
-                'subtype' => 'axe',
-                'rarity' => 'common',
-                'stackable' => false,
-                'atk_bonus' => 3,
-                'str_bonus' => 5,
-                'equipment_slot' => 'weapon',
-                'required_level' => 1,
-                'base_value' => 60,
-            ],
-            [
-                'name' => 'Iron Battleaxe',
-                'description' => 'A heavy iron battleaxe.',
-                'type' => 'weapon',
-                'subtype' => 'axe',
-                'rarity' => 'common',
-                'stackable' => false,
-                'atk_bonus' => 6,
-                'str_bonus' => 10,
-                'equipment_slot' => 'weapon',
-                'required_level' => 15,
-                'base_value' => 200,
-            ],
-
-            // === ARMOR ===
-            // Helmets
+            // === LEGACY ARMOR (kept for backwards compatibility) ===
             [
                 'name' => 'Leather Cap',
                 'description' => 'A simple leather cap offering minimal protection.',
@@ -153,32 +172,6 @@ class ItemSeeder extends Seeder
                 'base_value' => 25,
             ],
             [
-                'name' => 'Iron Helm',
-                'description' => 'A sturdy iron helmet.',
-                'type' => 'armor',
-                'subtype' => 'helmet',
-                'rarity' => 'common',
-                'stackable' => false,
-                'def_bonus' => 6,
-                'equipment_slot' => 'head',
-                'required_level' => 10,
-                'base_value' => 100,
-            ],
-            [
-                'name' => 'Steel Great Helm',
-                'description' => 'A full steel helm providing excellent protection.',
-                'type' => 'armor',
-                'subtype' => 'helmet',
-                'rarity' => 'uncommon',
-                'stackable' => false,
-                'def_bonus' => 12,
-                'equipment_slot' => 'head',
-                'required_level' => 30,
-                'base_value' => 400,
-            ],
-
-            // Chest armor
-            [
                 'name' => 'Leather Vest',
                 'description' => 'A simple leather vest.',
                 'type' => 'armor',
@@ -191,33 +184,6 @@ class ItemSeeder extends Seeder
                 'base_value' => 40,
             ],
             [
-                'name' => 'Chainmail Shirt',
-                'description' => 'A shirt of interlocked iron rings.',
-                'type' => 'armor',
-                'subtype' => 'chest',
-                'rarity' => 'common',
-                'stackable' => false,
-                'def_bonus' => 10,
-                'equipment_slot' => 'chest',
-                'required_level' => 15,
-                'base_value' => 200,
-            ],
-            [
-                'name' => 'Steel Plate Armor',
-                'description' => 'Heavy plate armor forged from steel.',
-                'type' => 'armor',
-                'subtype' => 'chest',
-                'rarity' => 'uncommon',
-                'stackable' => false,
-                'def_bonus' => 20,
-                'hp_bonus' => 10,
-                'equipment_slot' => 'chest',
-                'required_level' => 40,
-                'base_value' => 1000,
-            ],
-
-            // Shields
-            [
                 'name' => 'Wooden Shield',
                 'description' => 'A basic wooden shield.',
                 'type' => 'armor',
@@ -228,18 +194,6 @@ class ItemSeeder extends Seeder
                 'equipment_slot' => 'shield',
                 'required_level' => 1,
                 'base_value' => 30,
-            ],
-            [
-                'name' => 'Iron Shield',
-                'description' => 'A reliable iron shield.',
-                'type' => 'armor',
-                'subtype' => 'shield',
-                'rarity' => 'common',
-                'stackable' => false,
-                'def_bonus' => 8,
-                'equipment_slot' => 'shield',
-                'required_level' => 10,
-                'base_value' => 120,
             ],
 
             // === RESOURCES ===
@@ -304,6 +258,26 @@ class ItemSeeder extends Seeder
                 'max_stack' => 100,
                 'base_value' => 200,
             ],
+            [
+                'name' => 'Celestial Ore',
+                'description' => 'A rare ore from meteorites, pulsing with cosmic energy.',
+                'type' => 'resource',
+                'subtype' => 'ore',
+                'rarity' => 'rare',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 500,
+            ],
+            [
+                'name' => 'Oria Ore',
+                'description' => 'The rarest and most powerful ore in existence, said to be blessed by the gods.',
+                'type' => 'resource',
+                'subtype' => 'ore',
+                'rarity' => 'epic',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 1000,
+            ],
 
             // Bars
             [
@@ -335,6 +309,36 @@ class ItemSeeder extends Seeder
                 'stackable' => true,
                 'max_stack' => 100,
                 'base_value' => 100,
+            ],
+            [
+                'name' => 'Mithril Bar',
+                'description' => 'A gleaming bar of refined mithril.',
+                'type' => 'resource',
+                'subtype' => 'bar',
+                'rarity' => 'uncommon',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 300,
+            ],
+            [
+                'name' => 'Celestial Bar',
+                'description' => 'A bar of refined celestial metal, radiating with cosmic power.',
+                'type' => 'resource',
+                'subtype' => 'bar',
+                'rarity' => 'rare',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 800,
+            ],
+            [
+                'name' => 'Oria Bar',
+                'description' => 'The most precious metal bar, forged from divine oria ore.',
+                'type' => 'resource',
+                'subtype' => 'bar',
+                'rarity' => 'epic',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 1500,
             ],
 
             // Fish (perishable - spoils after time)
@@ -916,7 +920,10 @@ class ItemSeeder extends Seeder
             ],
         ];
 
-        foreach ($items as $item) {
+        // Merge smithed items with other items
+        $allItems = array_merge($smithedItems, $items);
+
+        foreach ($allItems as $item) {
             Item::updateOrCreate(
                 ['name' => $item['name']],
                 $item

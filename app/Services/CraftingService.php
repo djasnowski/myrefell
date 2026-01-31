@@ -10,11 +10,64 @@ use Illuminate\Support\Facades\DB;
 class CraftingService
 {
     /**
-     * Crafting recipes configuration.
-     * Each recipe has required materials and the output.
+     * Metal tiers for smithing recipes.
      */
-    public const RECIPES = [
-        // Smithing recipes
+    private const METAL_TIERS = [
+        'Bronze' => ['base_level' => 1, 'bar_xp' => 12, 'item_xp' => 12, 'bar_energy' => 3, 'item_energy' => 2],
+        'Iron' => ['base_level' => 15, 'bar_xp' => 25, 'item_xp' => 20, 'bar_energy' => 4, 'item_energy' => 3],
+        'Steel' => ['base_level' => 30, 'bar_xp' => 40, 'item_xp' => 30, 'bar_energy' => 5, 'item_energy' => 3],
+        'Mithril' => ['base_level' => 45, 'bar_xp' => 55, 'item_xp' => 45, 'bar_energy' => 5, 'item_energy' => 4],
+        'Celestial' => ['base_level' => 60, 'bar_xp' => 75, 'item_xp' => 60, 'bar_energy' => 6, 'item_energy' => 5],
+        'Oria' => ['base_level' => 75, 'bar_xp' => 100, 'item_xp' => 80, 'bar_energy' => 7, 'item_energy' => 6],
+    ];
+
+    /**
+     * Smithable item templates.
+     * Each has: bars required, level offset, output quantity (for stackables).
+     */
+    private const SMITHABLE_ITEMS = [
+        // Weapons (11 types)
+        'Dagger' => ['bars' => 1, 'offset' => 0, 'output' => 1],
+        'Axe' => ['bars' => 1, 'offset' => 1, 'output' => 1],
+        'Mace' => ['bars' => 1, 'offset' => 2, 'output' => 1],
+        'Sword' => ['bars' => 1, 'offset' => 4, 'output' => 1],
+        'Scimitar' => ['bars' => 2, 'offset' => 5, 'output' => 1],
+        'Spear' => ['bars' => 1, 'offset' => 5, 'output' => 1],
+        'Longsword' => ['bars' => 2, 'offset' => 6, 'output' => 1],
+        'Warhammer' => ['bars' => 3, 'offset' => 9, 'output' => 1],
+        'Battleaxe' => ['bars' => 3, 'offset' => 10, 'output' => 1],
+        'Claws' => ['bars' => 2, 'offset' => 13, 'output' => 1],
+        '2h Sword' => ['bars' => 3, 'offset' => 14, 'output' => 1],
+        // Armor (8 types)
+        'Medium Helm' => ['bars' => 1, 'offset' => 3, 'output' => 1],
+        'Full Helm' => ['bars' => 2, 'offset' => 7, 'output' => 1],
+        'Sq Shield' => ['bars' => 2, 'offset' => 8, 'output' => 1],
+        'Chainbody' => ['bars' => 3, 'offset' => 11, 'output' => 1],
+        'Kiteshield' => ['bars' => 3, 'offset' => 12, 'output' => 1],
+        'Platelegs' => ['bars' => 3, 'offset' => 16, 'output' => 1],
+        'Plateskirt' => ['bars' => 3, 'offset' => 16, 'output' => 1],
+        'Platebody' => ['bars' => 5, 'offset' => 18, 'output' => 1],
+        // Ammunition (4 types)
+        'Dart Tips' => ['bars' => 1, 'offset' => 4, 'output' => 10],
+        'Arrowtips' => ['bars' => 1, 'offset' => 5, 'output' => 15],
+        'Javelin Tips' => ['bars' => 1, 'offset' => 6, 'output' => 5],
+        'Throwing Knives' => ['bars' => 1, 'offset' => 7, 'output' => 5],
+    ];
+
+    /**
+     * Base recipes (bars, tools, etc.).
+     *
+     * @var array<string, array<string, mixed>>|null
+     */
+    private static ?array $cachedRecipes = null;
+
+    /**
+     * Base crafting recipes.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private const BASE_RECIPES = [
+        // Bar smelting recipes
         'bronze_bar' => [
             'name' => 'Bronze Bar',
             'category' => 'smithing',
@@ -56,6 +109,48 @@ class CraftingService
                 ['name' => 'Coal', 'quantity' => 2],
             ],
             'output' => ['name' => 'Steel Bar', 'quantity' => 1],
+        ],
+        'mithril_bar' => [
+            'name' => 'Mithril Bar',
+            'category' => 'smithing',
+            'skill' => 'smithing',
+            'required_level' => 45,
+            'xp_reward' => 55,
+            'energy_cost' => 5,
+            'task_type' => 'smith',
+            'materials' => [
+                ['name' => 'Mithril Ore', 'quantity' => 1],
+                ['name' => 'Coal', 'quantity' => 3],
+            ],
+            'output' => ['name' => 'Mithril Bar', 'quantity' => 1],
+        ],
+        'celestial_bar' => [
+            'name' => 'Celestial Bar',
+            'category' => 'smithing',
+            'skill' => 'smithing',
+            'required_level' => 60,
+            'xp_reward' => 75,
+            'energy_cost' => 6,
+            'task_type' => 'smith',
+            'materials' => [
+                ['name' => 'Celestial Ore', 'quantity' => 1],
+                ['name' => 'Coal', 'quantity' => 4],
+            ],
+            'output' => ['name' => 'Celestial Bar', 'quantity' => 1],
+        ],
+        'oria_bar' => [
+            'name' => 'Oria Bar',
+            'category' => 'smithing',
+            'skill' => 'smithing',
+            'required_level' => 75,
+            'xp_reward' => 100,
+            'energy_cost' => 7,
+            'task_type' => 'smith',
+            'materials' => [
+                ['name' => 'Oria Ore', 'quantity' => 1],
+                ['name' => 'Coal', 'quantity' => 5],
+            ],
+            'output' => ['name' => 'Oria Bar', 'quantity' => 1],
         ],
         'nails' => [
             'name' => 'Nails',
@@ -153,7 +248,6 @@ class CraftingService
             ],
             'output' => ['name' => 'Fishing Net', 'quantity' => 1],
         ],
-
         // Crafting recipes
         'wooden_arrow' => [
             'name' => 'Wooden Arrow',
@@ -182,6 +276,59 @@ class CraftingService
             'output' => ['name' => 'Oak Plank', 'quantity' => 2],
         ],
     ];
+
+    /**
+     * Get all recipes including dynamically generated smithing recipes.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function getRecipes(): array
+    {
+        if (self::$cachedRecipes !== null) {
+            return self::$cachedRecipes;
+        }
+
+        $recipes = self::BASE_RECIPES;
+
+        // Generate smithing recipes for all metal tiers
+        foreach (self::METAL_TIERS as $metal => $tierData) {
+            $barName = "{$metal} Bar";
+
+            foreach (self::SMITHABLE_ITEMS as $itemName => $itemData) {
+                $fullName = "{$metal} {$itemName}";
+                $recipeId = strtolower(str_replace([' ', '-'], '_', $fullName));
+                $level = $tierData['base_level'] + $itemData['offset'];
+                $xpPerBar = $tierData['item_xp'];
+                $energyPerBar = $tierData['item_energy'];
+
+                $recipes[$recipeId] = [
+                    'name' => $fullName,
+                    'category' => 'smithing',
+                    'skill' => 'smithing',
+                    'required_level' => $level,
+                    'xp_reward' => $xpPerBar * $itemData['bars'],
+                    'energy_cost' => $energyPerBar * $itemData['bars'],
+                    'task_type' => 'smith',
+                    'materials' => [
+                        ['name' => $barName, 'quantity' => $itemData['bars']],
+                    ],
+                    'output' => ['name' => $fullName, 'quantity' => $itemData['output']],
+                ];
+            }
+        }
+
+        self::$cachedRecipes = $recipes;
+
+        return $recipes;
+    }
+
+    /**
+     * Clear the cached recipes (for testing).
+     */
+    public static function clearRecipeCache(): void
+    {
+        self::$cachedRecipes = null;
+    }
 
     /**
      * Location types that allow crafting.
@@ -217,7 +364,7 @@ class CraftingService
 
         $categories = [];
 
-        foreach (self::RECIPES as $id => $recipe) {
+        foreach (self::getRecipes() as $id => $recipe) {
             $skillLevel = $user->getSkillLevel($recipe['skill']);
 
             // Check if player meets level requirement
@@ -243,7 +390,7 @@ class CraftingService
     {
         $categories = [];
 
-        foreach (self::RECIPES as $id => $recipe) {
+        foreach (self::getRecipes() as $id => $recipe) {
             $category = $recipe['category'];
             if (! isset($categories[$category])) {
                 $categories[$category] = [];
@@ -308,7 +455,7 @@ class CraftingService
      */
     public function canMakeRecipe(User $user, string $recipeId): bool
     {
-        $recipe = self::RECIPES[$recipeId] ?? null;
+        $recipe = self::getRecipes()[$recipeId] ?? null;
         if (! $recipe) {
             return false;
         }
@@ -345,7 +492,7 @@ class CraftingService
      */
     public function craft(User $user, string $recipeId, ?string $locationType = null, ?int $locationId = null): array
     {
-        $recipe = self::RECIPES[$recipeId] ?? null;
+        $recipe = self::getRecipes()[$recipeId] ?? null;
 
         if (! $recipe) {
             return [
