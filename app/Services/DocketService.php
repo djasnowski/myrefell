@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\CraftingOrder;
 use App\Models\Item;
-use App\Models\LocationStockpile;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -406,14 +405,21 @@ class DocketService
 
             // Award XP to crafter
             $xpReward = $recipe['xp_reward'] * $order->quantity;
-            $skill = $user->skills()->where('skill_name', $recipe['skill'])->first();
-            $leveledUp = false;
 
-            if ($skill) {
-                $oldLevel = $skill->level;
-                $skill->addXp($xpReward);
-                $leveledUp = $skill->fresh()->level > $oldLevel;
+            // Get or create the skill
+            $skill = $user->skills()->where('skill_name', $recipe['skill'])->first();
+
+            if (! $skill) {
+                $skill = $user->skills()->create([
+                    'skill_name' => $recipe['skill'],
+                    'level' => 1,
+                    'xp' => 0,
+                ]);
             }
+
+            $oldLevel = $skill->level;
+            $skill->addXp($xpReward);
+            $leveledUp = $skill->fresh()->level > $oldLevel;
 
             // Give item to customer
             $totalQuantity = $recipe['output']['quantity'] * $order->quantity;

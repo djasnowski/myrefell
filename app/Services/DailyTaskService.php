@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\DailyTask;
 use App\Models\PlayerDailyTask;
-use App\Models\PlayerSkill;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -125,7 +124,7 @@ class DailyTaskService
     /**
      * Record progress for a task type.
      */
-    public function recordProgress(User $user, string $taskType, string $targetIdentifier = null, int $amount = 1): void
+    public function recordProgress(User $user, string $taskType, ?string $targetIdentifier = null, int $amount = 1): void
     {
         $query = PlayerDailyTask::where('user_id', $user->id)
             ->where('assigned_date', today())
@@ -173,13 +172,20 @@ class DailyTaskService
             // Grant XP reward
             if ($task->xp_reward > 0 && $task->xp_skill) {
                 $skill = $user->skills()->where('skill_name', $task->xp_skill)->first();
-                if ($skill) {
-                    $skill->addXp($task->xp_reward);
-                    $rewards['xp'] = [
-                        'amount' => $task->xp_reward,
-                        'skill' => $task->xp_skill,
-                    ];
+
+                if (! $skill) {
+                    $skill = $user->skills()->create([
+                        'skill_name' => $task->xp_skill,
+                        'level' => 1,
+                        'xp' => 0,
+                    ]);
                 }
+
+                $skill->addXp($task->xp_reward);
+                $rewards['xp'] = [
+                    'amount' => $task->xp_reward,
+                    'skill' => $task->xp_skill,
+                ];
             }
 
             // Mark as claimed

@@ -196,13 +196,20 @@ class QuestService
             // Grant XP reward
             if ($quest->xp_reward > 0 && $quest->xp_skill) {
                 $skill = $user->skills()->where('skill_name', $quest->xp_skill)->first();
-                if ($skill) {
-                    $skill->addXp($quest->xp_reward);
-                    $rewards['xp'] = [
-                        'amount' => $quest->xp_reward,
-                        'skill' => $quest->xp_skill,
-                    ];
+
+                if (! $skill) {
+                    $skill = $user->skills()->create([
+                        'skill_name' => $quest->xp_skill,
+                        'level' => 1,
+                        'xp' => 0,
+                    ]);
                 }
+
+                $skill->addXp($quest->xp_reward);
+                $rewards['xp'] = [
+                    'amount' => $quest->xp_reward,
+                    'skill' => $quest->xp_skill,
+                ];
             }
 
             // Grant item rewards
@@ -237,7 +244,7 @@ class QuestService
     /**
      * Record progress for a quest type.
      */
-    public function recordProgress(User $user, string $questType, string $targetIdentifier = null, int $amount = 1): void
+    public function recordProgress(User $user, string $questType, ?string $targetIdentifier = null, int $amount = 1): void
     {
         $query = PlayerQuest::where('user_id', $user->id)
             ->where('status', PlayerQuest::STATUS_ACTIVE)

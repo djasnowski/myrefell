@@ -57,7 +57,7 @@ class GatheringService
         ],
         'woodcutting' => [
             'name' => 'Woodcutting',
-            'skill' => 'crafting',
+            'skill' => 'woodcutting',
             'energy_cost' => 4,
             'base_xp' => 10,
             'task_type' => 'chop',
@@ -226,14 +226,21 @@ class GatheringService
             // Award XP (scaled by quantity for bonus yields)
             $baseXp = $config['base_xp'] + $resource['xp_bonus'];
             $xpAwarded = (int) ceil($baseXp * $totalQuantity);
-            $skill = $user->skills()->where('skill_name', $config['skill'])->first();
-            $leveledUp = false;
 
-            if ($skill) {
-                $oldLevel = $skill->level;
-                $skill->addXp($xpAwarded);
-                $leveledUp = $skill->fresh()->level > $oldLevel;
+            // Get or create the skill
+            $skill = $user->skills()->where('skill_name', $config['skill'])->first();
+
+            if (! $skill) {
+                $skill = $user->skills()->create([
+                    'skill_name' => $config['skill'],
+                    'level' => 1,
+                    'xp' => 0,
+                ]);
             }
+
+            $oldLevel = $skill->level;
+            $skill->addXp($xpAwarded);
+            $leveledUp = $skill->fresh()->level > $oldLevel;
 
             // Record daily task progress
             $this->dailyTaskService->recordProgress($user, $config['task_type'], $item->name, $totalQuantity);

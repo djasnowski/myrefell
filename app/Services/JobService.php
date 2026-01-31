@@ -355,13 +355,20 @@ class JobService
             $xpAwarded = null;
             if ($job->xp_reward > 0 && $job->xp_skill) {
                 $skill = $user->skills()->where('skill_name', $job->xp_skill)->first();
-                if ($skill) {
-                    $skill->addXp($job->xp_reward);
-                    $xpAwarded = [
-                        'amount' => $job->xp_reward,
-                        'skill' => $job->xp_skill,
-                    ];
+
+                if (! $skill) {
+                    $skill = $user->skills()->create([
+                        'skill_name' => $job->xp_skill,
+                        'level' => 1,
+                        'xp' => 0,
+                    ]);
                 }
+
+                $skill->addXp($job->xp_reward);
+                $xpAwarded = [
+                    'amount' => $job->xp_reward,
+                    'skill' => $job->xp_skill,
+                ];
             }
 
             // Check for production

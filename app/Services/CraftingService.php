@@ -437,14 +437,21 @@ class CraftingService
 
             // Award XP (scaled by total quantity)
             $xpAwarded = (int) ceil($recipe['xp_reward'] * ($totalQuantity / max(1, $baseQuantity)));
-            $skill = $user->skills()->where('skill_name', $recipe['skill'])->first();
-            $leveledUp = false;
 
-            if ($skill) {
-                $oldLevel = $skill->level;
-                $skill->addXp($xpAwarded);
-                $leveledUp = $skill->fresh()->level > $oldLevel;
+            // Get or create the skill
+            $skill = $user->skills()->where('skill_name', $recipe['skill'])->first();
+
+            if (! $skill) {
+                $skill = $user->skills()->create([
+                    'skill_name' => $recipe['skill'],
+                    'level' => 1,
+                    'xp' => 0,
+                ]);
             }
+
+            $oldLevel = $skill->level;
+            $skill->addXp($xpAwarded);
+            $leveledUp = $skill->fresh()->level > $oldLevel;
 
             // Record daily task progress
             if (isset($recipe['task_type'])) {

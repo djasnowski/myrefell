@@ -242,14 +242,21 @@ class CookingService
 
             // Award XP
             $xpAwarded = $recipe['xp_reward'];
-            $skill = $user->skills()->where('skill_name', 'cooking')->first();
-            $leveledUp = false;
 
-            if ($skill) {
-                $oldLevel = $skill->level;
-                $skill->addXp($xpAwarded);
-                $leveledUp = $skill->fresh()->level > $oldLevel;
+            // Get or create the skill
+            $skill = $user->skills()->where('skill_name', 'cooking')->first();
+
+            if (! $skill) {
+                $skill = $user->skills()->create([
+                    'skill_name' => 'cooking',
+                    'level' => 1,
+                    'xp' => 0,
+                ]);
             }
+
+            $oldLevel = $skill->level;
+            $skill->addXp($xpAwarded);
+            $leveledUp = $skill->fresh()->level > $oldLevel;
 
             // Record daily task progress
             $this->dailyTaskService->recordProgress($user, 'cook', $outputItem->name, $quantity);
