@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AllowItchIoEmbed;
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsurePlayerAtLocation;
 use App\Http\Middleware\HandleAppearance;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            AllowItchIoEmbed::class,
         ]);
 
         // Route middleware aliases
