@@ -42,7 +42,7 @@ class CraftingController extends Controller
     /**
      * Show the crafting page (location-scoped).
      */
-    public function index(Request $request, Village|Town|Barony $village = null, Town $town = null, Barony $barony = null): Response
+    public function index(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null): Response
     {
         $location = $village ?? $town ?? $barony;
         $locationType = $this->getLocationType($location);

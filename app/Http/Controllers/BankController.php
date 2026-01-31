@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Barony;
+use App\Models\Town;
+use App\Models\Village;
 use App\Services\BankService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,25 +20,25 @@ class BankController extends Controller
     /**
      * Show the bank page for a village.
      */
-    public function villageBank(Request $request, int $villageId): Response
+    public function villageBank(Request $request, Village $village): Response
     {
-        return $this->showBank($request, 'village', $villageId);
+        return $this->showBank($request, 'village', $village->id);
     }
 
     /**
      * Show the bank page for a barony.
      */
-    public function baronyBank(Request $request, int $baronyId): Response
+    public function baronyBank(Request $request, Barony $barony): Response
     {
-        return $this->showBank($request, 'barony', $baronyId);
+        return $this->showBank($request, 'barony', $barony->id);
     }
 
     /**
      * Show the bank page for a town.
      */
-    public function townBank(Request $request, int $townId): Response
+    public function townBank(Request $request, Town $town): Response
     {
-        return $this->showBank($request, 'town', $townId);
+        return $this->showBank($request, 'town', $town->id);
     }
 
     /**
