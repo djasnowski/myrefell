@@ -79,7 +79,7 @@ class VillageController extends Controller
         // Get recent activity at this location
         $recentActivity = $this->getRecentActivity($village);
 
-        return Inertia::render('Villages/show', [
+        return Inertia::render('villages/show', [
             'village' => [
                 'id' => $village->id,
                 'name' => $village->name,
