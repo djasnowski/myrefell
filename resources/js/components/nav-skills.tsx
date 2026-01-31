@@ -4,6 +4,7 @@ import type {
 import {
     Beef,
     BicepsFlexed,
+    Church,
     Fish,
     Hammer,
     Heart,
@@ -30,7 +31,7 @@ interface SidebarData {
     skills: Skill[];
 }
 
-const skillOrder = ['attack', 'strength', 'defense', 'hitpoints', 'range', 'farming', 'mining', 'fishing', 'woodcutting', 'cooking', 'smithing', 'crafting'];
+const skillOrder = ['attack', 'strength', 'defense', 'hitpoints', 'range', 'prayer', 'farming', 'mining', 'fishing', 'woodcutting', 'cooking', 'smithing', 'crafting'];
 
 const skillIcons: Record<string, LucideIcon> = {
     hitpoints: Heart,
@@ -38,6 +39,7 @@ const skillIcons: Record<string, LucideIcon> = {
     strength: BicepsFlexed,
     defense: Shield,
     range: Target,
+    prayer: Church,
     farming: Wheat,
     mining: Pickaxe,
     fishing: Fish,
@@ -100,7 +102,7 @@ export function NavSkills() {
     );
 
     return (
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-4 gap-1.5">
             {sortedSkills.map((skill) => (
                 <SkillBadge key={skill.name} skill={skill} />
             ))}

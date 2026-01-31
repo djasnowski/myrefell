@@ -4,6 +4,7 @@ import type {
 import {
     Beef,
     BicepsFlexed,
+    Church,
     Crosshair,
     Fish,
     Hammer,
@@ -61,6 +62,7 @@ const skillIcons: Record<string, LucideIcon> = {
     defense: Shield,
     hitpoints: Heart,
     range: Crosshair,
+    prayer: Church,
     farming: Wheat,
     mining: Pickaxe,
     fishing: Fish,
