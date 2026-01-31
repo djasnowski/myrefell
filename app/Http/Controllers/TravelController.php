@@ -29,6 +29,7 @@ class TravelController extends Controller
             'destinations' => $this->travelService->getAvailableDestinations($user),
             'energy_cost' => TravelService::ENERGY_COST,
             'just_arrived' => $arrival,
+            'is_dev' => app()->environment('local'),
         ]);
     }
 
@@ -76,9 +77,9 @@ class TravelController extends Controller
                 $request->input('destination_id')
             );
 
-            // If Inertia request, redirect back
+            // If Inertia request, redirect to travel page to show progress
             if ($request->header('X-Inertia')) {
-                return back();
+                return redirect()->route('travel.index');
             }
 
             return response()->json([
@@ -123,6 +124,38 @@ class TravelController extends Controller
             'success' => false,
             'error' => 'You are not traveling.',
         ], 422);
+    }
+
+    /**
+     * Skip travel (dev only) - instantly arrive at destination.
+     */
+    public function skip(Request $request)
+    {
+        if (! app()->environment('local')) {
+            abort(403, 'This action is only available in development.');
+        }
+
+        $user = $request->user();
+
+        if (! $user->is_traveling) {
+            if ($request->header('X-Inertia')) {
+                return back()->withErrors(['travel' => 'You are not traveling.']);
+            }
+
+            return response()->json(['success' => false, 'error' => 'You are not traveling.'], 422);
+        }
+
+        // Force arrival by setting arrives_at to now
+        $user->update(['traveling_arrives_at' => now()->subSecond()]);
+
+        // Check arrival to complete the travel
+        $this->travelService->checkArrival($user);
+
+        if ($request->header('X-Inertia')) {
+            return redirect()->route('travel.index');
+        }
+
+        return response()->json(['success' => true, 'message' => 'Travel skipped.']);
     }
 
     /**

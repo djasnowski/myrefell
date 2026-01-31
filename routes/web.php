@@ -188,6 +188,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('travel/start', [TravelController::class, 'start'])->name('travel.start');
     Route::post('travel/cancel', [TravelController::class, 'cancel'])->name('travel.cancel');
     Route::post('travel/arrive', [TravelController::class, 'arrive'])->name('travel.arrive');
+    Route::post('travel/skip', [TravelController::class, 'skip'])->name('travel.skip');
 
     // Stable (Horses) - Legacy route redirects to location-scoped
     Route::get('stable', [StableController::class, 'legacyIndex'])->name('stable.index');

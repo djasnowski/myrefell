@@ -3,17 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Barony;
-use App\Models\DiseaseInfection;
 use App\Models\DiseaseImmunity;
+use App\Models\DiseaseInfection;
 use App\Models\Kingdom;
 use App\Models\Town;
 use App\Models\Village;
+use App\Services\TravelService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class MapController extends Controller
 {
+    public function __construct(
+        protected TravelService $travelService
+    ) {}
+
     /**
      * Display the world map as the dashboard.
      */
@@ -21,9 +26,14 @@ class MapController extends Controller
     {
         $user = $request->user();
 
+        // Check if arrived
+        $this->travelService->checkArrival($user);
+
         return Inertia::render('Travel/Map', [
             'map_data' => $this->getMapData($user),
             'health_data' => $this->getHealthData($user),
+            'travel_status' => $this->travelService->getTravelStatus($user),
+            'is_dev' => app()->environment('local'),
         ]);
     }
 
@@ -261,7 +271,7 @@ class MapController extends Controller
         $locationType = $user->current_location_type;
         $locationId = $user->current_location_id;
 
-        if (!$locationType || !$locationId) {
+        if (! $locationType || ! $locationId) {
             return null;
         }
 

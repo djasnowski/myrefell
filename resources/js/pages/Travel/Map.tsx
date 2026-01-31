@@ -1,6 +1,6 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { Anchor, Castle, Church, Compass, Crown, Home, MapPin, Minus, Plus, RotateCcw, Search, Users, X } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { Anchor, Castle, Church, Clock, Compass, Crown, Home, Loader2, MapPin, Minus, Plus, RotateCcw, Search, Users, X, Zap } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { HealthStatusWidget, type DiseaseInfection, type DiseaseImmunity } from '@/components/ui/health-status-widget';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -70,9 +70,27 @@ interface HealthData {
     healer_path: string | null;
 }
 
+interface TravelStatus {
+    is_traveling: boolean;
+    destination: {
+        type: string;
+        id: number;
+        name: string;
+    };
+    started_at: string;
+    arrives_at: string;
+    total_seconds: number;
+    elapsed_seconds: number;
+    remaining_seconds: number;
+    progress_percent: number;
+    has_arrived: boolean;
+}
+
 interface PageProps {
     map_data: MapData;
     health_data: HealthData;
+    travel_status: TravelStatus | null;
+    is_dev: boolean;
     [key: string]: unknown;
 }
 
@@ -110,8 +128,115 @@ function getBiomeColor(biome: string): { terrain: string; accent: string } {
     return biomeColors[biome] || { terrain: '#3d3d3d', accent: '#5c5c5c' };
 }
 
+function formatTime(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins > 0) {
+        return `${mins}m ${secs}s`;
+    }
+    return `${secs}s`;
+}
+
+function TravelProgressOverlay({ status, isDev }: { status: TravelStatus; isDev: boolean }) {
+    const [remaining, setRemaining] = useState(status.remaining_seconds);
+    const [progress, setProgress] = useState(status.progress_percent);
+    const arrivedRef = useRef(false);
+
+    useEffect(() => {
+        if (status.has_arrived && !arrivedRef.current) {
+            arrivedRef.current = true;
+            router.post('/travel/arrive', {}, {
+                preserveScroll: true,
+                onSuccess: () => router.reload(),
+            });
+            return;
+        }
+
+        const interval = setInterval(() => {
+            setRemaining((prev) => {
+                const newVal = Math.max(0, prev - 1);
+                if (newVal <= 0 && !arrivedRef.current) {
+                    arrivedRef.current = true;
+                    clearInterval(interval);
+                    router.post('/travel/arrive', {}, {
+                        preserveScroll: true,
+                        onSuccess: () => router.reload(),
+                    });
+                }
+                return newVal;
+            });
+            setProgress((prev) => Math.min(100, prev + (100 / status.total_seconds)));
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [status.has_arrived, status.total_seconds]);
+
+    const handleCancel = () => {
+        router.post('/travel/cancel', {}, {
+            preserveScroll: true,
+            onSuccess: () => router.reload(),
+        });
+    };
+
+    const handleSkip = () => {
+        router.post('/travel/skip', {}, {
+            preserveScroll: true,
+            onSuccess: () => router.reload(),
+        });
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-stone-950/70 backdrop-blur-sm">
+            <div className="rounded-xl border-2 border-amber-600/50 bg-stone-900/95 p-6 shadow-2xl">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-900/30">
+                        <Loader2 className="h-8 w-8 animate-spin text-amber-400" />
+                    </div>
+                    <div className="text-center">
+                        <div className="font-pixel text-sm text-amber-400">Traveling to</div>
+                        <div className="font-pixel text-xl text-stone-100">{status.destination.name}</div>
+                    </div>
+                    <div className="flex items-center gap-2 text-stone-300">
+                        <Clock className="h-5 w-5" />
+                        <span className="font-pixel text-lg">{formatTime(remaining)}</span>
+                    </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="mt-4">
+                    <div className="h-3 w-72 overflow-hidden rounded-full bg-stone-700">
+                        <div
+                            className="h-full bg-gradient-to-r from-amber-600 to-amber-400 transition-all duration-1000"
+                            style={{ width: `${progress}%` }}
+                        />
+                    </div>
+                </div>
+
+                <div className="mt-4 flex justify-center gap-3">
+                    <button
+                        onClick={handleCancel}
+                        className="flex items-center gap-2 rounded-lg border border-red-600/50 bg-red-900/20 px-4 py-2 font-pixel text-sm text-red-400 transition hover:bg-red-900/40"
+                    >
+                        <X className="h-4 w-4" />
+                        Cancel
+                    </button>
+                    {isDev && (
+                        <button
+                            onClick={handleSkip}
+                            className="flex items-center gap-2 rounded-lg border border-blue-600/50 bg-blue-900/20 px-4 py-2 font-pixel text-sm text-blue-400 transition hover:bg-blue-900/40"
+                        >
+                            <Zap className="h-4 w-4" />
+                            Skip
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function Dashboard() {
-    const { map_data, health_data } = usePage<PageProps>().props;
+    const { map_data, health_data, travel_status, is_dev } = usePage<PageProps>().props;
     const { kingdoms, towns, baronies, villages, player, bounds } = map_data;
 
     const [zoom, setZoom] = useState(1);
@@ -126,6 +251,14 @@ export default function Dashboard() {
     const [clickedLocation, setClickedLocation] = useState<{ type: string; data: Location & { population?: number; is_port?: boolean; kingdom_name?: string; barony_name?: string } } | null>(null);
     const [isTraveling, setIsTraveling] = useState(false);
     const svgRef = useRef<SVGSVGElement>(null);
+
+    // Prevent page scrolling on the map page
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, []);
 
     // Calculate travel time from player position
     const getTravelTime = useCallback((loc: Location) => {
@@ -492,7 +625,7 @@ export default function Dashboard() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="World Map" />
-            <div className="relative flex h-0 min-h-0 w-full flex-1 overflow-hidden" style={{ backgroundColor: DEEP_WATER_COLOR }}>
+            <div className="relative h-[calc(100dvh-4rem)] w-full overflow-hidden" style={{ backgroundColor: DEEP_WATER_COLOR }}>
                 {/* Right Controls */}
                 <div className="absolute right-4 top-4 z-10 flex flex-col gap-2">
                     <button onClick={handleZoomIn} className="rounded-lg border-2 border-stone-600 bg-stone-800/90 p-2 text-stone-300 transition hover:bg-stone-700" title="Zoom In">
@@ -883,6 +1016,11 @@ export default function Dashboard() {
                             </div>
                         </div>
                     </div>
+                )}
+
+                {/* Travel Progress Overlay */}
+                {travel_status?.is_traveling && (
+                    <TravelProgressOverlay status={travel_status} isDev={is_dev} />
                 )}
             </div>
         </AppLayout>

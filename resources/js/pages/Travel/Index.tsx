@@ -41,6 +41,7 @@ interface PageProps {
     destinations: Destination[];
     energy_cost: number;
     just_arrived: ArrivalInfo | null;
+    is_dev: boolean;
     [key: string]: unknown;
 }
 
@@ -65,7 +66,7 @@ function formatTime(seconds: number): string {
     return `${secs}s`;
 }
 
-function TravelProgress({ status, onCancel, onArrive }: { status: TravelStatus; onCancel: () => void; onArrive: () => void }) {
+function TravelProgress({ status, onCancel, onArrive, onSkip, isDev }: { status: TravelStatus; onCancel: () => void; onArrive: () => void; onSkip?: () => void; isDev?: boolean }) {
     const [remaining, setRemaining] = useState(status.remaining_seconds);
     const [progress, setProgress] = useState(status.progress_percent);
     const arrivedRef = useRef(false);
@@ -125,13 +126,24 @@ function TravelProgress({ status, onCancel, onArrive }: { status: TravelStatus; 
                     <span className="font-pixel text-sm text-stone-300">{formatTime(remaining)} remaining</span>
                 </div>
 
-                <button
-                    onClick={onCancel}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-red-600/50 bg-red-900/20 px-4 py-2 font-pixel text-sm text-red-400 transition hover:bg-red-900/40"
-                >
-                    <X className="h-4 w-4" />
-                    Cancel Journey
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={onCancel}
+                        className="flex flex-1 items-center justify-center gap-2 rounded-lg border-2 border-red-600/50 bg-red-900/20 px-4 py-2 font-pixel text-sm text-red-400 transition hover:bg-red-900/40"
+                    >
+                        <X className="h-4 w-4" />
+                        Cancel
+                    </button>
+                    {isDev && onSkip && (
+                        <button
+                            onClick={onSkip}
+                            className="flex items-center justify-center gap-2 rounded-lg border-2 border-blue-600/50 bg-blue-900/20 px-4 py-2 font-pixel text-sm text-blue-400 transition hover:bg-blue-900/40"
+                        >
+                            <Zap className="h-4 w-4" />
+                            Skip
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -188,7 +200,7 @@ function DestinationCard({
 }
 
 export default function TravelIndex() {
-    const { travel_status, destinations, energy_cost, just_arrived } = usePage<PageProps>().props;
+    const { travel_status, destinations, energy_cost, just_arrived, is_dev } = usePage<PageProps>().props;
     const [traveling, setTraveling] = useState(false);
     const [showArrival, setShowArrival] = useState(!!just_arrived);
 
@@ -221,6 +233,15 @@ export default function TravelIndex() {
 
     const handleArrive = () => {
         router.post('/travel/arrive', {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                router.reload();
+            },
+        });
+    };
+
+    const handleSkip = () => {
+        router.post('/travel/skip', {}, {
             preserveScroll: true,
             onSuccess: () => {
                 router.reload();
@@ -265,7 +286,7 @@ export default function TravelIndex() {
             <AppLayout breadcrumbs={breadcrumbs}>
                 <Head title="Traveling..." />
                 <div className="flex h-full flex-1 items-center justify-center p-4">
-                    <TravelProgress status={travel_status} onCancel={handleCancel} onArrive={handleArrive} />
+                    <TravelProgress status={travel_status} onCancel={handleCancel} onArrive={handleArrive} onSkip={handleSkip} isDev={is_dev} />
                 </div>
             </AppLayout>
         );

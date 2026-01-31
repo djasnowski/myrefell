@@ -7,21 +7,12 @@ import {
     ClipboardList,
     Clock,
     Crown,
-    Dumbbell,
-    Gavel,
-    Hammer,
     Home,
     Loader2,
     Map,
     MapPin,
-    Pickaxe,
     ScrollText,
-    Shield,
-    Sparkles,
-    Store,
     Trees,
-    UsersRound,
-    Wheat,
     type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -123,99 +114,6 @@ const locationPaths: Record<string, string> = {
     kingdom: 'kingdoms',
 };
 
-// Build location-scoped URL for a service
-function buildLocationUrl(location: LocationData, service: string): string {
-    const basePath = locationPaths[location.type] || location.type + 's';
-    return `/${basePath}/${location.id}/${service}`;
-}
-
-// Get everything available at current location (merged: services, activities, common)
-function getLocationItems(location: LocationData | null, farm: FarmData | null, context?: PlayerContext): NavItem[] {
-    const items: NavItem[] = [];
-
-    if (!location) {
-        return items;
-    }
-
-    // If the player has a role at this location, add a roles link
-    if (context?.has_role_at_location) {
-        items.push({
-            title: 'My Role',
-            href: buildLocationUrl(location, 'roles'),
-            icon: Shield,
-            description: 'Manage your official duties',
-        });
-    }
-
-    // Wilderness - only gathering
-    if (location.type === 'wilderness') {
-        items.push({
-            title: 'Gathering',
-            href: '/gathering',
-            icon: Pickaxe,
-            description: 'Mine, fish, or chop wood',
-        });
-        return items;
-    }
-
-    // Activities available at settlements - now location-scoped
-    if (['village', 'town', 'barony', 'duchy', 'kingdom'].includes(location.type)) {
-        items.push({
-            title: 'Training',
-            href: buildLocationUrl(location, 'training'),
-            icon: Dumbbell,
-            description: 'Train combat skills',
-        });
-    }
-
-    // Gathering only in villages
-    if (location.type === 'village') {
-        items.push({
-            title: 'Gathering',
-            href: buildLocationUrl(location, 'gathering'),
-            icon: Pickaxe,
-            description: 'Mine, fish, or chop wood',
-        });
-    }
-
-    // Crafting in villages, towns, and baronies
-    if (['village', 'town', 'barony'].includes(location.type)) {
-        items.push({
-            title: 'Crafting',
-            href: buildLocationUrl(location, 'crafting'),
-            icon: Hammer,
-            description: 'Create items',
-        });
-    }
-
-    // Farming - only shows if player has crops at this location
-    if (farm?.has_crops) {
-        items.push({
-            title: farm.crops_ready > 0 ? `Farming (${farm.crops_ready})` : 'Farming',
-            href: '/farming',
-            icon: Wheat,
-            description: farm.crops_ready > 0 ? `${farm.crops_ready} crops ready to harvest` : 'Tend to your crops',
-        });
-    }
-
-    // Court is always available at settlements
-    if (['village', 'town', 'barony', 'duchy', 'kingdom'].includes(location.type)) {
-        items.push({
-            title: 'Court',
-            href: '/crime',
-            icon: Gavel,
-            description: 'Justice and bounties',
-        });
-    }
-
-    return items;
-}
-
-// Get icon for destination type
-function getDestinationIcon(type: string): LucideIcon {
-    return locationIcons[type] || MapPin;
-}
-
 // Get player actions (always visible regardless of location)
 function getPlayerActions(): NavItem[] {
     return [
@@ -251,60 +149,6 @@ function getPlayerActions(): NavItem[] {
         },
     ];
 }
-
-
-// Get contextual items based on player's affiliations
-function getContextualItems(context: PlayerContext): NavItem[] {
-    const items: NavItem[] = [];
-
-    if (context.dynasty) {
-        items.push({
-            title: 'My Dynasty',
-            href: `/dynasties/${context.dynasty.id}`,
-            icon: Crown,
-            description: context.dynasty.name,
-        });
-    }
-
-    if (context.guild) {
-        items.push({
-            title: 'My Guild',
-            href: `/guilds/${context.guild.id}`,
-            icon: UsersRound,
-            description: context.guild.name,
-        });
-    }
-
-    if (context.business) {
-        items.push({
-            title: 'My Business',
-            href: `/businesses/${context.business.id}`,
-            icon: Store,
-            description: context.business.name,
-        });
-    }
-
-    if (context.religion) {
-        items.push({
-            title: 'My Faith',
-            href: `/religions/${context.religion.id}`,
-            icon: Sparkles,
-            description: context.religion.name,
-        });
-    }
-
-    if (context.army) {
-        items.push({
-            title: 'My Army',
-            href: `/warfare/armies/${context.army.id}`,
-            icon: Shield,
-            description: context.army.name,
-        });
-    }
-
-    return items;
-}
-
 
 function formatTime(seconds: number): string {
     const mins = Math.floor(seconds / 60);
@@ -361,6 +205,11 @@ function TravelingIndicator({ travel }: { travel: TravelStatus }) {
     );
 }
 
+// Get icon for destination type
+function getDestinationIcon(type: string): LucideIcon {
+    return locationIcons[type] || MapPin;
+}
+
 export function NavLocation() {
     const { sidebar } = usePage<{ sidebar: SidebarData | null }>().props;
     const { isCurrentUrl } = useCurrentUrl();
@@ -369,21 +218,9 @@ export function NavLocation() {
 
     if (!sidebar) return null;
 
-    const { location, home_village, travel, nearby_destinations, context, farm } = sidebar;
-    const travelDestinations = nearby_destinations || [];
+    const { location, travel, nearby_destinations } = sidebar;
     const playerActions = getPlayerActions();
-    const locationItems = getLocationItems(location, farm, context);
-    const contextualItems = getContextualItems(context || {});
-
-    // Add home village link if player is away from home
-    if (home_village && location && (location.type !== 'village' || location.id !== home_village.id)) {
-        playerActions.push({
-            title: 'Home Village',
-            href: `/villages/${home_village.id}`,
-            icon: Home,
-            description: home_village.name,
-        });
-    }
+    const travelDestinations = nearby_destinations || [];
 
     const LocationIcon = location ? locationIcons[location.type] || MapPin : MapPin;
 
@@ -469,7 +306,6 @@ export function NavLocation() {
 
             {/* Player Actions - Always visible */}
             <SidebarGroup className="px-2 py-0">
-                <SidebarGroupLabel>You</SidebarGroupLabel>
                 <SidebarMenu>
                     {playerActions.map((item) => (
                         <SidebarMenuItem key={item.title}>
@@ -487,51 +323,6 @@ export function NavLocation() {
                     ))}
                 </SidebarMenu>
             </SidebarGroup>
-
-            {/* Everything at this location */}
-            {locationItems.length > 0 && location && (
-                <SidebarGroup className="px-2 py-0">
-                    <SidebarMenu>
-                        {locationItems.map((item) => (
-                            <SidebarMenuItem key={item.title}>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={isCurrentUrl(item.href)}
-                                    tooltip={{ children: item.description || item.title }}
-                                >
-                                    <Link href={item.href} prefetch>
-                                        <item.icon className="h-4 w-4" />
-                                        <span>{item.title}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        ))}
-                    </SidebarMenu>
-                </SidebarGroup>
-            )}
-
-            {/* Contextual Items (Dynasty, Guild, Business, Religion, Army) */}
-            {contextualItems.length > 0 && (
-                <SidebarGroup className="px-2 py-0">
-                    <SidebarGroupLabel>Affiliations</SidebarGroupLabel>
-                    <SidebarMenu>
-                        {contextualItems.map((item) => (
-                            <SidebarMenuItem key={item.title}>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={isCurrentUrl(item.href)}
-                                    tooltip={{ children: item.description || item.title }}
-                                >
-                                    <Link href={item.href} prefetch>
-                                        <item.icon className="h-4 w-4" />
-                                        <span>{item.title}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        ))}
-                    </SidebarMenu>
-                </SidebarGroup>
-            )}
 
             {/* Travel Destinations */}
             {travelDestinations.length > 0 && (

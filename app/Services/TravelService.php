@@ -26,8 +26,9 @@ class TravelService
 
     /**
      * Dev mode: all travel takes this many seconds (set to null to disable).
+     * Use the Skip button on /travel instead for testing.
      */
-    public const DEV_TRAVEL_SECONDS = 2;
+    public const DEV_TRAVEL_SECONDS = null;
 
     /**
      * Start traveling to a destination.
