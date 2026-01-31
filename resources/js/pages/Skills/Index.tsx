@@ -70,21 +70,6 @@ const skillIcons: Record<string, LucideIcon> = {
     crafting: Scissors,
 };
 
-const skillDescriptions: Record<string, string> = {
-    attack: 'Determines accuracy in combat and unlocks better weapons',
-    strength: 'Increases maximum damage dealt in combat',
-    defense: 'Reduces damage taken and unlocks better armor',
-    hitpoints: 'Determines your maximum health and survival',
-    range: 'Accuracy and power with bows and ranged weapons',
-    farming: 'Grow crops, tend fields, and harvest produce',
-    mining: 'Allows mining of better ores and increases yield',
-    fishing: 'Catch rarer fish and find better fishing spots',
-    woodcutting: 'Chop higher-tier trees and harvest faster',
-    cooking: 'Prepare better food with higher healing',
-    smithing: 'Forge better weapons and armor from ores',
-    crafting: 'Create tools, jewelry, and other useful items',
-};
-
 const categoryConfig = {
     combat: {
         color: 'border-red-500/50 bg-red-900/20',

@@ -4,7 +4,6 @@ import {
     Heart,
     Shield,
     Skull,
-    Sword,
     Swords,
     Zap,
 } from 'lucide-react';

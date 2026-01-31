@@ -1,6 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
-    ArrowRight,
     ChevronLeft,
     ChevronRight,
     Eye,
@@ -10,6 +9,7 @@ import {
     Users,
 } from 'lucide-react';
 import { useState } from 'react';
+import { show as showUser } from '@/actions/App/Http/Controllers/Admin/UserController';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +23,6 @@ import {
 } from '@/components/ui/select';
 import AdminLayout from '@/layouts/admin-layout';
 import type { BreadcrumbItem } from '@/types';
-import { show as showUser } from '@/actions/App/Http/Controllers/Admin/UserController';
 
 interface User {
     id: number;

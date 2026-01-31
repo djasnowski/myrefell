@@ -1,13 +1,13 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save, User } from 'lucide-react';
 import { useState } from 'react';
+import { show as showUser } from '@/actions/App/Http/Controllers/Admin/UserController';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AdminLayout from '@/layouts/admin-layout';
 import type { BreadcrumbItem, SharedData } from '@/types';
-import { show as showUser, index as usersIndex } from '@/actions/App/Http/Controllers/Admin/UserController';
 
 interface UserData {
     id: number;
