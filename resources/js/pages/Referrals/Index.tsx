@@ -169,28 +169,28 @@ export default function ReferralsIndex() {
                     </div>
 
                     <div className="rounded-lg bg-stone-800/50 p-4">
-                        <h3 className="mb-2 font-pixel text-sm text-stone-300">How it works:</h3>
-                        <ul className="space-y-1 text-xs text-stone-400">
+                        <h3 className="mb-3 font-pixel text-base text-stone-200">How it works:</h3>
+                        <ul className="space-y-2 text-sm text-stone-300">
                             <li className="flex items-start gap-2">
-                                <span className="text-amber-400">1.</span>
+                                <span className="font-bold text-amber-400">1.</span>
                                 Share your referral link with friends
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-amber-400">2.</span>
+                                <span className="font-bold text-amber-400">2.</span>
                                 They sign up and verify their email
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-amber-400">3.</span>
+                                <span className="font-bold text-amber-400">3.</span>
                                 When they reach combat level {rewards.required_level}, you earn{" "}
-                                <span className="text-amber-300">
+                                <span className="font-bold text-amber-300">
                                     {rewards.referrer_reward} gold
                                 </span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <Gift className="mt-0.5 h-3 w-3 text-green-400" />
+                                <Gift className="mt-0.5 h-4 w-4 text-green-400" />
                                 <span>
                                     They also get{" "}
-                                    <span className="text-green-300">
+                                    <span className="font-bold text-green-300">
                                         {rewards.referred_bonus} gold
                                     </span>{" "}
                                     for using your link!
@@ -207,28 +207,28 @@ export default function ReferralsIndex() {
                         <div className="font-pixel text-2xl text-stone-100">
                             {stats.total_referrals}
                         </div>
-                        <div className="text-xs text-stone-500">Total Referrals</div>
+                        <div className="text-sm text-stone-400">Total Referrals</div>
                     </div>
                     <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
                         <Clock className="mx-auto mb-2 h-6 w-6 text-amber-400" />
                         <div className="font-pixel text-2xl text-stone-100">
                             {stats.pending_referrals}
                         </div>
-                        <div className="text-xs text-stone-500">Pending</div>
+                        <div className="text-sm text-stone-400">Pending</div>
                     </div>
                     <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
                         <Check className="mx-auto mb-2 h-6 w-6 text-green-400" />
                         <div className="font-pixel text-2xl text-stone-100">
                             {stats.rewarded_referrals}
                         </div>
-                        <div className="text-xs text-stone-500">Completed</div>
+                        <div className="text-sm text-stone-400">Completed</div>
                     </div>
                     <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
                         <Coins className="mx-auto mb-2 h-6 w-6 text-amber-400" />
                         <div className="font-pixel text-2xl text-amber-300">
                             {stats.total_earned.toLocaleString()}
                         </div>
-                        <div className="text-xs text-stone-500">Gold Earned</div>
+                        <div className="text-sm text-stone-400">Gold Earned</div>
                     </div>
                 </div>
 
@@ -286,8 +286,8 @@ export default function ReferralsIndex() {
                     ) : (
                         <div className="rounded-xl border-2 border-dashed border-stone-700 p-8 text-center">
                             <Users className="mx-auto mb-3 h-12 w-12 text-stone-600" />
-                            <p className="font-pixel text-stone-500">No referrals yet</p>
-                            <p className="text-xs text-stone-600">
+                            <p className="font-pixel text-lg text-stone-500">No referrals yet</p>
+                            <p className="text-sm text-stone-500">
                                 Share your link to start earning gold!
                             </p>
                         </div>
