@@ -29,25 +29,31 @@ A persistent browser-based medieval MMO where players and NPCs live together in 
 - **28-slot inventory** with stackable items and perishable tracking
 
 ### World Hierarchy
-```
-Kingdom (ruled by elected King)
-└── Barony (ruled by Baron)
-    ├── Town (ruled by Mayor) - guild halls, markets, cathedrals
-    └── Village (ruled by Elder) - population hubs
-        └── Hamlet - uses parent village services
+
+```mermaid
+graph TD
+    K[Kingdom<br/>Ruled by King] --> D[Duchy<br/>Ruled by Duke]
+    D --> B[Barony<br/>Ruled by Baron]
+    B --> T[Town<br/>Ruled by Mayor]
+    B --> V[Village<br/>Ruled by Elder]
+    V --> H[Hamlet<br/>Uses parent services]
+    V -.->|Some villages| P[Port<br/>Ship travel]
 ```
 
 - **8 Biomes**: Forests, Plains, Mountains, Swamps, Desert, Tundra, Coastal, Volcano
+- **Port Villages**: Coastal settlements with harbors for cross-kingdom ship travel
 
 ### Living World
 
 The world runs on a calendar system with time passing automatically:
 
 - **Calendar**: 4 seasons × 12 weeks = 48-week year (1 real day = 1 game week)
-- **Seasons affect**: Travel speed, gathering yields, food decay, market prices
+- **Seasons affect**: Travel speed, gathering yields, food decay, market prices, disaster frequency
 - **NPCs live full lives**: Age, marry, have children, and die naturally
 - **Food consumption**: Weekly food drain from granaries; starvation if empty
 - **Resource decay**: Perishable items spoil over time (faster in summer)
+- **Disease outbreaks**: Spread through settlements, quarantine to contain
+- **Natural disasters**: Fires, floods, storms damage buildings and cause casualties
 
 ### Political System
 - **Democratic elections** for village roles, mayors, and kings
@@ -138,6 +144,13 @@ Non-territorial power structures that overlay the political hierarchy. Players m
 - Hire NPCs with wages and efficiency tracking
 - Business treasury, reputation, and transaction logs
 - Categories: production, service, extraction
+
+**Employment**:
+- Work jobs at locations (up to 2 concurrent jobs)
+- Job requirements (skills, social class, etc.)
+- Work shifts for gold wages
+- Supervisor roles with cut of worker output
+- Quit anytime, find new work elsewhere
 
 **Player-Run Guilds**:
 - Found guilds at towns (5+ members, 50k gold)
@@ -263,14 +276,83 @@ Found new settlements and expand the world:
 - **Vulnerability window**: New settlements are vulnerable after founding
 - **Failure**: Abandoned settlements become explorable ruins
 
+### Horses & Stables
+
+Travel faster with your own mount:
+
+- **Purchase horses** at stables (varies by location type)
+- **Horse types** with different speed multipliers and stamina
+- **Stable your horse** at locations to let it rest and recover
+- **Stamina system**: Horses tire during travel, rest to restore
+- **Custom naming** for your loyal steed
+- **Sell horses** when you need gold (depreciated value)
+
+### Disease & Health
+
+```mermaid
+flowchart LR
+    Healthy -->|Exposure| Incubating
+    Incubating -->|Time| Symptomatic
+    Symptomatic -->|Treatment| Recovering
+    Symptomatic -->|No treatment| Deceased
+    Recovering --> Recovered
+    Recovered -->|Immunity| Immune
+```
+
+**Outbreaks**:
+- Diseases spread through settlements
+- Contagious diseases spread between residents
+- Outbreak severity: Emerging → Active → Declining → Ended
+
+**Infections**:
+- Incubation period before symptoms appear
+- Treatment improves recovery chances
+- Mortality risk for untreated severe cases
+- Recovery grants immunity
+
+**Quarantine**:
+- Leaders can issue quarantine orders
+- Reduces disease spread by 70%
+- Track quarantine status and lift when safe
+
+### Sea Travel (Ports)
+
+Cross-kingdom travel by ship:
+
+- **Port villages** offer ship passage to other kingdoms
+- **Dynamic pricing** based on distance (base cost + gold per minute)
+- **No land travel** required between distant kingdoms
+- **Each kingdom** has its own harbormaster
+
+### Blessings
+
+Priests can grant divine blessings:
+
+- **Prayer skill** unlocks more powerful blessings
+- **Blessing categories**: Combat, crafting, travel, protection
+- **Duration-based effects** with gold/energy costs
+- **Request blessings** from priests at shrines/churches
+- **Multiple active blessings** with stacking effects
+
+### Natural Disasters
+
+Random events that threaten settlements:
+
+- **Seasonal disasters**: Some only occur in certain seasons
+- **Severity levels**: Affects damage dealt
+- **Building damage**: Structures can be damaged or destroyed
+- **Casualties**: NPCs may perish in severe disasters
+- **Protective buildings**: Some structures reduce disaster impact
+- **Repair costs**: Gold required to restore damaged buildings
+
 ### Gameplay
 - **Daily Tasks**: Combat, gathering, crafting, and service tasks with gold/XP rewards
 - **Quests**: Accept up to 5 quests with various objectives and rewards
 - **Gathering**: Mining, fishing, woodcutting in the wilderness
 - **Crafting**: Smithing, cooking, and general crafting with recipes
 - **Crafting Docket**: Player crafters can accept orders; NPC crafting available for instant (but costlier) results
-- **Travel**: Move between locations with energy cost and travel time
-- **Healing**: Village healers and town/barony infirmaries
+- **Travel**: Move between locations with energy cost and travel time (horses speed this up!)
+- **Healing**: Village healers and town/barony infirmaries treat injuries and diseases
 
 ## Requirements
 
