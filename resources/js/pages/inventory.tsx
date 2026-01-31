@@ -74,7 +74,7 @@ function ItemTooltip({
             {item.description && (
                 <div className="mb-2 text-sm text-stone-300">{item.description}</div>
             )}
-            {hasStats && (
+            {!!hasStats && (
                 <div className="mb-2 space-y-1 border-t border-stone-700 pt-2">
                     {item.atk_bonus > 0 && (
                         <div className="font-pixel text-xs text-red-400">
