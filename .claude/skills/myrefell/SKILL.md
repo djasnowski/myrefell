@@ -1,3 +1,8 @@
+---
+name: myrefell
+description: Run commands on the MyRefell production server via SSH and tinker
+---
+
 # MyRefell Production Server
 
 Run commands on the MyRefell production server via SSH and tinker.
