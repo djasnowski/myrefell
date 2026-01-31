@@ -35,7 +35,6 @@ interface SkillStats {
     total_level: number;
     total_xp: number;
     combat_level: number;
-    highest_skill: { name: string; level: number } | null;
     max_total_level: number;
 }
 
@@ -88,19 +87,16 @@ const skillDescriptions: Record<string, string> = {
 
 const categoryConfig = {
     combat: {
-        label: 'Combat Skills',
         color: 'border-red-500/50 bg-red-900/20',
         iconColor: 'text-red-400',
         barColor: 'from-red-600 to-red-400',
     },
     gathering: {
-        label: 'Gathering Skills',
         color: 'border-green-500/50 bg-green-900/20',
         iconColor: 'text-green-400',
         barColor: 'from-green-600 to-green-400',
     },
     crafting: {
-        label: 'Crafting Skills',
         color: 'border-blue-500/50 bg-blue-900/20',
         iconColor: 'text-blue-400',
         barColor: 'from-blue-600 to-blue-400',
@@ -112,31 +108,19 @@ function SkillCard({ skill, category }: { skill: Skill; category: keyof typeof c
     const config = categoryConfig[category];
 
     return (
-        <div className={`rounded-xl border-2 ${config.color} p-4 transition-all hover:scale-[1.02]`}>
-            {/* Header */}
-            <div className="mb-3 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-stone-800/50 p-2.5">
-                        <Icon className={`h-6 w-6 ${config.iconColor}`} />
-                    </div>
-                    <div>
-                        <h3 className="font-pixel text-sm capitalize text-amber-300">{skill.name}</h3>
-                        <p className="max-w-[180px] text-xs text-stone-400">{skillDescriptions[skill.name]}</p>
-                    </div>
-                </div>
-                <div className="text-right">
-                    <div className="font-pixel text-2xl text-white">{skill.level}</div>
-                    <div className="font-pixel text-[10px] text-stone-500">/ 99</div>
-                </div>
+        <div className={`flex items-center gap-3 rounded-lg border ${config.color} px-3 py-2 transition-all hover:brightness-110`}>
+            {/* Icon */}
+            <div className="rounded-md bg-stone-800/50 p-2">
+                <Icon className={`h-5 w-5 ${config.iconColor}`} />
             </div>
 
-            {/* XP Progress Bar */}
-            <div className="mb-2">
+            {/* Name & Progress */}
+            <div className="min-w-0 flex-1">
                 <div className="mb-1 flex items-center justify-between">
-                    <span className="font-pixel text-[10px] text-stone-400">Experience</span>
-                    <span className="font-pixel text-[10px] text-stone-400">{skill.xp_progress}%</span>
+                    <h3 className="font-pixel text-xs capitalize text-amber-300">{skill.name}</h3>
+                    <span className="font-pixel text-[10px] text-stone-500">{skill.xp.toLocaleString()} xp</span>
                 </div>
-                <div className="h-3 w-full overflow-hidden rounded-full bg-stone-700">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-stone-700">
                     <div
                         className={`h-full bg-gradient-to-r ${config.barColor} transition-all duration-500`}
                         style={{ width: `${skill.xp_progress}%` }}
@@ -144,47 +128,19 @@ function SkillCard({ skill, category }: { skill: Skill; category: keyof typeof c
                 </div>
             </div>
 
-            {/* XP Stats */}
-            <div className="flex items-center justify-between rounded-lg bg-stone-800/50 px-3 py-2">
-                <div className="text-center">
-                    <div className="font-pixel text-[10px] text-stone-500">Total XP</div>
-                    <div className="font-pixel text-xs text-stone-300">{skill.xp.toLocaleString()}</div>
-                </div>
-                <div className="h-6 w-px bg-stone-600" />
+            {/* Level */}
+            <div className="flex items-baseline gap-0.5 pl-2">
                 {skill.is_max ? (
-                    <div className="flex items-center gap-1 text-center">
+                    <div className="flex items-center gap-1">
                         <Trophy className="h-4 w-4 text-amber-400" />
-                        <span className="font-pixel text-xs text-amber-400">MAX</span>
+                        <span className="font-pixel text-lg text-amber-400">99</span>
                     </div>
                 ) : (
-                    <div className="text-center">
-                        <div className="font-pixel text-[10px] text-stone-500">To Next Level</div>
-                        <div className="font-pixel text-xs text-emerald-300">{skill.xp_to_next.toLocaleString()} XP</div>
-                    </div>
+                    <>
+                        <span className="font-pixel text-lg text-white">{skill.level}</span>
+                        <span className="font-pixel text-[10px] text-stone-500">/99</span>
+                    </>
                 )}
-            </div>
-        </div>
-    );
-}
-
-function SkillCategory({
-    title,
-    skills,
-    category,
-}: {
-    title: string;
-    skills: Skill[];
-    category: keyof typeof categoryConfig;
-}) {
-    const config = categoryConfig[category];
-
-    return (
-        <div className="mb-6">
-            <h2 className={`mb-3 font-pixel text-lg ${config.iconColor}`}>{title}</h2>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {skills.map((skill) => (
-                    <SkillCard key={skill.name} skill={skill} category={category} />
-                ))}
             </div>
         </div>
     );
@@ -225,23 +181,18 @@ export default function SkillsIndex() {
                     </div>
                 </div>
 
-                {/* Highest Skill Banner */}
-                {stats.highest_skill && (
-                    <div className="mb-6 flex items-center gap-3 rounded-lg border-2 border-amber-500/30 bg-amber-900/20 px-4 py-3">
-                        <Trophy className="h-6 w-6 text-amber-400" />
-                        <div>
-                            <span className="font-pixel text-sm text-stone-400">Highest Skill: </span>
-                            <span className="font-pixel text-sm capitalize text-amber-300">{stats.highest_skill.name}</span>
-                            <span className="font-pixel text-sm text-stone-400"> at level </span>
-                            <span className="font-pixel text-sm text-white">{stats.highest_skill.level}</span>
-                        </div>
-                    </div>
-                )}
-
-                {/* Skill Categories */}
-                <SkillCategory title="Combat Skills" skills={skills.combat} category="combat" />
-                <SkillCategory title="Gathering Skills" skills={skills.gathering} category="gathering" />
-                <SkillCategory title="Crafting Skills" skills={skills.crafting} category="crafting" />
+                {/* Skills Grid */}
+                <div className="grid gap-2 md:grid-cols-3">
+                    {skills.combat.map((skill) => (
+                        <SkillCard key={skill.name} skill={skill} category="combat" />
+                    ))}
+                    {skills.gathering.map((skill) => (
+                        <SkillCard key={skill.name} skill={skill} category="gathering" />
+                    ))}
+                    {skills.crafting.map((skill) => (
+                        <SkillCard key={skill.name} skill={skill} category="crafting" />
+                    ))}
+                </div>
             </div>
         </AppLayout>
     );

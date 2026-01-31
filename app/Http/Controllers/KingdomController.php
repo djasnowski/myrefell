@@ -47,7 +47,7 @@ class KingdomController extends Controller
      */
     public function show(Request $request, Kingdom $kingdom): Response
     {
-        $kingdom->load(['capitalTown', 'baronies.villages', 'baronies.towns', 'king']);
+        $kingdom->load(['capitalTown', 'baronies.villages', 'baronies.towns', 'baronies.baron', 'king']);
         $user = $request->user();
 
         // Get the king's role assignment for legitimacy
@@ -71,6 +71,72 @@ class KingdomController extends Controller
             ];
         }
 
+        // Aggregate statistics across all baronies
+        $totalVillagePopulation = 0;
+        $totalTownPopulation = 0;
+        $totalVillageWealth = 0;
+        $totalTownWealth = 0;
+        $totalPorts = 0;
+
+        // Collect all village IDs for player count
+        $villageIds = [];
+
+        // Build enhanced barony data with hierarchy
+        $baroniesData = $kingdom->baronies->map(function ($barony) use (&$totalVillagePopulation, &$totalTownPopulation, &$totalVillageWealth, &$totalTownWealth, &$totalPorts, &$villageIds) {
+            $baronyVillagePopulation = $barony->villages->sum('population');
+            $baronyTownPopulation = $barony->towns->sum('population');
+            $baronyVillageWealth = $barony->villages->sum('wealth');
+            $baronyTownWealth = $barony->towns->sum('wealth');
+            $baronyPorts = $barony->villages->where('is_port', true)->count() + $barony->towns->where('is_port', true)->count();
+
+            $totalVillagePopulation += $baronyVillagePopulation;
+            $totalTownPopulation += $baronyTownPopulation;
+            $totalVillageWealth += $baronyVillageWealth;
+            $totalTownWealth += $baronyTownWealth;
+            $totalPorts += $baronyPorts;
+
+            // Collect village IDs
+            foreach ($barony->villages as $village) {
+                $villageIds[] = $village->id;
+            }
+
+            return [
+                'id' => $barony->id,
+                'name' => $barony->name,
+                'biome' => $barony->biome,
+                'is_capital' => $barony->isCapitalBarony(),
+                'village_count' => $barony->villages->count(),
+                'town_count' => $barony->towns->count(),
+                'population' => $baronyVillagePopulation + $baronyTownPopulation,
+                'wealth' => $baronyVillageWealth + $baronyTownWealth,
+                'baron' => $barony->baron ? [
+                    'id' => $barony->baron->id,
+                    'username' => $barony->baron->username,
+                ] : null,
+                // Hierarchy data - settlements within the barony
+                'settlements' => [
+                    ...$barony->towns->map(fn ($town) => [
+                        'id' => $town->id,
+                        'name' => $town->name,
+                        'type' => 'town',
+                        'is_capital' => $town->is_capital,
+                        'is_port' => $town->is_port,
+                        'population' => $town->population,
+                    ]),
+                    ...$barony->villages->map(fn ($village) => [
+                        'id' => $village->id,
+                        'name' => $village->name,
+                        'type' => $village->isHamlet() ? 'hamlet' : 'village',
+                        'is_port' => $village->is_port,
+                        'population' => $village->population,
+                    ]),
+                ],
+            ];
+        });
+
+        // Count players living in this kingdom
+        $playerCount = \App\Models\User::whereIn('home_village_id', $villageIds)->count();
+
         return Inertia::render('kingdoms/show', [
             'kingdom' => [
                 'id' => $kingdom->id,
@@ -87,17 +153,14 @@ class KingdomController extends Controller
                     'name' => $kingdom->capitalTown->name,
                     'biome' => $kingdom->capitalTown->biome,
                 ] : null,
-                'baronies' => $kingdom->baronies->map(fn ($barony) => [
-                    'id' => $barony->id,
-                    'name' => $barony->name,
-                    'biome' => $barony->biome,
-                    'is_capital' => $barony->isCapitalBarony(),
-                    'village_count' => $barony->villages->count(),
-                    'town_count' => $barony->towns->count(),
-                ]),
+                'baronies' => $baroniesData,
                 'barony_count' => $kingdom->baronies->count(),
                 'total_villages' => $kingdom->baronies->sum(fn ($b) => $b->villages->count()),
                 'total_towns' => $kingdom->baronies->sum(fn ($b) => $b->towns->count()),
+                'total_population' => $totalVillagePopulation + $totalTownPopulation,
+                'total_wealth' => $totalVillageWealth + $totalTownWealth,
+                'total_ports' => $totalPorts,
+                'player_count' => $playerCount,
                 'king' => $king,
             ],
             'current_user_id' => $user->id,

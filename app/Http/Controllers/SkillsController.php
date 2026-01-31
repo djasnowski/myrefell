@@ -21,7 +21,7 @@ class SkillsController extends Controller
             ->map(fn ($skill) => $this->formatSkill($skill))
             ->values();
 
-        $gatheringSkills = $skills->filter(fn ($skill) => in_array($skill->skill_name, ['mining', 'fishing', 'woodcutting']))
+        $gatheringSkills = $skills->filter(fn ($skill) => in_array($skill->skill_name, ['farming', 'mining', 'fishing', 'woodcutting']))
             ->map(fn ($skill) => $this->formatSkill($skill))
             ->values();
 
@@ -32,7 +32,6 @@ class SkillsController extends Controller
         // Calculate totals
         $totalLevel = $skills->sum('level');
         $totalXp = $skills->sum('xp');
-        $highestSkill = $skills->sortByDesc('level')->first();
         $combatLevel = $player->combat_level;
 
         return Inertia::render('Skills/Index', [
@@ -45,10 +44,6 @@ class SkillsController extends Controller
                 'total_level' => $totalLevel,
                 'total_xp' => $totalXp,
                 'combat_level' => $combatLevel,
-                'highest_skill' => $highestSkill ? [
-                    'name' => $highestSkill->skill_name,
-                    'level' => $highestSkill->level,
-                ] : null,
                 'max_total_level' => count(PlayerSkill::SKILLS) * PlayerSkill::MAX_LEVEL,
             ],
         ]);

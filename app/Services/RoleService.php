@@ -59,7 +59,7 @@ class RoleService
     public function selfAppoint(User $user, Role $role, string $locationType, int $locationId): array
     {
         // Check if user resides at this location
-        if (!$this->userResidesAt($user, $locationType, $locationId)) {
+        if (! $this->userResidesAt($user, $locationType, $locationId)) {
             return [
                 'success' => false,
                 'message' => 'You must be a resident of this location to claim a role here.',
@@ -104,7 +104,7 @@ class RoleService
     {
         $homeVillage = $user->homeVillage;
 
-        if (!$homeVillage) {
+        if (! $homeVillage) {
             return false;
         }
 
@@ -144,15 +144,16 @@ class RoleService
         ?\DateTimeInterface $expiresAt = null
     ): array {
         // Check if user already holds ANY role anywhere (one role per player globally)
+        // Auto-resign from existing role if they have one
         $existingAnyRole = PlayerRole::where('user_id', $user->id)
             ->active()
+            ->with('role')
             ->first();
 
         if ($existingAnyRole) {
-            return [
-                'success' => false,
-                'message' => 'You can only hold one role at a time. Resign from your current role first.',
-            ];
+            // Auto-resign from current role before claiming new one
+            $existingAnyRole->resign();
+            $this->activateNpcIfNeeded($existingAnyRole->role_id, $existingAnyRole->location_type, $existingAnyRole->location_id);
         }
 
         // Check if role is for this location type
@@ -164,7 +165,7 @@ class RoleService
         }
 
         // Check if role is active
-        if (!$role->is_active) {
+        if (! $role->is_active) {
             return [
                 'success' => false,
                 'message' => 'This role is not currently active.',
@@ -187,7 +188,7 @@ class RoleService
         }
 
         // Check if there are available slots
-        if (!$role->hasAvailableSlots($locationType, $locationId)) {
+        if (! $role->hasAvailableSlots($locationType, $locationId)) {
             return [
                 'success' => false,
                 'message' => 'No positions available for this role at this location.',
@@ -226,7 +227,7 @@ class RoleService
      */
     public function removeFromRole(PlayerRole $playerRole, User $removedBy, ?string $reason = null): array
     {
-        if (!$playerRole->isActive()) {
+        if (! $playerRole->isActive()) {
             return [
                 'success' => false,
                 'message' => 'This role assignment is not active.',
@@ -258,7 +259,7 @@ class RoleService
             ];
         }
 
-        if (!$playerRole->isActive()) {
+        if (! $playerRole->isActive()) {
             return [
                 'success' => false,
                 'message' => 'You do not currently hold this role.',
@@ -318,11 +319,12 @@ class RoleService
     public function getRoleHolder(string $roleSlug, string $locationType, int $locationId): ?User
     {
         $role = Role::where('slug', $roleSlug)->first();
-        if (!$role) {
+        if (! $role) {
             return null;
         }
 
         $playerRole = $role->getHolderAt($locationType, $locationId);
+
         return $playerRole?->user;
     }
 
@@ -368,7 +370,7 @@ class RoleService
                 'npc_name' => LocationNpc::generateNpcName($role->slug),
                 'npc_description' => "The local {$role->name}.",
                 'npc_icon' => $role->icon,
-                'is_active' => !$role->hasAvailableSlots($locationType, $locationId) ? false : true,
+                'is_active' => ! $role->hasAvailableSlots($locationType, $locationId) ? false : true,
             ]
         );
     }
@@ -384,7 +386,7 @@ class RoleService
             ->active()
             ->exists();
 
-        if (!$playerHoldsRole) {
+        if (! $playerHoldsRole) {
             LocationNpc::where('role_id', $roleId)
                 ->where('location_type', $locationType)
                 ->where('location_id', $locationId)
@@ -424,13 +426,13 @@ class RoleService
                 'expires_at' => $playerRole->expires_at?->toISOString(),
                 'total_salary_earned' => $playerRole->total_salary_earned,
             ] : null,
-            'npc' => (!$playerRole && $npc) ? [
+            'npc' => (! $playerRole && $npc) ? [
                 'id' => $npc->id,
                 'name' => $npc->npc_name,
                 'description' => $npc->npc_description,
                 'icon' => $npc->npc_icon,
             ] : null,
-            'is_vacant' => !$playerRole,
+            'is_vacant' => ! $playerRole,
         ];
     }
 

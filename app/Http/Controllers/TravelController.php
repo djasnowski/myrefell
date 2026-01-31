@@ -64,7 +64,7 @@ class TravelController extends Controller
     public function start(Request $request)
     {
         $request->validate([
-            'destination_type' => 'required|string|in:village,barony,town,wilderness',
+            'destination_type' => 'required|string|in:village,barony,town,kingdom,wilderness',
             'destination_id' => 'required|integer',
         ]);
 

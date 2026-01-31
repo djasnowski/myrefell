@@ -115,6 +115,9 @@ class RoleController extends Controller
         $population = $this->getLocationPopulation($locationType, $locationId);
         $canSelfAppoint = $population < RoleService::SELF_APPOINT_THRESHOLD;
 
+        // Check if user resides at this location (required for claiming roles)
+        $userResidesHere = $this->roleService->userResidesAt($user, $locationType, $locationId);
+
         return Inertia::render('Roles/Index', [
             'location_type' => $locationType,
             'location_id' => $locationId,
@@ -124,6 +127,7 @@ class RoleController extends Controller
             'user_roles_here' => $userRolesHere,
             'population' => $population,
             'can_self_appoint' => $canSelfAppoint,
+            'user_resides_here' => $userResidesHere,
             'self_appoint_threshold' => RoleService::SELF_APPOINT_THRESHOLD,
             'player' => [
                 'id' => $user->id,
@@ -212,7 +216,7 @@ class RoleController extends Controller
             $request->location_id
         );
 
-        if (!$canAppoint) {
+        if (! $canAppoint) {
             return back()->with('error', 'You do not have permission to appoint roles.');
         }
 
@@ -250,7 +254,7 @@ class RoleController extends Controller
             $playerRole->location_id
         );
 
-        if (!$canRemove) {
+        if (! $canRemove) {
             return back()->with('error', 'You do not have permission to remove this role holder.');
         }
 

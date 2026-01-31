@@ -102,6 +102,7 @@ interface PageProps {
     user_roles_here: UserRole[];
     population: number;
     can_self_appoint: boolean;
+    user_resides_here: boolean;
     self_appoint_threshold: number;
     player: {
         id: number;
@@ -305,8 +306,9 @@ function RoleModal({
     role,
     currentUserId,
     userRoleHere,
-    userHasAnyRole,
+    currentUserRole,
     canSelfAppoint,
+    userResidesHere,
     onClose,
     onResign,
     onClaim,
@@ -316,8 +318,9 @@ function RoleModal({
     role: Role;
     currentUserId: number;
     userRoleHere: UserRole | undefined;
-    userHasAnyRole: boolean;
+    currentUserRole: UserRole | undefined;
     canSelfAppoint: boolean;
+    userResidesHere: boolean;
     onClose: () => void;
     onResign: (playerRoleId: number) => void;
     onClaim: (roleId: number) => void;
@@ -327,7 +330,9 @@ function RoleModal({
     const Icon = iconMap[role.icon.toLowerCase()] || Crown;
     const isCurrentUser = role.holder?.user_id === currentUserId;
     const isUserRole = userRoleHere?.role_id === role.id;
-    const canClaim = role.is_vacant && canSelfAppoint && !userHasAnyRole;
+    // Can claim if: vacant, self-appointment allowed, user resides here (and it's not their current role)
+    const canClaim = role.is_vacant && canSelfAppoint && userResidesHere && !isUserRole;
+    const willReplaceRole = canClaim && currentUserRole !== undefined;
     const consequences = roleConsequences[role.slug] || { duties: [], ifVacant: 'Village functions reduced.' };
 
     return (
@@ -425,6 +430,21 @@ function RoleModal({
                     </div>
                 )}
 
+                {/* Warning about replacing role */}
+                {willReplaceRole && (
+                    <div className="mb-4 rounded-lg border border-amber-600/50 bg-amber-900/20 p-3">
+                        <div className="flex items-start gap-2">
+                            <AlertTriangle className="h-4 w-4 flex-shrink-0 text-amber-400" />
+                            <div>
+                                <span className="font-pixel text-xs text-amber-300">You will lose your current job</span>
+                                <p className="font-pixel text-[10px] text-amber-400/80">
+                                    Claiming this role will resign you from {currentUserRole.name} at {currentUserRole.location_name}.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Actions */}
                 <div className="flex gap-2">
                     {isUserRole && (
@@ -440,16 +460,20 @@ function RoleModal({
                         <button
                             onClick={() => onClaim(role.id)}
                             disabled={claimLoading === role.id}
-                            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-green-600/50 bg-green-900/30 px-4 py-2 font-pixel text-xs text-green-300 hover:bg-green-800/40"
+                            className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2 font-pixel text-xs ${
+                                willReplaceRole
+                                    ? 'border-amber-600/50 bg-amber-900/30 text-amber-300 hover:bg-amber-800/40'
+                                    : 'border-green-600/50 bg-green-900/30 text-green-300 hover:bg-green-800/40'
+                            }`}
                         >
-                            {claimLoading === role.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Crown className="h-4 w-4" />Claim This Role</>}
+                            {claimLoading === role.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Crown className="h-4 w-4" />{willReplaceRole ? 'Switch to This Role' : 'Claim This Role'}</>}
                         </button>
                     )}
                     {!canClaim && !isUserRole && role.is_vacant && (
                         <div className="flex-1 rounded-lg border border-dashed border-stone-600 bg-stone-900/30 p-2 text-center">
                             <span className="font-pixel text-[10px] text-stone-500">
-                                {userHasAnyRole
-                                    ? 'You already hold a role in this location'
+                                {!userResidesHere
+                                    ? 'You must reside here to claim this role'
                                     : canSelfAppoint
                                         ? 'Cannot claim this role'
                                         : 'Election required to fill this position'}
@@ -463,14 +487,15 @@ function RoleModal({
 }
 
 export default function RolesIndex() {
-    const { location_type, location_id, location_name, roles, user_roles, user_roles_here, population, can_self_appoint, self_appoint_threshold, player } = usePage<PageProps>().props;
+    const { location_type, location_id, location_name, roles, user_roles, user_roles_here, population, can_self_appoint, user_resides_here, self_appoint_threshold, player } = usePage<PageProps>().props;
 
     const [selectedRole, setSelectedRole] = useState<Role | null>(null);
     const [resignLoading, setResignLoading] = useState<number | null>(null);
     const [claimLoading, setClaimLoading] = useState<number | null>(null);
 
     const locationTypeDisplay = location_type.charAt(0).toUpperCase() + location_type.slice(1);
-    const userHasAnyRole = user_roles.length > 0;
+    // User's current role (anywhere in the game - they can only have one)
+    const currentUserRole = user_roles.length > 0 ? user_roles[0] : undefined;
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -528,9 +553,14 @@ export default function RolesIndex() {
                             {location_name} • Pop: {population} • {can_self_appoint ? 'Claim vacant roles' : `Election required (${self_appoint_threshold}+)`}
                         </p>
                     </div>
-                    {user_roles_here.length > 0 && (
+                    {currentUserRole && (
                         <div className="rounded border border-green-600/50 bg-green-900/20 px-3 py-1">
-                            <span className="font-pixel text-xs text-green-300">You hold {user_roles_here.length} role(s)</span>
+                            <span className="font-pixel text-xs text-green-300">
+                                Your job: {currentUserRole.name}
+                                {currentUserRole.location_type !== location_type || currentUserRole.location_id !== location_id
+                                    ? ` (${currentUserRole.location_name})`
+                                    : ' (here)'}
+                            </span>
                         </div>
                     )}
                 </div>
@@ -596,8 +626,9 @@ export default function RolesIndex() {
                     role={selectedRole}
                     currentUserId={player.id}
                     userRoleHere={user_roles_here.find((ur) => ur.role_id === selectedRole.id)}
-                    userHasAnyRole={userHasAnyRole}
+                    currentUserRole={currentUserRole}
                     canSelfAppoint={can_self_appoint}
+                    userResidesHere={user_resides_here}
                     onClose={() => setSelectedRole(null)}
                     onResign={handleResign}
                     onClaim={handleClaim}
