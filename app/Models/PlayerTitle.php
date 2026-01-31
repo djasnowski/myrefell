@@ -108,6 +108,14 @@ class PlayerTitle extends Model
     }
 
     /**
+     * Get the title type definition.
+     */
+    public function titleType(): BelongsTo
+    {
+        return $this->belongsTo(TitleType::class);
+    }
+
+    /**
      * Get the domain (village, castle, town, or kingdom) this title is associated with.
      */
     public function domain(): MorphTo

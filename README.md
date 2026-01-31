@@ -59,7 +59,64 @@ The world runs on a calendar system with time passing automatically:
 - **Democratic elections** for village roles, mayors, and kings
 - **Electable roles**: Elder, Blacksmith, Merchant, Guard Captain, Healer
 - **Vote of no-confidence** to remove leaders
-- **Title progression**: Peasant → Knight → Lord → King
+
+### Noble Titles
+
+Full medieval hierarchy with limits and bestowing authority:
+
+```mermaid
+graph TD
+    subgraph Royalty
+        EMP[Emperor<br/>1 per world]
+        KING[King/Queen<br/>1 per Kingdom]
+        PRINCE[Prince/Princess<br/>3 per Kingdom]
+    end
+
+    subgraph "Landed Nobility"
+        DUKE[Duke/Duchess<br/>1 per Duchy]
+        MARQ[Marquess<br/>1 per border Duchy]
+        COUNT[Count/Earl<br/>2 per Duchy]
+        VISC[Viscount<br/>4 per Duchy]
+        BARON[Baron/Baroness<br/>1 per Barony]
+    end
+
+    subgraph "Minor Nobility"
+        BARONET[Baronet<br/>5 per Barony]
+        KNIGHT[Knight/Dame<br/>10 per Barony]
+        SQUIRE[Squire<br/>2 per Knight]
+    end
+
+    subgraph Commoners
+        YEOMAN[Yeoman]
+        FREE[Freeman]
+        PEAS[Peasant]
+        SERF[Serf]
+    end
+
+    EMP -->|bestows| KING
+    KING -->|bestows| DUKE
+    KING -->|bestows| PRINCE
+    DUKE -->|bestows| COUNT
+    DUKE -->|bestows| MARQ
+    COUNT -->|bestows| VISC
+    BARON -->|bestows| BARONET
+    BARONET -->|bestows| KNIGHT
+    KNIGHT -->|bestows| SQUIRE
+```
+
+| Title | Style of Address | Granted By | Limit |
+|-------|------------------|------------|-------|
+| Emperor | Your Imperial Majesty | Conquest only | 1 per world |
+| King | Your Majesty | Emperor/Election | 1 per Kingdom |
+| Prince | Your Royal Highness | King | 3 per Kingdom |
+| Duke | Your Grace | King | 1 per Duchy |
+| Marquess | Lord/Lady | King | 1 per border Duchy |
+| Count | Lord/Lady | Duke, King | 2 per Duchy |
+| Viscount | Lord/Lady | Count, Duke | 4 per Duchy |
+| Baron | Lord/Lady | Duke, King | 1 per Barony |
+| Baronet | Sir/Dame | Baron+ | 5 per Barony |
+| Knight | Sir/Dame | Baronet+ | 10 per Barony |
+| Squire | Squire | Knight+ | 2 per Knight |
 
 ### Social Classes
 
