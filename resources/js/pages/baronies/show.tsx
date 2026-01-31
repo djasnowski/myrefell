@@ -16,6 +16,7 @@ import {
     Sun,
     TreePine,
     Trees,
+    Truck,
     Users,
     Waves,
     Wheat,
@@ -311,7 +312,7 @@ export default function BaronyShow({
                 />
 
                 {/* Quick Actions */}
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <Link
                         href={`/baronies/${barony.id}/roles`}
                         className="flex items-center gap-4 rounded-xl border border-stone-600/30 bg-stone-800/30 p-4 transition hover:bg-stone-800/50"
@@ -322,6 +323,17 @@ export default function BaronyShow({
                             <div className="text-xs text-stone-500">
                                 View officials and positions
                             </div>
+                        </div>
+                    </Link>
+
+                    <Link
+                        href="/trade/caravans"
+                        className="flex items-center gap-4 rounded-xl border border-stone-600/30 bg-stone-800/30 p-4 transition hover:bg-stone-800/50"
+                    >
+                        <Truck className="h-8 w-8 text-orange-400" />
+                        <div>
+                            <div className="font-pixel text-stone-200">My Caravans</div>
+                            <div className="text-xs text-stone-500">Manage your trade caravans</div>
                         </div>
                     </Link>
 
