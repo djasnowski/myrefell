@@ -49,6 +49,7 @@ use App\Http\Controllers\SuccessionController;
 use App\Http\Controllers\TariffController;
 use App\Http\Controllers\TavernController;
 use App\Http\Controllers\TaxController;
+use App\Http\Controllers\TitleController;
 use App\Http\Controllers\TownController;
 use App\Http\Controllers\TradeRouteController;
 use App\Http\Controllers\TrainingController;
@@ -227,6 +228,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('healer/heal', [HealerController::class, 'heal'])->name('healer.heal');
     Route::post('healer/heal-amount', [HealerController::class, 'healAmount'])->name('healer.heal-amount');
     Route::post('healer/treat-disease', [HealerController::class, 'treatDisease'])->name('healer.treat-disease');
+
+    // Titles & Petitions
+    Route::get('titles', [TitleController::class, 'index'])->name('titles.index');
+    Route::get('titles/petition/{titleType}', [TitleController::class, 'showPetitionForm'])->name('titles.petition.form');
+    Route::post('titles/petition', [TitleController::class, 'submitPetition'])->name('titles.petition.submit');
+    Route::post('titles/petition/{petition}/withdraw', [TitleController::class, 'withdrawPetition'])->name('titles.petition.withdraw');
+    Route::get('titles/review/{petition}', [TitleController::class, 'reviewPetition'])->name('titles.petition.review');
+    Route::post('titles/review/{petition}/approve', [TitleController::class, 'approvePetition'])->name('titles.petition.approve');
+    Route::post('titles/review/{petition}/deny', [TitleController::class, 'denyPetition'])->name('titles.petition.deny');
+    Route::get('titles/ceremony/{petition}', [TitleController::class, 'showCeremony'])->name('titles.ceremony');
+    Route::post('titles/ceremony/{petition}/complete', [TitleController::class, 'completeCeremony'])->name('titles.ceremony.complete');
+    Route::post('titles/grant', [TitleController::class, 'grantTitle'])->name('titles.grant');
 
     // Gathering - Legacy routes (redirect to location-scoped)
     Route::get('gathering', [GatheringController::class, 'legacyIndex'])->name('gathering.index');
