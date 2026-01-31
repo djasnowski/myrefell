@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Config\LocationServices;
 use App\Models\Barony;
 use App\Models\PlayerRole;
 use App\Models\Role;
@@ -76,6 +77,45 @@ class BaronyController extends Controller
         // Check if current user is the baron
         $isBaron = $baron && $baron['id'] === $user->id;
 
+        // Calculate aggregated stats
+        $totalPopulation = $barony->villages->sum('population') + $barony->towns->sum('population');
+        $totalWealth = $barony->villages->sum('wealth') + $barony->towns->sum('wealth');
+
+        // Get services available at barony level
+        $services = LocationServices::getServicesForLocation('barony');
+
+        // Get recent activity for this barony (from all villages/towns in the barony)
+        $villageIds = $barony->villages->pluck('id')->toArray();
+        $townIds = $barony->towns->pluck('id')->toArray();
+
+        $recentActivity = ActivityLog::query()
+            ->where(function ($query) use ($villageIds, $townIds, $barony) {
+                $query->where(function ($q) use ($villageIds) {
+                    $q->where('location_type', 'village')
+                        ->whereIn('location_id', $villageIds);
+                })->orWhere(function ($q) use ($townIds) {
+                    $q->where('location_type', 'town')
+                        ->whereIn('location_id', $townIds);
+                })->orWhere(function ($q) use ($barony) {
+                    $q->where('location_type', 'barony')
+                        ->where('location_id', $barony->id);
+                });
+            })
+            ->with('user:id,username')
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn ($log) => [
+                'id' => $log->id,
+                'username' => $log->user->username ?? 'Unknown',
+                'description' => $log->description,
+                'activity_type' => $log->activity_type,
+                'subtype' => $log->subtype,
+                'metadata' => $log->metadata,
+                'created_at' => $log->created_at->toIso8601String(),
+                'time_ago' => $log->created_at->diffForHumans(),
+            ]);
+
         return Inertia::render('baronies/show', [
             'barony' => [
                 'id' => $barony->id,
@@ -98,6 +138,7 @@ class BaronyController extends Controller
                     'name' => $village->name,
                     'biome' => $village->biome,
                     'population' => $village->population,
+                    'wealth' => $village->wealth,
                     'is_hamlet' => $village->isHamlet(),
                 ]),
                 'towns' => $barony->towns->map(fn ($town) => [
@@ -105,11 +146,16 @@ class BaronyController extends Controller
                     'name' => $town->name,
                     'biome' => $town->biome,
                     'population' => $town->population,
+                    'wealth' => $town->wealth,
                 ]),
                 'village_count' => $barony->villages->count(),
                 'town_count' => $barony->towns->count(),
+                'total_population' => $totalPopulation,
+                'total_wealth' => $totalWealth,
                 'baron' => $baron,
             ],
+            'services' => array_values(array_map(fn ($service, $id) => array_merge($service, ['id' => $id]), $services, array_keys($services))),
+            'recent_activity' => $recentActivity,
             'current_user_id' => $user->id,
             'is_baron' => $isBaron,
         ]);

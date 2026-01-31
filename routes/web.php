@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ArmyController;
 use App\Http\Controllers\BankController;
 use App\Http\Controllers\BaronyController;
@@ -628,6 +629,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('buildings', [BuildingController::class, 'store'])->name('buildings.store');
     Route::post('buildings/{building}/repair', [BuildingController::class, 'repair'])->name('buildings.repair');
     Route::post('buildings/projects/{project}/cancel', [BuildingController::class, 'cancel'])->name('buildings.cancel');
+
+    // Dev/Admin tools (dan only)
+    Route::post('dev/set-energy', [AdminController::class, 'setEnergy'])->name('dev.set-energy');
 });
 
 // Admin routes

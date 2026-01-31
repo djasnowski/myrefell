@@ -222,9 +222,11 @@ export default function TravelIndex() {
         usePage<PageProps>().props;
     const [traveling, setTraveling] = useState(false);
     const [showArrival, setShowArrival] = useState(!!just_arrived);
+    const [travelError, setTravelError] = useState<string | null>(null);
 
     const handleTravel = (destination: Destination) => {
         setTraveling(true);
+        setTravelError(null);
         router.post(
             "/travel/start",
             {
@@ -237,6 +239,11 @@ export default function TravelIndex() {
                     router.reload();
                 },
                 onFinish: () => setTraveling(false),
+                onError: (errors) => {
+                    const errorMessage =
+                        errors.travel || Object.values(errors)[0] || "Failed to start travel.";
+                    setTravelError(errorMessage as string);
+                },
             },
         );
     };
@@ -342,6 +349,19 @@ export default function TravelIndex() {
                     <h1 className="font-pixel text-2xl text-amber-400">Travel</h1>
                     <p className="font-pixel text-sm text-stone-400">Choose your destination</p>
                 </div>
+
+                {travelError && (
+                    <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-600/50 bg-red-900/30 px-4 py-3">
+                        <Zap className="h-5 w-5 text-red-400" />
+                        <span className="font-pixel text-sm text-red-300">{travelError}</span>
+                        <button
+                            onClick={() => setTravelError(null)}
+                            className="ml-auto text-red-400 hover:text-red-300"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                    </div>
+                )}
 
                 {destinations.length > 0 ? (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

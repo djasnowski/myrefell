@@ -9,7 +9,9 @@ import {
     Hammer,
     HeartPulse,
     Landmark,
+    MessageSquare,
     Pickaxe,
+    Receipt,
     Shield,
     Sparkles,
     Store,
@@ -44,6 +46,8 @@ const iconMap: Record<string, LucideIcon> = {
     shield: Shield,
     "building-columns": Building2,
     hospital: Church,
+    "message-square": MessageSquare,
+    receipt: Receipt,
 };
 
 export function ServiceCard({

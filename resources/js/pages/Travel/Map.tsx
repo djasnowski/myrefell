@@ -306,6 +306,7 @@ export default function Dashboard() {
     } | null>(null);
     const [isTraveling, setIsTraveling] = useState(false);
     const [loreExpanded, setLoreExpanded] = useState(false);
+    const [travelError, setTravelError] = useState<string | null>(null);
     const svgRef = useRef<SVGSVGElement>(null);
 
     // Prevent page scrolling on the map page
@@ -737,11 +738,13 @@ export default function Dashboard() {
     ) => {
         setClickedLocation({ type, data });
         setLoreExpanded(false);
+        setTravelError(null);
     };
 
     const handleTravel = () => {
         if (!clickedLocation) return;
         setIsTraveling(true);
+        setTravelError(null);
         router.post(
             "/travel/start",
             {
@@ -755,6 +758,11 @@ export default function Dashboard() {
                 onSuccess: () => {
                     setClickedLocation(null);
                     router.visit("/travel");
+                },
+                onError: (errors) => {
+                    const errorMessage =
+                        errors.travel || Object.values(errors)[0] || "Failed to start travel.";
+                    setTravelError(errorMessage as string);
                 },
             },
         );
@@ -1855,6 +1863,12 @@ export default function Dashboard() {
 
                             {/* Footer */}
                             <div className="border-t border-stone-700 px-4 py-3">
+                                {travelError && (
+                                    <div className="mb-3 flex items-center gap-2 rounded border border-red-600/50 bg-red-900/30 px-3 py-2">
+                                        <Zap className="h-4 w-4 text-red-400" />
+                                        <span className="text-sm text-red-300">{travelError}</span>
+                                    </div>
+                                )}
                                 <button
                                     onClick={handleTravel}
                                     disabled={

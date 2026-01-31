@@ -1,4 +1,5 @@
 import { Link } from "@inertiajs/react";
+import { NavAdminControls } from "@/components/nav-admin-controls";
 import { NavLocation } from "@/components/nav-location";
 import { NavPlayerInfo } from "@/components/nav-player-info";
 import { NavSkills } from "@/components/nav-skills";
@@ -44,6 +45,11 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
+                {/* Admin controls (dan only) */}
+                <div className="px-2">
+                    <NavAdminControls />
+                </div>
+
                 {/* Skills at bottom */}
                 <div className="px-2 pb-2">
                     <NavSkills />

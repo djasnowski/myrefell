@@ -92,6 +92,7 @@ class HandleInertiaRequests extends Middleware
                 'primary_title' => $player->primary_title,
                 'title_tier' => $player->title_tier,
                 'social_class' => $player->social_class,
+                'is_admin' => $player->username === 'dan',
                 'role' => $activeRole ? [
                     'name' => $activeRole->role->name,
                     'slug' => $activeRole->role->slug,
@@ -324,12 +325,12 @@ class HandleInertiaRequests extends Middleware
      */
     protected function hasDungeonNearby($location, string $locationType): bool
     {
-        if (!in_array($locationType, ['village', 'town'])) {
+        if (! in_array($locationType, ['village', 'town'])) {
             return false;
         }
 
         $biome = $location->biome ?? null;
-        if (!$biome) {
+        if (! $biome) {
             return false;
         }
 
@@ -348,11 +349,11 @@ class HandleInertiaRequests extends Middleware
     protected function getFarmData($player): ?array
     {
         // FarmPlot model may not exist yet
-        if (!class_exists(\App\Models\FarmPlot::class)) {
+        if (! class_exists(\App\Models\FarmPlot::class)) {
             return null;
         }
 
-        if (!$player->current_location_type || !$player->current_location_id) {
+        if (! $player->current_location_type || ! $player->current_location_id) {
             return null;
         }
 

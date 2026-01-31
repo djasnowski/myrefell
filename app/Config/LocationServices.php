@@ -94,6 +94,24 @@ class LocationServices
             'icon' => 'hospital',
             'route' => 'infirmary',
         ],
+        'chat' => [
+            'name' => 'Town Crier',
+            'description' => 'Local news and discussions',
+            'icon' => 'message-square',
+            'route' => 'chat',
+        ],
+        'taxes' => [
+            'name' => 'Tax Office',
+            'description' => 'Manage local taxes',
+            'icon' => 'receipt',
+            'route' => 'taxes',
+        ],
+        'businesses' => [
+            'name' => 'Businesses',
+            'description' => 'Local shops and enterprises',
+            'icon' => 'store',
+            'route' => 'businesses',
+        ],
     ];
 
     /**
@@ -127,15 +145,13 @@ class LocationServices
             'tavern',
         ],
         'barony' => [
-            'training',
-            'crafting',
             'market',
             'bank',
             'infirmary',
-            'shrine',
             'jobs',
-            'stables',
-            'arena',
+            'businesses',
+            'chat',
+            'taxes',
         ],
         'duchy' => [
             'training',
