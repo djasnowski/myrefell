@@ -43,10 +43,17 @@ interface GatherResult {
     seasonal_bonus?: boolean;
 }
 
+interface Location {
+    type: string;
+    id: number;
+    name: string;
+}
+
 interface PageProps {
     activity: Activity;
     player_energy: number;
     max_energy: number;
+    location: Location;
     [key: string]: unknown;
 }
 
@@ -77,7 +84,7 @@ const seasonColors: Record<string, string> = {
 };
 
 export default function GatheringActivity() {
-    const { activity, player_energy, max_energy } = usePage<PageProps>().props;
+    const { activity, player_energy, max_energy, location } = usePage<PageProps>().props;
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<GatherResult | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(player_energy);
@@ -93,8 +100,9 @@ export default function GatheringActivity() {
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Gathering', href: '/gathering' },
-        { title: activity.name, href: `/gathering/${activity.id}` },
+        { title: location.name, href: `/villages/${location.id}` },
+        { title: 'Gathering', href: `/villages/${location.id}/gathering` },
+        { title: activity.name, href: `/villages/${location.id}/gathering/${activity.id}` },
     ];
 
     const canGather = currentEnergy >= activity.energy_cost && !activity.inventory_full;
@@ -106,7 +114,7 @@ export default function GatheringActivity() {
         setResult(null);
 
         try {
-            const response = await fetch('/gathering/gather', {
+            const response = await fetch(`/villages/${location.id}/gathering/gather`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

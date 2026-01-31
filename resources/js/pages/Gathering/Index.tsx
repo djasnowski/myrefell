@@ -19,18 +19,21 @@ interface SeasonalData {
     description: string;
 }
 
+interface Location {
+    type: string;
+    id: number;
+    name: string;
+}
+
 interface PageProps {
     activities: Activity[];
     player_energy: number;
     max_energy: number;
     seasonal: SeasonalData;
+    location: Location;
     [key: string]: unknown;
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Gathering', href: '/gathering' },
-];
 
 const activityIcons: Record<string, typeof Pickaxe> = {
     mining: Pickaxe,
@@ -65,12 +68,18 @@ const seasonColors: Record<string, string> = {
 };
 
 export default function GatheringIndex() {
-    const { activities, player_energy, max_energy, seasonal } = usePage<PageProps>().props;
+    const { activities, player_energy, max_energy, seasonal, location } = usePage<PageProps>().props;
     const SeasonIcon = seasonIcons[seasonal.season] || Sun;
     const seasonColor = seasonColors[seasonal.season] || 'text-stone-400';
     const modifierPercent = Math.round((seasonal.modifier - 1) * 100);
     const isBonus = modifierPercent > 0;
     const isPenalty = modifierPercent < 0;
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: location.name, href: `/villages/${location.id}` },
+        { title: 'Gathering', href: `/villages/${location.id}/gathering` },
+    ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -134,7 +143,7 @@ export default function GatheringIndex() {
                         return (
                             <Link
                                 key={activity.id}
-                                href={`/gathering/${activity.id}`}
+                                href={`/villages/${location.id}/gathering/${activity.id}`}
                                 className={`rounded-xl border-2 p-5 transition ${colorClass}`}
                             >
                                 <div className="mb-4 flex items-center gap-3">

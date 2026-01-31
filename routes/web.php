@@ -241,11 +241,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('titles/ceremony/{petition}/complete', [TitleController::class, 'completeCeremony'])->name('titles.ceremony.complete');
     Route::post('titles/grant', [TitleController::class, 'grantTitle'])->name('titles.grant');
 
-    // Gathering - Legacy routes (redirect to location-scoped)
-    Route::get('gathering', [GatheringController::class, 'legacyIndex'])->name('gathering.index');
-    Route::get('gathering/{activity}', [GatheringController::class, 'show'])->name('gathering.show');
-    Route::post('gathering/gather', [GatheringController::class, 'gather'])->name('gathering.gather');
-
     // Farming
     Route::get('farming', [FarmingController::class, 'index'])->name('farming.index');
     Route::post('farming/buy-plot', [FarmingController::class, 'buyPlot'])->name('farming.buy-plot');
