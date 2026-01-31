@@ -82,6 +82,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'travel_arrives_at',
         'travel_destination_type',
         'travel_destination_id',
+        'referral_code',
     ];
 
     /**
@@ -536,6 +537,22 @@ class User extends Authenticatable implements MustVerifyEmail
     public function diseaseImmunities(): HasMany
     {
         return $this->hasMany(DiseaseImmunity::class);
+    }
+
+    /**
+     * Get referrals made by this user.
+     */
+    public function referralsMade(): HasMany
+    {
+        return $this->hasMany(Referral::class, 'referrer_id');
+    }
+
+    /**
+     * Get the referral that brought this user (if any).
+     */
+    public function referredBy(): HasOne
+    {
+        return $this->hasOne(Referral::class, 'referred_id');
     }
 
     /**

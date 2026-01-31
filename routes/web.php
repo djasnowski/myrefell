@@ -39,6 +39,7 @@ use App\Http\Controllers\NoConfidenceController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\PortController;
 use App\Http\Controllers\QuestController;
+use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\ReligionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RoleStockingController;
@@ -629,6 +630,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('buildings', [BuildingController::class, 'store'])->name('buildings.store');
     Route::post('buildings/{building}/repair', [BuildingController::class, 'repair'])->name('buildings.repair');
     Route::post('buildings/projects/{project}/cancel', [BuildingController::class, 'cancel'])->name('buildings.cancel');
+
+    // Referrals
+    Route::get('referrals', [ReferralController::class, 'index'])->name('referrals.index');
 
     // Dev/Admin tools (dan only)
     Route::post('dev/set-energy', [AdminController::class, 'setEnergy'])->name('dev.set-energy');

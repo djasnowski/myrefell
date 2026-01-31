@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ReferralService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -102,11 +103,32 @@ class PlayerSkill extends Model
         $levelsGained = $newLevel - $this->level;
         if ($levelsGained > 0) {
             $this->level = min($newLevel, self::MAX_LEVEL);
+
+            // Check referral qualification when combat level might have changed
+            if (in_array($this->skill_name, ['attack', 'strength', 'defense'])) {
+                $this->checkReferralQualification();
+            }
         }
 
         $this->save();
 
         return $levelsGained;
+    }
+
+    /**
+     * Check if the player qualifies for referral reward after leveling up.
+     */
+    protected function checkReferralQualification(): void
+    {
+        $user = $this->player;
+        if (! $user) {
+            return;
+        }
+
+        // Only process if user's combat level now meets the requirement
+        if ($user->combat_level >= ReferralService::REQUIRED_LEVEL) {
+            app(ReferralService::class)->processQualification($user);
+        }
     }
 
     /**
@@ -144,6 +166,7 @@ class PlayerSkill extends Model
         }
 
         $nextLevelXp = self::xpForLevel($this->level + 1);
+
         return $nextLevelXp - $this->xp;
     }
 

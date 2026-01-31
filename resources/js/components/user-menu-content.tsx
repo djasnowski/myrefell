@@ -1,5 +1,5 @@
 import { Link, router } from "@inertiajs/react";
-import { Crown, LogOut, Settings } from "lucide-react";
+import { Crown, Gift, LogOut, Settings } from "lucide-react";
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -53,6 +53,17 @@ export function UserMenuContent({ user }: Props) {
                     >
                         <Settings className="mr-2" />
                         Settings
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link
+                        className="block w-full cursor-pointer"
+                        href="/referrals"
+                        prefetch
+                        onClick={cleanup}
+                    >
+                        <Gift className="mr-2" />
+                        Invite Friends
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuGroup>

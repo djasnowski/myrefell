@@ -2,12 +2,14 @@
 
 namespace App\Providers;
 
+use App\Listeners\CheckReferralQualification;
 use App\Listeners\UpdateUserLoginInfo;
 use App\Models\Kingdom;
 use App\Models\Town;
 use App\Models\Village;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
     protected function configureEventListeners(): void
     {
         Event::listen(Login::class, UpdateUserLoginInfo::class);
+        Event::listen(Verified::class, CheckReferralQualification::class);
     }
 
     protected function configureMorphMap(): void

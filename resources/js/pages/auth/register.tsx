@@ -1,5 +1,5 @@
 import { Form, Head } from "@inertiajs/react";
-import { Mars, Venus } from "lucide-react";
+import { Gift, Mars, Venus } from "lucide-react";
 import { useState } from "react";
 import InputError from "@/components/input-error";
 import TextLink from "@/components/text-link";
@@ -15,6 +15,10 @@ import { store } from "@/routes/register";
 export default function Register() {
     const [gender, setGender] = useState<string>("");
 
+    // Get referral code from URL query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const referralCode = urlParams.get("ref") || "";
+
     return (
         <AuthLayout
             title="Create your character"
@@ -29,6 +33,23 @@ export default function Register() {
             >
                 {({ processing, errors }) => (
                     <>
+                        {/* Hidden referral code field */}
+                        <input type="hidden" name="referral_code" value={referralCode} />
+
+                        {referralCode && (
+                            <div className="flex items-center gap-2 rounded-lg border border-green-600/50 bg-green-900/20 p-3">
+                                <Gift className="h-5 w-5 text-green-400" />
+                                <div>
+                                    <p className="text-sm font-medium text-green-300">
+                                        Referral bonus active!
+                                    </p>
+                                    <p className="text-xs text-green-400/70">
+                                        You'll receive 50 gold after verifying your email
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="grid gap-6">
                             <div className="grid gap-2">
                                 <Label htmlFor="username">Username</Label>
