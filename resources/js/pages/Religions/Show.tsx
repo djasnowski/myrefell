@@ -87,6 +87,14 @@ const rankColors: Record<string, string> = {
     follower: 'text-stone-400 bg-stone-700/30',
 };
 
+// Format effect keys: combat_xp_bonus -> Combat XP Bonus
+const formatEffectKey = (key: string): string => {
+    return key
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+};
+
 export default function ReligionShow() {
     const { religion, membership, is_member, can_join, kingdom_status, members, structures, energy, gold } =
         usePage<PageProps>().props;
@@ -393,7 +401,7 @@ export default function ReligionShow() {
                                             <div className="mt-1 font-pixel text-xs text-amber-400">
                                                 {Object.entries(belief.effects).map(([k, v]) => (
                                                     <span key={k} className="mr-2">
-                                                        {k}: {v > 0 ? '+' : ''}{v}
+                                                        {formatEffectKey(k)}: {v > 0 ? '+' : ''}{v}
                                                     </span>
                                                 ))}
                                             </div>
@@ -407,7 +415,7 @@ export default function ReligionShow() {
                                     <div className="font-pixel text-sm text-amber-400">
                                         {Object.entries(religion.combined_effects).map(([k, v]) => (
                                             <span key={k} className="mr-3">
-                                                {k}: {v > 0 ? '+' : ''}{v}
+                                                {formatEffectKey(k)}: {v > 0 ? '+' : ''}{v}
                                             </span>
                                         ))}
                                     </div>
