@@ -293,6 +293,7 @@ class HandleInertiaRequests extends Middleware
         $locationType = $player->current_location_type;
         $isTownOrVillage = in_array($locationType, ['village', 'town']);
         $isTown = $locationType === 'town';
+        $isNotVillage = $locationType !== 'village';
 
         return [
             'type' => $locationType,
@@ -312,6 +313,7 @@ class HandleInertiaRequests extends Middleware
                 'dungeon' => $this->hasDungeonNearby($location, $locationType),
                 'guilds' => $isTown,
                 'elections' => $isTownOrVillage,
+                'stables' => $isNotVillage, // Towns, baronies, duchies, kingdoms have stables
             ],
         ];
     }
