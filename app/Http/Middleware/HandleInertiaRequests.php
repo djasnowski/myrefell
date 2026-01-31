@@ -91,6 +91,7 @@ class HandleInertiaRequests extends Middleware
                 'combat_level' => $player->combat_level,
                 'primary_title' => $player->primary_title,
                 'title_tier' => $player->title_tier,
+                'social_class' => $player->social_class,
                 'role' => $activeRole ? [
                     'name' => $activeRole->role->name,
                     'slug' => $activeRole->role->slug,

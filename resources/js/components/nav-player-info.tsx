@@ -1,7 +1,7 @@
+import { useSidebar } from '@/components/ui/sidebar';
 import { usePage } from '@inertiajs/react';
 import * as LucideIcons from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useSidebar } from '@/components/ui/sidebar';
 
 interface SidebarData {
     player: {
@@ -16,6 +16,7 @@ interface SidebarData {
         combat_level: number;
         primary_title: string | null;
         title_tier: number | null;
+        social_class: string;
         role: {
             name: string;
             slug: string;
@@ -40,26 +41,50 @@ interface SidebarData {
     };
 }
 
-function getIconComponent(iconName: string | null): React.ComponentType<{ className?: string }> | null {
+function getIconComponent(
+    iconName: string | null,
+): React.ComponentType<{ className?: string }> | null {
     if (!iconName) return null;
     // Convert kebab-case to PascalCase (e.g., "chef-hat" -> "ChefHat")
     const pascalCase = iconName
         .split('-')
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join('');
-    return (LucideIcons as Record<string, React.ComponentType<{ className?: string }>>)[pascalCase] || null;
+    return (
+        (
+            LucideIcons as Record<
+                string,
+                React.ComponentType<{ className?: string }>
+            >
+        )[pascalCase] || null
+    );
 }
 
-function StatBar({ current, max, color }: { current: number; max: number; color: string }) {
+function StatBar({
+    current,
+    max,
+    color,
+}: {
+    current: number;
+    max: number;
+    color: string;
+}) {
     const percentage = Math.min((current / max) * 100, 100);
     return (
         <div className="h-2 w-full overflow-hidden rounded-sm bg-stone-700">
-            <div className={`h-full transition-all duration-300 ${color}`} style={{ width: `${percentage}%` }} />
+            <div
+                className={`h-full transition-all duration-300 ${color}`}
+                style={{ width: `${percentage}%` }}
+            />
         </div>
     );
 }
 
-function EnergyTimer({ secondsUntilNext }: { secondsUntilNext: number | null }) {
+function EnergyTimer({
+    secondsUntilNext,
+}: {
+    secondsUntilNext: number | null;
+}) {
     const [seconds, setSeconds] = useState(secondsUntilNext ?? 0);
 
     useEffect(() => {
@@ -98,8 +123,10 @@ export function NavPlayerInfo() {
     const { player, energy_info } = sidebar;
 
     const titleDisplay = player.primary_title
-        ? player.primary_title.charAt(0).toUpperCase() + player.primary_title.slice(1)
-        : 'Peasant';
+        ? player.primary_title.charAt(0).toUpperCase() +
+          player.primary_title.slice(1)
+        : player.social_class.charAt(0).toUpperCase() +
+          player.social_class.slice(1);
 
     // Collapsed view - just show avatar/icon
     if (state === 'collapsed') {
@@ -112,14 +139,18 @@ export function NavPlayerInfo() {
                 <div className="h-1 w-6 overflow-hidden rounded-full bg-stone-700">
                     <div
                         className="h-full bg-red-500"
-                        style={{ width: `${(player.hp / player.max_hp) * 100}%` }}
+                        style={{
+                            width: `${(player.hp / player.max_hp) * 100}%`,
+                        }}
                     />
                 </div>
                 {/* Mini Energy bar */}
                 <div className="h-1 w-6 overflow-hidden rounded-full bg-stone-700">
                     <div
                         className="h-full bg-yellow-500"
-                        style={{ width: `${(energy_info.current / energy_info.max) * 100}%` }}
+                        style={{
+                            width: `${(energy_info.current / energy_info.max) * 100}%`,
+                        }}
                     />
                 </div>
             </div>
@@ -131,8 +162,12 @@ export function NavPlayerInfo() {
             {/* Player Name & Level */}
             <div className="mb-2 flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                    <div className="truncate font-pixel text-sm text-sidebar-accent-foreground">{player.username}</div>
-                    <div className="font-pixel text-[10px] text-sidebar-foreground/60">{titleDisplay}</div>
+                    <div className="truncate font-pixel text-sm text-sidebar-accent-foreground">
+                        {player.username}
+                    </div>
+                    <div className="font-pixel text-[10px] text-sidebar-foreground/60">
+                        {titleDisplay}
+                    </div>
                 </div>
                 <div className="ml-2 flex-shrink-0 rounded bg-sidebar-primary/20 px-2 py-0.5 font-pixel text-xs text-sidebar-primary">
                     Lv.{player.combat_level}
@@ -144,13 +179,19 @@ export function NavPlayerInfo() {
                 <div className="mb-0.5 flex items-center justify-between">
                     <span className="flex items-center gap-1">
                         <span className="text-xs">❤️</span>
-                        <span className="font-pixel text-[10px] text-sidebar-foreground/80">HP</span>
+                        <span className="font-pixel text-[10px] text-sidebar-foreground/80">
+                            HP
+                        </span>
                     </span>
                     <span className="font-pixel text-[10px] text-sidebar-foreground/60">
                         {player.hp}/{player.max_hp}
                     </span>
                 </div>
-                <StatBar current={player.hp} max={player.max_hp} color="bg-gradient-to-r from-red-700 to-red-500" />
+                <StatBar
+                    current={player.hp}
+                    max={player.max_hp}
+                    color="bg-gradient-to-r from-red-700 to-red-500"
+                />
             </div>
 
             {/* Energy */}
@@ -158,16 +199,25 @@ export function NavPlayerInfo() {
                 <div className="mb-0.5 flex items-center justify-between">
                     <span className="flex items-center gap-1">
                         <span className="text-xs">⚡</span>
-                        <span className="font-pixel text-[10px] text-sidebar-foreground/80">Energy</span>
+                        <span className="font-pixel text-[10px] text-sidebar-foreground/80">
+                            Energy
+                        </span>
                     </span>
                     <span className="font-pixel text-[10px] text-sidebar-foreground/60">
                         {energy_info.current}/{energy_info.max}
                     </span>
                 </div>
-                <StatBar current={energy_info.current} max={energy_info.max} color="bg-gradient-to-r from-yellow-600 to-yellow-400" />
+                <StatBar
+                    current={energy_info.current}
+                    max={energy_info.max}
+                    color="bg-gradient-to-r from-yellow-600 to-yellow-400"
+                />
                 {!energy_info.at_max && (
                     <div className="mt-0.5 text-right">
-                        <EnergyTimer key={energy_info.seconds_until_next} secondsUntilNext={energy_info.seconds_until_next} />
+                        <EnergyTimer
+                            key={energy_info.seconds_until_next}
+                            secondsUntilNext={energy_info.seconds_until_next}
+                        />
                     </div>
                 )}
             </div>
@@ -175,41 +225,59 @@ export function NavPlayerInfo() {
             {/* Gold */}
             <div className="flex items-center justify-center gap-1.5 rounded border border-amber-600/30 bg-amber-900/20 py-1.5">
                 <span className="text-sm">🪙</span>
-                <span className="font-pixel text-sm text-amber-300">{player.gold.toLocaleString()}</span>
+                <span className="font-pixel text-sm text-amber-300">
+                    {player.gold.toLocaleString()}
+                </span>
             </div>
 
             {/* Role & Job */}
             {(player.role || player.job) && (
                 <div className="mt-2 space-y-1">
-                    {player.role && (() => {
-                        const RoleIcon = getIconComponent(player.role.icon) || LucideIcons.Crown;
-                        return (
-                            <div className="relative flex items-center gap-1.5 rounded border border-purple-600/30 bg-purple-900/20 px-2 py-1">
-                                <RoleIcon className="mr-1 h-5 w-5 flex-shrink-0 text-purple-400" />
-                                <div className="min-w-0 flex-1">
-                                    <div className="truncate font-pixel text-[10px] text-purple-300">{player.role.name}</div>
-                                    <div className="truncate font-pixel text-[8px] text-purple-400/60">{player.role.location_name}</div>
-                                </div>
-                                {player.role.pending_count > 0 && (
-                                    <div className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 font-pixel text-[9px] text-white">
-                                        {player.role.pending_count > 9 ? '9+' : player.role.pending_count}
+                    {player.role &&
+                        (() => {
+                            const RoleIcon =
+                                getIconComponent(player.role.icon) ||
+                                LucideIcons.Crown;
+                            return (
+                                <div className="relative flex items-center gap-1.5 rounded border border-purple-600/30 bg-purple-900/20 px-2 py-1">
+                                    <RoleIcon className="mr-1 h-5 w-5 flex-shrink-0 text-purple-400" />
+                                    <div className="min-w-0 flex-1">
+                                        <div className="truncate font-pixel text-[10px] text-purple-300">
+                                            {player.role.name}
+                                        </div>
+                                        <div className="truncate font-pixel text-[8px] text-purple-400/60">
+                                            {player.role.location_name}
+                                        </div>
                                     </div>
-                                )}
-                            </div>
-                        );
-                    })()}
-                    {player.job && (() => {
-                        const JobIcon = getIconComponent(player.job.icon) || LucideIcons.Hammer;
-                        return (
-                            <div className="flex items-center gap-1.5 rounded border border-blue-600/30 bg-blue-900/20 px-2 py-1">
-                                <JobIcon className="mr-1 h-5 w-5 flex-shrink-0 text-blue-400" />
-                                <div className="min-w-0 flex-1">
-                                    <div className="truncate font-pixel text-[10px] text-blue-300">{player.job.name}</div>
-                                    <div className="truncate font-pixel text-[8px] text-blue-400/60">{player.job.wage}g/work</div>
+                                    {player.role.pending_count > 0 && (
+                                        <div className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 font-pixel text-[9px] text-white">
+                                            {player.role.pending_count > 9
+                                                ? '9+'
+                                                : player.role.pending_count}
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-                        );
-                    })()}
+                            );
+                        })()}
+                    {player.job &&
+                        (() => {
+                            const JobIcon =
+                                getIconComponent(player.job.icon) ||
+                                LucideIcons.Hammer;
+                            return (
+                                <div className="flex items-center gap-1.5 rounded border border-blue-600/30 bg-blue-900/20 px-2 py-1">
+                                    <JobIcon className="mr-1 h-5 w-5 flex-shrink-0 text-blue-400" />
+                                    <div className="min-w-0 flex-1">
+                                        <div className="truncate font-pixel text-[10px] text-blue-300">
+                                            {player.job.name}
+                                        </div>
+                                        <div className="truncate font-pixel text-[8px] text-blue-400/60">
+                                            {player.job.wage}g/work
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
                 </div>
             )}
         </div>
