@@ -125,9 +125,16 @@ class PlayerSkill extends Model
             return;
         }
 
-        // Only process if user's combat level now meets the requirement
+        $referralService = app(ReferralService::class);
+
+        // Check level 2 qualification
         if ($user->combat_level >= ReferralService::REQUIRED_LEVEL) {
-            app(ReferralService::class)->processQualification($user);
+            $referralService->processQualification($user);
+        }
+
+        // Check bonus level rewards
+        if ($user->combat_level >= ReferralService::BONUS_LEVEL) {
+            $referralService->processBonusReward($user);
         }
     }
 

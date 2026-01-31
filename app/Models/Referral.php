@@ -21,6 +21,9 @@ class Referral extends Model
         'qualified_at',
         'rewarded_at',
         'reward_amount',
+        'bonus_rewarded_at',
+        'referrer_bonus_item',
+        'referred_bonus_item',
     ];
 
     protected function casts(): array
@@ -29,6 +32,7 @@ class Referral extends Model
             'qualified_at' => 'datetime',
             'rewarded_at' => 'datetime',
             'reward_amount' => 'integer',
+            'bonus_rewarded_at' => 'datetime',
         ];
     }
 

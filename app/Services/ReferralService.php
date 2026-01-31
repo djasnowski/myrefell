@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Item;
 use App\Models\Referral;
 use App\Models\User;
 use Illuminate\Support\Str;
@@ -16,9 +17,15 @@ class ReferralService
     // Anti-abuse settings
     public const REQUIRED_LEVEL = 2;
 
+    public const BONUS_LEVEL = 8; // Level for bonus item rewards
+
     public const MIN_ACCOUNT_AGE_MINUTES = 60; // 1 hour minimum before qualifying
 
     public const IP_COOLDOWN_DAYS = 30; // One referral per IP per month
+
+    public function __construct(
+        protected InventoryService $inventoryService
+    ) {}
 
     /**
      * Generate a unique referral code for a user.
@@ -225,6 +232,81 @@ class ReferralService
     }
 
     /**
+     * Get the requirement stages for a referred user.
+     */
+    public function getRequirementStages(User $referred): array
+    {
+        $accountAgeMinutes = $referred->created_at->diffInMinutes(now());
+
+        return [
+            'email_verified' => $referred->hasVerifiedEmail(),
+            'level_reached' => $referred->combat_level >= self::REQUIRED_LEVEL,
+            'account_age_met' => $accountAgeMinutes >= self::MIN_ACCOUNT_AGE_MINUTES,
+            'bonus_level_reached' => $referred->combat_level >= self::BONUS_LEVEL,
+            'current_level' => $referred->combat_level,
+            'account_age_minutes' => $accountAgeMinutes,
+        ];
+    }
+
+    /**
+     * Check and award level 5 bonus items.
+     */
+    public function processBonusReward(User $referred): bool
+    {
+        $referral = Referral::where('referred_id', $referred->id)->first();
+
+        if (! $referral) {
+            return false;
+        }
+
+        // Already awarded bonus
+        if ($referral->bonus_rewarded_at) {
+            return false;
+        }
+
+        // Must be rewarded (level 2 complete) first
+        if (! $referral->isRewarded()) {
+            return false;
+        }
+
+        // Check bonus level requirement
+        if ($referred->combat_level < self::BONUS_LEVEL) {
+            return false;
+        }
+
+        // Get a random rare item for the referred user
+        $rareItem = Item::where('rarity', 'rare')->inRandomOrder()->first();
+
+        // Get a random epic item for the referrer
+        $epicItem = Item::where('rarity', 'epic')->inRandomOrder()->first();
+
+        $referrer = $referral->referrer;
+
+        // Award items
+        $referredItemName = null;
+        $referrerItemName = null;
+
+        if ($rareItem) {
+            $this->inventoryService->addItem($referred, $rareItem->id, 1);
+            $referredItemName = $rareItem->name;
+        }
+
+        if ($epicItem && $referrer) {
+            $this->inventoryService->addItem($referrer, $epicItem->id, 1);
+            $referrerItemName = $epicItem->name;
+        }
+
+        // Update referral record
+        $referral->update([
+            'bonus_rewarded_at' => now(),
+            'referred_bonus_item' => $referredItemName,
+            'referrer_bonus_item' => $referrerItemName,
+        ]);
+
+        return true;
+    }
+
+    /**
      * Get referral statistics for a user.
      */
     public function getStats(User $user): array
@@ -251,16 +333,25 @@ class ReferralService
             ->with('referred')
             ->latest()
             ->get()
-            ->map(fn (Referral $r) => [
-                'id' => $r->id,
-                'username' => $r->referred->username ?? 'Unknown',
-                'level' => $r->referred->combat_level ?? 0,
-                'status' => $r->status,
-                'reward_amount' => $r->reward_amount,
-                'created_at' => $r->created_at->toIso8601String(),
-                'qualified_at' => $r->qualified_at?->toIso8601String(),
-                'rewarded_at' => $r->rewarded_at?->toIso8601String(),
-            ])
+            ->map(function (Referral $r) {
+                $referred = $r->referred;
+                $stages = $referred ? $this->getRequirementStages($referred) : null;
+
+                return [
+                    'id' => $r->id,
+                    'username' => $referred->username ?? 'Unknown',
+                    'level' => $referred->combat_level ?? 0,
+                    'status' => $r->status,
+                    'reward_amount' => $r->reward_amount,
+                    'created_at' => $r->created_at->toIso8601String(),
+                    'qualified_at' => $r->qualified_at?->toIso8601String(),
+                    'rewarded_at' => $r->rewarded_at?->toIso8601String(),
+                    'bonus_rewarded_at' => $r->bonus_rewarded_at?->toIso8601String(),
+                    'referrer_bonus_item' => $r->referrer_bonus_item,
+                    'referred_bonus_item' => $r->referred_bonus_item,
+                    'stages' => $stages,
+                ];
+            })
             ->toArray();
     }
 }

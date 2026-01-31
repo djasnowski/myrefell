@@ -1,5 +1,19 @@
 import { Head, usePage } from "@inertiajs/react";
-import { Check, Clock, Coins, Copy, Gift, Link2, Share2, Shield, Users } from "lucide-react";
+import {
+    Check,
+    Clock,
+    Coins,
+    Copy,
+    Gift,
+    Link2,
+    Mail,
+    Share2,
+    Shield,
+    Sparkles,
+    Swords,
+    Timer,
+    Users,
+} from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import type { BreadcrumbItem } from "@/types";
@@ -14,6 +28,15 @@ interface ReferralStats {
     total_earned: number;
 }
 
+interface ReferralStages {
+    email_verified: boolean;
+    level_reached: boolean;
+    account_age_met: boolean;
+    bonus_level_reached: boolean;
+    current_level: number;
+    account_age_minutes: number;
+}
+
 interface Referral {
     id: number;
     username: string;
@@ -23,12 +46,17 @@ interface Referral {
     created_at: string;
     qualified_at: string | null;
     rewarded_at: string | null;
+    bonus_rewarded_at: string | null;
+    referrer_bonus_item: string | null;
+    referred_bonus_item: string | null;
+    stages: ReferralStages | null;
 }
 
 interface Rewards {
     referrer_reward: number;
     referred_bonus: number;
     required_level: number;
+    bonus_level: number;
 }
 
 interface PageProps {
@@ -196,6 +224,15 @@ export default function ReferralsIndex() {
                                     for using your link!
                                 </span>
                             </li>
+                            <li className="flex items-start gap-2">
+                                <Sparkles className="mt-0.5 h-4 w-4 text-purple-400" />
+                                <span>
+                                    At combat level {rewards.bonus_level}, they get a{" "}
+                                    <span className="font-bold text-blue-300">rare item</span> and
+                                    you get an{" "}
+                                    <span className="font-bold text-purple-300">epic item</span>!
+                                </span>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -236,49 +273,141 @@ export default function ReferralsIndex() {
                 <div>
                     <h2 className="mb-4 font-pixel text-lg text-stone-300">Your Referrals</h2>
                     {referrals.length > 0 ? (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                             {referrals.map((referral) => {
                                 const status = statusConfig[referral.status];
                                 const StatusIcon = status.icon;
+                                const stages = referral.stages;
                                 return (
                                     <div
                                         key={referral.id}
-                                        className={`flex items-center justify-between rounded-lg border ${status.border} ${status.bg} p-4`}
+                                        className={`rounded-lg border ${status.border} ${status.bg} p-4`}
                                     >
-                                        <div className="flex items-center gap-3">
-                                            <div className="rounded-lg bg-stone-800/50 p-2">
-                                                <Users className="h-5 w-5 text-stone-400" />
-                                            </div>
-                                            <div>
-                                                <div className="font-pixel text-sm text-stone-200">
-                                                    {referral.username}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="rounded-lg bg-stone-800/50 p-2">
+                                                    <Users className="h-5 w-5 text-stone-400" />
                                                 </div>
-                                                <div className="text-xs text-stone-500">
-                                                    Level {referral.level} • Joined{" "}
-                                                    {formatDate(referral.created_at)}
+                                                <div>
+                                                    <div className="font-pixel text-sm text-stone-200">
+                                                        {referral.username}
+                                                    </div>
+                                                    <div className="text-xs text-stone-500">
+                                                        Level {referral.level} • Joined{" "}
+                                                        {formatDate(referral.created_at)}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            {referral.status === "rewarded" && (
-                                                <div className="flex items-center gap-1 text-amber-300">
-                                                    <Coins className="h-4 w-4" />
-                                                    <span className="font-pixel text-sm">
-                                                        +{referral.reward_amount}
+                                            <div className="flex items-center gap-3">
+                                                {referral.status === "rewarded" && (
+                                                    <div className="flex items-center gap-1 text-amber-300">
+                                                        <Coins className="h-4 w-4" />
+                                                        <span className="font-pixel text-sm">
+                                                            +{referral.reward_amount}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <div
+                                                    className={`flex items-center gap-1 rounded-full ${status.bg} border ${status.border} px-3 py-1`}
+                                                >
+                                                    <StatusIcon
+                                                        className={`h-3 w-3 ${status.color}`}
+                                                    />
+                                                    <span
+                                                        className={`font-pixel text-xs ${status.color}`}
+                                                    >
+                                                        {status.label}
                                                     </span>
                                                 </div>
-                                            )}
-                                            <div
-                                                className={`flex items-center gap-1 rounded-full ${status.bg} border ${status.border} px-3 py-1`}
-                                            >
-                                                <StatusIcon className={`h-3 w-3 ${status.color}`} />
-                                                <span
-                                                    className={`font-pixel text-xs ${status.color}`}
-                                                >
-                                                    {status.label}
-                                                </span>
                                             </div>
                                         </div>
+
+                                        {/* Requirement Stages */}
+                                        {stages && !referral.bonus_rewarded_at && (
+                                            <div className="mt-3 border-t border-stone-700/50 pt-3">
+                                                <div className="mb-2 text-xs font-medium text-stone-400">
+                                                    {referral.status === "pending"
+                                                        ? "Requirements to qualify:"
+                                                        : "Bonus progress:"}
+                                                </div>
+                                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
+                                                    <div
+                                                        className={`flex items-center gap-2 rounded-md px-2 py-1.5 ${stages.email_verified ? "bg-green-900/20 text-green-400" : "bg-stone-800/50 text-stone-500"}`}
+                                                    >
+                                                        <Mail className="h-4 w-4" />
+                                                        <span className="text-xs">
+                                                            Email Verified
+                                                        </span>
+                                                        {stages.email_verified && (
+                                                            <Check className="ml-auto h-3 w-3" />
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        className={`flex items-center gap-2 rounded-md px-2 py-1.5 ${stages.level_reached ? "bg-green-900/20 text-green-400" : "bg-stone-800/50 text-stone-500"}`}
+                                                    >
+                                                        <Swords className="h-4 w-4" />
+                                                        <span className="text-xs">
+                                                            Combat Lvl {rewards.required_level}
+                                                        </span>
+                                                        {stages.level_reached && (
+                                                            <Check className="ml-auto h-3 w-3" />
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        className={`flex items-center gap-2 rounded-md px-2 py-1.5 ${stages.account_age_met ? "bg-green-900/20 text-green-400" : "bg-stone-800/50 text-stone-500"}`}
+                                                    >
+                                                        <Timer className="h-4 w-4" />
+                                                        <span className="text-xs">
+                                                            1hr Account Age
+                                                        </span>
+                                                        {stages.account_age_met && (
+                                                            <Check className="ml-auto h-3 w-3" />
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        className={`flex items-center gap-2 rounded-md px-2 py-1.5 ${stages.bonus_level_reached ? "bg-purple-900/20 text-purple-400" : "bg-stone-800/50 text-stone-500"}`}
+                                                    >
+                                                        <Sparkles className="h-4 w-4" />
+                                                        <span className="text-xs">
+                                                            Combat Lvl {rewards.bonus_level}
+                                                        </span>
+                                                        {stages.bonus_level_reached && (
+                                                            <Check className="ml-auto h-3 w-3" />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Bonus Items Awarded */}
+                                        {referral.bonus_rewarded_at && (
+                                            <div className="mt-3 border-t border-stone-700/50 pt-3">
+                                                <div className="flex flex-wrap items-center gap-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <Sparkles className="h-4 w-4 text-purple-400" />
+                                                        <span className="text-xs text-stone-400">
+                                                            Bonus Items:
+                                                        </span>
+                                                    </div>
+                                                    {referral.referrer_bonus_item && (
+                                                        <div className="flex items-center gap-1.5 rounded-md bg-purple-900/30 border border-purple-600/50 px-2 py-1">
+                                                            <Gift className="h-3 w-3 text-purple-400" />
+                                                            <span className="text-xs text-purple-300">
+                                                                You: {referral.referrer_bonus_item}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    {referral.referred_bonus_item && (
+                                                        <div className="flex items-center gap-1.5 rounded-md bg-blue-900/30 border border-blue-600/50 px-2 py-1">
+                                                            <Gift className="h-3 w-3 text-blue-400" />
+                                                            <span className="text-xs text-blue-300">
+                                                                They: {referral.referred_bonus_item}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}

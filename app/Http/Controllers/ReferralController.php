@@ -30,6 +30,7 @@ class ReferralController extends Controller
                 'referrer_reward' => ReferralService::REFERRER_REWARD,
                 'referred_bonus' => ReferralService::REFERRED_BONUS,
                 'required_level' => ReferralService::REQUIRED_LEVEL,
+                'bonus_level' => ReferralService::BONUS_LEVEL,
             ],
         ]);
     }
