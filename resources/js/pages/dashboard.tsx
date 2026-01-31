@@ -162,7 +162,9 @@ export default function Dashboard() {
         {
             title: "Train Combat",
             description: "Improve Attack, Strength, Defense",
-            href: location ? `/${location.type}s/${location.id}/training` : "/villages",
+            href: location
+                ? `/${pluralizeLocationType(location.type)}/${location.id}/training`
+                : "/villages",
             icon: Swords,
         },
         {
@@ -174,13 +176,17 @@ export default function Dashboard() {
         {
             title: "Visit Market",
             description: "Buy and sell goods",
-            href: location ? `/${location.type}s/${location.id}/market` : "/villages",
+            href: location
+                ? `/${pluralizeLocationType(location.type)}/${location.id}/market`
+                : "/villages",
             icon: Coins,
         },
         {
             title: "Find Work",
             description: "Apply for a job",
-            href: location ? `/${location.type}s/${location.id}/jobs` : "/villages",
+            href: location
+                ? `/${pluralizeLocationType(location.type)}/${location.id}/jobs`
+                : "/villages",
             icon: Briefcase,
         },
     ];
@@ -195,7 +201,9 @@ export default function Dashboard() {
             items: [
                 features?.training && {
                     name: "Training",
-                    href: location ? `/${location.type}s/${location.id}/training` : "/villages",
+                    href: location
+                        ? `/${pluralizeLocationType(location.type)}/${location.id}/training`
+                        : "/villages",
                     icon: Swords,
                 },
                 { name: "Combat", href: "/combat", icon: Shield },
@@ -208,23 +216,31 @@ export default function Dashboard() {
             items: [
                 features?.bank && {
                     name: "Banking",
-                    href: location ? `/${location.type}s/${location.id}/bank` : "/villages",
+                    href: location
+                        ? `/${pluralizeLocationType(location.type)}/${location.id}/bank`
+                        : "/villages",
                     icon: Banknote,
                 },
                 features?.market && {
                     name: "Market",
-                    href: location ? `/${location.type}s/${location.id}/market` : "/villages",
+                    href: location
+                        ? `/${pluralizeLocationType(location.type)}/${location.id}/market`
+                        : "/villages",
                     icon: Store,
                 },
                 features?.crafting && {
                     name: "Crafting",
-                    href: location ? `/${location.type}s/${location.id}/crafting` : "/villages",
+                    href: location
+                        ? `/${pluralizeLocationType(location.type)}/${location.id}/crafting`
+                        : "/villages",
                     icon: Hammer,
                 },
                 { name: "Caravans", href: "/trade/caravans", icon: Truck },
                 features?.jobs && {
                     name: "Jobs",
-                    href: location ? `/${location.type}s/${location.id}/jobs` : "/villages",
+                    href: location
+                        ? `/${pluralizeLocationType(location.type)}/${location.id}/jobs`
+                        : "/villages",
                     icon: Briefcase,
                 },
             ].filter(Boolean),
@@ -264,12 +280,16 @@ export default function Dashboard() {
                 { name: "Travel", href: "/travel", icon: Map },
                 features?.stables && {
                     name: "Stables",
-                    href: location ? `/${location.type}s/${location.id}/stables` : "/towns",
+                    href: location
+                        ? `/${pluralizeLocationType(location.type)}/${location.id}/stables`
+                        : "/towns",
                     icon: Gauge,
                 },
                 features?.port && {
                     name: "Sea Port",
-                    href: location ? `/${location.type}s/${location.id}/port` : "/villages",
+                    href: location
+                        ? `/${pluralizeLocationType(location.type)}/${location.id}/port`
+                        : "/villages",
                     icon: Anchor,
                 },
                 { name: "Calendar", href: "/calendar", icon: Calendar },
