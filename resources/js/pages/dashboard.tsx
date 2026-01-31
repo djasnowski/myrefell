@@ -16,6 +16,7 @@ import {
     Heart,
     Home,
     Gauge,
+    Gift,
     Lightbulb,
     Map,
     MapPin,
@@ -562,20 +563,42 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Tips */}
-                <div className="rounded-xl border border-amber-900/30 bg-amber-900/10 p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                        <Lightbulb className="h-4 w-4 text-amber-400" />
-                        <h3 className="font-[Cinzel] text-sm font-bold text-amber-400">Tips</h3>
-                    </div>
-                    <div className="grid gap-x-6 gap-y-1 text-xs text-stone-400 sm:grid-cols-2">
-                        <div>
-                            • Energy regenerates over time - use it for training and gathering
+                {/* Tips + Referral */}
+                <div className="grid gap-4 lg:grid-cols-3">
+                    {/* Tips */}
+                    <div className="rounded-xl border border-amber-900/30 bg-amber-900/10 p-4 lg:col-span-2">
+                        <div className="mb-2 flex items-center gap-2">
+                            <Lightbulb className="h-4 w-4 text-amber-400" />
+                            <h3 className="font-[Cinzel] text-sm font-bold text-amber-400">Tips</h3>
                         </div>
-                        <div>• Complete daily tasks for bonus rewards</div>
-                        <div>• Check the notice board for quests</div>
-                        <div>• Travel costs energy - plan journeys carefully</div>
+                        <div className="grid gap-x-6 gap-y-1 text-xs text-stone-400 sm:grid-cols-2">
+                            <div>
+                                • Energy regenerates over time - use it for training and gathering
+                            </div>
+                            <div>• Complete daily tasks for bonus rewards</div>
+                            <div>• Check the notice board for quests</div>
+                            <div>• Travel costs energy - plan journeys carefully</div>
+                        </div>
                     </div>
+
+                    {/* Invite Friends */}
+                    <Link
+                        href="/referrals"
+                        className="group flex items-center gap-3 rounded-xl border border-green-900/30 bg-green-900/10 p-4 transition hover:border-green-700/50 hover:bg-green-900/20"
+                    >
+                        <div className="rounded-lg bg-green-900/30 p-2.5">
+                            <Gift className="h-6 w-6 text-green-400" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-[Cinzel] text-sm font-bold text-green-400">
+                                Invite Friends
+                            </h3>
+                            <p className="text-xs text-stone-400">
+                                Earn 250 gold for each friend who joins!
+                            </p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-green-400 opacity-0 transition group-hover:opacity-100" />
+                    </Link>
                 </div>
             </div>
         </AppLayout>
