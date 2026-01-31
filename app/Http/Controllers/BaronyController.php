@@ -84,37 +84,8 @@ class BaronyController extends Controller
         // Get services available at barony level
         $services = LocationServices::getServicesForLocation('barony');
 
-        // Get recent activity for this barony (from all villages/towns in the barony)
-        $villageIds = $barony->villages->pluck('id')->toArray();
-        $townIds = $barony->towns->pluck('id')->toArray();
-
-        $recentActivity = ActivityLog::query()
-            ->where(function ($query) use ($villageIds, $townIds, $barony) {
-                $query->where(function ($q) use ($villageIds) {
-                    $q->where('location_type', 'village')
-                        ->whereIn('location_id', $villageIds);
-                })->orWhere(function ($q) use ($townIds) {
-                    $q->where('location_type', 'town')
-                        ->whereIn('location_id', $townIds);
-                })->orWhere(function ($q) use ($barony) {
-                    $q->where('location_type', 'barony')
-                        ->where('location_id', $barony->id);
-                });
-            })
-            ->with('user:id,username')
-            ->latest()
-            ->limit(10)
-            ->get()
-            ->map(fn ($log) => [
-                'id' => $log->id,
-                'username' => $log->user->username ?? 'Unknown',
-                'description' => $log->description,
-                'activity_type' => $log->activity_type,
-                'subtype' => $log->subtype,
-                'metadata' => $log->metadata,
-                'created_at' => $log->created_at->toIso8601String(),
-                'time_ago' => $log->created_at->diffForHumans(),
-            ]);
+        // TODO: Activity logging not yet implemented
+        $recentActivity = collect([]);
 
         return Inertia::render('baronies/show', [
             'barony' => [
