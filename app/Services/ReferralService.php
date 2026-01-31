@@ -248,13 +248,13 @@ class ReferralService
     public function getReferralsList(User $user): array
     {
         return Referral::where('referrer_id', $user->id)
-            ->with('referred:id,username,level,created_at')
+            ->with('referred')
             ->latest()
             ->get()
             ->map(fn (Referral $r) => [
                 'id' => $r->id,
                 'username' => $r->referred->username ?? 'Unknown',
-                'level' => $r->referred->level ?? 0,
+                'level' => $r->referred->combat_level ?? 0,
                 'status' => $r->status,
                 'reward_amount' => $r->reward_amount,
                 'created_at' => $r->created_at->toIso8601String(),
