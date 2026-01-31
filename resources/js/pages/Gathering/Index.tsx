@@ -77,8 +77,8 @@ export default function GatheringIndex() {
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
-        { title: location.name, href: `/villages/${location.id}` },
-        { title: 'Gathering', href: `/villages/${location.id}/gathering` },
+        { title: location.name, href: `/${location.type}s/${location.id}` },
+        { title: 'Gathering', href: `/${location.type}s/${location.id}/gathering` },
     ];
 
     return (
@@ -143,7 +143,7 @@ export default function GatheringIndex() {
                         return (
                             <Link
                                 key={activity.id}
-                                href={`/villages/${location.id}/gathering/${activity.id}`}
+                                href={`/${location.type}s/${location.id}/gathering/${activity.id}`}
                                 className={`rounded-xl border-2 p-5 transition ${colorClass}`}
                             >
                                 <div className="mb-4 flex items-center gap-3">

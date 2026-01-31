@@ -29,7 +29,7 @@ class GatheringService
             'energy_cost' => 5,
             'base_xp' => 15,
             'task_type' => 'mine',
-            'location_types' => ['village', 'barony', 'wilderness'],
+            'location_types' => ['village', 'town', 'barony', 'wilderness'],
             'resources' => [
                 ['name' => 'Copper Ore', 'weight' => 60, 'min_level' => 1, 'xp_bonus' => 0],
                 ['name' => 'Tin Ore', 'weight' => 40, 'min_level' => 1, 'xp_bonus' => 5],
@@ -45,7 +45,7 @@ class GatheringService
             'energy_cost' => 4,
             'base_xp' => 12,
             'task_type' => 'fish',
-            'location_types' => ['village', 'wilderness'],
+            'location_types' => ['village', 'town', 'wilderness'],
             'resources' => [
                 ['name' => 'Raw Shrimp', 'weight' => 50, 'min_level' => 1, 'xp_bonus' => 0],
                 ['name' => 'Raw Sardine', 'weight' => 40, 'min_level' => 1, 'xp_bonus' => 3],
@@ -61,7 +61,7 @@ class GatheringService
             'energy_cost' => 4,
             'base_xp' => 10,
             'task_type' => 'chop',
-            'location_types' => ['village', 'wilderness'],
+            'location_types' => ['village', 'town', 'wilderness'],
             'resources' => [
                 ['name' => 'Wood', 'weight' => 60, 'min_level' => 1, 'xp_bonus' => 0],
                 ['name' => 'Oak Wood', 'weight' => 35, 'min_level' => 10, 'xp_bonus' => 8],

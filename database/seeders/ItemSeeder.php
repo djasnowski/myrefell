@@ -499,6 +499,20 @@ class ItemSeeder extends Seeder
             // === CONSUMABLES ===
             // Food (cooked food lasts longer but still perishable)
             [
+                'name' => 'Cooked Shrimp',
+                'description' => 'A cooked shrimp. Heals 3 HP. Lasts longer than raw shrimp.',
+                'type' => 'consumable',
+                'subtype' => 'food',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 50,
+                'hp_bonus' => 3,
+                'base_value' => 8,
+                'is_perishable' => true,
+                'spoil_after_weeks' => 4,
+                'decays_into' => 'Spoiled Food',
+            ],
+            [
                 'name' => 'Bread',
                 'description' => 'A loaf of freshly baked bread. Heals 5 HP. Will go stale over time.',
                 'type' => 'consumable',

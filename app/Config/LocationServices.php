@@ -114,6 +114,7 @@ class LocationServices
         ],
         'town' => [
             'training',
+            'gathering',
             'crafting',
             'market',
             'bank',
@@ -123,6 +124,7 @@ class LocationServices
             'port',      // Only if is_port = true
             'hall',
             'stables',
+            'tavern',
         ],
         'barony' => [
             'training',
@@ -158,9 +160,7 @@ class LocationServices
     /**
      * Get services available at a specific location.
      *
-     * @param string $locationType
-     * @param bool $isPort Whether the location is a port
-     * @return array
+     * @param  bool  $isPort  Whether the location is a port
      */
     public static function getServicesForLocation(string $locationType, bool $isPort = false): array
     {
@@ -169,12 +169,12 @@ class LocationServices
 
         foreach ($serviceIds as $serviceId) {
             $service = self::SERVICES[$serviceId] ?? null;
-            if (!$service) {
+            if (! $service) {
                 continue;
             }
 
             // Skip port if location is not a port
-            if (($service['requires_port'] ?? false) && !$isPort) {
+            if (($service['requires_port'] ?? false) && ! $isPort) {
                 continue;
             }
 
@@ -190,6 +190,7 @@ class LocationServices
     public static function isServiceAvailable(string $locationType, string $serviceId, bool $isPort = false): bool
     {
         $services = self::getServicesForLocation($locationType, $isPort);
+
         return isset($services[$serviceId]);
     }
 
@@ -199,7 +200,7 @@ class LocationServices
     public static function getServiceRoute(string $locationType, string $serviceId): string
     {
         $service = self::SERVICES[$serviceId] ?? null;
-        if (!$service) {
+        if (! $service) {
             return '';
         }
 
@@ -210,7 +211,7 @@ class LocationServices
             'barony' => 'baronies',
             'duchy' => 'duchies',
             'kingdom' => 'kingdoms',
-            default => $locationType . 's',
+            default => $locationType.'s',
         };
 
         return "{$locationPlural}.{$service['route']}";
@@ -222,7 +223,7 @@ class LocationServices
     public static function getServiceUrl(string $locationType, int $locationId, string $serviceId): string
     {
         $routeName = self::getServiceRoute($locationType, $serviceId);
-        if (!$routeName) {
+        if (! $routeName) {
             return '';
         }
 

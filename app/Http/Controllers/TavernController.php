@@ -8,12 +8,18 @@ use App\Models\Kingdom;
 use App\Models\LocationActivityLog;
 use App\Models\Town;
 use App\Models\Village;
+use App\Services\CookingService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class TavernController extends Controller
 {
+    public function __construct(
+        protected CookingService $cookingService
+    ) {}
+
     /**
      * Show the tavern page.
      */
@@ -49,6 +55,9 @@ class TavernController extends Controller
         $restCost = 10; // gold
         $energyRestored = min(50, $user->max_energy - $user->energy);
 
+        // Get cooking recipes
+        $cookingInfo = $this->cookingService->getCookingInfo($user);
+
         return Inertia::render('Tavern/Index', [
             'location' => $location ? [
                 'type' => $locationType,
@@ -66,6 +75,7 @@ class TavernController extends Controller
                 'can_rest' => $user->gold >= $restCost && $user->energy < $user->max_energy,
             ],
             'recent_activity' => $recentActivity,
+            'cooking' => $cookingInfo,
         ]);
     }
 
@@ -106,6 +116,29 @@ class TavernController extends Controller
         }
 
         return back()->with('success', "You rest at the tavern and recover {$energyRestored} energy.");
+    }
+
+    /**
+     * Cook a recipe at the tavern.
+     */
+    public function cook(Request $request, ?Village $village = null, ?Town $town = null): JsonResponse
+    {
+        $request->validate([
+            'recipe' => 'required|string',
+        ]);
+
+        $location = $village ?? $town;
+        $locationType = $this->getLocationType($location);
+
+        $user = $request->user();
+        $result = $this->cookingService->cook(
+            $user,
+            $request->input('recipe'),
+            $locationType ?? $user->current_location_type,
+            $location?->id ?? $user->current_location_id
+        );
+
+        return response()->json($result, $result['success'] ? 200 : 422);
     }
 
     /**

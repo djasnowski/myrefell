@@ -45,14 +45,22 @@ interface CraftResult {
     energy_remaining?: number;
 }
 
+interface Location {
+    type: string;
+    id: number;
+    name: string;
+}
+
 interface PageProps {
     crafting_info: CraftingInfo;
+    location?: Location;
     [key: string]: unknown;
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
+const getBreadcrumbs = (location?: Location): BreadcrumbItem[] => [
     { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Crafting', href: '/crafting' },
+    ...(location ? [{ title: location.name, href: `/${location.type}s/${location.id}` }] : []),
+    { title: 'Crafting', href: location ? `/${location.type}s/${location.id}/crafting` : '/crafting' },
 ];
 
 const categoryIcons: Record<string, typeof Hammer> = {
@@ -168,18 +176,23 @@ function RecipeCard({
 }
 
 export default function CraftingIndex() {
-    const { crafting_info } = usePage<PageProps>().props;
+    const { crafting_info, location } = usePage<PageProps>().props;
     const [loading, setLoading] = useState<string | null>(null);
     const [result, setResult] = useState<CraftResult | null>(null);
     const [activeCategory, setActiveCategory] = useState<string>('all');
     const [currentEnergy, setCurrentEnergy] = useState(crafting_info.player_energy);
+
+    // Build the craft URL based on location
+    const craftUrl = location
+        ? `/${location.type}s/${location.id}/crafting/craft`
+        : '/crafting/craft';
 
     const handleCraft = async (recipeId: string) => {
         setLoading(recipeId);
         setResult(null);
 
         try {
-            const response = await fetch('/crafting/craft', {
+            const response = await fetch(craftUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -214,7 +227,7 @@ export default function CraftingIndex() {
     const categories = ['all', ...Object.keys(crafting_info.all_recipes)];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={getBreadcrumbs(location)}>
             <Head title="Crafting" />
             <div className="flex h-full flex-1 flex-col p-4">
                 {/* Header */}

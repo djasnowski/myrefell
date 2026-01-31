@@ -100,9 +100,9 @@ export default function GatheringActivity() {
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
-        { title: location.name, href: `/villages/${location.id}` },
-        { title: 'Gathering', href: `/villages/${location.id}/gathering` },
-        { title: activity.name, href: `/villages/${location.id}/gathering/${activity.id}` },
+        { title: location.name, href: `/${location.type}s/${location.id}` },
+        { title: 'Gathering', href: `/${location.type}s/${location.id}/gathering` },
+        { title: activity.name, href: `/${location.type}s/${location.id}/gathering/${activity.id}` },
     ];
 
     const canGather = currentEnergy >= activity.energy_cost && !activity.inventory_full;
@@ -114,7 +114,7 @@ export default function GatheringActivity() {
         setResult(null);
 
         try {
-            const response = await fetch(`/villages/${location.id}/gathering/gather`, {
+            const response = await fetch(`/${location.type}s/${location.id}/gathering/gather`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

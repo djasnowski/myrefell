@@ -282,12 +282,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
         Route::get('tavern', [TavernController::class, 'index'])->name('tavern');
         Route::post('tavern/rest', [TavernController::class, 'rest'])->name('tavern.rest');
+        Route::post('tavern/cook', [TavernController::class, 'cook'])->name('tavern.cook');
     });
 
     // Location-scoped services: Towns
     Route::prefix('towns/{town}')->name('towns.')->middleware('at.location')->group(function () {
         Route::get('training', [TrainingController::class, 'index'])->name('training');
         Route::post('training/train', [TrainingController::class, 'train'])->name('training.train');
+        Route::get('gathering', [GatheringController::class, 'index'])->name('gathering');
+        Route::post('gathering/gather', [GatheringController::class, 'gather'])->name('gathering.gather');
+        Route::get('gathering/{activity}', [GatheringController::class, 'show'])->name('gathering.show');
         Route::get('crafting', [CraftingController::class, 'index'])->name('crafting');
         Route::post('crafting/craft', [CraftingController::class, 'craft'])->name('crafting.craft');
         Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
@@ -296,6 +300,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('shrine/request/{blessingRequest}/approve', [BlessingController::class, 'approveRequest'])->name('shrine.approve');
         Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
         Route::get('stables', [StableController::class, 'index'])->name('stables');
+        Route::get('tavern', [TavernController::class, 'index'])->name('tavern');
+        Route::post('tavern/rest', [TavernController::class, 'rest'])->name('tavern.rest');
+        Route::post('tavern/cook', [TavernController::class, 'cook'])->name('tavern.cook');
     });
 
     // Location-scoped services: Baronies

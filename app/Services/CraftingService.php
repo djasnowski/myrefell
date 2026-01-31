@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Item;
 use App\Models\LocationActivityLog;
 use App\Models\User;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class CraftingService
@@ -153,113 +152,6 @@ class CraftingService
                 ['name' => 'Thread', 'quantity' => 5],
             ],
             'output' => ['name' => 'Fishing Net', 'quantity' => 1],
-        ],
-
-        // Cooking recipes
-        'flour' => [
-            'name' => 'Flour',
-            'category' => 'cooking',
-            'skill' => 'cooking',
-            'required_level' => 1,
-            'xp_reward' => 5,
-            'energy_cost' => 2,
-            'task_type' => 'cook',
-            'materials' => [
-                ['name' => 'Grain', 'quantity' => 2],
-            ],
-            'output' => ['name' => 'Flour', 'quantity' => 1],
-        ],
-        'bread' => [
-            'name' => 'Bread',
-            'category' => 'cooking',
-            'skill' => 'cooking',
-            'required_level' => 1,
-            'xp_reward' => 8,
-            'energy_cost' => 2,
-            'task_type' => 'cook',
-            'materials' => [
-                ['name' => 'Flour', 'quantity' => 1],
-            ],
-            'output' => ['name' => 'Bread', 'quantity' => 1],
-        ],
-        'cooked_shrimp' => [
-            'name' => 'Cooked Shrimp',
-            'category' => 'cooking',
-            'skill' => 'cooking',
-            'required_level' => 1,
-            'xp_reward' => 10,
-            'energy_cost' => 2,
-            'task_type' => 'cook',
-            'materials' => [
-                ['name' => 'Raw Shrimp', 'quantity' => 1],
-            ],
-            'output' => ['name' => 'Cooked Shrimp', 'quantity' => 1],
-        ],
-        'cooked_trout' => [
-            'name' => 'Cooked Trout',
-            'category' => 'cooking',
-            'skill' => 'cooking',
-            'required_level' => 10,
-            'xp_reward' => 20,
-            'energy_cost' => 3,
-            'task_type' => 'cook',
-            'materials' => [
-                ['name' => 'Raw Trout', 'quantity' => 1],
-            ],
-            'output' => ['name' => 'Cooked Trout', 'quantity' => 1],
-        ],
-        'cooked_salmon' => [
-            'name' => 'Cooked Salmon',
-            'category' => 'cooking',
-            'skill' => 'cooking',
-            'required_level' => 20,
-            'xp_reward' => 30,
-            'energy_cost' => 3,
-            'task_type' => 'cook',
-            'materials' => [
-                ['name' => 'Raw Salmon', 'quantity' => 1],
-            ],
-            'output' => ['name' => 'Cooked Salmon', 'quantity' => 1],
-        ],
-        'cooked_lobster' => [
-            'name' => 'Cooked Lobster',
-            'category' => 'cooking',
-            'skill' => 'cooking',
-            'required_level' => 30,
-            'xp_reward' => 50,
-            'energy_cost' => 4,
-            'task_type' => 'cook',
-            'materials' => [
-                ['name' => 'Raw Lobster', 'quantity' => 1],
-            ],
-            'output' => ['name' => 'Cooked Lobster', 'quantity' => 1],
-        ],
-        'cooked_meat' => [
-            'name' => 'Cooked Meat',
-            'category' => 'cooking',
-            'skill' => 'cooking',
-            'required_level' => 5,
-            'xp_reward' => 15,
-            'energy_cost' => 2,
-            'task_type' => 'cook',
-            'materials' => [
-                ['name' => 'Raw Meat', 'quantity' => 1],
-            ],
-            'output' => ['name' => 'Cooked Meat', 'quantity' => 1],
-        ],
-        'meat_pie' => [
-            'name' => 'Meat Pie',
-            'category' => 'cooking',
-            'skill' => 'cooking',
-            'required_level' => 15,
-            'xp_reward' => 35,
-            'energy_cost' => 4,
-            'task_type' => 'cook',
-            'materials' => [
-                ['name' => 'Flour', 'quantity' => 1],
-                ['name' => 'Raw Meat', 'quantity' => 1],
-            ],
-            'output' => ['name' => 'Meat Pie', 'quantity' => 1],
         ],
 
         // Crafting recipes
