@@ -1,4 +1,5 @@
 import { Head, Link } from "@inertiajs/react";
+import { Route } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RulerDisplay } from "@/components/ui/legitimacy-badge";
@@ -44,6 +45,7 @@ interface Barony {
 interface Props {
     barony: Barony;
     current_user_id: number;
+    is_baron: boolean;
 }
 
 const biomeColors: Record<string, string> = {
@@ -57,7 +59,7 @@ const biomeColors: Record<string, string> = {
     swamps: "bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200",
 };
 
-export default function BaronyShow({ barony, current_user_id }: Props) {
+export default function BaronyShow({ barony, current_user_id, is_baron }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
         { title: "Baronies", href: "/baronies" },
@@ -142,6 +144,18 @@ export default function BaronyShow({ barony, current_user_id }: Props) {
                         <span className="font-pixel text-lg text-amber-300">View Roles</span>
                         <p className="text-sm text-stone-400">See barony officials and positions</p>
                     </Link>
+                    {is_baron && (
+                        <Link
+                            href={`/baronies/${barony.id}/trade-routes`}
+                            className="flex-1 rounded-lg border-2 border-emerald-600/50 bg-emerald-900/20 p-4 text-center transition hover:bg-emerald-800/30"
+                        >
+                            <div className="flex items-center justify-center gap-2">
+                                <Route className="h-5 w-5 text-emerald-300" />
+                                <span className="font-pixel text-lg text-emerald-300">Trade Routes</span>
+                            </div>
+                            <p className="text-sm text-stone-400">Manage caravan routes for your barony</p>
+                        </Link>
+                    )}
                 </div>
 
                 <div>

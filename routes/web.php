@@ -495,6 +495,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Trade Routes
     Route::get('trade/routes', [TradeRouteController::class, 'index'])->name('trade.routes');
     Route::post('trade/routes', [TradeRouteController::class, 'store'])->name('trade.routes.store');
+    Route::get('baronies/{barony}/trade-routes', [TradeRouteController::class, 'baronyTradeRoutes'])->name('baronies.trade-routes');
+    Route::post('baronies/{barony}/trade-routes', [TradeRouteController::class, 'storeBaronyRoute'])->name('baronies.trade-routes.store');
 
     // Caravans
     Route::get('trade/caravans', [CaravanController::class, 'index'])->name('trade.caravans');

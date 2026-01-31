@@ -579,9 +579,14 @@ export default function RolesIndex() {
     // User's current role (anywhere in the game - they can only have one)
     const currentUserRole = user_roles.length > 0 ? user_roles[0] : undefined;
 
+    // Pluralize location type correctly for URL
+    const locationTypePlural = location_type === 'barony' ? 'baronies'
+        : location_type === 'duchy' ? 'duchies'
+        : `${location_type}s`;
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
-        { title: location_name, href: `/${location_type}s/${location_id}` },
+        { title: location_name, href: `/${locationTypePlural}/${location_id}` },
         { title: "Roles", href: "#" },
     ];
 

@@ -73,6 +73,9 @@ class BaronyController extends Controller
             }
         }
 
+        // Check if current user is the baron
+        $isBaron = $baron && $baron['id'] === $user->id;
+
         return Inertia::render('baronies/show', [
             'barony' => [
                 'id' => $barony->id,
@@ -108,6 +111,7 @@ class BaronyController extends Controller
                 'baron' => $baron,
             ],
             'current_user_id' => $user->id,
+            'is_baron' => $isBaron,
         ]);
     }
 

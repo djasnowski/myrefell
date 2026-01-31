@@ -50,6 +50,18 @@ interface LocationFeatures {
     stables: boolean;
 }
 
+// Helper to pluralize location types correctly
+function pluralizeLocationType(type: string): string {
+    const plurals: Record<string, string> = {
+        village: "villages",
+        town: "towns",
+        barony: "baronies",
+        duchy: "duchies",
+        kingdom: "kingdoms",
+    };
+    return plurals[type] || `${type}s`;
+}
+
 interface DiseaseInfection {
     id: number;
     disease_name: string;
@@ -105,7 +117,7 @@ export default function Dashboard() {
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
-        ...(location ? [{ title: location.name, href: `/${location.type}s/${location.id}` }] : []),
+        ...(location ? [{ title: location.name, href: `/${pluralizeLocationType(location.type)}/${location.id}` }] : []),
     ];
 
     const quickActions = [
@@ -357,7 +369,7 @@ export default function Dashboard() {
                                 </div>
                             </div>
                             <Link
-                                href={`/${location.type}s/${location.id}`}
+                                href={`/${pluralizeLocationType(location.type)}/${location.id}`}
                                 className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-stone-800 px-3 py-1.5 text-sm font-medium text-stone-300 transition hover:bg-stone-700"
                             >
                                 Explore <ArrowRight className="h-3 w-3" />

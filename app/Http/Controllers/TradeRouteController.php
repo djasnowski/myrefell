@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Barony;
 use App\Models\Caravan;
 use App\Models\PlayerRole;
 use App\Models\Role;
@@ -146,6 +147,222 @@ class TradeRouteController extends Controller
         }
 
         // Calculate approximate distance (simplified - could be enhanced with actual map data)
+        $distance = rand(50, 200);
+        $baseTravelDays = max(1, (int) ($distance / 50));
+
+        // Set bandit chance based on danger level
+        $banditChance = match ($validated['danger_level']) {
+            'safe' => 5,
+            'moderate' => 15,
+            'dangerous' => 30,
+            'perilous' => 50,
+            default => 10,
+        };
+
+        $route = TradeRoute::create([
+            'name' => $validated['name'],
+            'origin_type' => $validated['origin_type'],
+            'origin_id' => $validated['origin_id'],
+            'destination_type' => $validated['destination_type'],
+            'destination_id' => $validated['destination_id'],
+            'distance' => $distance,
+            'base_travel_days' => $baseTravelDays,
+            'danger_level' => $validated['danger_level'],
+            'bandit_chance' => $banditChance,
+            'is_active' => true,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Trade route created successfully.',
+            'route_id' => $route->id,
+        ]);
+    }
+
+    /**
+     * Display trade routes for a specific barony.
+     */
+    public function baronyTradeRoutes(Request $request, Barony $barony): Response
+    {
+        $user = $request->user();
+
+        // Check if user is baron of this barony
+        $baronRole = Role::where('slug', 'baron')->first();
+        $isBaron = $baronRole && PlayerRole::where('user_id', $user->id)
+            ->where('role_id', $baronRole->id)
+            ->where('location_type', 'barony')
+            ->where('location_id', $barony->id)
+            ->active()
+            ->exists();
+
+        if (! $isBaron) {
+            abort(403, 'You must be the Baron of this barony to manage its trade routes.');
+        }
+
+        // Get villages in this barony for the dropdown
+        $villages = $barony->villages()->orderBy('name')->get()->map(fn ($v) => [
+            'id' => $v->id,
+            'name' => $v->name,
+            'type' => 'village',
+        ]);
+
+        // Get towns in this barony
+        $towns = $barony->towns()->orderBy('name')->get()->map(fn ($t) => [
+            'id' => $t->id,
+            'name' => $t->name,
+            'type' => 'town',
+        ]);
+
+        // Get all villages and towns (for destination - can route to other baronies)
+        $allVillages = Village::orderBy('name')->get()->map(fn ($v) => [
+            'id' => $v->id,
+            'name' => $v->name,
+            'type' => 'village',
+            'barony_id' => $v->barony_id,
+        ]);
+
+        $allTowns = Town::orderBy('name')->get()->map(fn ($t) => [
+            'id' => $t->id,
+            'name' => $t->name,
+            'type' => 'town',
+            'barony_id' => $t->barony_id,
+        ]);
+
+        // Get trade routes that originate from or go to this barony's settlements
+        $baronyVillageIds = $barony->villages->pluck('id')->toArray();
+        $baronyTownIds = $barony->towns->pluck('id')->toArray();
+
+        $routes = TradeRoute::active()
+            ->where(function ($query) use ($baronyVillageIds, $baronyTownIds) {
+                $query->where(function ($q) use ($baronyVillageIds) {
+                    $q->where('origin_type', 'village')
+                        ->whereIn('origin_id', $baronyVillageIds);
+                })->orWhere(function ($q) use ($baronyTownIds) {
+                    $q->where('origin_type', 'town')
+                        ->whereIn('origin_id', $baronyTownIds);
+                })->orWhere(function ($q) use ($baronyVillageIds) {
+                    $q->where('destination_type', 'village')
+                        ->whereIn('destination_id', $baronyVillageIds);
+                })->orWhere(function ($q) use ($baronyTownIds) {
+                    $q->where('destination_type', 'town')
+                        ->whereIn('destination_id', $baronyTownIds);
+                });
+            })
+            ->withCount(['caravans' => function ($query) {
+                $query->whereIn('status', [
+                    Caravan::STATUS_PREPARING,
+                    Caravan::STATUS_TRAVELING,
+                    Caravan::STATUS_RETURNING,
+                ]);
+            }])
+            ->get()
+            ->map(function ($route) {
+                $origin = $route->origin;
+                $destination = $route->destination;
+
+                return [
+                    'id' => $route->id,
+                    'name' => $route->name,
+                    'origin' => [
+                        'type' => $route->origin_type,
+                        'id' => $route->origin_id,
+                        'name' => $origin?->name ?? 'Unknown',
+                    ],
+                    'destination' => [
+                        'type' => $route->destination_type,
+                        'id' => $route->destination_id,
+                        'name' => $destination?->name ?? 'Unknown',
+                    ],
+                    'distance' => $route->distance,
+                    'base_travel_days' => $route->base_travel_days,
+                    'danger_level' => $route->danger_level,
+                    'bandit_chance' => $route->effective_bandit_chance,
+                    'active_caravans_count' => $route->caravans_count,
+                    'notes' => $route->notes,
+                ];
+            });
+
+        return Inertia::render('Trade/BaronyRoutes', [
+            'barony' => [
+                'id' => $barony->id,
+                'name' => $barony->name,
+            ],
+            'routes' => $routes->toArray(),
+            'barony_locations' => $villages->merge($towns)->toArray(),
+            'all_locations' => $allVillages->merge($allTowns)->toArray(),
+        ]);
+    }
+
+    /**
+     * Store a new trade route for a barony.
+     */
+    public function storeBaronyRoute(Request $request, Barony $barony)
+    {
+        $user = $request->user();
+
+        // Check if user is baron of this barony
+        $baronRole = Role::where('slug', 'baron')->first();
+        $isBaron = $baronRole && PlayerRole::where('user_id', $user->id)
+            ->where('role_id', $baronRole->id)
+            ->where('location_type', 'barony')
+            ->where('location_id', $barony->id)
+            ->active()
+            ->exists();
+
+        if (! $isBaron) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You must be the Baron of this barony to create trade routes.',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'origin_type' => 'required|in:village,town',
+            'origin_id' => 'required|integer',
+            'destination_type' => 'required|in:village,town',
+            'destination_id' => 'required|integer',
+            'danger_level' => 'required|in:safe,moderate,dangerous,perilous',
+        ]);
+
+        // Validate origin exists and belongs to this barony
+        $origin = match ($validated['origin_type']) {
+            'village' => Village::where('barony_id', $barony->id)->find($validated['origin_id']),
+            'town' => Town::where('barony_id', $barony->id)->find($validated['origin_id']),
+            default => null,
+        };
+
+        if (! $origin) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Origin must be a settlement within your barony.',
+            ], 422);
+        }
+
+        // Validate destination exists (can be any settlement)
+        $destination = match ($validated['destination_type']) {
+            'village' => Village::find($validated['destination_id']),
+            'town' => Town::find($validated['destination_id']),
+            default => null,
+        };
+
+        if (! $destination) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid destination location.',
+            ], 422);
+        }
+
+        // Check that origin and destination are different
+        if ($validated['origin_type'] === $validated['destination_type']
+            && $validated['origin_id'] === $validated['destination_id']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Origin and destination must be different.',
+            ], 422);
+        }
+
+        // Calculate approximate distance based on coordinates if available
         $distance = rand(50, 200);
         $baseTravelDays = max(1, (int) ($distance / 50));
 
