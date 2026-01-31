@@ -77,6 +77,11 @@ class User extends Authenticatable implements MustVerifyEmail
         'dynasty_id',
         'dynasty_member_id',
         'spouse_id',
+        'is_traveling',
+        'travel_started_at',
+        'travel_arrives_at',
+        'travel_destination_type',
+        'travel_destination_id',
     ];
 
     /**

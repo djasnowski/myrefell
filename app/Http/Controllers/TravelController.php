@@ -131,13 +131,22 @@ class TravelController extends Controller
      */
     public function skip(Request $request)
     {
+        \Log::info('Skip called', ['env' => app()->environment()]);
+
         if (! app()->environment('local')) {
+            \Log::warning('Skip rejected - not local environment');
             abort(403, 'This action is only available in development.');
         }
 
         $user = $request->user();
+        \Log::info('Skip user state', [
+            'user_id' => $user->id,
+            'is_traveling' => $user->is_traveling,
+            'travel_arrives_at' => $user->travel_arrives_at,
+        ]);
 
         if (! $user->is_traveling) {
+            \Log::warning('Skip rejected - user not traveling');
             if ($request->header('X-Inertia')) {
                 return back()->withErrors(['travel' => 'You are not traveling.']);
             }
@@ -147,11 +156,16 @@ class TravelController extends Controller
 
         // Force arrival by setting arrives_at to now
         $user->update(['travel_arrives_at' => now()->subSecond()]);
+        $user->refresh();
+        \Log::info('Skip updated travel_arrives_at', ['new_value' => $user->travel_arrives_at]);
 
         // Check arrival to complete the travel
-        $this->travelService->checkArrival($user);
+        $result = $this->travelService->checkArrival($user);
+        \Log::info('Skip checkArrival result', ['result' => $result]);
 
         if ($request->header('X-Inertia')) {
+            \Log::info('Skip returning Inertia redirect');
+
             return redirect()->route('travel.index');
         }
 
