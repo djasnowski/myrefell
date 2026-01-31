@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from "@inertiajs/react";
 import {
     Building,
     Building2,
@@ -12,10 +12,10 @@ import {
     Shield,
     Wrench,
     X,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface BuildingType {
     id: number;
@@ -100,29 +100,37 @@ const categoryIcons: Record<string, typeof Building> = {
 };
 
 const categoryColors: Record<string, string> = {
-    housing: 'border-blue-500/50 bg-blue-900/20',
-    economic: 'border-amber-500/50 bg-amber-900/20',
-    military: 'border-red-500/50 bg-red-900/20',
-    religious: 'border-purple-500/50 bg-purple-900/20',
-    infrastructure: 'border-stone-500/50 bg-stone-700/20',
+    housing: "border-blue-500/50 bg-blue-900/20",
+    economic: "border-amber-500/50 bg-amber-900/20",
+    military: "border-red-500/50 bg-red-900/20",
+    religious: "border-purple-500/50 bg-purple-900/20",
+    infrastructure: "border-stone-500/50 bg-stone-700/20",
 };
 
 const statusColors: Record<string, string> = {
-    planned: 'text-stone-400 bg-stone-800/50',
-    under_construction: 'text-amber-300 bg-amber-800/50',
-    operational: 'text-green-300 bg-green-800/50',
-    damaged: 'text-red-300 bg-red-800/50',
-    destroyed: 'text-red-500 bg-red-900/50',
-    abandoned: 'text-stone-500 bg-stone-800/50',
+    planned: "text-stone-400 bg-stone-800/50",
+    under_construction: "text-amber-300 bg-amber-800/50",
+    operational: "text-green-300 bg-green-800/50",
+    damaged: "text-red-300 bg-red-800/50",
+    destroyed: "text-red-500 bg-red-900/50",
+    abandoned: "text-stone-500 bg-stone-800/50",
 };
 
-function ProgressBar({ value, max = 100, color = 'amber' }: { value: number; max?: number; color?: string }) {
+function ProgressBar({
+    value,
+    max = 100,
+    color = "amber",
+}: {
+    value: number;
+    max?: number;
+    color?: string;
+}) {
     const percent = Math.min(100, Math.max(0, (value / max) * 100));
     const colorClasses: Record<string, string> = {
-        amber: 'bg-amber-500',
-        green: 'bg-green-500',
-        red: 'bg-red-500',
-        blue: 'bg-blue-500',
+        amber: "bg-amber-500",
+        green: "bg-green-500",
+        red: "bg-red-500",
+        blue: "bg-blue-500",
     };
 
     return (
@@ -149,7 +157,9 @@ function ExistingBuildingCard({
     const Icon = categoryIcons[building.type.category] || Building;
 
     return (
-        <div className={`rounded-xl border-2 ${categoryColors[building.type.category] || 'border-stone-600/50 bg-stone-800/50'} p-4`}>
+        <div
+            className={`rounded-xl border-2 ${categoryColors[building.type.category] || "border-stone-600/50 bg-stone-800/50"} p-4`}
+        >
             <div className="mb-3 flex items-start justify-between">
                 <div className="flex items-center gap-2">
                     <div className="rounded-lg bg-stone-800/50 p-2">
@@ -157,11 +167,15 @@ function ExistingBuildingCard({
                     </div>
                     <div>
                         <h3 className="font-pixel text-sm text-amber-300">{building.name}</h3>
-                        <span className="font-pixel text-[10px] text-stone-400">{building.type.category}</span>
+                        <span className="font-pixel text-[10px] text-stone-400">
+                            {building.type.category}
+                        </span>
                     </div>
                 </div>
                 <div className={`rounded-lg px-2 py-1 ${statusColors[building.status]}`}>
-                    <span className="font-pixel text-[10px]">{building.status.replace('_', ' ')}</span>
+                    <span className="font-pixel text-[10px]">
+                        {building.status.replace("_", " ")}
+                    </span>
                 </div>
             </div>
 
@@ -169,13 +183,21 @@ function ExistingBuildingCard({
             <div className="mb-3">
                 <div className="mb-1 flex items-center justify-between">
                     <span className="font-pixel text-[10px] text-stone-400">Condition</span>
-                    <span className={`font-pixel text-xs ${building.condition >= 70 ? 'text-green-300' : building.condition >= 40 ? 'text-amber-300' : 'text-red-300'}`}>
+                    <span
+                        className={`font-pixel text-xs ${building.condition >= 70 ? "text-green-300" : building.condition >= 40 ? "text-amber-300" : "text-red-300"}`}
+                    >
                         {building.condition}%
                     </span>
                 </div>
                 <ProgressBar
                     value={building.condition}
-                    color={building.condition >= 70 ? 'green' : building.condition >= 40 ? 'amber' : 'red'}
+                    color={
+                        building.condition >= 70
+                            ? "green"
+                            : building.condition >= 40
+                              ? "amber"
+                              : "red"
+                    }
                 />
             </div>
 
@@ -233,9 +255,13 @@ function ProjectCard({
                         <Hammer className="h-5 w-5 text-amber-300" />
                     </div>
                     <div>
-                        <h3 className="font-pixel text-sm text-amber-300">{project.building.name}</h3>
+                        <h3 className="font-pixel text-sm text-amber-300">
+                            {project.building.name}
+                        </h3>
                         <span className="font-pixel text-[10px] text-stone-400">
-                            {project.project_type === 'construction' ? 'New Construction' : 'Repair Work'}
+                            {project.project_type === "construction"
+                                ? "New Construction"
+                                : "Repair Work"}
                         </span>
                     </div>
                 </div>
@@ -260,8 +286,12 @@ function ProjectCard({
                 </div>
                 {project.days_remaining !== null && (
                     <div>
-                        <span className="font-pixel text-[10px] text-stone-400">Days Remaining</span>
-                        <p className="font-pixel text-xs text-stone-200">~{project.days_remaining}</p>
+                        <span className="font-pixel text-[10px] text-stone-400">
+                            Days Remaining
+                        </span>
+                        <p className="font-pixel text-xs text-stone-200">
+                            ~{project.days_remaining}
+                        </p>
                     </div>
                 )}
             </div>
@@ -304,11 +334,13 @@ function BuildingTypeCard({
 
     // Check if player has all required resources
     const canAfford = Object.entries(type.construction_requirements).every(
-        ([resource, amount]) => (resources[resource] ?? 0) >= amount
+        ([resource, amount]) => (resources[resource] ?? 0) >= amount,
     );
 
     return (
-        <div className={`rounded-xl border-2 ${categoryColors[type.category] || 'border-stone-600/50 bg-stone-800/50'} p-4`}>
+        <div
+            className={`rounded-xl border-2 ${categoryColors[type.category] || "border-stone-600/50 bg-stone-800/50"} p-4`}
+        >
             <div className="mb-3 flex items-start justify-between">
                 <div className="flex items-center gap-2">
                     <div className="rounded-lg bg-stone-800/50 p-2">
@@ -316,7 +348,9 @@ function BuildingTypeCard({
                     </div>
                     <div>
                         <h3 className="font-pixel text-sm text-amber-300">{type.name}</h3>
-                        <span className="font-pixel text-[10px] text-stone-400">{type.category}</span>
+                        <span className="font-pixel text-[10px] text-stone-400">
+                            {type.category}
+                        </span>
                     </div>
                 </div>
                 {type.is_fortification && (
@@ -336,7 +370,9 @@ function BuildingTypeCard({
                         const hasEnough = (resources[resource] ?? 0) >= amount;
                         return (
                             <div key={resource} className="flex items-center gap-1">
-                                <span className={`font-pixel text-xs ${hasEnough ? 'text-stone-300' : 'text-red-400'}`}>
+                                <span
+                                    className={`font-pixel text-xs ${hasEnough ? "text-stone-300" : "text-red-400"}`}
+                                >
                                     {resource}: {amount}
                                 </span>
                                 {!hasEnough && (
@@ -354,11 +390,15 @@ function BuildingTypeCard({
             <div className="mb-3 grid grid-cols-2 gap-2 rounded-lg bg-stone-800/50 p-2">
                 <div className="flex items-center gap-1">
                     <span className="font-pixel text-[10px] text-stone-400">Build Time:</span>
-                    <span className="font-pixel text-xs text-stone-300">{type.construction_days} days</span>
+                    <span className="font-pixel text-xs text-stone-300">
+                        {type.construction_days} days
+                    </span>
                 </div>
                 <div className="flex items-center gap-1">
                     <span className="font-pixel text-[10px] text-stone-400">Upkeep:</span>
-                    <span className="font-pixel text-xs text-amber-300">{type.maintenance_cost}g/week</span>
+                    <span className="font-pixel text-xs text-amber-300">
+                        {type.maintenance_cost}g/week
+                    </span>
                 </div>
             </div>
 
@@ -381,23 +421,24 @@ function BuildingTypeCard({
                 disabled={building || !canBuild || !canAfford}
                 className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-green-600 bg-green-900/30 px-4 py-2 font-pixel text-xs text-green-300 transition hover:bg-green-800/50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-                {building ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Start Construction'}
+                {building ? <Loader2 className="h-4 w-4 animate-spin" /> : "Start Construction"}
             </button>
         </div>
     );
 }
 
 export default function BuildingsIndex() {
-    const { location, buildings, projects, available_types, resources, can_build, player } = usePage<PageProps>().props;
+    const { location, buildings, projects, available_types, resources, can_build, player } =
+        usePage<PageProps>().props;
 
     const [buildingLoading, setBuildingLoading] = useState<number | null>(null);
     const [repairingId, setRepairingId] = useState<number | null>(null);
     const [cancellingId, setCancellingId] = useState<number | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
+        { title: "Dashboard", href: "/dashboard" },
         ...(location ? [{ title: location.name, href: `/${location.type}s/${location.id}` }] : []),
-        { title: 'Buildings', href: '#' },
+        { title: "Buildings", href: "#" },
     ];
 
     const handleBuild = (typeId: number) => {
@@ -405,7 +446,7 @@ export default function BuildingsIndex() {
 
         setBuildingLoading(typeId);
         router.post(
-            '/buildings',
+            "/buildings",
             {
                 building_type_id: typeId,
                 location_type: location.type,
@@ -417,7 +458,7 @@ export default function BuildingsIndex() {
                     router.reload();
                 },
                 onFinish: () => setBuildingLoading(null),
-            }
+            },
         );
     };
 
@@ -432,7 +473,7 @@ export default function BuildingsIndex() {
                     router.reload();
                 },
                 onFinish: () => setRepairingId(null),
-            }
+            },
         );
     };
 
@@ -447,7 +488,7 @@ export default function BuildingsIndex() {
                     router.reload();
                 },
                 onFinish: () => setCancellingId(null),
-            }
+            },
         );
     };
 
@@ -457,7 +498,9 @@ export default function BuildingsIndex() {
                 <Head title="Buildings" />
                 <div className="flex h-full flex-1 flex-col items-center justify-center p-4">
                     <Building className="h-16 w-16 text-stone-600" />
-                    <p className="mt-3 font-pixel text-base text-stone-500">You must be at a location to view buildings</p>
+                    <p className="mt-3 font-pixel text-base text-stone-500">
+                        You must be at a location to view buildings
+                    </p>
                 </div>
             </AppLayout>
         );
@@ -471,12 +514,16 @@ export default function BuildingsIndex() {
                 <div className="mb-6 flex items-center justify-between">
                     <div>
                         <h1 className="font-pixel text-2xl text-amber-400">Buildings</h1>
-                        <p className="font-pixel text-sm text-stone-400">Manage infrastructure in {location.name}</p>
+                        <p className="font-pixel text-sm text-stone-400">
+                            Manage infrastructure in {location.name}
+                        </p>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2 rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2">
                             <Coins className="h-4 w-4 text-amber-400" />
-                            <span className="font-pixel text-sm text-amber-300">{player.gold}g</span>
+                            <span className="font-pixel text-sm text-amber-300">
+                                {player.gold}g
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -487,9 +534,16 @@ export default function BuildingsIndex() {
                         <h2 className="mb-2 font-pixel text-sm text-stone-300">Your Resources</h2>
                         <div className="flex flex-wrap gap-3">
                             {Object.entries(resources).map(([resource, amount]) => (
-                                <div key={resource} className="flex items-center gap-1 rounded-lg bg-stone-700/50 px-2 py-1">
-                                    <span className="font-pixel text-xs text-stone-400">{resource}:</span>
-                                    <span className="font-pixel text-xs text-amber-300">{amount}</span>
+                                <div
+                                    key={resource}
+                                    className="flex items-center gap-1 rounded-lg bg-stone-700/50 px-2 py-1"
+                                >
+                                    <span className="font-pixel text-xs text-stone-400">
+                                        {resource}:
+                                    </span>
+                                    <span className="font-pixel text-xs text-amber-300">
+                                        {amount}
+                                    </span>
                                 </div>
                             ))}
                         </div>
@@ -499,7 +553,9 @@ export default function BuildingsIndex() {
                 {/* Existing Buildings */}
                 {buildings.length > 0 && (
                     <div className="mb-6">
-                        <h2 className="mb-3 font-pixel text-lg text-green-400">Existing Buildings</h2>
+                        <h2 className="mb-3 font-pixel text-lg text-green-400">
+                            Existing Buildings
+                        </h2>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {buildings.map((building) => (
                                 <ExistingBuildingCard
@@ -517,7 +573,9 @@ export default function BuildingsIndex() {
                 {/* Under Construction */}
                 {projects.length > 0 && (
                     <div className="mb-6">
-                        <h2 className="mb-3 font-pixel text-lg text-amber-300">Under Construction</h2>
+                        <h2 className="mb-3 font-pixel text-lg text-amber-300">
+                            Under Construction
+                        </h2>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {projects.map((project) => (
                                 <ProjectCard
@@ -559,7 +617,9 @@ export default function BuildingsIndex() {
                         <div className="flex flex-1 items-center justify-center py-12">
                             <div className="text-center">
                                 <Building className="mx-auto h-16 w-16 text-stone-600" />
-                                <p className="mt-3 font-pixel text-base text-stone-500">All building types have been constructed</p>
+                                <p className="mt-3 font-pixel text-base text-stone-500">
+                                    All building types have been constructed
+                                </p>
                                 <p className="font-pixel text-xs text-stone-600">
                                     This location has all available buildings.
                                 </p>

@@ -1,10 +1,10 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { AlertTriangle, Check, FileText, Gavel, User, X } from 'lucide-react';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from "@inertiajs/react";
+import { AlertTriangle, Check, FileText, Gavel, User, X } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Accusation {
     id: number;
@@ -22,18 +22,18 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Crime', href: '/crime' },
-    { title: 'Pending Accusations', href: '#' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Crime", href: "/crime" },
+    { title: "Pending Accusations", href: "#" },
 ];
 
 export default function PendingAccusations() {
     const { accusations } = usePage<PageProps>().props;
     const [reviewingId, setReviewingId] = useState<number | null>(null);
-    const [notes, setNotes] = useState('');
+    const [notes, setNotes] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const handleReview = (id: number, decision: 'accept' | 'reject' | 'false') => {
+    const handleReview = (id: number, decision: "accept" | "reject" | "false") => {
         setLoading(true);
         router.post(
             `/crime/accusations/${id}/review`,
@@ -43,10 +43,10 @@ export default function PendingAccusations() {
                 onSuccess: () => {
                     router.reload();
                     setReviewingId(null);
-                    setNotes('');
+                    setNotes("");
                 },
                 onFinish: () => setLoading(false),
-            }
+            },
         );
     };
 
@@ -73,9 +73,7 @@ export default function PendingAccusations() {
                 {accusations.length === 0 ? (
                     <div className="rounded-xl border border-stone-800 bg-stone-900/50 p-8 text-center">
                         <FileText className="mx-auto size-12 text-stone-600" />
-                        <p className="mt-4 text-stone-400">
-                            No pending accusations to review
-                        </p>
+                        <p className="mt-4 text-stone-400">No pending accusations to review</p>
                     </div>
                 ) : (
                     <div className="space-y-4">
@@ -133,7 +131,9 @@ export default function PendingAccusations() {
                                         <div className="flex gap-2">
                                             <Button
                                                 size="sm"
-                                                onClick={() => handleReview(accusation.id, 'accept')}
+                                                onClick={() =>
+                                                    handleReview(accusation.id, "accept")
+                                                }
                                                 disabled={loading}
                                                 className="bg-green-600 hover:bg-green-700"
                                             >
@@ -143,7 +143,9 @@ export default function PendingAccusations() {
                                             <Button
                                                 size="sm"
                                                 variant="outline"
-                                                onClick={() => handleReview(accusation.id, 'reject')}
+                                                onClick={() =>
+                                                    handleReview(accusation.id, "reject")
+                                                }
                                                 disabled={loading}
                                                 className="border-stone-700"
                                             >
@@ -153,7 +155,7 @@ export default function PendingAccusations() {
                                             <Button
                                                 size="sm"
                                                 variant="destructive"
-                                                onClick={() => handleReview(accusation.id, 'false')}
+                                                onClick={() => handleReview(accusation.id, "false")}
                                                 disabled={loading}
                                             >
                                                 <AlertTriangle className="size-4" />
@@ -164,7 +166,7 @@ export default function PendingAccusations() {
                                                 variant="ghost"
                                                 onClick={() => {
                                                     setReviewingId(null);
-                                                    setNotes('');
+                                                    setNotes("");
                                                 }}
                                                 disabled={loading}
                                             >

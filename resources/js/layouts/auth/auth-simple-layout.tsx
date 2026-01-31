@@ -1,13 +1,9 @@
-import { Link } from '@inertiajs/react';
-import AppLogoIcon from '@/components/app-logo-icon';
-import { home } from '@/routes';
-import type { AuthLayoutProps } from '@/types';
+import { Link } from "@inertiajs/react";
+import AppLogoIcon from "@/components/app-logo-icon";
+import { home } from "@/routes";
+import type { AuthLayoutProps } from "@/types";
 
-export default function AuthSimpleLayout({
-    children,
-    title,
-    description,
-}: AuthLayoutProps) {
+export default function AuthSimpleLayout({ children, title, description }: AuthLayoutProps) {
     return (
         <div className="relative flex min-h-svh flex-col items-center justify-center p-6 md:p-10 overflow-hidden">
             {/* Decorative background with radial gradient */}
@@ -24,7 +20,7 @@ export default function AuthSimpleLayout({
                         linear-gradient(var(--primary) 1px, transparent 1px),
                         linear-gradient(90deg, var(--primary) 1px, transparent 1px)
                     `,
-                    backgroundSize: '40px 40px'
+                    backgroundSize: "40px 40px",
                 }}
             />
 

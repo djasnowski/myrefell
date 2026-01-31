@@ -1,7 +1,7 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { Axe, Fish, Leaf, Pickaxe, Snowflake, Sun, TreeDeciduous, Zap } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, Link, usePage } from "@inertiajs/react";
+import { Axe, Fish, Leaf, Pickaxe, Snowflake, Sun, TreeDeciduous, Zap } from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Activity {
     id: string;
@@ -14,7 +14,7 @@ interface Activity {
 }
 
 interface SeasonalData {
-    season: 'spring' | 'summer' | 'autumn' | 'winter';
+    season: "spring" | "summer" | "autumn" | "winter";
     modifier: number;
     description: string;
 }
@@ -34,7 +34,6 @@ interface PageProps {
     [key: string]: unknown;
 }
 
-
 const activityIcons: Record<string, typeof Pickaxe> = {
     mining: Pickaxe,
     fishing: Fish,
@@ -42,15 +41,15 @@ const activityIcons: Record<string, typeof Pickaxe> = {
 };
 
 const activityColors: Record<string, string> = {
-    mining: 'border-stone-500/50 bg-stone-700/30 hover:bg-stone-700/50',
-    fishing: 'border-blue-500/50 bg-blue-900/30 hover:bg-blue-900/50',
-    woodcutting: 'border-green-600/50 bg-green-900/30 hover:bg-green-900/50',
+    mining: "border-stone-500/50 bg-stone-700/30 hover:bg-stone-700/50",
+    fishing: "border-blue-500/50 bg-blue-900/30 hover:bg-blue-900/50",
+    woodcutting: "border-green-600/50 bg-green-900/30 hover:bg-green-900/50",
 };
 
 const activityDescriptions: Record<string, string> = {
-    mining: 'Extract ores and minerals from the earth',
-    fishing: 'Catch fish from nearby waters',
-    woodcutting: 'Chop trees for wood and lumber',
+    mining: "Extract ores and minerals from the earth",
+    fishing: "Catch fish from nearby waters",
+    woodcutting: "Chop trees for wood and lumber",
 };
 
 const seasonIcons: Record<string, typeof Sun> = {
@@ -61,24 +60,25 @@ const seasonIcons: Record<string, typeof Sun> = {
 };
 
 const seasonColors: Record<string, string> = {
-    spring: 'text-green-400 bg-green-900/30 border-green-600/50',
-    summer: 'text-yellow-400 bg-yellow-900/30 border-yellow-600/50',
-    autumn: 'text-orange-400 bg-orange-900/30 border-orange-600/50',
-    winter: 'text-blue-400 bg-blue-900/30 border-blue-600/50',
+    spring: "text-green-400 bg-green-900/30 border-green-600/50",
+    summer: "text-yellow-400 bg-yellow-900/30 border-yellow-600/50",
+    autumn: "text-orange-400 bg-orange-900/30 border-orange-600/50",
+    winter: "text-blue-400 bg-blue-900/30 border-blue-600/50",
 };
 
 export default function GatheringIndex() {
-    const { activities, player_energy, max_energy, seasonal, location } = usePage<PageProps>().props;
+    const { activities, player_energy, max_energy, seasonal, location } =
+        usePage<PageProps>().props;
     const SeasonIcon = seasonIcons[seasonal.season] || Sun;
-    const seasonColor = seasonColors[seasonal.season] || 'text-stone-400';
+    const seasonColor = seasonColors[seasonal.season] || "text-stone-400";
     const modifierPercent = Math.round((seasonal.modifier - 1) * 100);
     const isBonus = modifierPercent > 0;
     const isPenalty = modifierPercent < 0;
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
+        { title: "Dashboard", href: "/dashboard" },
         { title: location.name, href: `/${location.type}s/${location.id}` },
-        { title: 'Gathering', href: `/${location.type}s/${location.id}/gathering` },
+        { title: "Gathering", href: `/${location.type}s/${location.id}/gathering` },
     ];
 
     return (
@@ -88,7 +88,9 @@ export default function GatheringIndex() {
                 {/* Header */}
                 <div className="mb-6">
                     <h1 className="font-pixel text-2xl text-amber-400">Gathering</h1>
-                    <p className="font-pixel text-sm text-stone-400">Collect resources from the world around you</p>
+                    <p className="font-pixel text-sm text-stone-400">
+                        Collect resources from the world around you
+                    </p>
                 </div>
 
                 {/* Seasonal Effect Banner */}
@@ -96,21 +98,29 @@ export default function GatheringIndex() {
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <SeasonIcon className="h-5 w-5" />
-                            <span className="font-pixel text-sm capitalize">{seasonal.season} Season</span>
+                            <span className="font-pixel text-sm capitalize">
+                                {seasonal.season} Season
+                            </span>
                         </div>
                         <div className="font-pixel text-sm">
                             {isBonus && (
-                                <span className="text-green-400">+{modifierPercent}% bonus yield chance</span>
+                                <span className="text-green-400">
+                                    +{modifierPercent}% bonus yield chance
+                                </span>
                             )}
                             {isPenalty && (
-                                <span className="text-red-400">{modifierPercent}% yield penalty</span>
+                                <span className="text-red-400">
+                                    {modifierPercent}% yield penalty
+                                </span>
                             )}
                             {!isBonus && !isPenalty && (
                                 <span className="text-stone-400">Normal yields</span>
                             )}
                         </div>
                     </div>
-                    <p className="mt-1 font-pixel text-[10px] text-stone-400">{seasonal.description}</p>
+                    <p className="mt-1 font-pixel text-[10px] text-stone-400">
+                        {seasonal.description}
+                    </p>
                 </div>
 
                 {/* Energy Bar */}
@@ -136,8 +146,9 @@ export default function GatheringIndex() {
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {activities.map((activity) => {
                         const Icon = activityIcons[activity.id] || Pickaxe;
-                        const colorClass = activityColors[activity.id] || 'border-stone-600/50 bg-stone-800/50';
-                        const description = activityDescriptions[activity.id] || '';
+                        const colorClass =
+                            activityColors[activity.id] || "border-stone-600/50 bg-stone-800/50";
+                        const description = activityDescriptions[activity.id] || "";
                         const canAfford = player_energy >= activity.energy_cost;
 
                         return (
@@ -151,20 +162,26 @@ export default function GatheringIndex() {
                                         <Icon className="h-8 w-8 text-stone-300" />
                                     </div>
                                     <div>
-                                        <h2 className="font-pixel text-lg text-amber-300">{activity.name}</h2>
+                                        <h2 className="font-pixel text-lg text-amber-300">
+                                            {activity.name}
+                                        </h2>
                                         <p className="font-pixel text-[10px] capitalize text-stone-400">
                                             {activity.skill} Level {activity.skill_level}
                                         </p>
                                     </div>
                                 </div>
 
-                                <p className="mb-4 font-pixel text-xs text-stone-400">{description}</p>
+                                <p className="mb-4 font-pixel text-xs text-stone-400">
+                                    {description}
+                                </p>
 
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-1">
-                                        <Zap className={`h-3 w-3 ${canAfford ? 'text-yellow-400' : 'text-red-400'}`} />
+                                        <Zap
+                                            className={`h-3 w-3 ${canAfford ? "text-yellow-400" : "text-red-400"}`}
+                                        />
                                         <span
-                                            className={`font-pixel text-xs ${canAfford ? 'text-yellow-400' : 'text-red-400'}`}
+                                            className={`font-pixel text-xs ${canAfford ? "text-yellow-400" : "text-red-400"}`}
                                         >
                                             {activity.energy_cost} per action
                                         </span>
@@ -184,8 +201,12 @@ export default function GatheringIndex() {
                             <div className="mb-3 text-6xl opacity-50">
                                 <Pickaxe className="mx-auto h-16 w-16 text-stone-600" />
                             </div>
-                            <p className="font-pixel text-base text-stone-500">No gathering available here</p>
-                            <p className="font-pixel text-xs text-stone-600">Travel to a different location</p>
+                            <p className="font-pixel text-base text-stone-500">
+                                No gathering available here
+                            </p>
+                            <p className="font-pixel text-xs text-stone-600">
+                                Travel to a different location
+                            </p>
                         </div>
                     </div>
                 )}

@@ -1,7 +1,9 @@
-import { Link, usePage } from '@inertiajs/react';
-import { LayoutDashboard, Shield, Users } from 'lucide-react';
-import AppLogo from '@/components/app-logo';
-import { NavUser } from '@/components/nav-user';
+import { Link, usePage } from "@inertiajs/react";
+import { LayoutDashboard, Shield, Users } from "lucide-react";
+import { index as adminDashboard } from "@/actions/App/Http/Controllers/Admin/DashboardController";
+import { index as adminUsers } from "@/actions/App/Http/Controllers/Admin/UserController";
+import AppLogo from "@/components/app-logo";
+import { NavUser } from "@/components/nav-user";
 import {
     Sidebar,
     SidebarContent,
@@ -13,19 +15,17 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-} from '@/components/ui/sidebar';
-import { index as adminDashboard } from '@/actions/App/Http/Controllers/Admin/DashboardController';
-import { index as adminUsers } from '@/actions/App/Http/Controllers/Admin/UserController';
-import { dashboard } from '@/routes';
+} from "@/components/ui/sidebar";
+import { dashboard } from "@/routes";
 
 const adminNavItems = [
     {
-        title: 'Dashboard',
+        title: "Dashboard",
         url: adminDashboard.url(),
         icon: LayoutDashboard,
     },
     {
-        title: 'Users',
+        title: "Users",
         url: adminUsers.url(),
         icon: Users,
     },
@@ -58,10 +58,7 @@ export function AdminSidebar() {
                         <SidebarMenu>
                             {adminNavItems.map((item) => (
                                 <SidebarMenuItem key={item.title}>
-                                    <SidebarMenuButton
-                                        asChild
-                                        isActive={url.startsWith(item.url)}
-                                    >
+                                    <SidebarMenuButton asChild isActive={url.startsWith(item.url)}>
                                         <Link href={item.url}>
                                             <item.icon className="size-4" />
                                             <span>{item.title}</span>

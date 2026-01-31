@@ -1,15 +1,15 @@
-import { Form, Head } from '@inertiajs/react';
-import InputError from '@/components/input-error';
-import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
-import AuthLayout from '@/layouts/auth-layout';
-import { register } from '@/routes';
-import { store } from '@/routes/login';
-import { request } from '@/routes/password';
+import { Form, Head } from "@inertiajs/react";
+import InputError from "@/components/input-error";
+import TextLink from "@/components/text-link";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import AuthLayout from "@/layouts/auth-layout";
+import { register } from "@/routes";
+import { store } from "@/routes/login";
+import { request } from "@/routes/password";
 
 type Props = {
     status?: string;
@@ -17,11 +17,7 @@ type Props = {
     canRegister: boolean;
 };
 
-export default function Login({
-    status,
-    canResetPassword,
-    canRegister,
-}: Props) {
+export default function Login({ status, canResetPassword, canRegister }: Props) {
     return (
         <AuthLayout
             title="Log in to your account"
@@ -29,11 +25,7 @@ export default function Login({
         >
             <Head title="Log in" />
 
-            <Form
-                {...store.form()}
-                resetOnSuccess={['password']}
-                className="flex flex-col gap-6"
-            >
+            <Form {...store.form()} resetOnSuccess={["password"]} className="flex flex-col gap-6">
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-6">
@@ -78,11 +70,7 @@ export default function Login({
                             </div>
 
                             <div className="flex items-center space-x-3">
-                                <Checkbox
-                                    id="remember"
-                                    name="remember"
-                                    tabIndex={3}
-                                />
+                                <Checkbox id="remember" name="remember" tabIndex={3} />
                                 <Label htmlFor="remember">Remember me</Label>
                             </div>
 
@@ -100,7 +88,7 @@ export default function Login({
 
                         {canRegister && (
                             <div className="text-center text-sm text-muted-foreground">
-                                Don't have an account?{' '}
+                                Don't have an account?{" "}
                                 <TextLink href={register()} tabIndex={5}>
                                     Sign up
                                 </TextLink>
@@ -111,9 +99,7 @@ export default function Login({
             </Form>
 
             {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    {status}
-                </div>
+                <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>
             )}
         </AuthLayout>
     );

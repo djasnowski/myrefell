@@ -1,15 +1,15 @@
-import { Link } from '@inertiajs/react';
+import { Link } from "@inertiajs/react";
 import {
     SidebarGroup,
     SidebarGroupLabel,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-} from '@/components/ui/sidebar';
-import { useCurrentUrl } from '@/hooks/use-current-url';
-import type { NavItem } from '@/types';
+} from "@/components/ui/sidebar";
+import { useCurrentUrl } from "@/hooks/use-current-url";
+import type { NavItem } from "@/types";
 
-export function NavMain({ items = [], label = 'Platform' }: { items: NavItem[]; label?: string }) {
+export function NavMain({ items = [], label = "Platform" }: { items: NavItem[]; label?: string }) {
     const { isCurrentUrl } = useCurrentUrl();
 
     return (

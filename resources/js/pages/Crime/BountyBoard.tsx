@@ -1,8 +1,8 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { Coins, Loader2, MapPin, Skull, Target, User } from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from "@inertiajs/react";
+import { Coins, Loader2, MapPin, Skull, Target, User } from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Bounty {
     id: number;
@@ -40,15 +40,15 @@ interface PageProps {
 }
 
 const captureTypeColors: Record<string, string> = {
-    alive: 'text-green-300 bg-green-900/50',
-    dead_or_alive: 'text-amber-300 bg-amber-900/50',
-    dead: 'text-red-300 bg-red-900/50',
+    alive: "text-green-300 bg-green-900/50",
+    dead_or_alive: "text-amber-300 bg-amber-900/50",
+    dead: "text-red-300 bg-red-900/50",
 };
 
 const captureTypeDisplay: Record<string, string> = {
-    alive: 'Wanted Alive',
-    dead_or_alive: 'Dead or Alive',
-    dead: 'Wanted Dead',
+    alive: "Wanted Alive",
+    dead_or_alive: "Dead or Alive",
+    dead: "Wanted Dead",
 };
 
 export default function BountyBoard() {
@@ -56,9 +56,9 @@ export default function BountyBoard() {
     const [claimingId, setClaimingId] = useState<number | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Criminal Record', href: '/crime' },
-        { title: 'Bounty Board', href: '#' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Criminal Record", href: "/crime" },
+        { title: "Bounty Board", href: "#" },
     ];
 
     return (
@@ -73,7 +73,9 @@ export default function BountyBoard() {
                     </div>
                     <div className="rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2">
                         <span className="font-pixel text-xs text-stone-400">Active Bounties:</span>
-                        <span className="ml-2 font-pixel text-sm text-amber-300">{bounties.total}</span>
+                        <span className="ml-2 font-pixel text-sm text-amber-300">
+                            {bounties.total}
+                        </span>
                     </div>
                 </div>
 
@@ -134,8 +136,8 @@ export default function BountyBoard() {
                                 {/* Posted By */}
                                 <div className="mb-3 flex items-center justify-between text-[10px] text-stone-500">
                                     <span>
-                                        Posted by:{' '}
-                                        {bounty.posted_by ? bounty.posted_by.username : 'Authority'}
+                                        Posted by:{" "}
+                                        {bounty.posted_by ? bounty.posted_by.username : "Authority"}
                                     </span>
                                     {bounty.expires_at && <span>Expires: {bounty.expires_at}</span>}
                                 </div>
@@ -144,11 +146,15 @@ export default function BountyBoard() {
                                 <button
                                     onClick={() => {
                                         setClaimingId(bounty.id);
-                                        router.post(`/crime/bounties/${bounty.id}/claim`, {}, {
-                                            preserveScroll: true,
-                                            onSuccess: () => router.reload(),
-                                            onFinish: () => setClaimingId(null),
-                                        });
+                                        router.post(
+                                            `/crime/bounties/${bounty.id}/claim`,
+                                            {},
+                                            {
+                                                preserveScroll: true,
+                                                onSuccess: () => router.reload(),
+                                                onFinish: () => setClaimingId(null),
+                                            },
+                                        );
                                     }}
                                     disabled={claimingId === bounty.id}
                                     className="flex w-full items-center justify-center gap-2 rounded-lg border border-amber-600/50 bg-amber-900/30 px-3 py-2 font-pixel text-xs text-amber-300 transition hover:bg-amber-800/50 disabled:opacity-50"
@@ -172,7 +178,9 @@ export default function BountyBoard() {
                     <div className="flex flex-1 items-center justify-center py-12">
                         <div className="text-center">
                             <Target className="mx-auto mb-3 h-16 w-16 text-stone-600" />
-                            <p className="font-pixel text-base text-stone-500">No Active Bounties</p>
+                            <p className="font-pixel text-base text-stone-500">
+                                No Active Bounties
+                            </p>
                             <p className="font-pixel text-xs text-stone-600">
                                 The realm is at peace... for now.
                             </p>

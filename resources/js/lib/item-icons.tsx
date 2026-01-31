@@ -23,7 +23,7 @@ import {
     TreeDeciduous,
     Wheat,
     Wrench,
-} from 'lucide-react';
+} from "lucide-react";
 
 // Subtype-specific icons (most specific)
 const subtypeIcons: Record<string, LucideIcon> = {

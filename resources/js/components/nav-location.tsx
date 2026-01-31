@@ -1,4 +1,4 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from "@inertiajs/react";
 import {
     Backpack,
     BarChart3,
@@ -14,8 +14,8 @@ import {
     ScrollText,
     Trees,
     type LucideIcon,
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import {
     SidebarGroup,
     SidebarGroupLabel,
@@ -23,8 +23,8 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     useSidebar,
-} from '@/components/ui/sidebar';
-import { useCurrentUrl } from '@/hooks/use-current-url';
+} from "@/components/ui/sidebar";
+import { useCurrentUrl } from "@/hooks/use-current-url";
 
 interface LocationData {
     type: string;
@@ -107,45 +107,45 @@ const locationIcons: Record<string, LucideIcon> = {
 
 // Location type to URL path mapping (handles irregular plurals)
 const locationPaths: Record<string, string> = {
-    village: 'villages',
-    barony: 'baronies',
-    town: 'towns',
-    duchy: 'duchies',
-    kingdom: 'kingdoms',
+    village: "villages",
+    barony: "baronies",
+    town: "towns",
+    duchy: "duchies",
+    kingdom: "kingdoms",
 };
 
 // Get player actions (always visible regardless of location)
 function getPlayerActions(): NavItem[] {
     return [
         {
-            title: 'World Map',
-            href: '/travel',
+            title: "World Map",
+            href: "/travel",
             icon: Map,
-            description: 'Travel the realm',
+            description: "Travel the realm",
         },
         {
-            title: 'Inventory',
-            href: '/inventory',
+            title: "Inventory",
+            href: "/inventory",
             icon: Backpack,
-            description: 'Your items and equipment',
+            description: "Your items and equipment",
         },
         {
-            title: 'Skills',
-            href: '/skills',
+            title: "Skills",
+            href: "/skills",
             icon: BarChart3,
-            description: 'View your skill levels',
+            description: "View your skill levels",
         },
         {
-            title: 'Quests',
-            href: '/quests',
+            title: "Quests",
+            href: "/quests",
             icon: ScrollText,
-            description: 'Active quest log',
+            description: "Active quest log",
         },
         {
-            title: 'Daily Tasks',
-            href: '/daily-tasks',
+            title: "Daily Tasks",
+            href: "/daily-tasks",
             icon: ClipboardList,
-            description: 'Earn daily rewards',
+            description: "Earn daily rewards",
         },
     ];
 }
@@ -170,12 +170,16 @@ function TravelingIndicator({ travel }: { travel: TravelStatus }) {
                 if (newVal <= 0 && !arriving) {
                     // Call arrive endpoint to complete travel
                     setArriving(true);
-                    router.post('/travel/arrive', {}, {
-                        preserveScroll: true,
-                        onFinish: () => {
-                            router.reload();
+                    router.post(
+                        "/travel/arrive",
+                        {},
+                        {
+                            preserveScroll: true,
+                            onFinish: () => {
+                                router.reload();
+                            },
                         },
-                    });
+                    );
                 }
                 return newVal;
             });
@@ -194,7 +198,9 @@ function TravelingIndicator({ travel }: { travel: TravelStatus }) {
             <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1">
                     <Icon className="h-3 w-3 text-amber-300" />
-                    <span className="truncate font-pixel text-[10px] text-amber-300">{travel.destination.name}</span>
+                    <span className="truncate font-pixel text-[10px] text-amber-300">
+                        {travel.destination.name}
+                    </span>
                 </div>
                 <div className="flex items-center gap-1 text-amber-400/70">
                     <Clock className="h-2.5 w-2.5" />
@@ -227,7 +233,7 @@ export function NavLocation() {
     const handleTravel = (dest: TravelDestination) => {
         setTravelingTo(`${dest.type}-${dest.id}`);
         router.post(
-            '/travel/start',
+            "/travel/start",
             {
                 destination_type: dest.type,
                 destination_id: dest.id,
@@ -235,23 +241,27 @@ export function NavLocation() {
             {
                 preserveScroll: true,
                 onFinish: () => setTravelingTo(null),
-                onSuccess: () => router.visit('/travel'),
+                onSuccess: () => router.visit("/travel"),
                 onError: (errors) => {
-                    const message = errors.travel || Object.values(errors)[0] || 'Failed to start travel';
+                    const message =
+                        errors.travel || Object.values(errors)[0] || "Failed to start travel";
                     alert(message);
                 },
-            }
+            },
         );
     };
 
     // Collapsed view
-    if (state === 'collapsed') {
+    if (state === "collapsed") {
         if (travel?.is_traveling) {
             return (
                 <SidebarGroup className="px-2 py-0">
                     <SidebarMenu>
                         <SidebarMenuItem>
-                            <SidebarMenuButton tooltip={{ children: `Traveling to ${travel.destination.name}` }} className="justify-center">
+                            <SidebarMenuButton
+                                tooltip={{ children: `Traveling to ${travel.destination.name}` }}
+                                className="justify-center"
+                            >
                                 <Loader2 className="h-4 w-4 animate-spin text-amber-400" />
                             </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -264,7 +274,10 @@ export function NavLocation() {
             <SidebarGroup className="px-2 py-0">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton tooltip={{ children: location?.name || 'Wandering...' }} className="justify-center">
+                        <SidebarMenuButton
+                            tooltip={{ children: location?.name || "Wandering..." }}
+                            className="justify-center"
+                        >
                             <LocationIcon className="h-4 w-4" />
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -287,13 +300,17 @@ export function NavLocation() {
             {/* Current Location Header */}
             <div className="px-2">
                 <Link
-                    href={location?.id && locationPaths[location.type] ? `/${locationPaths[location.type]}/${location.id}` : '/dashboard'}
+                    href={
+                        location?.id && locationPaths[location.type]
+                            ? `/${locationPaths[location.type]}/${location.id}`
+                            : "/dashboard"
+                    }
                     className="flex items-center gap-2 rounded-md border border-sidebar-border bg-sidebar-accent/30 px-2 py-1.5 transition-colors hover:bg-sidebar-accent/50"
                 >
                     <LocationIcon className="h-4 w-4 flex-shrink-0 text-sidebar-primary" />
                     <div className="min-w-0 flex-1">
                         <div className="truncate font-pixel text-xs text-sidebar-accent-foreground">
-                            {location?.name || 'Wandering...'}
+                            {location?.name || "Wandering..."}
                         </div>
                         {location && (
                             <div className="font-pixel text-[10px] capitalize text-sidebar-foreground/50">
@@ -337,7 +354,9 @@ export function NavLocation() {
                                     <SidebarMenuButton
                                         onClick={() => handleTravel(dest)}
                                         disabled={isLoading}
-                                        tooltip={{ children: `${dest.name} (${dest.travel_time} min)` }}
+                                        tooltip={{
+                                            children: `${dest.name} (${dest.travel_time} min)`,
+                                        }}
                                     >
                                         {isLoading ? (
                                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -345,7 +364,9 @@ export function NavLocation() {
                                             <Icon className="h-4 w-4" />
                                         )}
                                         <span className="flex-1 truncate">{dest.name}</span>
-                                        <span className="text-[10px] text-sidebar-foreground/50">{dest.travel_time}m</span>
+                                        <span className="text-[10px] text-sidebar-foreground/50">
+                                            {dest.travel_time}m
+                                        </span>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             );

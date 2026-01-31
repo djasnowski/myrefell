@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router } from "@inertiajs/react";
 import {
     ArrowLeft,
     Calendar,
@@ -13,10 +13,10 @@ import {
     Send,
     User,
     X,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface DynastyRef {
     id: number;
@@ -34,7 +34,7 @@ interface MemberInfo {
 interface Proposal {
     id: number;
     status: string;
-    direction: 'incoming' | 'outgoing';
+    direction: "incoming" | "outgoing";
     proposer: MemberInfo;
     proposed: MemberInfo;
     proposer_dynasty: DynastyRef | null;
@@ -72,24 +72,24 @@ interface Props {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Dynasty', href: '/dynasty' },
-    { title: 'Marriage Proposals', href: '/dynasty/proposals' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Dynasty", href: "/dynasty" },
+    { title: "Marriage Proposals", href: "/dynasty/proposals" },
 ];
 
 const statusColors: Record<string, { bg: string; text: string; label: string }> = {
-    pending: { bg: 'bg-blue-900/30', text: 'text-blue-400', label: 'Pending' },
-    accepted: { bg: 'bg-green-900/30', text: 'text-green-400', label: 'Accepted' },
-    rejected: { bg: 'bg-red-900/30', text: 'text-red-400', label: 'Rejected' },
-    withdrawn: { bg: 'bg-stone-900/30', text: 'text-stone-500', label: 'Withdrawn' },
-    expired: { bg: 'bg-stone-900/30', text: 'text-stone-500', label: 'Expired' },
+    pending: { bg: "bg-blue-900/30", text: "text-blue-400", label: "Pending" },
+    accepted: { bg: "bg-green-900/30", text: "text-green-400", label: "Accepted" },
+    rejected: { bg: "bg-red-900/30", text: "text-red-400", label: "Rejected" },
+    withdrawn: { bg: "bg-stone-900/30", text: "text-stone-500", label: "Withdrawn" },
+    expired: { bg: "bg-stone-900/30", text: "text-stone-500", label: "Expired" },
 };
 
 const marriageStatusColors: Record<string, { bg: string; text: string; label: string }> = {
-    active: { bg: 'bg-green-900/30', text: 'text-green-400', label: 'Active' },
-    divorced: { bg: 'bg-red-900/30', text: 'text-red-400', label: 'Divorced' },
-    annulled: { bg: 'bg-stone-900/30', text: 'text-stone-500', label: 'Annulled' },
-    widowed: { bg: 'bg-purple-900/30', text: 'text-purple-400', label: 'Widowed' },
+    active: { bg: "bg-green-900/30", text: "text-green-400", label: "Active" },
+    divorced: { bg: "bg-red-900/30", text: "text-red-400", label: "Divorced" },
+    annulled: { bg: "bg-stone-900/30", text: "text-stone-500", label: "Annulled" },
+    widowed: { bg: "bg-purple-900/30", text: "text-purple-400", label: "Widowed" },
 };
 
 export default function Proposals({
@@ -109,51 +109,69 @@ export default function Proposals({
         setProcessing(proposalId);
         setError(null);
 
-        router.post(`/dynasty/proposals/${proposalId}/accept`, {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setSuccess('Proposal accepted! The wedding has taken place.');
-                router.reload();
+        router.post(
+            `/dynasty/proposals/${proposalId}/accept`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setSuccess("Proposal accepted! The wedding has taken place.");
+                    router.reload();
+                },
+                onError: (errors) => {
+                    setError(
+                        Object.values(errors).flat().join(", ") || "Failed to accept proposal",
+                    );
+                },
+                onFinish: () => setProcessing(null),
             },
-            onError: (errors) => {
-                setError(Object.values(errors).flat().join(', ') || 'Failed to accept proposal');
-            },
-            onFinish: () => setProcessing(null),
-        });
+        );
     };
 
     const handleReject = async (proposalId: number) => {
         setProcessing(proposalId);
         setError(null);
 
-        router.post(`/dynasty/proposals/${proposalId}/reject`, {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setSuccess('Proposal rejected.');
-                router.reload();
+        router.post(
+            `/dynasty/proposals/${proposalId}/reject`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setSuccess("Proposal rejected.");
+                    router.reload();
+                },
+                onError: (errors) => {
+                    setError(
+                        Object.values(errors).flat().join(", ") || "Failed to reject proposal",
+                    );
+                },
+                onFinish: () => setProcessing(null),
             },
-            onError: (errors) => {
-                setError(Object.values(errors).flat().join(', ') || 'Failed to reject proposal');
-            },
-            onFinish: () => setProcessing(null),
-        });
+        );
     };
 
     const handleWithdraw = async (proposalId: number) => {
         setProcessing(proposalId);
         setError(null);
 
-        router.post(`/dynasty/proposals/${proposalId}/withdraw`, {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setSuccess('Proposal withdrawn.');
-                router.reload();
+        router.post(
+            `/dynasty/proposals/${proposalId}/withdraw`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setSuccess("Proposal withdrawn.");
+                    router.reload();
+                },
+                onError: (errors) => {
+                    setError(
+                        Object.values(errors).flat().join(", ") || "Failed to withdraw proposal",
+                    );
+                },
+                onFinish: () => setProcessing(null),
             },
-            onError: (errors) => {
-                setError(Object.values(errors).flat().join(', ') || 'Failed to withdraw proposal');
-            },
-            onFinish: () => setProcessing(null),
-        });
+        );
     };
 
     // No dynasty state
@@ -182,8 +200,8 @@ export default function Proposals({
         );
     }
 
-    const pendingIncoming = incoming.filter(p => p.status === 'pending');
-    const pendingOutgoing = outgoing.filter(p => p.status === 'pending');
+    const pendingIncoming = incoming.filter((p) => p.status === "pending");
+    const pendingOutgoing = outgoing.filter((p) => p.status === "pending");
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -219,8 +237,8 @@ export default function Proposals({
                         <div>
                             <h1 className="font-pixel text-xl text-pink-400">Marriage Proposals</h1>
                             <p className="font-pixel text-xs text-stone-500">
-                            House {dynasty_name} {is_head && '— Head of House'}
-                        </p>
+                                House {dynasty_name} {is_head && "— Head of House"}
+                            </p>
                         </div>
                     </div>
                     {can_propose && (
@@ -245,7 +263,9 @@ export default function Proposals({
                         {pendingIncoming.length === 0 ? (
                             <div className="py-6 text-center">
                                 <MailOpen className="mx-auto mb-2 h-8 w-8 text-stone-600" />
-                                <p className="font-pixel text-xs text-stone-500">No pending incoming proposals</p>
+                                <p className="font-pixel text-xs text-stone-500">
+                                    No pending incoming proposals
+                                </p>
                             </div>
                         ) : (
                             <div className="space-y-3">
@@ -257,9 +277,13 @@ export default function Proposals({
                                         <div className="flex flex-wrap items-start justify-between gap-4">
                                             <div className="flex-1">
                                                 <div className="mb-2 flex items-center gap-2">
-                                                    <span className="font-pixel text-xs text-stone-400">From:</span>
+                                                    <span className="font-pixel text-xs text-stone-400">
+                                                        From:
+                                                    </span>
                                                     <span className="font-pixel text-sm text-amber-400">
-                                                        House {proposal.proposer_dynasty?.name || 'Unknown'}
+                                                        House{" "}
+                                                        {proposal.proposer_dynasty?.name ||
+                                                            "Unknown"}
                                                     </span>
                                                     <span className="font-pixel text-[10px] text-stone-500">
                                                         {proposal.created_at}
@@ -267,17 +291,27 @@ export default function Proposals({
                                                 </div>
 
                                                 <div className="mb-3 flex items-center gap-2 font-pixel text-xs">
-                                                    <span className="text-stone-400">Proposed Match:</span>
-                                                    <span className="text-pink-400">{proposal.proposer.name}</span>
+                                                    <span className="text-stone-400">
+                                                        Proposed Match:
+                                                    </span>
+                                                    <span className="text-pink-400">
+                                                        {proposal.proposer.name}
+                                                    </span>
                                                     <Heart className="h-3 w-3 text-pink-400" />
-                                                    <span className="text-pink-400">{proposal.proposed.name}</span>
+                                                    <span className="text-pink-400">
+                                                        {proposal.proposed.name}
+                                                    </span>
                                                 </div>
 
                                                 {proposal.offered_dowry > 0 && (
                                                     <div className="mb-2 flex items-center gap-2 font-pixel text-xs">
                                                         <Coins className="h-3 w-3 text-yellow-400" />
-                                                        <span className="text-stone-400">Dowry Offered:</span>
-                                                        <span className="text-yellow-400">{proposal.offered_dowry}g</span>
+                                                        <span className="text-stone-400">
+                                                            Dowry Offered:
+                                                        </span>
+                                                        <span className="text-yellow-400">
+                                                            {proposal.offered_dowry}g
+                                                        </span>
                                                     </div>
                                                 )}
 
@@ -301,16 +335,26 @@ export default function Proposals({
                                                 {proposal.can_respond && (
                                                     <>
                                                         <button
-                                                            onClick={() => handleAccept(proposal.id)}
-                                                            disabled={!is_head || processing === proposal.id}
+                                                            onClick={() =>
+                                                                handleAccept(proposal.id)
+                                                            }
+                                                            disabled={
+                                                                !is_head ||
+                                                                processing === proposal.id
+                                                            }
                                                             className="flex items-center gap-1 rounded border border-green-600/50 bg-green-900/20 px-3 py-1.5 font-pixel text-xs text-green-400 transition hover:bg-green-900/40 disabled:opacity-50"
                                                         >
                                                             <Check className="h-3 w-3" />
                                                             Accept
                                                         </button>
                                                         <button
-                                                            onClick={() => handleReject(proposal.id)}
-                                                            disabled={!is_head || processing === proposal.id}
+                                                            onClick={() =>
+                                                                handleReject(proposal.id)
+                                                            }
+                                                            disabled={
+                                                                !is_head ||
+                                                                processing === proposal.id
+                                                            }
                                                             className="flex items-center gap-1 rounded border border-red-600/50 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-400 transition hover:bg-red-900/40 disabled:opacity-50"
                                                         >
                                                             <X className="h-3 w-3" />
@@ -341,12 +385,15 @@ export default function Proposals({
                         {outgoing.length === 0 ? (
                             <div className="py-6 text-center">
                                 <Send className="mx-auto mb-2 h-8 w-8 text-stone-600" />
-                                <p className="font-pixel text-xs text-stone-500">No outgoing proposals</p>
+                                <p className="font-pixel text-xs text-stone-500">
+                                    No outgoing proposals
+                                </p>
                             </div>
                         ) : (
                             <div className="space-y-3">
                                 {outgoing.map((proposal) => {
-                                    const statusStyle = statusColors[proposal.status] || statusColors.pending;
+                                    const statusStyle =
+                                        statusColors[proposal.status] || statusColors.pending;
                                     return (
                                         <div
                                             key={proposal.id}
@@ -355,27 +402,43 @@ export default function Proposals({
                                             <div className="flex flex-wrap items-start justify-between gap-4">
                                                 <div className="flex-1">
                                                     <div className="mb-2 flex items-center gap-2">
-                                                        <span className="font-pixel text-xs text-stone-400">To:</span>
-                                                        <span className="font-pixel text-sm text-amber-400">
-                                                            House {proposal.proposed_dynasty?.name || 'Unknown'}
+                                                        <span className="font-pixel text-xs text-stone-400">
+                                                            To:
                                                         </span>
-                                                        <span className={`rounded px-2 py-0.5 font-pixel text-[10px] ${statusStyle.bg} ${statusStyle.text}`}>
+                                                        <span className="font-pixel text-sm text-amber-400">
+                                                            House{" "}
+                                                            {proposal.proposed_dynasty?.name ||
+                                                                "Unknown"}
+                                                        </span>
+                                                        <span
+                                                            className={`rounded px-2 py-0.5 font-pixel text-[10px] ${statusStyle.bg} ${statusStyle.text}`}
+                                                        >
                                                             {statusStyle.label}
                                                         </span>
                                                     </div>
 
                                                     <div className="mb-3 flex items-center gap-2 font-pixel text-xs">
-                                                        <span className="text-stone-400">Proposed Match:</span>
-                                                        <span className="text-pink-400">{proposal.proposer.name}</span>
+                                                        <span className="text-stone-400">
+                                                            Proposed Match:
+                                                        </span>
+                                                        <span className="text-pink-400">
+                                                            {proposal.proposer.name}
+                                                        </span>
                                                         <Heart className="h-3 w-3 text-pink-400" />
-                                                        <span className="text-pink-400">{proposal.proposed.name}</span>
+                                                        <span className="text-pink-400">
+                                                            {proposal.proposed.name}
+                                                        </span>
                                                     </div>
 
                                                     {proposal.offered_dowry > 0 && (
                                                         <div className="mb-2 flex items-center gap-2 font-pixel text-xs">
                                                             <Coins className="h-3 w-3 text-yellow-400" />
-                                                            <span className="text-stone-400">Dowry Offered:</span>
-                                                            <span className="text-yellow-400">{proposal.offered_dowry}g</span>
+                                                            <span className="text-stone-400">
+                                                                Dowry Offered:
+                                                            </span>
+                                                            <span className="text-yellow-400">
+                                                                {proposal.offered_dowry}g
+                                                            </span>
                                                         </div>
                                                     )}
 
@@ -392,9 +455,11 @@ export default function Proposals({
                                                 </div>
 
                                                 <div className="flex items-center gap-2">
-                                                    {proposal.status === 'pending' && (
+                                                    {proposal.status === "pending" && (
                                                         <button
-                                                            onClick={() => handleWithdraw(proposal.id)}
+                                                            onClick={() =>
+                                                                handleWithdraw(proposal.id)
+                                                            }
                                                             disabled={processing === proposal.id}
                                                             className="flex items-center gap-1 rounded border border-stone-600/50 bg-stone-900/20 px-3 py-1.5 font-pixel text-xs text-stone-400 transition hover:bg-stone-900/40 disabled:opacity-50"
                                                         >
@@ -421,12 +486,16 @@ export default function Proposals({
                         {marriages.length === 0 ? (
                             <div className="py-6 text-center">
                                 <HeartOff className="mx-auto mb-2 h-8 w-8 text-stone-600" />
-                                <p className="font-pixel text-xs text-stone-500">No marriages recorded</p>
+                                <p className="font-pixel text-xs text-stone-500">
+                                    No marriages recorded
+                                </p>
                             </div>
                         ) : (
                             <div className="space-y-2">
                                 {marriages.map((marriage) => {
-                                    const statusStyle = marriageStatusColors[marriage.status] || marriageStatusColors.active;
+                                    const statusStyle =
+                                        marriageStatusColors[marriage.status] ||
+                                        marriageStatusColors.active;
                                     return (
                                         <div
                                             key={marriage.id}
@@ -435,17 +504,25 @@ export default function Proposals({
                                             <div className="flex items-center gap-3">
                                                 <div className="flex items-center gap-2 font-pixel text-xs">
                                                     <User className="h-3 w-3 text-blue-400" />
-                                                    <span className="text-stone-300">{marriage.spouse1.name}</span>
+                                                    <span className="text-stone-300">
+                                                        {marriage.spouse1.name}
+                                                    </span>
                                                     <span className="text-stone-600">&</span>
                                                     <User className="h-3 w-3 text-pink-400" />
-                                                    <span className="text-stone-300">{marriage.spouse2.name}</span>
+                                                    <span className="text-stone-300">
+                                                        {marriage.spouse2.name}
+                                                    </span>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <span className="font-pixel text-[10px] text-stone-500">
-                                                    {marriage.wedding_year ? `Year ${marriage.wedding_year}` : 'Unknown date'}
+                                                    {marriage.wedding_year
+                                                        ? `Year ${marriage.wedding_year}`
+                                                        : "Unknown date"}
                                                 </span>
-                                                <span className={`rounded px-2 py-0.5 font-pixel text-[10px] ${statusStyle.bg} ${statusStyle.text}`}>
+                                                <span
+                                                    className={`rounded px-2 py-0.5 font-pixel text-[10px] ${statusStyle.bg} ${statusStyle.text}`}
+                                                >
                                                     {statusStyle.label}
                                                 </span>
                                             </div>
@@ -459,9 +536,10 @@ export default function Proposals({
                     {/* Info Notice */}
                     <div className="rounded-lg border border-amber-600/30 bg-amber-900/10 p-3">
                         <p className="font-pixel text-[10px] text-amber-400/80">
-                            Marriage alliances can strengthen ties between dynasties. Breaking alliances may result
-                            in prestige loss and damaged relationships. Marriage alliances require divorce or
-                            annulment to break (additional prestige cost).
+                            Marriage alliances can strengthen ties between dynasties. Breaking
+                            alliances may result in prestige loss and damaged relationships.
+                            Marriage alliances require divorce or annulment to break (additional
+                            prestige cost).
                         </p>
                     </div>
                 </div>

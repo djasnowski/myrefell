@@ -1,8 +1,8 @@
-import { Link } from '@inertiajs/react';
-import { NavLocation } from '@/components/nav-location';
-import { NavPlayerInfo } from '@/components/nav-player-info';
-import { NavSkills } from '@/components/nav-skills';
-import { NavUser } from '@/components/nav-user';
+import { Link } from "@inertiajs/react";
+import { NavLocation } from "@/components/nav-location";
+import { NavPlayerInfo } from "@/components/nav-player-info";
+import { NavSkills } from "@/components/nav-skills";
+import { NavUser } from "@/components/nav-user";
 import {
     Sidebar,
     SidebarContent,
@@ -12,9 +12,9 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarSeparator,
-} from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
-import AppLogo from './app-logo';
+} from "@/components/ui/sidebar";
+import { dashboard } from "@/routes";
+import AppLogo from "./app-logo";
 
 export function AppSidebar() {
     return (

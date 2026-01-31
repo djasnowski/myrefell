@@ -1,8 +1,8 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUp, Crosshair, Dumbbell, Heart, Loader2, Shield, Sword, Zap } from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from "@inertiajs/react";
+import { ArrowUp, Crosshair, Dumbbell, Heart, Loader2, Shield, Sword, Zap } from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Exercise {
     id: string;
@@ -68,34 +68,35 @@ const exerciseIcons: Record<string, typeof Sword> = {
 
 const exerciseColors: Record<string, { bg: string; border: string; text: string }> = {
     attack: {
-        bg: 'from-red-900/50 to-stone-900',
-        border: 'border-red-600/50',
-        text: 'text-red-400',
+        bg: "from-red-900/50 to-stone-900",
+        border: "border-red-600/50",
+        text: "text-red-400",
     },
     strength: {
-        bg: 'from-orange-900/50 to-stone-900',
-        border: 'border-orange-600/50',
-        text: 'text-orange-400',
+        bg: "from-orange-900/50 to-stone-900",
+        border: "border-orange-600/50",
+        text: "text-orange-400",
     },
     defense: {
-        bg: 'from-blue-900/50 to-stone-900',
-        border: 'border-blue-600/50',
-        text: 'text-blue-400',
+        bg: "from-blue-900/50 to-stone-900",
+        border: "border-blue-600/50",
+        text: "text-blue-400",
     },
     hitpoints: {
-        bg: 'from-pink-900/50 to-stone-900',
-        border: 'border-pink-600/50',
-        text: 'text-pink-400',
+        bg: "from-pink-900/50 to-stone-900",
+        border: "border-pink-600/50",
+        text: "text-pink-400",
     },
     range: {
-        bg: 'from-green-900/50 to-stone-900',
-        border: 'border-green-600/50',
-        text: 'text-green-400',
+        bg: "from-green-900/50 to-stone-900",
+        border: "border-green-600/50",
+        text: "text-green-400",
     },
 };
 
 export default function TrainingIndex() {
-    const { exercises, combat_stats, player_energy, max_energy, player_hp, max_hp } = usePage<PageProps>().props;
+    const { exercises, combat_stats, player_energy, max_energy, player_hp, max_hp } =
+        usePage<PageProps>().props;
     const [loading, setLoading] = useState<string | null>(null);
     const [result, setResult] = useState<TrainResult | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(player_energy);
@@ -103,8 +104,8 @@ export default function TrainingIndex() {
     const [currentHp, setCurrentHp] = useState(player_hp);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Training Grounds', href: '/training' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Training Grounds", href: "/training" },
     ];
 
     const handleTrain = async (exercise: string) => {
@@ -117,11 +118,14 @@ export default function TrainingIndex() {
         setResult(null);
 
         try {
-            const response = await fetch('/training/train', {
-                method: 'POST',
+            const response = await fetch("/training/train", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
                 },
                 body: JSON.stringify({ exercise }),
             });
@@ -140,8 +144,12 @@ export default function TrainingIndex() {
                 }
 
                 // Update the stat that was trained
-                if (data.skill && data.skill_progress !== undefined && data.xp_to_next_level !== undefined) {
-                    const skillKey = data.skill as 'attack' | 'strength' | 'defense';
+                if (
+                    data.skill &&
+                    data.skill_progress !== undefined &&
+                    data.xp_to_next_level !== undefined
+                ) {
+                    const skillKey = data.skill as "attack" | "strength" | "defense";
                     setCurrentStats((prev) => {
                         const updatedStat = {
                             ...prev[skillKey],
@@ -156,10 +164,12 @@ export default function TrainingIndex() {
                         };
 
                         newStats.combat_level = Math.floor(
-                            ((skillKey === 'attack' ? updatedStat.level : prev.attack.level) +
-                                (skillKey === 'strength' ? updatedStat.level : prev.strength.level) +
-                                (skillKey === 'defense' ? updatedStat.level : prev.defense.level)) /
-                                3
+                            ((skillKey === "attack" ? updatedStat.level : prev.attack.level) +
+                                (skillKey === "strength"
+                                    ? updatedStat.level
+                                    : prev.strength.level) +
+                                (skillKey === "defense" ? updatedStat.level : prev.defense.level)) /
+                                3,
                         );
 
                         return newStats;
@@ -169,7 +179,7 @@ export default function TrainingIndex() {
 
             // Reload sidebar data and sync HP
             router.reload({
-                only: ['sidebar', 'player_hp'],
+                only: ["sidebar", "player_hp"],
                 onSuccess: (page) => {
                     const props = page.props as PageProps;
                     if (props.player_hp !== undefined) {
@@ -178,7 +188,7 @@ export default function TrainingIndex() {
                 },
             });
         } catch {
-            setResult({ success: false, message: 'An error occurred' });
+            setResult({ success: false, message: "An error occurred" });
         } finally {
             setLoading(null);
         }
@@ -196,7 +206,9 @@ export default function TrainingIndex() {
                                 <Sword className="h-12 w-12 text-amber-400" />
                             </div>
                             <div>
-                                <h1 className="font-pixel text-2xl text-amber-400">Training Grounds</h1>
+                                <h1 className="font-pixel text-2xl text-amber-400">
+                                    Training Grounds
+                                </h1>
                                 <p className="font-pixel text-xs text-stone-400">
                                     Train your combat skills to become stronger
                                 </p>
@@ -208,19 +220,27 @@ export default function TrainingIndex() {
                     <div className="mb-6 grid grid-cols-4 gap-3">
                         <div className="rounded-lg border border-stone-600 bg-stone-800/50 p-3 text-center">
                             <div className="font-pixel text-xs text-stone-400">Combat Level</div>
-                            <div className="font-pixel text-2xl text-amber-400">{currentStats.combat_level}</div>
+                            <div className="font-pixel text-2xl text-amber-400">
+                                {currentStats.combat_level}
+                            </div>
                         </div>
                         <div className="rounded-lg border border-red-600/30 bg-stone-800/50 p-3 text-center">
                             <div className="font-pixel text-xs text-red-400">Attack</div>
-                            <div className="font-pixel text-xl text-red-300">{currentStats.attack.level}</div>
+                            <div className="font-pixel text-xl text-red-300">
+                                {currentStats.attack.level}
+                            </div>
                         </div>
                         <div className="rounded-lg border border-orange-600/30 bg-stone-800/50 p-3 text-center">
                             <div className="font-pixel text-xs text-orange-400">Strength</div>
-                            <div className="font-pixel text-xl text-orange-300">{currentStats.strength.level}</div>
+                            <div className="font-pixel text-xl text-orange-300">
+                                {currentStats.strength.level}
+                            </div>
                         </div>
                         <div className="rounded-lg border border-blue-600/30 bg-stone-800/50 p-3 text-center">
                             <div className="font-pixel text-xs text-blue-400">Defense</div>
-                            <div className="font-pixel text-xl text-blue-300">{currentStats.defense.level}</div>
+                            <div className="font-pixel text-xl text-blue-300">
+                                {currentStats.defense.level}
+                            </div>
                         </div>
                     </div>
 
@@ -266,7 +286,9 @@ export default function TrainingIndex() {
                     {result && (
                         <div
                             className={`mb-6 rounded-lg border p-4 ${
-                                result.success ? 'border-green-600/50 bg-green-900/20' : 'border-red-600/50 bg-red-900/20'
+                                result.success
+                                    ? "border-green-600/50 bg-green-900/20"
+                                    : "border-red-600/50 bg-red-900/20"
                             }`}
                         >
                             <div className="flex items-center gap-3">
@@ -274,22 +296,27 @@ export default function TrainingIndex() {
                                     <>
                                         <div
                                             className={`rounded-lg p-2 ${
-                                                exerciseColors[result.exercise || 'attack'].bg
+                                                exerciseColors[result.exercise || "attack"].bg
                                             }`}
                                         >
                                             {(() => {
-                                                const Icon = exerciseIcons[result.exercise || 'attack'];
+                                                const Icon =
+                                                    exerciseIcons[result.exercise || "attack"];
                                                 return (
                                                     <Icon
                                                         className={`h-6 w-6 ${
-                                                            exerciseColors[result.exercise || 'attack'].text
+                                                            exerciseColors[
+                                                                result.exercise || "attack"
+                                                            ].text
                                                         }`}
                                                     />
                                                 );
                                             })()}
                                         </div>
                                         <div>
-                                            <div className="font-pixel text-sm text-green-300">{result.message}</div>
+                                            <div className="font-pixel text-sm text-green-300">
+                                                {result.message}
+                                            </div>
                                             <div className="flex items-center gap-2">
                                                 <span className="font-pixel text-[10px] text-amber-400">
                                                     +{result.xp_awarded} XP
@@ -304,7 +331,9 @@ export default function TrainingIndex() {
                                         </div>
                                     </>
                                 ) : (
-                                    <div className="font-pixel text-sm text-red-400">{result.message}</div>
+                                    <div className="font-pixel text-sm text-red-400">
+                                        {result.message}
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -334,7 +363,9 @@ export default function TrainingIndex() {
                                         <div className="flex-1">
                                             <div className="flex items-start justify-between gap-4">
                                                 <div className="flex-1">
-                                                    <h3 className={`font-pixel text-lg ${colors.text}`}>
+                                                    <h3
+                                                        className={`font-pixel text-lg ${colors.text}`}
+                                                    >
                                                         {exercise.name}
                                                     </h3>
                                                     <p className="max-w-md py-1 font-pixel text-[10px] text-stone-400">
@@ -350,16 +381,17 @@ export default function TrainingIndex() {
                                             <div className="relative mt-2 h-4 w-full overflow-hidden rounded-full bg-stone-700">
                                                 <div
                                                     className={`h-full transition-all ${
-                                                        exercise.id === 'attack'
-                                                            ? 'bg-red-500'
-                                                            : exercise.id === 'strength'
-                                                              ? 'bg-orange-500'
-                                                              : 'bg-blue-500'
+                                                        exercise.id === "attack"
+                                                            ? "bg-red-500"
+                                                            : exercise.id === "strength"
+                                                              ? "bg-orange-500"
+                                                              : "bg-blue-500"
                                                     }`}
                                                     style={{ width: `${stat.progress}%` }}
                                                 />
                                                 <div className="absolute inset-0 flex items-center justify-center font-pixel text-[10px] text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
-                                                    {stat.xp_to_next_level.toLocaleString()} XP to lvl {stat.level + 1}
+                                                    {stat.xp_to_next_level.toLocaleString()} XP to
+                                                    lvl {stat.level + 1}
                                                 </div>
                                             </div>
 
@@ -379,7 +411,7 @@ export default function TrainingIndex() {
                                                     className={`rounded-lg px-4 py-2 font-pixel text-xs transition ${
                                                         canTrain && loading === null
                                                             ? `${colors.border} bg-stone-800/80 hover:bg-stone-700/80 ${colors.text}`
-                                                            : 'cursor-not-allowed border-stone-700 bg-stone-800/50 text-stone-500'
+                                                            : "cursor-not-allowed border-stone-700 bg-stone-800/50 text-stone-500"
                                                     } border`}
                                                 >
                                                     {loading === exercise.id ? (
@@ -388,7 +420,7 @@ export default function TrainingIndex() {
                                                             Training...
                                                         </span>
                                                     ) : (
-                                                        'Train'
+                                                        "Train"
                                                     )}
                                                 </button>
                                             </div>

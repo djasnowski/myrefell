@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from "@inertiajs/react";
 import {
     Bell,
     BookOpen,
@@ -23,10 +23,10 @@ import {
     Wrench,
     X,
     Zap,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface BlessingEffect {
     [key: string]: number;
@@ -119,56 +119,61 @@ const iconMap: Record<string, typeof Sparkles> = {
     sword: Sword,
     shield: Shield,
     heart: Heart,
-    'heart-pulse': HeartPulse,
+    "heart-pulse": HeartPulse,
     wheat: Wheat,
     fish: Fish,
-    'tree-deciduous': TreeDeciduous,
+    "tree-deciduous": TreeDeciduous,
     pickaxe: Pickaxe,
     wrench: Wrench,
     coins: Coins,
     zap: Zap,
     wind: Wind,
-    'book-open': BookOpen,
+    "book-open": BookOpen,
     church: Church,
 };
 
 const categoryColors: Record<string, string> = {
-    combat: 'border-red-600/50 bg-red-900/20',
-    skill: 'border-blue-600/50 bg-blue-900/20',
-    general: 'border-purple-600/50 bg-purple-900/20',
+    combat: "border-red-600/50 bg-red-900/20",
+    skill: "border-blue-600/50 bg-blue-900/20",
+    general: "border-purple-600/50 bg-purple-900/20",
 };
 
 const categoryLabels: Record<string, string> = {
-    combat: 'Combat',
-    skill: 'Skill',
-    general: 'General',
+    combat: "Combat",
+    skill: "Skill",
+    general: "General",
 };
 
 function formatEffect(key: string, value: number): string {
     const labels: Record<string, string> = {
-        attack_bonus: 'Attack',
-        defense_bonus: 'Defense',
-        strength_bonus: 'Strength',
-        max_hp_bonus: 'Max HP',
-        hp_regen_bonus: 'HP Regen',
-        energy_regen_bonus: 'Energy Regen',
-        gold_find_bonus: 'Gold Find',
-        rare_drop_bonus: 'Rare Drops',
-        travel_speed_bonus: 'Travel Speed',
-        all_xp_bonus: 'All XP',
-        farming_bonus: 'Farming',
-        farming_xp_bonus: 'Farming XP',
-        fishing_xp_bonus: 'Fishing XP',
-        fishing_yield_bonus: 'Fishing Yield',
-        woodcutting_xp_bonus: 'Woodcutting XP',
-        woodcutting_yield_bonus: 'Wood Yield',
-        mining_xp_bonus: 'Mining XP',
-        mining_yield_bonus: 'Mining Yield',
-        smithing_xp_bonus: 'Smithing XP',
-        crafting_xp_bonus: 'Crafting XP',
+        attack_bonus: "Attack",
+        defense_bonus: "Defense",
+        strength_bonus: "Strength",
+        max_hp_bonus: "Max HP",
+        hp_regen_bonus: "HP Regen",
+        energy_regen_bonus: "Energy Regen",
+        gold_find_bonus: "Gold Find",
+        rare_drop_bonus: "Rare Drops",
+        travel_speed_bonus: "Travel Speed",
+        all_xp_bonus: "All XP",
+        farming_bonus: "Farming",
+        farming_xp_bonus: "Farming XP",
+        fishing_xp_bonus: "Fishing XP",
+        fishing_yield_bonus: "Fishing Yield",
+        woodcutting_xp_bonus: "Woodcutting XP",
+        woodcutting_yield_bonus: "Wood Yield",
+        mining_xp_bonus: "Mining XP",
+        mining_yield_bonus: "Mining Yield",
+        smithing_xp_bonus: "Smithing XP",
+        crafting_xp_bonus: "Crafting XP",
     };
     // If no label found, convert snake_case to Title Case
-    const label = labels[key] || key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    const label =
+        labels[key] ||
+        key
+            .split("_")
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(" ");
     return `+${value}% ${label}`;
 }
 
@@ -190,8 +195,8 @@ function BlessingCard({
             onClick={onSelect}
             disabled={disabled}
             className={`flex items-center gap-3 rounded-lg border p-3 text-left transition ${categoryColors[blessing.category]} ${
-                selected ? 'ring-2 ring-amber-400' : ''
-            } ${disabled ? 'cursor-not-allowed opacity-50' : 'hover:brightness-110'}`}
+                selected ? "ring-2 ring-amber-400" : ""
+            } ${disabled ? "cursor-not-allowed opacity-50" : "hover:brightness-110"}`}
         >
             {/* Large Icon */}
             <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-stone-800/50">
@@ -203,7 +208,10 @@ function BlessingCard({
                 <div className="font-pixel text-sm text-amber-300">{blessing.name}</div>
                 <div className="flex flex-wrap gap-1 mt-1">
                     {Object.entries(blessing.effects).map(([key, value]) => (
-                        <span key={key} className="rounded bg-stone-800 px-1.5 py-0.5 font-pixel text-[10px] text-green-400">
+                        <span
+                            key={key}
+                            className="rounded bg-stone-800 px-1.5 py-0.5 font-pixel text-[10px] text-green-400"
+                        >
                             {formatEffect(key, value)}
                         </span>
                     ))}
@@ -242,13 +250,19 @@ function ActiveBlessingCard({ blessing }: { blessing: ActiveBlessing }) {
             </div>
             <div className="mb-3 flex flex-wrap gap-1.5">
                 {Object.entries(blessing.effects).map(([key, value]) => (
-                    <span key={key} className="rounded bg-stone-800 px-2 py-1 font-pixel text-xs text-green-400">
+                    <span
+                        key={key}
+                        className="rounded bg-stone-800 px-2 py-1 font-pixel text-xs text-green-400"
+                    >
                         {formatEffect(key, value)}
                     </span>
                 ))}
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-stone-700">
-                <div className="h-full bg-amber-500 transition-all" style={{ width: `${progress}%` }} />
+                <div
+                    className="h-full bg-amber-500 transition-all"
+                    style={{ width: `${progress}%` }}
+                />
             </div>
             <div className="mt-2 text-xs text-stone-500">From: {blessing.granted_by}</div>
         </div>
@@ -256,18 +270,29 @@ function ActiveBlessingCard({ blessing }: { blessing: ActiveBlessing }) {
 }
 
 export default function ShrineIndex() {
-    const { active_blessings, is_priest, priest_data, recent_blessings, energy, gold, current_user_id, location } = usePage<PageProps>().props;
+    const {
+        active_blessings,
+        is_priest,
+        priest_data,
+        recent_blessings,
+        energy,
+        gold,
+        current_user_id,
+        location,
+    } = usePage<PageProps>().props;
 
     const [selectedBlessing, setSelectedBlessing] = useState<BlessingType | null>(null);
     const [selectedPlayer, setSelectedPlayer] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
     const [prayLoading, setPrayLoading] = useState(false);
-    const [activeCategory, setActiveCategory] = useState<string>('all');
+    const [activeCategory, setActiveCategory] = useState<string>("all");
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        ...(location.name ? [{ title: location.name, href: `/${location.type}s/${location.id}` }] : []),
-        { title: 'Shrine', href: '#' },
+        { title: "Dashboard", href: "/dashboard" },
+        ...(location.name
+            ? [{ title: location.name, href: `/${location.type}s/${location.id}` }]
+            : []),
+        { title: "Shrine", href: "#" },
     ];
 
     const handleBless = () => {
@@ -278,7 +303,7 @@ export default function ShrineIndex() {
 
         setLoading(true);
         router.post(
-            '/shrine/bless',
+            "/shrine/bless",
             {
                 blessing_type_id: selectedBlessing.id,
                 target_user_id: targetId,
@@ -293,14 +318,14 @@ export default function ShrineIndex() {
                     setSelectedBlessing(null);
                     setSelectedPlayer(null);
                 },
-            }
+            },
         );
     };
 
     const handlePray = (blessingType: BlessingType) => {
         setPrayLoading(true);
         router.post(
-            '/shrine/pray',
+            "/shrine/pray",
             { blessing_type_id: blessingType.id },
             {
                 preserveScroll: true,
@@ -308,12 +333,14 @@ export default function ShrineIndex() {
                     router.reload();
                 },
                 onFinish: () => setPrayLoading(false),
-            }
+            },
         );
     };
 
     const filteredBlessings =
-        priest_data?.available_blessings.filter((b) => activeCategory === 'all' || b.category === activeCategory) || [];
+        priest_data?.available_blessings.filter(
+            (b) => activeCategory === "all" || b.category === activeCategory,
+        ) || [];
 
     const groupedBlessings = filteredBlessings.reduce(
         (acc, blessing) => {
@@ -321,7 +348,7 @@ export default function ShrineIndex() {
             acc[blessing.category].push(blessing);
             return acc;
         },
-        {} as Record<string, BlessingType[]>
+        {} as Record<string, BlessingType[]>,
     );
 
     return (
@@ -335,7 +362,9 @@ export default function ShrineIndex() {
                         <div>
                             <h1 className="font-pixel text-xl text-amber-400">Village Shrine</h1>
                             <p className="font-pixel text-xs text-stone-400">
-                                {is_priest ? 'Bestow blessings upon the faithful' : 'Pray for divine favor'}
+                                {is_priest
+                                    ? "Bestow blessings upon the faithful"
+                                    : "Pray for divine favor"}
                             </p>
                         </div>
                     </div>
@@ -362,9 +391,13 @@ export default function ShrineIndex() {
                         {active_blessings.length === 0 ? (
                             <div className="rounded-lg border border-dashed border-stone-700 p-4 text-center">
                                 <Sparkles className="mx-auto mb-2 h-8 w-8 text-stone-600" />
-                                <p className="font-pixel text-xs text-stone-500">No active blessings</p>
+                                <p className="font-pixel text-xs text-stone-500">
+                                    No active blessings
+                                </p>
                                 <p className="font-pixel text-[10px] text-stone-600">
-                                    {is_priest ? 'Bless yourself or others' : 'Pray at the shrine for blessings'}
+                                    {is_priest
+                                        ? "Bless yourself or others"
+                                        : "Pray at the shrine for blessings"}
                                 </p>
                             </div>
                         ) : (
@@ -393,12 +426,17 @@ export default function ShrineIndex() {
                                                 <Icon className="h-4 w-4 flex-shrink-0 text-amber-400/70" />
                                                 <div className="min-w-0 flex-1">
                                                     <div className="truncate font-pixel text-[10px] text-stone-300">
-                                                        <span className="text-amber-300">{blessing.granted_by}</span>
-                                                        {' blessed '}
-                                                        <span className="text-green-400">{blessing.recipient}</span>
+                                                        <span className="text-amber-300">
+                                                            {blessing.granted_by}
+                                                        </span>
+                                                        {" blessed "}
+                                                        <span className="text-green-400">
+                                                            {blessing.recipient}
+                                                        </span>
                                                     </div>
                                                     <div className="font-pixel text-[9px] text-stone-500">
-                                                        {blessing.blessing_name} · {blessing.time_ago}
+                                                        {blessing.blessing_name} ·{" "}
+                                                        {blessing.time_ago}
                                                     </div>
                                                 </div>
                                             </div>
@@ -419,7 +457,9 @@ export default function ShrineIndex() {
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <Church className="h-5 w-5 text-purple-400" />
-                                            <span className="font-pixel text-sm text-purple-300">Priest Powers</span>
+                                            <span className="font-pixel text-sm text-purple-300">
+                                                Priest Powers
+                                            </span>
                                         </div>
                                         <span className="font-pixel text-xs text-stone-400">
                                             Blessings today: {priest_data.blessings_given_today}
@@ -427,111 +467,136 @@ export default function ShrineIndex() {
                                     </div>
                                     <div className="mt-2 flex items-center gap-4 text-xs text-stone-400">
                                         <span>
-                                            XP: {priest_data.prayer_xp} / {priest_data.prayer_xp_to_next}
+                                            XP: {priest_data.prayer_xp} /{" "}
+                                            {priest_data.prayer_xp_to_next}
                                         </span>
                                     </div>
                                 </div>
 
                                 {/* Pending Blessing Requests */}
-                                {priest_data.pending_requests && priest_data.pending_requests.length > 0 && (
-                                    <div className="rounded-lg border border-amber-600/50 bg-amber-900/20 p-4">
-                                        <div className="mb-3 flex items-center gap-2">
-                                            <Bell className="h-5 w-5 text-amber-400" />
-                                            <span className="font-pixel text-sm text-amber-300">
-                                                Blessing Requests ({priest_data.pending_requests.length})
-                                            </span>
-                                        </div>
-                                        <div className="space-y-2">
-                                            {priest_data.pending_requests.map((req) => {
-                                                const Icon = iconMap[req.blessing_icon] || Sparkles;
-                                                return (
-                                                    <div
-                                                        key={req.id}
-                                                        className="flex items-center justify-between rounded border border-stone-700 bg-stone-800/50 p-3"
-                                                    >
-                                                        <div className="flex items-center gap-3">
-                                                            <Icon className="h-5 w-5 text-amber-300" />
-                                                            <div>
-                                                                <div className="font-pixel text-xs text-stone-200">
-                                                                    <span className="text-amber-300">{req.username}</span> requests{' '}
-                                                                    <span className="text-amber-300">{req.blessing_name}</span>
-                                                                </div>
-                                                                {req.message && (
-                                                                    <div className="font-pixel text-[10px] text-stone-400 italic">
-                                                                        "{req.message}"
+                                {priest_data.pending_requests &&
+                                    priest_data.pending_requests.length > 0 && (
+                                        <div className="rounded-lg border border-amber-600/50 bg-amber-900/20 p-4">
+                                            <div className="mb-3 flex items-center gap-2">
+                                                <Bell className="h-5 w-5 text-amber-400" />
+                                                <span className="font-pixel text-sm text-amber-300">
+                                                    Blessing Requests (
+                                                    {priest_data.pending_requests.length})
+                                                </span>
+                                            </div>
+                                            <div className="space-y-2">
+                                                {priest_data.pending_requests.map((req) => {
+                                                    const Icon =
+                                                        iconMap[req.blessing_icon] || Sparkles;
+                                                    return (
+                                                        <div
+                                                            key={req.id}
+                                                            className="flex items-center justify-between rounded border border-stone-700 bg-stone-800/50 p-3"
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <Icon className="h-5 w-5 text-amber-300" />
+                                                                <div>
+                                                                    <div className="font-pixel text-xs text-stone-200">
+                                                                        <span className="text-amber-300">
+                                                                            {req.username}
+                                                                        </span>{" "}
+                                                                        requests{" "}
+                                                                        <span className="text-amber-300">
+                                                                            {req.blessing_name}
+                                                                        </span>
                                                                     </div>
-                                                                )}
-                                                                <div className="font-pixel text-[9px] text-stone-500">{req.created_at}</div>
+                                                                    {req.message && (
+                                                                        <div className="font-pixel text-[10px] text-stone-400 italic">
+                                                                            "{req.message}"
+                                                                        </div>
+                                                                    )}
+                                                                    <div className="font-pixel text-[9px] text-stone-500">
+                                                                        {req.created_at}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex gap-2">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        router.post(
+                                                                            `/${location.type}s/${location.id}/shrine/request/${req.id}/approve`,
+                                                                            {},
+                                                                            {
+                                                                                preserveScroll: true,
+                                                                            },
+                                                                        );
+                                                                    }}
+                                                                    className="flex items-center gap-1 rounded bg-green-600 px-2 py-1 font-pixel text-[10px] text-white hover:bg-green-500"
+                                                                >
+                                                                    <Check className="h-3 w-3" />
+                                                                    Approve
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        router.post(
+                                                                            `/${location.type}s/${location.id}/shrine/request/${req.id}/deny`,
+                                                                            {},
+                                                                            {
+                                                                                preserveScroll: true,
+                                                                            },
+                                                                        );
+                                                                    }}
+                                                                    className="flex items-center gap-1 rounded bg-red-600 px-2 py-1 font-pixel text-[10px] text-white hover:bg-red-500"
+                                                                >
+                                                                    <X className="h-3 w-3" />
+                                                                    Deny
+                                                                </button>
                                                             </div>
                                                         </div>
-                                                        <div className="flex gap-2">
-                                                            <button
-                                                                onClick={() => {
-                                                                    router.post(`/${location.type}s/${location.id}/shrine/request/${req.id}/approve`, {}, {
-                                                                        preserveScroll: true,
-                                                                    });
-                                                                }}
-                                                                className="flex items-center gap-1 rounded bg-green-600 px-2 py-1 font-pixel text-[10px] text-white hover:bg-green-500"
-                                                            >
-                                                                <Check className="h-3 w-3" />
-                                                                Approve
-                                                            </button>
-                                                            <button
-                                                                onClick={() => {
-                                                                    router.post(`/${location.type}s/${location.id}/shrine/request/${req.id}/deny`, {}, {
-                                                                        preserveScroll: true,
-                                                                    });
-                                                                }}
-                                                                className="flex items-center gap-1 rounded bg-red-600 px-2 py-1 font-pixel text-[10px] text-white hover:bg-red-500"
-                                                            >
-                                                                <X className="h-3 w-3" />
-                                                                Deny
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
 
                                 {/* Category Filter */}
                                 <div className="flex gap-2">
-                                    {['all', 'combat', 'skill', 'general'].map((cat) => (
+                                    {["all", "combat", "skill", "general"].map((cat) => (
                                         <button
                                             key={cat}
                                             onClick={() => setActiveCategory(cat)}
                                             className={`rounded px-3 py-1 font-pixel text-xs transition ${
                                                 activeCategory === cat
-                                                    ? 'bg-amber-600 text-white'
-                                                    : 'bg-stone-800 text-stone-400 hover:bg-stone-700'
+                                                    ? "bg-amber-600 text-white"
+                                                    : "bg-stone-800 text-stone-400 hover:bg-stone-700"
                                             }`}
                                         >
-                                            {cat === 'all' ? 'All' : categoryLabels[cat]}
+                                            {cat === "all" ? "All" : categoryLabels[cat]}
                                         </button>
                                     ))}
                                 </div>
 
                                 {/* Blessings Grid */}
                                 <div className="space-y-4">
-                                    {Object.entries(groupedBlessings).map(([category, blessings]) => (
-                                        <div key={category}>
-                                            <h3 className="mb-2 font-pixel text-xs text-stone-400">
-                                                {categoryLabels[category]} Blessings
-                                            </h3>
-                                            <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
-                                                {blessings.map((blessing) => (
-                                                    <BlessingCard
-                                                        key={blessing.id}
-                                                        blessing={blessing}
-                                                        selected={selectedBlessing?.id === blessing.id}
-                                                        onSelect={() => setSelectedBlessing(blessing)}
-                                                        disabled={energy < blessing.energy_cost}
-                                                    />
-                                                ))}
+                                    {Object.entries(groupedBlessings).map(
+                                        ([category, blessings]) => (
+                                            <div key={category}>
+                                                <h3 className="mb-2 font-pixel text-xs text-stone-400">
+                                                    {categoryLabels[category]} Blessings
+                                                </h3>
+                                                <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
+                                                    {blessings.map((blessing) => (
+                                                        <BlessingCard
+                                                            key={blessing.id}
+                                                            blessing={blessing}
+                                                            selected={
+                                                                selectedBlessing?.id === blessing.id
+                                                            }
+                                                            onSelect={() =>
+                                                                setSelectedBlessing(blessing)
+                                                            }
+                                                            disabled={energy < blessing.energy_cost}
+                                                        />
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ),
+                                    )}
                                 </div>
 
                                 {/* Target Selection */}
@@ -545,8 +610,8 @@ export default function ShrineIndex() {
                                                 onClick={() => setSelectedPlayer(-1)}
                                                 className={`flex items-center gap-1 rounded px-3 py-1.5 font-pixel text-xs transition ${
                                                     selectedPlayer === -1
-                                                        ? 'bg-amber-600 text-white'
-                                                        : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
+                                                        ? "bg-amber-600 text-white"
+                                                        : "bg-stone-800 text-stone-300 hover:bg-stone-700"
                                                 }`}
                                             >
                                                 <User className="h-3 w-3" />
@@ -560,8 +625,8 @@ export default function ShrineIndex() {
                                                         onClick={() => setSelectedPlayer(player.id)}
                                                         className={`flex items-center gap-1 rounded px-3 py-1.5 font-pixel text-xs transition ${
                                                             selectedPlayer === player.id
-                                                                ? 'bg-amber-600 text-white'
-                                                                : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
+                                                                ? "bg-amber-600 text-white"
+                                                                : "bg-stone-800 text-stone-300 hover:bg-stone-700"
                                                         }`}
                                                     >
                                                         <Users className="h-3 w-3" />
@@ -590,10 +655,13 @@ export default function ShrineIndex() {
                             // Non-priest view - self prayer
                             <div className="space-y-4">
                                 <div className="rounded-lg border border-stone-700 bg-stone-900/50 p-4">
-                                    <h2 className="mb-2 font-pixel text-sm text-amber-300">Prayer at the Shrine</h2>
+                                    <h2 className="mb-2 font-pixel text-sm text-amber-300">
+                                        Prayer at the Shrine
+                                    </h2>
                                     <p className="font-pixel text-xs text-stone-400">
-                                        Without a Priest, you may pray directly at the shrine. Blessings cost 50% more
-                                        gold and last 25% shorter, but are still effective.
+                                        Without a Priest, you may pray directly at the shrine.
+                                        Blessings cost 50% more gold and last 25% shorter, but are
+                                        still effective.
                                     </p>
                                 </div>
 
@@ -602,13 +670,13 @@ export default function ShrineIndex() {
                                     {[
                                         {
                                             id: 1,
-                                            name: 'Blessing of Strength',
-                                            slug: 'strength',
-                                            icon: 'swords',
-                                            description: 'Increases your attack power.',
-                                            category: 'combat',
+                                            name: "Blessing of Strength",
+                                            slug: "strength",
+                                            icon: "swords",
+                                            description: "Increases your attack power.",
+                                            category: "combat",
                                             effects: { attack_bonus: 10 },
-                                            duration: '45m',
+                                            duration: "45m",
                                             duration_minutes: 45,
                                             gold_cost: 38,
                                             energy_cost: 0,
@@ -616,13 +684,13 @@ export default function ShrineIndex() {
                                         },
                                         {
                                             id: 2,
-                                            name: 'Blessing of Protection',
-                                            slug: 'protection',
-                                            icon: 'shield',
-                                            description: 'Increases your defense.',
-                                            category: 'combat',
+                                            name: "Blessing of Protection",
+                                            slug: "protection",
+                                            icon: "shield",
+                                            description: "Increases your defense.",
+                                            category: "combat",
                                             effects: { defense_bonus: 10 },
-                                            duration: '45m',
+                                            duration: "45m",
                                             duration_minutes: 45,
                                             gold_cost: 38,
                                             energy_cost: 0,
@@ -630,13 +698,13 @@ export default function ShrineIndex() {
                                         },
                                         {
                                             id: 10,
-                                            name: 'Blessing of Fortune',
-                                            slug: 'fortune',
-                                            icon: 'coins',
-                                            description: 'Increases gold found.',
-                                            category: 'general',
+                                            name: "Blessing of Fortune",
+                                            slug: "fortune",
+                                            icon: "coins",
+                                            description: "Increases gold found.",
+                                            category: "general",
                                             effects: { gold_find_bonus: 10 },
-                                            duration: '45m',
+                                            duration: "45m",
                                             duration_minutes: 45,
                                             gold_cost: 75,
                                             energy_cost: 0,
@@ -650,20 +718,28 @@ export default function ShrineIndex() {
                                             <div className="mb-2 flex items-center gap-2">
                                                 {(() => {
                                                     const Icon = iconMap[blessing.icon] || Sparkles;
-                                                    return <Icon className="h-5 w-5 text-amber-300" />;
+                                                    return (
+                                                        <Icon className="h-5 w-5 text-amber-300" />
+                                                    );
                                                 })()}
-                                                <span className="font-pixel text-xs text-amber-300">{blessing.name}</span>
+                                                <span className="font-pixel text-xs text-amber-300">
+                                                    {blessing.name}
+                                                </span>
                                             </div>
-                                            <p className="mb-2 text-[10px] text-stone-400">{blessing.description}</p>
+                                            <p className="mb-2 text-[10px] text-stone-400">
+                                                {blessing.description}
+                                            </p>
                                             <div className="mb-2 flex flex-wrap gap-1">
-                                                {Object.entries(blessing.effects).map(([key, value]) => (
-                                                    <span
-                                                        key={key}
-                                                        className="rounded bg-stone-800 px-1.5 py-0.5 font-pixel text-[9px] text-green-400"
-                                                    >
-                                                        {formatEffect(key, value)}
-                                                    </span>
-                                                ))}
+                                                {Object.entries(blessing.effects).map(
+                                                    ([key, value]) => (
+                                                        <span
+                                                            key={key}
+                                                            className="rounded bg-stone-800 px-1.5 py-0.5 font-pixel text-[9px] text-green-400"
+                                                        >
+                                                            {formatEffect(key, value)}
+                                                        </span>
+                                                    ),
+                                                )}
                                             </div>
                                             <div className="mb-2 flex items-center justify-between text-[9px] text-stone-500">
                                                 <span className="flex items-center gap-1">
@@ -683,7 +759,7 @@ export default function ShrineIndex() {
                                                 {prayLoading ? (
                                                     <Loader2 className="h-3 w-3 animate-spin" />
                                                 ) : (
-                                                    'Pray'
+                                                    "Pray"
                                                 )}
                                             </button>
                                         </div>

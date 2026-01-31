@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from "@inertiajs/react";
 import {
     Anchor,
     Axe,
@@ -28,10 +28,10 @@ import {
     Utensils,
     Wheat,
     Zap,
-} from 'lucide-react';
-import { useMemo, useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Job {
     id: number;
@@ -108,9 +108,9 @@ const iconMap: Record<string, typeof Briefcase> = {
     flame: Flame,
     package: Package,
     moon: Moon,
-    'heart-pulse': HeartPulse,
+    "heart-pulse": HeartPulse,
     anchor: Anchor,
-    'grid-3x3': Grid3x3,
+    "grid-3x3": Grid3x3,
     candle: Flame,
     church: Church,
     croissant: Croissant,
@@ -121,9 +121,9 @@ const iconMap: Record<string, typeof Briefcase> = {
 };
 
 const categoryColors: Record<string, string> = {
-    service: 'border-purple-500/50 bg-purple-900/20',
-    labor: 'border-amber-500/50 bg-amber-900/20',
-    skilled: 'border-blue-500/50 bg-blue-900/20',
+    service: "border-purple-500/50 bg-purple-900/20",
+    labor: "border-amber-500/50 bg-amber-900/20",
+    skilled: "border-blue-500/50 bg-blue-900/20",
 };
 
 const skillIcons: Record<string, typeof Briefcase> = {
@@ -154,7 +154,9 @@ function JobCard({
     const SkillIcon = job.required_skill ? skillIcons[job.required_skill] || Briefcase : null;
 
     return (
-        <div className={`rounded-xl border-2 ${categoryColors[job.category] || 'border-stone-600/50 bg-stone-800/50'} p-4`}>
+        <div
+            className={`rounded-xl border-2 ${categoryColors[job.category] || "border-stone-600/50 bg-stone-800/50"} p-4`}
+        >
             {/* Header */}
             <div className="mb-3 flex items-start justify-between">
                 <div className="flex items-center gap-3">
@@ -164,7 +166,9 @@ function JobCard({
                     <div>
                         <h3 className="font-pixel text-base text-amber-300">{job.name}</h3>
                         <div className="flex items-center gap-2">
-                            <span className="font-pixel text-xs text-stone-400">{job.category_display}</span>
+                            <span className="font-pixel text-xs text-stone-400">
+                                {job.category_display}
+                            </span>
                             {job.required_skill && SkillIcon && (
                                 <>
                                     <span className="text-stone-600">•</span>
@@ -209,14 +213,18 @@ function JobCard({
                 <div className="rounded-lg bg-stone-800/50 p-2.5 text-center">
                     <div className="flex items-center justify-center gap-1">
                         <Zap className="h-4 w-4 text-yellow-400" />
-                        <span className="font-pixel text-lg text-yellow-300">{job.energy_cost}</span>
+                        <span className="font-pixel text-lg text-yellow-300">
+                            {job.energy_cost}
+                        </span>
                     </div>
                     <div className="font-pixel text-[10px] text-stone-500">Energy</div>
                 </div>
                 <div className="rounded-lg bg-stone-800/50 p-2.5 text-center">
                     <div className="flex items-center justify-center gap-1">
                         <Clock className="h-4 w-4 text-stone-400" />
-                        <span className="font-pixel text-lg text-stone-300">{job.cooldown_minutes}m</span>
+                        <span className="font-pixel text-lg text-stone-300">
+                            {job.cooldown_minutes}m
+                        </span>
                     </div>
                     <div className="font-pixel text-[10px] text-stone-500">Cooldown</div>
                 </div>
@@ -236,7 +244,7 @@ function JobCard({
                 disabled={loading || !canApply}
                 className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-green-600 bg-green-900/30 px-4 py-2.5 font-pixel text-sm text-green-300 transition hover:bg-green-800/50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Apply for Job'}
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply for Job"}
             </button>
         </div>
     );
@@ -269,7 +277,9 @@ function EmploymentCard({
                     </div>
                     <div>
                         <h3 className="font-pixel text-sm text-green-300">{employment.name}</h3>
-                        <span className="font-pixel text-[10px] text-stone-400">{employment.location_name}</span>
+                        <span className="font-pixel text-[10px] text-stone-400">
+                            {employment.location_name}
+                        </span>
                     </div>
                 </div>
                 <div className="rounded-lg bg-green-800/50 px-2 py-1">
@@ -284,18 +294,24 @@ function EmploymentCard({
                 </div>
                 <div>
                     <span className="font-pixel text-[10px] text-stone-400">Total Earned</span>
-                    <p className="font-pixel text-sm text-amber-300">{employment.total_earnings}g</p>
+                    <p className="font-pixel text-sm text-amber-300">
+                        {employment.total_earnings}g
+                    </p>
                 </div>
             </div>
 
             <div className="mb-3 flex items-center justify-between rounded-lg bg-stone-800/50 p-2">
                 <div className="flex items-center gap-1">
                     <span className="font-pixel text-[10px] text-stone-400">Wage:</span>
-                    <span className="font-pixel text-xs text-amber-300">{employment.base_wage}g</span>
+                    <span className="font-pixel text-xs text-amber-300">
+                        {employment.base_wage}g
+                    </span>
                 </div>
                 <div className="flex items-center gap-1">
                     <Zap className="h-3 w-3 text-yellow-400" />
-                    <span className="font-pixel text-xs text-stone-300">{employment.energy_cost}</span>
+                    <span className="font-pixel text-xs text-stone-300">
+                        {employment.energy_cost}
+                    </span>
                 </div>
             </div>
 
@@ -313,7 +329,7 @@ function EmploymentCard({
                     onClick={onWork}
                     disabled={workLoading || !employment.can_work || !hasEnergy}
                     className="flex flex-1 items-center justify-center gap-2 rounded-lg border-2 border-amber-500 bg-amber-900/30 px-4 py-2 font-pixel text-xs text-amber-300 transition hover:bg-amber-800/50 disabled:cursor-not-allowed disabled:opacity-50"
-                    title={!hasEnergy ? `Need ${employment.energy_cost} energy` : ''}
+                    title={!hasEnergy ? `Need ${employment.energy_cost} energy` : ""}
                 >
                     {workLoading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -329,7 +345,7 @@ function EmploymentCard({
                     disabled={quitLoading}
                     className="flex items-center justify-center gap-2 rounded-lg border-2 border-red-600/50 bg-red-900/20 px-4 py-2 font-pixel text-xs text-red-300 transition hover:bg-red-800/30 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                    {quitLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Quit'}
+                    {quitLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Quit"}
                 </button>
             </div>
         </div>
@@ -337,20 +353,28 @@ function EmploymentCard({
 }
 
 export default function JobsIndex() {
-    const { location_type, location_id, location_name, available_jobs, current_employment, all_employment, max_jobs, player } =
-        usePage<PageProps>().props;
+    const {
+        location_type,
+        location_id,
+        location_name,
+        available_jobs,
+        current_employment,
+        all_employment,
+        max_jobs,
+        player,
+    } = usePage<PageProps>().props;
 
     const [applyLoading, setApplyLoading] = useState<number | null>(null);
     const [workLoading, setWorkLoading] = useState<number | null>(null);
     const [quitLoading, setQuitLoading] = useState<number | null>(null);
-    const [categoryFilter, setCategoryFilter] = useState<string>('all');
-    const [searchQuery, setSearchQuery] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState<string>("all");
+    const [searchQuery, setSearchQuery] = useState("");
 
     const filteredJobs = useMemo(() => {
         return available_jobs.filter((job) => {
-            const matchesCategory = categoryFilter === 'all' || job.category === categoryFilter;
+            const matchesCategory = categoryFilter === "all" || job.category === categoryFilter;
             const matchesSearch =
-                searchQuery === '' ||
+                searchQuery === "" ||
                 job.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 job.description.toLowerCase().includes(searchQuery.toLowerCase());
             return matchesCategory && matchesSearch;
@@ -358,7 +382,12 @@ export default function JobsIndex() {
     }, [available_jobs, categoryFilter, searchQuery]);
 
     const categoryCounts = useMemo(() => {
-        const counts: Record<string, number> = { all: available_jobs.length, service: 0, labor: 0, skilled: 0 };
+        const counts: Record<string, number> = {
+            all: available_jobs.length,
+            service: 0,
+            labor: 0,
+            skilled: 0,
+        };
         available_jobs.forEach((job) => {
             if (counts[job.category] !== undefined) {
                 counts[job.category]++;
@@ -368,9 +397,9 @@ export default function JobsIndex() {
     }, [available_jobs]);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
+        { title: "Dashboard", href: "/dashboard" },
         { title: location_name, href: `/${location_type}s/${location_id}` },
-        { title: 'Jobs', href: '#' },
+        { title: "Jobs", href: "#" },
     ];
 
     const canApplyForMore = all_employment.length < max_jobs;
@@ -378,7 +407,7 @@ export default function JobsIndex() {
     const handleApply = (jobId: number) => {
         setApplyLoading(jobId);
         router.post(
-            '/jobs/apply',
+            "/jobs/apply",
             {
                 job_id: jobId,
                 location_type: location_type,
@@ -390,7 +419,7 @@ export default function JobsIndex() {
                     router.reload();
                 },
                 onFinish: () => setApplyLoading(null),
-            }
+            },
         );
     };
 
@@ -405,7 +434,7 @@ export default function JobsIndex() {
                     router.reload();
                 },
                 onFinish: () => setWorkLoading(null),
-            }
+            },
         );
     };
 
@@ -420,7 +449,7 @@ export default function JobsIndex() {
                     router.reload();
                 },
                 onFinish: () => setQuitLoading(null),
-            }
+            },
         );
     };
 
@@ -432,7 +461,9 @@ export default function JobsIndex() {
                 <div className="mb-6 flex items-center justify-between">
                     <div>
                         <h1 className="font-pixel text-2xl text-amber-400">Jobs</h1>
-                        <p className="font-pixel text-sm text-stone-400">Find work at {location_name}</p>
+                        <p className="font-pixel text-sm text-stone-400">
+                            Find work at {location_name}
+                        </p>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2 rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2">
@@ -493,41 +524,41 @@ export default function JobsIndex() {
                             <div className="flex items-center gap-1 rounded-lg border-2 border-stone-600/50 bg-stone-800/50 p-1">
                                 <Filter className="ml-1 h-4 w-4 text-stone-500" />
                                 <button
-                                    onClick={() => setCategoryFilter('all')}
+                                    onClick={() => setCategoryFilter("all")}
                                     className={`rounded px-2 py-1 font-pixel text-[10px] transition ${
-                                        categoryFilter === 'all'
-                                            ? 'bg-amber-600 text-white'
-                                            : 'text-stone-400 hover:text-stone-200'
+                                        categoryFilter === "all"
+                                            ? "bg-amber-600 text-white"
+                                            : "text-stone-400 hover:text-stone-200"
                                     }`}
                                 >
                                     All ({categoryCounts.all})
                                 </button>
                                 <button
-                                    onClick={() => setCategoryFilter('service')}
+                                    onClick={() => setCategoryFilter("service")}
                                     className={`rounded px-2 py-1 font-pixel text-[10px] transition ${
-                                        categoryFilter === 'service'
-                                            ? 'bg-purple-600 text-white'
-                                            : 'text-stone-400 hover:text-purple-300'
+                                        categoryFilter === "service"
+                                            ? "bg-purple-600 text-white"
+                                            : "text-stone-400 hover:text-purple-300"
                                     }`}
                                 >
                                     Service ({categoryCounts.service})
                                 </button>
                                 <button
-                                    onClick={() => setCategoryFilter('labor')}
+                                    onClick={() => setCategoryFilter("labor")}
                                     className={`rounded px-2 py-1 font-pixel text-[10px] transition ${
-                                        categoryFilter === 'labor'
-                                            ? 'bg-amber-600 text-white'
-                                            : 'text-stone-400 hover:text-amber-300'
+                                        categoryFilter === "labor"
+                                            ? "bg-amber-600 text-white"
+                                            : "text-stone-400 hover:text-amber-300"
                                     }`}
                                 >
                                     Labor ({categoryCounts.labor})
                                 </button>
                                 <button
-                                    onClick={() => setCategoryFilter('skilled')}
+                                    onClick={() => setCategoryFilter("skilled")}
                                     className={`rounded px-2 py-1 font-pixel text-[10px] transition ${
-                                        categoryFilter === 'skilled'
-                                            ? 'bg-blue-600 text-white'
-                                            : 'text-stone-400 hover:text-blue-300'
+                                        categoryFilter === "skilled"
+                                            ? "bg-blue-600 text-white"
+                                            : "text-stone-400 hover:text-blue-300"
                                     }`}
                                 >
                                     Skilled ({categoryCounts.skilled})
@@ -539,7 +570,8 @@ export default function JobsIndex() {
                     {!canApplyForMore && (
                         <div className="mb-4 rounded-lg border-2 border-amber-600/50 bg-amber-900/20 p-3">
                             <p className="font-pixel text-xs text-amber-300">
-                                You have the maximum number of jobs ({max_jobs}). Quit one to apply for another.
+                                You have the maximum number of jobs ({max_jobs}). Quit one to apply
+                                for another.
                             </p>
                         </div>
                     )}
@@ -562,23 +594,25 @@ export default function JobsIndex() {
                                     <Briefcase className="mx-auto h-16 w-16 text-stone-600" />
                                 </div>
                                 <p className="font-pixel text-base text-stone-500">
-                                    {available_jobs.length > 0 ? 'No matching jobs' : 'No positions available'}
+                                    {available_jobs.length > 0
+                                        ? "No matching jobs"
+                                        : "No positions available"}
                                 </p>
                                 <p className="font-pixel text-xs text-stone-600">
                                     {available_jobs.length > 0 ? (
                                         <button
                                             onClick={() => {
-                                                setCategoryFilter('all');
-                                                setSearchQuery('');
+                                                setCategoryFilter("all");
+                                                setSearchQuery("");
                                             }}
                                             className="text-amber-400 hover:underline"
                                         >
                                             Clear filters
                                         </button>
                                     ) : current_employment.length > 0 ? (
-                                        'You already have all available jobs here.'
+                                        "You already have all available jobs here."
                                     ) : (
-                                        'Check back later or try another location.'
+                                        "Check back later or try another location."
                                     )}
                                 </p>
                             </div>

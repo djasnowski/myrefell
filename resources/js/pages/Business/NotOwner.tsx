@@ -1,7 +1,7 @@
-import { Head, router } from '@inertiajs/react';
-import { Lock } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router } from "@inertiajs/react";
+import { Lock } from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface PageProps {
     business_name: string;
@@ -9,9 +9,9 @@ interface PageProps {
 
 export default function NotOwner({ business_name }: PageProps) {
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Businesses', href: '/businesses' },
-        { title: 'Access Denied', href: '#' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Businesses", href: "/businesses" },
+        { title: "Access Denied", href: "#" },
     ];
 
     return (
@@ -25,7 +25,7 @@ export default function NotOwner({ business_name }: PageProps) {
                         You do not own {business_name} and cannot manage it.
                     </p>
                     <button
-                        onClick={() => router.get('/businesses')}
+                        onClick={() => router.get("/businesses")}
                         className="mt-6 rounded-lg border-2 border-amber-500 bg-amber-900/30 px-6 py-2 font-pixel text-sm text-amber-300 transition hover:bg-amber-800/50"
                     >
                         View My Businesses

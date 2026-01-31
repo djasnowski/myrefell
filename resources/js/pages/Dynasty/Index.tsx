@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router } from "@inertiajs/react";
 import {
     Crown,
     Heart,
@@ -12,10 +12,10 @@ import {
     Sparkles,
     Check,
     X,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface DynastyMember {
     id: number;
@@ -84,65 +84,89 @@ export default function DynastyIndex({
 }: Props) {
     const [founding, setFounding] = useState(false);
     const [showFoundForm, setShowFoundForm] = useState(false);
-    const [dynastyName, setDynastyName] = useState('');
-    const [dynastyMotto, setDynastyMotto] = useState('');
+    const [dynastyName, setDynastyName] = useState("");
+    const [dynastyMotto, setDynastyMotto] = useState("");
     const [editing, setEditing] = useState(false);
-    const [newMotto, setNewMotto] = useState(dynasty?.motto || '');
+    const [newMotto, setNewMotto] = useState(dynasty?.motto || "");
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Dynasty', href: '/dynasty' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Dynasty", href: "/dynasty" },
     ];
 
     const handleFoundDynasty = () => {
         if (!dynastyName.trim() || founding) return;
         setFounding(true);
-        router.post('/dynasty', {
-            name: dynastyName,
-            motto: dynastyMotto || null,
-        }, {
-            onSuccess: () => {
-                router.reload();
+        router.post(
+            "/dynasty",
+            {
+                name: dynastyName,
+                motto: dynastyMotto || null,
             },
-            onFinish: () => setFounding(false),
-        });
+            {
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => setFounding(false),
+            },
+        );
     };
 
     const handleUpdateMotto = () => {
-        router.put('/dynasty', {
-            motto: newMotto || null,
-        }, {
-            preserveScroll: true,
-            onSuccess: () => {
-                router.reload();
+        router.put(
+            "/dynasty",
+            {
+                motto: newMotto || null,
             },
-            onFinish: () => setEditing(false),
-        });
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => setEditing(false),
+            },
+        );
     };
 
     const getEventIcon = (type: string) => {
         switch (type) {
-            case 'birth': return '🎂';
-            case 'death': return '💀';
-            case 'marriage': return '💍';
-            case 'divorce': return '💔';
-            case 'succession': return '👑';
-            case 'achievement': return '🏆';
-            case 'scandal': return '😱';
-            case 'alliance': return '🤝';
-            case 'inheritance': return '📜';
-            default: return '📌';
+            case "birth":
+                return "🎂";
+            case "death":
+                return "💀";
+            case "marriage":
+                return "💍";
+            case "divorce":
+                return "💔";
+            case "succession":
+                return "👑";
+            case "achievement":
+                return "🏆";
+            case "scandal":
+                return "😱";
+            case "alliance":
+                return "🤝";
+            case "inheritance":
+                return "📜";
+            default:
+                return "📌";
         }
     };
 
     const getPrestigeColor = (rank: string) => {
         switch (rank) {
-            case 'Legendary': return 'text-amber-400';
-            case 'Illustrious': return 'text-purple-400';
-            case 'Notable': return 'text-blue-400';
-            case 'Established': return 'text-green-400';
-            case 'Rising': return 'text-stone-300';
-            default: return 'text-stone-500';
+            case "Legendary":
+                return "text-amber-400";
+            case "Illustrious":
+                return "text-purple-400";
+            case "Notable":
+                return "text-blue-400";
+            case "Established":
+                return "text-green-400";
+            case "Rising":
+                return "text-stone-300";
+            default:
+                return "text-stone-500";
         }
     };
 
@@ -159,7 +183,9 @@ export default function DynastyIndex({
                                     <Crown className="h-8 w-8 text-amber-400" />
                                 </div>
                                 <div>
-                                    <h1 className="font-pixel text-2xl text-amber-400">Found a Dynasty</h1>
+                                    <h1 className="font-pixel text-2xl text-amber-400">
+                                        Found a Dynasty
+                                    </h1>
                                     <p className="font-pixel text-xs text-stone-500">
                                         Establish your noble house
                                     </p>
@@ -187,7 +213,9 @@ export default function DynastyIndex({
                             </div>
 
                             <div className="mb-6">
-                                <h3 className="mb-3 font-pixel text-sm text-stone-300">Requirements</h3>
+                                <h3 className="mb-3 font-pixel text-sm text-stone-300">
+                                    Requirements
+                                </h3>
                                 <div className="space-y-2">
                                     {founding_requirements.map((req, i) => (
                                         <div key={i} className="flex items-center gap-2">
@@ -196,7 +224,9 @@ export default function DynastyIndex({
                                             ) : (
                                                 <X className="h-4 w-4 text-red-400" />
                                             )}
-                                            <span className={`font-pixel text-xs ${req.met ? 'text-stone-300' : 'text-stone-500'}`}>
+                                            <span
+                                                className={`font-pixel text-xs ${req.met ? "text-stone-300" : "text-stone-500"}`}
+                                            >
                                                 {req.label}
                                             </span>
                                         </div>
@@ -247,7 +277,9 @@ export default function DynastyIndex({
                                             disabled={founding || !dynastyName.trim()}
                                             className="flex-1 rounded-lg bg-amber-600 py-2 font-pixel text-sm text-white transition hover:bg-amber-500 disabled:opacity-50"
                                         >
-                                            {founding ? 'Founding...' : `Found Dynasty (${founding_cost}g)`}
+                                            {founding
+                                                ? "Founding..."
+                                                : `Found Dynasty (${founding_cost}g)`}
                                         </button>
                                         <button
                                             onClick={() => setShowFoundForm(false)}
@@ -304,7 +336,7 @@ export default function DynastyIndex({
                                 <button
                                     onClick={() => {
                                         setEditing(false);
-                                        setNewMotto(dynasty.motto || '');
+                                        setNewMotto(dynasty.motto || "");
                                     }}
                                     className="rounded border border-stone-600 px-2 py-1 font-pixel text-xs text-stone-400"
                                 >
@@ -314,7 +346,7 @@ export default function DynastyIndex({
                         ) : (
                             <div className="flex items-center gap-2">
                                 <p className="font-pixel text-sm italic text-stone-400">
-                                    "{dynasty.motto || 'No motto set'}"
+                                    "{dynasty.motto || "No motto set"}"
                                 </p>
                                 {is_head && (
                                     <button
@@ -339,25 +371,38 @@ export default function DynastyIndex({
                             </h2>
                             <div className="space-y-3">
                                 <div className="flex justify-between">
-                                    <span className="font-pixel text-[10px] text-stone-500">Prestige</span>
-                                    <span className={`font-pixel text-xs ${getPrestigeColor(dynasty.prestige_rank)}`}>
-                                        {dynasty.prestige.toLocaleString()} ({dynasty.prestige_rank})
+                                    <span className="font-pixel text-[10px] text-stone-500">
+                                        Prestige
+                                    </span>
+                                    <span
+                                        className={`font-pixel text-xs ${getPrestigeColor(dynasty.prestige_rank)}`}
+                                    >
+                                        {dynasty.prestige.toLocaleString()} ({dynasty.prestige_rank}
+                                        )
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="font-pixel text-[10px] text-stone-500">Members</span>
+                                    <span className="font-pixel text-[10px] text-stone-500">
+                                        Members
+                                    </span>
                                     <span className="font-pixel text-xs text-stone-300">
                                         {dynasty.living_members} living
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="font-pixel text-[10px] text-stone-500">Generations</span>
-                                    <span className="font-pixel text-xs text-stone-300">{dynasty.generations}</span>
+                                    <span className="font-pixel text-[10px] text-stone-500">
+                                        Generations
+                                    </span>
+                                    <span className="font-pixel text-xs text-stone-300">
+                                        {dynasty.generations}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="font-pixel text-[10px] text-stone-500">Founded</span>
+                                    <span className="font-pixel text-[10px] text-stone-500">
+                                        Founded
+                                    </span>
                                     <span className="font-pixel text-xs text-stone-300">
-                                        Year {dynasty.founded_at || '?'}
+                                        Year {dynasty.founded_at || "?"}
                                     </span>
                                 </div>
                             </div>
@@ -371,17 +416,21 @@ export default function DynastyIndex({
                             </h2>
                             <div className="space-y-4">
                                 <div className="rounded-lg border border-amber-600/50 bg-amber-900/20 p-3">
-                                    <div className="font-pixel text-[10px] text-stone-500">Head of House</div>
+                                    <div className="font-pixel text-[10px] text-stone-500">
+                                        Head of House
+                                    </div>
                                     <div className="flex items-center gap-2">
                                         <Crown className="h-4 w-4 text-amber-400" />
                                         <span className="font-pixel text-sm text-amber-400">
-                                            {dynasty.head?.name || 'None'}
+                                            {dynasty.head?.name || "None"}
                                         </span>
                                     </div>
                                 </div>
                                 {dynasty.heir ? (
                                     <div className="rounded-lg border border-purple-600/50 bg-purple-900/20 p-3">
-                                        <div className="font-pixel text-[10px] text-stone-500">Heir Apparent</div>
+                                        <div className="font-pixel text-[10px] text-stone-500">
+                                            Heir Apparent
+                                        </div>
                                         <div className="flex items-center gap-2">
                                             <Star className="h-4 w-4 text-purple-400" />
                                             <span className="font-pixel text-sm text-purple-400">
@@ -389,12 +438,14 @@ export default function DynastyIndex({
                                             </span>
                                         </div>
                                         <div className="mt-1 font-pixel text-[10px] text-stone-500">
-                                            {dynasty.heir.relation}, age {dynasty.heir.age || '?'}
+                                            {dynasty.heir.relation}, age {dynasty.heir.age || "?"}
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="rounded-lg border border-stone-700 bg-stone-800/30 p-3 text-center">
-                                        <span className="font-pixel text-xs text-stone-500">No heir designated</span>
+                                        <span className="font-pixel text-xs text-stone-500">
+                                            No heir designated
+                                        </span>
                                     </div>
                                 )}
                             </div>
@@ -455,7 +506,9 @@ export default function DynastyIndex({
                         {members.length === 0 ? (
                             <div className="py-8 text-center">
                                 <Users className="mx-auto mb-2 h-8 w-8 text-stone-600" />
-                                <div className="font-pixel text-xs text-stone-500">No living members</div>
+                                <div className="font-pixel text-xs text-stone-500">
+                                    No living members
+                                </div>
                             </div>
                         ) : (
                             <div className="space-y-2">
@@ -464,19 +517,27 @@ export default function DynastyIndex({
                                         key={member.id}
                                         className={`flex items-center justify-between rounded-lg border p-3 ${
                                             member.is_head
-                                                ? 'border-amber-600/50 bg-amber-900/20'
+                                                ? "border-amber-600/50 bg-amber-900/20"
                                                 : member.is_heir
-                                                    ? 'border-purple-600/50 bg-purple-900/20'
-                                                    : 'border-stone-700 bg-stone-800/30'
+                                                  ? "border-purple-600/50 bg-purple-900/20"
+                                                  : "border-stone-700 bg-stone-800/30"
                                         }`}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                                                member.gender === 'male' ? 'bg-blue-900/50' : 'bg-pink-900/50'
-                                            }`}>
-                                                <User className={`h-4 w-4 ${
-                                                    member.gender === 'male' ? 'text-blue-400' : 'text-pink-400'
-                                                }`} />
+                                            <div
+                                                className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                                                    member.gender === "male"
+                                                        ? "bg-blue-900/50"
+                                                        : "bg-pink-900/50"
+                                                }`}
+                                            >
+                                                <User
+                                                    className={`h-4 w-4 ${
+                                                        member.gender === "male"
+                                                            ? "text-blue-400"
+                                                            : "text-pink-400"
+                                                    }`}
+                                                />
                                             </div>
                                             <div>
                                                 <div className="flex items-center gap-2">
@@ -492,7 +553,9 @@ export default function DynastyIndex({
                                                 </div>
                                                 <div className="flex items-center gap-2 font-pixel text-[10px] text-stone-500">
                                                     <span>Gen {member.generation}</span>
-                                                    {member.age !== null && <span>Age {member.age}</span>}
+                                                    {member.age !== null && (
+                                                        <span>Age {member.age}</span>
+                                                    )}
                                                     {member.is_married && (
                                                         <span className="flex items-center gap-1">
                                                             <Heart className="h-3 w-3 text-pink-400" />
@@ -513,11 +576,13 @@ export default function DynastyIndex({
                                                     Heir
                                                 </span>
                                             )}
-                                            {member.is_player && !member.is_head && !member.is_heir && (
-                                                <span className="rounded bg-blue-900/50 px-2 py-0.5 font-pixel text-[10px] text-blue-400">
-                                                    Player
-                                                </span>
-                                            )}
+                                            {member.is_player &&
+                                                !member.is_head &&
+                                                !member.is_heir && (
+                                                    <span className="rounded bg-blue-900/50 px-2 py-0.5 font-pixel text-[10px] text-blue-400">
+                                                        Player
+                                                    </span>
+                                                )}
                                         </div>
                                     </div>
                                 ))}
@@ -534,7 +599,9 @@ export default function DynastyIndex({
                         {recent_events.length === 0 ? (
                             <div className="py-8 text-center">
                                 <Calendar className="mx-auto mb-2 h-8 w-8 text-stone-600" />
-                                <div className="font-pixel text-xs text-stone-500">No recent events</div>
+                                <div className="font-pixel text-xs text-stone-500">
+                                    No recent events
+                                </div>
                             </div>
                         ) : (
                             <div className="space-y-3">
@@ -559,10 +626,15 @@ export default function DynastyIndex({
                                                 </p>
                                             )}
                                             {event.prestige_change !== 0 && (
-                                                <span className={`font-pixel text-[10px] ${
-                                                    event.prestige_change > 0 ? 'text-green-400' : 'text-red-400'
-                                                }`}>
-                                                    {event.prestige_change > 0 ? '+' : ''}{event.prestige_change} prestige
+                                                <span
+                                                    className={`font-pixel text-[10px] ${
+                                                        event.prestige_change > 0
+                                                            ? "text-green-400"
+                                                            : "text-red-400"
+                                                    }`}
+                                                >
+                                                    {event.prestige_change > 0 ? "+" : ""}
+                                                    {event.prestige_change} prestige
                                                 </span>
                                             )}
                                         </div>

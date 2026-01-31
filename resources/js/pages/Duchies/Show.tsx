@@ -1,10 +1,10 @@
-import { Head, Link } from '@inertiajs/react';
-import { Crown, Shield } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { RulerDisplay } from '@/components/ui/legitimacy-badge';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, Link } from "@inertiajs/react";
+import { Crown, Shield } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { RulerDisplay } from "@/components/ui/legitimacy-badge";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Barony {
     id: number;
@@ -65,20 +65,20 @@ interface Props {
 }
 
 const biomeColors: Record<string, string> = {
-    plains: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    forest: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
-    tundra: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    coastal: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200',
-    desert: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
-    volcanic: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    mountains: 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200',
-    swamps: 'bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200',
+    plains: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+    forest: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
+    tundra: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+    coastal: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200",
+    desert: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+    volcanic: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+    mountains: "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200",
+    swamps: "bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200",
 };
 
 export default function DuchyShow({ duchy, roles, current_user_id, is_duke }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Duchies', href: '/duchies' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Duchies", href: "/duchies" },
         { title: duchy.name, href: `/duchies/${duchy.id}` },
     ];
 
@@ -89,12 +89,8 @@ export default function DuchyShow({ duchy, roles, current_user_id, is_duke }: Pr
                 <div className="flex items-start justify-between">
                     <div>
                         <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-bold">
-                                Duchy of {duchy.name}
-                            </h1>
-                            <Badge className={biomeColors[duchy.biome] || ''}>
-                                {duchy.biome}
-                            </Badge>
+                            <h1 className="text-2xl font-bold">Duchy of {duchy.name}</h1>
+                            <Badge className={biomeColors[duchy.biome] || ""}>{duchy.biome}</Badge>
                         </div>
                         <p className="text-muted-foreground mt-1">{duchy.description}</p>
                     </div>
@@ -106,11 +102,14 @@ export default function DuchyShow({ duchy, roles, current_user_id, is_duke }: Pr
                             <CardDescription>Kingdom</CardDescription>
                             <CardTitle className="text-lg">
                                 {duchy.kingdom ? (
-                                    <Link href={`/kingdoms/${duchy.kingdom.id}`} className="hover:underline">
+                                    <Link
+                                        href={`/kingdoms/${duchy.kingdom.id}`}
+                                        className="hover:underline"
+                                    >
                                         {duchy.kingdom.name}
                                     </Link>
                                 ) : (
-                                    'Independent'
+                                    "Independent"
                                 )}
                             </CardTitle>
                         </CardHeader>
@@ -130,7 +129,9 @@ export default function DuchyShow({ duchy, roles, current_user_id, is_duke }: Pr
                     <Card>
                         <CardHeader className="pb-2">
                             <CardDescription>Coordinates</CardDescription>
-                            <CardTitle className="text-lg">({duchy.coordinates.x}, {duchy.coordinates.y})</CardTitle>
+                            <CardTitle className="text-lg">
+                                ({duchy.coordinates.x}, {duchy.coordinates.y})
+                            </CardTitle>
                         </CardHeader>
                     </Card>
                 </div>
@@ -140,11 +141,18 @@ export default function DuchyShow({ duchy, roles, current_user_id, is_duke }: Pr
                     <div className="flex items-center gap-3 rounded-lg border border-amber-600/30 bg-amber-900/10 px-4 py-3">
                         <Crown className="h-5 w-5 text-amber-400" />
                         <div className="flex-1">
-                            <div className="font-pixel text-sm text-amber-300">You are the Duke</div>
-                            <div className="text-xs text-stone-400">Manage duchy affairs, oversee baronies, appoint court positions</div>
+                            <div className="font-pixel text-sm text-amber-300">
+                                You are the Duke
+                            </div>
+                            <div className="text-xs text-stone-400">
+                                Manage duchy affairs, oversee baronies, appoint court positions
+                            </div>
                         </div>
                         <div className="flex gap-2">
-                            <Link href={`/duchies/${duchy.id}/roles`} className="flex items-center gap-1 rounded border border-stone-600 bg-stone-800 px-3 py-1.5 font-pixel text-xs text-stone-300 transition hover:bg-stone-700">
+                            <Link
+                                href={`/duchies/${duchy.id}/roles`}
+                                className="flex items-center gap-1 rounded border border-stone-600 bg-stone-800 px-3 py-1.5 font-pixel text-xs text-stone-300 transition hover:bg-stone-700"
+                            >
                                 <Shield className="h-3 w-3" />
                                 Roles
                             </Link>
@@ -164,20 +172,32 @@ export default function DuchyShow({ duchy, roles, current_user_id, is_duke }: Pr
                     <h2 className="text-xl font-semibold mb-4">Court Positions</h2>
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                         {roles.map((role) => (
-                            <Card key={role.id} className={role.holder ? 'border-amber-500/30' : 'border-stone-700/50'}>
+                            <Card
+                                key={role.id}
+                                className={
+                                    role.holder ? "border-amber-500/30" : "border-stone-700/50"
+                                }
+                            >
                                 <CardHeader className="pb-2">
                                     <div className="flex items-center justify-between">
-                                        <CardTitle className="text-sm font-medium">{role.name}</CardTitle>
+                                        <CardTitle className="text-sm font-medium">
+                                            {role.name}
+                                        </CardTitle>
                                         <Badge variant="outline" className="text-xs">
                                             Tier {role.tier}
                                         </Badge>
                                     </div>
-                                    <CardDescription className="text-xs">{role.salary}g/day</CardDescription>
+                                    <CardDescription className="text-xs">
+                                        {role.salary}g/day
+                                    </CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     {role.holder ? (
                                         <div className="text-sm">
-                                            <Link href={`/players/${role.holder.id}`} className="text-amber-400 hover:underline">
+                                            <Link
+                                                href={`/players/${role.holder.id}`}
+                                                className="text-amber-400 hover:underline"
+                                            >
                                                 {role.holder.username}
                                             </Link>
                                             <p className="text-xs text-stone-500 mt-1">
@@ -202,8 +222,13 @@ export default function DuchyShow({ duchy, roles, current_user_id, is_duke }: Pr
                                 <Card className="transition-shadow hover:shadow-lg cursor-pointer h-full">
                                     <CardHeader>
                                         <div className="flex items-center justify-between">
-                                            <CardTitle className="text-base">{barony.name}</CardTitle>
-                                            <Badge className={biomeColors[barony.biome] || ''} variant="secondary">
+                                            <CardTitle className="text-base">
+                                                {barony.name}
+                                            </CardTitle>
+                                            <Badge
+                                                className={biomeColors[barony.biome] || ""}
+                                                variant="secondary"
+                                            >
                                                 {barony.biome}
                                             </Badge>
                                         </div>

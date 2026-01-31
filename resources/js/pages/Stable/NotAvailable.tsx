@@ -1,7 +1,7 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { Gauge, MapPin } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, Link, usePage } from "@inertiajs/react";
+import { Gauge, MapPin } from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface PageProps {
     message: string;
@@ -12,8 +12,8 @@ export default function StableNotAvailable() {
     const { message } = usePage<PageProps>().props;
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Stables', href: '/stable' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Stables", href: "/stable" },
     ];
 
     return (

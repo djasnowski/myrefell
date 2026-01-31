@@ -1,7 +1,7 @@
-import { Head, usePage } from '@inertiajs/react';
-import { AlertCircle, ArrowLeft } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, usePage } from "@inertiajs/react";
+import { AlertCircle, ArrowLeft } from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface PageProps {
     message: string;
@@ -9,8 +9,8 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Guilds', href: '/guilds' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Guilds", href: "/guilds" },
 ];
 
 export default function NotAvailable() {

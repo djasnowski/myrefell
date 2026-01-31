@@ -1,7 +1,7 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { Briefcase, MapPin } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, Link, usePage } from "@inertiajs/react";
+import { Briefcase, MapPin } from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface PageProps {
     location: string;
@@ -9,8 +9,8 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Jobs', href: '#' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Jobs", href: "#" },
 ];
 
 export default function NotHere() {
@@ -25,7 +25,9 @@ export default function NotHere() {
                         <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-stone-700/50">
                             <Briefcase className="h-8 w-8 text-stone-500" />
                         </div>
-                        <h2 className="mb-2 font-pixel text-lg text-stone-300">Cannot Access Jobs</h2>
+                        <h2 className="mb-2 font-pixel text-lg text-stone-300">
+                            Cannot Access Jobs
+                        </h2>
                         <p className="mb-6 font-pixel text-xs text-stone-500">
                             You must be at {location} to look for work here.
                         </p>

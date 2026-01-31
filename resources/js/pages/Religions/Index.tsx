@@ -1,15 +1,15 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { Church, Coins, Eye, EyeOff, Heart, Plus, Sparkles, Star, Users, Zap } from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from "@inertiajs/react";
+import { Church, Coins, Eye, EyeOff, Heart, Plus, Sparkles, Star, Users, Zap } from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Belief {
     id: number;
     name: string;
     description: string;
     icon: string;
-    type: 'virtue' | 'vice' | 'neutral';
+    type: "virtue" | "vice" | "neutral";
     effects: Record<string, number> | null;
 }
 
@@ -19,7 +19,7 @@ interface Religion {
     description: string | null;
     icon: string;
     color: string;
-    type: 'cult' | 'religion';
+    type: "cult" | "religion";
     is_public: boolean;
     is_cult: boolean;
     is_religion: boolean;
@@ -78,20 +78,20 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Religions', href: '/religions' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Religions", href: "/religions" },
 ];
 
 const beliefTypeColors: Record<string, string> = {
-    virtue: 'text-green-400 bg-green-900/30 border-green-500/30',
-    vice: 'text-red-400 bg-red-900/30 border-red-500/30',
-    neutral: 'text-blue-400 bg-blue-900/30 border-blue-500/30',
+    virtue: "text-green-400 bg-green-900/30 border-green-500/30",
+    vice: "text-red-400 bg-red-900/30 border-red-500/30",
+    neutral: "text-blue-400 bg-blue-900/30 border-blue-500/30",
 };
 
 const rankColors: Record<string, string> = {
-    prophet: 'text-yellow-400 bg-yellow-900/30',
-    priest: 'text-purple-400 bg-purple-900/30',
-    follower: 'text-stone-400 bg-stone-700/30',
+    prophet: "text-yellow-400 bg-yellow-900/30",
+    priest: "text-purple-400 bg-purple-900/30",
+    follower: "text-stone-400 bg-stone-700/30",
 };
 
 export default function ReligionsIndex() {
@@ -99,8 +99,8 @@ export default function ReligionsIndex() {
         usePage<PageProps>().props;
 
     const [showCreateCult, setShowCreateCult] = useState(false);
-    const [cultName, setCultName] = useState('');
-    const [cultDescription, setCultDescription] = useState('');
+    const [cultName, setCultName] = useState("");
+    const [cultDescription, setCultDescription] = useState("");
     const [selectedBeliefs, setSelectedBeliefs] = useState<number[]>([]);
     const [isCreating, setIsCreating] = useState(false);
     const [joiningId, setJoiningId] = useState<number | null>(null);
@@ -122,11 +122,13 @@ export default function ReligionsIndex() {
         setError(null);
 
         try {
-            const response = await fetch('/religions/create-cult', {
-                method: 'POST',
+            const response = await fetch("/religions/create-cult", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify({
                     name: cultName,
@@ -139,15 +141,15 @@ export default function ReligionsIndex() {
             if (data.success) {
                 setSuccess(data.message);
                 setShowCreateCult(false);
-                setCultName('');
-                setCultDescription('');
+                setCultName("");
+                setCultDescription("");
                 setSelectedBeliefs([]);
                 router.reload();
             } else {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to create cult');
+            setError("Failed to create cult");
         } finally {
             setIsCreating(false);
         }
@@ -158,11 +160,13 @@ export default function ReligionsIndex() {
         setError(null);
 
         try {
-            const response = await fetch('/religions/join', {
-                method: 'POST',
+            const response = await fetch("/religions/join", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify({ religion_id: religionId }),
             });
@@ -175,7 +179,7 @@ export default function ReligionsIndex() {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to join religion');
+            setError("Failed to join religion");
         } finally {
             setJoiningId(null);
         }
@@ -186,11 +190,13 @@ export default function ReligionsIndex() {
         setError(null);
 
         try {
-            const response = await fetch('/religions/action', {
-                method: 'POST',
+            const response = await fetch("/religions/action", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify({
                     religion_id: religionId,
@@ -207,7 +213,7 @@ export default function ReligionsIndex() {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to perform action');
+            setError("Failed to perform action");
         } finally {
             setActionLoading(null);
         }
@@ -223,7 +229,9 @@ export default function ReligionsIndex() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="font-pixel text-2xl text-amber-400">Religions</h1>
-                        <p className="font-pixel text-sm text-stone-400">Found cults, join religions, and earn devotion</p>
+                        <p className="font-pixel text-sm text-stone-400">
+                            Found cults, join religions, and earn devotion
+                        </p>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2 font-pixel text-sm">
@@ -261,10 +269,17 @@ export default function ReligionsIndex() {
                                 >
                                     <div className="mb-3 flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <Church className="h-5 w-5" style={{ color: membership.religion_color }} />
-                                            <h3 className="font-pixel text-base text-white">{membership.religion_name}</h3>
+                                            <Church
+                                                className="h-5 w-5"
+                                                style={{ color: membership.religion_color }}
+                                            />
+                                            <h3 className="font-pixel text-base text-white">
+                                                {membership.religion_name}
+                                            </h3>
                                         </div>
-                                        <span className={`rounded px-2 py-1 font-pixel text-xs ${rankColors[membership.rank]}`}>
+                                        <span
+                                            className={`rounded px-2 py-1 font-pixel text-xs ${rankColors[membership.rank]}`}
+                                        >
                                             {membership.rank_display}
                                         </span>
                                     </div>
@@ -275,28 +290,42 @@ export default function ReligionsIndex() {
                                             <span>Devotion: {membership.devotion}</span>
                                         </div>
                                         <div className="flex items-center gap-1 text-stone-400">
-                                            {membership.religion_type === 'cult' ? (
+                                            {membership.religion_type === "cult" ? (
                                                 <EyeOff className="h-3 w-3 text-stone-500" />
                                             ) : (
                                                 <Eye className="h-3 w-3 text-green-400" />
                                             )}
-                                            <span className="capitalize">{membership.religion_type}</span>
+                                            <span className="capitalize">
+                                                {membership.religion_type}
+                                            </span>
                                         </div>
                                     </div>
 
                                     {/* Action Buttons */}
                                     <div className="flex flex-wrap gap-2">
                                         <button
-                                            onClick={() => performAction(membership.religion_id, 'prayer')}
-                                            disabled={actionLoading === `${membership.religion_id}-prayer` || energy.current < action_costs.prayer}
+                                            onClick={() =>
+                                                performAction(membership.religion_id, "prayer")
+                                            }
+                                            disabled={
+                                                actionLoading ===
+                                                    `${membership.religion_id}-prayer` ||
+                                                energy.current < action_costs.prayer
+                                            }
                                             className="flex items-center gap-1 rounded bg-purple-600/50 px-3 py-1 font-pixel text-xs text-purple-200 transition hover:bg-purple-600 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             <Sparkles className="h-3 w-3" />
                                             Pray ({action_costs.prayer}E)
                                         </button>
                                         <button
-                                            onClick={() => performAction(membership.religion_id, 'ritual')}
-                                            disabled={actionLoading === `${membership.religion_id}-ritual` || energy.current < action_costs.ritual}
+                                            onClick={() =>
+                                                performAction(membership.religion_id, "ritual")
+                                            }
+                                            disabled={
+                                                actionLoading ===
+                                                    `${membership.religion_id}-ritual` ||
+                                                energy.current < action_costs.ritual
+                                            }
                                             className="flex items-center gap-1 rounded bg-indigo-600/50 px-3 py-1 font-pixel text-xs text-indigo-200 transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             <Star className="h-3 w-3" />
@@ -318,7 +347,9 @@ export default function ReligionsIndex() {
                 {/* Structures at Location */}
                 {structures.length > 0 && (
                     <div>
-                        <h2 className="mb-4 font-pixel text-lg text-amber-300">Religious Structures Here</h2>
+                        <h2 className="mb-4 font-pixel text-lg text-amber-300">
+                            Religious Structures Here
+                        </h2>
                         <div className="grid gap-3 md:grid-cols-3">
                             {structures.map((structure) => (
                                 <div
@@ -326,14 +357,20 @@ export default function ReligionsIndex() {
                                     className="rounded-lg border border-stone-700 bg-stone-800/50 p-3"
                                 >
                                     <div className="flex items-center gap-2">
-                                        <Church className="h-4 w-4" style={{ color: structure.religion.color }} />
-                                        <span className="font-pixel text-sm text-white">{structure.name}</span>
+                                        <Church
+                                            className="h-4 w-4"
+                                            style={{ color: structure.religion.color }}
+                                        />
+                                        <span className="font-pixel text-sm text-white">
+                                            {structure.name}
+                                        </span>
                                     </div>
                                     <div className="mt-1 font-pixel text-xs text-stone-400">
                                         {structure.type_display} - {structure.religion.name}
                                     </div>
                                     <div className="mt-1 font-pixel text-xs text-green-400">
-                                        +{((structure.devotion_multiplier - 1) * 100).toFixed(0)}% devotion bonus
+                                        +{((structure.devotion_multiplier - 1) * 100).toFixed(0)}%
+                                        devotion bonus
                                     </div>
                                 </div>
                             ))}
@@ -351,14 +388,16 @@ export default function ReligionsIndex() {
                                 className="flex items-center gap-1 rounded bg-purple-600 px-3 py-2 font-pixel text-xs text-white transition hover:bg-purple-500"
                             >
                                 <Plus className="h-4 w-4" />
-                                {showCreateCult ? 'Cancel' : 'Create Cult'}
+                                {showCreateCult ? "Cancel" : "Create Cult"}
                             </button>
                         </div>
 
                         {showCreateCult && (
                             <div className="mt-4 rounded-xl border-2 border-purple-500/30 bg-purple-900/20 p-4">
                                 <div className="mb-4">
-                                    <label className="mb-1 block font-pixel text-xs text-stone-400">Cult Name</label>
+                                    <label className="mb-1 block font-pixel text-xs text-stone-400">
+                                        Cult Name
+                                    </label>
                                     <input
                                         type="text"
                                         value={cultName}
@@ -370,7 +409,9 @@ export default function ReligionsIndex() {
                                 </div>
 
                                 <div className="mb-4">
-                                    <label className="mb-1 block font-pixel text-xs text-stone-400">Description</label>
+                                    <label className="mb-1 block font-pixel text-xs text-stone-400">
+                                        Description
+                                    </label>
                                     <textarea
                                         value={cultDescription}
                                         onChange={(e) => setCultDescription(e.target.value)}
@@ -390,22 +431,32 @@ export default function ReligionsIndex() {
                                             <button
                                                 key={belief.id}
                                                 onClick={() => toggleBelief(belief.id)}
-                                                disabled={selectedBeliefs.length >= 2 && !selectedBeliefs.includes(belief.id)}
+                                                disabled={
+                                                    selectedBeliefs.length >= 2 &&
+                                                    !selectedBeliefs.includes(belief.id)
+                                                }
                                                 className={`rounded-lg border p-3 text-left transition ${
                                                     selectedBeliefs.includes(belief.id)
-                                                        ? 'border-purple-500 bg-purple-900/50'
+                                                        ? "border-purple-500 bg-purple-900/50"
                                                         : beliefTypeColors[belief.type]
-                                                } ${selectedBeliefs.length >= 2 && !selectedBeliefs.includes(belief.id) ? 'cursor-not-allowed opacity-50' : ''}`}
+                                                } ${selectedBeliefs.length >= 2 && !selectedBeliefs.includes(belief.id) ? "cursor-not-allowed opacity-50" : ""}`}
                                             >
-                                                <div className="font-pixel text-sm text-white">{belief.name}</div>
-                                                <div className="font-pixel text-xs text-stone-400">{belief.description}</div>
+                                                <div className="font-pixel text-sm text-white">
+                                                    {belief.name}
+                                                </div>
+                                                <div className="font-pixel text-xs text-stone-400">
+                                                    {belief.description}
+                                                </div>
                                                 {belief.effects && (
                                                     <div className="mt-1 font-pixel text-xs text-amber-400">
-                                                        {Object.entries(belief.effects).map(([k, v]) => (
-                                                            <span key={k} className="mr-2">
-                                                                {k}: {v > 0 ? '+' : ''}{v}
-                                                            </span>
-                                                        ))}
+                                                        {Object.entries(belief.effects).map(
+                                                            ([k, v]) => (
+                                                                <span key={k} className="mr-2">
+                                                                    {k}: {v > 0 ? "+" : ""}
+                                                                    {v}
+                                                                </span>
+                                                            ),
+                                                        )}
                                                     </div>
                                                 )}
                                             </button>
@@ -415,10 +466,14 @@ export default function ReligionsIndex() {
 
                                 <button
                                     onClick={createCult}
-                                    disabled={!cultName.trim() || selectedBeliefs.length === 0 || isCreating}
+                                    disabled={
+                                        !cultName.trim() ||
+                                        selectedBeliefs.length === 0 ||
+                                        isCreating
+                                    }
                                     className="w-full rounded bg-purple-600 py-2 font-pixel text-sm text-white transition hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    {isCreating ? 'Creating...' : 'Found Cult (Free)'}
+                                    {isCreating ? "Creating..." : "Found Cult (Free)"}
                                 </button>
                             </div>
                         )}
@@ -437,20 +492,29 @@ export default function ReligionsIndex() {
                                 >
                                     <div className="mb-3 flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <Church className="h-5 w-5" style={{ color: religion.color }} />
-                                            <h3 className="font-pixel text-base text-white">{religion.name}</h3>
+                                            <Church
+                                                className="h-5 w-5"
+                                                style={{ color: religion.color }}
+                                            />
+                                            <h3 className="font-pixel text-base text-white">
+                                                {religion.name}
+                                            </h3>
                                         </div>
-                                        <span className={`rounded px-2 py-1 font-pixel text-xs capitalize ${
-                                            religion.is_cult
-                                                ? 'bg-stone-700 text-stone-300'
-                                                : 'bg-amber-900/50 text-amber-300'
-                                        }`}>
+                                        <span
+                                            className={`rounded px-2 py-1 font-pixel text-xs capitalize ${
+                                                religion.is_cult
+                                                    ? "bg-stone-700 text-stone-300"
+                                                    : "bg-amber-900/50 text-amber-300"
+                                            }`}
+                                        >
                                             {religion.type}
                                         </span>
                                     </div>
 
                                     {religion.description && (
-                                        <p className="mb-3 font-pixel text-xs text-stone-400">{religion.description}</p>
+                                        <p className="mb-3 font-pixel text-xs text-stone-400">
+                                            {religion.description}
+                                        </p>
                                     )}
 
                                     <div className="mb-3 flex items-center gap-3 font-pixel text-xs text-stone-400">
@@ -466,7 +530,9 @@ export default function ReligionsIndex() {
 
                                     {/* Beliefs */}
                                     <div className="mb-3">
-                                        <div className="mb-1 font-pixel text-xs text-stone-500">Beliefs:</div>
+                                        <div className="mb-1 font-pixel text-xs text-stone-500">
+                                            Beliefs:
+                                        </div>
                                         <div className="flex flex-wrap gap-1">
                                             {religion.beliefs.map((belief) => (
                                                 <span
@@ -485,7 +551,7 @@ export default function ReligionsIndex() {
                                         disabled={joiningId === religion.id}
                                         className="w-full rounded bg-purple-600/50 py-2 font-pixel text-xs text-purple-200 transition hover:bg-purple-600 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
-                                        {joiningId === religion.id ? 'Joining...' : 'Join'}
+                                        {joiningId === religion.id ? "Joining..." : "Join"}
                                     </button>
                                 </div>
                             ))}
@@ -498,9 +564,13 @@ export default function ReligionsIndex() {
                     <div className="flex flex-1 items-center justify-center">
                         <div className="text-center">
                             <Church className="mx-auto mb-3 h-16 w-16 text-stone-600" />
-                            <p className="font-pixel text-base text-stone-500">No religions available</p>
+                            <p className="font-pixel text-base text-stone-500">
+                                No religions available
+                            </p>
                             <p className="font-pixel text-xs text-stone-600">
-                                {canCreateCult ? 'Create a cult to start spreading your beliefs!' : 'Wait for religions to become public'}
+                                {canCreateCult
+                                    ? "Create a cult to start spreading your beliefs!"
+                                    : "Wait for religions to become public"}
                             </p>
                         </div>
                     </div>

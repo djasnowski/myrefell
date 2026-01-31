@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import {
     AlertTriangle,
     ArrowLeft,
@@ -15,10 +15,10 @@ import {
     Target,
     Users,
     XCircle,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface SiegeTarget {
     id: number;
@@ -82,19 +82,19 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Warfare', href: '#' },
-    { title: 'Wars', href: '/warfare/wars' },
-    { title: 'Siege', href: '#' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Warfare", href: "#" },
+    { title: "Wars", href: "/warfare/wars" },
+    { title: "Siege", href: "#" },
 ];
 
 const statusColors: Record<string, { bg: string; text: string; label: string }> = {
-    active: { bg: 'bg-amber-900/30', text: 'text-amber-400', label: 'Active' },
-    assault: { bg: 'bg-red-900/30', text: 'text-red-400', label: 'Assault in Progress' },
-    breached: { bg: 'bg-orange-900/30', text: 'text-orange-400', label: 'Walls Breached' },
-    captured: { bg: 'bg-green-900/30', text: 'text-green-400', label: 'Captured' },
-    lifted: { bg: 'bg-stone-900/30', text: 'text-stone-400', label: 'Siege Lifted' },
-    abandoned: { bg: 'bg-stone-900/30', text: 'text-stone-500', label: 'Abandoned' },
+    active: { bg: "bg-amber-900/30", text: "text-amber-400", label: "Active" },
+    assault: { bg: "bg-red-900/30", text: "text-red-400", label: "Assault in Progress" },
+    breached: { bg: "bg-orange-900/30", text: "text-orange-400", label: "Walls Breached" },
+    captured: { bg: "bg-green-900/30", text: "text-green-400", label: "Captured" },
+    lifted: { bg: "bg-stone-900/30", text: "text-stone-400", label: "Siege Lifted" },
+    abandoned: { bg: "bg-stone-900/30", text: "text-stone-500", label: "Abandoned" },
 };
 
 const targetTypeIcons: Record<string, typeof Castle> = {
@@ -104,22 +104,22 @@ const targetTypeIcons: Record<string, typeof Castle> = {
 };
 
 const equipmentLabels: Record<string, { name: string; damage: number }> = {
-    battering_ram: { name: 'Battering Ram', damage: 2 },
-    trebuchet: { name: 'Trebuchet', damage: 5 },
-    catapult: { name: 'Catapult', damage: 3 },
-    siege_tower: { name: 'Siege Tower', damage: 1 },
-    sappers: { name: 'Sappers', damage: 4 },
+    battering_ram: { name: "Battering Ram", damage: 2 },
+    trebuchet: { name: "Trebuchet", damage: 5 },
+    catapult: { name: "Catapult", damage: 3 },
+    siege_tower: { name: "Siege Tower", damage: 1 },
+    sappers: { name: "Sappers", damage: 4 },
 };
 
 const unitTypeLabels: Record<string, string> = {
-    levy: 'Levy',
-    militia: 'Militia',
-    men_at_arms: 'Men-at-Arms',
-    knights: 'Knights',
-    archers: 'Archers',
-    crossbowmen: 'Crossbowmen',
-    cavalry: 'Cavalry',
-    siege_engineers: 'Siege Eng.',
+    levy: "Levy",
+    militia: "Militia",
+    men_at_arms: "Men-at-Arms",
+    knights: "Knights",
+    archers: "Archers",
+    crossbowmen: "Crossbowmen",
+    cavalry: "Cavalry",
+    siege_engineers: "Siege Eng.",
 };
 
 export default function SiegeShow() {
@@ -128,7 +128,7 @@ export default function SiegeShow() {
     const [isAssaulting, setIsAssaulting] = useState(false);
     const [isLifting, setIsLifting] = useState(false);
     const [isBuilding, setIsBuilding] = useState(false);
-    const [selectedEquipment, setSelectedEquipment] = useState('battering_ram');
+    const [selectedEquipment, setSelectedEquipment] = useState("battering_ram");
     const [equipmentCount, setEquipmentCount] = useState(1);
     const [showBuildForm, setShowBuildForm] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -145,22 +145,24 @@ export default function SiegeShow() {
 
         try {
             const response = await fetch(`/warfare/sieges/${siege.id}/assault`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
             });
 
             const data = await response.json();
             if (response.ok) {
-                setSuccess('Assault completed!');
+                setSuccess("Assault completed!");
                 router.reload();
             } else {
-                setError(data.message || 'Failed to launch assault');
+                setError(data.message || "Failed to launch assault");
             }
         } catch {
-            setError('Failed to launch assault');
+            setError("Failed to launch assault");
         } finally {
             setIsAssaulting(false);
         }
@@ -174,21 +176,23 @@ export default function SiegeShow() {
 
         try {
             const response = await fetch(`/warfare/sieges/${siege.id}/lift`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
             });
 
             const data = await response.json();
             if (response.ok) {
-                router.visit('/warfare/armies');
+                router.visit("/warfare/armies");
             } else {
-                setError(data.message || 'Failed to lift siege');
+                setError(data.message || "Failed to lift siege");
             }
         } catch {
-            setError('Failed to lift siege');
+            setError("Failed to lift siege");
         } finally {
             setIsLifting(false);
         }
@@ -202,10 +206,12 @@ export default function SiegeShow() {
 
         try {
             const response = await fetch(`/warfare/sieges/${siege.id}/build-equipment`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify({
                     equipment: selectedEquipment,
@@ -215,14 +221,16 @@ export default function SiegeShow() {
 
             const data = await response.json();
             if (response.ok) {
-                setSuccess(`Built ${equipmentCount} ${equipmentLabels[selectedEquipment]?.name || selectedEquipment}`);
+                setSuccess(
+                    `Built ${equipmentCount} ${equipmentLabels[selectedEquipment]?.name || selectedEquipment}`,
+                );
                 setShowBuildForm(false);
                 router.reload();
             } else {
-                setError(data.message || 'Failed to build equipment');
+                setError(data.message || "Failed to build equipment");
             }
         } catch {
-            setError('Failed to build equipment');
+            setError("Failed to build equipment");
         } finally {
             setIsBuilding(false);
         }
@@ -241,9 +249,9 @@ export default function SiegeShow() {
     };
 
     const getProgressColor = (value: number) => {
-        if (value >= 70) return 'bg-green-500';
-        if (value >= 40) return 'bg-yellow-500';
-        return 'bg-red-500';
+        if (value >= 70) return "bg-green-500";
+        if (value >= 40) return "bg-yellow-500";
+        return "bg-red-500";
     };
 
     return (
@@ -269,12 +277,16 @@ export default function SiegeShow() {
                                     Siege of {siege.target.name}
                                 </h1>
                                 <p className="font-pixel text-sm text-stone-400">
-                                    Day {siege.days_besieged} | {siege.target.type.charAt(0).toUpperCase() + siege.target.type.slice(1)}
+                                    Day {siege.days_besieged} |{" "}
+                                    {siege.target.type.charAt(0).toUpperCase() +
+                                        siege.target.type.slice(1)}
                                 </p>
                             </div>
                         </div>
                     </div>
-                    <span className={`rounded px-3 py-1.5 font-pixel text-xs ${status.bg} ${status.text}`}>
+                    <span
+                        className={`rounded px-3 py-1.5 font-pixel text-xs ${status.bg} ${status.text}`}
+                    >
                         {status.label}
                     </span>
                 </div>
@@ -299,7 +311,7 @@ export default function SiegeShow() {
                             <span className="text-stone-400">Part of:</span>
                             <span className="text-white">{war.name}</span>
                             <span className="rounded bg-stone-700/50 px-2 py-0.5 text-[10px] capitalize text-stone-400">
-                                {war.status.replace('_', ' ')}
+                                {war.status.replace("_", " ")}
                             </span>
                         </div>
                     </div>
@@ -322,11 +334,23 @@ export default function SiegeShow() {
                                         <Shield className="h-3 w-3" />
                                         Fortification
                                     </span>
-                                    <span className={siege.fortification_level <= 30 ? 'text-red-400' : siege.fortification_level <= 60 ? 'text-yellow-400' : 'text-green-400'}>
+                                    <span
+                                        className={
+                                            siege.fortification_level <= 30
+                                                ? "text-red-400"
+                                                : siege.fortification_level <= 60
+                                                  ? "text-yellow-400"
+                                                  : "text-green-400"
+                                        }
+                                    >
                                         {siege.fortification_level}%
                                     </span>
                                 </div>
-                                {renderProgressBar(siege.fortification_level, 100, getProgressColor(siege.fortification_level))}
+                                {renderProgressBar(
+                                    siege.fortification_level,
+                                    100,
+                                    getProgressColor(siege.fortification_level),
+                                )}
                                 {siege.has_breach && (
                                     <div className="mt-1 flex items-center gap-1 font-pixel text-[10px] text-orange-400">
                                         <AlertTriangle className="h-3 w-3" />
@@ -342,11 +366,23 @@ export default function SiegeShow() {
                                         <Package className="h-3 w-3" />
                                         Garrison Supplies
                                     </span>
-                                    <span className={siege.supplies_remaining <= 20 ? 'text-red-400' : siege.supplies_remaining <= 50 ? 'text-yellow-400' : 'text-green-400'}>
+                                    <span
+                                        className={
+                                            siege.supplies_remaining <= 20
+                                                ? "text-red-400"
+                                                : siege.supplies_remaining <= 50
+                                                  ? "text-yellow-400"
+                                                  : "text-green-400"
+                                        }
+                                    >
                                         {siege.supplies_remaining}%
                                     </span>
                                 </div>
-                                {renderProgressBar(siege.supplies_remaining, 100, getProgressColor(siege.supplies_remaining))}
+                                {renderProgressBar(
+                                    siege.supplies_remaining,
+                                    100,
+                                    getProgressColor(siege.supplies_remaining),
+                                )}
                                 {siege.is_starving && (
                                     <div className="mt-1 flex items-center gap-1 font-pixel text-[10px] text-red-400">
                                         <Skull className="h-3 w-3" />
@@ -362,11 +398,23 @@ export default function SiegeShow() {
                                         <Heart className="h-3 w-3" />
                                         Garrison Morale
                                     </span>
-                                    <span className={siege.garrison_morale <= 30 ? 'text-red-400' : siege.garrison_morale <= 60 ? 'text-yellow-400' : 'text-green-400'}>
+                                    <span
+                                        className={
+                                            siege.garrison_morale <= 30
+                                                ? "text-red-400"
+                                                : siege.garrison_morale <= 60
+                                                  ? "text-yellow-400"
+                                                  : "text-green-400"
+                                        }
+                                    >
                                         {siege.garrison_morale}%
                                     </span>
                                 </div>
-                                {renderProgressBar(siege.garrison_morale, 100, getProgressColor(siege.garrison_morale))}
+                                {renderProgressBar(
+                                    siege.garrison_morale,
+                                    100,
+                                    getProgressColor(siege.garrison_morale),
+                                )}
                             </div>
 
                             {/* Garrison Strength */}
@@ -376,7 +424,9 @@ export default function SiegeShow() {
                                         <Users className="h-4 w-4" />
                                         Garrison Strength
                                     </span>
-                                    <span className="text-white">{siege.garrison_strength} defenders</span>
+                                    <span className="text-white">
+                                        {siege.garrison_strength} defenders
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -386,14 +436,16 @@ export default function SiegeShow() {
                             <div className="mb-4 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <Hammer className="h-5 w-5 text-amber-400" />
-                                    <h2 className="font-pixel text-lg text-amber-300">Siege Equipment</h2>
+                                    <h2 className="font-pixel text-lg text-amber-300">
+                                        Siege Equipment
+                                    </h2>
                                 </div>
                                 {can_control && siege.is_active && (
                                     <button
                                         onClick={() => setShowBuildForm(!showBuildForm)}
                                         className="rounded border border-amber-600/50 bg-amber-900/20 px-3 py-1 font-pixel text-xs text-amber-300 transition hover:bg-amber-900/40"
                                     >
-                                        {showBuildForm ? 'Cancel' : 'Build More'}
+                                        {showBuildForm ? "Cancel" : "Build More"}
                                     </button>
                                 )}
                             </div>
@@ -410,9 +462,12 @@ export default function SiegeShow() {
                                                 {equipmentLabels[type]?.name || type}
                                             </span>
                                             <div className="flex items-center gap-2">
-                                                <span className="font-pixel text-sm text-amber-300">x{count}</span>
+                                                <span className="font-pixel text-sm text-amber-300">
+                                                    x{count}
+                                                </span>
                                                 <span className="font-pixel text-[10px] text-stone-500">
-                                                    ({equipmentLabels[type]?.damage * count} dmg/day)
+                                                    ({equipmentLabels[type]?.damage * count}{" "}
+                                                    dmg/day)
                                                 </span>
                                             </div>
                                         </div>
@@ -451,7 +506,14 @@ export default function SiegeShow() {
                                         <input
                                             type="number"
                                             value={equipmentCount}
-                                            onChange={(e) => setEquipmentCount(Math.max(1, Math.min(5, parseInt(e.target.value) || 1)))}
+                                            onChange={(e) =>
+                                                setEquipmentCount(
+                                                    Math.max(
+                                                        1,
+                                                        Math.min(5, parseInt(e.target.value) || 1),
+                                                    ),
+                                                )
+                                            }
                                             min={1}
                                             max={5}
                                             className="w-full rounded border border-stone-600 bg-stone-800 px-3 py-2 font-pixel text-sm text-white focus:border-amber-500 focus:outline-none"
@@ -463,7 +525,7 @@ export default function SiegeShow() {
                                         disabled={isBuilding}
                                         className="w-full rounded bg-amber-600 py-2 font-pixel text-sm text-white transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
-                                        {isBuilding ? 'Building...' : 'Build Equipment'}
+                                        {isBuilding ? "Building..." : "Build Equipment"}
                                     </button>
                                 </div>
                             )}
@@ -477,56 +539,79 @@ export default function SiegeShow() {
                             <div className="rounded-xl border-2 border-red-600/50 bg-red-900/20 p-4">
                                 <div className="mb-4 flex items-center gap-2">
                                     <Swords className="h-5 w-5 text-red-400" />
-                                    <h2 className="font-pixel text-lg text-red-300">Attacking Army</h2>
+                                    <h2 className="font-pixel text-lg text-red-300">
+                                        Attacking Army
+                                    </h2>
                                 </div>
 
                                 <div className="mb-3 rounded-lg bg-stone-900/50 p-3">
                                     <div className="mb-2 flex items-center justify-between">
-                                        <span className="font-pixel text-base text-white">{attacking_army.name}</span>
+                                        <span className="font-pixel text-base text-white">
+                                            {attacking_army.name}
+                                        </span>
                                         <span className="font-pixel text-xs capitalize text-stone-400">
                                             {attacking_army.status}
                                         </span>
                                     </div>
                                     <div className="font-pixel text-xs text-stone-400">
-                                        Commander: <span className="text-white">{attacking_army.commander_name}</span>
+                                        Commander:{" "}
+                                        <span className="text-white">
+                                            {attacking_army.commander_name}
+                                        </span>
                                     </div>
                                 </div>
 
                                 {/* Army Stats */}
                                 <div className="mb-3 grid grid-cols-3 gap-2">
                                     <div className="rounded-lg bg-stone-900/30 p-2 text-center">
-                                        <div className="font-pixel text-[10px] text-stone-400">Soldiers</div>
-                                        <div className="font-pixel text-sm text-white">{attacking_army.total_troops}</div>
+                                        <div className="font-pixel text-[10px] text-stone-400">
+                                            Soldiers
+                                        </div>
+                                        <div className="font-pixel text-sm text-white">
+                                            {attacking_army.total_troops}
+                                        </div>
                                     </div>
                                     <div className="rounded-lg bg-stone-900/30 p-2 text-center">
                                         <div className="flex items-center justify-center gap-1">
                                             <Sword className="h-3 w-3 text-red-400" />
-                                            <span className="font-pixel text-[10px] text-stone-400">Attack</span>
+                                            <span className="font-pixel text-[10px] text-stone-400">
+                                                Attack
+                                            </span>
                                         </div>
-                                        <div className="font-pixel text-sm text-red-300">{attacking_army.total_attack}</div>
+                                        <div className="font-pixel text-sm text-red-300">
+                                            {attacking_army.total_attack}
+                                        </div>
                                     </div>
                                     <div className="rounded-lg bg-stone-900/30 p-2 text-center">
                                         <div className="flex items-center justify-center gap-1">
                                             <Shield className="h-3 w-3 text-blue-400" />
-                                            <span className="font-pixel text-[10px] text-stone-400">Defense</span>
+                                            <span className="font-pixel text-[10px] text-stone-400">
+                                                Defense
+                                            </span>
                                         </div>
-                                        <div className="font-pixel text-sm text-blue-300">{attacking_army.total_defense}</div>
+                                        <div className="font-pixel text-sm text-blue-300">
+                                            {attacking_army.total_defense}
+                                        </div>
                                     </div>
                                 </div>
 
                                 {/* Unit Composition */}
                                 {Object.keys(attacking_army.units).length > 0 && (
                                     <div className="rounded-lg bg-stone-900/30 p-2">
-                                        <div className="mb-1 font-pixel text-[10px] text-stone-400">Unit Composition:</div>
+                                        <div className="mb-1 font-pixel text-[10px] text-stone-400">
+                                            Unit Composition:
+                                        </div>
                                         <div className="flex flex-wrap gap-1">
-                                            {Object.entries(attacking_army.units).map(([type, count]) => (
-                                                <span
-                                                    key={type}
-                                                    className="rounded bg-stone-700/50 px-2 py-0.5 font-pixel text-[10px] text-stone-300"
-                                                >
-                                                    {unitTypeLabels[type] || type}: {count}
-                                                </span>
-                                            ))}
+                                            {Object.entries(attacking_army.units).map(
+                                                ([type, count]) => (
+                                                    <span
+                                                        key={type}
+                                                        className="rounded bg-stone-700/50 px-2 py-0.5 font-pixel text-[10px] text-stone-300"
+                                                    >
+                                                        {unitTypeLabels[type] || type}: {count}
+                                                    </span>
+                                                ),
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -536,14 +621,30 @@ export default function SiegeShow() {
                                     <div className="flex items-center gap-1">
                                         <Heart className="h-3 w-3 text-red-400" />
                                         <span className="text-stone-400">Morale:</span>
-                                        <span className={attacking_army.morale >= 70 ? 'text-green-400' : attacking_army.morale >= 40 ? 'text-yellow-400' : 'text-red-400'}>
+                                        <span
+                                            className={
+                                                attacking_army.morale >= 70
+                                                    ? "text-green-400"
+                                                    : attacking_army.morale >= 40
+                                                      ? "text-yellow-400"
+                                                      : "text-red-400"
+                                            }
+                                        >
                                             {attacking_army.morale}%
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-1">
                                         <Package className="h-3 w-3 text-amber-400" />
                                         <span className="text-stone-400">Supplies:</span>
-                                        <span className={attacking_army.supplies >= 20 ? 'text-green-400' : attacking_army.supplies >= 10 ? 'text-yellow-400' : 'text-red-400'}>
+                                        <span
+                                            className={
+                                                attacking_army.supplies >= 20
+                                                    ? "text-green-400"
+                                                    : attacking_army.supplies >= 10
+                                                      ? "text-yellow-400"
+                                                      : "text-red-400"
+                                            }
+                                        >
                                             {attacking_army.supplies} days
                                         </span>
                                     </div>
@@ -563,12 +664,15 @@ export default function SiegeShow() {
                                     className="mb-3 flex w-full items-center justify-center gap-2 rounded border-2 border-red-600/50 bg-red-900/30 px-4 py-3 font-pixel text-sm text-red-300 transition hover:bg-red-900/50 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     <Sword className="h-5 w-5" />
-                                    {isAssaulting ? 'Launching Assault...' : `Launch Assault (Difficulty: ${siege.assault_difficulty}%)`}
+                                    {isAssaulting
+                                        ? "Launching Assault..."
+                                        : `Launch Assault (Difficulty: ${siege.assault_difficulty}%)`}
                                 </button>
 
                                 {!siege.can_assault && (
                                     <p className="mb-3 font-pixel text-[10px] text-stone-500">
-                                        Cannot assault: Fortifications are too strong. Wait for a breach or weaken the walls with siege equipment.
+                                        Cannot assault: Fortifications are too strong. Wait for a
+                                        breach or weaken the walls with siege equipment.
                                     </p>
                                 )}
 
@@ -579,7 +683,8 @@ export default function SiegeShow() {
                                         Continue the siege to wear down the garrison
                                     </div>
                                     <p className="mt-1 font-pixel text-[10px] text-stone-500">
-                                        Siege equipment damages fortifications daily. Low supplies and morale may force surrender.
+                                        Siege equipment damages fortifications daily. Low supplies
+                                        and morale may force surrender.
                                     </p>
                                 </div>
 
@@ -590,23 +695,27 @@ export default function SiegeShow() {
                                     className="flex w-full items-center justify-center gap-2 rounded border border-stone-600/50 bg-stone-800/30 px-4 py-2 font-pixel text-xs text-stone-400 transition hover:bg-stone-700/30 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     <XCircle className="h-4 w-4" />
-                                    {isLifting ? 'Lifting Siege...' : 'Lift Siege (Withdraw)'}
+                                    {isLifting ? "Lifting Siege..." : "Lift Siege (Withdraw)"}
                                 </button>
                             </div>
                         )}
 
                         {/* Siege Ended Notice */}
                         {siege.is_ended && (
-                            <div className={`rounded-xl border-2 p-4 ${
-                                siege.status === 'captured'
-                                    ? 'border-green-600/50 bg-green-900/20'
-                                    : 'border-stone-600/50 bg-stone-800/30'
-                            }`}>
+                            <div
+                                className={`rounded-xl border-2 p-4 ${
+                                    siege.status === "captured"
+                                        ? "border-green-600/50 bg-green-900/20"
+                                        : "border-stone-600/50 bg-stone-800/30"
+                                }`}
+                            >
                                 <div className="text-center">
-                                    {siege.status === 'captured' ? (
+                                    {siege.status === "captured" ? (
                                         <>
                                             <Target className="mx-auto mb-2 h-12 w-12 text-green-400" />
-                                            <h3 className="font-pixel text-lg text-green-300">Victory!</h3>
+                                            <h3 className="font-pixel text-lg text-green-300">
+                                                Victory!
+                                            </h3>
                                             <p className="font-pixel text-sm text-stone-400">
                                                 {siege.target.name} has been captured.
                                             </p>
@@ -614,9 +723,13 @@ export default function SiegeShow() {
                                     ) : (
                                         <>
                                             <XCircle className="mx-auto mb-2 h-12 w-12 text-stone-400" />
-                                            <h3 className="font-pixel text-lg text-stone-300">Siege Ended</h3>
+                                            <h3 className="font-pixel text-lg text-stone-300">
+                                                Siege Ended
+                                            </h3>
                                             <p className="font-pixel text-sm text-stone-400">
-                                                The siege was {siege.status === 'lifted' ? 'lifted' : 'abandoned'}.
+                                                The siege was{" "}
+                                                {siege.status === "lifted" ? "lifted" : "abandoned"}
+                                                .
                                             </p>
                                         </>
                                     )}
@@ -630,32 +743,40 @@ export default function SiegeShow() {
 
                             {siege.siege_log.length > 0 ? (
                                 <div className="max-h-64 space-y-2 overflow-y-auto">
-                                    {siege.siege_log.slice().reverse().map((entry, index) => (
-                                        <div
-                                            key={index}
-                                            className="rounded-lg bg-stone-900/50 p-2"
-                                        >
-                                            <div className="mb-1 font-pixel text-xs text-amber-400">
-                                                Day {entry.day}
-                                            </div>
-                                            {entry.events.map((event, eventIndex) => (
-                                                <div
-                                                    key={eventIndex}
-                                                    className="font-pixel text-[10px] text-stone-300"
-                                                >
-                                                    {event}
+                                    {siege.siege_log
+                                        .slice()
+                                        .reverse()
+                                        .map((entry, index) => (
+                                            <div
+                                                key={index}
+                                                className="rounded-lg bg-stone-900/50 p-2"
+                                            >
+                                                <div className="mb-1 font-pixel text-xs text-amber-400">
+                                                    Day {entry.day}
                                                 </div>
-                                            ))}
-                                            <div className="mt-1 flex gap-3 font-pixel text-[10px] text-stone-500">
-                                                {entry.fortification_damage > 0 && (
-                                                    <span>Fortification -{entry.fortification_damage}%</span>
-                                                )}
-                                                {entry.supplies_consumed > 0 && (
-                                                    <span>Supplies -{entry.supplies_consumed}</span>
-                                                )}
+                                                {entry.events.map((event, eventIndex) => (
+                                                    <div
+                                                        key={eventIndex}
+                                                        className="font-pixel text-[10px] text-stone-300"
+                                                    >
+                                                        {event}
+                                                    </div>
+                                                ))}
+                                                <div className="mt-1 flex gap-3 font-pixel text-[10px] text-stone-500">
+                                                    {entry.fortification_damage > 0 && (
+                                                        <span>
+                                                            Fortification -
+                                                            {entry.fortification_damage}%
+                                                        </span>
+                                                    )}
+                                                    {entry.supplies_consumed > 0 && (
+                                                        <span>
+                                                            Supplies -{entry.supplies_consumed}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ))}
                                 </div>
                             ) : (
                                 <div className="rounded-lg bg-stone-900/50 p-3 text-center font-pixel text-xs text-stone-500">

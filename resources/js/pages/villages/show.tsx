@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import {
     Anchor,
     Coins,
@@ -18,14 +18,14 @@ import {
     Waves,
     Wheat,
     type LucideIcon,
-} from 'lucide-react';
-import { useState } from 'react';
-import { ActivityFeed } from '@/components/activity-feed';
-import { ServicesGrid } from '@/components/service-card';
-import DisasterWidget from '@/components/widgets/disaster-widget';
-import { LegitimacyDisplay } from '@/components/widgets/legitimacy-badge';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import { ActivityFeed } from "@/components/activity-feed";
+import { ServicesGrid } from "@/components/service-card";
+import DisasterWidget from "@/components/widgets/disaster-widget";
+import { LegitimacyDisplay } from "@/components/widgets/legitimacy-badge";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Resident {
     id: number;
@@ -95,8 +95,8 @@ interface Disaster {
     id: number;
     type: string;
     name: string;
-    severity: 'minor' | 'moderate' | 'severe' | 'catastrophic';
-    status: 'active' | 'ending';
+    severity: "minor" | "moderate" | "severe" | "catastrophic";
+    status: "active" | "ending";
     started_at: string;
     days_active: number;
     buildings_damaged: number;
@@ -118,19 +118,74 @@ interface Props {
     };
 }
 
-const biomeConfig: Record<string, { icon: LucideIcon; color: string; bg: string; border: string }> = {
-    plains: { icon: Wheat, color: 'text-green-400', bg: 'bg-green-900/30', border: 'border-green-600/50' },
-    forest: { icon: Trees, color: 'text-emerald-400', bg: 'bg-emerald-900/30', border: 'border-emerald-600/50' },
-    tundra: { icon: Snowflake, color: 'text-cyan-400', bg: 'bg-cyan-900/30', border: 'border-cyan-600/50' },
-    coastal: { icon: Waves, color: 'text-blue-400', bg: 'bg-blue-900/30', border: 'border-blue-600/50' },
-    desert: { icon: Sun, color: 'text-amber-400', bg: 'bg-amber-900/30', border: 'border-amber-600/50' },
-    volcano: { icon: Mountain, color: 'text-red-400', bg: 'bg-red-900/30', border: 'border-red-600/50' },
-    mountains: { icon: Mountain, color: 'text-slate-400', bg: 'bg-slate-900/30', border: 'border-slate-600/50' },
-    swamps: { icon: TreePine, color: 'text-lime-400', bg: 'bg-lime-900/30', border: 'border-lime-600/50' },
-    tropical: { icon: Palmtree, color: 'text-teal-400', bg: 'bg-teal-900/30', border: 'border-teal-600/50' },
-};
+const biomeConfig: Record<string, { icon: LucideIcon; color: string; bg: string; border: string }> =
+    {
+        plains: {
+            icon: Wheat,
+            color: "text-green-400",
+            bg: "bg-green-900/30",
+            border: "border-green-600/50",
+        },
+        forest: {
+            icon: Trees,
+            color: "text-emerald-400",
+            bg: "bg-emerald-900/30",
+            border: "border-emerald-600/50",
+        },
+        tundra: {
+            icon: Snowflake,
+            color: "text-cyan-400",
+            bg: "bg-cyan-900/30",
+            border: "border-cyan-600/50",
+        },
+        coastal: {
+            icon: Waves,
+            color: "text-blue-400",
+            bg: "bg-blue-900/30",
+            border: "border-blue-600/50",
+        },
+        desert: {
+            icon: Sun,
+            color: "text-amber-400",
+            bg: "bg-amber-900/30",
+            border: "border-amber-600/50",
+        },
+        volcano: {
+            icon: Mountain,
+            color: "text-red-400",
+            bg: "bg-red-900/30",
+            border: "border-red-600/50",
+        },
+        mountains: {
+            icon: Mountain,
+            color: "text-slate-400",
+            bg: "bg-slate-900/30",
+            border: "border-slate-600/50",
+        },
+        swamps: {
+            icon: TreePine,
+            color: "text-lime-400",
+            bg: "bg-lime-900/30",
+            border: "border-lime-600/50",
+        },
+        tropical: {
+            icon: Palmtree,
+            color: "text-teal-400",
+            bg: "bg-teal-900/30",
+            border: "border-teal-600/50",
+        },
+    };
 
-export default function VillageShow({ village, services, recent_activity, is_resident, can_migrate, has_pending_request, current_user_id, disasters = [] }: Props) {
+export default function VillageShow({
+    village,
+    services,
+    recent_activity,
+    is_resident,
+    can_migrate,
+    has_pending_request,
+    current_user_id,
+    disasters = [],
+}: Props) {
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
     const [loading, setLoading] = useState(false);
 
@@ -138,15 +193,19 @@ export default function VillageShow({ village, services, recent_activity, is_res
     const BiomeIcon = biome.icon;
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
+        { title: "Dashboard", href: "/dashboard" },
         { title: village.name, href: `/villages/${village.id}` },
     ];
 
     const handleRequestMigration = () => {
         setLoading(true);
-        router.post(`/migration/request/${village.id}`, {}, {
-            onFinish: () => setLoading(false),
-        });
+        router.post(
+            `/migration/request/${village.id}`,
+            {},
+            {
+                onFinish: () => setLoading(false),
+            },
+        );
     };
 
     return (
@@ -165,12 +224,18 @@ export default function VillageShow({ village, services, recent_activity, is_res
                                     {village.name}
                                 </h1>
                                 {village.is_hamlet && (
-                                    <span className="rounded-full bg-stone-700 px-2 py-0.5 text-xs text-stone-300">Hamlet</span>
+                                    <span className="rounded-full bg-stone-700 px-2 py-0.5 text-xs text-stone-300">
+                                        Hamlet
+                                    </span>
                                 )}
                                 {village.is_town && (
-                                    <span className="rounded-full bg-purple-900/50 px-2 py-0.5 text-xs text-purple-300">Town</span>
+                                    <span className="rounded-full bg-purple-900/50 px-2 py-0.5 text-xs text-purple-300">
+                                        Town
+                                    </span>
                                 )}
-                                <span className={`rounded-full ${biome.bg} border ${biome.border} px-3 py-0.5 text-xs capitalize ${biome.color}`}>
+                                <span
+                                    className={`rounded-full ${biome.bg} border ${biome.border} px-3 py-0.5 text-xs capitalize ${biome.color}`}
+                                >
                                     {village.biome}
                                 </span>
                             </div>
@@ -180,7 +245,10 @@ export default function VillageShow({ village, services, recent_activity, is_res
                             <div className="mt-3 flex items-center gap-2 text-sm">
                                 {village.kingdom && (
                                     <>
-                                        <Link href={`/kingdoms/${village.kingdom.id}`} className="text-amber-400 hover:underline">
+                                        <Link
+                                            href={`/kingdoms/${village.kingdom.id}`}
+                                            className="text-amber-400 hover:underline"
+                                        >
                                             {village.kingdom.name}
                                         </Link>
                                         <span className="text-stone-600">›</span>
@@ -188,7 +256,10 @@ export default function VillageShow({ village, services, recent_activity, is_res
                                 )}
                                 {village.barony && (
                                     <>
-                                        <Link href={`/baronies/${village.barony.id}`} className="text-stone-300 hover:underline">
+                                        <Link
+                                            href={`/baronies/${village.barony.id}`}
+                                            className="text-stone-300 hover:underline"
+                                        >
                                             {village.barony.name}
                                         </Link>
                                         <span className="text-stone-600">›</span>
@@ -197,7 +268,14 @@ export default function VillageShow({ village, services, recent_activity, is_res
                                 <span className="text-stone-500">{village.name}</span>
                                 {village.parent_village && (
                                     <span className="text-stone-600 text-xs">
-                                        (hamlet of <Link href={`/villages/${village.parent_village.id}`} className="text-stone-400 hover:underline">{village.parent_village.name}</Link>)
+                                        (hamlet of{" "}
+                                        <Link
+                                            href={`/villages/${village.parent_village.id}`}
+                                            className="text-stone-400 hover:underline"
+                                        >
+                                            {village.parent_village.name}
+                                        </Link>
+                                        )
                                     </span>
                                 )}
                             </div>
@@ -226,9 +304,7 @@ export default function VillageShow({ village, services, recent_activity, is_res
                 )}
 
                 {/* Disaster Alert */}
-                {disasters.length > 0 && (
-                    <DisasterWidget disasters={disasters} />
-                )}
+                {disasters.length > 0 && <DisasterWidget disasters={disasters} />}
 
                 {/* Stats Row */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -302,11 +378,15 @@ export default function VillageShow({ village, services, recent_activity, is_res
                                         <div className="font-pixel text-lg text-stone-100">
                                             {village.elder.username}
                                             {village.elder.id === current_user_id && (
-                                                <span className="ml-2 text-xs text-amber-400">(You)</span>
+                                                <span className="ml-2 text-xs text-amber-400">
+                                                    (You)
+                                                </span>
                                             )}
                                         </div>
                                         {village.elder.primary_title && (
-                                            <div className="text-xs capitalize text-stone-500">{village.elder.primary_title}</div>
+                                            <div className="text-xs capitalize text-stone-500">
+                                                {village.elder.primary_title}
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -334,7 +414,9 @@ export default function VillageShow({ village, services, recent_activity, is_res
                             <Shield className="h-8 w-8 text-stone-400" />
                             <div>
                                 <div className="font-pixel text-stone-200">Village Roles</div>
-                                <div className="text-xs text-stone-500">View officials and positions</div>
+                                <div className="text-xs text-stone-500">
+                                    View officials and positions
+                                </div>
                             </div>
                         </div>
                         <span className="text-stone-500">›</span>
@@ -349,8 +431,13 @@ export default function VillageShow({ village, services, recent_activity, is_res
                                 <div className="flex items-center gap-3">
                                     <Loader2 className="h-5 w-5 animate-spin text-amber-400" />
                                     <div>
-                                        <p className="font-pixel text-amber-300">Migration Request Pending</p>
-                                        <Link href="/migration" className="text-xs text-stone-400 hover:underline">
+                                        <p className="font-pixel text-amber-300">
+                                            Migration Request Pending
+                                        </p>
+                                        <Link
+                                            href="/migration"
+                                            className="text-xs text-stone-400 hover:underline"
+                                        >
                                             View your request status
                                         </Link>
                                     </div>
@@ -369,19 +456,23 @@ export default function VillageShow({ village, services, recent_activity, is_res
                                 )}
                                 <div>
                                     <span className="font-pixel text-lg text-blue-300">
-                                        {village.resident_count === 0 ? 'Settle Here' : 'Request to Settle'}
+                                        {village.resident_count === 0
+                                            ? "Settle Here"
+                                            : "Request to Settle"}
                                     </span>
                                     <p className="text-xs text-stone-400">
                                         {village.resident_count === 0
-                                            ? 'Be the first resident of this village'
-                                            : 'The village elder must approve your request'}
+                                            ? "Be the first resident of this village"
+                                            : "The village elder must approve your request"}
                                     </p>
                                 </div>
                             </button>
                         ) : (
                             <div className="rounded-xl border border-stone-700 bg-stone-800/30 p-4 text-center">
                                 <p className="font-pixel text-stone-500">Migration on Cooldown</p>
-                                <p className="text-xs text-stone-600">You must wait before you can move again</p>
+                                <p className="text-xs text-stone-600">
+                                    You must wait before you can move again
+                                </p>
                             </div>
                         )}
                     </div>
@@ -414,7 +505,9 @@ export default function VillageShow({ village, services, recent_activity, is_res
                                         <div className="font-pixel text-sm text-stone-200">
                                             {resident.username}
                                             {resident.id === current_user_id && (
-                                                <span className="ml-1 text-xs text-green-400">(You)</span>
+                                                <span className="ml-1 text-xs text-green-400">
+                                                    (You)
+                                                </span>
                                             )}
                                         </div>
                                         <div className="flex items-center gap-1 text-xs text-stone-500">
@@ -434,7 +527,7 @@ export default function VillageShow({ village, services, recent_activity, is_res
                 )}
 
                 {/* Port indicator */}
-                {village.biome === 'coastal' && (
+                {village.biome === "coastal" && (
                     <Link
                         href={`/villages/${village.id}/port`}
                         className="flex items-center gap-4 rounded-xl border border-blue-600/30 bg-blue-900/10 p-4 transition hover:bg-blue-900/20"
@@ -442,7 +535,9 @@ export default function VillageShow({ village, services, recent_activity, is_res
                         <Anchor className="h-8 w-8 text-blue-400" />
                         <div>
                             <div className="font-pixel text-blue-300">Harbor</div>
-                            <div className="text-xs text-stone-400">Book passage to distant lands</div>
+                            <div className="text-xs text-stone-400">
+                                Book passage to distant lands
+                            </div>
                         </div>
                     </Link>
                 )}

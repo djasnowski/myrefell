@@ -1,16 +1,9 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import {
-    Castle,
-    Heart,
-    Shield,
-    Skull,
-    Swords,
-    Zap,
-} from 'lucide-react';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from "@inertiajs/react";
+import { Castle, Heart, Shield, Skull, Swords, Zap } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Monster {
     id: number;
@@ -32,7 +25,7 @@ interface Dungeon {
     name: string;
     description: string | null;
     theme: string;
-    difficulty: 'easy' | 'normal' | 'hard' | 'nightmare';
+    difficulty: "easy" | "normal" | "hard" | "nightmare";
     min_combat_level: number;
     recommended_level: number;
     floor_count: number;
@@ -64,43 +57,43 @@ interface PageProps {
 }
 
 const difficultyColors: Record<string, string> = {
-    easy: 'border-green-500/50 bg-green-900/20 text-green-400',
-    normal: 'border-yellow-500/50 bg-yellow-900/20 text-yellow-400',
-    hard: 'border-red-500/50 bg-red-900/20 text-red-400',
-    nightmare: 'border-purple-500/50 bg-purple-900/20 text-purple-400',
+    easy: "border-green-500/50 bg-green-900/20 text-green-400",
+    normal: "border-yellow-500/50 bg-yellow-900/20 text-yellow-400",
+    hard: "border-red-500/50 bg-red-900/20 text-red-400",
+    nightmare: "border-purple-500/50 bg-purple-900/20 text-purple-400",
 };
 
 export default function DungeonShow() {
     const { dungeon, can_enter, player_stats, energy } = usePage<PageProps>().props;
-    const [trainingStyle, setTrainingStyle] = useState<'attack' | 'strength' | 'defense'>('attack');
+    const [trainingStyle, setTrainingStyle] = useState<"attack" | "strength" | "defense">("attack");
     const [isEntering, setIsEntering] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Dungeons', href: '/dungeons' },
-        { title: dungeon.name, href: '#' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Dungeons", href: "/dungeons" },
+        { title: dungeon.name, href: "#" },
     ];
 
     const handleEnter = () => {
         setIsEntering(true);
         setError(null);
         router.post(
-            '/dungeons/enter',
+            "/dungeons/enter",
             {
                 dungeon_id: dungeon.id,
                 training_style: trainingStyle,
             },
             {
                 onSuccess: () => {
-                    router.visit('/dungeons/explore');
+                    router.visit("/dungeons/explore");
                 },
                 onError: (errors) => {
-                    setError(errors.error || 'Failed to enter dungeon');
+                    setError(errors.error || "Failed to enter dungeon");
                     setIsEntering(false);
                 },
                 onFinish: () => setIsEntering(false),
-            }
+            },
         );
     };
 
@@ -137,9 +130,7 @@ export default function DungeonShow() {
                     </div>
                 </div>
 
-                {dungeon.description && (
-                    <p className="text-stone-400">{dungeon.description}</p>
-                )}
+                {dungeon.description && <p className="text-stone-400">{dungeon.description}</p>}
 
                 <div className="grid gap-6 lg:grid-cols-3">
                     {/* Dungeon Info */}
@@ -151,13 +142,11 @@ export default function DungeonShow() {
                             </h3>
                             <div className="mt-3 grid grid-cols-2 gap-3">
                                 <div
-                                    className={`rounded p-3 ${meetsLevel ? 'bg-green-900/20' : 'bg-red-900/20'}`}
+                                    className={`rounded p-3 ${meetsLevel ? "bg-green-900/20" : "bg-red-900/20"}`}
                                 >
-                                    <p className="text-xs text-stone-500">
-                                        Minimum Combat Level
-                                    </p>
+                                    <p className="text-xs text-stone-500">Minimum Combat Level</p>
                                     <p
-                                        className={`text-lg font-semibold ${meetsLevel ? 'text-green-400' : 'text-red-400'}`}
+                                        className={`text-lg font-semibold ${meetsLevel ? "text-green-400" : "text-red-400"}`}
                                     >
                                         {dungeon.min_combat_level}
                                     </p>
@@ -166,11 +155,11 @@ export default function DungeonShow() {
                                     </p>
                                 </div>
                                 <div
-                                    className={`rounded p-3 ${hasEnergy ? 'bg-green-900/20' : 'bg-red-900/20'}`}
+                                    className={`rounded p-3 ${hasEnergy ? "bg-green-900/20" : "bg-red-900/20"}`}
                                 >
                                     <p className="text-xs text-stone-500">Energy Cost</p>
                                     <p
-                                        className={`text-lg font-semibold ${hasEnergy ? 'text-green-400' : 'text-red-400'}`}
+                                        className={`text-lg font-semibold ${hasEnergy ? "text-green-400" : "text-red-400"}`}
                                     >
                                         {energy.cost}
                                     </p>
@@ -183,9 +172,7 @@ export default function DungeonShow() {
 
                         {/* Rewards */}
                         <div className="rounded-xl border border-stone-800 bg-stone-900/50 p-4">
-                            <h3 className="font-[Cinzel] font-semibold text-stone-100">
-                                Rewards
-                            </h3>
+                            <h3 className="font-[Cinzel] font-semibold text-stone-100">Rewards</h3>
                             <div className="mt-3 grid grid-cols-2 gap-3">
                                 <div className="rounded bg-stone-900/50 p-3">
                                     <p className="text-xs text-stone-500">Base XP</p>
@@ -214,8 +201,8 @@ export default function DungeonShow() {
                                             key={floor.id}
                                             className={`flex items-center justify-between rounded p-2 ${
                                                 floor.is_boss_floor
-                                                    ? 'bg-red-900/20'
-                                                    : 'bg-stone-900/50'
+                                                    ? "bg-red-900/20"
+                                                    : "bg-stone-900/50"
                                             }`}
                                         >
                                             <span className="text-stone-300">
@@ -282,14 +269,14 @@ export default function DungeonShow() {
                                 Choose which skill gains XP
                             </p>
                             <div className="mt-3 grid grid-cols-3 gap-2">
-                                {(['attack', 'strength', 'defense'] as const).map((style) => (
+                                {(["attack", "strength", "defense"] as const).map((style) => (
                                     <button
                                         key={style}
                                         onClick={() => setTrainingStyle(style)}
                                         className={`rounded p-2 text-center text-sm capitalize transition ${
                                             trainingStyle === style
-                                                ? 'bg-amber-600 text-white'
-                                                : 'bg-stone-800 text-stone-400 hover:bg-stone-700'
+                                                ? "bg-amber-600 text-white"
+                                                : "bg-stone-800 text-stone-400 hover:bg-stone-700"
                                         }`}
                                     >
                                         {style}
@@ -300,9 +287,7 @@ export default function DungeonShow() {
 
                         {/* Enter Button */}
                         <div className="rounded-xl border border-stone-800 bg-stone-900/50 p-4">
-                            {error && (
-                                <p className="mb-3 text-sm text-red-400">{error}</p>
-                            )}
+                            {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
                             <Button
                                 onClick={handleEnter}
                                 disabled={!can_enter || isEntering}
@@ -310,13 +295,13 @@ export default function DungeonShow() {
                                 size="lg"
                             >
                                 <Swords className="size-5" />
-                                {isEntering ? 'Entering...' : 'Enter Dungeon'}
+                                {isEntering ? "Entering..." : "Enter Dungeon"}
                             </Button>
                             {!can_enter && (
                                 <p className="mt-2 text-center text-xs text-stone-500">
-                                    {!meetsLevel && 'Combat level too low. '}
-                                    {!hasEnergy && 'Not enough energy. '}
-                                    {!hasHealth && 'HP too low. '}
+                                    {!meetsLevel && "Combat level too low. "}
+                                    {!hasEnergy && "Not enough energy. "}
+                                    {!hasHealth && "HP too low. "}
                                 </p>
                             )}
                         </div>
@@ -328,9 +313,7 @@ export default function DungeonShow() {
                                     <Skull className="size-5" />
                                     Boss
                                 </h3>
-                                <p className="mt-2 text-stone-100">
-                                    {dungeon.boss_monster.name}
-                                </p>
+                                <p className="mt-2 text-stone-100">{dungeon.boss_monster.name}</p>
                                 <p className="text-sm text-stone-400">
                                     Level {dungeon.boss_monster.combat_level}
                                 </p>

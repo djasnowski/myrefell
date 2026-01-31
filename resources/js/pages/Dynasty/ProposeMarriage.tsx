@@ -1,18 +1,8 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Coins,
-    Filter,
-    Heart,
-    Search,
-    Send,
-    Sparkles,
-    User,
-    Users,
-} from 'lucide-react';
-import { useMemo, useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, Link, router } from "@inertiajs/react";
+import { ArrowLeft, Coins, Filter, Heart, Search, Send, Sparkles, User, Users } from "lucide-react";
+import { useMemo, useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface EligibleMember {
     id: number;
@@ -52,10 +42,10 @@ interface Props {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Dynasty', href: '/dynasty' },
-    { title: 'Marriage Proposals', href: '/dynasty/proposals' },
-    { title: 'Propose Marriage', href: '/dynasty/proposals/create' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Dynasty", href: "/dynasty" },
+    { title: "Marriage Proposals", href: "/dynasty/proposals" },
+    { title: "Propose Marriage", href: "/dynasty/proposals/create" },
 ];
 
 export default function ProposeMarriage({
@@ -70,12 +60,12 @@ export default function ProposeMarriage({
     const [selectedMember, setSelectedMember] = useState<number | null>(null);
     const [selectedCandidate, setSelectedCandidate] = useState<number | null>(null);
     const [dowryAmount, setDowryAmount] = useState(0);
-    const [message, setMessage] = useState('');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [dynastyFilter, setDynastyFilter] = useState<number | 'all'>('all');
-    const [genderFilter, setGenderFilter] = useState<'all' | 'male' | 'female'>('all');
-    const [ageMin, setAgeMin] = useState<number | ''>('');
-    const [ageMax, setAgeMax] = useState<number | ''>('');
+    const [message, setMessage] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [dynastyFilter, setDynastyFilter] = useState<number | "all">("all");
+    const [genderFilter, setGenderFilter] = useState<"all" | "male" | "female">("all");
+    const [ageMin, setAgeMin] = useState<number | "">("");
+    const [ageMax, setAgeMax] = useState<number | "">("");
     const [processing, setProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -91,20 +81,20 @@ export default function ProposeMarriage({
             }
 
             // Dynasty filter
-            if (dynastyFilter !== 'all' && c.dynasty_id !== dynastyFilter) {
+            if (dynastyFilter !== "all" && c.dynasty_id !== dynastyFilter) {
                 return false;
             }
 
             // Gender filter
-            if (genderFilter !== 'all' && c.gender !== genderFilter) {
+            if (genderFilter !== "all" && c.gender !== genderFilter) {
                 return false;
             }
 
             // Age filter
-            if (ageMin !== '' && (c.age === null || c.age < ageMin)) {
+            if (ageMin !== "" && (c.age === null || c.age < ageMin)) {
                 return false;
             }
-            if (ageMax !== '' && (c.age === null || c.age > ageMax)) {
+            if (ageMax !== "" && (c.age === null || c.age > ageMax)) {
                 return false;
             }
 
@@ -117,32 +107,36 @@ export default function ProposeMarriage({
 
     const handleSubmit = () => {
         if (!selectedMember || !selectedCandidate) {
-            setError('Please select both a dynasty member and a candidate.');
+            setError("Please select both a dynasty member and a candidate.");
             return;
         }
 
         if (dowryAmount > player_gold) {
-            setError('You do not have enough gold for this dowry.');
+            setError("You do not have enough gold for this dowry.");
             return;
         }
 
         setProcessing(true);
         setError(null);
 
-        router.post('/dynasty/proposals', {
-            proposer_member_id: selectedMember,
-            proposed_member_id: selectedCandidate,
-            offered_dowry: dowryAmount,
-            message: message || null,
-        }, {
-            onSuccess: () => {
-                router.reload();
+        router.post(
+            "/dynasty/proposals",
+            {
+                proposer_member_id: selectedMember,
+                proposed_member_id: selectedCandidate,
+                offered_dowry: dowryAmount,
+                message: message || null,
             },
-            onError: (errors) => {
-                setError(Object.values(errors).flat().join(', ') || 'Failed to send proposal');
+            {
+                onSuccess: () => {
+                    router.reload();
+                },
+                onError: (errors) => {
+                    setError(Object.values(errors).flat().join(", ") || "Failed to send proposal");
+                },
+                onFinish: () => setProcessing(false),
             },
-            onFinish: () => setProcessing(false),
-        });
+        );
     };
 
     // No dynasty state
@@ -199,7 +193,7 @@ export default function ProposeMarriage({
                     <div>
                         <h1 className="font-pixel text-xl text-pink-400">Propose Marriage</h1>
                         <p className="font-pixel text-xs text-stone-500">
-                            House {dynasty_name} {is_head && '— Head of House'}
+                            House {dynasty_name} {is_head && "— Head of House"}
                         </p>
                     </div>
                 </div>
@@ -216,7 +210,8 @@ export default function ProposeMarriage({
                             <div className="py-6 text-center">
                                 <Users className="mx-auto mb-2 h-8 w-8 text-stone-600" />
                                 <p className="font-pixel text-xs text-stone-500">
-                                    No eligible members (must be unmarried and at least 14 years old)
+                                    No eligible members (must be unmarried and at least 14 years
+                                    old)
                                 </p>
                             </div>
                         ) : (
@@ -226,8 +221,8 @@ export default function ProposeMarriage({
                                         key={member.id}
                                         className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition ${
                                             selectedMember === member.id
-                                                ? 'border-blue-500 bg-blue-900/30'
-                                                : 'border-stone-700 bg-stone-800/50 hover:bg-stone-800'
+                                                ? "border-blue-500 bg-blue-900/30"
+                                                : "border-stone-700 bg-stone-800/50 hover:bg-stone-800"
                                         }`}
                                     >
                                         <input
@@ -238,26 +233,37 @@ export default function ProposeMarriage({
                                             onChange={() => setSelectedMember(member.id)}
                                             className="sr-only"
                                         />
-                                        <div className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                                            member.gender === 'male' ? 'bg-blue-900/50' : 'bg-pink-900/50'
-                                        }`}>
-                                            <User className={`h-4 w-4 ${
-                                                member.gender === 'male' ? 'text-blue-400' : 'text-pink-400'
-                                            }`} />
+                                        <div
+                                            className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                                                member.gender === "male"
+                                                    ? "bg-blue-900/50"
+                                                    : "bg-pink-900/50"
+                                            }`}
+                                        >
+                                            <User
+                                                className={`h-4 w-4 ${
+                                                    member.gender === "male"
+                                                        ? "text-blue-400"
+                                                        : "text-pink-400"
+                                                }`}
+                                            />
                                         </div>
                                         <div className="flex-1">
                                             <div className="font-pixel text-sm text-stone-200">
                                                 {member.name}
                                             </div>
                                             <div className="font-pixel text-[10px] text-stone-500">
-                                                {member.gender === 'male' ? 'Son' : 'Daughter'} | Age {member.age ?? '?'} | Gen {member.generation}
+                                                {member.gender === "male" ? "Son" : "Daughter"} |
+                                                Age {member.age ?? "?"} | Gen {member.generation}
                                             </div>
                                         </div>
-                                        <div className={`h-4 w-4 rounded-full border-2 ${
-                                            selectedMember === member.id
-                                                ? 'border-blue-400 bg-blue-400'
-                                                : 'border-stone-600'
-                                        }`} />
+                                        <div
+                                            className={`h-4 w-4 rounded-full border-2 ${
+                                                selectedMember === member.id
+                                                    ? "border-blue-400 bg-blue-400"
+                                                    : "border-stone-600"
+                                            }`}
+                                        />
                                     </label>
                                 ))}
                             </div>
@@ -288,8 +294,14 @@ export default function ProposeMarriage({
                                 <Filter className="h-4 w-4 text-stone-500" />
 
                                 <select
-                                    value={dynastyFilter === 'all' ? 'all' : dynastyFilter}
-                                    onChange={(e) => setDynastyFilter(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
+                                    value={dynastyFilter === "all" ? "all" : dynastyFilter}
+                                    onChange={(e) =>
+                                        setDynastyFilter(
+                                            e.target.value === "all"
+                                                ? "all"
+                                                : parseInt(e.target.value),
+                                        )
+                                    }
                                     className="rounded border border-stone-600 bg-stone-900 px-2 py-1 font-pixel text-xs text-stone-300"
                                 >
                                     <option value="all">All Dynasties</option>
@@ -302,7 +314,9 @@ export default function ProposeMarriage({
 
                                 <select
                                     value={genderFilter}
-                                    onChange={(e) => setGenderFilter(e.target.value as 'all' | 'male' | 'female')}
+                                    onChange={(e) =>
+                                        setGenderFilter(e.target.value as "all" | "male" | "female")
+                                    }
                                     className="rounded border border-stone-600 bg-stone-900 px-2 py-1 font-pixel text-xs text-stone-300"
                                 >
                                     <option value="all">Any Gender</option>
@@ -311,11 +325,19 @@ export default function ProposeMarriage({
                                 </select>
 
                                 <div className="flex items-center gap-1">
-                                    <span className="font-pixel text-[10px] text-stone-500">Age:</span>
+                                    <span className="font-pixel text-[10px] text-stone-500">
+                                        Age:
+                                    </span>
                                     <input
                                         type="number"
                                         value={ageMin}
-                                        onChange={(e) => setAgeMin(e.target.value === '' ? '' : parseInt(e.target.value))}
+                                        onChange={(e) =>
+                                            setAgeMin(
+                                                e.target.value === ""
+                                                    ? ""
+                                                    : parseInt(e.target.value),
+                                            )
+                                        }
                                         placeholder="Min"
                                         min={14}
                                         className="w-14 rounded border border-stone-600 bg-stone-900 px-2 py-1 font-pixel text-xs text-stone-300"
@@ -324,7 +346,13 @@ export default function ProposeMarriage({
                                     <input
                                         type="number"
                                         value={ageMax}
-                                        onChange={(e) => setAgeMax(e.target.value === '' ? '' : parseInt(e.target.value))}
+                                        onChange={(e) =>
+                                            setAgeMax(
+                                                e.target.value === ""
+                                                    ? ""
+                                                    : parseInt(e.target.value),
+                                            )
+                                        }
                                         placeholder="Max"
                                         min={14}
                                         className="w-14 rounded border border-stone-600 bg-stone-900 px-2 py-1 font-pixel text-xs text-stone-300"
@@ -348,8 +376,8 @@ export default function ProposeMarriage({
                                         key={candidate.id}
                                         className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition ${
                                             selectedCandidate === candidate.id
-                                                ? 'border-purple-500 bg-purple-900/30'
-                                                : 'border-stone-700 bg-stone-800/50 hover:bg-stone-800'
+                                                ? "border-purple-500 bg-purple-900/30"
+                                                : "border-stone-700 bg-stone-800/50 hover:bg-stone-800"
                                         }`}
                                     >
                                         <input
@@ -360,19 +388,28 @@ export default function ProposeMarriage({
                                             onChange={() => setSelectedCandidate(candidate.id)}
                                             className="sr-only"
                                         />
-                                        <div className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                                            candidate.gender === 'male' ? 'bg-blue-900/50' : 'bg-pink-900/50'
-                                        }`}>
-                                            <User className={`h-4 w-4 ${
-                                                candidate.gender === 'male' ? 'text-blue-400' : 'text-pink-400'
-                                            }`} />
+                                        <div
+                                            className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                                                candidate.gender === "male"
+                                                    ? "bg-blue-900/50"
+                                                    : "bg-pink-900/50"
+                                            }`}
+                                        >
+                                            <User
+                                                className={`h-4 w-4 ${
+                                                    candidate.gender === "male"
+                                                        ? "text-blue-400"
+                                                        : "text-pink-400"
+                                                }`}
+                                            />
                                         </div>
                                         <div className="flex-1">
                                             <div className="font-pixel text-sm text-stone-200">
                                                 {candidate.name}
                                             </div>
                                             <div className="font-pixel text-[10px] text-stone-500">
-                                                House {candidate.dynasty_name || 'Unknown'} | Age {candidate.age ?? '?'}
+                                                House {candidate.dynasty_name || "Unknown"} | Age{" "}
+                                                {candidate.age ?? "?"}
                                             </div>
                                         </div>
                                         <div className="text-right">
@@ -381,11 +418,13 @@ export default function ProposeMarriage({
                                                 {candidate.dynasty_prestige} prestige
                                             </div>
                                         </div>
-                                        <div className={`h-4 w-4 rounded-full border-2 ${
-                                            selectedCandidate === candidate.id
-                                                ? 'border-purple-400 bg-purple-400'
-                                                : 'border-stone-600'
-                                        }`} />
+                                        <div
+                                            className={`h-4 w-4 rounded-full border-2 ${
+                                                selectedCandidate === candidate.id
+                                                    ? "border-purple-400 bg-purple-400"
+                                                    : "border-stone-600"
+                                            }`}
+                                        />
                                     </label>
                                 ))
                             )}
@@ -425,7 +464,14 @@ export default function ProposeMarriage({
                                         min={0}
                                         max={player_gold}
                                         value={dowryAmount}
-                                        onChange={(e) => setDowryAmount(Math.min(player_gold, Math.max(0, parseInt(e.target.value) || 0)))}
+                                        onChange={(e) =>
+                                            setDowryAmount(
+                                                Math.min(
+                                                    player_gold,
+                                                    Math.max(0, parseInt(e.target.value) || 0),
+                                                ),
+                                            )
+                                        }
                                         className="w-24 rounded border border-stone-600 bg-stone-900 px-3 py-2 font-pixel text-sm text-stone-200"
                                     />
                                     <span className="font-pixel text-sm text-yellow-400">gold</span>
@@ -435,7 +481,10 @@ export default function ProposeMarriage({
                             {/* Message */}
                             <div>
                                 <label className="mb-2 block font-pixel text-xs text-stone-400">
-                                    Message to {selectedCandidateData?.dynasty_name ? `House ${selectedCandidateData.dynasty_name}` : 'Recipient'}
+                                    Message to{" "}
+                                    {selectedCandidateData?.dynasty_name
+                                        ? `House ${selectedCandidateData.dynasty_name}`
+                                        : "Recipient"}
                                 </label>
                                 <textarea
                                     value={message}
@@ -462,12 +511,20 @@ export default function ProposeMarriage({
 
                             <div className="mb-4 flex items-center justify-center gap-4">
                                 <div className="text-center">
-                                    <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${
-                                        selectedMemberData.gender === 'male' ? 'bg-blue-900/50' : 'bg-pink-900/50'
-                                    }`}>
-                                        <User className={`h-6 w-6 ${
-                                            selectedMemberData.gender === 'male' ? 'text-blue-400' : 'text-pink-400'
-                                        }`} />
+                                    <div
+                                        className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${
+                                            selectedMemberData.gender === "male"
+                                                ? "bg-blue-900/50"
+                                                : "bg-pink-900/50"
+                                        }`}
+                                    >
+                                        <User
+                                            className={`h-6 w-6 ${
+                                                selectedMemberData.gender === "male"
+                                                    ? "text-blue-400"
+                                                    : "text-pink-400"
+                                            }`}
+                                        />
                                     </div>
                                     <div className="mt-2 font-pixel text-xs text-stone-300">
                                         {selectedMemberData.name}
@@ -480,12 +537,20 @@ export default function ProposeMarriage({
                                 <Heart className="h-6 w-6 text-pink-400" />
 
                                 <div className="text-center">
-                                    <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${
-                                        selectedCandidateData.gender === 'male' ? 'bg-blue-900/50' : 'bg-pink-900/50'
-                                    }`}>
-                                        <User className={`h-6 w-6 ${
-                                            selectedCandidateData.gender === 'male' ? 'text-blue-400' : 'text-pink-400'
-                                        }`} />
+                                    <div
+                                        className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${
+                                            selectedCandidateData.gender === "male"
+                                                ? "bg-blue-900/50"
+                                                : "bg-pink-900/50"
+                                        }`}
+                                    >
+                                        <User
+                                            className={`h-6 w-6 ${
+                                                selectedCandidateData.gender === "male"
+                                                    ? "text-blue-400"
+                                                    : "text-pink-400"
+                                            }`}
+                                        />
                                     </div>
                                     <div className="mt-2 font-pixel text-xs text-stone-300">
                                         {selectedCandidateData.name}
@@ -499,7 +564,8 @@ export default function ProposeMarriage({
                             <div className="space-y-1 rounded-lg bg-stone-900/50 p-3">
                                 <div className="flex items-center gap-2 font-pixel text-xs text-stone-300">
                                     <span className="text-green-400">+</span>
-                                    Marriage alliance with House {selectedCandidateData.dynasty_name}
+                                    Marriage alliance with House{" "}
+                                    {selectedCandidateData.dynasty_name}
                                 </div>
                                 {dowryAmount > 0 && (
                                     <div className="flex items-center gap-2 font-pixel text-xs text-stone-300">
@@ -525,16 +591,16 @@ export default function ProposeMarriage({
                             className="flex items-center gap-2 rounded border-2 border-pink-600/50 bg-pink-900/20 px-6 py-2 font-pixel text-sm text-pink-400 transition hover:bg-pink-900/40 disabled:opacity-50"
                         >
                             <Send className="h-4 w-4" />
-                            {processing ? 'Sending...' : 'Send Proposal'}
+                            {processing ? "Sending..." : "Send Proposal"}
                         </button>
                     </div>
 
                     {/* Info Notice */}
                     <div className="rounded-lg border border-amber-600/30 bg-amber-900/10 p-3">
                         <p className="font-pixel text-[10px] text-amber-400/80">
-                            Marriage proposals expire after 14 days if not responded to. The head of the target
-                            dynasty will receive your proposal and can accept, reject, or ignore it. Higher dowries
-                            may increase the likelihood of acceptance.
+                            Marriage proposals expire after 14 days if not responded to. The head of
+                            the target dynasty will receive your proposal and can accept, reject, or
+                            ignore it. Higher dowries may increase the likelihood of acceptance.
                         </p>
                     </div>
                 </div>

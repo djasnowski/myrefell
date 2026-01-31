@@ -1,8 +1,8 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Award, Coins, Crown, Hammer, Star, Users, Vote, Settings } from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from "@inertiajs/react";
+import { ArrowLeft, Award, Coins, Crown, Hammer, Star, Users, Vote, Settings } from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface GuildBenefit {
     id: number;
@@ -113,26 +113,35 @@ interface PageProps {
 }
 
 const rankColors: Record<string, string> = {
-    guildmaster: 'text-yellow-400 bg-yellow-900/30',
-    master: 'text-purple-400 bg-purple-900/30',
-    journeyman: 'text-blue-400 bg-blue-900/30',
-    apprentice: 'text-stone-400 bg-stone-700/30',
+    guildmaster: "text-yellow-400 bg-yellow-900/30",
+    master: "text-purple-400 bg-purple-900/30",
+    journeyman: "text-blue-400 bg-blue-900/30",
+    apprentice: "text-stone-400 bg-stone-700/30",
 };
 
 export default function GuildShow() {
-    const { guild, membership, is_member, can_join, player_skill_level, members, active_election, price_controls, gold } =
-        usePage<PageProps>().props;
+    const {
+        guild,
+        membership,
+        is_member,
+        can_join,
+        player_skill_level,
+        members,
+        active_election,
+        price_controls,
+        gold,
+    } = usePage<PageProps>().props;
 
-    const [donateAmount, setDonateAmount] = useState('100');
+    const [donateAmount, setDonateAmount] = useState("100");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
-    const [candidatePlatform, setCandidatePlatform] = useState('');
+    const [candidatePlatform, setCandidatePlatform] = useState("");
     const [showSettings, setShowSettings] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Guilds', href: '/guilds' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Guilds", href: "/guilds" },
         { title: guild.name, href: `/guilds/${guild.id}` },
     ];
 
@@ -142,10 +151,12 @@ export default function GuildShow() {
 
         try {
             const response = await fetch(url, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify(body),
             });
@@ -158,7 +169,7 @@ export default function GuildShow() {
                 setError(data.message);
             }
         } catch {
-            setError('Request failed');
+            setError("Request failed");
         } finally {
             setIsLoading(false);
         }
@@ -167,35 +178,35 @@ export default function GuildShow() {
     const handleDonate = () => {
         const amount = parseInt(donateAmount, 10);
         if (amount >= 10) {
-            makeRequest('/guilds/donate', { guild_id: guild.id, amount });
+            makeRequest("/guilds/donate", { guild_id: guild.id, amount });
         }
     };
 
     const handlePayDues = () => {
-        makeRequest('/guilds/pay-dues', { guild_id: guild.id });
+        makeRequest("/guilds/pay-dues", { guild_id: guild.id });
     };
 
     const handleLeave = () => {
-        if (confirm('Are you sure you want to leave this guild?')) {
-            makeRequest('/guilds/leave', { guild_id: guild.id });
+        if (confirm("Are you sure you want to leave this guild?")) {
+            makeRequest("/guilds/leave", { guild_id: guild.id });
         }
     };
 
     const handleJoin = () => {
-        makeRequest('/guilds/join', { guild_id: guild.id });
+        makeRequest("/guilds/join", { guild_id: guild.id });
     };
 
     const handlePromote = (memberId: number) => {
-        makeRequest('/guilds/promote', { member_id: memberId });
+        makeRequest("/guilds/promote", { member_id: memberId });
     };
 
     const handleStartElection = () => {
-        makeRequest('/guilds/start-election', { guild_id: guild.id });
+        makeRequest("/guilds/start-election", { guild_id: guild.id });
     };
 
     const handleDeclare = () => {
         if (active_election) {
-            makeRequest('/guilds/declare-candidacy', {
+            makeRequest("/guilds/declare-candidacy", {
                 election_id: active_election.id,
                 platform: candidatePlatform,
             });
@@ -204,7 +215,7 @@ export default function GuildShow() {
 
     const handleVote = (candidateId: number) => {
         if (active_election) {
-            makeRequest('/guilds/vote', {
+            makeRequest("/guilds/vote", {
                 election_id: active_election.id,
                 candidate_id: candidateId,
             });
@@ -245,7 +256,9 @@ export default function GuildShow() {
                                 <h1 className="font-pixel text-2xl text-white">{guild.name}</h1>
                             </div>
                             {guild.description && (
-                                <p className="mt-2 font-pixel text-sm text-stone-400">{guild.description}</p>
+                                <p className="mt-2 font-pixel text-sm text-stone-400">
+                                    {guild.description}
+                                </p>
                             )}
                         </div>
                         <div className="flex items-center gap-2">
@@ -259,7 +272,9 @@ export default function GuildShow() {
                     <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
                         <div className="rounded-lg bg-stone-800/50 p-3">
                             <div className="font-pixel text-xs text-stone-500">Skill</div>
-                            <div className="font-pixel text-sm text-amber-300">{guild.skill_display}</div>
+                            <div className="font-pixel text-sm text-amber-300">
+                                {guild.skill_display}
+                            </div>
                         </div>
                         <div className="rounded-lg bg-stone-800/50 p-3">
                             <div className="font-pixel text-xs text-stone-500">Level</div>
@@ -288,7 +303,8 @@ export default function GuildShow() {
                     {guild.guildmaster && (
                         <div className="mt-4 flex items-center gap-2 font-pixel text-sm text-stone-400">
                             <Crown className="h-4 w-4 text-yellow-400" />
-                            Guildmaster: <span className="text-white">{guild.guildmaster.username}</span>
+                            Guildmaster:{" "}
+                            <span className="text-white">{guild.guildmaster.username}</span>
                         </div>
                     )}
 
@@ -306,7 +322,9 @@ export default function GuildShow() {
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
                                 <div className="mb-3 flex items-center gap-2">
-                                    <span className={`rounded px-2 py-1 font-pixel text-sm ${rankColors[membership.rank]}`}>
+                                    <span
+                                        className={`rounded px-2 py-1 font-pixel text-sm ${rankColors[membership.rank]}`}
+                                    >
                                         {membership.rank_display}
                                     </span>
                                     {membership.has_voting_rights && (
@@ -324,33 +342,67 @@ export default function GuildShow() {
                                         <Award className="h-4 w-4 text-blue-400" />
                                         Membership: {membership.years_membership} years
                                     </div>
-                                    <div className={membership.dues_paid ? 'text-green-400' : 'text-red-400'}>
+                                    <div
+                                        className={
+                                            membership.dues_paid ? "text-green-400" : "text-red-400"
+                                        }
+                                    >
                                         {membership.dues_paid
                                             ? `Dues paid until ${new Date(membership.dues_paid_until!).toLocaleDateString()}`
-                                            : 'Dues owed'}
+                                            : "Dues owed"}
                                     </div>
                                 </div>
 
                                 {/* Promotion Requirements */}
-                                {membership.promotion_requirements && Object.keys(membership.promotion_requirements).length > 0 && (
-                                    <div className="mt-3 rounded-lg bg-stone-700/50 p-3">
-                                        <div className="font-pixel text-xs text-stone-400">Promotion Requirements:</div>
-                                        <div className="mt-1 space-y-1 font-pixel text-xs">
-                                            <div className={membership.promotion_requirements.years_met ? 'text-green-400' : 'text-stone-500'}>
-                                                {membership.promotion_requirements.years_met ? '✓' : '○'} {membership.promotion_requirements.years_required} years membership
+                                {membership.promotion_requirements &&
+                                    Object.keys(membership.promotion_requirements).length > 0 && (
+                                        <div className="mt-3 rounded-lg bg-stone-700/50 p-3">
+                                            <div className="font-pixel text-xs text-stone-400">
+                                                Promotion Requirements:
                                             </div>
-                                            <div className={membership.promotion_requirements.contribution_met ? 'text-green-400' : 'text-stone-500'}>
-                                                {membership.promotion_requirements.contribution_met ? '✓' : '○'} {membership.promotion_requirements.contribution_required.toLocaleString()} contribution
+                                            <div className="mt-1 space-y-1 font-pixel text-xs">
+                                                <div
+                                                    className={
+                                                        membership.promotion_requirements.years_met
+                                                            ? "text-green-400"
+                                                            : "text-stone-500"
+                                                    }
+                                                >
+                                                    {membership.promotion_requirements.years_met
+                                                        ? "✓"
+                                                        : "○"}{" "}
+                                                    {
+                                                        membership.promotion_requirements
+                                                            .years_required
+                                                    }{" "}
+                                                    years membership
+                                                </div>
+                                                <div
+                                                    className={
+                                                        membership.promotion_requirements
+                                                            .contribution_met
+                                                            ? "text-green-400"
+                                                            : "text-stone-500"
+                                                    }
+                                                >
+                                                    {membership.promotion_requirements
+                                                        .contribution_met
+                                                        ? "✓"
+                                                        : "○"}{" "}
+                                                    {membership.promotion_requirements.contribution_required.toLocaleString()}{" "}
+                                                    contribution
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
                             </div>
 
                             <div className="space-y-3">
                                 {/* Donate */}
                                 <div>
-                                    <label className="mb-1 block font-pixel text-xs text-stone-400">Donate to Guild</label>
+                                    <label className="mb-1 block font-pixel text-xs text-stone-400">
+                                        Donate to Guild
+                                    </label>
                                     <div className="flex gap-2">
                                         <input
                                             type="number"
@@ -361,7 +413,11 @@ export default function GuildShow() {
                                         />
                                         <button
                                             onClick={handleDonate}
-                                            disabled={isLoading || parseInt(donateAmount, 10) < 10 || gold < parseInt(donateAmount, 10)}
+                                            disabled={
+                                                isLoading ||
+                                                parseInt(donateAmount, 10) < 10 ||
+                                                gold < parseInt(donateAmount, 10)
+                                            }
                                             className="rounded bg-amber-600 px-3 py-1 font-pixel text-xs text-white transition hover:bg-amber-500 disabled:opacity-50"
                                         >
                                             Donate
@@ -421,7 +477,7 @@ export default function GuildShow() {
                     <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 font-pixel text-sm text-stone-400">
                         {player_skill_level < 1
                             ? `You need at least level 1 in ${guild.skill_display} to join this guild.`
-                            : 'This guild is not accepting new members.'}
+                            : "This guild is not accepting new members."}
                     </div>
                 )}
 
@@ -433,16 +489,22 @@ export default function GuildShow() {
                             Guildmaster Election
                         </h2>
                         <div className="mb-4 font-pixel text-sm text-stone-400">
-                            Status: <span className="text-purple-300">{active_election.status_display}</span>
+                            Status:{" "}
+                            <span className="text-purple-300">
+                                {active_election.status_display}
+                            </span>
                         </div>
 
                         {active_election.is_nomination_phase && (
                             <div className="mb-4">
                                 <div className="font-pixel text-xs text-stone-400">
-                                    Nominations close: {new Date(active_election.nomination_ends_at).toLocaleString()}
+                                    Nominations close:{" "}
+                                    {new Date(active_election.nomination_ends_at).toLocaleString()}
                                 </div>
                                 <div className="mt-3">
-                                    <label className="mb-1 block font-pixel text-xs text-stone-400">Your Platform</label>
+                                    <label className="mb-1 block font-pixel text-xs text-stone-400">
+                                        Your Platform
+                                    </label>
                                     <textarea
                                         value={candidatePlatform}
                                         onChange={(e) => setCandidatePlatform(e.target.value)}
@@ -464,7 +526,8 @@ export default function GuildShow() {
 
                         {active_election.is_voting_phase && (
                             <div className="mb-4 font-pixel text-xs text-stone-400">
-                                Voting closes: {new Date(active_election.voting_ends_at).toLocaleString()}
+                                Voting closes:{" "}
+                                {new Date(active_election.voting_ends_at).toLocaleString()}
                             </div>
                         )}
 
@@ -477,9 +540,13 @@ export default function GuildShow() {
                                         className="flex items-center justify-between rounded-lg bg-stone-800 p-3"
                                     >
                                         <div>
-                                            <div className="font-pixel text-sm text-white">{candidate.username}</div>
+                                            <div className="font-pixel text-sm text-white">
+                                                {candidate.username}
+                                            </div>
                                             {candidate.platform && (
-                                                <div className="font-pixel text-xs text-stone-400">{candidate.platform}</div>
+                                                <div className="font-pixel text-xs text-stone-400">
+                                                    {candidate.platform}
+                                                </div>
                                             )}
                                             <div className="font-pixel text-xs text-purple-400">
                                                 {candidate.votes} votes
@@ -520,13 +587,18 @@ export default function GuildShow() {
                         <div className="grid gap-3 md:grid-cols-2">
                             {guild.benefits.map((benefit) => (
                                 <div key={benefit.id} className="rounded-lg bg-stone-700/50 p-3">
-                                    <div className="font-pixel text-sm text-white">{benefit.name}</div>
-                                    <div className="font-pixel text-xs text-stone-400">{benefit.description}</div>
+                                    <div className="font-pixel text-sm text-white">
+                                        {benefit.name}
+                                    </div>
+                                    <div className="font-pixel text-xs text-stone-400">
+                                        {benefit.description}
+                                    </div>
                                     {benefit.effects && (
                                         <div className="mt-1 font-pixel text-xs text-amber-400">
                                             {Object.entries(benefit.effects).map(([k, v]) => (
                                                 <span key={k} className="mr-2">
-                                                    {k.replace(/_/g, ' ')}: {v > 0 ? '+' : ''}{v}%
+                                                    {k.replace(/_/g, " ")}: {v > 0 ? "+" : ""}
+                                                    {v}%
                                                 </span>
                                             ))}
                                         </div>
@@ -550,23 +622,28 @@ export default function GuildShow() {
                                 className="flex items-center justify-between rounded-lg bg-stone-700/50 p-3"
                             >
                                 <div className="flex items-center gap-3">
-                                    <span className={`rounded px-2 py-1 font-pixel text-xs ${rankColors[member.rank]}`}>
+                                    <span
+                                        className={`rounded px-2 py-1 font-pixel text-xs ${rankColors[member.rank]}`}
+                                    >
                                         {member.rank_display}
                                     </span>
-                                    <span className="font-pixel text-sm text-white">{member.username}</span>
+                                    <span className="font-pixel text-sm text-white">
+                                        {member.username}
+                                    </span>
                                 </div>
                                 <div className="flex items-center gap-4 font-pixel text-xs text-stone-400">
                                     <span>{member.contribution.toLocaleString()} contribution</span>
                                     <span>{member.years_membership} years</span>
-                                    {membership?.is_guildmaster && member.rank !== 'guildmaster' && (
-                                        <button
-                                            onClick={() => handlePromote(member.id)}
-                                            disabled={isLoading}
-                                            className="rounded bg-purple-600/50 px-2 py-1 text-purple-200 transition hover:bg-purple-600 disabled:opacity-50"
-                                        >
-                                            Promote
-                                        </button>
-                                    )}
+                                    {membership?.is_guildmaster &&
+                                        member.rank !== "guildmaster" && (
+                                            <button
+                                                onClick={() => handlePromote(member.id)}
+                                                disabled={isLoading}
+                                                className="rounded bg-purple-600/50 px-2 py-1 text-purple-200 transition hover:bg-purple-600 disabled:opacity-50"
+                                            >
+                                                Promote
+                                            </button>
+                                        )}
                                 </div>
                             </div>
                         ))}
@@ -579,8 +656,13 @@ export default function GuildShow() {
                         <h2 className="mb-4 font-pixel text-lg text-amber-300">Price Controls</h2>
                         <div className="space-y-2">
                             {price_controls.map((pc) => (
-                                <div key={pc.id} className="flex items-center justify-between rounded-lg bg-stone-700/50 p-3">
-                                    <span className="font-pixel text-sm text-white">{pc.item_name}</span>
+                                <div
+                                    key={pc.id}
+                                    className="flex items-center justify-between rounded-lg bg-stone-700/50 p-3"
+                                >
+                                    <span className="font-pixel text-sm text-white">
+                                        {pc.item_name}
+                                    </span>
                                     <span className="font-pixel text-xs text-stone-400">
                                         Min: {pc.min_price} gold
                                         {pc.max_price && ` | Max: ${pc.max_price} gold`}

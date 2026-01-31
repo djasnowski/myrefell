@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from "@inertiajs/react";
 import {
     Coins,
     MapPin,
@@ -11,10 +11,10 @@ import {
     XCircle,
     Flag,
     Heart,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Location {
     type: string;
@@ -92,37 +92,37 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Warfare', href: '#' },
-    { title: 'Armies', href: '/warfare/armies' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Warfare", href: "#" },
+    { title: "Armies", href: "/warfare/armies" },
 ];
 
 const statusColors: Record<string, { bg: string; text: string; label: string }> = {
-    mustering: { bg: 'bg-blue-900/30', text: 'text-blue-400', label: 'Mustering' },
-    marching: { bg: 'bg-amber-900/30', text: 'text-amber-400', label: 'Marching' },
-    encamped: { bg: 'bg-green-900/30', text: 'text-green-400', label: 'Encamped' },
-    besieging: { bg: 'bg-purple-900/30', text: 'text-purple-400', label: 'Besieging' },
-    in_battle: { bg: 'bg-red-900/30', text: 'text-red-400', label: 'In Battle' },
-    disbanded: { bg: 'bg-stone-900/30', text: 'text-stone-400', label: 'Disbanded' },
+    mustering: { bg: "bg-blue-900/30", text: "text-blue-400", label: "Mustering" },
+    marching: { bg: "bg-amber-900/30", text: "text-amber-400", label: "Marching" },
+    encamped: { bg: "bg-green-900/30", text: "text-green-400", label: "Encamped" },
+    besieging: { bg: "bg-purple-900/30", text: "text-purple-400", label: "Besieging" },
+    in_battle: { bg: "bg-red-900/30", text: "text-red-400", label: "In Battle" },
+    disbanded: { bg: "bg-stone-900/30", text: "text-stone-400", label: "Disbanded" },
 };
 
 const reputationColors: Record<string, string> = {
-    unknown: 'text-stone-400',
-    poor: 'text-red-400',
-    average: 'text-yellow-400',
-    good: 'text-green-400',
-    legendary: 'text-purple-400',
+    unknown: "text-stone-400",
+    poor: "text-red-400",
+    average: "text-yellow-400",
+    good: "text-green-400",
+    legendary: "text-purple-400",
 };
 
 const unitTypeLabels: Record<string, string> = {
-    levy: 'Levy',
-    militia: 'Militia',
-    men_at_arms: 'Men-at-Arms',
-    knights: 'Knights',
-    archers: 'Archers',
-    crossbowmen: 'Crossbowmen',
-    cavalry: 'Cavalry',
-    siege_engineers: 'Siege Eng.',
+    levy: "Levy",
+    militia: "Militia",
+    men_at_arms: "Men-at-Arms",
+    knights: "Knights",
+    archers: "Archers",
+    crossbowmen: "Crossbowmen",
+    cavalry: "Cavalry",
+    siege_engineers: "Siege Eng.",
 };
 
 export default function Armies() {
@@ -136,7 +136,7 @@ export default function Armies() {
 
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [formData, setFormData] = useState({
-        name: '',
+        name: "",
     });
     const [isCreating, setIsCreating] = useState(false);
     const [isDisbanding, setIsDisbanding] = useState<number | null>(null);
@@ -146,7 +146,7 @@ export default function Armies() {
 
     const createArmy = async () => {
         if (!formData.name.trim()) {
-            setError('Please enter an army name.');
+            setError("Please enter an army name.");
             return;
         }
 
@@ -154,11 +154,13 @@ export default function Armies() {
         setError(null);
 
         try {
-            const response = await fetch('/warfare/armies', {
-                method: 'POST',
+            const response = await fetch("/warfare/armies", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify(formData),
             });
@@ -167,13 +169,13 @@ export default function Armies() {
             if (data.success) {
                 setSuccess(data.message);
                 setShowCreateForm(false);
-                setFormData({ name: '' });
+                setFormData({ name: "" });
                 router.reload();
             } else {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to raise army');
+            setError("Failed to raise army");
         } finally {
             setIsCreating(false);
         }
@@ -185,10 +187,12 @@ export default function Armies() {
 
         try {
             const response = await fetch(`/warfare/armies/${armyId}/disband`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
             });
 
@@ -200,7 +204,7 @@ export default function Armies() {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to disband army');
+            setError("Failed to disband army");
         } finally {
             setIsDisbanding(null);
         }
@@ -212,10 +216,12 @@ export default function Armies() {
 
         try {
             const response = await fetch(`/warfare/mercenaries/${companyId}/hire`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify({ contract_days: 30 }),
             });
@@ -228,7 +234,7 @@ export default function Armies() {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to hire mercenary company');
+            setError("Failed to hire mercenary company");
         } finally {
             setIsHiring(null);
         }
@@ -236,8 +242,8 @@ export default function Armies() {
 
     const renderArmyCard = (army: Army, showActions: boolean = true) => {
         const status = statusColors[army.status] || statusColors.encamped;
-        const isActive = army.status !== 'disbanded';
-        const canDisband = isActive && army.status !== 'in_battle';
+        const isActive = army.status !== "disbanded";
+        const canDisband = isActive && army.status !== "in_battle";
 
         return (
             <div
@@ -250,7 +256,9 @@ export default function Armies() {
                         <Swords className="h-5 w-5 text-red-400" />
                         <h3 className="font-pixel text-base text-white">{army.name}</h3>
                     </div>
-                    <span className={`rounded px-2 py-1 font-pixel text-[10px] ${status.bg} ${status.text}`}>
+                    <span
+                        className={`rounded px-2 py-1 font-pixel text-[10px] ${status.bg} ${status.text}`}
+                    >
                         {status.label}
                     </span>
                 </div>
@@ -260,7 +268,7 @@ export default function Armies() {
                     <div className="mb-1 flex items-center gap-2 font-pixel text-xs">
                         <Flag className="h-3 w-3 text-amber-400" />
                         <span className="text-stone-400">Commander:</span>
-                        <span className="text-white">{army.commander?.name ?? 'None'}</span>
+                        <span className="text-white">{army.commander?.name ?? "None"}</span>
                     </div>
                     <div className="flex items-center gap-2 font-pixel text-xs">
                         <MapPin className="h-3 w-3 text-green-400" />
@@ -274,14 +282,30 @@ export default function Armies() {
                     <div className="flex items-center gap-1">
                         <Heart className="h-3 w-3 text-red-400" />
                         <span className="text-stone-400">Morale:</span>
-                        <span className={army.morale >= 70 ? 'text-green-400' : army.morale >= 40 ? 'text-yellow-400' : 'text-red-400'}>
+                        <span
+                            className={
+                                army.morale >= 70
+                                    ? "text-green-400"
+                                    : army.morale >= 40
+                                      ? "text-yellow-400"
+                                      : "text-red-400"
+                            }
+                        >
                             {army.morale}%
                         </span>
                     </div>
                     <div className="flex items-center gap-1">
                         <Package className="h-3 w-3 text-amber-400" />
                         <span className="text-stone-400">Supplies:</span>
-                        <span className={army.supplies >= 20 ? 'text-green-400' : army.supplies >= 10 ? 'text-yellow-400' : 'text-red-400'}>
+                        <span
+                            className={
+                                army.supplies >= 20
+                                    ? "text-green-400"
+                                    : army.supplies >= 10
+                                      ? "text-yellow-400"
+                                      : "text-red-400"
+                            }
+                        >
                             {army.supplies}d
                         </span>
                     </div>
@@ -343,7 +367,7 @@ export default function Armies() {
                             className="flex flex-1 items-center justify-center gap-1 rounded border border-red-600/50 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-300 transition hover:bg-red-900/40 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             <XCircle className="h-3 w-3" />
-                            {isDisbanding === army.id ? 'Disbanding...' : 'Disband'}
+                            {isDisbanding === army.id ? "Disbanding..." : "Disband"}
                         </button>
                     </div>
                 )}
@@ -352,7 +376,7 @@ export default function Armies() {
     };
 
     const renderMercenaryCard = (company: MercenaryCompany) => {
-        const repColor = reputationColors[company.reputation] || 'text-stone-400';
+        const repColor = reputationColors[company.reputation] || "text-stone-400";
 
         return (
             <div
@@ -365,7 +389,9 @@ export default function Armies() {
                         <Flag className="h-5 w-5 text-amber-400" />
                         <h3 className="font-pixel text-base text-white">{company.name}</h3>
                     </div>
-                    <span className={`rounded px-2 py-1 font-pixel text-[10px] capitalize ${repColor}`}>
+                    <span
+                        className={`rounded px-2 py-1 font-pixel text-[10px] capitalize ${repColor}`}
+                    >
                         {company.reputation}
                     </span>
                 </div>
@@ -415,7 +441,7 @@ export default function Armies() {
                     className="flex w-full items-center justify-center gap-1 rounded border border-amber-600/50 bg-amber-900/20 px-3 py-1.5 font-pixel text-xs text-amber-300 transition hover:bg-amber-900/40 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     <Coins className="h-3 w-3" />
-                    {isHiring === company.id ? 'Hiring...' : `Hire (${company.hire_cost}g)`}
+                    {isHiring === company.id ? "Hiring..." : `Hire (${company.hire_cost}g)`}
                 </button>
             </div>
         );
@@ -438,7 +464,7 @@ export default function Armies() {
                         className="flex items-center gap-2 rounded border-2 border-red-600/50 bg-red-900/20 px-4 py-2 font-pixel text-xs text-red-300 transition hover:bg-red-900/40"
                     >
                         <Plus className="h-4 w-4" />
-                        {showCreateForm ? 'Cancel' : 'Raise Army'}
+                        {showCreateForm ? "Cancel" : "Raise Army"}
                     </button>
                 </div>
 
@@ -461,11 +487,14 @@ export default function Armies() {
 
                         <div className="mb-3 rounded-lg bg-stone-800/50 p-2 font-pixel text-xs text-stone-400">
                             <MapPin className="mr-1 inline h-3 w-3" />
-                            Mustering at: <span className="text-white">{current_location.name}</span>
+                            Mustering at:{" "}
+                            <span className="text-white">{current_location.name}</span>
                         </div>
 
                         <div className="mb-4">
-                            <label className="mb-1 block font-pixel text-xs text-stone-400">Army Name</label>
+                            <label className="mb-1 block font-pixel text-xs text-stone-400">
+                                Army Name
+                            </label>
                             <input
                                 type="text"
                                 value={formData.name}
@@ -479,7 +508,9 @@ export default function Armies() {
                         <div className="mb-4 rounded-lg bg-stone-800/50 p-3">
                             <div className="grid grid-cols-2 gap-2 font-pixel text-xs">
                                 <div className="text-stone-400">Raise Cost:</div>
-                                <div className="text-right text-yellow-300">{army_creation_cost}g</div>
+                                <div className="text-right text-yellow-300">
+                                    {army_creation_cost}g
+                                </div>
                                 <div className="text-stone-400">Starting Morale:</div>
                                 <div className="text-right text-white">100%</div>
                                 <div className="text-stone-400">Starting Supplies:</div>
@@ -496,7 +527,7 @@ export default function Armies() {
                             disabled={!formData.name.trim() || isCreating}
                             className="w-full rounded bg-red-600 py-2 font-pixel text-sm text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                            {isCreating ? 'Raising...' : `Raise Army (${army_creation_cost}g)`}
+                            {isCreating ? "Raising..." : `Raise Army (${army_creation_cost}g)`}
                         </button>
                     </div>
                 )}
@@ -514,7 +545,9 @@ export default function Armies() {
                 {/* Mercenary Companies */}
                 {mercenary_companies.length > 0 && (
                     <div>
-                        <h2 className="mb-3 font-pixel text-lg text-amber-300">Mercenary Companies Available</h2>
+                        <h2 className="mb-3 font-pixel text-lg text-amber-300">
+                            Mercenary Companies Available
+                        </h2>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {mercenary_companies.map((company) => renderMercenaryCard(company))}
                         </div>
@@ -532,17 +565,19 @@ export default function Armies() {
                 )}
 
                 {/* Empty State */}
-                {active_armies.length === 0 && disbanded_armies.length === 0 && mercenary_companies.length === 0 && (
-                    <div className="flex flex-1 items-center justify-center">
-                        <div className="text-center">
-                            <Swords className="mx-auto mb-3 h-16 w-16 text-stone-600" />
-                            <p className="font-pixel text-base text-stone-500">No armies yet</p>
-                            <p className="font-pixel text-xs text-stone-600">
-                                Raise your first army to begin your military campaign!
-                            </p>
+                {active_armies.length === 0 &&
+                    disbanded_armies.length === 0 &&
+                    mercenary_companies.length === 0 && (
+                        <div className="flex flex-1 items-center justify-center">
+                            <div className="text-center">
+                                <Swords className="mx-auto mb-3 h-16 w-16 text-stone-600" />
+                                <p className="font-pixel text-base text-stone-500">No armies yet</p>
+                                <p className="font-pixel text-xs text-stone-600">
+                                    Raise your first army to begin your military campaign!
+                                </p>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
             </div>
         </AppLayout>
     );

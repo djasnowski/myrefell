@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from "@inertiajs/react";
 import {
     Anchor,
     Banknote,
@@ -24,13 +24,13 @@ import {
     Waves,
     Wheat,
     type LucideIcon,
-} from 'lucide-react';
-import { ActivityFeed } from '@/components/activity-feed';
-import { ServicesGrid } from '@/components/service-card';
-import DisasterWidget from '@/components/widgets/disaster-widget';
-import { LegitimacyDisplay } from '@/components/widgets/legitimacy-badge';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { ActivityFeed } from "@/components/activity-feed";
+import { ServicesGrid } from "@/components/service-card";
+import DisasterWidget from "@/components/widgets/disaster-widget";
+import { LegitimacyDisplay } from "@/components/widgets/legitimacy-badge";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Visitor {
     id: number;
@@ -83,8 +83,8 @@ interface Disaster {
     id: number;
     type: string;
     name: string;
-    severity: 'minor' | 'moderate' | 'severe' | 'catastrophic';
-    status: 'active' | 'ending';
+    severity: "minor" | "moderate" | "severe" | "catastrophic";
+    status: "active" | "ending";
     started_at: string;
     days_active: number;
     buildings_damaged: number;
@@ -122,32 +122,88 @@ interface Props {
     disasters?: Disaster[];
 }
 
-const biomeConfig: Record<string, { icon: LucideIcon; color: string; bg: string; border: string }> = {
-    plains: { icon: Wheat, color: 'text-green-400', bg: 'bg-green-900/30', border: 'border-green-600/50' },
-    forest: { icon: Trees, color: 'text-emerald-400', bg: 'bg-emerald-900/30', border: 'border-emerald-600/50' },
-    tundra: { icon: Snowflake, color: 'text-cyan-400', bg: 'bg-cyan-900/30', border: 'border-cyan-600/50' },
-    coastal: { icon: Waves, color: 'text-blue-400', bg: 'bg-blue-900/30', border: 'border-blue-600/50' },
-    desert: { icon: Sun, color: 'text-amber-400', bg: 'bg-amber-900/30', border: 'border-amber-600/50' },
-    volcano: { icon: Mountain, color: 'text-red-400', bg: 'bg-red-900/30', border: 'border-red-600/50' },
-    mountains: { icon: Mountain, color: 'text-slate-400', bg: 'bg-slate-900/30', border: 'border-slate-600/50' },
-    swamps: { icon: TreePine, color: 'text-lime-400', bg: 'bg-lime-900/30', border: 'border-lime-600/50' },
-    tropical: { icon: Palmtree, color: 'text-teal-400', bg: 'bg-teal-900/30', border: 'border-teal-600/50' },
-};
+const biomeConfig: Record<string, { icon: LucideIcon; color: string; bg: string; border: string }> =
+    {
+        plains: {
+            icon: Wheat,
+            color: "text-green-400",
+            bg: "bg-green-900/30",
+            border: "border-green-600/50",
+        },
+        forest: {
+            icon: Trees,
+            color: "text-emerald-400",
+            bg: "bg-emerald-900/30",
+            border: "border-emerald-600/50",
+        },
+        tundra: {
+            icon: Snowflake,
+            color: "text-cyan-400",
+            bg: "bg-cyan-900/30",
+            border: "border-cyan-600/50",
+        },
+        coastal: {
+            icon: Waves,
+            color: "text-blue-400",
+            bg: "bg-blue-900/30",
+            border: "border-blue-600/50",
+        },
+        desert: {
+            icon: Sun,
+            color: "text-amber-400",
+            bg: "bg-amber-900/30",
+            border: "border-amber-600/50",
+        },
+        volcano: {
+            icon: Mountain,
+            color: "text-red-400",
+            bg: "bg-red-900/30",
+            border: "border-red-600/50",
+        },
+        mountains: {
+            icon: Mountain,
+            color: "text-slate-400",
+            bg: "bg-slate-900/30",
+            border: "border-slate-600/50",
+        },
+        swamps: {
+            icon: TreePine,
+            color: "text-lime-400",
+            bg: "bg-lime-900/30",
+            border: "border-lime-600/50",
+        },
+        tropical: {
+            icon: Palmtree,
+            color: "text-teal-400",
+            bg: "bg-teal-900/30",
+            border: "border-teal-600/50",
+        },
+    };
 
-export default function TownShow({ town, services, recent_activity, roles, visitors, is_visitor, is_mayor, current_user_id, disasters = [] }: Props) {
+export default function TownShow({
+    town,
+    services,
+    recent_activity,
+    roles,
+    visitors,
+    is_visitor,
+    is_mayor,
+    current_user_id,
+    disasters = [],
+}: Props) {
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
 
     const biome = biomeConfig[town.biome] || biomeConfig.plains;
     const BiomeIcon = biome.icon;
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Towns', href: '/towns' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Towns", href: "/towns" },
         { title: town.name, href: `/towns/${town.id}` },
     ];
 
     // Filter to show only key roles (tier 3+) in the summary
-    const keyRoles = roles.filter(r => r.tier >= 3).slice(0, 4);
+    const keyRoles = roles.filter((r) => r.tier >= 3).slice(0, 4);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -176,7 +232,9 @@ export default function TownShow({ town, services, recent_activity, roles, visit
                                         Port
                                     </span>
                                 )}
-                                <span className={`rounded-full ${biome.bg} border ${biome.border} px-3 py-0.5 text-xs capitalize ${biome.color}`}>
+                                <span
+                                    className={`rounded-full ${biome.bg} border ${biome.border} px-3 py-0.5 text-xs capitalize ${biome.color}`}
+                                >
                                     {town.biome}
                                 </span>
                             </div>
@@ -186,7 +244,10 @@ export default function TownShow({ town, services, recent_activity, roles, visit
                             <div className="mt-3 flex items-center gap-2 text-sm">
                                 {town.kingdom && (
                                     <>
-                                        <Link href={`/kingdoms/${town.kingdom.id}`} className="text-amber-400 hover:underline">
+                                        <Link
+                                            href={`/kingdoms/${town.kingdom.id}`}
+                                            className="text-amber-400 hover:underline"
+                                        >
                                             {town.kingdom.name}
                                         </Link>
                                         <span className="text-stone-600">›</span>
@@ -194,7 +255,10 @@ export default function TownShow({ town, services, recent_activity, roles, visit
                                 )}
                                 {town.duchy && (
                                     <>
-                                        <Link href={`/duchies/${town.duchy.id}`} className="text-purple-400 hover:underline">
+                                        <Link
+                                            href={`/duchies/${town.duchy.id}`}
+                                            className="text-purple-400 hover:underline"
+                                        >
                                             {town.duchy.name}
                                         </Link>
                                         <span className="text-stone-600">›</span>
@@ -202,7 +266,10 @@ export default function TownShow({ town, services, recent_activity, roles, visit
                                 )}
                                 {town.barony && (
                                     <>
-                                        <Link href={`/baronies/${town.barony.id}`} className="text-stone-300 hover:underline">
+                                        <Link
+                                            href={`/baronies/${town.barony.id}`}
+                                            className="text-stone-300 hover:underline"
+                                        >
                                             {town.barony.name}
                                         </Link>
                                         <span className="text-stone-600">›</span>
@@ -216,7 +283,9 @@ export default function TownShow({ town, services, recent_activity, roles, visit
                         {is_visitor && (
                             <div className="flex items-center gap-2 rounded-lg border border-blue-600/50 bg-blue-900/30 px-3 py-2">
                                 <MapPin className="h-4 w-4 text-blue-400" />
-                                <span className="font-pixel text-xs text-blue-400">You Are Here</span>
+                                <span className="font-pixel text-xs text-blue-400">
+                                    You Are Here
+                                </span>
                             </div>
                         )}
                     </div>
@@ -227,15 +296,25 @@ export default function TownShow({ town, services, recent_activity, roles, visit
                     <div className="flex items-center gap-3 rounded-lg border border-amber-600/30 bg-amber-900/10 px-4 py-3">
                         <Gavel className="h-5 w-5 text-amber-400" />
                         <div className="flex-1">
-                            <div className="font-pixel text-sm text-amber-300">You are the Mayor</div>
-                            <div className="text-xs text-stone-400">Manage town affairs, set tax rates, appoint officials</div>
+                            <div className="font-pixel text-sm text-amber-300">
+                                You are the Mayor
+                            </div>
+                            <div className="text-xs text-stone-400">
+                                Manage town affairs, set tax rates, appoint officials
+                            </div>
                         </div>
                         <div className="flex gap-2">
-                            <Link href={`/towns/${town.id}/roles`} className="flex items-center gap-1 rounded border border-stone-600 bg-stone-800 px-3 py-1.5 font-pixel text-xs text-stone-300 transition hover:bg-stone-700">
+                            <Link
+                                href={`/towns/${town.id}/roles`}
+                                className="flex items-center gap-1 rounded border border-stone-600 bg-stone-800 px-3 py-1.5 font-pixel text-xs text-stone-300 transition hover:bg-stone-700"
+                            >
                                 <Briefcase className="h-3 w-3" />
                                 Roles
                             </Link>
-                            <Link href={`/towns/${town.id}/treasury`} className="flex items-center gap-1 rounded border border-stone-600 bg-stone-800 px-3 py-1.5 font-pixel text-xs text-stone-300 transition hover:bg-stone-700">
+                            <Link
+                                href={`/towns/${town.id}/treasury`}
+                                className="flex items-center gap-1 rounded border border-stone-600 bg-stone-800 px-3 py-1.5 font-pixel text-xs text-stone-300 transition hover:bg-stone-700"
+                            >
                                 <Banknote className="h-3 w-3" />
                                 Treasury
                             </Link>
@@ -252,18 +331,21 @@ export default function TownShow({ town, services, recent_activity, roles, visit
                         </span>
                     )}
                     {town.barony && (
-                        <Link href={`/baronies/${town.barony.id}`} className="flex items-center gap-1 rounded-full border border-stone-700 bg-stone-800/50 px-3 py-1 text-xs text-stone-400 transition hover:text-stone-300">
+                        <Link
+                            href={`/baronies/${town.barony.id}`}
+                            className="flex items-center gap-1 rounded-full border border-stone-700 bg-stone-800/50 px-3 py-1 text-xs text-stone-400 transition hover:text-stone-300"
+                        >
                             <Building2 className="h-3 w-3" />
                             {town.barony.name}
                         </Link>
                     )}
-                    {services.some(s => s.id === 'church' || s.id === 'shrine') && (
+                    {services.some((s) => s.id === "church" || s.id === "shrine") && (
                         <span className="flex items-center gap-1 rounded-full border border-stone-700 bg-stone-800/50 px-3 py-1 text-xs text-stone-400">
                             <Church className="h-3 w-3" />
                             Has Shrine
                         </span>
                     )}
-                    {services.some(s => s.id === 'market') && (
+                    {services.some((s) => s.id === "market") && (
                         <span className="flex items-center gap-1 rounded-full border border-stone-700 bg-stone-800/50 px-3 py-1 text-xs text-stone-400">
                             <ScrollText className="h-3 w-3" />
                             Market Open
@@ -293,9 +375,7 @@ export default function TownShow({ town, services, recent_activity, roles, visit
                 )}
 
                 {/* Disaster Alert */}
-                {disasters.length > 0 && (
-                    <DisasterWidget disasters={disasters} />
-                )}
+                {disasters.length > 0 && <DisasterWidget disasters={disasters} />}
 
                 {/* Stats Row */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -369,11 +449,15 @@ export default function TownShow({ town, services, recent_activity, roles, visit
                                         <div className="font-pixel text-lg text-stone-100">
                                             {town.mayor.username}
                                             {town.mayor.id === current_user_id && (
-                                                <span className="ml-2 text-xs text-amber-400">(You)</span>
+                                                <span className="ml-2 text-xs text-amber-400">
+                                                    (You)
+                                                </span>
                                             )}
                                         </div>
                                         {town.mayor.primary_title && (
-                                            <div className="text-xs capitalize text-stone-500">{town.mayor.primary_title}</div>
+                                            <div className="text-xs capitalize text-stone-500">
+                                                {town.mayor.primary_title}
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -401,7 +485,9 @@ export default function TownShow({ town, services, recent_activity, roles, visit
                             <Shield className="h-8 w-8 text-stone-400" />
                             <div>
                                 <div className="font-pixel text-stone-200">Town Officials</div>
-                                <div className="text-xs text-stone-500">View all {roles.length} positions</div>
+                                <div className="text-xs text-stone-500">
+                                    View all {roles.length} positions
+                                </div>
                             </div>
                         </div>
                         <span className="text-stone-500">›</span>
@@ -417,22 +503,32 @@ export default function TownShow({ town, services, recent_activity, roles, visit
                                 <div
                                     key={role.id}
                                     className={`rounded-lg border p-3 ${
-                                        role.holder ? 'border-amber-600/30 bg-amber-900/10' : 'border-stone-700 bg-stone-800/30'
+                                        role.holder
+                                            ? "border-amber-600/30 bg-amber-900/10"
+                                            : "border-stone-700 bg-stone-800/30"
                                     }`}
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span className="font-pixel text-xs text-stone-400">{role.name}</span>
+                                        <span className="font-pixel text-xs text-stone-400">
+                                            {role.name}
+                                        </span>
                                         <span className="rounded bg-stone-700 px-1.5 py-0.5 text-[10px] text-stone-400">
                                             T{role.tier}
                                         </span>
                                     </div>
                                     {role.holder ? (
                                         <div className="mt-2">
-                                            <div className="font-pixel text-sm text-stone-200">{role.holder.username}</div>
-                                            <div className="text-[10px] text-stone-500">{role.holder.appointed_at}</div>
+                                            <div className="font-pixel text-sm text-stone-200">
+                                                {role.holder.username}
+                                            </div>
+                                            <div className="text-[10px] text-stone-500">
+                                                {role.holder.appointed_at}
+                                            </div>
                                         </div>
                                     ) : (
-                                        <div className="mt-2 font-pixel text-xs text-stone-600 italic">Vacant</div>
+                                        <div className="mt-2 font-pixel text-xs text-stone-600 italic">
+                                            Vacant
+                                        </div>
                                     )}
                                 </div>
                             ))}
@@ -461,7 +557,9 @@ export default function TownShow({ town, services, recent_activity, roles, visit
                                         <div className="font-pixel text-sm text-stone-200">
                                             {visitor.username}
                                             {visitor.id === current_user_id && (
-                                                <span className="ml-1 text-xs text-blue-400">(You)</span>
+                                                <span className="ml-1 text-xs text-blue-400">
+                                                    (You)
+                                                </span>
                                             )}
                                         </div>
                                         <div className="flex items-center gap-1 text-xs text-stone-500">
@@ -489,7 +587,9 @@ export default function TownShow({ town, services, recent_activity, roles, visit
                         <Anchor className="h-8 w-8 text-blue-400" />
                         <div>
                             <div className="font-pixel text-blue-300">Harbor</div>
-                            <div className="text-xs text-stone-400">Book passage to distant lands</div>
+                            <div className="text-xs text-stone-400">
+                                Book passage to distant lands
+                            </div>
                         </div>
                     </Link>
                 )}

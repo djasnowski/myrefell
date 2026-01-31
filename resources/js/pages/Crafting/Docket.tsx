@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from "@inertiajs/react";
 import {
     ArrowRight,
     Beef,
@@ -14,10 +14,10 @@ import {
     User,
     X,
     Zap,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Material {
     name: string;
@@ -89,8 +89,8 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Crafting Docket', href: '/docket' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Crafting Docket", href: "/docket" },
 ];
 
 const categoryIcons: Record<string, typeof Hammer> = {
@@ -117,7 +117,9 @@ function NpcRecipeCard({
     return (
         <div
             className={`rounded-lg border p-3 transition ${
-                canAfford ? 'border-amber-600/50 bg-stone-800/50' : 'border-stone-700 bg-stone-800/30 opacity-60'
+                canAfford
+                    ? "border-amber-600/50 bg-stone-800/50"
+                    : "border-stone-700 bg-stone-800/30 opacity-60"
             }`}
         >
             <div className="mb-2 flex items-center justify-between">
@@ -147,8 +149,8 @@ function NpcRecipeCard({
                 disabled={!canAfford || loading !== null}
                 className={`flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 font-pixel text-xs transition ${
                     canAfford && !loading
-                        ? 'bg-amber-600 text-stone-900 hover:bg-amber-500'
-                        : 'cursor-not-allowed bg-stone-700 text-stone-500'
+                        ? "bg-amber-600 text-stone-900 hover:bg-amber-500"
+                        : "cursor-not-allowed bg-stone-700 text-stone-500"
                 }`}
             >
                 {isLoading ? (
@@ -217,12 +219,11 @@ function PendingOrderCard({
 
             <div className="mb-3 flex items-center justify-between">
                 <span className="flex items-center gap-1 font-pixel text-xs text-green-400">
-                    <Coins className="h-3 w-3" />
-                    +{order.crafter_payment} gold
+                    <Coins className="h-3 w-3" />+{order.crafter_payment} gold
                 </span>
                 <span className="flex items-center gap-1 font-pixel text-[10px] text-stone-500">
                     <User className="h-3 w-3" />
-                    {order.customer?.username || 'Unknown'}
+                    {order.customer?.username || "Unknown"}
                 </span>
             </div>
 
@@ -230,7 +231,9 @@ function PendingOrderCard({
                 onClick={() => onAccept(order.id)}
                 disabled={loading !== null}
                 className={`flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 font-pixel text-xs transition ${
-                    !loading ? 'bg-green-600 text-stone-900 hover:bg-green-500' : 'cursor-not-allowed bg-stone-700 text-stone-500'
+                    !loading
+                        ? "bg-green-600 text-stone-900 hover:bg-green-500"
+                        : "cursor-not-allowed bg-stone-700 text-stone-500"
                 }`}
             >
                 {isLoading ? (
@@ -266,7 +269,9 @@ function AcceptedOrderCard({
     return (
         <div
             className={`rounded-lg border p-3 ${
-                order.is_tardy ? 'border-red-600/50 bg-red-900/20' : 'border-amber-600/50 bg-stone-800/50'
+                order.is_tardy
+                    ? "border-red-600/50 bg-red-900/20"
+                    : "border-amber-600/50 bg-stone-800/50"
             }`}
         >
             <div className="mb-2 flex items-center justify-between">
@@ -276,11 +281,11 @@ function AcceptedOrderCard({
                 </div>
                 <div
                     className={`flex items-center gap-1 font-pixel text-xs ${
-                        order.is_tardy ? 'text-red-400' : 'text-yellow-400'
+                        order.is_tardy ? "text-red-400" : "text-yellow-400"
                     }`}
                 >
                     <Clock className="h-3 w-3" />
-                    {order.is_tardy ? 'LATE!' : `${order.minutes_until_due}m left`}
+                    {order.is_tardy ? "LATE!" : `${order.minutes_until_due}m left`}
                 </div>
             </div>
 
@@ -296,12 +301,11 @@ function AcceptedOrderCard({
 
             <div className="mb-3 flex items-center justify-between">
                 <span className="flex items-center gap-1 font-pixel text-xs text-green-400">
-                    <Coins className="h-3 w-3" />
-                    +{order.crafter_payment} gold
+                    <Coins className="h-3 w-3" />+{order.crafter_payment} gold
                 </span>
                 <span className="flex items-center gap-1 font-pixel text-[10px] text-stone-500">
                     <User className="h-3 w-3" />
-                    For: {order.customer?.username || 'Unknown'}
+                    For: {order.customer?.username || "Unknown"}
                 </span>
             </div>
 
@@ -311,8 +315,8 @@ function AcceptedOrderCard({
                     disabled={loading !== null}
                     className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 font-pixel text-xs transition ${
                         !loading
-                            ? 'bg-green-600 text-stone-900 hover:bg-green-500'
-                            : 'cursor-not-allowed bg-stone-700 text-stone-500'
+                            ? "bg-green-600 text-stone-900 hover:bg-green-500"
+                            : "cursor-not-allowed bg-stone-700 text-stone-500"
                     }`}
                 >
                     {isLoading ? (
@@ -347,7 +351,7 @@ function MyOrderCard({
 }) {
     const isLoading = loading === order.id;
     const CategoryIcon = categoryIcons[order.category] || Hammer;
-    const isPending = order.status === 'pending';
+    const isPending = order.status === "pending";
 
     return (
         <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
@@ -358,10 +362,12 @@ function MyOrderCard({
                 </div>
                 <span
                     className={`rounded px-2 py-0.5 font-pixel text-[10px] ${
-                        isPending ? 'bg-yellow-900/50 text-yellow-400' : 'bg-blue-900/50 text-blue-400'
+                        isPending
+                            ? "bg-yellow-900/50 text-yellow-400"
+                            : "bg-blue-900/50 text-blue-400"
                     }`}
                 >
-                    {isPending ? 'Waiting' : 'In Progress'}
+                    {isPending ? "Waiting" : "In Progress"}
                 </span>
             </div>
 
@@ -408,7 +414,7 @@ export default function DocketPage() {
     const { docket_info } = usePage<PageProps>().props;
     const [loading, setLoading] = useState<string | number | null>(null);
     const [result, setResult] = useState<ActionResult | null>(null);
-    const [activeTab, setActiveTab] = useState<'npc' | 'orders' | 'my-work' | 'my-orders'>('npc');
+    const [activeTab, setActiveTab] = useState<"npc" | "orders" | "my-work" | "my-orders">("npc");
     const [playerGold, setPlayerGold] = useState(docket_info.player_gold);
 
     const handleNpcBuy = async (recipeId: string) => {
@@ -416,11 +422,14 @@ export default function DocketPage() {
         setResult(null);
 
         try {
-            const response = await fetch('/docket/npc-order', {
-                method: 'POST',
+            const response = await fetch("/docket/npc-order", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
                 },
                 body: JSON.stringify({ recipe: recipeId, quantity: 1 }),
             });
@@ -432,9 +441,9 @@ export default function DocketPage() {
                 setPlayerGold(data.gold_remaining);
             }
 
-            router.reload({ only: ['docket_info', 'sidebar'] });
+            router.reload({ only: ["docket_info", "sidebar"] });
         } catch {
-            setResult({ success: false, message: 'An error occurred' });
+            setResult({ success: false, message: "An error occurred" });
         } finally {
             setLoading(null);
         }
@@ -446,18 +455,21 @@ export default function DocketPage() {
 
         try {
             const response = await fetch(`/docket/${orderId}/accept`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
                 },
             });
 
             const data: ActionResult = await response.json();
             setResult(data);
-            router.reload({ only: ['docket_info', 'sidebar'] });
+            router.reload({ only: ["docket_info", "sidebar"] });
         } catch {
-            setResult({ success: false, message: 'An error occurred' });
+            setResult({ success: false, message: "An error occurred" });
         } finally {
             setLoading(null);
         }
@@ -469,10 +481,13 @@ export default function DocketPage() {
 
         try {
             const response = await fetch(`/docket/${orderId}/complete`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
                 },
             });
 
@@ -483,9 +498,9 @@ export default function DocketPage() {
                 setPlayerGold(data.gold_remaining);
             }
 
-            router.reload({ only: ['docket_info', 'sidebar'] });
+            router.reload({ only: ["docket_info", "sidebar"] });
         } catch {
-            setResult({ success: false, message: 'An error occurred' });
+            setResult({ success: false, message: "An error occurred" });
         } finally {
             setLoading(null);
         }
@@ -497,18 +512,21 @@ export default function DocketPage() {
 
         try {
             const response = await fetch(`/docket/${orderId}/abandon`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
                 },
             });
 
             const data: ActionResult = await response.json();
             setResult(data);
-            router.reload({ only: ['docket_info', 'sidebar'] });
+            router.reload({ only: ["docket_info", "sidebar"] });
         } catch {
-            setResult({ success: false, message: 'An error occurred' });
+            setResult({ success: false, message: "An error occurred" });
         } finally {
             setLoading(null);
         }
@@ -520,10 +538,13 @@ export default function DocketPage() {
 
         try {
             const response = await fetch(`/docket/${orderId}/cancel`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
                 },
             });
 
@@ -534,19 +555,23 @@ export default function DocketPage() {
                 setPlayerGold(data.gold_remaining);
             }
 
-            router.reload({ only: ['docket_info', 'sidebar'] });
+            router.reload({ only: ["docket_info", "sidebar"] });
         } catch {
-            setResult({ success: false, message: 'An error occurred' });
+            setResult({ success: false, message: "An error occurred" });
         } finally {
             setLoading(null);
         }
     };
 
     const tabs = [
-        { id: 'npc' as const, label: 'NPC Shop', count: docket_info.npc_recipes.length },
-        { id: 'orders' as const, label: 'Open Orders', count: docket_info.pending_orders.length },
-        { id: 'my-work' as const, label: 'My Work', count: docket_info.my_accepted_orders.length },
-        { id: 'my-orders' as const, label: 'My Orders', count: docket_info.my_placed_orders.length },
+        { id: "npc" as const, label: "NPC Shop", count: docket_info.npc_recipes.length },
+        { id: "orders" as const, label: "Open Orders", count: docket_info.pending_orders.length },
+        { id: "my-work" as const, label: "My Work", count: docket_info.my_accepted_orders.length },
+        {
+            id: "my-orders" as const,
+            label: "My Orders",
+            count: docket_info.my_placed_orders.length,
+        },
     ];
 
     return (
@@ -560,7 +585,9 @@ export default function DocketPage() {
                     </div>
                     <div>
                         <h1 className="font-pixel text-2xl text-amber-400">Crafting Docket</h1>
-                        <p className="font-pixel text-xs text-stone-400">Buy crafted items or fulfill orders for gold</p>
+                        <p className="font-pixel text-xs text-stone-400">
+                            Buy crafted items or fulfill orders for gold
+                        </p>
                     </div>
                 </div>
 
@@ -577,7 +604,9 @@ export default function DocketPage() {
                 {result && (
                     <div
                         className={`mb-4 rounded-lg border p-3 ${
-                            result.success ? 'border-green-600/50 bg-green-900/20' : 'border-red-600/50 bg-red-900/20'
+                            result.success
+                                ? "border-green-600/50 bg-green-900/20"
+                                : "border-red-600/50 bg-red-900/20"
                         }`}
                     >
                         <div className="flex items-center gap-3">
@@ -585,14 +614,18 @@ export default function DocketPage() {
                                 <>
                                     <Package className="h-6 w-6 text-green-400" />
                                     <div>
-                                        <div className="font-pixel text-sm text-green-300">{result.message}</div>
+                                        <div className="font-pixel text-sm text-green-300">
+                                            {result.message}
+                                        </div>
                                         {result.xp_earned && (
                                             <div className="flex items-center gap-2">
                                                 <span className="font-pixel text-[10px] text-amber-400">
                                                     +{result.xp_earned} XP
                                                 </span>
                                                 {result.leveled_up && (
-                                                    <span className="font-pixel text-[10px] text-yellow-300">Level Up!</span>
+                                                    <span className="font-pixel text-[10px] text-yellow-300">
+                                                        Level Up!
+                                                    </span>
                                                 )}
                                             </div>
                                         )}
@@ -601,10 +634,14 @@ export default function DocketPage() {
                             ) : result.success ? (
                                 <>
                                     <Check className="h-6 w-6 text-green-400" />
-                                    <div className="font-pixel text-sm text-green-300">{result.message}</div>
+                                    <div className="font-pixel text-sm text-green-300">
+                                        {result.message}
+                                    </div>
                                 </>
                             ) : (
-                                <span className="font-pixel text-sm text-red-400">{result.message}</span>
+                                <span className="font-pixel text-sm text-red-400">
+                                    {result.message}
+                                </span>
                             )}
                         </div>
                     </div>
@@ -618,15 +655,15 @@ export default function DocketPage() {
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-1.5 font-pixel text-xs transition ${
                                 activeTab === tab.id
-                                    ? 'bg-amber-600 text-stone-900'
-                                    : 'bg-stone-800 text-stone-400 hover:bg-stone-700'
+                                    ? "bg-amber-600 text-stone-900"
+                                    : "bg-stone-800 text-stone-400 hover:bg-stone-700"
                             }`}
                         >
                             {tab.label}
                             {tab.count > 0 && (
                                 <span
                                     className={`rounded px-1.5 py-0.5 text-[10px] ${
-                                        activeTab === tab.id ? 'bg-stone-900/30' : 'bg-stone-700'
+                                        activeTab === tab.id ? "bg-stone-900/30" : "bg-stone-700"
                                     }`}
                                 >
                                     {tab.count}
@@ -638,28 +675,32 @@ export default function DocketPage() {
 
                 {/* Tab Content */}
                 <div className="flex-1 overflow-y-auto">
-                    {activeTab === 'npc' && (
+                    {activeTab === "npc" && (
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {docket_info.npc_recipes.map((recipe) => (
                                 <NpcRecipeCard
                                     key={recipe.id}
                                     recipe={recipe}
                                     onBuy={handleNpcBuy}
-                                    loading={typeof loading === 'string' ? loading : null}
+                                    loading={typeof loading === "string" ? loading : null}
                                     playerGold={playerGold}
                                 />
                             ))}
                         </div>
                     )}
 
-                    {activeTab === 'orders' && (
+                    {activeTab === "orders" && (
                         <>
                             {docket_info.pending_orders.length === 0 ? (
                                 <div className="flex flex-1 items-center justify-center py-12">
                                     <div className="text-center">
                                         <ClipboardList className="mx-auto mb-3 h-12 w-12 text-stone-600" />
-                                        <p className="font-pixel text-sm text-stone-500">No open orders available</p>
-                                        <p className="font-pixel text-xs text-stone-600">Check back later or try another location</p>
+                                        <p className="font-pixel text-sm text-stone-500">
+                                            No open orders available
+                                        </p>
+                                        <p className="font-pixel text-xs text-stone-600">
+                                            Check back later or try another location
+                                        </p>
                                     </div>
                                 </div>
                             ) : (
@@ -669,7 +710,7 @@ export default function DocketPage() {
                                             key={order.id}
                                             order={order}
                                             onAccept={handleAcceptOrder}
-                                            loading={typeof loading === 'number' ? loading : null}
+                                            loading={typeof loading === "number" ? loading : null}
                                         />
                                     ))}
                                 </div>
@@ -677,14 +718,18 @@ export default function DocketPage() {
                         </>
                     )}
 
-                    {activeTab === 'my-work' && (
+                    {activeTab === "my-work" && (
                         <>
                             {docket_info.my_accepted_orders.length === 0 ? (
                                 <div className="flex flex-1 items-center justify-center py-12">
                                     <div className="text-center">
                                         <Zap className="mx-auto mb-3 h-12 w-12 text-stone-600" />
-                                        <p className="font-pixel text-sm text-stone-500">No active work orders</p>
-                                        <p className="font-pixel text-xs text-stone-600">Accept orders from the Open Orders tab</p>
+                                        <p className="font-pixel text-sm text-stone-500">
+                                            No active work orders
+                                        </p>
+                                        <p className="font-pixel text-xs text-stone-600">
+                                            Accept orders from the Open Orders tab
+                                        </p>
                                     </div>
                                 </div>
                             ) : (
@@ -695,7 +740,7 @@ export default function DocketPage() {
                                             order={order}
                                             onComplete={handleCompleteOrder}
                                             onAbandon={handleAbandonOrder}
-                                            loading={typeof loading === 'number' ? loading : null}
+                                            loading={typeof loading === "number" ? loading : null}
                                         />
                                     ))}
                                 </div>
@@ -703,13 +748,15 @@ export default function DocketPage() {
                         </>
                     )}
 
-                    {activeTab === 'my-orders' && (
+                    {activeTab === "my-orders" && (
                         <>
                             {docket_info.my_placed_orders.length === 0 ? (
                                 <div className="flex flex-1 items-center justify-center py-12">
                                     <div className="text-center">
                                         <ShoppingCart className="mx-auto mb-3 h-12 w-12 text-stone-600" />
-                                        <p className="font-pixel text-sm text-stone-500">No placed orders</p>
+                                        <p className="font-pixel text-sm text-stone-500">
+                                            No placed orders
+                                        </p>
                                         <p className="font-pixel text-xs text-stone-600">
                                             Place orders from the crafting page for player crafters
                                         </p>
@@ -722,7 +769,7 @@ export default function DocketPage() {
                                             key={order.id}
                                             order={order}
                                             onCancel={handleCancelOrder}
-                                            loading={typeof loading === 'number' ? loading : null}
+                                            loading={typeof loading === "number" ? loading : null}
                                         />
                                     ))}
                                 </div>

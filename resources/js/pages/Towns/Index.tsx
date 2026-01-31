@@ -1,12 +1,12 @@
-import { Head } from '@inertiajs/react';
-import { Castle } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head } from "@inertiajs/react";
+import { Castle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Towns', href: '/towns' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Towns", href: "/towns" },
 ];
 
 export default function TownsIndex() {

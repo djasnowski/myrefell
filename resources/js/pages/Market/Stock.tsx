@@ -1,8 +1,8 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowRight, Minus, Package, Plus, Store, Warehouse } from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from "@inertiajs/react";
+import { ArrowRight, Minus, Package, Plus, Store, Warehouse } from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface StockableItem {
     inventory_id: number;
@@ -32,20 +32,21 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Market', href: '#' },
-    { title: 'Stock Market', href: '/market/stock' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Market", href: "#" },
+    { title: "Stock Market", href: "/market/stock" },
 ];
 
 const typeColors: Record<string, string> = {
-    resource: 'text-blue-400',
-    consumable: 'text-green-400',
-    tool: 'text-orange-400',
-    misc: 'text-stone-400',
+    resource: "text-blue-400",
+    consumable: "text-green-400",
+    tool: "text-orange-400",
+    misc: "text-stone-400",
 };
 
 export default function MarketStock() {
-    const { stockable_items, managed_stockpile, location_name, flash, errors } = usePage<PageProps>().props;
+    const { stockable_items, managed_stockpile, location_name, flash, errors } =
+        usePage<PageProps>().props;
     const [quantities, setQuantities] = useState<Record<number, number>>({});
     const [loading, setLoading] = useState<number | null>(null);
 
@@ -65,7 +66,7 @@ export default function MarketStock() {
         setLoading(item.item_id);
 
         router.post(
-            '/market/stock',
+            "/market/stock",
             {
                 item_id: item.item_id,
                 quantity: qty,
@@ -76,7 +77,7 @@ export default function MarketStock() {
                     router.reload();
                 },
                 onFinish: () => setLoading(null),
-            }
+            },
         );
     };
 
@@ -107,7 +108,9 @@ export default function MarketStock() {
                 )}
                 {(flash?.error || errors?.error) && (
                     <div className="mb-4 rounded-lg border border-red-600/50 bg-red-900/20 p-3">
-                        <p className="font-pixel text-sm text-red-400">{flash?.error || errors?.error}</p>
+                        <p className="font-pixel text-sm text-red-400">
+                            {flash?.error || errors?.error}
+                        </p>
                     </div>
                 )}
 
@@ -128,7 +131,9 @@ export default function MarketStock() {
                             <div className="border-b border-stone-600 bg-stone-800 px-4 py-3">
                                 <div className="flex items-center gap-2">
                                     <Package className="h-5 w-5 text-amber-400" />
-                                    <h2 className="font-pixel text-sm text-amber-400">Your Inventory</h2>
+                                    <h2 className="font-pixel text-sm text-amber-400">
+                                        Your Inventory
+                                    </h2>
                                 </div>
                                 <p className="font-pixel text-xs text-stone-500">
                                     Items you can stock based on your role
@@ -171,8 +176,11 @@ export default function MarketStock() {
                                                                 onClick={() =>
                                                                     setQuantity(
                                                                         item.item_id,
-                                                                        getQuantity(item.item_id, item.quantity) - 1,
-                                                                        item.quantity
+                                                                        getQuantity(
+                                                                            item.item_id,
+                                                                            item.quantity,
+                                                                        ) - 1,
+                                                                        item.quantity,
                                                                     )
                                                                 }
                                                                 className="rounded bg-stone-700 p-1 hover:bg-stone-600"
@@ -181,12 +189,16 @@ export default function MarketStock() {
                                                             </button>
                                                             <input
                                                                 type="number"
-                                                                value={getQuantity(item.item_id, item.quantity)}
+                                                                value={getQuantity(
+                                                                    item.item_id,
+                                                                    item.quantity,
+                                                                )}
                                                                 onChange={(e) =>
                                                                     setQuantity(
                                                                         item.item_id,
-                                                                        parseInt(e.target.value) || 1,
-                                                                        item.quantity
+                                                                        parseInt(e.target.value) ||
+                                                                            1,
+                                                                        item.quantity,
                                                                     )
                                                                 }
                                                                 className="w-12 rounded border border-stone-600 bg-stone-800 px-1 py-0.5 text-center font-pixel text-xs text-stone-200"
@@ -197,8 +209,11 @@ export default function MarketStock() {
                                                                 onClick={() =>
                                                                     setQuantity(
                                                                         item.item_id,
-                                                                        getQuantity(item.item_id, item.quantity) + 1,
-                                                                        item.quantity
+                                                                        getQuantity(
+                                                                            item.item_id,
+                                                                            item.quantity,
+                                                                        ) + 1,
+                                                                        item.quantity,
                                                                     )
                                                                 }
                                                                 className="rounded bg-stone-700 p-1 hover:bg-stone-600"
@@ -230,7 +245,9 @@ export default function MarketStock() {
                             <div className="border-b border-stone-600 bg-stone-800 px-4 py-3">
                                 <div className="flex items-center gap-2">
                                     <Warehouse className="h-5 w-5 text-amber-400" />
-                                    <h2 className="font-pixel text-sm text-amber-400">Market Stock</h2>
+                                    <h2 className="font-pixel text-sm text-amber-400">
+                                        Market Stock
+                                    </h2>
                                 </div>
                                 <p className="font-pixel text-xs text-stone-500">
                                     Current items available in the market
@@ -263,7 +280,9 @@ export default function MarketStock() {
                                                     <div className="font-pixel text-lg text-amber-400">
                                                         {item.quantity}
                                                     </div>
-                                                    <div className="font-pixel text-xs text-stone-500">in stock</div>
+                                                    <div className="font-pixel text-xs text-stone-500">
+                                                        in stock
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}

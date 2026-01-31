@@ -1,6 +1,5 @@
-import { Head, usePage } from '@inertiajs/react';
-import type {
-    LucideIcon} from 'lucide-react';
+import { Head, usePage } from "@inertiajs/react";
+import type { LucideIcon } from "lucide-react";
 import {
     Beef,
     BicepsFlexed,
@@ -17,9 +16,9 @@ import {
     TreeDeciduous,
     Trophy,
     Wheat,
-} from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Skill {
     name: string;
@@ -52,8 +51,8 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Skills', href: '/skills' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Skills", href: "/skills" },
 ];
 
 const skillIcons: Record<string, LucideIcon> = {
@@ -74,19 +73,19 @@ const skillIcons: Record<string, LucideIcon> = {
 
 const categoryConfig = {
     combat: {
-        color: 'border-red-500/50 bg-red-900/20',
-        iconColor: 'text-red-400',
-        barColor: 'from-red-600 to-red-400',
+        color: "border-red-500/50 bg-red-900/20",
+        iconColor: "text-red-400",
+        barColor: "from-red-600 to-red-400",
     },
     gathering: {
-        color: 'border-green-500/50 bg-green-900/20',
-        iconColor: 'text-green-400',
-        barColor: 'from-green-600 to-green-400',
+        color: "border-green-500/50 bg-green-900/20",
+        iconColor: "text-green-400",
+        barColor: "from-green-600 to-green-400",
     },
     crafting: {
-        color: 'border-blue-500/50 bg-blue-900/20',
-        iconColor: 'text-blue-400',
-        barColor: 'from-blue-600 to-blue-400',
+        color: "border-blue-500/50 bg-blue-900/20",
+        iconColor: "text-blue-400",
+        barColor: "from-blue-600 to-blue-400",
     },
 };
 
@@ -95,7 +94,9 @@ function SkillCard({ skill, category }: { skill: Skill; category: keyof typeof c
     const config = categoryConfig[category];
 
     return (
-        <div className={`flex items-center gap-3 rounded-lg border ${config.color} px-3 py-2 transition-all hover:brightness-110`}>
+        <div
+            className={`flex items-center gap-3 rounded-lg border ${config.color} px-3 py-2 transition-all hover:brightness-110`}
+        >
             {/* Icon */}
             <div className="rounded-md bg-stone-800/50 p-2">
                 <Icon className={`h-5 w-5 ${config.iconColor}`} />
@@ -105,7 +106,9 @@ function SkillCard({ skill, category }: { skill: Skill; category: keyof typeof c
             <div className="min-w-0 flex-1">
                 <div className="mb-1 flex items-center justify-between">
                     <h3 className="font-pixel text-xs capitalize text-amber-300">{skill.name}</h3>
-                    <span className="font-pixel text-[10px] text-stone-500">{skill.xp.toLocaleString()} xp</span>
+                    <span className="font-pixel text-[10px] text-stone-500">
+                        {skill.xp.toLocaleString()} xp
+                    </span>
                 </div>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-stone-700">
                     <div
@@ -144,18 +147,26 @@ export default function SkillsIndex() {
                 <div className="mb-6 flex items-center justify-between">
                     <div>
                         <h1 className="font-pixel text-2xl text-amber-400">Skills</h1>
-                        <p className="font-pixel text-sm text-stone-400">Track your progress and abilities</p>
+                        <p className="font-pixel text-sm text-stone-400">
+                            Track your progress and abilities
+                        </p>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2 text-center">
-                            <div className="font-pixel text-[10px] text-stone-500">Combat Level</div>
-                            <div className="font-pixel text-lg text-red-400">{stats.combat_level}</div>
+                            <div className="font-pixel text-[10px] text-stone-500">
+                                Combat Level
+                            </div>
+                            <div className="font-pixel text-lg text-red-400">
+                                {stats.combat_level}
+                            </div>
                         </div>
                         <div className="rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2 text-center">
                             <div className="font-pixel text-[10px] text-stone-500">Total Level</div>
                             <div className="font-pixel text-lg text-amber-300">
                                 {stats.total_level}
-                                <span className="text-xs text-stone-500">/{stats.max_total_level}</span>
+                                <span className="text-xs text-stone-500">
+                                    /{stats.max_total_level}
+                                </span>
                             </div>
                         </div>
                         <div className="rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2 text-center">

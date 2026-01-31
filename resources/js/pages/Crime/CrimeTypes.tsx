@@ -1,7 +1,7 @@
-import { Head, usePage } from '@inertiajs/react';
-import { AlertTriangle, Gavel, Scale, Shield } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, usePage } from "@inertiajs/react";
+import { AlertTriangle, Gavel, Scale, Shield } from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface CrimeType {
     id: number;
@@ -20,16 +20,16 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Crime', href: '/crime' },
-    { title: 'Crime Types', href: '#' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Crime", href: "/crime" },
+    { title: "Crime Types", href: "#" },
 ];
 
 const severityColors: Record<string, string> = {
-    minor: 'border-yellow-500/50 bg-yellow-900/20 text-yellow-400',
-    moderate: 'border-orange-500/50 bg-orange-900/20 text-orange-400',
-    serious: 'border-red-500/50 bg-red-900/20 text-red-400',
-    capital: 'border-purple-500/50 bg-purple-900/20 text-purple-400',
+    minor: "border-yellow-500/50 bg-yellow-900/20 text-yellow-400",
+    moderate: "border-orange-500/50 bg-orange-900/20 text-orange-400",
+    serious: "border-red-500/50 bg-red-900/20 text-red-400",
+    capital: "border-purple-500/50 bg-purple-900/20 text-purple-400",
 };
 
 export default function CrimeTypes() {
@@ -78,9 +78,7 @@ export default function CrimeTypes() {
                                 </span>
                             </div>
 
-                            <p className="mt-2 text-sm text-stone-300">
-                                {crime.description}
-                            </p>
+                            <p className="mt-2 text-sm text-stone-300">{crime.description}</p>
 
                             <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                                 <div className="rounded bg-stone-900/50 p-2">

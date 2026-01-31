@@ -1,8 +1,20 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { AlertTriangle, Building2, Clock, Coins, Crown, Flame, Gavel, ScrollText, Skull, Users, Vote } from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, Link, router } from "@inertiajs/react";
+import {
+    AlertTriangle,
+    Building2,
+    Clock,
+    Coins,
+    Crown,
+    Flame,
+    Gavel,
+    ScrollText,
+    Skull,
+    Users,
+    Vote,
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Town {
     id: number;
@@ -34,20 +46,30 @@ interface Props {
     is_mayor: boolean;
 }
 
-export default function TownHall({ town, active_election, recent_elections, can_start_election, is_mayor }: Props) {
+export default function TownHall({
+    town,
+    active_election,
+    recent_elections,
+    can_start_election,
+    is_mayor,
+}: Props) {
     const [starting, setStarting] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
+        { title: "Dashboard", href: "/dashboard" },
         { title: town.name, href: `/towns/${town.id}` },
-        { title: 'Town Hall', href: `/towns/${town.id}/hall` },
+        { title: "Town Hall", href: `/towns/${town.id}/hall` },
     ];
 
     const handleStartElection = () => {
         setStarting(true);
-        router.post(`/towns/${town.id}/elections/mayor`, {}, {
-            onFinish: () => setStarting(false),
-        });
+        router.post(
+            `/towns/${town.id}/elections/mayor`,
+            {},
+            {
+                onFinish: () => setStarting(false),
+            },
+        );
     };
 
     return (
@@ -86,11 +108,15 @@ export default function TownHall({ town, active_election, recent_elections, can_
                             <div className="mb-4 rounded-lg border border-stone-700 bg-stone-800/50 p-4">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <div className="font-pixel text-[10px] text-stone-500">Mayor</div>
+                                        <div className="font-pixel text-[10px] text-stone-500">
+                                            Mayor
+                                        </div>
                                         {town.mayor ? (
                                             <div className="flex items-center gap-2">
                                                 <Crown className="h-4 w-4 text-amber-400" />
-                                                <span className="font-pixel text-sm text-stone-200">{town.mayor.username}</span>
+                                                <span className="font-pixel text-sm text-stone-200">
+                                                    {town.mayor.username}
+                                                </span>
                                                 {town.mayor.primary_title && (
                                                     <span className="font-pixel text-[10px] text-stone-500">
                                                         ({town.mayor.primary_title})
@@ -98,7 +124,9 @@ export default function TownHall({ town, active_election, recent_elections, can_
                                                 )}
                                             </div>
                                         ) : (
-                                            <span className="font-pixel text-sm text-stone-500">Position Vacant</span>
+                                            <span className="font-pixel text-sm text-stone-500">
+                                                Position Vacant
+                                            </span>
                                         )}
                                     </div>
                                     {is_mayor && (
@@ -115,8 +143,12 @@ export default function TownHall({ town, active_election, recent_elections, can_
                                     <div className="flex items-center gap-2">
                                         <Users className="h-4 w-4 text-stone-500" />
                                         <div>
-                                            <div className="font-pixel text-[10px] text-stone-500">Population</div>
-                                            <div className="font-pixel text-sm text-stone-300">{town.population.toLocaleString()}</div>
+                                            <div className="font-pixel text-[10px] text-stone-500">
+                                                Population
+                                            </div>
+                                            <div className="font-pixel text-sm text-stone-300">
+                                                {town.population.toLocaleString()}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -124,8 +156,12 @@ export default function TownHall({ town, active_election, recent_elections, can_
                                     <div className="flex items-center gap-2">
                                         <Coins className="h-4 w-4 text-yellow-400" />
                                         <div>
-                                            <div className="font-pixel text-[10px] text-stone-500">Treasury</div>
-                                            <div className="font-pixel text-sm text-yellow-400">{town.wealth.toLocaleString()}</div>
+                                            <div className="font-pixel text-[10px] text-stone-500">
+                                                Treasury
+                                            </div>
+                                            <div className="font-pixel text-sm text-yellow-400">
+                                                {town.wealth.toLocaleString()}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -133,8 +169,12 @@ export default function TownHall({ town, active_election, recent_elections, can_
                                     <div className="flex items-center gap-2">
                                         <ScrollText className="h-4 w-4 text-stone-500" />
                                         <div>
-                                            <div className="font-pixel text-[10px] text-stone-500">Tax Rate</div>
-                                            <div className="font-pixel text-sm text-stone-300">{(town.tax_rate * 100).toFixed(0)}%</div>
+                                            <div className="font-pixel text-[10px] text-stone-500">
+                                                Tax Rate
+                                            </div>
+                                            <div className="font-pixel text-sm text-stone-300">
+                                                {(town.tax_rate * 100).toFixed(0)}%
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -142,13 +182,20 @@ export default function TownHall({ town, active_election, recent_elections, can_
                                     <div className="flex items-center gap-2">
                                         <Crown className="h-4 w-4 text-amber-400" />
                                         <div>
-                                            <div className="font-pixel text-[10px] text-stone-500">Kingdom</div>
+                                            <div className="font-pixel text-[10px] text-stone-500">
+                                                Kingdom
+                                            </div>
                                             {town.kingdom ? (
-                                                <Link href={`/kingdoms/${town.kingdom.id}`} className="font-pixel text-sm text-amber-400 hover:underline">
+                                                <Link
+                                                    href={`/kingdoms/${town.kingdom.id}`}
+                                                    className="font-pixel text-sm text-amber-400 hover:underline"
+                                                >
                                                     {town.kingdom.name}
                                                 </Link>
                                             ) : (
-                                                <span className="font-pixel text-sm text-stone-500">Independent</span>
+                                                <span className="font-pixel text-sm text-stone-500">
+                                                    Independent
+                                                </span>
                                             )}
                                         </div>
                                     </div>
@@ -167,7 +214,9 @@ export default function TownHall({ town, active_election, recent_elections, can_
                             {active_election ? (
                                 <div className="mb-4 rounded-lg border-2 border-purple-600/50 bg-purple-900/20 p-4">
                                     <div className="mb-2 flex items-center justify-between">
-                                        <span className="font-pixel text-xs text-purple-400">Active Election</span>
+                                        <span className="font-pixel text-xs text-purple-400">
+                                            Active Election
+                                        </span>
                                         <span className="rounded bg-purple-900/50 px-2 py-0.5 font-pixel text-[10px] text-purple-300">
                                             {active_election.status}
                                         </span>
@@ -180,7 +229,10 @@ export default function TownHall({ town, active_election, recent_elections, can_
                                         {active_election.voting_ends_at && (
                                             <span className="flex items-center gap-1">
                                                 <Clock className="h-3 w-3" />
-                                                Ends: {new Date(active_election.voting_ends_at).toLocaleDateString()}
+                                                Ends:{" "}
+                                                {new Date(
+                                                    active_election.voting_ends_at,
+                                                ).toLocaleDateString()}
                                             </span>
                                         )}
                                     </div>
@@ -194,7 +246,9 @@ export default function TownHall({ town, active_election, recent_elections, can_
                             ) : (
                                 <div className="mb-4 rounded-lg border border-stone-700 bg-stone-800/30 p-4 text-center">
                                     <Vote className="mx-auto mb-2 h-8 w-8 text-stone-600" />
-                                    <div className="mb-1 font-pixel text-xs text-stone-400">No Active Election</div>
+                                    <div className="mb-1 font-pixel text-xs text-stone-400">
+                                        No Active Election
+                                    </div>
                                     <div className="font-pixel text-[10px] text-stone-600">
                                         The town is at peace... for now.
                                     </div>
@@ -208,14 +262,16 @@ export default function TownHall({ town, active_election, recent_elections, can_
                                     disabled={starting}
                                     className="mb-4 w-full rounded-lg border-2 border-purple-600/50 bg-purple-900/20 py-2 font-pixel text-xs text-purple-400 transition hover:bg-purple-900/40 disabled:opacity-50"
                                 >
-                                    {starting ? 'Starting...' : 'Start Mayoral Election'}
+                                    {starting ? "Starting..." : "Start Mayoral Election"}
                                 </button>
                             )}
 
                             {/* Recent Elections */}
                             {recent_elections.length > 0 && (
                                 <div>
-                                    <div className="mb-2 font-pixel text-[10px] text-stone-500">Recent Elections</div>
+                                    <div className="mb-2 font-pixel text-[10px] text-stone-500">
+                                        Recent Elections
+                                    </div>
                                     <div className="space-y-2">
                                         {recent_elections.map((election) => (
                                             <Link
@@ -224,14 +280,20 @@ export default function TownHall({ town, active_election, recent_elections, can_
                                                 className="flex items-center justify-between rounded-lg border border-stone-700 bg-stone-800/30 p-2 transition hover:bg-stone-700/50"
                                             >
                                                 <div>
-                                                    <div className="font-pixel text-xs text-stone-300">{election.position}</div>
-                                                    <div className="font-pixel text-[10px] text-stone-500">{election.started_at}</div>
+                                                    <div className="font-pixel text-xs text-stone-300">
+                                                        {election.position}
+                                                    </div>
+                                                    <div className="font-pixel text-[10px] text-stone-500">
+                                                        {election.started_at}
+                                                    </div>
                                                 </div>
-                                                <span className={`rounded px-2 py-0.5 font-pixel text-[10px] ${
-                                                    election.status === 'completed'
-                                                        ? 'bg-green-900/50 text-green-400'
-                                                        : 'bg-red-900/50 text-red-400'
-                                                }`}>
+                                                <span
+                                                    className={`rounded px-2 py-0.5 font-pixel text-[10px] ${
+                                                        election.status === "completed"
+                                                            ? "bg-green-900/50 text-green-400"
+                                                            : "bg-red-900/50 text-red-400"
+                                                    }`}
+                                                >
                                                     {election.status}
                                                 </span>
                                             </Link>
@@ -250,8 +312,12 @@ export default function TownHall({ town, active_election, recent_elections, can_
                         </h2>
                         <div className="py-8 text-center">
                             <ScrollText className="mx-auto mb-2 h-8 w-8 text-stone-600" />
-                            <div className="font-pixel text-xs text-stone-500">No decrees have been issued.</div>
-                            <div className="font-pixel text-[10px] text-stone-600">The mayor may issue decrees that affect the town.</div>
+                            <div className="font-pixel text-xs text-stone-500">
+                                No decrees have been issued.
+                            </div>
+                            <div className="font-pixel text-[10px] text-stone-600">
+                                The mayor may issue decrees that affect the town.
+                            </div>
                         </div>
                     </div>
 
@@ -265,31 +331,40 @@ export default function TownHall({ town, active_election, recent_elections, can_
                             <div className="rounded-lg border border-stone-700/50 bg-stone-900/30 p-3">
                                 <div className="mb-2 flex items-center gap-2">
                                     <Skull className="h-4 w-4 text-stone-500" />
-                                    <span className="font-pixel text-[10px] text-stone-500">Year 847</span>
+                                    <span className="font-pixel text-[10px] text-stone-500">
+                                        Year 847
+                                    </span>
                                 </div>
                                 <p className="font-pixel text-[10px] leading-relaxed text-stone-400 italic">
-                                    "The Sweating Sickness claimed twelve souls before the quarantine was lifted.
-                                    The old healer says it spreads through the air itself. May the gods spare us from another outbreak."
+                                    "The Sweating Sickness claimed twelve souls before the
+                                    quarantine was lifted. The old healer says it spreads through
+                                    the air itself. May the gods spare us from another outbreak."
                                 </p>
                             </div>
                             <div className="rounded-lg border border-stone-700/50 bg-stone-900/30 p-3">
                                 <div className="mb-2 flex items-center gap-2">
                                     <Flame className="h-4 w-4 text-orange-500/50" />
-                                    <span className="font-pixel text-[10px] text-stone-500">Year 842</span>
+                                    <span className="font-pixel text-[10px] text-stone-500">
+                                        Year 842
+                                    </span>
                                 </div>
                                 <p className="font-pixel text-[10px] leading-relaxed text-stone-400 italic">
                                     "Fire took the old granary and three houses on the eastern road.
-                                    The bucket brigade saved what they could. We rebuilt, as we always do."
+                                    The bucket brigade saved what they could. We rebuilt, as we
+                                    always do."
                                 </p>
                             </div>
                             <div className="rounded-lg border border-stone-700/50 bg-stone-900/30 p-3">
                                 <div className="mb-2 flex items-center gap-2">
                                     <AlertTriangle className="h-4 w-4 text-blue-500/50" />
-                                    <span className="font-pixel text-[10px] text-stone-500">Year 839</span>
+                                    <span className="font-pixel text-[10px] text-stone-500">
+                                        Year 839
+                                    </span>
                                 </div>
                                 <p className="font-pixel text-[10px] leading-relaxed text-stone-400 italic">
-                                    "The spring floods washed out the lower fields and damaged the mill.
-                                    Some say it was the worst flooding in living memory. The river takes what it will."
+                                    "The spring floods washed out the lower fields and damaged the
+                                    mill. Some say it was the worst flooding in living memory. The
+                                    river takes what it will."
                                 </p>
                             </div>
                         </div>

@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router } from "@inertiajs/react";
 import {
     Crown,
     ScrollText,
@@ -10,10 +10,10 @@ import {
     Clock,
     MessageSquare,
     Sparkles,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface TitleType {
     id: number;
@@ -50,42 +50,50 @@ interface Props {
 
 export default function Review({ petition }: Props) {
     const [processing, setProcessing] = useState(false);
-    const [responseMessage, setResponseMessage] = useState('');
+    const [responseMessage, setResponseMessage] = useState("");
     const [showDenyForm, setShowDenyForm] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Titles', href: '/titles' },
-        { title: 'Review Petition', href: '#' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Titles", href: "/titles" },
+        { title: "Review Petition", href: "#" },
     ];
 
     const handleApprove = () => {
         if (processing) return;
         setProcessing(true);
-        router.post(`/titles/review/${petition.id}/approve`, {
-            response_message: responseMessage || null,
-        }, {
-            onSuccess: () => {
-                router.reload();
+        router.post(
+            `/titles/review/${petition.id}/approve`,
+            {
+                response_message: responseMessage || null,
             },
-            onFinish: () => setProcessing(false),
-        });
+            {
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => setProcessing(false),
+            },
+        );
     };
 
     const handleDeny = () => {
         if (processing) return;
         setProcessing(true);
-        router.post(`/titles/review/${petition.id}/deny`, {
-            response_message: responseMessage || null,
-        }, {
-            onSuccess: () => {
-                router.reload();
+        router.post(
+            `/titles/review/${petition.id}/deny`,
+            {
+                response_message: responseMessage || null,
             },
-            onFinish: () => setProcessing(false),
-        });
+            {
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => setProcessing(false),
+            },
+        );
     };
 
-    const isPending = petition.status === 'pending';
+    const isPending = petition.status === "pending";
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -169,7 +177,9 @@ export default function Review({ petition }: Props) {
                         )}
                         {petition.title_type.style_of_address && (
                             <div className="mt-3 rounded-lg border border-stone-700 bg-stone-900/50 p-2">
-                                <div className="font-pixel text-[10px] text-stone-500">Style of Address</div>
+                                <div className="font-pixel text-[10px] text-stone-500">
+                                    Style of Address
+                                </div>
                                 <div className="font-pixel text-xs text-stone-300">
                                     {petition.title_type.style_of_address}
                                 </div>
@@ -188,7 +198,9 @@ export default function Review({ petition }: Props) {
                         <div className="rounded-xl border-2 border-amber-600/50 bg-amber-900/20 p-4">
                             <div className="flex items-center gap-2">
                                 <Coins className="h-5 w-5 text-amber-400" />
-                                <span className="font-pixel text-sm text-amber-400">Purchase Offer</span>
+                                <span className="font-pixel text-sm text-amber-400">
+                                    Purchase Offer
+                                </span>
                             </div>
                             <div className="mt-2 font-pixel text-2xl text-amber-300">
                                 {petition.gold_offered.toLocaleString()}g
@@ -257,7 +269,7 @@ export default function Review({ petition }: Props) {
                                         className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-600 py-3 font-pixel text-sm text-white transition hover:bg-green-500 disabled:opacity-50"
                                     >
                                         <Check className="h-4 w-4" />
-                                        {processing ? 'Processing...' : 'Approve Petition'}
+                                        {processing ? "Processing..." : "Approve Petition"}
                                     </button>
                                     <button
                                         onClick={() => setShowDenyForm(true)}
@@ -282,7 +294,7 @@ export default function Review({ petition }: Props) {
                                             className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-600 py-3 font-pixel text-sm text-white transition hover:bg-red-500 disabled:opacity-50"
                                         >
                                             <X className="h-4 w-4" />
-                                            {processing ? 'Processing...' : 'Confirm Denial'}
+                                            {processing ? "Processing..." : "Confirm Denial"}
                                         </button>
                                         <button
                                             onClick={() => setShowDenyForm(false)}
@@ -297,7 +309,8 @@ export default function Review({ petition }: Props) {
 
                             {petition.is_purchase && (
                                 <p className="mt-3 font-pixel text-[10px] text-amber-400 text-center">
-                                    If approved, {petition.gold_offered.toLocaleString()}g will be transferred to you.
+                                    If approved, {petition.gold_offered.toLocaleString()}g will be
+                                    transferred to you.
                                 </p>
                             )}
                         </div>
@@ -310,15 +323,20 @@ export default function Review({ petition }: Props) {
                                 This petition has already been processed.
                             </p>
                             <div className="mt-2">
-                                <span className={`inline-block rounded px-3 py-1 font-pixel text-xs ${
-                                    petition.status === 'approved' || petition.status === 'ceremony_pending'
-                                        ? 'bg-green-900/30 text-green-400'
-                                        : petition.status === 'denied'
-                                        ? 'bg-red-900/30 text-red-400'
-                                        : 'bg-stone-800/50 text-stone-400'
-                                }`}>
-                                    {petition.status === 'ceremony_pending' ? 'Approved (Awaiting Ceremony)' :
-                                     petition.status.charAt(0).toUpperCase() + petition.status.slice(1)}
+                                <span
+                                    className={`inline-block rounded px-3 py-1 font-pixel text-xs ${
+                                        petition.status === "approved" ||
+                                        petition.status === "ceremony_pending"
+                                            ? "bg-green-900/30 text-green-400"
+                                            : petition.status === "denied"
+                                              ? "bg-red-900/30 text-red-400"
+                                              : "bg-stone-800/50 text-stone-400"
+                                    }`}
+                                >
+                                    {petition.status === "ceremony_pending"
+                                        ? "Approved (Awaiting Ceremony)"
+                                        : petition.status.charAt(0).toUpperCase() +
+                                          petition.status.slice(1)}
                                 </span>
                             </div>
                             <Link

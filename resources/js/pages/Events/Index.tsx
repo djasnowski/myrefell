@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from "@inertiajs/react";
 import {
     Calendar,
     CalendarDays,
@@ -11,10 +11,10 @@ import {
     Target,
     Trophy,
     Users,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface FestivalType {
     id: number;
@@ -29,7 +29,7 @@ interface Festival {
     id: number;
     name: string;
     type: FestivalType;
-    status: 'scheduled' | 'active' | 'completed' | 'cancelled';
+    status: "scheduled" | "active" | "completed" | "cancelled";
     location_type: string;
     location_id: number;
     location_name: string;
@@ -58,7 +58,7 @@ interface Tournament {
     id: number;
     name: string;
     type: TournamentType;
-    status: 'registration' | 'in_progress' | 'completed' | 'cancelled';
+    status: "registration" | "in_progress" | "completed" | "cancelled";
     location_type: string;
     location_id: number;
     location_name: string;
@@ -83,7 +83,7 @@ interface RoyalEvent {
     event_type_name: string;
     title: string;
     description: string | null;
-    status: 'scheduled' | 'active' | 'completed' | 'cancelled';
+    status: "scheduled" | "active" | "completed" | "cancelled";
     location_type: string;
     location_id: number;
     location_name: string;
@@ -95,7 +95,7 @@ interface RoyalEvent {
 
 interface CalendarData {
     year: number;
-    season: 'spring' | 'summer' | 'autumn' | 'winter';
+    season: "spring" | "summer" | "autumn" | "winter";
     week: number;
     formatted_date: string;
 }
@@ -113,15 +113,15 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Events', href: '/events' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Events", href: "/events" },
 ];
 
 const festivalCategoryColors: Record<string, { bg: string; text: string; border: string }> = {
-    seasonal: { bg: 'bg-green-900/30', text: 'text-green-400', border: 'border-green-600/50' },
-    religious: { bg: 'bg-purple-900/30', text: 'text-purple-400', border: 'border-purple-600/50' },
-    royal: { bg: 'bg-amber-900/30', text: 'text-amber-400', border: 'border-amber-600/50' },
-    special: { bg: 'bg-blue-900/30', text: 'text-blue-400', border: 'border-blue-600/50' },
+    seasonal: { bg: "bg-green-900/30", text: "text-green-400", border: "border-green-600/50" },
+    religious: { bg: "bg-purple-900/30", text: "text-purple-400", border: "border-purple-600/50" },
+    royal: { bg: "bg-amber-900/30", text: "text-amber-400", border: "border-amber-600/50" },
+    special: { bg: "bg-blue-900/30", text: "text-blue-400", border: "border-blue-600/50" },
 };
 
 const combatTypeIcons: Record<string, typeof Swords> = {
@@ -133,12 +133,12 @@ const combatTypeIcons: Record<string, typeof Swords> = {
 };
 
 const statusColors: Record<string, { bg: string; text: string }> = {
-    scheduled: { bg: 'bg-blue-900/30', text: 'text-blue-400' },
-    active: { bg: 'bg-green-900/30', text: 'text-green-400' },
-    registration: { bg: 'bg-amber-900/30', text: 'text-amber-400' },
-    in_progress: { bg: 'bg-red-900/30', text: 'text-red-400' },
-    completed: { bg: 'bg-stone-900/30', text: 'text-stone-400' },
-    cancelled: { bg: 'bg-stone-900/30', text: 'text-stone-500' },
+    scheduled: { bg: "bg-blue-900/30", text: "text-blue-400" },
+    active: { bg: "bg-green-900/30", text: "text-green-400" },
+    registration: { bg: "bg-amber-900/30", text: "text-amber-400" },
+    in_progress: { bg: "bg-red-900/30", text: "text-red-400" },
+    completed: { bg: "bg-stone-900/30", text: "text-stone-400" },
+    cancelled: { bg: "bg-stone-900/30", text: "text-stone-500" },
 };
 
 export default function EventsIndex() {
@@ -164,23 +164,25 @@ export default function EventsIndex() {
 
         try {
             const response = await fetch(`/events/festivals/${festivalId}/join`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
-                body: JSON.stringify({ role: 'attendee' }),
+                body: JSON.stringify({ role: "attendee" }),
             });
 
             const data = await response.json();
             if (data.success) {
-                setSuccess('You have joined the festival!');
+                setSuccess("You have joined the festival!");
                 router.reload();
             } else {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to join festival');
+            setError("Failed to join festival");
         } finally {
             setJoiningFestival(null);
         }
@@ -192,29 +194,32 @@ export default function EventsIndex() {
 
         try {
             const response = await fetch(`/events/tournaments/${tournamentId}/register`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
             });
 
             const data = await response.json();
             if (data.success) {
-                setSuccess('You have registered for the tournament!');
+                setSuccess("You have registered for the tournament!");
                 router.reload();
             } else {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to register for tournament');
+            setError("Failed to register for tournament");
         } finally {
             setRegisteringTournament(null);
         }
     };
 
     const renderFestivalCard = (festival: Festival) => {
-        const categoryStyle = festivalCategoryColors[festival.type.category] || festivalCategoryColors.special;
+        const categoryStyle =
+            festivalCategoryColors[festival.type.category] || festivalCategoryColors.special;
         const statusStyle = statusColors[festival.status] || statusColors.scheduled;
 
         return (
@@ -228,7 +233,9 @@ export default function EventsIndex() {
                         <PartyPopper className={`h-5 w-5 ${categoryStyle.text}`} />
                         <h3 className="font-pixel text-base text-white">{festival.name}</h3>
                     </div>
-                    <span className={`rounded px-2 py-1 font-pixel text-[10px] capitalize ${statusStyle.bg} ${statusStyle.text}`}>
+                    <span
+                        className={`rounded px-2 py-1 font-pixel text-[10px] capitalize ${statusStyle.bg} ${statusStyle.text}`}
+                    >
                         {festival.status}
                     </span>
                 </div>
@@ -243,10 +250,12 @@ export default function EventsIndex() {
                     <div className="flex items-center gap-2 font-pixel text-xs">
                         <CalendarDays className="h-3 w-3 text-blue-400" />
                         <span className="text-stone-400">
-                            {festival.status === 'active' ? 'Until:' : 'Starts:'}
+                            {festival.status === "active" ? "Until:" : "Starts:"}
                         </span>
                         <span className="text-white">
-                            {festival.status === 'active' ? festival.ends_at_formatted : festival.starts_at_formatted}
+                            {festival.status === "active"
+                                ? festival.ends_at_formatted
+                                : festival.starts_at_formatted}
                         </span>
                     </div>
                 </div>
@@ -261,7 +270,9 @@ export default function EventsIndex() {
                 {/* Activities */}
                 {festival.type.activities && festival.type.activities.length > 0 && (
                     <div className="mb-3">
-                        <div className="mb-1 font-pixel text-[10px] text-stone-500">Activities:</div>
+                        <div className="mb-1 font-pixel text-[10px] text-stone-500">
+                            Activities:
+                        </div>
                         <div className="flex flex-wrap gap-1">
                             {festival.type.activities.map((activity, i) => (
                                 <span
@@ -291,13 +302,13 @@ export default function EventsIndex() {
                 </div>
 
                 {/* Action */}
-                {festival.status === 'active' && !festival.is_participating && (
+                {festival.status === "active" && !festival.is_participating && (
                     <button
                         onClick={() => joinFestival(festival.id)}
                         disabled={joiningFestival === festival.id}
                         className={`w-full rounded border ${categoryStyle.border} ${categoryStyle.bg} px-3 py-1.5 font-pixel text-xs ${categoryStyle.text} transition hover:brightness-125 disabled:cursor-not-allowed disabled:opacity-50`}
                     >
-                        {joiningFestival === festival.id ? 'Joining...' : 'Participate'}
+                        {joiningFestival === festival.id ? "Joining..." : "Participate"}
                     </button>
                 )}
                 {festival.is_participating && (
@@ -334,8 +345,10 @@ export default function EventsIndex() {
                                 Lethal
                             </span>
                         )}
-                        <span className={`rounded px-2 py-1 font-pixel text-[10px] capitalize ${statusStyle.bg} ${statusStyle.text}`}>
-                            {tournament.status.replace('_', ' ')}
+                        <span
+                            className={`rounded px-2 py-1 font-pixel text-[10px] capitalize ${statusStyle.bg} ${statusStyle.text}`}
+                        >
+                            {tournament.status.replace("_", " ")}
                         </span>
                     </div>
                 </div>
@@ -347,18 +360,22 @@ export default function EventsIndex() {
                         <span className="text-stone-400">Location:</span>
                         <span className="capitalize text-white">{tournament.location_name}</span>
                     </div>
-                    {tournament.status === 'registration' && (
+                    {tournament.status === "registration" && (
                         <div className="flex items-center gap-2 font-pixel text-xs">
                             <CalendarDays className="h-3 w-3 text-blue-400" />
                             <span className="text-stone-400">Registration ends:</span>
-                            <span className="text-white">{tournament.registration_ends_formatted}</span>
+                            <span className="text-white">
+                                {tournament.registration_ends_formatted}
+                            </span>
                         </div>
                     )}
-                    {tournament.status === 'in_progress' && tournament.current_round && (
+                    {tournament.status === "in_progress" && tournament.current_round && (
                         <div className="flex items-center gap-2 font-pixel text-xs">
                             <Trophy className="h-3 w-3 text-amber-400" />
                             <span className="text-stone-400">Round:</span>
-                            <span className="text-white">{tournament.current_round} / {tournament.total_rounds}</span>
+                            <span className="text-white">
+                                {tournament.current_round} / {tournament.total_rounds}
+                            </span>
                         </div>
                     )}
                 </div>
@@ -382,12 +399,16 @@ export default function EventsIndex() {
                             <Coins className="h-3 w-3 text-yellow-400" />
                             <span className="font-pixel text-[10px] text-stone-400">Prize</span>
                         </div>
-                        <div className="font-pixel text-sm text-yellow-300">{tournament.prize_pool}g</div>
+                        <div className="font-pixel text-sm text-yellow-300">
+                            {tournament.prize_pool}g
+                        </div>
                     </div>
                     <div className="rounded-lg bg-stone-900/30 p-2 text-center">
                         <div className="flex items-center justify-center gap-1">
                             <Users className="h-3 w-3 text-blue-400" />
-                            <span className="font-pixel text-[10px] text-stone-400">Competitors</span>
+                            <span className="font-pixel text-[10px] text-stone-400">
+                                Competitors
+                            </span>
                         </div>
                         <div className="font-pixel text-sm text-white">
                             {tournament.competitor_count}/{tournament.type.max_participants}
@@ -398,7 +419,9 @@ export default function EventsIndex() {
                             <Swords className="h-3 w-3 text-red-400" />
                             <span className="font-pixel text-[10px] text-stone-400">Entry</span>
                         </div>
-                        <div className="font-pixel text-sm text-white">{tournament.type.entry_fee}g</div>
+                        <div className="font-pixel text-sm text-white">
+                            {tournament.type.entry_fee}g
+                        </div>
                     </div>
                 </div>
 
@@ -406,13 +429,13 @@ export default function EventsIndex() {
                 {canRegister && (
                     <div className="mb-3 font-pixel text-[10px]">
                         <span className="text-stone-500">Requirements: </span>
-                        <span className={meetsLevel ? 'text-green-400' : 'text-red-400'}>
+                        <span className={meetsLevel ? "text-green-400" : "text-red-400"}>
                             Lvl {tournament.type.min_level}+
                         </span>
                         {tournament.type.entry_fee > 0 && (
                             <>
                                 <span className="text-stone-500"> | </span>
-                                <span className={hasGold ? 'text-green-400' : 'text-red-400'}>
+                                <span className={hasGold ? "text-green-400" : "text-red-400"}>
                                     {tournament.type.entry_fee}g entry
                                 </span>
                             </>
@@ -432,17 +455,20 @@ export default function EventsIndex() {
                 {canRegister && (
                     <button
                         onClick={() => registerForTournament(tournament.id)}
-                        disabled={registeringTournament === tournament.id || !meetsLevel || !hasGold}
+                        disabled={
+                            registeringTournament === tournament.id || !meetsLevel || !hasGold
+                        }
                         className="w-full rounded border border-red-600/50 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-300 transition hover:bg-red-900/40 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {registeringTournament === tournament.id
-                            ? 'Registering...'
+                            ? "Registering..."
                             : `Register (${tournament.type.entry_fee}g)`}
                     </button>
                 )}
                 {tournament.is_registered && (
                     <div className="rounded bg-green-900/30 px-3 py-1.5 text-center font-pixel text-xs text-green-400">
-                        Registered {tournament.user_status && tournament.user_status !== 'registered' && (
+                        Registered{" "}
+                        {tournament.user_status && tournament.user_status !== "registered" && (
                             <span className="capitalize">- {tournament.user_status}</span>
                         )}
                     </div>
@@ -465,7 +491,9 @@ export default function EventsIndex() {
                         <Crown className="h-5 w-5 text-amber-400" />
                         <h3 className="font-pixel text-base text-white">{event.title}</h3>
                     </div>
-                    <span className={`rounded px-2 py-1 font-pixel text-[10px] capitalize ${statusStyle.bg} ${statusStyle.text}`}>
+                    <span
+                        className={`rounded px-2 py-1 font-pixel text-[10px] capitalize ${statusStyle.bg} ${statusStyle.text}`}
+                    >
                         {event.status}
                     </span>
                 </div>
@@ -500,7 +528,9 @@ export default function EventsIndex() {
                             {event.secondary_participant_name && (
                                 <>
                                     <span className="text-stone-500">&</span>
-                                    <span className="text-white">{event.secondary_participant_name}</span>
+                                    <span className="text-white">
+                                        {event.secondary_participant_name}
+                                    </span>
                                 </>
                             )}
                         </div>
@@ -533,7 +563,9 @@ export default function EventsIndex() {
                     <div>
                         <h1 className="font-pixel text-2xl text-amber-400">Events Calendar</h1>
                         <p className="font-pixel text-sm text-stone-400">
-                            {calendar.formatted_date} - {calendar.season.charAt(0).toUpperCase() + calendar.season.slice(1)}, Year {calendar.year}
+                            {calendar.formatted_date} -{" "}
+                            {calendar.season.charAt(0).toUpperCase() + calendar.season.slice(1)},
+                            Year {calendar.year}
                         </p>
                     </div>
                     <div className="flex items-center gap-2 rounded-lg bg-stone-800/50 px-3 py-2">
@@ -626,7 +658,9 @@ export default function EventsIndex() {
                     <div className="flex flex-1 items-center justify-center">
                         <div className="text-center">
                             <Calendar className="mx-auto mb-3 h-16 w-16 text-stone-600" />
-                            <p className="font-pixel text-base text-stone-500">No events scheduled</p>
+                            <p className="font-pixel text-base text-stone-500">
+                                No events scheduled
+                            </p>
                             <p className="font-pixel text-xs text-stone-600">
                                 Check back later for festivals, tournaments, and royal events!
                             </p>
@@ -644,15 +678,21 @@ export default function EventsIndex() {
                         </div>
                         <div className="flex items-center gap-2">
                             <Trophy className="h-4 w-4 text-amber-400" />
-                            <span className="font-pixel text-[10px] text-stone-400">Tournaments</span>
+                            <span className="font-pixel text-[10px] text-stone-400">
+                                Tournaments
+                            </span>
                         </div>
                         <div className="flex items-center gap-2">
                             <Crown className="h-4 w-4 text-amber-300" />
-                            <span className="font-pixel text-[10px] text-stone-400">Royal Events</span>
+                            <span className="font-pixel text-[10px] text-stone-400">
+                                Royal Events
+                            </span>
                         </div>
                         <div className="flex items-center gap-2">
                             <Skull className="h-4 w-4 text-red-400" />
-                            <span className="font-pixel text-[10px] text-stone-400">Lethal Combat</span>
+                            <span className="font-pixel text-[10px] text-stone-400">
+                                Lethal Combat
+                            </span>
                         </div>
                     </div>
                 </div>

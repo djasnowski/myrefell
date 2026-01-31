@@ -1,13 +1,13 @@
-import { useSidebar } from '@/components/ui/sidebar';
-import { usePage } from '@inertiajs/react';
-import * as LucideIcons from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { usePage } from "@inertiajs/react";
+import * as LucideIcons from "lucide-react";
+import { useEffect, useState } from "react";
+import { useSidebar } from "@/components/ui/sidebar";
 
 interface SidebarData {
     player: {
         id: number;
         username: string;
-        gender: 'male' | 'female';
+        gender: "male" | "female";
         hp: number;
         max_hp: number;
         energy: number;
@@ -47,28 +47,16 @@ function getIconComponent(
     if (!iconName) return null;
     // Convert kebab-case to PascalCase (e.g., "chef-hat" -> "ChefHat")
     const pascalCase = iconName
-        .split('-')
+        .split("-")
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join('');
+        .join("");
     return (
-        (
-            LucideIcons as Record<
-                string,
-                React.ComponentType<{ className?: string }>
-            >
-        )[pascalCase] || null
+        (LucideIcons as Record<string, React.ComponentType<{ className?: string }>>)[pascalCase] ||
+        null
     );
 }
 
-function StatBar({
-    current,
-    max,
-    color,
-}: {
-    current: number;
-    max: number;
-    color: string;
-}) {
+function StatBar({ current, max, color }: { current: number; max: number; color: string }) {
     const percentage = Math.min((current / max) * 100, 100);
     return (
         <div className="h-2 w-full overflow-hidden rounded-sm bg-stone-700">
@@ -80,11 +68,7 @@ function StatBar({
     );
 }
 
-function EnergyTimer({
-    secondsUntilNext,
-}: {
-    secondsUntilNext: number | null;
-}) {
+function EnergyTimer({ secondsUntilNext }: { secondsUntilNext: number | null }) {
     const [seconds, setSeconds] = useState(secondsUntilNext ?? 0);
 
     useEffect(() => {
@@ -109,7 +93,7 @@ function EnergyTimer({
 
     return (
         <span className="font-pixel text-[8px] text-stone-400">
-            +1 in {minutes}:{secs.toString().padStart(2, '0')}
+            +1 in {minutes}:{secs.toString().padStart(2, "0")}
         </span>
     );
 }
@@ -123,13 +107,11 @@ export function NavPlayerInfo() {
     const { player, energy_info } = sidebar;
 
     const titleDisplay = player.primary_title
-        ? player.primary_title.charAt(0).toUpperCase() +
-          player.primary_title.slice(1)
-        : player.social_class.charAt(0).toUpperCase() +
-          player.social_class.slice(1);
+        ? player.primary_title.charAt(0).toUpperCase() + player.primary_title.slice(1)
+        : player.social_class.charAt(0).toUpperCase() + player.social_class.slice(1);
 
     // Collapsed view - just show avatar/icon
-    if (state === 'collapsed') {
+    if (state === "collapsed") {
         return (
             <div className="flex flex-col items-center gap-1">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sidebar-primary/20 font-pixel text-xs text-sidebar-primary">
@@ -236,8 +218,7 @@ export function NavPlayerInfo() {
                     {player.role &&
                         (() => {
                             const RoleIcon =
-                                getIconComponent(player.role.icon) ||
-                                LucideIcons.Crown;
+                                getIconComponent(player.role.icon) || LucideIcons.Crown;
                             return (
                                 <div className="relative flex items-center gap-1.5 rounded border border-purple-600/30 bg-purple-900/20 px-2 py-1">
                                     <RoleIcon className="mr-1 h-5 w-5 flex-shrink-0 text-purple-400" />
@@ -252,7 +233,7 @@ export function NavPlayerInfo() {
                                     {player.role.pending_count > 0 && (
                                         <div className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 font-pixel text-[9px] text-white">
                                             {player.role.pending_count > 9
-                                                ? '9+'
+                                                ? "9+"
                                                 : player.role.pending_count}
                                         </div>
                                     )}
@@ -261,9 +242,7 @@ export function NavPlayerInfo() {
                         })()}
                     {player.job &&
                         (() => {
-                            const JobIcon =
-                                getIconComponent(player.job.icon) ||
-                                LucideIcons.Hammer;
+                            const JobIcon = getIconComponent(player.job.icon) || LucideIcons.Hammer;
                             return (
                                 <div className="flex items-center gap-1.5 rounded border border-blue-600/30 bg-blue-900/20 px-2 py-1">
                                     <JobIcon className="mr-1 h-5 w-5 flex-shrink-0 text-blue-400" />

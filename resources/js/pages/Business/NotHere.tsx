@@ -1,7 +1,7 @@
-import { Head, router } from '@inertiajs/react';
-import { MapPin } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router } from "@inertiajs/react";
+import { MapPin } from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface PageProps {
     location: string;
@@ -9,8 +9,8 @@ interface PageProps {
 
 export default function NotHere({ location }: PageProps) {
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Businesses', href: '#' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Businesses", href: "#" },
     ];
 
     return (
@@ -24,7 +24,7 @@ export default function NotHere({ location }: PageProps) {
                         You must be in {location} to view and manage businesses here.
                     </p>
                     <button
-                        onClick={() => router.get('/dashboard')}
+                        onClick={() => router.get("/dashboard")}
                         className="mt-6 rounded-lg border-2 border-amber-500 bg-amber-900/30 px-6 py-2 font-pixel text-sm text-amber-300 transition hover:bg-amber-800/50"
                     >
                         Return to Dashboard

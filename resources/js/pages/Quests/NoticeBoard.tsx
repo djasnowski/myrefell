@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from "@inertiajs/react";
 import {
     Axe,
     Bug,
@@ -14,10 +14,10 @@ import {
     Swords,
     Utensils,
     X,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Quest {
     id: number;
@@ -63,7 +63,7 @@ interface PageProps {
 
 const iconMap: Record<string, typeof ScrollText> = {
     bug: Bug,
-    'paw-print': PawPrint,
+    "paw-print": PawPrint,
     gem: Gem,
     fish: Fish,
     axe: Axe,
@@ -74,10 +74,10 @@ const iconMap: Record<string, typeof ScrollText> = {
 };
 
 const categoryColors: Record<string, string> = {
-    combat: 'border-red-600/50 bg-red-900/20',
-    gathering: 'border-green-600/50 bg-green-900/20',
-    delivery: 'border-blue-600/50 bg-blue-900/20',
-    exploration: 'border-purple-600/50 bg-purple-900/20',
+    combat: "border-red-600/50 bg-red-900/20",
+    gathering: "border-green-600/50 bg-green-900/20",
+    delivery: "border-blue-600/50 bg-blue-900/20",
+    exploration: "border-purple-600/50 bg-purple-900/20",
 };
 
 function QuestIcon({ icon, className }: { icon: string; className?: string }) {
@@ -92,9 +92,9 @@ export default function NoticeBoard() {
     const [claimLoading, setClaimLoading] = useState<number | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Village', href: `/villages/${village_id}` },
-        { title: 'Notice Board', href: '#' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Village", href: `/villages/${village_id}` },
+        { title: "Notice Board", href: "#" },
     ];
 
     const canAcceptMore = active_quests.length < max_active_quests;
@@ -102,15 +102,20 @@ export default function NoticeBoard() {
     const handleAccept = async (questId: number) => {
         setLoading(questId);
         try {
-            await fetch('/quests/accept', {
-                method: 'POST',
+            await fetch("/quests/accept", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
                 },
                 body: JSON.stringify({ quest_id: questId }),
             });
-            router.reload({ only: ['available_quests', 'active_quests', 'completed_quests', 'sidebar'] });
+            router.reload({
+                only: ["available_quests", "active_quests", "completed_quests", "sidebar"],
+            });
         } finally {
             setLoading(null);
         }
@@ -120,13 +125,18 @@ export default function NoticeBoard() {
         setClaimLoading(playerQuestId);
         try {
             await fetch(`/quests/${playerQuestId}/claim`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
                 },
             });
-            router.reload({ only: ['available_quests', 'active_quests', 'completed_quests', 'sidebar'] });
+            router.reload({
+                only: ["available_quests", "active_quests", "completed_quests", "sidebar"],
+            });
         } finally {
             setClaimLoading(null);
         }
@@ -155,7 +165,9 @@ export default function NoticeBoard() {
                         {/* Completed Quests */}
                         {completed_quests.length > 0 && (
                             <div className="rounded-xl border-2 border-green-600/50 bg-green-900/20 p-4">
-                                <h2 className="mb-3 font-pixel text-sm text-green-300">Ready to Claim</h2>
+                                <h2 className="mb-3 font-pixel text-sm text-green-300">
+                                    Ready to Claim
+                                </h2>
                                 <div className="space-y-2">
                                     {completed_quests.map((pq) => (
                                         <div
@@ -163,8 +175,13 @@ export default function NoticeBoard() {
                                             className="flex items-center justify-between rounded-lg bg-stone-900/50 px-3 py-2"
                                         >
                                             <div className="flex items-center gap-2">
-                                                <QuestIcon icon={pq.icon} className="h-4 w-4 text-green-400" />
-                                                <span className="font-pixel text-xs text-stone-300">{pq.name}</span>
+                                                <QuestIcon
+                                                    icon={pq.icon}
+                                                    className="h-4 w-4 text-green-400"
+                                                />
+                                                <span className="font-pixel text-xs text-stone-300">
+                                                    {pq.name}
+                                                </span>
                                             </div>
                                             <button
                                                 onClick={() => handleClaim(pq.id)}
@@ -186,34 +203,61 @@ export default function NoticeBoard() {
 
                         {/* Active Quests */}
                         <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
-                            <h2 className="mb-3 font-pixel text-sm text-stone-300">Active Quests</h2>
+                            <h2 className="mb-3 font-pixel text-sm text-stone-300">
+                                Active Quests
+                            </h2>
                             {active_quests.length > 0 ? (
                                 <div className="space-y-3">
                                     {active_quests.map((pq) => (
                                         <div key={pq.id} className="rounded-lg bg-stone-900/50 p-3">
                                             <div className="mb-2 flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    <QuestIcon icon={pq.icon} className="h-4 w-4 text-amber-400" />
-                                                    <span className="font-pixel text-xs text-amber-300">{pq.name}</span>
+                                                    <QuestIcon
+                                                        icon={pq.icon}
+                                                        className="h-4 w-4 text-amber-400"
+                                                    />
+                                                    <span className="font-pixel text-xs text-amber-300">
+                                                        {pq.name}
+                                                    </span>
                                                 </div>
                                                 <button
                                                     className="rounded p-0.5 text-stone-600 transition hover:bg-stone-800 hover:text-red-400"
                                                     title="Abandon quest"
                                                     onClick={() => {
-                                                        if (confirm(`Abandon quest "${pq.name}"?`)) {
+                                                        if (
+                                                            confirm(`Abandon quest "${pq.name}"?`)
+                                                        ) {
                                                             fetch(`/quests/${pq.id}/abandon`, {
-                                                                method: 'POST',
+                                                                method: "POST",
                                                                 headers: {
-                                                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                                                                    "X-CSRF-TOKEN":
+                                                                        document
+                                                                            .querySelector(
+                                                                                'meta[name="csrf-token"]',
+                                                                            )
+                                                                            ?.getAttribute(
+                                                                                "content",
+                                                                            ) || "",
                                                                 },
-                                                            }).then(() => router.reload({ only: ['available_quests', 'active_quests', 'completed_quests', 'sidebar'] }));
+                                                            }).then(() =>
+                                                                router.reload({
+                                                                    only: [
+                                                                        "available_quests",
+                                                                        "active_quests",
+                                                                        "completed_quests",
+                                                                        "sidebar",
+                                                                    ],
+                                                                }),
+                                                            );
                                                         }
                                                     }}
                                                 >
                                                     <X className="h-3.5 w-3.5" />
                                                 </button>
                                             </div>
-                                            <p className="mb-2 font-pixel text-[10px] text-stone-400">{pq.objective}</p>
+                                            <p className="mb-2 font-pixel text-[10px] text-stone-400">
+                                                {pq.objective}
+                                            </p>
                                             <div className="mb-1 flex justify-between font-pixel text-[10px] text-stone-500">
                                                 <span>Progress</span>
                                                 <span>
@@ -232,7 +276,9 @@ export default function NoticeBoard() {
                             ) : (
                                 <div className="py-6 text-center">
                                     <ScrollText className="mx-auto mb-2 h-8 w-8 text-stone-600" />
-                                    <p className="font-pixel text-xs text-stone-500">No active quests</p>
+                                    <p className="font-pixel text-xs text-stone-500">
+                                        No active quests
+                                    </p>
                                 </div>
                             )}
                         </div>
@@ -244,24 +290,38 @@ export default function NoticeBoard() {
                         {available_quests.length > 0 ? (
                             <div className="space-y-3">
                                 {available_quests.map((quest) => {
-                                    const colorClass = categoryColors[quest.category] || 'border-stone-600/50 bg-stone-800/50';
+                                    const colorClass =
+                                        categoryColors[quest.category] ||
+                                        "border-stone-600/50 bg-stone-800/50";
                                     const isLoading = loading === quest.id;
 
                                     return (
-                                        <div key={quest.id} className={`rounded-lg border p-3 ${colorClass}`}>
+                                        <div
+                                            key={quest.id}
+                                            className={`rounded-lg border p-3 ${colorClass}`}
+                                        >
                                             <div className="mb-2 flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    <QuestIcon icon={quest.icon} className="h-4 w-4 text-amber-400" />
-                                                    <span className="font-pixel text-xs text-amber-300">{quest.name}</span>
+                                                    <QuestIcon
+                                                        icon={quest.icon}
+                                                        className="h-4 w-4 text-amber-400"
+                                                    />
+                                                    <span className="font-pixel text-xs text-amber-300">
+                                                        {quest.name}
+                                                    </span>
                                                 </div>
                                                 <span className="font-pixel text-[10px] capitalize text-stone-500">
                                                     {quest.category_display}
                                                 </span>
                                             </div>
-                                            <p className="mb-2 font-pixel text-[10px] text-stone-400">{quest.description}</p>
+                                            <p className="mb-2 font-pixel text-[10px] text-stone-400">
+                                                {quest.description}
+                                            </p>
                                             <div className="mb-3 flex items-center gap-1 text-stone-500">
                                                 <ChevronRight className="h-3 w-3" />
-                                                <span className="font-pixel text-[10px]">{quest.objective}</span>
+                                                <span className="font-pixel text-[10px]">
+                                                    {quest.objective}
+                                                </span>
                                             </div>
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
@@ -280,8 +340,8 @@ export default function NoticeBoard() {
                                                     disabled={!canAcceptMore || loading !== null}
                                                     className={`flex items-center gap-1 rounded px-2 py-1 font-pixel text-[10px] transition ${
                                                         canAcceptMore && !loading
-                                                            ? 'bg-amber-600 text-stone-900 hover:bg-amber-500'
-                                                            : 'cursor-not-allowed bg-stone-700 text-stone-500'
+                                                            ? "bg-amber-600 text-stone-900 hover:bg-amber-500"
+                                                            : "cursor-not-allowed bg-stone-700 text-stone-500"
                                                     }`}
                                                 >
                                                     {isLoading ? (
@@ -299,8 +359,12 @@ export default function NoticeBoard() {
                         ) : (
                             <div className="py-8 text-center">
                                 <ScrollText className="mx-auto mb-2 h-10 w-10 text-stone-600" />
-                                <p className="font-pixel text-xs text-stone-500">No quests available</p>
-                                <p className="font-pixel text-[10px] text-stone-600">Check back later</p>
+                                <p className="font-pixel text-xs text-stone-500">
+                                    No quests available
+                                </p>
+                                <p className="font-pixel text-[10px] text-stone-600">
+                                    Check back later
+                                </p>
                             </div>
                         )}
                     </div>

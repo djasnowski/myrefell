@@ -1,8 +1,8 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { Anchor, Coins, Crown, Loader2, Ship, Sparkles } from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from "@inertiajs/react";
+import { Anchor, Coins, Crown, Loader2, Ship, Sparkles } from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Destination {
     id: number;
@@ -47,9 +47,9 @@ export default function PortIndex() {
     const [success, setSuccess] = useState<string | null>(flash?.success || null);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
+        { title: "Dashboard", href: "/dashboard" },
         { title: port_info.port_name, href: `/villages/${port_info.port_id}` },
-        { title: 'Harbor', href: '#' },
+        { title: "Harbor", href: "#" },
     ];
 
     const handleBookPassage = (destinationId: number) => {
@@ -57,21 +57,25 @@ export default function PortIndex() {
         setError(null);
         setSuccess(null);
 
-        router.post('/port/book', { destination_id: destinationId }, {
-            preserveScroll: true,
-            onSuccess: () => {
-                router.reload();
+        router.post(
+            "/port/book",
+            { destination_id: destinationId },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+                onError: (errors) => {
+                    setError((Object.values(errors)[0] as string) || "An error occurred");
+                    setLoading(null);
+                },
+                onFinish: () => {
+                    // Only reset loading if we're still on the page (error case)
+                    // On success we redirect to dashboard
+                    setLoading(null);
+                },
             },
-            onError: (errors) => {
-                setError(Object.values(errors)[0] as string || 'An error occurred');
-                setLoading(null);
-            },
-            onFinish: () => {
-                // Only reset loading if we're still on the page (error case)
-                // On success we redirect to dashboard
-                setLoading(null);
-            },
-        });
+        );
     };
 
     return (
@@ -100,8 +104,12 @@ export default function PortIndex() {
                                 <Sparkles className="h-8 w-8 text-blue-400" />
                             </div>
                             <div>
-                                <h2 className="font-pixel text-lg text-blue-300">{port_info.harbormaster_name}</h2>
-                                <p className="font-pixel text-xs text-stone-400">{port_info.harbormaster_title}</p>
+                                <h2 className="font-pixel text-lg text-blue-300">
+                                    {port_info.harbormaster_name}
+                                </h2>
+                                <p className="font-pixel text-xs text-stone-400">
+                                    {port_info.harbormaster_title}
+                                </p>
                             </div>
                         </div>
                         <p className="font-pixel text-xs leading-relaxed text-stone-300">
@@ -130,11 +138,14 @@ export default function PortIndex() {
                                 <Coins className="h-5 w-5 text-yellow-400" />
                                 <span className="font-pixel text-sm text-stone-300">Your Gold</span>
                             </div>
-                            <span className="font-pixel text-lg text-yellow-400">{formatNumber(port_info.gold)}</span>
+                            <span className="font-pixel text-lg text-yellow-400">
+                                {formatNumber(port_info.gold)}
+                            </span>
                         </div>
                         <div className="mt-2 text-right">
                             <span className="font-pixel text-[10px] text-stone-500">
-                                Cost varies by distance (from {formatNumber(port_info.base_ship_cost)} gold)
+                                Cost varies by distance (from{" "}
+                                {formatNumber(port_info.base_ship_cost)} gold)
                             </span>
                         </div>
                     </div>
@@ -142,7 +153,9 @@ export default function PortIndex() {
                     {/* Destinations */}
                     {port_info.destinations.length > 0 ? (
                         <div className="space-y-3">
-                            <h3 className="font-pixel text-sm text-stone-300">Available Destinations</h3>
+                            <h3 className="font-pixel text-sm text-stone-300">
+                                Available Destinations
+                            </h3>
                             {port_info.destinations.map((dest) => {
                                 const canAfford = port_info.gold >= dest.cost;
                                 const isLoading = loading === dest.id;
@@ -154,15 +167,17 @@ export default function PortIndex() {
                                         disabled={!canAfford || loading !== null}
                                         className={`w-full rounded-xl border-2 p-4 text-left transition ${
                                             canAfford
-                                                ? 'border-blue-600/50 bg-blue-900/20 hover:bg-blue-900/30'
-                                                : 'cursor-not-allowed border-stone-700 bg-stone-800/30 opacity-50'
+                                                ? "border-blue-600/50 bg-blue-900/20 hover:bg-blue-900/30"
+                                                : "cursor-not-allowed border-stone-700 bg-stone-800/30 opacity-50"
                                         }`}
                                     >
                                         <div className="flex items-center justify-between">
                                             <div>
                                                 <div className="flex items-center gap-2">
                                                     <Ship className="h-4 w-4 text-blue-400" />
-                                                    <h4 className="font-pixel text-sm text-blue-300">{dest.name}</h4>
+                                                    <h4 className="font-pixel text-sm text-blue-300">
+                                                        {dest.name}
+                                                    </h4>
                                                 </div>
                                                 <div className="mt-1 flex items-center gap-1">
                                                     <Crown className="h-3 w-3 text-amber-400" />
@@ -188,7 +203,7 @@ export default function PortIndex() {
                                                 <div className="flex items-center justify-end gap-1">
                                                     <Coins className="h-3 w-3 text-yellow-400" />
                                                     <span
-                                                        className={`font-pixel text-xs ${canAfford ? 'text-yellow-400' : 'text-red-400'}`}
+                                                        className={`font-pixel text-xs ${canAfford ? "text-yellow-400" : "text-red-400"}`}
                                                     >
                                                         {formatNumber(dest.cost)}
                                                     </span>
@@ -202,7 +217,9 @@ export default function PortIndex() {
                     ) : (
                         <div className="rounded-xl border-2 border-stone-700 bg-stone-800/30 p-8 text-center">
                             <Ship className="mx-auto mb-3 h-12 w-12 text-stone-500" />
-                            <h3 className="mb-2 font-pixel text-lg text-stone-400">No Ships Available</h3>
+                            <h3 className="mb-2 font-pixel text-lg text-stone-400">
+                                No Ships Available
+                            </h3>
                             <p className="font-pixel text-xs text-stone-500">
                                 There are no ships departing at this time.
                             </p>

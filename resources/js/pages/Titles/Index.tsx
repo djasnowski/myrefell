@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router } from "@inertiajs/react";
 import {
     Crown,
     ScrollText,
@@ -11,10 +11,10 @@ import {
     Coins,
     Users,
     Sparkles,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 // Matches TitleService::getUserTitles flat structure
 interface UserTitle {
@@ -120,60 +120,86 @@ export default function TitlesIndex({
     const [withdrawing, setWithdrawing] = useState<number | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Titles', href: '/titles' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Titles", href: "/titles" },
     ];
 
     const handleWithdraw = (petitionId: number) => {
         setWithdrawing(petitionId);
-        router.post(`/titles/petition/${petitionId}/withdraw`, {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                router.reload();
+        router.post(
+            `/titles/petition/${petitionId}/withdraw`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => setWithdrawing(null),
             },
-            onFinish: () => setWithdrawing(null),
-        });
+        );
     };
 
     const getCategoryColor = (category: string | null) => {
         switch (category) {
-            case 'royalty': return 'text-purple-400';
-            case 'landed_nobility': return 'text-amber-400';
-            case 'minor_nobility': return 'text-blue-400';
-            default: return 'text-stone-400';
+            case "royalty":
+                return "text-purple-400";
+            case "landed_nobility":
+                return "text-amber-400";
+            case "minor_nobility":
+                return "text-blue-400";
+            default:
+                return "text-stone-400";
         }
     };
 
     const getCategoryBorder = (category: string | null) => {
         switch (category) {
-            case 'royalty': return 'border-purple-600/50 bg-purple-900/20';
-            case 'landed_nobility': return 'border-amber-600/50 bg-amber-900/20';
-            case 'minor_nobility': return 'border-blue-600/50 bg-blue-900/20';
-            default: return 'border-stone-700 bg-stone-800/30';
+            case "royalty":
+                return "border-purple-600/50 bg-purple-900/20";
+            case "landed_nobility":
+                return "border-amber-600/50 bg-amber-900/20";
+            case "minor_nobility":
+                return "border-blue-600/50 bg-blue-900/20";
+            default:
+                return "border-stone-700 bg-stone-800/30";
         }
     };
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'pending': return 'text-amber-400 bg-amber-900/20 border-amber-600/50';
-            case 'approved': return 'text-green-400 bg-green-900/20 border-green-600/50';
-            case 'denied': return 'text-red-400 bg-red-900/20 border-red-600/50';
-            case 'withdrawn': return 'text-stone-400 bg-stone-800/50 border-stone-600/50';
-            case 'expired': return 'text-stone-500 bg-stone-900/20 border-stone-700/50';
-            case 'ceremony_pending': return 'text-purple-400 bg-purple-900/20 border-purple-600/50';
-            default: return 'text-stone-400 bg-stone-800/50 border-stone-600/50';
+            case "pending":
+                return "text-amber-400 bg-amber-900/20 border-amber-600/50";
+            case "approved":
+                return "text-green-400 bg-green-900/20 border-green-600/50";
+            case "denied":
+                return "text-red-400 bg-red-900/20 border-red-600/50";
+            case "withdrawn":
+                return "text-stone-400 bg-stone-800/50 border-stone-600/50";
+            case "expired":
+                return "text-stone-500 bg-stone-900/20 border-stone-700/50";
+            case "ceremony_pending":
+                return "text-purple-400 bg-purple-900/20 border-purple-600/50";
+            default:
+                return "text-stone-400 bg-stone-800/50 border-stone-600/50";
         }
     };
 
     const getStatusLabel = (status: string) => {
         switch (status) {
-            case 'pending': return 'Awaiting Response';
-            case 'approved': return 'Approved';
-            case 'denied': return 'Denied';
-            case 'withdrawn': return 'Withdrawn';
-            case 'expired': return 'Expired';
-            case 'ceremony_pending': return 'Awaiting Ceremony';
-            default: return status;
+            case "pending":
+                return "Awaiting Response";
+            case "approved":
+                return "Approved";
+            case "denied":
+                return "Denied";
+            case "withdrawn":
+                return "Withdrawn";
+            case "expired":
+                return "Expired";
+            case "ceremony_pending":
+                return "Awaiting Ceremony";
+            default:
+                return status;
         }
     };
 
@@ -215,7 +241,10 @@ export default function TitlesIndex({
                                             <span className="font-pixel text-xs text-stone-200">
                                                 {petition.petitioner.username}
                                             </span>
-                                            <span className="font-pixel text-xs text-stone-500"> petitions for </span>
+                                            <span className="font-pixel text-xs text-stone-500">
+                                                {" "}
+                                                petitions for{" "}
+                                            </span>
                                             <span className="font-pixel text-xs text-amber-400">
                                                 {petition.title_name}
                                             </span>
@@ -253,7 +282,10 @@ export default function TitlesIndex({
                                             <span className="font-pixel text-xs text-stone-200">
                                                 {petition.petitioner.username}
                                             </span>
-                                            <span className="font-pixel text-xs text-stone-500"> to receive </span>
+                                            <span className="font-pixel text-xs text-stone-500">
+                                                {" "}
+                                                to receive{" "}
+                                            </span>
                                             <span className="font-pixel text-xs text-purple-400">
                                                 {petition.title_name}
                                             </span>
@@ -275,7 +307,9 @@ export default function TitlesIndex({
                             {my_titles.length === 0 ? (
                                 <div className="py-8 text-center">
                                     <Shield className="mx-auto mb-2 h-8 w-8 text-stone-600" />
-                                    <div className="font-pixel text-xs text-stone-500">You hold no titles</div>
+                                    <div className="font-pixel text-xs text-stone-500">
+                                        You hold no titles
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="space-y-2">
@@ -286,8 +320,12 @@ export default function TitlesIndex({
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    <Crown className={`h-4 w-4 ${getCategoryColor(title.category)}`} />
-                                                    <span className={`font-pixel text-sm ${getCategoryColor(title.category)}`}>
+                                                    <Crown
+                                                        className={`h-4 w-4 ${getCategoryColor(title.category)}`}
+                                                    />
+                                                    <span
+                                                        className={`font-pixel text-sm ${getCategoryColor(title.category)}`}
+                                                    >
                                                         {title.name}
                                                     </span>
                                                 </div>
@@ -321,7 +359,9 @@ export default function TitlesIndex({
                             {my_petitions.length === 0 ? (
                                 <div className="py-8 text-center">
                                     <ScrollText className="mx-auto mb-2 h-8 w-8 text-stone-600" />
-                                    <div className="font-pixel text-xs text-stone-500">No active petitions</div>
+                                    <div className="font-pixel text-xs text-stone-500">
+                                        No active petitions
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="space-y-2">
@@ -334,7 +374,9 @@ export default function TitlesIndex({
                                                 <span className="font-pixel text-sm text-stone-200">
                                                     {petition.title_name}
                                                 </span>
-                                                <span className={`rounded border px-2 py-0.5 font-pixel text-[10px] ${getStatusColor(petition.status)}`}>
+                                                <span
+                                                    className={`rounded border px-2 py-0.5 font-pixel text-[10px] ${getStatusColor(petition.status)}`}
+                                                >
                                                     {getStatusLabel(petition.status)}
                                                 </span>
                                             </div>
@@ -351,16 +393,18 @@ export default function TitlesIndex({
                                                 <span className="font-pixel text-[10px] text-stone-600">
                                                     Submitted: {petition.created_at}
                                                 </span>
-                                                {petition.status === 'pending' && (
+                                                {petition.status === "pending" && (
                                                     <button
                                                         onClick={() => handleWithdraw(petition.id)}
                                                         disabled={withdrawing === petition.id}
                                                         className="font-pixel text-[10px] text-red-400 hover:text-red-300 disabled:opacity-50"
                                                     >
-                                                        {withdrawing === petition.id ? 'Withdrawing...' : 'Withdraw'}
+                                                        {withdrawing === petition.id
+                                                            ? "Withdrawing..."
+                                                            : "Withdraw"}
                                                     </button>
                                                 )}
-                                                {petition.status === 'ceremony_pending' && (
+                                                {petition.status === "ceremony_pending" && (
                                                     <Link
                                                         href={`/titles/ceremony/${petition.id}`}
                                                         className="font-pixel text-[10px] text-purple-400 hover:text-purple-300"
@@ -398,8 +442,12 @@ export default function TitlesIndex({
                                     >
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
-                                                <Crown className={`h-4 w-4 ${getCategoryColor(title.category)}`} />
-                                                <span className={`font-pixel text-sm ${getCategoryColor(title.category)}`}>
+                                                <Crown
+                                                    className={`h-4 w-4 ${getCategoryColor(title.category)}`}
+                                                />
+                                                <span
+                                                    className={`font-pixel text-sm ${getCategoryColor(title.category)}`}
+                                                >
                                                     {title.name}
                                                 </span>
                                             </div>
@@ -431,12 +479,16 @@ export default function TitlesIndex({
                                                 {title.meets_requirements ? (
                                                     <>
                                                         <Check className="h-3 w-3 text-green-400" />
-                                                        <span className="font-pixel text-[10px] text-green-400">Eligible</span>
+                                                        <span className="font-pixel text-[10px] text-green-400">
+                                                            Eligible
+                                                        </span>
                                                     </>
                                                 ) : (
                                                     <>
                                                         <X className="h-3 w-3 text-red-400" />
-                                                        <span className="font-pixel text-[10px] text-red-400">Not Eligible</span>
+                                                        <span className="font-pixel text-[10px] text-red-400">
+                                                            Not Eligible
+                                                        </span>
                                                     </>
                                                 )}
                                             </div>
@@ -444,8 +496,8 @@ export default function TitlesIndex({
                                                 href={`/titles/petition/${title.slug}`}
                                                 className={`rounded px-2 py-1 font-pixel text-[10px] transition ${
                                                     title.meets_requirements
-                                                        ? 'bg-amber-600 text-white hover:bg-amber-500'
-                                                        : 'bg-stone-700 text-stone-400 hover:bg-stone-600'
+                                                        ? "bg-amber-600 text-white hover:bg-amber-500"
+                                                        : "bg-stone-700 text-stone-400 hover:bg-stone-600"
                                                 }`}
                                             >
                                                 View Details

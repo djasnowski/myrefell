@@ -1,9 +1,9 @@
-import { Head, Link } from '@inertiajs/react';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { RulerDisplay } from '@/components/ui/legitimacy-badge';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, Link } from "@inertiajs/react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { RulerDisplay } from "@/components/ui/legitimacy-badge";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Village {
     id: number;
@@ -47,20 +47,20 @@ interface Props {
 }
 
 const biomeColors: Record<string, string> = {
-    plains: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    forest: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
-    tundra: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    coastal: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200',
-    desert: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
-    volcano: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    mountains: 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200',
-    swamps: 'bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200',
+    plains: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+    forest: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
+    tundra: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+    coastal: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200",
+    desert: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+    volcano: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+    mountains: "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200",
+    swamps: "bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200",
 };
 
 export default function BaronyShow({ barony, current_user_id }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Baronies', href: '/baronies' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Baronies", href: "/baronies" },
         { title: barony.name, href: `/baronies/${barony.id}` },
     ];
 
@@ -79,7 +79,7 @@ export default function BaronyShow({ barony, current_user_id }: Props) {
                                     </span>
                                 )}
                             </h1>
-                            <Badge className={biomeColors[barony.biome] || ''}>
+                            <Badge className={biomeColors[barony.biome] || ""}>
                                 {barony.biome}
                             </Badge>
                         </div>
@@ -93,11 +93,14 @@ export default function BaronyShow({ barony, current_user_id }: Props) {
                             <CardDescription>Kingdom</CardDescription>
                             <CardTitle className="text-lg">
                                 {barony.kingdom ? (
-                                    <Link href={`/kingdoms/${barony.kingdom.id}`} className="hover:underline">
+                                    <Link
+                                        href={`/kingdoms/${barony.kingdom.id}`}
+                                        className="hover:underline"
+                                    >
                                         {barony.kingdom.name}
                                     </Link>
                                 ) : (
-                                    'Independent'
+                                    "Independent"
                                 )}
                             </CardTitle>
                         </CardHeader>
@@ -117,7 +120,9 @@ export default function BaronyShow({ barony, current_user_id }: Props) {
                     <Card>
                         <CardHeader className="pb-2">
                             <CardDescription>Coordinates</CardDescription>
-                            <CardTitle className="text-lg">({barony.coordinates.x}, {barony.coordinates.y})</CardTitle>
+                            <CardTitle className="text-lg">
+                                ({barony.coordinates.x}, {barony.coordinates.y})
+                            </CardTitle>
                         </CardHeader>
                     </Card>
                 </div>
@@ -155,7 +160,10 @@ export default function BaronyShow({ barony, current_user_id }: Props) {
                                                     </span>
                                                 )}
                                             </CardTitle>
-                                            <Badge className={biomeColors[village.biome] || ''} variant="secondary">
+                                            <Badge
+                                                className={biomeColors[village.biome] || ""}
+                                                variant="secondary"
+                                            >
                                                 {village.biome}
                                             </Badge>
                                         </div>

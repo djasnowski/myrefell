@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router } from "@inertiajs/react";
 import {
     Calendar,
     ChevronLeft,
@@ -9,10 +9,10 @@ import {
     Shield,
     TrendingDown,
     TrendingUp,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface DynastyEvent {
     id: number;
@@ -52,72 +52,76 @@ interface Props {
 }
 
 const EVENT_TYPES = [
-    { value: '', label: 'All Events', icon: '📜' },
-    { value: 'birth', label: 'Births', icon: '🎂' },
-    { value: 'death', label: 'Deaths', icon: '💀' },
-    { value: 'marriage', label: 'Marriages', icon: '💍' },
-    { value: 'divorce', label: 'Divorces', icon: '💔' },
-    { value: 'succession', label: 'Successions', icon: '👑' },
-    { value: 'achievement', label: 'Achievements', icon: '🏆' },
-    { value: 'scandal', label: 'Scandals', icon: '😱' },
-    { value: 'alliance', label: 'Alliances', icon: '🤝' },
-    { value: 'inheritance', label: 'Inheritances', icon: '📜' },
+    { value: "", label: "All Events", icon: "📜" },
+    { value: "birth", label: "Births", icon: "🎂" },
+    { value: "death", label: "Deaths", icon: "💀" },
+    { value: "marriage", label: "Marriages", icon: "💍" },
+    { value: "divorce", label: "Divorces", icon: "💔" },
+    { value: "succession", label: "Successions", icon: "👑" },
+    { value: "achievement", label: "Achievements", icon: "🏆" },
+    { value: "scandal", label: "Scandals", icon: "😱" },
+    { value: "alliance", label: "Alliances", icon: "🤝" },
+    { value: "inheritance", label: "Inheritances", icon: "📜" },
 ];
 
-export default function DynastyHistory({
-    dynasty,
-    events,
-    stats,
-    filter,
-}: Props) {
-    const [selectedFilter, setSelectedFilter] = useState(filter || '');
+export default function DynastyHistory({ dynasty, events, stats, filter }: Props) {
+    const [selectedFilter, setSelectedFilter] = useState(filter || "");
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Dynasty', href: '/dynasty' },
-        { title: 'History', href: '/dynasty/history' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Dynasty", href: "/dynasty" },
+        { title: "History", href: "/dynasty/history" },
     ];
 
     const getEventIcon = (type: string): React.ReactNode => {
-        if (type === 'succession') {
+        if (type === "succession") {
             return <Crown className="h-5 w-5 text-amber-400" />;
         }
-        if (type === 'alliance') {
+        if (type === "alliance") {
             return <Shield className="h-5 w-5 text-blue-400" />;
         }
-        const found = EVENT_TYPES.find(t => t.value === type);
-        return found?.icon || '📌';
+        const found = EVENT_TYPES.find((t) => t.value === type);
+        return found?.icon || "📌";
     };
 
     const handleFilterChange = (value: string) => {
         setSelectedFilter(value);
-        router.get('/dynasty/history', value ? { filter: value } : {}, {
+        router.get("/dynasty/history", value ? { filter: value } : {}, {
             preserveState: true,
             preserveScroll: true,
         });
     };
 
     const goToPage = (page: number) => {
-        router.get('/dynasty/history', {
-            page,
-            ...(selectedFilter ? { filter: selectedFilter } : {}),
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        router.get(
+            "/dynasty/history",
+            {
+                page,
+                ...(selectedFilter ? { filter: selectedFilter } : {}),
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
     };
 
     // Group events by year
-    const eventsByYear = events.data.reduce((acc, event) => {
-        const year = event.year;
-        if (!acc[year]) {
-            acc[year] = [];
-        }
-        acc[year].push(event);
-        return acc;
-    }, {} as Record<number, DynastyEvent[]>);
+    const eventsByYear = events.data.reduce(
+        (acc, event) => {
+            const year = event.year;
+            if (!acc[year]) {
+                acc[year] = [];
+            }
+            acc[year].push(event);
+            return acc;
+        },
+        {} as Record<number, DynastyEvent[]>,
+    );
 
-    const years = Object.keys(eventsByYear).map(Number).sort((a, b) => b - a);
+    const years = Object.keys(eventsByYear)
+        .map(Number)
+        .sort((a, b) => b - a);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -146,15 +150,21 @@ export default function DynastyHistory({
                     {/* Stats Overview */}
                     <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
                         <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center">
-                            <div className="font-pixel text-lg text-stone-300">{stats.total_events}</div>
-                            <div className="font-pixel text-[10px] text-stone-500">Total Events</div>
+                            <div className="font-pixel text-lg text-stone-300">
+                                {stats.total_events}
+                            </div>
+                            <div className="font-pixel text-[10px] text-stone-500">
+                                Total Events
+                            </div>
                         </div>
                         <div className="rounded-lg border border-blue-600/50 bg-blue-900/20 p-3 text-center">
                             <div className="font-pixel text-lg text-blue-400">{stats.births}</div>
                             <div className="font-pixel text-[10px] text-stone-500">Births</div>
                         </div>
                         <div className="rounded-lg border border-pink-600/50 bg-pink-900/20 p-3 text-center">
-                            <div className="font-pixel text-lg text-pink-400">{stats.marriages}</div>
+                            <div className="font-pixel text-lg text-pink-400">
+                                {stats.marriages}
+                            </div>
                             <div className="font-pixel text-[10px] text-stone-500">Marriages</div>
                         </div>
                         <div className="rounded-lg border border-stone-600 bg-stone-800/50 p-3 text-center">
@@ -164,16 +174,22 @@ export default function DynastyHistory({
                                 ) : (
                                     <TrendingDown className="h-4 w-4 text-red-400" />
                                 )}
-                                <span className={`font-pixel text-lg ${
-                                    stats.total_prestige_gained - stats.total_prestige_lost >= 0
-                                        ? 'text-green-400'
-                                        : 'text-red-400'
-                                }`}>
-                                    {stats.total_prestige_gained - stats.total_prestige_lost >= 0 ? '+' : ''}
+                                <span
+                                    className={`font-pixel text-lg ${
+                                        stats.total_prestige_gained - stats.total_prestige_lost >= 0
+                                            ? "text-green-400"
+                                            : "text-red-400"
+                                    }`}
+                                >
+                                    {stats.total_prestige_gained - stats.total_prestige_lost >= 0
+                                        ? "+"
+                                        : ""}
                                     {stats.total_prestige_gained - stats.total_prestige_lost}
                                 </span>
                             </div>
-                            <div className="font-pixel text-[10px] text-stone-500">Net Prestige</div>
+                            <div className="font-pixel text-[10px] text-stone-500">
+                                Net Prestige
+                            </div>
                         </div>
                     </div>
 
@@ -181,7 +197,9 @@ export default function DynastyHistory({
                     <div className="mb-4 rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
                         <div className="flex items-center gap-2 mb-3">
                             <Filter className="h-4 w-4 text-stone-400" />
-                            <span className="font-pixel text-xs text-stone-400">Filter by Event Type</span>
+                            <span className="font-pixel text-xs text-stone-400">
+                                Filter by Event Type
+                            </span>
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {EVENT_TYPES.map((type) => (
@@ -190,8 +208,8 @@ export default function DynastyHistory({
                                     onClick={() => handleFilterChange(type.value)}
                                     className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-pixel text-xs transition ${
                                         selectedFilter === type.value
-                                            ? 'border-amber-600 bg-amber-900/30 text-amber-400'
-                                            : 'border-stone-700 bg-stone-800/30 text-stone-400 hover:bg-stone-700'
+                                            ? "border-amber-600 bg-amber-900/30 text-amber-400"
+                                            : "border-stone-700 bg-stone-800/30 text-stone-400 hover:bg-stone-700"
                                     }`}
                                 >
                                     <span>{type.icon}</span>
@@ -211,11 +229,13 @@ export default function DynastyHistory({
                         {events.data.length === 0 ? (
                             <div className="py-12 text-center">
                                 <HistoryIcon className="mx-auto mb-3 h-12 w-12 text-stone-600" />
-                                <div className="font-pixel text-sm text-stone-500">No events recorded</div>
+                                <div className="font-pixel text-sm text-stone-500">
+                                    No events recorded
+                                </div>
                                 <p className="mt-1 font-pixel text-xs text-stone-600">
                                     {selectedFilter
-                                        ? 'Try a different filter'
-                                        : 'Your dynasty history will appear here'}
+                                        ? "Try a different filter"
+                                        : "Your dynasty history will appear here"}
                                 </p>
                             </div>
                         ) : (
@@ -225,7 +245,9 @@ export default function DynastyHistory({
                                         {/* Year Header */}
                                         <div className="mb-3 flex items-center gap-3">
                                             <div className="rounded-lg bg-amber-900/30 px-3 py-1">
-                                                <span className="font-pixel text-sm text-amber-400">Year {year}</span>
+                                                <span className="font-pixel text-sm text-amber-400">
+                                                    Year {year}
+                                                </span>
                                             </div>
                                             <div className="flex-1 h-px bg-stone-700" />
                                         </div>
@@ -237,16 +259,18 @@ export default function DynastyHistory({
                                                     key={event.id}
                                                     className={`relative flex items-start gap-3 rounded-lg border p-3 ${
                                                         event.prestige_change > 0
-                                                            ? 'border-green-600/30 bg-green-900/10'
+                                                            ? "border-green-600/30 bg-green-900/10"
                                                             : event.prestige_change < 0
-                                                                ? 'border-red-600/30 bg-red-900/10'
-                                                                : 'border-stone-700 bg-stone-800/30'
+                                                              ? "border-red-600/30 bg-red-900/10"
+                                                              : "border-stone-700 bg-stone-800/30"
                                                     }`}
                                                 >
                                                     {/* Timeline dot */}
                                                     <div className="absolute -left-[1.4rem] top-4 h-2 w-2 rounded-full bg-stone-600" />
 
-                                                    <div className="text-xl">{getEventIcon(event.type)}</div>
+                                                    <div className="text-xl">
+                                                        {getEventIcon(event.type)}
+                                                    </div>
                                                     <div className="flex-1">
                                                         <div className="flex items-start justify-between gap-2">
                                                             <div>
@@ -269,17 +293,22 @@ export default function DynastyHistory({
                                                             </p>
                                                         )}
                                                         {event.prestige_change !== 0 && (
-                                                            <div className={`mt-2 inline-flex items-center gap-1 rounded px-2 py-0.5 font-pixel text-[10px] ${
-                                                                event.prestige_change > 0
-                                                                    ? 'bg-green-900/30 text-green-400'
-                                                                    : 'bg-red-900/30 text-red-400'
-                                                            }`}>
+                                                            <div
+                                                                className={`mt-2 inline-flex items-center gap-1 rounded px-2 py-0.5 font-pixel text-[10px] ${
+                                                                    event.prestige_change > 0
+                                                                        ? "bg-green-900/30 text-green-400"
+                                                                        : "bg-red-900/30 text-red-400"
+                                                                }`}
+                                                            >
                                                                 {event.prestige_change > 0 ? (
                                                                     <TrendingUp className="h-3 w-3" />
                                                                 ) : (
                                                                     <TrendingDown className="h-3 w-3" />
                                                                 )}
-                                                                {event.prestige_change > 0 ? '+' : ''}{event.prestige_change} prestige
+                                                                {event.prestige_change > 0
+                                                                    ? "+"
+                                                                    : ""}
+                                                                {event.prestige_change} prestige
                                                             </div>
                                                         )}
                                                     </div>

@@ -1,16 +1,10 @@
-import { Form } from '@inertiajs/react';
-import { Eye, EyeOff, LockKeyhole, RefreshCw } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
-import { regenerateRecoveryCodes } from '@/routes/two-factor';
-import AlertError from './alert-error';
+import { Form } from "@inertiajs/react";
+import { Eye, EyeOff, LockKeyhole, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { regenerateRecoveryCodes } from "@/routes/two-factor";
+import AlertError from "./alert-error";
 
 type Props = {
     recoveryCodesList: string[];
@@ -37,8 +31,8 @@ export default function TwoFactorRecoveryCodes({
         if (!codesAreVisible) {
             setTimeout(() => {
                 codesSectionRef.current?.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'nearest',
+                    behavior: "smooth",
+                    block: "nearest",
                 });
             });
         }
@@ -60,8 +54,8 @@ export default function TwoFactorRecoveryCodes({
                     2FA Recovery Codes
                 </CardTitle>
                 <CardDescription>
-                    Recovery codes let you regain access if you lose your 2FA
-                    device. Store them in a secure password manager.
+                    Recovery codes let you regain access if you lose your 2FA device. Store them in
+                    a secure password manager.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -72,11 +66,8 @@ export default function TwoFactorRecoveryCodes({
                         aria-expanded={codesAreVisible}
                         aria-controls="recovery-codes-section"
                     >
-                        <RecoveryCodeIconComponent
-                            className="size-4"
-                            aria-hidden="true"
-                        />
-                        {codesAreVisible ? 'Hide' : 'View'} Recovery Codes
+                        <RecoveryCodeIconComponent className="size-4" aria-hidden="true" />
+                        {codesAreVisible ? "Hide" : "View"} Recovery Codes
                     </Button>
 
                     {canRegenerateCodes && (
@@ -100,7 +91,7 @@ export default function TwoFactorRecoveryCodes({
                 </div>
                 <div
                     id="recovery-codes-section"
-                    className={`relative overflow-hidden transition-all duration-300 ${codesAreVisible ? 'h-auto opacity-100' : 'h-0 opacity-0'}`}
+                    className={`relative overflow-hidden transition-all duration-300 ${codesAreVisible ? "h-auto opacity-100" : "h-0 opacity-0"}`}
                     aria-hidden={!codesAreVisible}
                 >
                     <div className="mt-3 space-y-3">
@@ -129,29 +120,22 @@ export default function TwoFactorRecoveryCodes({
                                             className="space-y-2"
                                             aria-label="Loading recovery codes"
                                         >
-                                            {Array.from(
-                                                { length: 8 },
-                                                (_, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className="h-4 animate-pulse rounded bg-muted-foreground/20"
-                                                        aria-hidden="true"
-                                                    />
-                                                ),
-                                            )}
+                                            {Array.from({ length: 8 }, (_, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="h-4 animate-pulse rounded bg-muted-foreground/20"
+                                                    aria-hidden="true"
+                                                />
+                                            ))}
                                         </div>
                                     )}
                                 </div>
 
                                 <div className="text-xs text-muted-foreground select-none">
                                     <p id="regenerate-warning">
-                                        Each recovery code can be used once to
-                                        access your account and will be removed
-                                        after use. If you need more, click{' '}
-                                        <span className="font-bold">
-                                            Regenerate Codes
-                                        </span>{' '}
-                                        above.
+                                        Each recovery code can be used once to access your account
+                                        and will be removed after use. If you need more, click{" "}
+                                        <span className="font-bold">Regenerate Codes</span> above.
                                     </p>
                                 </div>
                             </>

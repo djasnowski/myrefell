@@ -1,15 +1,15 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Church, Coins, Crown, Heart, Shield, Star, Users, Zap } from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from "@inertiajs/react";
+import { ArrowLeft, Church, Coins, Crown, Heart, Shield, Star, Users, Zap } from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Belief {
     id: number;
     name: string;
     description: string;
     icon: string;
-    type: 'virtue' | 'vice' | 'neutral';
+    type: "virtue" | "vice" | "neutral";
     effects: Record<string, number> | null;
 }
 
@@ -19,7 +19,7 @@ interface Religion {
     description: string | null;
     icon: string;
     color: string;
-    type: 'cult' | 'religion';
+    type: "cult" | "religion";
     is_public: boolean;
     is_cult: boolean;
     is_religion: boolean;
@@ -76,28 +76,37 @@ interface PageProps {
 }
 
 const beliefTypeColors: Record<string, string> = {
-    virtue: 'text-green-400 bg-green-900/30 border-green-500/30',
-    vice: 'text-red-400 bg-red-900/30 border-red-500/30',
-    neutral: 'text-blue-400 bg-blue-900/30 border-blue-500/30',
+    virtue: "text-green-400 bg-green-900/30 border-green-500/30",
+    vice: "text-red-400 bg-red-900/30 border-red-500/30",
+    neutral: "text-blue-400 bg-blue-900/30 border-blue-500/30",
 };
 
 const rankColors: Record<string, string> = {
-    prophet: 'text-yellow-400 bg-yellow-900/30',
-    priest: 'text-purple-400 bg-purple-900/30',
-    follower: 'text-stone-400 bg-stone-700/30',
+    prophet: "text-yellow-400 bg-yellow-900/30",
+    priest: "text-purple-400 bg-purple-900/30",
+    follower: "text-stone-400 bg-stone-700/30",
 };
 
 // Format effect keys: combat_xp_bonus -> Combat XP Bonus
 const formatEffectKey = (key: string): string => {
     return key
-        .split('_')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
 };
 
 export default function ReligionShow() {
-    const { religion, membership, is_member, can_join, kingdom_status, members, structures, energy, gold } =
-        usePage<PageProps>().props;
+    const {
+        religion,
+        membership,
+        is_member,
+        can_join,
+        kingdom_status,
+        members,
+        structures,
+        energy,
+        gold,
+    } = usePage<PageProps>().props;
 
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -105,21 +114,26 @@ export default function ReligionShow() {
     const [donationAmount, setDonationAmount] = useState(100);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Religions', href: '/religions' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Religions", href: "/religions" },
         { title: religion.name, href: `/religions/${religion.id}` },
     ];
 
-    const performAction = async (actionType: string, additionalData: Record<string, unknown> = {}) => {
+    const performAction = async (
+        actionType: string,
+        additionalData: Record<string, unknown> = {},
+    ) => {
         setIsLoading(true);
         setError(null);
 
         try {
-            const response = await fetch('/religions/action', {
-                method: 'POST',
+            const response = await fetch("/religions/action", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify({
                     religion_id: religion.id,
@@ -136,7 +150,7 @@ export default function ReligionShow() {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to perform action');
+            setError("Failed to perform action");
         } finally {
             setIsLoading(false);
         }
@@ -147,11 +161,13 @@ export default function ReligionShow() {
         setError(null);
 
         try {
-            const response = await fetch('/religions/join', {
-                method: 'POST',
+            const response = await fetch("/religions/join", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify({ religion_id: religion.id }),
             });
@@ -164,24 +180,26 @@ export default function ReligionShow() {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to join religion');
+            setError("Failed to join religion");
         } finally {
             setIsLoading(false);
         }
     };
 
     const leaveReligion = async () => {
-        if (!confirm('Are you sure you want to leave this religion?')) return;
+        if (!confirm("Are you sure you want to leave this religion?")) return;
 
         setIsLoading(true);
         setError(null);
 
         try {
-            const response = await fetch('/religions/leave', {
-                method: 'POST',
+            const response = await fetch("/religions/leave", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify({ religion_id: religion.id }),
             });
@@ -189,12 +207,12 @@ export default function ReligionShow() {
             const data = await response.json();
             if (data.success) {
                 setSuccess(data.message);
-                router.visit('/religions');
+                router.visit("/religions");
             } else {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to leave religion');
+            setError("Failed to leave religion");
         } finally {
             setIsLoading(false);
         }
@@ -205,11 +223,13 @@ export default function ReligionShow() {
         setError(null);
 
         try {
-            const response = await fetch('/religions/promote', {
-                method: 'POST',
+            const response = await fetch("/religions/promote", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify({ member_id: memberId }),
             });
@@ -222,7 +242,7 @@ export default function ReligionShow() {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to promote member');
+            setError("Failed to promote member");
         } finally {
             setIsLoading(false);
         }
@@ -233,11 +253,13 @@ export default function ReligionShow() {
         setError(null);
 
         try {
-            const response = await fetch('/religions/demote', {
-                method: 'POST',
+            const response = await fetch("/religions/demote", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify({ member_id: memberId }),
             });
@@ -250,7 +272,7 @@ export default function ReligionShow() {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to demote member');
+            setError("Failed to demote member");
         } finally {
             setIsLoading(false);
         }
@@ -261,11 +283,13 @@ export default function ReligionShow() {
         setError(null);
 
         try {
-            const response = await fetch('/religions/make-public', {
-                method: 'POST',
+            const response = await fetch("/religions/make-public", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify({ religion_id: religion.id }),
             });
@@ -278,24 +302,31 @@ export default function ReligionShow() {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to make public');
+            setError("Failed to make public");
         } finally {
             setIsLoading(false);
         }
     };
 
     const convertToReligion = async () => {
-        if (!confirm('Convert this cult to a full religion? This costs 100,000 gold and requires 15+ members.')) return;
+        if (
+            !confirm(
+                "Convert this cult to a full religion? This costs 100,000 gold and requires 15+ members.",
+            )
+        )
+            return;
 
         setIsLoading(true);
         setError(null);
 
         try {
-            const response = await fetch('/religions/convert', {
-                method: 'POST',
+            const response = await fetch("/religions/convert", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify({ religion_id: religion.id }),
             });
@@ -308,7 +339,7 @@ export default function ReligionShow() {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to convert to religion');
+            setError("Failed to convert to religion");
         } finally {
             setIsLoading(false);
         }
@@ -334,18 +365,28 @@ export default function ReligionShow() {
                         <div>
                             <h1 className="font-pixel text-2xl text-amber-400">{religion.name}</h1>
                             <div className="flex items-center gap-2">
-                                <span className={`rounded px-2 py-0.5 font-pixel text-xs capitalize ${
-                                    religion.is_cult ? 'bg-stone-700 text-stone-300' : 'bg-amber-900/50 text-amber-300'
-                                }`}>
+                                <span
+                                    className={`rounded px-2 py-0.5 font-pixel text-xs capitalize ${
+                                        religion.is_cult
+                                            ? "bg-stone-700 text-stone-300"
+                                            : "bg-amber-900/50 text-amber-300"
+                                    }`}
+                                >
                                     {religion.type}
                                 </span>
                                 {kingdom_status && (
-                                    <span className={`rounded px-2 py-0.5 font-pixel text-xs ${
-                                        kingdom_status === 'state' ? 'bg-green-900/50 text-green-300' :
-                                        kingdom_status === 'banned' ? 'bg-red-900/50 text-red-300' :
-                                        'bg-stone-700 text-stone-300'
-                                    }`}>
-                                        {kingdom_status === 'state' ? 'State Religion' : kingdom_status}
+                                    <span
+                                        className={`rounded px-2 py-0.5 font-pixel text-xs ${
+                                            kingdom_status === "state"
+                                                ? "bg-green-900/50 text-green-300"
+                                                : kingdom_status === "banned"
+                                                  ? "bg-red-900/50 text-red-300"
+                                                  : "bg-stone-700 text-stone-300"
+                                        }`}
+                                    >
+                                        {kingdom_status === "state"
+                                            ? "State Religion"
+                                            : kingdom_status}
                                     </span>
                                 )}
                             </div>
@@ -382,13 +423,17 @@ export default function ReligionShow() {
                         {religion.description && (
                             <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4">
                                 <h2 className="mb-2 font-pixel text-sm text-amber-300">About</h2>
-                                <p className="font-pixel text-sm text-stone-300">{religion.description}</p>
+                                <p className="font-pixel text-sm text-stone-300">
+                                    {religion.description}
+                                </p>
                             </div>
                         )}
 
                         {/* Beliefs */}
                         <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4">
-                            <h2 className="mb-3 font-pixel text-sm text-amber-300">Beliefs ({religion.beliefs.length}/{religion.belief_limit})</h2>
+                            <h2 className="mb-3 font-pixel text-sm text-amber-300">
+                                Beliefs ({religion.beliefs.length}/{religion.belief_limit})
+                            </h2>
                             <div className="space-y-2">
                                 {religion.beliefs.map((belief) => (
                                     <div
@@ -396,12 +441,15 @@ export default function ReligionShow() {
                                         className={`rounded-lg border p-3 ${beliefTypeColors[belief.type]}`}
                                     >
                                         <div className="font-pixel text-sm">{belief.name}</div>
-                                        <div className="font-pixel text-xs opacity-80">{belief.description}</div>
+                                        <div className="font-pixel text-xs opacity-80">
+                                            {belief.description}
+                                        </div>
                                         {belief.effects && (
                                             <div className="mt-1 font-pixel text-xs text-amber-400">
                                                 {Object.entries(belief.effects).map(([k, v]) => (
                                                     <span key={k} className="mr-2">
-                                                        {formatEffectKey(k)}: {v > 0 ? '+' : ''}{v}
+                                                        {formatEffectKey(k)}: {v > 0 ? "+" : ""}
+                                                        {v}
                                                     </span>
                                                 ))}
                                             </div>
@@ -411,11 +459,14 @@ export default function ReligionShow() {
                             </div>
                             {Object.keys(religion.combined_effects).length > 0 && (
                                 <div className="mt-3 border-t border-stone-700 pt-3">
-                                    <div className="font-pixel text-xs text-stone-400">Combined Effects:</div>
+                                    <div className="font-pixel text-xs text-stone-400">
+                                        Combined Effects:
+                                    </div>
                                     <div className="font-pixel text-sm text-amber-400">
                                         {Object.entries(religion.combined_effects).map(([k, v]) => (
                                             <span key={k} className="mr-3">
-                                                {formatEffectKey(k)}: {v > 0 ? '+' : ''}{v}
+                                                {formatEffectKey(k)}: {v > 0 ? "+" : ""}
+                                                {v}
                                             </span>
                                         ))}
                                     </div>
@@ -426,10 +477,12 @@ export default function ReligionShow() {
                         {/* Member Actions (if member) */}
                         {is_member && membership && (
                             <div className="rounded-lg border border-purple-500/30 bg-purple-900/20 p-4">
-                                <h2 className="mb-3 font-pixel text-sm text-purple-300">Religious Actions</h2>
+                                <h2 className="mb-3 font-pixel text-sm text-purple-300">
+                                    Religious Actions
+                                </h2>
                                 <div className="grid gap-3 md:grid-cols-2">
                                     <button
-                                        onClick={() => performAction('prayer')}
+                                        onClick={() => performAction("prayer")}
                                         disabled={isLoading || energy.current < 5}
                                         className="flex items-center justify-center gap-2 rounded bg-purple-600/50 py-2 font-pixel text-xs text-purple-200 transition hover:bg-purple-600 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
@@ -437,7 +490,7 @@ export default function ReligionShow() {
                                         Pray (5 Energy)
                                     </button>
                                     <button
-                                        onClick={() => performAction('ritual')}
+                                        onClick={() => performAction("ritual")}
                                         disabled={isLoading || energy.current < 15}
                                         className="flex items-center justify-center gap-2 rounded bg-indigo-600/50 py-2 font-pixel text-xs text-indigo-200 transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
@@ -445,7 +498,7 @@ export default function ReligionShow() {
                                         Ritual (15 Energy)
                                     </button>
                                     <button
-                                        onClick={() => performAction('sacrifice')}
+                                        onClick={() => performAction("sacrifice")}
                                         disabled={isLoading || energy.current < 20}
                                         className="flex items-center justify-center gap-2 rounded bg-red-600/50 py-2 font-pixel text-xs text-red-200 transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
@@ -456,12 +509,20 @@ export default function ReligionShow() {
                                         <input
                                             type="number"
                                             value={donationAmount}
-                                            onChange={(e) => setDonationAmount(Math.max(10, parseInt(e.target.value) || 10))}
+                                            onChange={(e) =>
+                                                setDonationAmount(
+                                                    Math.max(10, parseInt(e.target.value) || 10),
+                                                )
+                                            }
                                             min={10}
                                             className="w-24 rounded border border-stone-600 bg-stone-800 px-2 py-2 font-pixel text-xs text-white"
                                         />
                                         <button
-                                            onClick={() => performAction('donation', { donation_amount: donationAmount })}
+                                            onClick={() =>
+                                                performAction("donation", {
+                                                    donation_amount: donationAmount,
+                                                })
+                                            }
                                             disabled={isLoading || gold < donationAmount}
                                             className="flex flex-1 items-center justify-center gap-2 rounded bg-amber-600/50 py-2 font-pixel text-xs text-amber-200 transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
@@ -487,7 +548,9 @@ export default function ReligionShow() {
                         {/* Prophet Controls */}
                         {membership?.is_prophet && (
                             <div className="rounded-lg border border-yellow-500/30 bg-yellow-900/20 p-4">
-                                <h2 className="mb-3 font-pixel text-sm text-yellow-300">Prophet Controls</h2>
+                                <h2 className="mb-3 font-pixel text-sm text-yellow-300">
+                                    Prophet Controls
+                                </h2>
                                 <div className="flex flex-wrap gap-2">
                                     {!religion.is_public && (
                                         <button
@@ -518,7 +581,7 @@ export default function ReligionShow() {
                                 disabled={isLoading}
                                 className="w-full rounded bg-purple-600 py-3 font-pixel text-sm text-white transition hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                {isLoading ? 'Joining...' : 'Join This Religion'}
+                                {isLoading ? "Joining..." : "Join This Religion"}
                             </button>
                         )}
                     </div>
@@ -528,11 +591,15 @@ export default function ReligionShow() {
                         {/* Membership Status */}
                         {membership && (
                             <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4">
-                                <h2 className="mb-3 font-pixel text-sm text-amber-300">Your Status</h2>
+                                <h2 className="mb-3 font-pixel text-sm text-amber-300">
+                                    Your Status
+                                </h2>
                                 <div className="space-y-2 font-pixel text-xs">
                                     <div className="flex justify-between">
                                         <span className="text-stone-400">Rank:</span>
-                                        <span className={`rounded px-2 py-0.5 ${rankColors[membership.rank]}`}>
+                                        <span
+                                            className={`rounded px-2 py-0.5 ${rankColors[membership.rank]}`}
+                                        >
                                             {membership.rank_display}
                                         </span>
                                     </div>
@@ -559,29 +626,38 @@ export default function ReligionShow() {
                                     >
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                {member.rank === 'prophet' && <Crown className="h-3 w-3 text-yellow-400" />}
-                                                <span className="font-pixel text-xs text-white">{member.username}</span>
+                                                {member.rank === "prophet" && (
+                                                    <Crown className="h-3 w-3 text-yellow-400" />
+                                                )}
+                                                <span className="font-pixel text-xs text-white">
+                                                    {member.username}
+                                                </span>
                                             </div>
-                                            <span className={`font-pixel text-[10px] ${
-                                                member.rank === 'prophet' ? 'text-yellow-400' :
-                                                member.rank === 'priest' ? 'text-purple-400' :
-                                                'text-stone-500'
-                                            }`}>
+                                            <span
+                                                className={`font-pixel text-[10px] ${
+                                                    member.rank === "prophet"
+                                                        ? "text-yellow-400"
+                                                        : member.rank === "priest"
+                                                          ? "text-purple-400"
+                                                          : "text-stone-500"
+                                                }`}
+                                            >
                                                 {member.rank_display} - {member.devotion} devotion
                                             </span>
                                         </div>
-                                        {membership?.is_prophet && member.rank !== 'prophet' && (
+                                        {membership?.is_prophet && member.rank !== "prophet" && (
                                             <div className="flex gap-1">
-                                                {member.rank === 'follower' && member.devotion >= 1000 && (
-                                                    <button
-                                                        onClick={() => promoteMember(member.id)}
-                                                        disabled={isLoading}
-                                                        className="rounded bg-green-600/50 px-2 py-1 font-pixel text-[10px] text-green-200 hover:bg-green-600"
-                                                    >
-                                                        Promote
-                                                    </button>
-                                                )}
-                                                {member.rank === 'priest' && (
+                                                {member.rank === "follower" &&
+                                                    member.devotion >= 1000 && (
+                                                        <button
+                                                            onClick={() => promoteMember(member.id)}
+                                                            disabled={isLoading}
+                                                            className="rounded bg-green-600/50 px-2 py-1 font-pixel text-[10px] text-green-200 hover:bg-green-600"
+                                                        >
+                                                            Promote
+                                                        </button>
+                                                    )}
+                                                {member.rank === "priest" && (
                                                     <button
                                                         onClick={() => demoteMember(member.id)}
                                                         disabled={isLoading}
@@ -600,13 +676,21 @@ export default function ReligionShow() {
                         {/* Structures */}
                         {structures.length > 0 && (
                             <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4">
-                                <h2 className="mb-3 font-pixel text-sm text-amber-300">Structures</h2>
+                                <h2 className="mb-3 font-pixel text-sm text-amber-300">
+                                    Structures
+                                </h2>
                                 <div className="space-y-2">
                                     {structures.map((structure) => (
-                                        <div key={structure.id} className="rounded bg-stone-900/50 p-2">
-                                            <div className="font-pixel text-xs text-white">{structure.name}</div>
+                                        <div
+                                            key={structure.id}
+                                            className="rounded bg-stone-900/50 p-2"
+                                        >
+                                            <div className="font-pixel text-xs text-white">
+                                                {structure.name}
+                                            </div>
                                             <div className="font-pixel text-[10px] text-stone-400">
-                                                {structure.type_display} at {structure.location_type} #{structure.location_id}
+                                                {structure.type_display} at{" "}
+                                                {structure.location_type} #{structure.location_id}
                                             </div>
                                         </div>
                                     ))}
@@ -620,7 +704,9 @@ export default function ReligionShow() {
                                 <h2 className="mb-2 font-pixel text-sm text-amber-300">Founder</h2>
                                 <div className="flex items-center gap-2">
                                     <Crown className="h-4 w-4 text-yellow-400" />
-                                    <span className="font-pixel text-sm text-white">{religion.founder.username}</span>
+                                    <span className="font-pixel text-sm text-white">
+                                        {religion.founder.username}
+                                    </span>
                                 </div>
                             </div>
                         )}

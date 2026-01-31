@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link } from "@inertiajs/react";
 import {
     Anchor,
     Briefcase,
@@ -25,26 +25,18 @@ import {
     Waves,
     Wheat,
     type LucideIcon,
-} from 'lucide-react';
-import { useState } from 'react';
-import {
-    Bar,
-    BarChart,
-    CartesianGrid,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis,
-} from 'recharts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { RulerDisplay } from '@/components/ui/legitimacy-badge';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { RulerDisplay } from "@/components/ui/legitimacy-badge";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Settlement {
     id: number;
     name: string;
-    type: 'town' | 'village' | 'hamlet';
+    type: "town" | "village" | "hamlet";
     is_capital?: boolean;
     is_port?: boolean;
     population: number;
@@ -104,18 +96,63 @@ interface Props {
     current_user_id: number;
 }
 
-const biomeConfig: Record<string, { icon: LucideIcon; color: string; bg: string; border: string }> = {
-    plains: { icon: Wheat, color: 'text-green-400', bg: 'bg-green-900/30', border: 'border-green-600/50' },
-    forest: { icon: Trees, color: 'text-emerald-400', bg: 'bg-emerald-900/30', border: 'border-emerald-600/50' },
-    tundra: { icon: Snowflake, color: 'text-cyan-400', bg: 'bg-cyan-900/30', border: 'border-cyan-600/50' },
-    coastal: { icon: Waves, color: 'text-blue-400', bg: 'bg-blue-900/30', border: 'border-blue-600/50' },
-    desert: { icon: Sun, color: 'text-amber-400', bg: 'bg-amber-900/30', border: 'border-amber-600/50' },
-    volcano: { icon: Mountain, color: 'text-red-400', bg: 'bg-red-900/30', border: 'border-red-600/50' },
-    mountains: { icon: Mountain, color: 'text-slate-400', bg: 'bg-slate-900/30', border: 'border-slate-600/50' },
-    swamps: { icon: TreePine, color: 'text-lime-400', bg: 'bg-lime-900/30', border: 'border-lime-600/50' },
-    tropical: { icon: Palmtree, color: 'text-teal-400', bg: 'bg-teal-900/30', border: 'border-teal-600/50' },
-};
-
+const biomeConfig: Record<string, { icon: LucideIcon; color: string; bg: string; border: string }> =
+    {
+        plains: {
+            icon: Wheat,
+            color: "text-green-400",
+            bg: "bg-green-900/30",
+            border: "border-green-600/50",
+        },
+        forest: {
+            icon: Trees,
+            color: "text-emerald-400",
+            bg: "bg-emerald-900/30",
+            border: "border-emerald-600/50",
+        },
+        tundra: {
+            icon: Snowflake,
+            color: "text-cyan-400",
+            bg: "bg-cyan-900/30",
+            border: "border-cyan-600/50",
+        },
+        coastal: {
+            icon: Waves,
+            color: "text-blue-400",
+            bg: "bg-blue-900/30",
+            border: "border-blue-600/50",
+        },
+        desert: {
+            icon: Sun,
+            color: "text-amber-400",
+            bg: "bg-amber-900/30",
+            border: "border-amber-600/50",
+        },
+        volcano: {
+            icon: Mountain,
+            color: "text-red-400",
+            bg: "bg-red-900/30",
+            border: "border-red-600/50",
+        },
+        mountains: {
+            icon: Mountain,
+            color: "text-slate-400",
+            bg: "bg-slate-900/30",
+            border: "border-slate-600/50",
+        },
+        swamps: {
+            icon: TreePine,
+            color: "text-lime-400",
+            bg: "bg-lime-900/30",
+            border: "border-lime-600/50",
+        },
+        tropical: {
+            icon: Palmtree,
+            color: "text-teal-400",
+            bg: "bg-teal-900/30",
+            border: "border-teal-600/50",
+        },
+    };
 
 function HierarchyTree({ baronies }: { baronies: Barony[] }) {
     const [expandedBaronies, setExpandedBaronies] = useState<Set<number>>(new Set());
@@ -164,15 +201,15 @@ function HierarchyTree({ baronies }: { baronies: Barony[] }) {
                     const isExpanded = expandedBaronies.has(barony.id);
                     const isLast = idx === baronies.length - 1;
                     const sortedSettlements = [...barony.settlements].sort((a, b) => {
-                        if (a.type === 'town' && b.type !== 'town') return -1;
-                        if (a.type !== 'town' && b.type === 'town') return 1;
+                        if (a.type === "town" && b.type !== "town") return -1;
+                        if (a.type !== "town" && b.type === "town") return 1;
                         if (a.is_capital) return -1;
                         if (b.is_capital) return 1;
                         return a.name.localeCompare(b.name);
                     });
 
                     return (
-                        <div key={barony.id} className={!isLast ? 'mb-2' : ''}>
+                        <div key={barony.id} className={!isLast ? "mb-2" : ""}>
                             <button
                                 onClick={() => toggleBarony(barony.id)}
                                 className="group flex w-full items-center gap-2 rounded p-1 text-left transition hover:bg-stone-700/50"
@@ -200,30 +237,41 @@ function HierarchyTree({ baronies }: { baronies: Barony[] }) {
                             {isExpanded && sortedSettlements.length > 0 && (
                                 <div className="ml-6 mt-1 space-y-1 border-l border-stone-700 pl-4">
                                     {sortedSettlements.map((settlement, sIdx) => {
-                                        const isSettlementLast = sIdx === sortedSettlements.length - 1;
+                                        const isSettlementLast =
+                                            sIdx === sortedSettlements.length - 1;
                                         return (
                                             <div
                                                 key={`${settlement.type}-${settlement.id}`}
-                                                className={`flex items-center gap-2 text-sm ${!isSettlementLast ? 'pb-1' : ''}`}
+                                                className={`flex items-center gap-2 text-sm ${!isSettlementLast ? "pb-1" : ""}`}
                                             >
-                                                {settlement.type === 'town' ? (
+                                                {settlement.type === "town" ? (
                                                     <Building className="h-3 w-3 text-purple-400" />
-                                                ) : settlement.type === 'hamlet' ? (
+                                                ) : settlement.type === "hamlet" ? (
                                                     <Home className="h-3 w-3 text-stone-500" />
                                                 ) : (
                                                     <Home className="h-3 w-3 text-stone-400" />
                                                 )}
                                                 <Link
-                                                    href={settlement.type === 'town' ? `/towns/${settlement.id}` : `/villages/${settlement.id}`}
+                                                    href={
+                                                        settlement.type === "town"
+                                                            ? `/towns/${settlement.id}`
+                                                            : `/villages/${settlement.id}`
+                                                    }
                                                     className="text-stone-300 hover:text-amber-400 hover:underline"
                                                 >
                                                     {settlement.name}
                                                 </Link>
                                                 {settlement.is_capital && (
-                                                    <Crown className="h-3 w-3 text-amber-400" title="Kingdom Capital" />
+                                                    <Crown
+                                                        className="h-3 w-3 text-amber-400"
+                                                        title="Kingdom Capital"
+                                                    />
                                                 )}
                                                 {settlement.is_port && (
-                                                    <Anchor className="h-3 w-3 text-blue-400" title="Port" />
+                                                    <Anchor
+                                                        className="h-3 w-3 text-blue-400"
+                                                        title="Port"
+                                                    />
                                                 )}
                                                 <span className="ml-auto text-xs text-stone-500">
                                                     {settlement.population.toLocaleString()} pop
@@ -246,15 +294,15 @@ export default function KingdomShow({ kingdom, current_user_id }: Props) {
     const BiomeIcon = biome.icon;
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Kingdoms', href: '/kingdoms' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Kingdoms", href: "/kingdoms" },
         { title: kingdom.name, href: `/kingdoms/${kingdom.id}` },
     ];
 
     // Prepare chart data
     const baronyPopulationData = kingdom.baronies
         .map((b) => ({
-            name: b.name.length > 12 ? b.name.slice(0, 10) + '...' : b.name,
+            name: b.name.length > 12 ? b.name.slice(0, 10) + "..." : b.name,
             population: b.population,
             villages: b.village_count,
             towns: b.town_count,
@@ -276,7 +324,9 @@ export default function KingdomShow({ kingdom, current_user_id }: Props) {
                                 <h1 className="font-[Cinzel] text-3xl font-bold text-stone-100">
                                     {kingdom.name}
                                 </h1>
-                                <span className={`rounded-full ${biome.bg} border ${biome.border} px-3 py-0.5 text-xs capitalize ${biome.color}`}>
+                                <span
+                                    className={`rounded-full ${biome.bg} border ${biome.border} px-3 py-0.5 text-xs capitalize ${biome.color}`}
+                                >
                                     {kingdom.biome}
                                 </span>
                             </div>
@@ -287,7 +337,10 @@ export default function KingdomShow({ kingdom, current_user_id }: Props) {
                                 <div className="mt-3 flex items-center gap-2 text-sm">
                                     <Crown className="h-4 w-4 text-amber-400" />
                                     <span className="text-stone-500">Capital:</span>
-                                    <Link href={`/towns/${kingdom.capital.id}`} className="text-amber-400 hover:underline">
+                                    <Link
+                                        href={`/towns/${kingdom.capital.id}`}
+                                        className="text-amber-400 hover:underline"
+                                    >
                                         {kingdom.capital.name}
                                     </Link>
                                 </div>
@@ -477,15 +530,22 @@ export default function KingdomShow({ kingdom, current_user_id }: Props) {
                                         />
                                         <Tooltip
                                             contentStyle={{
-                                                backgroundColor: '#1c1917',
-                                                border: '1px solid #44403c',
-                                                borderRadius: '8px',
+                                                backgroundColor: "#1c1917",
+                                                border: "1px solid #44403c",
+                                                borderRadius: "8px",
                                             }}
-                                            labelStyle={{ color: '#e7e5e4' }}
-                                            itemStyle={{ color: '#60a5fa' }}
-                                            formatter={(value: number) => [value.toLocaleString(), 'Population']}
+                                            labelStyle={{ color: "#e7e5e4" }}
+                                            itemStyle={{ color: "#60a5fa" }}
+                                            formatter={(value: number) => [
+                                                value.toLocaleString(),
+                                                "Population",
+                                            ]}
                                         />
-                                        <Bar dataKey="population" fill="#60a5fa" radius={[0, 4, 4, 0]} />
+                                        <Bar
+                                            dataKey="population"
+                                            fill="#60a5fa"
+                                            radius={[0, 4, 4, 0]}
+                                        />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>
@@ -516,7 +576,9 @@ export default function KingdomShow({ kingdom, current_user_id }: Props) {
                                                         </span>
                                                     )}
                                                 </CardTitle>
-                                                <span className={`rounded-full ${baronyBiome.bg} border ${baronyBiome.border} px-2 py-0.5 text-xs capitalize ${baronyBiome.color}`}>
+                                                <span
+                                                    className={`rounded-full ${baronyBiome.bg} border ${baronyBiome.border} px-2 py-0.5 text-xs capitalize ${baronyBiome.color}`}
+                                                >
                                                     {barony.biome}
                                                 </span>
                                             </div>
@@ -534,7 +596,9 @@ export default function KingdomShow({ kingdom, current_user_id }: Props) {
                                             <div className="grid grid-cols-2 gap-2 text-sm">
                                                 <div className="flex items-center gap-2 text-stone-400">
                                                     <Users className="h-4 w-4" />
-                                                    <span>{barony.population.toLocaleString()} pop</span>
+                                                    <span>
+                                                        {barony.population.toLocaleString()} pop
+                                                    </span>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-amber-400">
                                                     <Coins className="h-4 w-4" />
@@ -542,11 +606,19 @@ export default function KingdomShow({ kingdom, current_user_id }: Props) {
                                                 </div>
                                                 <div className="flex items-center gap-2 text-stone-500">
                                                     <Building className="h-4 w-4" />
-                                                    <span>{barony.town_count} {barony.town_count === 1 ? 'town' : 'towns'}</span>
+                                                    <span>
+                                                        {barony.town_count}{" "}
+                                                        {barony.town_count === 1 ? "town" : "towns"}
+                                                    </span>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-stone-500">
                                                     <Home className="h-4 w-4" />
-                                                    <span>{barony.village_count} {barony.village_count === 1 ? 'village' : 'villages'}</span>
+                                                    <span>
+                                                        {barony.village_count}{" "}
+                                                        {barony.village_count === 1
+                                                            ? "village"
+                                                            : "villages"}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </CardContent>

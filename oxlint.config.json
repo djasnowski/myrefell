@@ -1,0 +1,40 @@
+{
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "plugins": ["react", "react-hooks", "typescript", "import"],
+    "env": {
+        "browser": true
+    },
+    "globals": {
+        "route": "readonly"
+    },
+    "rules": {
+        "react/react-in-jsx-scope": "off",
+        "react/prop-types": "off",
+        "react/no-unescaped-entities": "off",
+        "import/order": [
+            "error",
+            {
+                "groups": ["builtin", "external", "internal", "parent", "sibling", "index"],
+                "alphabetize": {
+                    "order": "asc",
+                    "caseInsensitive": true
+                }
+            }
+        ],
+        "@typescript-eslint/consistent-type-imports": [
+            "error",
+            {
+                "prefer": "type-imports",
+                "fixStyle": "separate-type-imports"
+            }
+        ]
+    },
+    "ignorePatterns": [
+        "vendor/**",
+        "node_modules/**",
+        "public/**",
+        "bootstrap/ssr/**",
+        "vite.config.ts",
+        "resources/js/actions/**"
+    ]
+}

@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import {
     ArrowRight,
     Box,
@@ -11,10 +11,10 @@ import {
     Shield,
     Truck,
     XCircle,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Location {
     type: string;
@@ -40,7 +40,7 @@ interface TradeRoute {
 interface Caravan {
     id: number;
     name: string;
-    status: 'preparing' | 'traveling' | 'arrived' | 'returning' | 'disbanded' | 'destroyed';
+    status: "preparing" | "traveling" | "arrived" | "returning" | "disbanded" | "destroyed";
     capacity: number;
     guards: number;
     gold_carried: number;
@@ -80,25 +80,25 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Trade Routes', href: '/trade/routes' },
-    { title: 'My Caravans', href: '/trade/caravans' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Trade Routes", href: "/trade/routes" },
+    { title: "My Caravans", href: "/trade/caravans" },
 ];
 
 const statusColors: Record<string, { bg: string; text: string; label: string }> = {
-    preparing: { bg: 'bg-blue-900/30', text: 'text-blue-400', label: 'Loading' },
-    traveling: { bg: 'bg-amber-900/30', text: 'text-amber-400', label: 'In Transit' },
-    arrived: { bg: 'bg-green-900/30', text: 'text-green-400', label: 'Arrived' },
-    returning: { bg: 'bg-purple-900/30', text: 'text-purple-400', label: 'Returning' },
-    disbanded: { bg: 'bg-stone-900/30', text: 'text-stone-400', label: 'Disbanded' },
-    destroyed: { bg: 'bg-red-900/30', text: 'text-red-400', label: 'Destroyed' },
+    preparing: { bg: "bg-blue-900/30", text: "text-blue-400", label: "Loading" },
+    traveling: { bg: "bg-amber-900/30", text: "text-amber-400", label: "In Transit" },
+    arrived: { bg: "bg-green-900/30", text: "text-green-400", label: "Arrived" },
+    returning: { bg: "bg-purple-900/30", text: "text-purple-400", label: "Returning" },
+    disbanded: { bg: "bg-stone-900/30", text: "text-stone-400", label: "Disbanded" },
+    destroyed: { bg: "bg-red-900/30", text: "text-red-400", label: "Destroyed" },
 };
 
 const dangerColors: Record<string, string> = {
-    safe: 'text-green-400',
-    moderate: 'text-yellow-400',
-    dangerous: 'text-orange-400',
-    perilous: 'text-red-400',
+    safe: "text-green-400",
+    moderate: "text-yellow-400",
+    dangerous: "text-orange-400",
+    perilous: "text-red-400",
 };
 
 export default function Caravans() {
@@ -115,7 +115,7 @@ export default function Caravans() {
 
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [formData, setFormData] = useState({
-        name: '',
+        name: "",
         guards: 0,
     });
     const [isCreating, setIsCreating] = useState(false);
@@ -127,7 +127,7 @@ export default function Caravans() {
 
     const createCaravan = async () => {
         if (!formData.name.trim()) {
-            setError('Please enter a caravan name.');
+            setError("Please enter a caravan name.");
             return;
         }
 
@@ -135,11 +135,13 @@ export default function Caravans() {
         setError(null);
 
         try {
-            const response = await fetch('/trade/caravans', {
-                method: 'POST',
+            const response = await fetch("/trade/caravans", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify(formData),
             });
@@ -148,13 +150,13 @@ export default function Caravans() {
             if (data.success) {
                 setSuccess(data.message);
                 setShowCreateForm(false);
-                setFormData({ name: '', guards: 0 });
+                setFormData({ name: "", guards: 0 });
                 router.reload();
             } else {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to create caravan');
+            setError("Failed to create caravan");
         } finally {
             setIsCreating(false);
         }
@@ -166,10 +168,12 @@ export default function Caravans() {
 
         try {
             const response = await fetch(`/trade/caravans/${caravanId}/disband`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
             });
 
@@ -181,7 +185,7 @@ export default function Caravans() {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to disband caravan');
+            setError("Failed to disband caravan");
         } finally {
             setIsDisbanding(null);
         }
@@ -189,7 +193,7 @@ export default function Caravans() {
 
     const renderCaravanCard = (caravan: Caravan, showActions: boolean = true) => {
         const status = statusColors[caravan.status] || statusColors.preparing;
-        const isActive = ['preparing', 'traveling', 'returning'].includes(caravan.status);
+        const isActive = ["preparing", "traveling", "returning"].includes(caravan.status);
 
         return (
             <div
@@ -202,7 +206,9 @@ export default function Caravans() {
                         <Truck className="h-5 w-5 text-amber-400" />
                         <h3 className="font-pixel text-base text-white">{caravan.name}</h3>
                     </div>
-                    <span className={`rounded px-2 py-1 font-pixel text-[10px] ${status.bg} ${status.text}`}>
+                    <span
+                        className={`rounded px-2 py-1 font-pixel text-[10px] ${status.bg} ${status.text}`}
+                    >
                         {status.label}
                     </span>
                 </div>
@@ -211,20 +217,26 @@ export default function Caravans() {
                 <div className="mb-3 flex items-center justify-between rounded-lg bg-stone-900/50 p-2">
                     <div className="flex items-center gap-1">
                         <MapPin className="h-3 w-3 text-green-400" />
-                        <span className="font-pixel text-xs text-white">{caravan.current_location.name}</span>
+                        <span className="font-pixel text-xs text-white">
+                            {caravan.current_location.name}
+                        </span>
                     </div>
                     <ArrowRight className="h-4 w-4 text-stone-500" />
                     <div className="flex items-center gap-1">
                         <MapPin className="h-3 w-3 text-red-400" />
-                        <span className="font-pixel text-xs text-white">{caravan.destination.name}</span>
+                        <span className="font-pixel text-xs text-white">
+                            {caravan.destination.name}
+                        </span>
                     </div>
                 </div>
 
                 {/* Progress Bar (for traveling) */}
-                {caravan.status === 'traveling' && (
+                {caravan.status === "traveling" && (
                     <div className="mb-3">
                         <div className="mb-1 flex justify-between font-pixel text-[10px] text-stone-400">
-                            <span>Day {caravan.travel_progress}/{caravan.travel_total}</span>
+                            <span>
+                                Day {caravan.travel_progress}/{caravan.travel_total}
+                            </span>
                             <span>{caravan.travel_progress_percent}%</span>
                         </div>
                         <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
@@ -251,7 +263,9 @@ export default function Caravans() {
                     <div className="flex items-center gap-1">
                         <Box className="h-3 w-3 text-purple-400" />
                         <span className="text-stone-400">Capacity:</span>
-                        <span className="text-white">{caravan.total_goods ?? 0}/{caravan.capacity}</span>
+                        <span className="text-white">
+                            {caravan.total_goods ?? 0}/{caravan.capacity}
+                        </span>
                     </div>
                 </div>
 
@@ -283,7 +297,9 @@ export default function Caravans() {
                     <div className="mb-3 flex items-center gap-2 font-pixel text-xs">
                         <span className="text-stone-400">Route:</span>
                         <span className="text-white">{caravan.route.name}</span>
-                        <span className={`capitalize ${dangerColors[caravan.route.danger_level] || 'text-stone-400'}`}>
+                        <span
+                            className={`capitalize ${dangerColors[caravan.route.danger_level] || "text-stone-400"}`}
+                        >
                             ({caravan.route.danger_level})
                         </span>
                     </div>
@@ -302,12 +318,18 @@ export default function Caravans() {
                         {isActive && (
                             <button
                                 onClick={() => disbandCaravan(caravan.id)}
-                                disabled={isDisbanding === caravan.id || caravan.status === 'traveling'}
+                                disabled={
+                                    isDisbanding === caravan.id || caravan.status === "traveling"
+                                }
                                 className="flex flex-1 items-center justify-center gap-1 rounded border border-red-600/50 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-300 transition hover:bg-red-900/40 disabled:cursor-not-allowed disabled:opacity-50"
-                                title={caravan.status === 'traveling' ? 'Cannot disband while traveling' : 'Disband caravan'}
+                                title={
+                                    caravan.status === "traveling"
+                                        ? "Cannot disband while traveling"
+                                        : "Disband caravan"
+                                }
                             >
                                 <XCircle className="h-3 w-3" />
-                                {isDisbanding === caravan.id ? 'Disbanding...' : 'Disband'}
+                                {isDisbanding === caravan.id ? "Disbanding..." : "Disband"}
                             </button>
                         )}
                     </div>
@@ -341,7 +363,7 @@ export default function Caravans() {
                         className="flex items-center gap-2 rounded border-2 border-amber-600/50 bg-amber-900/20 px-4 py-2 font-pixel text-xs text-amber-300 transition hover:bg-amber-900/40"
                     >
                         <Plus className="h-4 w-4" />
-                        {showCreateForm ? 'Cancel' : 'New Caravan'}
+                        {showCreateForm ? "Cancel" : "New Caravan"}
                     </button>
                 </div>
 
@@ -360,7 +382,9 @@ export default function Caravans() {
                 {/* Create Form */}
                 {showCreateForm && (
                     <div className="rounded-xl border-2 border-amber-500/30 bg-amber-900/20 p-4">
-                        <h3 className="mb-4 font-pixel text-base text-amber-300">Create New Caravan</h3>
+                        <h3 className="mb-4 font-pixel text-base text-amber-300">
+                            Create New Caravan
+                        </h3>
 
                         <div className="mb-3 rounded-lg bg-stone-800/50 p-2 font-pixel text-xs text-stone-400">
                             <MapPin className="mr-1 inline h-3 w-3" />
@@ -368,7 +392,9 @@ export default function Caravans() {
                         </div>
 
                         <div className="mb-4">
-                            <label className="mb-1 block font-pixel text-xs text-stone-400">Caravan Name</label>
+                            <label className="mb-1 block font-pixel text-xs text-stone-400">
+                                Caravan Name
+                            </label>
                             <input
                                 type="text"
                                 value={formData.name}
@@ -386,7 +412,15 @@ export default function Caravans() {
                             <input
                                 type="number"
                                 value={formData.guards}
-                                onChange={(e) => setFormData({ ...formData, guards: Math.max(0, Math.min(20, parseInt(e.target.value) || 0)) })}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        guards: Math.max(
+                                            0,
+                                            Math.min(20, parseInt(e.target.value) || 0),
+                                        ),
+                                    })
+                                }
                                 min={0}
                                 max={20}
                                 className="w-full rounded border border-stone-600 bg-stone-800 px-3 py-2 font-pixel text-sm text-white focus:border-amber-500 focus:outline-none"
@@ -401,11 +435,17 @@ export default function Caravans() {
                                 <div className="text-stone-400">Base Cost:</div>
                                 <div className="text-right text-white">{caravan_cost}g</div>
                                 <div className="text-stone-400">Guard Cost:</div>
-                                <div className="text-right text-white">{formData.guards * guard_cost}g</div>
+                                <div className="text-right text-white">
+                                    {formData.guards * guard_cost}g
+                                </div>
                                 <div className="text-stone-400">Capacity:</div>
                                 <div className="text-right text-white">{base_capacity} units</div>
-                                <div className="border-t border-stone-600 pt-1 text-amber-400">Total:</div>
-                                <div className="border-t border-stone-600 pt-1 text-right text-amber-300">{totalCost}g</div>
+                                <div className="border-t border-stone-600 pt-1 text-amber-400">
+                                    Total:
+                                </div>
+                                <div className="border-t border-stone-600 pt-1 text-right text-amber-300">
+                                    {totalCost}g
+                                </div>
                             </div>
                         </div>
 
@@ -414,7 +454,7 @@ export default function Caravans() {
                             disabled={!formData.name.trim() || isCreating}
                             className="w-full rounded bg-amber-600 py-2 font-pixel text-sm text-white transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                            {isCreating ? 'Creating...' : `Create Caravan (${totalCost}g)`}
+                            {isCreating ? "Creating..." : `Create Caravan (${totalCost}g)`}
                         </button>
                     </div>
                 )}
@@ -432,7 +472,9 @@ export default function Caravans() {
                 {/* Arrived Caravans */}
                 {arrived_caravans.length > 0 && (
                     <div>
-                        <h2 className="mb-3 font-pixel text-lg text-green-300">Arrived - Ready to Unload</h2>
+                        <h2 className="mb-3 font-pixel text-lg text-green-300">
+                            Arrived - Ready to Unload
+                        </h2>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {arrived_caravans.map((caravan) => renderCaravanCard(caravan))}
                         </div>
@@ -450,22 +492,28 @@ export default function Caravans() {
                 )}
 
                 {/* Empty State */}
-                {active_caravans.length === 0 && arrived_caravans.length === 0 && completed_caravans.length === 0 && (
-                    <div className="flex flex-1 items-center justify-center">
-                        <div className="text-center">
-                            <Truck className="mx-auto mb-3 h-16 w-16 text-stone-600" />
-                            <p className="font-pixel text-base text-stone-500">No caravans yet</p>
-                            <p className="font-pixel text-xs text-stone-600">
-                                Create your first caravan to start trading!
-                            </p>
+                {active_caravans.length === 0 &&
+                    arrived_caravans.length === 0 &&
+                    completed_caravans.length === 0 && (
+                        <div className="flex flex-1 items-center justify-center">
+                            <div className="text-center">
+                                <Truck className="mx-auto mb-3 h-16 w-16 text-stone-600" />
+                                <p className="font-pixel text-base text-stone-500">
+                                    No caravans yet
+                                </p>
+                                <p className="font-pixel text-xs text-stone-600">
+                                    Create your first caravan to start trading!
+                                </p>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
                 {/* Available Routes Info */}
                 {available_routes.length > 0 && (
                     <div className="mt-auto rounded-lg border border-stone-700 bg-stone-800/50 p-3">
-                        <h4 className="mb-2 font-pixel text-xs text-stone-400">Available Trade Routes ({available_routes.length})</h4>
+                        <h4 className="mb-2 font-pixel text-xs text-stone-400">
+                            Available Trade Routes ({available_routes.length})
+                        </h4>
                         <div className="flex flex-wrap gap-2">
                             {available_routes.slice(0, 5).map((route) => (
                                 <div
@@ -473,7 +521,10 @@ export default function Caravans() {
                                     className="rounded bg-stone-700/50 px-2 py-1 font-pixel text-[10px]"
                                 >
                                     <span className="text-white">{route.name}</span>
-                                    <span className="text-stone-400"> ({route.base_travel_days} days)</span>
+                                    <span className="text-stone-400">
+                                        {" "}
+                                        ({route.base_travel_days} days)
+                                    </span>
                                 </div>
                             ))}
                             {available_routes.length > 5 && (

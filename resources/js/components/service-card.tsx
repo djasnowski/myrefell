@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link } from "@inertiajs/react";
 import {
     Anchor,
     Banknote,
@@ -15,8 +15,8 @@ import {
     Store,
     Briefcase,
     type LucideIcon,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ServiceCardProps {
     serviceId: string;
@@ -35,14 +35,14 @@ const iconMap: Record<string, LucideIcon> = {
     hammer: Hammer,
     store: Store,
     landmark: Landmark,
-    'heart-pulse': HeartPulse,
+    "heart-pulse": HeartPulse,
     sparkles: Sparkles,
     briefcase: Briefcase,
     ship: Anchor,
     beer: Beer,
     banknote: Banknote,
     shield: Shield,
-    'building-columns': Building2,
+    "building-columns": Building2,
     hospital: Church,
 };
 
@@ -61,10 +61,10 @@ export function ServiceCard({
         <div
             data-service-id={serviceId}
             className={cn(
-                'group relative flex flex-col items-center gap-2 rounded-lg border p-4 text-center transition-all',
+                "group relative flex flex-col items-center gap-2 rounded-lg border p-4 text-center transition-all",
                 disabled
-                    ? 'cursor-not-allowed border-muted bg-muted/20 opacity-50'
-                    : 'border-border bg-card hover:border-primary/50 hover:bg-accent hover:shadow-md'
+                    ? "cursor-not-allowed border-muted bg-muted/20 opacity-50"
+                    : "border-border bg-card hover:border-primary/50 hover:bg-accent hover:shadow-md",
             )}
         >
             {badge && (
@@ -74,14 +74,21 @@ export function ServiceCard({
             )}
             <div
                 className={cn(
-                    'flex h-12 w-12 items-center justify-center rounded-full transition-colors',
-                    disabled ? 'bg-muted/50' : 'bg-primary/10 group-hover:bg-primary/20'
+                    "flex h-12 w-12 items-center justify-center rounded-full transition-colors",
+                    disabled ? "bg-muted/50" : "bg-primary/10 group-hover:bg-primary/20",
                 )}
             >
-                <Icon className={cn('h-6 w-6', disabled ? 'text-muted-foreground' : 'text-primary')} />
+                <Icon
+                    className={cn("h-6 w-6", disabled ? "text-muted-foreground" : "text-primary")}
+                />
             </div>
             <div>
-                <h3 className={cn('font-pixel text-sm font-medium', disabled ? 'text-muted-foreground' : '')}>
+                <h3
+                    className={cn(
+                        "font-pixel text-sm font-medium",
+                        disabled ? "text-muted-foreground" : "",
+                    )}
+                >
                     {name}
                 </h3>
                 <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
@@ -123,20 +130,25 @@ export function ServicesGrid({
 }: ServicesGridProps) {
     // Build location path
     const locationPaths: Record<string, string> = {
-        village: 'villages',
-        town: 'towns',
-        barony: 'baronies',
-        duchy: 'duchies',
-        kingdom: 'kingdoms',
+        village: "villages",
+        town: "towns",
+        barony: "baronies",
+        duchy: "duchies",
+        kingdom: "kingdoms",
     };
 
-    const basePath = locationPaths[locationType] || locationType + 's';
+    const basePath = locationPaths[locationType] || locationType + "s";
 
     return (
-        <div className={cn('grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5', className)}>
+        <div
+            className={cn(
+                "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5",
+                className,
+            )}
+        >
             {services.map((service) => {
                 // Skip port services if location is not a port
-                if (service.id === 'port' && !isPort) {
+                if (service.id === "port" && !isPort) {
                     return null;
                 }
 

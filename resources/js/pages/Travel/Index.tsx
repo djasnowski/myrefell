@@ -1,8 +1,8 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { Castle, Church, Clock, Home, Loader2, MapPin, Trees, X, Zap } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from "@inertiajs/react";
+import { Castle, Church, Clock, Home, Loader2, MapPin, Trees, X, Zap } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Destination {
     type: string;
@@ -46,8 +46,8 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Travel', href: '/travel' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Travel", href: "/travel" },
 ];
 
 const locationIcons: Record<string, typeof Home> = {
@@ -66,7 +66,19 @@ function formatTime(seconds: number): string {
     return `${secs}s`;
 }
 
-function TravelProgress({ status, onCancel, onArrive, onSkip, isDev }: { status: TravelStatus; onCancel: () => void; onArrive: () => void; onSkip?: () => void; isDev?: boolean }) {
+function TravelProgress({
+    status,
+    onCancel,
+    onArrive,
+    onSkip,
+    isDev,
+}: {
+    status: TravelStatus;
+    onCancel: () => void;
+    onArrive: () => void;
+    onSkip?: () => void;
+    isDev?: boolean;
+}) {
     const [remaining, setRemaining] = useState(status.remaining_seconds);
     const [progress, setProgress] = useState(status.progress_percent);
     const arrivedRef = useRef(false);
@@ -88,7 +100,7 @@ function TravelProgress({ status, onCancel, onArrive, onSkip, isDev }: { status:
                 }
                 return newVal;
             });
-            setProgress((prev) => Math.min(100, prev + (100 / status.total_seconds)));
+            setProgress((prev) => Math.min(100, prev + 100 / status.total_seconds));
         }, 1000);
 
         return () => clearInterval(interval);
@@ -108,7 +120,9 @@ function TravelProgress({ status, onCancel, onArrive, onSkip, isDev }: { status:
 
                 <div className="mb-4 flex items-center justify-center gap-2">
                     <Icon className="h-5 w-5 text-stone-400" />
-                    <span className="font-pixel text-sm text-stone-200">{status.destination.name}</span>
+                    <span className="font-pixel text-sm text-stone-200">
+                        {status.destination.name}
+                    </span>
                 </div>
 
                 {/* Progress Bar */}
@@ -123,7 +137,9 @@ function TravelProgress({ status, onCancel, onArrive, onSkip, isDev }: { status:
 
                 <div className="mb-6 flex items-center justify-center gap-2">
                     <Clock className="h-4 w-4 text-stone-400" />
-                    <span className="font-pixel text-sm text-stone-300">{formatTime(remaining)} remaining</span>
+                    <span className="font-pixel text-sm text-stone-300">
+                        {formatTime(remaining)} remaining
+                    </span>
                 </div>
 
                 <div className="flex gap-2">
@@ -163,17 +179,17 @@ function DestinationCard({
     const Icon = locationIcons[destination.type] || MapPin;
 
     const bgColors: Record<string, string> = {
-        village: 'border-green-600/50 bg-green-900/20 hover:bg-green-900/30',
-        barony: 'border-stone-500/50 bg-stone-800/50 hover:bg-stone-700/50',
-        town: 'border-blue-600/50 bg-blue-900/20 hover:bg-blue-900/30',
-        wilderness: 'border-amber-600/50 bg-amber-900/20 hover:bg-amber-900/30',
+        village: "border-green-600/50 bg-green-900/20 hover:bg-green-900/30",
+        barony: "border-stone-500/50 bg-stone-800/50 hover:bg-stone-700/50",
+        town: "border-blue-600/50 bg-blue-900/20 hover:bg-blue-900/30",
+        wilderness: "border-amber-600/50 bg-amber-900/20 hover:bg-amber-900/30",
     };
 
     return (
         <button
             onClick={onTravel}
             disabled={traveling}
-            className={`w-full rounded-xl border-2 p-4 text-left transition ${bgColors[destination.type] || 'border-stone-600/50 bg-stone-800/50'} disabled:cursor-not-allowed disabled:opacity-50`}
+            className={`w-full rounded-xl border-2 p-4 text-left transition ${bgColors[destination.type] || "border-stone-600/50 bg-stone-800/50"} disabled:cursor-not-allowed disabled:opacity-50`}
         >
             <div className="mb-2 flex items-center gap-3">
                 <div className="rounded-lg bg-stone-800/50 p-2">
@@ -181,7 +197,9 @@ function DestinationCard({
                 </div>
                 <div>
                     <h3 className="font-pixel text-sm text-amber-300">{destination.name}</h3>
-                    <span className="font-pixel text-[10px] capitalize text-stone-400">{destination.type}</span>
+                    <span className="font-pixel text-[10px] capitalize text-stone-400">
+                        {destination.type}
+                    </span>
                 </div>
             </div>
 
@@ -200,14 +218,15 @@ function DestinationCard({
 }
 
 export default function TravelIndex() {
-    const { travel_status, destinations, energy_cost, just_arrived, is_dev } = usePage<PageProps>().props;
+    const { travel_status, destinations, energy_cost, just_arrived, is_dev } =
+        usePage<PageProps>().props;
     const [traveling, setTraveling] = useState(false);
     const [showArrival, setShowArrival] = useState(!!just_arrived);
 
     const handleTravel = (destination: Destination) => {
         setTraveling(true);
         router.post(
-            '/travel/start',
+            "/travel/start",
             {
                 destination_type: destination.type,
                 destination_id: destination.id,
@@ -218,35 +237,47 @@ export default function TravelIndex() {
                     router.reload();
                 },
                 onFinish: () => setTraveling(false),
-            }
+            },
         );
     };
 
     const handleCancel = () => {
-        router.post('/travel/cancel', {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                router.reload();
+        router.post(
+            "/travel/cancel",
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
             },
-        });
+        );
     };
 
     const handleArrive = () => {
-        router.post('/travel/arrive', {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                router.reload();
+        router.post(
+            "/travel/arrive",
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
             },
-        });
+        );
     };
 
     const handleSkip = () => {
-        router.post('/travel/skip', {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                router.reload();
+        router.post(
+            "/travel/skip",
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
             },
-        });
+        );
     };
 
     const dismissArrival = () => {
@@ -265,8 +296,12 @@ export default function TravelIndex() {
                             <div className="mb-4 inline-flex h-20 w-20 items-center justify-center rounded-full bg-green-900/30">
                                 <Icon className="h-10 w-10 text-green-400" />
                             </div>
-                            <h2 className="mb-2 font-pixel text-xl text-green-400">You have arrived!</h2>
-                            <p className="mb-6 font-pixel text-sm text-stone-300">{just_arrived.location.name}</p>
+                            <h2 className="mb-2 font-pixel text-xl text-green-400">
+                                You have arrived!
+                            </h2>
+                            <p className="mb-6 font-pixel text-sm text-stone-300">
+                                {just_arrived.location.name}
+                            </p>
                             <button
                                 onClick={dismissArrival}
                                 className="rounded-lg border-2 border-green-600 bg-green-900/30 px-6 py-2 font-pixel text-sm text-green-300 transition hover:bg-green-800/50"
@@ -286,7 +321,13 @@ export default function TravelIndex() {
             <AppLayout breadcrumbs={breadcrumbs}>
                 <Head title="Traveling..." />
                 <div className="flex h-full flex-1 items-center justify-center p-4">
-                    <TravelProgress status={travel_status} onCancel={handleCancel} onArrive={handleArrive} onSkip={handleSkip} isDev={is_dev} />
+                    <TravelProgress
+                        status={travel_status}
+                        onCancel={handleCancel}
+                        onArrive={handleArrive}
+                        onSkip={handleSkip}
+                        isDev={is_dev}
+                    />
                 </div>
             </AppLayout>
         );
@@ -319,7 +360,9 @@ export default function TravelIndex() {
                         <div className="text-center">
                             <div className="mb-3 text-6xl">🗺️</div>
                             <p className="font-pixel text-base text-stone-500">Nowhere to go</p>
-                            <p className="font-pixel text-xs text-stone-600">You seem to be stuck...</p>
+                            <p className="font-pixel text-xs text-stone-600">
+                                You seem to be stuck...
+                            </p>
                         </div>
                     </div>
                 )}

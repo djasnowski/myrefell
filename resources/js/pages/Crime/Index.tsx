@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from "@inertiajs/react";
 import {
     AlertTriangle,
     Ban,
@@ -13,9 +13,9 @@ import {
     Skull,
     Target,
     User,
-} from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface JailInfo {
     location: string;
@@ -82,21 +82,23 @@ interface PageProps {
 }
 
 const statusColors = {
-    pending: 'text-yellow-300 bg-yellow-900/50',
-    active: 'text-red-300 bg-red-900/50',
-    completed: 'text-green-300 bg-green-900/50',
-    pardoned: 'text-blue-300 bg-blue-900/50',
+    pending: "text-yellow-300 bg-yellow-900/50",
+    active: "text-red-300 bg-red-900/50",
+    completed: "text-green-300 bg-green-900/50",
+    pardoned: "text-blue-300 bg-blue-900/50",
 };
 
 export default function CrimeIndex() {
-    const { player, status, exiles, bounties, punishments, pending_trials } = usePage<PageProps>().props;
+    const { player, status, exiles, bounties, punishments, pending_trials } =
+        usePage<PageProps>().props;
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Criminal Record', href: '#' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Criminal Record", href: "#" },
     ];
 
-    const hasIssues = status.is_jailed || status.is_outlaw || exiles.length > 0 || bounties.length > 0;
+    const hasIssues =
+        status.is_jailed || status.is_outlaw || exiles.length > 0 || bounties.length > 0;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -146,11 +148,15 @@ export default function CrimeIndex() {
                 {/* Current Status */}
                 <div
                     className={`rounded-xl border-2 p-4 ${
-                        hasIssues ? 'border-red-500/50 bg-red-900/20' : 'border-green-500/50 bg-green-900/20'
+                        hasIssues
+                            ? "border-red-500/50 bg-red-900/20"
+                            : "border-green-500/50 bg-green-900/20"
                     }`}
                 >
                     <div className="flex items-center gap-3">
-                        <div className={`rounded-lg p-3 ${hasIssues ? 'bg-red-800/50' : 'bg-green-800/50'}`}>
+                        <div
+                            className={`rounded-lg p-3 ${hasIssues ? "bg-red-800/50" : "bg-green-800/50"}`}
+                        >
                             {hasIssues ? (
                                 <AlertTriangle className="h-6 w-6 text-red-300" />
                             ) : (
@@ -158,13 +164,15 @@ export default function CrimeIndex() {
                             )}
                         </div>
                         <div>
-                            <h2 className={`font-pixel text-lg ${hasIssues ? 'text-red-300' : 'text-green-300'}`}>
-                                {hasIssues ? 'Criminal Status' : 'Clean Record'}
+                            <h2
+                                className={`font-pixel text-lg ${hasIssues ? "text-red-300" : "text-green-300"}`}
+                            >
+                                {hasIssues ? "Criminal Status" : "Clean Record"}
                             </h2>
                             <p className="font-pixel text-xs text-stone-400">
                                 {hasIssues
-                                    ? 'You have outstanding legal issues'
-                                    : 'You are in good standing with the law'}
+                                    ? "You have outstanding legal issues"
+                                    : "You are in good standing with the law"}
                             </p>
                         </div>
                     </div>
@@ -182,7 +190,9 @@ export default function CrimeIndex() {
                                 <div className="flex items-center gap-4 text-sm">
                                     <div className="flex items-center gap-1">
                                         <MapPin className="h-4 w-4 text-stone-400" />
-                                        <span className="text-stone-300">{status.jail_info.location}</span>
+                                        <span className="text-stone-300">
+                                            {status.jail_info.location}
+                                        </span>
                                     </div>
                                     <div className="flex items-center gap-1">
                                         <Clock className="h-4 w-4 text-stone-400" />
@@ -211,7 +221,9 @@ export default function CrimeIndex() {
                                 <p className="text-sm text-stone-300">
                                     Declared by: {status.outlaw_info.declared_by}
                                 </p>
-                                <p className="font-pixel text-xs text-stone-400">{status.outlaw_info.reason}</p>
+                                <p className="font-pixel text-xs text-stone-400">
+                                    {status.outlaw_info.reason}
+                                </p>
                                 <p className="mt-1 font-pixel text-[10px] text-red-400">
                                     Anyone may kill you without legal consequence
                                 </p>
@@ -240,12 +252,16 @@ export default function CrimeIndex() {
                                                 {exile.location} ({exile.location_type})
                                             </span>
                                         </div>
-                                        <p className="font-pixel text-[10px] text-stone-400">{exile.reason}</p>
+                                        <p className="font-pixel text-[10px] text-stone-400">
+                                            {exile.reason}
+                                        </p>
                                     </div>
                                     <span
-                                        className={`font-pixel text-xs ${exile.is_permanent ? 'text-red-300' : 'text-yellow-300'}`}
+                                        className={`font-pixel text-xs ${exile.is_permanent ? "text-red-300" : "text-yellow-300"}`}
                                     >
-                                        {exile.is_permanent ? 'Permanent' : `Expires ${exile.expires_at}`}
+                                        {exile.is_permanent
+                                            ? "Permanent"
+                                            : `Expires ${exile.expires_at}`}
                                     </span>
                                 </div>
                             ))}
@@ -276,9 +292,13 @@ export default function CrimeIndex() {
                                                 {bounty.capture_type}
                                             </span>
                                         </div>
-                                        <p className="font-pixel text-[10px] text-stone-400">{bounty.reason}</p>
+                                        <p className="font-pixel text-[10px] text-stone-400">
+                                            {bounty.reason}
+                                        </p>
                                     </div>
-                                    <span className="font-pixel text-xs text-stone-400">by {bounty.posted_by}</span>
+                                    <span className="font-pixel text-xs text-stone-400">
+                                        by {bounty.posted_by}
+                                    </span>
                                 </div>
                             ))}
                         </div>
@@ -300,7 +320,9 @@ export default function CrimeIndex() {
                                     className="block rounded-lg border border-purple-600/50 bg-purple-900/30 p-3 transition hover:border-purple-500 hover:bg-purple-900/40"
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span className="font-pixel text-sm text-purple-300">{trial.crime}</span>
+                                        <span className="font-pixel text-sm text-purple-300">
+                                            {trial.crime}
+                                        </span>
                                         <span className="rounded bg-stone-800/50 px-1.5 py-0.5 font-pixel text-[10px] text-stone-300">
                                             {trial.status}
                                         </span>
@@ -308,7 +330,9 @@ export default function CrimeIndex() {
                                     <div className="mt-1 flex items-center gap-4 text-[10px] text-stone-400">
                                         <span>Court: {trial.court}</span>
                                         {trial.judge && <span>Judge: {trial.judge}</span>}
-                                        {trial.scheduled_at && <span>Scheduled: {trial.scheduled_at}</span>}
+                                        {trial.scheduled_at && (
+                                            <span>Scheduled: {trial.scheduled_at}</span>
+                                        )}
                                     </div>
                                 </Link>
                             ))}
@@ -331,7 +355,9 @@ export default function CrimeIndex() {
                                 >
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <span className="font-pixel text-sm text-stone-200">{punishment.type}</span>
+                                            <span className="font-pixel text-sm text-stone-200">
+                                                {punishment.type}
+                                            </span>
                                             {punishment.crime && (
                                                 <span className="font-pixel text-[10px] text-stone-500">
                                                     for {punishment.crime}
@@ -345,8 +371,9 @@ export default function CrimeIndex() {
                                     <div className="text-right">
                                         <span
                                             className={`rounded px-1.5 py-0.5 font-pixel text-[10px] ${
-                                                statusColors[punishment.status as keyof typeof statusColors] ||
-                                                'text-stone-300 bg-stone-800/50'
+                                                statusColors[
+                                                    punishment.status as keyof typeof statusColors
+                                                ] || "text-stone-300 bg-stone-800/50"
                                             }`}
                                         >
                                             {punishment.status}

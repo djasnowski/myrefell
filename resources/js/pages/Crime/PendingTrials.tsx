@@ -1,8 +1,8 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { Calendar, Gavel, Scale, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, Link, usePage } from "@inertiajs/react";
+import { Calendar, Gavel, Scale, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Trial {
     id: number;
@@ -22,15 +22,15 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Crime', href: '/crime' },
-    { title: 'Pending Trials', href: '#' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Crime", href: "/crime" },
+    { title: "Pending Trials", href: "#" },
 ];
 
 const statusColors: Record<string, string> = {
-    scheduled: 'bg-blue-900/30 text-blue-400',
-    in_progress: 'bg-amber-900/30 text-amber-400',
-    awaiting_verdict: 'bg-purple-900/30 text-purple-400',
+    scheduled: "bg-blue-900/30 text-blue-400",
+    in_progress: "bg-amber-900/30 text-amber-400",
+    awaiting_verdict: "bg-purple-900/30 text-purple-400",
 };
 
 export default function PendingTrials() {
@@ -50,9 +50,7 @@ export default function PendingTrials() {
                         <h1 className="font-[Cinzel] text-2xl font-bold text-stone-100">
                             Pending Trials
                         </h1>
-                        <p className="text-sm text-stone-400">
-                            Trials awaiting your verdict
-                        </p>
+                        <p className="text-sm text-stone-400">Trials awaiting your verdict</p>
                     </div>
                 </div>
 
@@ -92,9 +90,9 @@ export default function PendingTrials() {
                                                 </span>
                                             )}
                                             <span
-                                                className={`rounded px-2 py-0.5 ${statusColors[trial.status] || 'bg-stone-800 text-stone-400'}`}
+                                                className={`rounded px-2 py-0.5 ${statusColors[trial.status] || "bg-stone-800 text-stone-400"}`}
                                             >
-                                                {trial.status.replace('_', ' ')}
+                                                {trial.status.replace("_", " ")}
                                             </span>
                                         </div>
                                     </div>
@@ -112,7 +110,7 @@ export default function PendingTrials() {
                                             Prosecution Argument
                                         </p>
                                         <p className="mt-1 text-sm text-stone-300">
-                                            {trial.prosecution_argument || 'Not yet submitted'}
+                                            {trial.prosecution_argument || "Not yet submitted"}
                                         </p>
                                     </div>
                                     <div className="rounded bg-stone-900/50 p-3">
@@ -120,7 +118,7 @@ export default function PendingTrials() {
                                             Defense Argument
                                         </p>
                                         <p className="mt-1 text-sm text-stone-300">
-                                            {trial.defense_argument || 'Not yet submitted'}
+                                            {trial.defense_argument || "Not yet submitted"}
                                         </p>
                                     </div>
                                 </div>

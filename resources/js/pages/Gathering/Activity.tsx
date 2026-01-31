@@ -1,8 +1,22 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUp, Axe, Backpack, Fish, Leaf, Loader2, Package, Pickaxe, Snowflake, Sparkles, Sun, TreeDeciduous, Zap } from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from "@inertiajs/react";
+import {
+    ArrowUp,
+    Axe,
+    Backpack,
+    Fish,
+    Leaf,
+    Loader2,
+    Package,
+    Pickaxe,
+    Snowflake,
+    Sparkles,
+    Sun,
+    TreeDeciduous,
+    Zap,
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Resource {
     name: string;
@@ -25,7 +39,7 @@ interface Activity {
     inventory_full: boolean;
     free_slots: number;
     seasonal_modifier: number;
-    current_season: 'spring' | 'summer' | 'autumn' | 'winter';
+    current_season: "spring" | "summer" | "autumn" | "winter";
 }
 
 interface GatherResult {
@@ -64,9 +78,9 @@ const activityIcons: Record<string, typeof Pickaxe> = {
 };
 
 const activityBgColors: Record<string, string> = {
-    mining: 'from-stone-800 to-stone-900 border-stone-600',
-    fishing: 'from-blue-900/50 to-stone-900 border-blue-600/50',
-    woodcutting: 'from-green-900/50 to-stone-900 border-green-600/50',
+    mining: "from-stone-800 to-stone-900 border-stone-600",
+    fishing: "from-blue-900/50 to-stone-900 border-blue-600/50",
+    woodcutting: "from-green-900/50 to-stone-900 border-green-600/50",
 };
 
 const seasonIcons: Record<string, typeof Sun> = {
@@ -77,10 +91,10 @@ const seasonIcons: Record<string, typeof Sun> = {
 };
 
 const seasonColors: Record<string, string> = {
-    spring: 'text-green-400 border-green-600/50 bg-green-900/20',
-    summer: 'text-yellow-400 border-yellow-600/50 bg-yellow-900/20',
-    autumn: 'text-orange-400 border-orange-600/50 bg-orange-900/20',
-    winter: 'text-blue-400 border-blue-600/50 bg-blue-900/20',
+    spring: "text-green-400 border-green-600/50 bg-green-900/20",
+    summer: "text-yellow-400 border-yellow-600/50 bg-yellow-900/20",
+    autumn: "text-orange-400 border-orange-600/50 bg-orange-900/20",
+    winter: "text-blue-400 border-blue-600/50 bg-blue-900/20",
 };
 
 export default function GatheringActivity() {
@@ -90,19 +104,22 @@ export default function GatheringActivity() {
     const [currentEnergy, setCurrentEnergy] = useState(player_energy);
 
     const Icon = activityIcons[activity.id] || Pickaxe;
-    const bgColor = activityBgColors[activity.id] || 'from-stone-800 to-stone-900 border-stone-600';
+    const bgColor = activityBgColors[activity.id] || "from-stone-800 to-stone-900 border-stone-600";
 
     const SeasonIcon = seasonIcons[activity.current_season] || Sun;
-    const seasonColor = seasonColors[activity.current_season] || 'text-stone-400';
+    const seasonColor = seasonColors[activity.current_season] || "text-stone-400";
     const modifierPercent = Math.round((activity.seasonal_modifier - 1) * 100);
     const isBonus = modifierPercent > 0;
     const isPenalty = modifierPercent < 0;
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
+        { title: "Dashboard", href: "/dashboard" },
         { title: location.name, href: `/${location.type}s/${location.id}` },
-        { title: 'Gathering', href: `/${location.type}s/${location.id}/gathering` },
-        { title: activity.name, href: `/${location.type}s/${location.id}/gathering/${activity.id}` },
+        { title: "Gathering", href: `/${location.type}s/${location.id}/gathering` },
+        {
+            title: activity.name,
+            href: `/${location.type}s/${location.id}/gathering/${activity.id}`,
+        },
     ];
 
     const canGather = currentEnergy >= activity.energy_cost && !activity.inventory_full;
@@ -115,10 +132,13 @@ export default function GatheringActivity() {
 
         try {
             const response = await fetch(`/${location.type}s/${location.id}/gathering/gather`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
                 },
                 body: JSON.stringify({ activity: activity.id }),
             });
@@ -131,9 +151,9 @@ export default function GatheringActivity() {
             }
 
             // Reload sidebar data
-            router.reload({ only: ['sidebar'] });
+            router.reload({ only: ["sidebar"] });
         } catch {
-            setResult({ success: false, message: 'An error occurred' });
+            setResult({ success: false, message: "An error occurred" });
         } finally {
             setLoading(false);
         }
@@ -151,7 +171,9 @@ export default function GatheringActivity() {
                                 <Icon className="h-12 w-12 text-amber-400" />
                             </div>
                             <div>
-                                <h1 className="font-pixel text-2xl text-amber-400">{activity.name}</h1>
+                                <h1 className="font-pixel text-2xl text-amber-400">
+                                    {activity.name}
+                                </h1>
                                 <p className="font-pixel text-xs capitalize text-stone-400">
                                     {activity.skill} Level {activity.skill_level}
                                 </p>
@@ -164,14 +186,20 @@ export default function GatheringActivity() {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <SeasonIcon className="h-4 w-4" />
-                                <span className="font-pixel text-xs capitalize">{activity.current_season}</span>
+                                <span className="font-pixel text-xs capitalize">
+                                    {activity.current_season}
+                                </span>
                             </div>
                             <div className="font-pixel text-xs">
                                 {isBonus && (
-                                    <span className="text-green-400">+{modifierPercent}% bonus yield chance</span>
+                                    <span className="text-green-400">
+                                        +{modifierPercent}% bonus yield chance
+                                    </span>
                                 )}
                                 {isPenalty && (
-                                    <span className="text-red-400">{modifierPercent}% reduced yields</span>
+                                    <span className="text-red-400">
+                                        {modifierPercent}% reduced yields
+                                    </span>
                                 )}
                                 {!isBonus && !isPenalty && (
                                     <span className="text-stone-400">Normal yields</span>
@@ -202,9 +230,11 @@ export default function GatheringActivity() {
                                 <Backpack className="h-3 w-3" />
                                 Inventory
                             </div>
-                            <div className="font-pixel text-lg text-stone-300">{activity.free_slots} slots</div>
+                            <div className="font-pixel text-lg text-stone-300">
+                                {activity.free_slots} slots
+                            </div>
                             <div className="font-pixel text-[10px] text-stone-500">
-                                {activity.inventory_full ? 'Inventory is full!' : 'Space available'}
+                                {activity.inventory_full ? "Inventory is full!" : "Space available"}
                             </div>
                         </div>
                     </div>
@@ -214,8 +244,8 @@ export default function GatheringActivity() {
                         <div
                             className={`mb-6 rounded-lg border p-4 ${
                                 result.success
-                                    ? 'border-green-600/50 bg-green-900/20'
-                                    : 'border-red-600/50 bg-red-900/20'
+                                    ? "border-green-600/50 bg-green-900/20"
+                                    : "border-red-600/50 bg-red-900/20"
                             }`}
                         >
                             <div className="flex items-center gap-3">
@@ -225,7 +255,9 @@ export default function GatheringActivity() {
                                         <div>
                                             <div className="flex items-center gap-2 font-pixel text-sm text-green-300">
                                                 {result.quantity && result.quantity > 1 ? (
-                                                    <span>{result.quantity}x {result.resource.name}</span>
+                                                    <span>
+                                                        {result.quantity}x {result.resource.name}
+                                                    </span>
                                                 ) : (
                                                     <span>{result.resource.name}</span>
                                                 )}
@@ -250,7 +282,9 @@ export default function GatheringActivity() {
                                     </>
                                 )}
                                 {!result.success && (
-                                    <div className="font-pixel text-sm text-red-400">{result.message}</div>
+                                    <div className="font-pixel text-sm text-red-400">
+                                        {result.message}
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -262,8 +296,8 @@ export default function GatheringActivity() {
                         disabled={!canGather || loading}
                         className={`mb-6 flex w-full items-center justify-center gap-3 rounded-xl border-2 px-6 py-4 font-pixel text-lg transition ${
                             canGather && !loading
-                                ? 'border-amber-600 bg-amber-900/30 text-amber-300 hover:bg-amber-800/50'
-                                : 'cursor-not-allowed border-stone-700 bg-stone-800/50 text-stone-500'
+                                ? "border-amber-600 bg-amber-900/30 text-amber-300 hover:bg-amber-800/50"
+                                : "cursor-not-allowed border-stone-700 bg-stone-800/50 text-stone-500"
                         }`}
                     >
                         {loading ? (
@@ -281,7 +315,9 @@ export default function GatheringActivity() {
 
                     {/* Available Resources */}
                     <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
-                        <h2 className="mb-4 font-pixel text-sm text-stone-300">Available Resources</h2>
+                        <h2 className="mb-4 font-pixel text-sm text-stone-300">
+                            Available Resources
+                        </h2>
                         <div className="grid gap-2">
                             {activity.resources.map((resource) => (
                                 <div
@@ -290,7 +326,9 @@ export default function GatheringActivity() {
                                 >
                                     <div className="flex items-center gap-2">
                                         <Package className="h-4 w-4 text-stone-400" />
-                                        <span className="font-pixel text-xs text-stone-300">{resource.name}</span>
+                                        <span className="font-pixel text-xs text-stone-300">
+                                            {resource.name}
+                                        </span>
                                     </div>
                                     <span className="font-pixel text-[10px] text-amber-400">
                                         +{activity.base_xp + resource.xp_bonus} XP
@@ -304,7 +342,9 @@ export default function GatheringActivity() {
                             <div className="mt-4 rounded-lg border border-stone-600 bg-stone-900/30 p-3">
                                 <div className="flex items-center gap-2">
                                     <Sparkles className="h-4 w-4 text-purple-400" />
-                                    <span className="font-pixel text-xs text-purple-300">Next unlock</span>
+                                    <span className="font-pixel text-xs text-purple-300">
+                                        Next unlock
+                                    </span>
                                 </div>
                                 <div className="mt-1 font-pixel text-sm text-stone-300">
                                     {activity.next_unlock.name}

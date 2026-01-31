@@ -1,8 +1,19 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { CheckCircle, Circle, Clock, Gift, Loader2, Sparkles, Swords, Trees, Utensils, Wrench } from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from "@inertiajs/react";
+import {
+    CheckCircle,
+    Circle,
+    Clock,
+    Gift,
+    Loader2,
+    Sparkles,
+    Swords,
+    Trees,
+    Utensils,
+    Wrench,
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface TaskRewards {
     gold: number;
@@ -19,7 +30,7 @@ interface DailyTask {
     current_progress: number;
     target_amount: number;
     progress_percent: number;
-    status: 'active' | 'completed' | 'claimed' | 'expired';
+    status: "active" | "completed" | "claimed" | "expired";
     rewards: TaskRewards;
     energy_cost: number;
 }
@@ -37,8 +48,8 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Daily Tasks', href: '/daily-tasks' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Daily Tasks", href: "/daily-tasks" },
 ];
 
 const categoryIcons: Record<string, typeof Swords> = {
@@ -49,20 +60,28 @@ const categoryIcons: Record<string, typeof Swords> = {
 };
 
 const categoryColors: Record<string, string> = {
-    combat: 'border-red-500/50 bg-red-900/20',
-    gathering: 'border-green-500/50 bg-green-900/20',
-    crafting: 'border-blue-500/50 bg-blue-900/20',
-    service: 'border-purple-500/50 bg-purple-900/20',
+    combat: "border-red-500/50 bg-red-900/20",
+    gathering: "border-green-500/50 bg-green-900/20",
+    crafting: "border-blue-500/50 bg-blue-900/20",
+    service: "border-purple-500/50 bg-purple-900/20",
 };
 
 const statusConfig = {
-    active: { icon: Circle, color: 'text-stone-400', label: 'In Progress' },
-    completed: { icon: Gift, color: 'text-amber-400', label: 'Ready to Claim' },
-    claimed: { icon: CheckCircle, color: 'text-green-400', label: 'Claimed' },
-    expired: { icon: Clock, color: 'text-stone-500', label: 'Expired' },
+    active: { icon: Circle, color: "text-stone-400", label: "In Progress" },
+    completed: { icon: Gift, color: "text-amber-400", label: "Ready to Claim" },
+    claimed: { icon: CheckCircle, color: "text-green-400", label: "Claimed" },
+    expired: { icon: Clock, color: "text-stone-500", label: "Expired" },
 };
 
-function TaskCard({ task, onClaim, onProgress }: { task: DailyTask; onClaim: () => void; onProgress: () => void }) {
+function TaskCard({
+    task,
+    onClaim,
+    onProgress,
+}: {
+    task: DailyTask;
+    onClaim: () => void;
+    onProgress: () => void;
+}) {
     const [claiming, setClaiming] = useState(false);
     const [progressing, setProgressing] = useState(false);
 
@@ -81,13 +100,13 @@ function TaskCard({ task, onClaim, onProgress }: { task: DailyTask; onClaim: () 
         setTimeout(() => setProgressing(false), 500);
     };
 
-    const isClaimable = task.status === 'completed';
-    const isActive = task.status === 'active';
+    const isClaimable = task.status === "completed";
+    const isActive = task.status === "active";
 
     return (
         <div
-            className={`rounded-xl border-2 ${categoryColors[task.category] || 'border-stone-600/50 bg-stone-800/50'} p-4 transition-all ${
-                isClaimable ? 'ring-2 ring-amber-400/50' : ''
+            className={`rounded-xl border-2 ${categoryColors[task.category] || "border-stone-600/50 bg-stone-800/50"} p-4 transition-all ${
+                isClaimable ? "ring-2 ring-amber-400/50" : ""
             }`}
         >
             {/* Header */}
@@ -98,12 +117,16 @@ function TaskCard({ task, onClaim, onProgress }: { task: DailyTask; onClaim: () 
                     </div>
                     <div>
                         <h3 className="font-pixel text-sm text-amber-300">{task.name}</h3>
-                        <span className="font-pixel text-[10px] capitalize text-stone-400">{task.category}</span>
+                        <span className="font-pixel text-[10px] capitalize text-stone-400">
+                            {task.category}
+                        </span>
                     </div>
                 </div>
                 <div className={`flex items-center gap-1 ${statusColor}`}>
                     <StatusIcon className="h-4 w-4" />
-                    <span className="font-pixel text-[10px]">{statusConfig[task.status].label}</span>
+                    <span className="font-pixel text-[10px]">
+                        {statusConfig[task.status].label}
+                    </span>
                 </div>
             </div>
 
@@ -121,11 +144,11 @@ function TaskCard({ task, onClaim, onProgress }: { task: DailyTask; onClaim: () 
                 <div className="h-3 w-full overflow-hidden rounded-full bg-stone-700">
                     <div
                         className={`h-full transition-all duration-500 ${
-                            task.status === 'claimed'
-                                ? 'bg-green-500'
-                                : task.status === 'completed'
-                                  ? 'bg-amber-500'
-                                  : 'bg-gradient-to-r from-blue-600 to-blue-400'
+                            task.status === "claimed"
+                                ? "bg-green-500"
+                                : task.status === "completed"
+                                  ? "bg-amber-500"
+                                  : "bg-gradient-to-r from-blue-600 to-blue-400"
                         }`}
                         style={{ width: `${task.progress_percent}%` }}
                     />
@@ -181,7 +204,7 @@ function TaskCard({ task, onClaim, onProgress }: { task: DailyTask; onClaim: () 
                         )}
                     </button>
                 )}
-                {task.status === 'claimed' && (
+                {task.status === "claimed" && (
                     <div className="flex flex-1 items-center justify-center gap-2 rounded-lg border-2 border-green-600/50 bg-green-900/20 px-4 py-2 font-pixel text-xs text-green-400">
                         <CheckCircle className="h-4 w-4" />
                         Completed!
@@ -196,21 +219,29 @@ export default function DailyTasksIndex() {
     const { tasks, stats } = usePage<PageProps>().props;
 
     const handleClaim = (taskId: number) => {
-        router.post(`/daily-tasks/${taskId}/claim`, {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                router.reload();
+        router.post(
+            `/daily-tasks/${taskId}/claim`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
             },
-        });
+        );
     };
 
     const handleProgress = (taskId: number) => {
-        router.post(`/daily-tasks/${taskId}/progress`, { amount: 1 }, {
-            preserveScroll: true,
-            onSuccess: () => {
-                router.reload();
+        router.post(
+            `/daily-tasks/${taskId}/progress`,
+            { amount: 1 },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
             },
-        });
+        );
     };
 
     return (
@@ -221,7 +252,9 @@ export default function DailyTasksIndex() {
                 <div className="mb-6 flex items-center justify-between">
                     <div>
                         <h1 className="font-pixel text-2xl text-amber-400">Daily Tasks</h1>
-                        <p className="font-pixel text-sm text-stone-400">Complete tasks to earn gold and XP</p>
+                        <p className="font-pixel text-sm text-stone-400">
+                            Complete tasks to earn gold and XP
+                        </p>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2">
@@ -232,7 +265,9 @@ export default function DailyTasksIndex() {
                         </div>
                         <div className="rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2">
                             <span className="font-pixel text-xs text-stone-400">Total:</span>
-                            <span className="ml-2 font-pixel text-sm text-emerald-300">{stats.total_completed}</span>
+                            <span className="ml-2 font-pixel text-sm text-emerald-300">
+                                {stats.total_completed}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -253,8 +288,12 @@ export default function DailyTasksIndex() {
                     <div className="flex flex-1 items-center justify-center">
                         <div className="text-center">
                             <div className="mb-3 text-6xl">📋</div>
-                            <p className="font-pixel text-base text-stone-500">No tasks available</p>
-                            <p className="font-pixel text-xs text-stone-600">Check back tomorrow!</p>
+                            <p className="font-pixel text-base text-stone-500">
+                                No tasks available
+                            </p>
+                            <p className="font-pixel text-xs text-stone-600">
+                                Check back tomorrow!
+                            </p>
                         </div>
                     </div>
                 )}

@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from "@inertiajs/react";
 import {
     Anchor,
     Baby,
@@ -29,9 +29,9 @@ import {
     Users,
     Vote,
     Wheat,
-} from 'lucide-react';
-import { dashboard, login, register } from '@/routes';
-import type { SharedData } from '@/types';
+} from "lucide-react";
+import { dashboard, login, register } from "@/routes";
+import type { SharedData } from "@/types";
 
 function DecorativeDivider() {
     return (
@@ -43,7 +43,13 @@ function DecorativeDivider() {
     );
 }
 
-function FramedCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+function FramedCard({
+    children,
+    className = "",
+}: {
+    children: React.ReactNode;
+    className?: string;
+}) {
     return (
         <div className="relative">
             {/* Corner decorations */}
@@ -51,7 +57,9 @@ function FramedCard({ children, className = '' }: { children: React.ReactNode; c
             <div className="absolute -top-2 -right-2 w-6 h-6 border-t-2 border-r-2 border-primary/60" />
             <div className="absolute -bottom-2 -left-2 w-6 h-6 border-b-2 border-l-2 border-primary/60" />
             <div className="absolute -bottom-2 -right-2 w-6 h-6 border-b-2 border-r-2 border-primary/60" />
-            <div className={`relative bg-card/80 backdrop-blur-sm border border-border/50 p-8 shadow-lg shadow-primary/5 ${className}`}>
+            <div
+                className={`relative bg-card/80 backdrop-blur-sm border border-border/50 p-8 shadow-lg shadow-primary/5 ${className}`}
+            >
                 {children}
             </div>
         </div>
@@ -70,7 +78,10 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                 />
                 <link rel="canonical" href="https://myrefell.com/" />
                 <link rel="preconnect" href="https://fonts.bunny.net" />
-                <link href="https://fonts.bunny.net/css?family=cinzel:400,700&family=inter:400,500,600" rel="stylesheet" />
+                <link
+                    href="https://fonts.bunny.net/css?family=cinzel:400,700&family=inter:400,500,600"
+                    rel="stylesheet"
+                />
             </Head>
 
             <div className="relative min-h-screen bg-background text-foreground overflow-hidden">
@@ -88,7 +99,7 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                             linear-gradient(var(--primary) 1px, transparent 1px),
                             linear-gradient(90deg, var(--primary) 1px, transparent 1px)
                         `,
-                        backgroundSize: '40px 40px'
+                        backgroundSize: "40px 40px",
                     }}
                 />
 
@@ -97,7 +108,9 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                     <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
                         <Link href="/" className="flex items-center gap-2">
                             <Crown className="h-8 w-8 text-primary" />
-                            <span className="font-[Cinzel] text-2xl font-bold tracking-wide text-primary">Myrefell</span>
+                            <span className="font-[Cinzel] text-2xl font-bold tracking-wide text-primary">
+                                Myrefell
+                            </span>
                         </Link>
                         <div className="flex items-center gap-4">
                             <Link
@@ -150,8 +163,9 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                         </h1>
 
                         <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
-                            In Myrefell, you are one person in a persistent medieval world. Train your combat skills,
-                            master crafts, climb the social ladder, and shape history through politics, war, and faith.
+                            In Myrefell, you are one person in a persistent medieval world. Train
+                            your combat skills, master crafts, climb the social ladder, and shape
+                            history through politics, war, and faith.
                         </p>
 
                         <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -185,14 +199,21 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                         {/* Quick Stats */}
                         <div className="mt-16 grid grid-cols-2 gap-4 md:grid-cols-4">
                             {[
-                                { value: '4', label: 'Kingdoms' },
-                                { value: '12', label: 'Skills to Master' },
-                                { value: '5', label: 'Social Classes' },
-                                { value: '∞', label: 'Possibilities' },
+                                { value: "4", label: "Kingdoms" },
+                                { value: "12", label: "Skills to Master" },
+                                { value: "5", label: "Social Classes" },
+                                { value: "∞", label: "Possibilities" },
                             ].map((stat) => (
-                                <div key={stat.label} className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-4">
-                                    <div className="text-3xl font-bold text-primary">{stat.value}</div>
-                                    <div className="text-sm text-muted-foreground">{stat.label}</div>
+                                <div
+                                    key={stat.label}
+                                    className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-4"
+                                >
+                                    <div className="text-3xl font-bold text-primary">
+                                        {stat.value}
+                                    </div>
+                                    <div className="text-sm text-muted-foreground">
+                                        {stat.label}
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -214,7 +235,8 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                 One Person, <span className="text-primary">Infinite Paths</span>
                             </h2>
                             <p className="mx-auto max-w-2xl text-muted-foreground">
-                                You are both an individual with a body to train and a citizen who shapes society.
+                                You are both an individual with a body to train and a citizen who
+                                shapes society.
                             </p>
                         </div>
 
@@ -225,19 +247,27 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                     <div className="rounded-lg bg-destructive/20 p-3">
                                         <Swords className="h-6 w-6 text-destructive" />
                                     </div>
-                                    <h3 className="font-[Cinzel] text-2xl font-bold">The Individual</h3>
+                                    <h3 className="font-[Cinzel] text-2xl font-bold">
+                                        The Individual
+                                    </h3>
                                 </div>
                                 <p className="mb-6 text-muted-foreground">
-                                    Train your body, master crafts, and equip yourself for adventure.
+                                    Train your body, master crafts, and equip yourself for
+                                    adventure.
                                 </p>
                                 <ul className="space-y-3">
                                     <li className="flex items-center gap-3 text-foreground/80">
                                         <Shield className="h-5 w-5 text-muted-foreground" />
-                                        <span>5 combat skills: Attack, Strength, Defense, Range, Hitpoints</span>
+                                        <span>
+                                            5 combat skills: Attack, Strength, Defense, Range,
+                                            Hitpoints
+                                        </span>
                                     </li>
                                     <li className="flex items-center gap-3 text-foreground/80">
                                         <Hammer className="h-5 w-5 text-muted-foreground" />
-                                        <span>7 trade skills: Farming, Mining, Fishing, and more</span>
+                                        <span>
+                                            7 trade skills: Farming, Mining, Fishing, and more
+                                        </span>
                                     </li>
                                     <li className="flex items-center gap-3 text-foreground/80">
                                         <Heart className="h-5 w-5 text-muted-foreground" />
@@ -252,7 +282,9 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                     <div className="rounded-lg bg-primary/20 p-3">
                                         <Crown className="h-6 w-6 text-primary" />
                                     </div>
-                                    <h3 className="font-[Cinzel] text-2xl font-bold">The Citizen</h3>
+                                    <h3 className="font-[Cinzel] text-2xl font-bold">
+                                        The Citizen
+                                    </h3>
                                 </div>
                                 <p className="mb-6 text-muted-foreground">
                                     Vote, hold office, own property, and shape your community.
@@ -284,16 +316,37 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                 A <span className="text-primary">Living World</span> to Explore
                             </h2>
                             <p className="mx-auto max-w-2xl text-muted-foreground">
-                                From humble hamlets to mighty kingdoms, every settlement is player-governed with real consequences.
+                                From humble hamlets to mighty kingdoms, every settlement is
+                                player-governed with real consequences.
                             </p>
                         </div>
 
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                             {[
-                                { icon: Crown, name: 'Kingdom', ruler: 'Elected King', desc: 'Declare wars, set taxes, rule the realm' },
-                                { icon: Castle, name: 'Barony', ruler: 'Baron', desc: 'Collect taxes, raise militia, judge crimes' },
-                                { icon: Church, name: 'Town', ruler: 'Elected Mayor', desc: 'Manage guilds, markets, town affairs' },
-                                { icon: Home, name: 'Village', ruler: 'Elected Elder', desc: 'Local disputes, approve migrants' },
+                                {
+                                    icon: Crown,
+                                    name: "Kingdom",
+                                    ruler: "Elected King",
+                                    desc: "Declare wars, set taxes, rule the realm",
+                                },
+                                {
+                                    icon: Castle,
+                                    name: "Barony",
+                                    ruler: "Baron",
+                                    desc: "Collect taxes, raise militia, judge crimes",
+                                },
+                                {
+                                    icon: Church,
+                                    name: "Town",
+                                    ruler: "Elected Mayor",
+                                    desc: "Manage guilds, markets, town affairs",
+                                },
+                                {
+                                    icon: Home,
+                                    name: "Village",
+                                    ruler: "Elected Elder",
+                                    desc: "Local disputes, approve migrants",
+                                },
                             ].map((loc) => (
                                 <div
                                     key={loc.name}
@@ -302,7 +355,9 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                     <div className="mb-4 inline-flex rounded-lg bg-primary/10 p-3">
                                         <loc.icon className="h-6 w-6 text-primary" />
                                     </div>
-                                    <h3 className="mb-1 font-[Cinzel] text-xl font-bold text-foreground">{loc.name}</h3>
+                                    <h3 className="mb-1 font-[Cinzel] text-xl font-bold text-foreground">
+                                        {loc.name}
+                                    </h3>
                                     <p className="mb-2 text-sm text-primary">{loc.ruler}</p>
                                     <p className="text-sm text-muted-foreground">{loc.desc}</p>
                                 </div>
@@ -321,20 +376,53 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                 Choose Your <span className="text-primary">Path to Power</span>
                             </h2>
                             <p className="mx-auto max-w-2xl text-muted-foreground">
-                                There are no classes in Myrefell. Forge your own destiny through the path that calls to you.
+                                There are no classes in Myrefell. Forge your own destiny through the
+                                path that calls to you.
                             </p>
                         </div>
 
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                             {[
-                                { icon: Coins, title: 'Economic Magnate', desc: 'Own businesses, run caravans, set tariffs, and dominate trade.' },
-                                { icon: Swords, title: 'Military Commander', desc: 'Raise armies, declare wars, siege castles, and conquer kingdoms.' },
-                                { icon: Crown, title: 'Political Leader', desc: 'Win elections, hold office, climb from Elder to King.' },
-                                { icon: Church, title: 'Religious Prophet', desc: 'Found a cult, grow it into a religion, become spiritual leader.' },
-                                { icon: Skull, title: 'Criminal Mastermind', desc: 'Build an underworld empire and control the shadows.' },
-                                { icon: Users, title: 'Dynasty Builder', desc: 'Marry strategically, raise heirs, build a lasting legacy.' },
-                                { icon: Ship, title: 'Trade Baron', desc: 'Send caravans across the realm and profit from tariffs.' },
-                                { icon: Trophy, title: 'Tournament Champion', desc: 'Compete in tournaments, win glory, and earn renown.' },
+                                {
+                                    icon: Coins,
+                                    title: "Economic Magnate",
+                                    desc: "Own businesses, run caravans, set tariffs, and dominate trade.",
+                                },
+                                {
+                                    icon: Swords,
+                                    title: "Military Commander",
+                                    desc: "Raise armies, declare wars, siege castles, and conquer kingdoms.",
+                                },
+                                {
+                                    icon: Crown,
+                                    title: "Political Leader",
+                                    desc: "Win elections, hold office, climb from Elder to King.",
+                                },
+                                {
+                                    icon: Church,
+                                    title: "Religious Prophet",
+                                    desc: "Found a cult, grow it into a religion, become spiritual leader.",
+                                },
+                                {
+                                    icon: Skull,
+                                    title: "Criminal Mastermind",
+                                    desc: "Build an underworld empire and control the shadows.",
+                                },
+                                {
+                                    icon: Users,
+                                    title: "Dynasty Builder",
+                                    desc: "Marry strategically, raise heirs, build a lasting legacy.",
+                                },
+                                {
+                                    icon: Ship,
+                                    title: "Trade Baron",
+                                    desc: "Send caravans across the realm and profit from tariffs.",
+                                },
+                                {
+                                    icon: Trophy,
+                                    title: "Tournament Champion",
+                                    desc: "Compete in tournaments, win glory, and earn renown.",
+                                },
                             ].map((path) => (
                                 <div
                                     key={path.title}
@@ -343,7 +431,9 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                     <div className="mb-4 inline-flex rounded-lg bg-primary/10 p-3">
                                         <path.icon className="h-6 w-6 text-primary" />
                                     </div>
-                                    <h3 className="mb-2 font-[Cinzel] text-lg font-bold text-foreground">{path.title}</h3>
+                                    <h3 className="mb-2 font-[Cinzel] text-lg font-bold text-foreground">
+                                        {path.title}
+                                    </h3>
                                     <p className="text-sm text-muted-foreground">{path.desc}</p>
                                 </div>
                             ))}
@@ -359,7 +449,9 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                 A World That <span className="text-primary">Lives Without You</span>
                             </h2>
                             <p className="mx-auto max-w-2xl text-muted-foreground">
-                                Unlike other games, Myrefell's world doesn't pause. NPCs live full lives, information travels realistically, and seasons change the landscape.
+                                Unlike other games, Myrefell's world doesn't pause. NPCs live full
+                                lives, information travels realistically, and seasons change the
+                                landscape.
                             </p>
                         </div>
 
@@ -373,7 +465,8 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                     <h3 className="font-[Cinzel] text-xl font-bold">Living NPCs</h3>
                                 </div>
                                 <p className="mb-6 text-muted-foreground">
-                                    NPCs aren't static vendors. They're people with lives of their own.
+                                    NPCs aren't static vendors. They're people with lives of their
+                                    own.
                                 </p>
                                 <ul className="space-y-3">
                                     <li className="flex items-center gap-3 text-foreground/80">
@@ -397,7 +490,9 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                     <div className="rounded-lg bg-accent/20 p-3">
                                         <Mail className="h-6 w-6 text-accent-foreground" />
                                     </div>
-                                    <h3 className="font-[Cinzel] text-xl font-bold">Slow Information</h3>
+                                    <h3 className="font-[Cinzel] text-xl font-bold">
+                                        Slow Information
+                                    </h3>
                                 </div>
                                 <p className="mb-6 text-muted-foreground">
                                     No global chat. News travels at the speed of messengers.
@@ -424,7 +519,9 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                     <div className="rounded-lg bg-accent/20 p-3">
                                         <Calendar className="h-6 w-6 text-accent-foreground" />
                                     </div>
-                                    <h3 className="font-[Cinzel] text-xl font-bold">Dynamic World</h3>
+                                    <h3 className="font-[Cinzel] text-xl font-bold">
+                                        Dynamic World
+                                    </h3>
                                 </div>
                                 <p className="mb-6 text-muted-foreground">
                                     Seasons change, disasters strike, diseases spread.
@@ -456,24 +553,25 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                 Master <span className="text-primary">12 Skills</span>
                             </h2>
                             <p className="mx-auto max-w-2xl text-muted-foreground">
-                                Every skill opens new opportunities. Train combat, mine ore, forge weapons, and craft your legacy.
+                                Every skill opens new opportunities. Train combat, mine ore, forge
+                                weapons, and craft your legacy.
                             </p>
                         </div>
 
                         <div className="grid grid-cols-3 gap-4 md:grid-cols-4 lg:grid-cols-6">
                             {[
-                                { icon: Swords, name: 'Attack' },
-                                { icon: Shield, name: 'Strength' },
-                                { icon: Heart, name: 'Defense' },
-                                { icon: HeartPulse, name: 'Hitpoints' },
-                                { icon: Target, name: 'Range' },
-                                { icon: Wheat, name: 'Farming' },
-                                { icon: Pickaxe, name: 'Mining' },
-                                { icon: Anchor, name: 'Fishing' },
-                                { icon: Trees, name: 'Woodcutting' },
-                                { icon: Wheat, name: 'Cooking' },
-                                { icon: Hammer, name: 'Smithing' },
-                                { icon: Hammer, name: 'Crafting' },
+                                { icon: Swords, name: "Attack" },
+                                { icon: Shield, name: "Strength" },
+                                { icon: Heart, name: "Defense" },
+                                { icon: HeartPulse, name: "Hitpoints" },
+                                { icon: Target, name: "Range" },
+                                { icon: Wheat, name: "Farming" },
+                                { icon: Pickaxe, name: "Mining" },
+                                { icon: Anchor, name: "Fishing" },
+                                { icon: Trees, name: "Woodcutting" },
+                                { icon: Wheat, name: "Cooking" },
+                                { icon: Hammer, name: "Smithing" },
+                                { icon: Hammer, name: "Crafting" },
                             ].map((skill) => (
                                 <div
                                     key={skill.name}
@@ -482,7 +580,9 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                     <div className="mb-2 rounded-lg bg-primary/10 p-2">
                                         <skill.icon className="h-5 w-5 text-primary" />
                                     </div>
-                                    <span className="text-xs text-muted-foreground">{skill.name}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                        {skill.name}
+                                    </span>
                                 </div>
                             ))}
                         </div>
@@ -497,26 +597,53 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                 Climb the <span className="text-primary">Social Ladder</span>
                             </h2>
                             <p className="mx-auto max-w-2xl text-muted-foreground">
-                                Your class determines your rights. Earn freedom, gain citizenship, or achieve nobility through deeds.
+                                Your class determines your rights. Earn freedom, gain citizenship,
+                                or achieve nobility through deeds.
                             </p>
                         </div>
 
                         <div className="flex flex-wrap justify-center gap-4">
                             {[
-                                { name: 'Serf', desc: 'Bound to the land', rights: 'Basic protection only' },
-                                { name: 'Freeman', desc: 'Free citizen', rights: 'Vote, own property, travel' },
-                                { name: 'Burgher', desc: 'Town citizen', rights: 'Guild membership, trade' },
-                                { name: 'Noble', desc: 'Aristocracy', rights: 'Hold high office, own land' },
-                                { name: 'Clergy', desc: 'Religious order', rights: 'Church authority' },
+                                {
+                                    name: "Serf",
+                                    desc: "Bound to the land",
+                                    rights: "Basic protection only",
+                                },
+                                {
+                                    name: "Freeman",
+                                    desc: "Free citizen",
+                                    rights: "Vote, own property, travel",
+                                },
+                                {
+                                    name: "Burgher",
+                                    desc: "Town citizen",
+                                    rights: "Guild membership, trade",
+                                },
+                                {
+                                    name: "Noble",
+                                    desc: "Aristocracy",
+                                    rights: "Hold high office, own land",
+                                },
+                                {
+                                    name: "Clergy",
+                                    desc: "Religious order",
+                                    rights: "Church authority",
+                                },
                             ].map((cls, i) => (
                                 <div
                                     key={cls.name}
                                     className="w-40 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-4 text-center"
                                 >
-                                    <div className="mb-2 text-2xl font-bold text-primary">{i + 1}</div>
-                                    <h3 className="font-[Cinzel] font-bold text-foreground">{cls.name}</h3>
+                                    <div className="mb-2 text-2xl font-bold text-primary">
+                                        {i + 1}
+                                    </div>
+                                    <h3 className="font-[Cinzel] font-bold text-foreground">
+                                        {cls.name}
+                                    </h3>
                                     <p className="text-xs text-primary">{cls.desc}</p>
-                                    <p className="mt-2 text-xs text-muted-foreground">{cls.rights}</p>
+                                    <p className="mt-2 text-xs text-muted-foreground">
+                                        {cls.rights}
+                                    </p>
                                 </div>
                             ))}
                         </div>
@@ -534,27 +661,74 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
 
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                             {[
-                                { title: 'Full Warfare System', desc: 'Raise armies, declare wars, siege settlements, fight battles. Negotiate peace with territory transfers and gold demands.' },
-                                { title: 'Dynasty & Marriage', desc: 'Found dynasties, arrange marriages, manage succession. Build a family tree that spans generations.' },
-                                { title: 'Trade Caravans', desc: 'Send caravans across the realm, set tariffs on routes through your territory, profit from trade.' },
-                                { title: 'Festivals & Tournaments', desc: 'Attend festivals as performer or vendor, compete in tournament brackets for glory and prizes.' },
-                                { title: 'Building Construction', desc: 'Construct buildings in your settlements, manage repairs, expand your infrastructure.' },
-                                { title: 'Real Elections', desc: 'Every government position is elected by players. Campaign for office or stage a no-confidence vote.' },
-                                { title: 'Meaningful Law', desc: 'Commit crimes, face trials, receive punishments. Courts with judges, evidence, and verdicts.' },
-                                { title: 'Player-Founded Religions', desc: 'Start a cult, grow it into a religion, define its beliefs. Religions grant bonuses and political power.' },
-                                { title: 'Dungeons & Bosses', desc: 'Explore multi-floor dungeons, fight monsters and bosses for loot. Die and lose everything you found.' },
-                                { title: 'Horses & Travel', desc: 'Buy and stable horses to travel faster. Manage their stamina or leave them at the stable to rest.' },
-                                { title: 'Local Banking', desc: 'Your wealth is where you leave it. Gold stored in one town stays there until you return.' },
-                                { title: 'Political Legitimacy', desc: 'Rulers gain and lose legitimacy. Scandals, lost wars, and church opposition can trigger rebellion.' },
-                                { title: 'Food & Famine', desc: 'Villages must maintain food stockpiles. Shortages cause starvation, emigration, and death.' },
-                                { title: 'Found Settlements', desc: 'Petition the King for a charter, gather signatories, and found your own village from nothing.' },
-                                { title: 'Earn Your Legacy', desc: 'Every title, every conquest, every alliance — built through your own skill, strategy, and determination.' },
+                                {
+                                    title: "Full Warfare System",
+                                    desc: "Raise armies, declare wars, siege settlements, fight battles. Negotiate peace with territory transfers and gold demands.",
+                                },
+                                {
+                                    title: "Dynasty & Marriage",
+                                    desc: "Found dynasties, arrange marriages, manage succession. Build a family tree that spans generations.",
+                                },
+                                {
+                                    title: "Trade Caravans",
+                                    desc: "Send caravans across the realm, set tariffs on routes through your territory, profit from trade.",
+                                },
+                                {
+                                    title: "Festivals & Tournaments",
+                                    desc: "Attend festivals as performer or vendor, compete in tournament brackets for glory and prizes.",
+                                },
+                                {
+                                    title: "Building Construction",
+                                    desc: "Construct buildings in your settlements, manage repairs, expand your infrastructure.",
+                                },
+                                {
+                                    title: "Real Elections",
+                                    desc: "Every government position is elected by players. Campaign for office or stage a no-confidence vote.",
+                                },
+                                {
+                                    title: "Meaningful Law",
+                                    desc: "Commit crimes, face trials, receive punishments. Courts with judges, evidence, and verdicts.",
+                                },
+                                {
+                                    title: "Player-Founded Religions",
+                                    desc: "Start a cult, grow it into a religion, define its beliefs. Religions grant bonuses and political power.",
+                                },
+                                {
+                                    title: "Dungeons & Bosses",
+                                    desc: "Explore multi-floor dungeons, fight monsters and bosses for loot. Die and lose everything you found.",
+                                },
+                                {
+                                    title: "Horses & Travel",
+                                    desc: "Buy and stable horses to travel faster. Manage their stamina or leave them at the stable to rest.",
+                                },
+                                {
+                                    title: "Local Banking",
+                                    desc: "Your wealth is where you leave it. Gold stored in one town stays there until you return.",
+                                },
+                                {
+                                    title: "Political Legitimacy",
+                                    desc: "Rulers gain and lose legitimacy. Scandals, lost wars, and church opposition can trigger rebellion.",
+                                },
+                                {
+                                    title: "Food & Famine",
+                                    desc: "Villages must maintain food stockpiles. Shortages cause starvation, emigration, and death.",
+                                },
+                                {
+                                    title: "Found Settlements",
+                                    desc: "Petition the King for a charter, gather signatories, and found your own village from nothing.",
+                                },
+                                {
+                                    title: "Earn Your Legacy",
+                                    desc: "Every title, every conquest, every alliance — built through your own skill, strategy, and determination.",
+                                },
                             ].map((feature) => (
                                 <div
                                     key={feature.title}
                                     className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-6"
                                 >
-                                    <h3 className="mb-2 font-[Cinzel] text-lg font-bold text-primary">{feature.title}</h3>
+                                    <h3 className="mb-2 font-[Cinzel] text-lg font-bold text-primary">
+                                        {feature.title}
+                                    </h3>
                                     <p className="text-sm text-muted-foreground">{feature.desc}</p>
                                 </div>
                             ))}
@@ -570,17 +744,35 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                 Your <span className="text-primary">Daily Life</span>
                             </h2>
                             <p className="mx-auto max-w-2xl text-muted-foreground">
-                                A few minutes each day to train, work, and engage with your community.
+                                A few minutes each day to train, work, and engage with your
+                                community.
                             </p>
                         </div>
 
                         <div className="mx-auto max-w-3xl">
                             <div className="space-y-4">
                                 {[
-                                    { time: 'Morning', activity: 'Train your combat stats at the training grounds', icon: Swords },
-                                    { time: 'Midday', activity: 'Work your job for wages or run your business', icon: Coins },
-                                    { time: 'Afternoon', activity: 'Complete 3 daily tasks for bonus rewards', icon: Scroll },
-                                    { time: 'Evening', activity: 'Check local news, chat with neighbors, vote in elections', icon: Users },
+                                    {
+                                        time: "Morning",
+                                        activity: "Train your combat stats at the training grounds",
+                                        icon: Swords,
+                                    },
+                                    {
+                                        time: "Midday",
+                                        activity: "Work your job for wages or run your business",
+                                        icon: Coins,
+                                    },
+                                    {
+                                        time: "Afternoon",
+                                        activity: "Complete 3 daily tasks for bonus rewards",
+                                        icon: Scroll,
+                                    },
+                                    {
+                                        time: "Evening",
+                                        activity:
+                                            "Check local news, chat with neighbors, vote in elections",
+                                        icon: Users,
+                                    },
                                 ].map((item, i) => (
                                     <div
                                         key={item.time}
@@ -591,7 +783,9 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                         </div>
                                         <div className="flex-1">
                                             <div className="text-sm text-primary">{item.time}</div>
-                                            <div className="text-foreground/80">{item.activity}</div>
+                                            <div className="text-foreground/80">
+                                                {item.activity}
+                                            </div>
                                         </div>
                                         <item.icon className="h-5 w-5 text-muted-foreground" />
                                     </div>
@@ -648,10 +842,13 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                             <div>
                                 <div className="flex items-center gap-2 mb-4">
                                     <Crown className="h-7 w-7 text-primary" />
-                                    <span className="font-[Cinzel] text-xl font-bold text-foreground">Myrefell</span>
+                                    <span className="font-[Cinzel] text-xl font-bold text-foreground">
+                                        Myrefell
+                                    </span>
                                 </div>
                                 <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                                    A persistent medieval world where every choice matters. Rise from peasant to king through skill, strategy, and diplomacy.
+                                    A persistent medieval world where every choice matters. Rise
+                                    from peasant to king through skill, strategy, and diplomacy.
                                 </p>
                                 <p className="text-xs text-muted-foreground/60">
                                     Your legacy is earned.
@@ -660,20 +857,31 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
 
                             {/* Game */}
                             <div>
-                                <h4 className="font-[Cinzel] font-bold text-foreground mb-4">Game</h4>
+                                <h4 className="font-[Cinzel] font-bold text-foreground mb-4">
+                                    Game
+                                </h4>
                                 <ul className="space-y-2">
                                     <li>
-                                        <Link href="/features" className="text-sm text-muted-foreground transition hover:text-primary">
+                                        <Link
+                                            href="/features"
+                                            className="text-sm text-muted-foreground transition hover:text-primary"
+                                        >
                                             Features
                                         </Link>
                                     </li>
                                     <li>
-                                        <Link href={register()} className="text-sm text-muted-foreground transition hover:text-primary">
+                                        <Link
+                                            href={register()}
+                                            className="text-sm text-muted-foreground transition hover:text-primary"
+                                        >
                                             Create a Character
                                         </Link>
                                     </li>
                                     <li>
-                                        <Link href={login()} className="text-sm text-muted-foreground transition hover:text-primary">
+                                        <Link
+                                            href={login()}
+                                            className="text-sm text-muted-foreground transition hover:text-primary"
+                                        >
                                             Sign In
                                         </Link>
                                     </li>
@@ -682,23 +890,34 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
 
                             {/* Support */}
                             <div>
-                                <h4 className="font-[Cinzel] font-bold text-foreground mb-4">Support</h4>
+                                <h4 className="font-[Cinzel] font-bold text-foreground mb-4">
+                                    Support
+                                </h4>
                                 <ul className="space-y-2">
                                     <li className="flex items-center gap-2">
                                         <Mail className="h-4 w-4 text-muted-foreground" />
-                                        <a href="mailto:support@myrefell.com" className="text-sm text-muted-foreground transition hover:text-primary">
+                                        <a
+                                            href="mailto:support@myrefell.com"
+                                            className="text-sm text-muted-foreground transition hover:text-primary"
+                                        >
                                             support@myrefell.com
                                         </a>
                                     </li>
                                     <li className="flex items-center gap-2">
                                         <Shield className="h-4 w-4 text-muted-foreground" />
-                                        <a href="mailto:abuse@myrefell.com" className="text-sm text-muted-foreground transition hover:text-primary">
+                                        <a
+                                            href="mailto:abuse@myrefell.com"
+                                            className="text-sm text-muted-foreground transition hover:text-primary"
+                                        >
                                             Report Cheating
                                         </a>
                                     </li>
                                     <li className="flex items-center gap-2">
                                         <Scale className="h-4 w-4 text-muted-foreground" />
-                                        <a href="mailto:appeals@myrefell.com" className="text-sm text-muted-foreground transition hover:text-primary">
+                                        <a
+                                            href="mailto:appeals@myrefell.com"
+                                            className="text-sm text-muted-foreground transition hover:text-primary"
+                                        >
                                             Ban Appeals
                                         </a>
                                     </li>
@@ -707,20 +926,31 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
 
                             {/* Legal */}
                             <div>
-                                <h4 className="font-[Cinzel] font-bold text-foreground mb-4">Legal</h4>
+                                <h4 className="font-[Cinzel] font-bold text-foreground mb-4">
+                                    Legal
+                                </h4>
                                 <ul className="space-y-2">
                                     <li>
-                                        <Link href="/terms" className="text-sm text-muted-foreground transition hover:text-primary">
+                                        <Link
+                                            href="/terms"
+                                            className="text-sm text-muted-foreground transition hover:text-primary"
+                                        >
                                             Terms of Service
                                         </Link>
                                     </li>
                                     <li>
-                                        <Link href="/privacy" className="text-sm text-muted-foreground transition hover:text-primary">
+                                        <Link
+                                            href="/privacy"
+                                            className="text-sm text-muted-foreground transition hover:text-primary"
+                                        >
                                             Privacy Policy
                                         </Link>
                                     </li>
                                     <li>
-                                        <Link href="/rules" className="text-sm text-muted-foreground transition hover:text-primary">
+                                        <Link
+                                            href="/rules"
+                                            className="text-sm text-muted-foreground transition hover:text-primary"
+                                        >
                                             Game Rules
                                         </Link>
                                     </li>

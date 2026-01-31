@@ -1,19 +1,19 @@
-import { Form, Head } from '@inertiajs/react';
-import { Mars, Venus } from 'lucide-react';
-import { useState } from 'react';
-import InputError from '@/components/input-error';
-import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
-import AuthLayout from '@/layouts/auth-layout';
-import { cn } from '@/lib/utils';
-import { login } from '@/routes';
-import { store } from '@/routes/register';
+import { Form, Head } from "@inertiajs/react";
+import { Mars, Venus } from "lucide-react";
+import { useState } from "react";
+import InputError from "@/components/input-error";
+import TextLink from "@/components/text-link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import AuthLayout from "@/layouts/auth-layout";
+import { cn } from "@/lib/utils";
+import { login } from "@/routes";
+import { store } from "@/routes/register";
 
 export default function Register() {
-    const [gender, setGender] = useState<string>('');
+    const [gender, setGender] = useState<string>("");
 
     return (
         <AuthLayout
@@ -23,7 +23,7 @@ export default function Register() {
             <Head title="Register" />
             <Form
                 {...store.form()}
-                resetOnSuccess={['password', 'password_confirmation']}
+                resetOnSuccess={["password", "password_confirmation"]}
                 disableWhileProcessing
                 className="flex flex-col gap-6"
             >
@@ -47,10 +47,7 @@ export default function Register() {
                                 <p className="text-xs text-muted-foreground">
                                     3-20 characters, letters, numbers, and underscores only
                                 </p>
-                                <InputError
-                                    message={errors.username}
-                                    className="mt-2"
-                                />
+                                <InputError message={errors.username} className="mt-2" />
                             </div>
 
                             <div className="grid gap-2">
@@ -74,12 +71,12 @@ export default function Register() {
                                     <button
                                         type="button"
                                         tabIndex={3}
-                                        onClick={() => setGender('male')}
+                                        onClick={() => setGender("male")}
                                         className={cn(
-                                            'flex items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium transition-colors',
-                                            gender === 'male'
-                                                ? 'border-primary bg-primary/10 text-primary'
-                                                : 'border-input bg-white/5 dark:bg-white/10 text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                                            "flex items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium transition-colors",
+                                            gender === "male"
+                                                ? "border-primary bg-primary/10 text-primary"
+                                                : "border-input bg-white/5 dark:bg-white/10 text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                                         )}
                                     >
                                         <Mars className="size-4" />
@@ -88,12 +85,12 @@ export default function Register() {
                                     <button
                                         type="button"
                                         tabIndex={3}
-                                        onClick={() => setGender('female')}
+                                        onClick={() => setGender("female")}
                                         className={cn(
-                                            'flex items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium transition-colors',
-                                            gender === 'female'
-                                                ? 'border-primary bg-primary/10 text-primary'
-                                                : 'border-input bg-white/5 dark:bg-white/10 text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                                            "flex items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium transition-colors",
+                                            gender === "female"
+                                                ? "border-primary bg-primary/10 text-primary"
+                                                : "border-input bg-white/5 dark:bg-white/10 text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                                         )}
                                     >
                                         <Venus className="size-4" />
@@ -118,9 +115,7 @@ export default function Register() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">
-                                    Confirm password
-                                </Label>
+                                <Label htmlFor="password_confirmation">Confirm password</Label>
                                 <Input
                                     id="password_confirmation"
                                     type="password"
@@ -130,9 +125,7 @@ export default function Register() {
                                     name="password_confirmation"
                                     placeholder="Confirm password"
                                 />
-                                <InputError
-                                    message={errors.password_confirmation}
-                                />
+                                <InputError message={errors.password_confirmation} />
                             </div>
 
                             <Button
@@ -147,7 +140,7 @@ export default function Register() {
                         </div>
 
                         <div className="text-center text-sm text-muted-foreground">
-                            Already have an account?{' '}
+                            Already have an account?{" "}
                             <TextLink href={login()} tabIndex={7}>
                                 Log in
                             </TextLink>

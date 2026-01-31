@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import {
     AlertTriangle,
     ArrowLeft,
@@ -13,10 +13,10 @@ import {
     Sword,
     Swords,
     X,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface WarSide {
     type: string;
@@ -53,7 +53,7 @@ interface Territory {
     type: string;
     name: string;
     can_demand: boolean;
-    direction: 'to_you' | 'from_you';
+    direction: "to_you" | "from_you";
 }
 
 interface TruceOption {
@@ -69,7 +69,7 @@ interface PageProps {
         attacker: number;
         defender: number;
     };
-    user_side: 'attacker' | 'defender' | null;
+    user_side: "attacker" | "defender" | null;
     territories: Territory[];
     player_gold: number;
     enemy_gold: number;
@@ -78,10 +78,10 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Warfare', href: '#' },
-    { title: 'Wars', href: '/warfare/wars' },
-    { title: 'Peace Negotiation', href: '#' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Warfare", href: "#" },
+    { title: "Wars", href: "/warfare/wars" },
+    { title: "Peace Negotiation", href: "#" },
 ];
 
 export default function PeaceNegotiation() {
@@ -97,35 +97,42 @@ export default function PeaceNegotiation() {
         truce_options,
     } = usePage<PageProps>().props;
 
-    const [treatyType, setTreatyType] = useState<'white_peace' | 'surrender' | 'negotiated'>('white_peace');
+    const [treatyType, setTreatyType] = useState<"white_peace" | "surrender" | "negotiated">(
+        "white_peace",
+    );
     const [selectedTerritories, setSelectedTerritories] = useState<number[]>([]);
     const [goldPayment, setGoldPayment] = useState<number>(0);
-    const [paymentDirection, setPaymentDirection] = useState<'to_you' | 'from_you'>('to_you');
+    const [paymentDirection, setPaymentDirection] = useState<"to_you" | "from_you">("to_you");
     const [truceDays, setTruceDays] = useState<number>(365);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(initialError || null);
 
-    const isWinning = user_side === 'attacker'
-        ? war_score.attacker > war_score.defender
-        : war_score.defender > war_score.attacker;
+    const isWinning =
+        user_side === "attacker"
+            ? war_score.attacker > war_score.defender
+            : war_score.defender > war_score.attacker;
 
-    const userScore = user_side === 'attacker' ? war_score.attacker : war_score.defender;
-    const enemyScore = user_side === 'attacker' ? war_score.defender : war_score.attacker;
+    const userScore = user_side === "attacker" ? war_score.attacker : war_score.defender;
+    const enemyScore = user_side === "attacker" ? war_score.defender : war_score.attacker;
 
     const maxGoldDemand = Math.min(
-        paymentDirection === 'to_you' ? enemy_gold : player_gold,
-        Math.max(0, userScore - enemyScore) * 50 + 1000
+        paymentDirection === "to_you" ? enemy_gold : player_gold,
+        Math.max(0, userScore - enemyScore) * 50 + 1000,
     );
 
     const toggleTerritory = (territoryId: number) => {
         setSelectedTerritories((prev) =>
             prev.includes(territoryId)
                 ? prev.filter((id) => id !== territoryId)
-                : [...prev, territoryId]
+                : [...prev, territoryId],
         );
     };
 
-    const calculateAcceptanceLikelihood = (): { percentage: number; label: string; factors: string[] } => {
+    const calculateAcceptanceLikelihood = (): {
+        percentage: number;
+        label: string;
+        factors: string[];
+    } => {
         const factors: string[] = [];
         let baseChance = 50;
 
@@ -146,10 +153,10 @@ export default function PeaceNegotiation() {
         }
 
         // Treaty type factor
-        if (treatyType === 'white_peace') {
+        if (treatyType === "white_peace") {
             baseChance += 20;
             factors.push(`White peace is more acceptable (+20%)`);
-        } else if (treatyType === 'surrender') {
+        } else if (treatyType === "surrender") {
             baseChance += 40;
             factors.push(`Surrender is always accepted (+40%)`);
         }
@@ -163,7 +170,7 @@ export default function PeaceNegotiation() {
 
         // Gold payment factor
         if (goldPayment > 0) {
-            if (paymentDirection === 'to_you') {
+            if (paymentDirection === "to_you") {
                 const goldPenalty = Math.min(20, Math.floor(goldPayment / 500) * 5);
                 baseChance -= goldPenalty;
                 if (goldPenalty > 0) factors.push(`Gold demands (-${goldPenalty}%)`);
@@ -177,26 +184,26 @@ export default function PeaceNegotiation() {
         // Clamp to reasonable range
         const percentage = Math.min(95, Math.max(5, baseChance));
 
-        let label = 'Unlikely';
-        if (percentage >= 80) label = 'Very Likely';
-        else if (percentage >= 65) label = 'Likely';
-        else if (percentage >= 45) label = 'Uncertain';
-        else if (percentage >= 25) label = 'Unlikely';
-        else label = 'Very Unlikely';
+        let label = "Unlikely";
+        if (percentage >= 80) label = "Very Likely";
+        else if (percentage >= 65) label = "Likely";
+        else if (percentage >= 45) label = "Uncertain";
+        else if (percentage >= 25) label = "Unlikely";
+        else label = "Very Unlikely";
 
         return { percentage, label, factors };
     };
 
     const likelihood = calculateAcceptanceLikelihood();
 
-    const determineWinnerSide = (): 'attacker' | 'defender' | null => {
-        if (treatyType === 'white_peace') return null;
-        if (treatyType === 'surrender') {
-            return user_side === 'attacker' ? 'defender' : 'attacker';
+    const determineWinnerSide = (): "attacker" | "defender" | null => {
+        if (treatyType === "white_peace") return null;
+        if (treatyType === "surrender") {
+            return user_side === "attacker" ? "defender" : "attacker";
         }
         // For negotiated peace, winner is determined by score or manual selection
         if (userScore > enemyScore) return user_side;
-        if (enemyScore > userScore) return user_side === 'attacker' ? 'defender' : 'attacker';
+        if (enemyScore > userScore) return user_side === "attacker" ? "defender" : "attacker";
         return null;
     };
 
@@ -209,24 +216,24 @@ export default function PeaceNegotiation() {
                 const territory = territories.find((t) => t.id === id);
                 return {
                     territory_id: id,
-                    territory_type: territory?.type || 'barony',
-                    direction: territory?.direction || 'to_you',
+                    territory_type: territory?.type || "barony",
+                    direction: territory?.direction || "to_you",
                 };
             });
 
             const response = await fetch(`/warfare/wars/${war.id}/peace`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>(
-                        'meta[name="csrf-token"]'
-                    )?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify({
                     treaty_type: treatyType,
                     winner_side: determineWinnerSide(),
                     territory_changes: territoryChanges,
-                    gold_payment: paymentDirection === 'to_you' ? goldPayment : -goldPayment,
+                    gold_payment: paymentDirection === "to_you" ? goldPayment : -goldPayment,
                     truce_days: truceDays,
                 }),
             });
@@ -236,10 +243,10 @@ export default function PeaceNegotiation() {
             if (data.success) {
                 router.visit(`/warfare/wars/${war.id}`);
             } else {
-                setError(data.message || 'Failed to offer peace.');
+                setError(data.message || "Failed to offer peace.");
             }
         } catch {
-            setError('An error occurred while offering peace.');
+            setError("An error occurred while offering peace.");
         } finally {
             setIsSubmitting(false);
         }
@@ -288,9 +295,12 @@ export default function PeaceNegotiation() {
 
                     <div className="rounded-xl border-2 border-red-500/30 bg-red-900/20 p-8 text-center">
                         <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-red-400" />
-                        <h1 className="mb-2 font-pixel text-xl text-white">Cannot Negotiate Peace</h1>
+                        <h1 className="mb-2 font-pixel text-xl text-white">
+                            Cannot Negotiate Peace
+                        </h1>
                         <p className="font-pixel text-sm text-stone-400">
-                            {initialError || 'You do not have permission to negotiate peace in this war.'}
+                            {initialError ||
+                                "You do not have permission to negotiate peace in this war."}
                         </p>
                     </div>
                 </div>
@@ -341,14 +351,14 @@ export default function PeaceNegotiation() {
                         <div className="flex items-center gap-2">
                             <Sword className="h-4 w-4 text-red-400" />
                             <span className="text-red-300">{war.attacker.name}</span>
-                            {user_side === 'attacker' && (
+                            {user_side === "attacker" && (
                                 <span className="rounded bg-green-900/50 px-1.5 py-0.5 text-[10px] text-green-400">
                                     You
                                 </span>
                             )}
                         </div>
                         <div className="flex items-center gap-2">
-                            {user_side === 'defender' && (
+                            {user_side === "defender" && (
                                 <span className="rounded bg-green-900/50 px-1.5 py-0.5 text-[10px] text-green-400">
                                     You
                                 </span>
@@ -384,38 +394,43 @@ export default function PeaceNegotiation() {
                             <div className="space-y-2">
                                 <button
                                     onClick={() => {
-                                        setTreatyType('white_peace');
+                                        setTreatyType("white_peace");
                                         setSelectedTerritories([]);
                                         setGoldPayment(0);
                                     }}
                                     className={`w-full rounded-lg p-3 text-left transition ${
-                                        treatyType === 'white_peace'
-                                            ? 'border-2 border-stone-400/50 bg-stone-700/30'
-                                            : 'bg-stone-900/50 hover:bg-stone-900/70'
+                                        treatyType === "white_peace"
+                                            ? "border-2 border-stone-400/50 bg-stone-700/30"
+                                            : "bg-stone-900/50 hover:bg-stone-900/70"
                                     }`}
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span className="font-pixel text-sm text-white">White Peace</span>
-                                        {treatyType === 'white_peace' && (
+                                        <span className="font-pixel text-sm text-white">
+                                            White Peace
+                                        </span>
+                                        {treatyType === "white_peace" && (
                                             <Check className="h-4 w-4 text-green-400" />
                                         )}
                                     </div>
                                     <p className="mt-1 font-pixel text-[10px] text-stone-400">
-                                        End the war with no victor. No territory changes or payments.
+                                        End the war with no victor. No territory changes or
+                                        payments.
                                     </p>
                                 </button>
 
                                 <button
-                                    onClick={() => setTreatyType('negotiated')}
+                                    onClick={() => setTreatyType("negotiated")}
                                     className={`w-full rounded-lg p-3 text-left transition ${
-                                        treatyType === 'negotiated'
-                                            ? 'border-2 border-amber-500/50 bg-amber-900/30'
-                                            : 'bg-stone-900/50 hover:bg-stone-900/70'
+                                        treatyType === "negotiated"
+                                            ? "border-2 border-amber-500/50 bg-amber-900/30"
+                                            : "bg-stone-900/50 hover:bg-stone-900/70"
                                     }`}
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span className="font-pixel text-sm text-white">Negotiated Peace</span>
-                                        {treatyType === 'negotiated' && (
+                                        <span className="font-pixel text-sm text-white">
+                                            Negotiated Peace
+                                        </span>
+                                        {treatyType === "negotiated" && (
                                             <Check className="h-4 w-4 text-green-400" />
                                         )}
                                     </div>
@@ -425,16 +440,18 @@ export default function PeaceNegotiation() {
                                 </button>
 
                                 <button
-                                    onClick={() => setTreatyType('surrender')}
+                                    onClick={() => setTreatyType("surrender")}
                                     className={`w-full rounded-lg p-3 text-left transition ${
-                                        treatyType === 'surrender'
-                                            ? 'border-2 border-red-500/50 bg-red-900/30'
-                                            : 'bg-stone-900/50 hover:bg-stone-900/70'
+                                        treatyType === "surrender"
+                                            ? "border-2 border-red-500/50 bg-red-900/30"
+                                            : "bg-stone-900/50 hover:bg-stone-900/70"
                                     }`}
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span className="font-pixel text-sm text-white">Surrender</span>
-                                        {treatyType === 'surrender' && (
+                                        <span className="font-pixel text-sm text-white">
+                                            Surrender
+                                        </span>
+                                        {treatyType === "surrender" && (
                                             <Check className="h-4 w-4 text-green-400" />
                                         )}
                                     </div>
@@ -446,7 +463,7 @@ export default function PeaceNegotiation() {
                         </div>
 
                         {/* Territory Changes */}
-                        {treatyType === 'negotiated' && territories.length > 0 && (
+                        {treatyType === "negotiated" && territories.length > 0 && (
                             <div className="rounded-xl border-2 border-stone-600/50 bg-stone-800/30 p-4">
                                 <h2 className="mb-4 flex items-center gap-2 font-pixel text-lg text-white">
                                     <Map className="h-5 w-5 text-green-400" />
@@ -458,28 +475,38 @@ export default function PeaceNegotiation() {
                                 </div>
 
                                 <div className="max-h-48 space-y-2 overflow-y-auto">
-                                    {territories.filter((t) => t.direction === 'to_you' && t.can_demand).length > 0 && (
+                                    {territories.filter(
+                                        (t) => t.direction === "to_you" && t.can_demand,
+                                    ).length > 0 && (
                                         <div className="mb-2">
                                             <div className="mb-1 font-pixel text-[10px] text-green-400">
                                                 Enemy Cedes to You:
                                             </div>
                                             {territories
-                                                .filter((t) => t.direction === 'to_you' && t.can_demand)
+                                                .filter(
+                                                    (t) => t.direction === "to_you" && t.can_demand,
+                                                )
                                                 .map((territory) => (
                                                     <button
                                                         key={territory.id}
-                                                        onClick={() => toggleTerritory(territory.id)}
+                                                        onClick={() =>
+                                                            toggleTerritory(territory.id)
+                                                        }
                                                         className={`w-full rounded p-2 text-left transition ${
-                                                            selectedTerritories.includes(territory.id)
-                                                                ? 'border border-green-500/50 bg-green-900/30'
-                                                                : 'bg-stone-900/50 hover:bg-stone-900/70'
+                                                            selectedTerritories.includes(
+                                                                territory.id,
+                                                            )
+                                                                ? "border border-green-500/50 bg-green-900/30"
+                                                                : "bg-stone-900/50 hover:bg-stone-900/70"
                                                         }`}
                                                     >
                                                         <div className="flex items-center justify-between">
                                                             <span className="font-pixel text-xs text-white">
                                                                 {territory.name}
                                                             </span>
-                                                            {selectedTerritories.includes(territory.id) ? (
+                                                            {selectedTerritories.includes(
+                                                                territory.id,
+                                                            ) ? (
                                                                 <Check className="h-3 w-3 text-green-400" />
                                                             ) : (
                                                                 <X className="h-3 w-3 text-stone-500" />
@@ -490,28 +517,39 @@ export default function PeaceNegotiation() {
                                         </div>
                                     )}
 
-                                    {territories.filter((t) => t.direction === 'from_you' && t.can_demand).length > 0 && (
+                                    {territories.filter(
+                                        (t) => t.direction === "from_you" && t.can_demand,
+                                    ).length > 0 && (
                                         <div>
                                             <div className="mb-1 font-pixel text-[10px] text-red-400">
                                                 You Cede to Enemy:
                                             </div>
                                             {territories
-                                                .filter((t) => t.direction === 'from_you' && t.can_demand)
+                                                .filter(
+                                                    (t) =>
+                                                        t.direction === "from_you" && t.can_demand,
+                                                )
                                                 .map((territory) => (
                                                     <button
                                                         key={territory.id}
-                                                        onClick={() => toggleTerritory(territory.id)}
+                                                        onClick={() =>
+                                                            toggleTerritory(territory.id)
+                                                        }
                                                         className={`w-full rounded p-2 text-left transition ${
-                                                            selectedTerritories.includes(territory.id)
-                                                                ? 'border border-red-500/50 bg-red-900/30'
-                                                                : 'bg-stone-900/50 hover:bg-stone-900/70'
+                                                            selectedTerritories.includes(
+                                                                territory.id,
+                                                            )
+                                                                ? "border border-red-500/50 bg-red-900/30"
+                                                                : "bg-stone-900/50 hover:bg-stone-900/70"
                                                         }`}
                                                     >
                                                         <div className="flex items-center justify-between">
                                                             <span className="font-pixel text-xs text-white">
                                                                 {territory.name}
                                                             </span>
-                                                            {selectedTerritories.includes(territory.id) ? (
+                                                            {selectedTerritories.includes(
+                                                                territory.id,
+                                                            ) ? (
                                                                 <Check className="h-3 w-3 text-red-400" />
                                                             ) : (
                                                                 <X className="h-3 w-3 text-stone-500" />
@@ -525,7 +563,8 @@ export default function PeaceNegotiation() {
 
                                 {territories.every((t) => !t.can_demand) && (
                                     <p className="font-pixel text-xs text-stone-500">
-                                        No territories available for transfer based on current war score.
+                                        No territories available for transfer based on current war
+                                        score.
                                     </p>
                                 )}
                             </div>
@@ -535,7 +574,7 @@ export default function PeaceNegotiation() {
                     {/* Right Column: Payment & Truce */}
                     <div className="space-y-6">
                         {/* Gold Payment */}
-                        {treatyType === 'negotiated' && (
+                        {treatyType === "negotiated" && (
                             <div className="rounded-xl border-2 border-stone-600/50 bg-stone-800/30 p-4">
                                 <h2 className="mb-4 flex items-center gap-2 font-pixel text-lg text-white">
                                     <Coins className="h-5 w-5 text-amber-400" />
@@ -545,26 +584,26 @@ export default function PeaceNegotiation() {
                                 <div className="mb-4 flex gap-2">
                                     <button
                                         onClick={() => {
-                                            setPaymentDirection('to_you');
+                                            setPaymentDirection("to_you");
                                             setGoldPayment(0);
                                         }}
                                         className={`flex-1 rounded border px-3 py-1.5 font-pixel text-xs transition ${
-                                            paymentDirection === 'to_you'
-                                                ? 'border-green-500/50 bg-green-900/30 text-green-300'
-                                                : 'border-stone-600/50 bg-stone-900/20 text-stone-400 hover:bg-stone-900/40'
+                                            paymentDirection === "to_you"
+                                                ? "border-green-500/50 bg-green-900/30 text-green-300"
+                                                : "border-stone-600/50 bg-stone-900/20 text-stone-400 hover:bg-stone-900/40"
                                         }`}
                                     >
                                         They Pay You
                                     </button>
                                     <button
                                         onClick={() => {
-                                            setPaymentDirection('from_you');
+                                            setPaymentDirection("from_you");
                                             setGoldPayment(0);
                                         }}
                                         className={`flex-1 rounded border px-3 py-1.5 font-pixel text-xs transition ${
-                                            paymentDirection === 'from_you'
-                                                ? 'border-red-500/50 bg-red-900/30 text-red-300'
-                                                : 'border-stone-600/50 bg-stone-900/20 text-stone-400 hover:bg-stone-900/40'
+                                            paymentDirection === "from_you"
+                                                ? "border-red-500/50 bg-red-900/30 text-red-300"
+                                                : "border-stone-600/50 bg-stone-900/20 text-stone-400 hover:bg-stone-900/40"
                                         }`}
                                     >
                                         You Pay Them
@@ -579,7 +618,9 @@ export default function PeaceNegotiation() {
                                             max={maxGoldDemand}
                                             step="50"
                                             value={goldPayment}
-                                            onChange={(e) => setGoldPayment(parseInt(e.target.value))}
+                                            onChange={(e) =>
+                                                setGoldPayment(parseInt(e.target.value))
+                                            }
                                             className="h-2 flex-1 cursor-pointer appearance-none rounded-lg bg-stone-700"
                                         />
                                     </div>
@@ -591,15 +632,20 @@ export default function PeaceNegotiation() {
                                             value={goldPayment}
                                             onChange={(e) =>
                                                 setGoldPayment(
-                                                    Math.min(maxGoldDemand, Math.max(0, parseInt(e.target.value) || 0))
+                                                    Math.min(
+                                                        maxGoldDemand,
+                                                        Math.max(0, parseInt(e.target.value) || 0),
+                                                    ),
                                                 )
                                             }
                                             className="w-24 rounded border border-stone-600/50 bg-stone-900/50 px-3 py-2 font-pixel text-sm text-white focus:border-amber-500/50 focus:outline-none"
                                         />
-                                        <span className="font-pixel text-sm text-amber-400">gold</span>
+                                        <span className="font-pixel text-sm text-amber-400">
+                                            gold
+                                        </span>
                                     </div>
                                     <div className="font-pixel text-[10px] text-stone-500">
-                                        {paymentDirection === 'to_you'
+                                        {paymentDirection === "to_you"
                                             ? `Enemy treasury: ~${enemy_gold}g`
                                             : `Your gold: ${player_gold}g`}
                                     </div>
@@ -621,8 +667,8 @@ export default function PeaceNegotiation() {
                                         onClick={() => setTruceDays(option.value)}
                                         className={`rounded border px-3 py-2 font-pixel text-xs transition ${
                                             truceDays === option.value
-                                                ? 'border-blue-500/50 bg-blue-900/30 text-blue-300'
-                                                : 'border-stone-600/50 bg-stone-900/20 text-stone-400 hover:bg-stone-900/40'
+                                                ? "border-blue-500/50 bg-blue-900/30 text-blue-300"
+                                                : "border-stone-600/50 bg-stone-900/20 text-stone-400 hover:bg-stone-900/40"
                                         }`}
                                     >
                                         {option.label}
@@ -647,10 +693,10 @@ export default function PeaceNegotiation() {
                                     <div
                                         className={`h-full transition-all duration-300 ${
                                             likelihood.percentage >= 65
-                                                ? 'bg-green-500'
+                                                ? "bg-green-500"
                                                 : likelihood.percentage >= 40
-                                                  ? 'bg-yellow-500'
-                                                  : 'bg-red-500'
+                                                  ? "bg-yellow-500"
+                                                  : "bg-red-500"
                                         }`}
                                         style={{ width: `${likelihood.percentage}%` }}
                                     />
@@ -658,10 +704,10 @@ export default function PeaceNegotiation() {
                                 <span
                                     className={`font-pixel text-sm ${
                                         likelihood.percentage >= 65
-                                            ? 'text-green-400'
+                                            ? "text-green-400"
                                             : likelihood.percentage >= 40
-                                              ? 'text-yellow-400'
-                                              : 'text-red-400'
+                                              ? "text-yellow-400"
+                                              : "text-red-400"
                                     }`}
                                 >
                                     {likelihood.percentage}% ({likelihood.label})
@@ -670,7 +716,10 @@ export default function PeaceNegotiation() {
 
                             <div className="space-y-1">
                                 {likelihood.factors.map((factor, index) => (
-                                    <div key={index} className="font-pixel text-[10px] text-stone-400">
+                                    <div
+                                        key={index}
+                                        className="font-pixel text-[10px] text-stone-400"
+                                    >
                                         {factor}
                                     </div>
                                 ))}
@@ -685,15 +734,17 @@ export default function PeaceNegotiation() {
                         <AlertTriangle className="h-5 w-5 shrink-0 text-amber-400" />
                         <div>
                             <p className="font-pixel text-sm text-amber-300">
-                                {treatyType === 'surrender'
-                                    ? 'Warning: You are offering to surrender. This will end the war with you as the loser.'
-                                    : treatyType === 'white_peace'
-                                      ? 'A white peace will end the war with no victor and no territory changes.'
-                                      : 'This will immediately end the war and apply all negotiated terms.'}
+                                {treatyType === "surrender"
+                                    ? "Warning: You are offering to surrender. This will end the war with you as the loser."
+                                    : treatyType === "white_peace"
+                                      ? "A white peace will end the war with no victor and no territory changes."
+                                      : "This will immediately end the war and apply all negotiated terms."}
                             </p>
                             <p className="mt-1 font-pixel text-xs text-stone-400">
-                                A truce of {truce_options.find((o) => o.value === truceDays)?.label || `${truceDays} days`} will
-                                prevent hostilities between both parties.
+                                A truce of{" "}
+                                {truce_options.find((o) => o.value === truceDays)?.label ||
+                                    `${truceDays} days`}{" "}
+                                will prevent hostilities between both parties.
                             </p>
                         </div>
                     </div>
@@ -709,17 +760,17 @@ export default function PeaceNegotiation() {
                             onClick={handleSubmit}
                             disabled={isSubmitting}
                             className={`flex items-center gap-2 rounded border px-4 py-2 font-pixel text-xs transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                                treatyType === 'surrender'
-                                    ? 'border-red-600/50 bg-red-900/20 text-red-300 hover:bg-red-900/40'
-                                    : 'border-green-600/50 bg-green-900/20 text-green-300 hover:bg-green-900/40'
+                                treatyType === "surrender"
+                                    ? "border-red-600/50 bg-red-900/20 text-red-300 hover:bg-red-900/40"
+                                    : "border-green-600/50 bg-green-900/20 text-green-300 hover:bg-green-900/40"
                             }`}
                         >
                             <HandshakeIcon className="h-4 w-4" />
                             {isSubmitting
-                                ? 'Sending...'
-                                : treatyType === 'surrender'
-                                  ? 'Surrender'
-                                  : 'Send Peace Offer'}
+                                ? "Sending..."
+                                : treatyType === "surrender"
+                                  ? "Surrender"
+                                  : "Send Peace Offer"}
                         </button>
                     </div>
                 </div>

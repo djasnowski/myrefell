@@ -1,11 +1,20 @@
-import { Head, usePage } from '@inertiajs/react';
-import { Calendar, Cloud, CloudRain, Leaf, Snowflake, Sun, TrendingDown, TrendingUp } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, usePage } from "@inertiajs/react";
+import {
+    Calendar,
+    Cloud,
+    CloudRain,
+    Leaf,
+    Snowflake,
+    Sun,
+    TrendingDown,
+    TrendingUp,
+} from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface CalendarData {
     year: number;
-    season: 'spring' | 'summer' | 'autumn' | 'winter';
+    season: "spring" | "summer" | "autumn" | "winter";
     week: number;
     week_of_year: number;
     formatted_date: string;
@@ -23,31 +32,31 @@ interface PageProps {
 const seasonConfig = {
     spring: {
         icon: Cloud,
-        gradient: 'from-green-900/50 to-stone-900',
-        border: 'border-green-600/50',
-        text: 'text-green-400',
-        accent: 'bg-green-500',
+        gradient: "from-green-900/50 to-stone-900",
+        border: "border-green-600/50",
+        text: "text-green-400",
+        accent: "bg-green-500",
     },
     summer: {
         icon: Sun,
-        gradient: 'from-yellow-900/50 to-stone-900',
-        border: 'border-yellow-600/50',
-        text: 'text-yellow-400',
-        accent: 'bg-yellow-500',
+        gradient: "from-yellow-900/50 to-stone-900",
+        border: "border-yellow-600/50",
+        text: "text-yellow-400",
+        accent: "bg-yellow-500",
     },
     autumn: {
         icon: Leaf,
-        gradient: 'from-orange-900/50 to-stone-900',
-        border: 'border-orange-600/50',
-        text: 'text-orange-400',
-        accent: 'bg-orange-500',
+        gradient: "from-orange-900/50 to-stone-900",
+        border: "border-orange-600/50",
+        text: "text-orange-400",
+        accent: "bg-orange-500",
     },
     winter: {
         icon: Snowflake,
-        gradient: 'from-blue-900/50 to-stone-900',
-        border: 'border-blue-600/50',
-        text: 'text-blue-400',
-        accent: 'bg-blue-500',
+        gradient: "from-blue-900/50 to-stone-900",
+        border: "border-blue-600/50",
+        text: "text-blue-400",
+        accent: "bg-blue-500",
     },
 };
 
@@ -57,20 +66,20 @@ export default function CalendarIndex() {
     const SeasonIcon = config.icon;
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Calendar', href: '/calendar' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Calendar", href: "/calendar" },
     ];
 
     const formatModifier = (modifier: number) => {
         const percentage = Math.round((modifier - 1) * 100);
-        if (percentage === 0) return 'Normal';
+        if (percentage === 0) return "Normal";
         return percentage > 0 ? `+${percentage}%` : `${percentage}%`;
     };
 
     const getModifierColor = (modifier: number, isInverse: boolean = false) => {
-        if (modifier === 1) return 'text-stone-400';
+        if (modifier === 1) return "text-stone-400";
         const isBetter = isInverse ? modifier > 1 : modifier < 1;
-        return isBetter ? 'text-green-400' : 'text-red-400';
+        return isBetter ? "text-green-400" : "text-red-400";
     };
 
     return (
@@ -87,7 +96,9 @@ export default function CalendarIndex() {
                                 <SeasonIcon className={`h-12 w-12 ${config.text}`} />
                             </div>
                             <div>
-                                <h1 className={`font-pixel text-2xl ${config.text}`}>World Calendar</h1>
+                                <h1 className={`font-pixel text-2xl ${config.text}`}>
+                                    World Calendar
+                                </h1>
                                 <p className="font-pixel text-xs text-stone-400">
                                     Track the passage of time in Myrefell
                                 </p>
@@ -110,7 +121,9 @@ export default function CalendarIndex() {
                     </div>
 
                     {/* Season Info */}
-                    <div className={`mb-6 rounded-xl border-2 ${config.border} bg-gradient-to-br ${config.gradient} p-4`}>
+                    <div
+                        className={`mb-6 rounded-xl border-2 ${config.border} bg-gradient-to-br ${config.gradient} p-4`}
+                    >
                         <div className="flex items-start gap-3">
                             <SeasonIcon className={`h-6 w-6 ${config.text} mt-0.5`} />
                             <div>
@@ -127,7 +140,9 @@ export default function CalendarIndex() {
                     {/* Season Progress */}
                     <div className="mb-6 rounded-lg border border-stone-700 bg-stone-800/50 p-4">
                         <div className="flex items-center justify-between mb-2">
-                            <span className="font-pixel text-xs text-stone-400">Season Progress</span>
+                            <span className="font-pixel text-xs text-stone-400">
+                                Season Progress
+                            </span>
                             <span className="font-pixel text-xs text-stone-500">
                                 Week {calendar.week} of 12
                             </span>
@@ -139,13 +154,13 @@ export default function CalendarIndex() {
                             />
                         </div>
                         <div className="flex justify-between mt-2">
-                            {['Early', 'Mid', 'Late'].map((phase, i) => (
+                            {["Early", "Mid", "Late"].map((phase, i) => (
                                 <span
                                     key={phase}
                                     className={`font-pixel text-[10px] ${
                                         Math.ceil(calendar.week / 4) === i + 1
                                             ? config.text
-                                            : 'text-stone-600'
+                                            : "text-stone-600"
                                     }`}
                                 >
                                     {phase} {calendar.season}
@@ -165,17 +180,21 @@ export default function CalendarIndex() {
                                 ) : (
                                     <CloudRain className="h-4 w-4 text-stone-400" />
                                 )}
-                                <span className="font-pixel text-xs text-stone-400">Travel Speed</span>
+                                <span className="font-pixel text-xs text-stone-400">
+                                    Travel Speed
+                                </span>
                             </div>
-                            <div className={`font-pixel text-xl ${getModifierColor(calendar.travel_modifier)}`}>
+                            <div
+                                className={`font-pixel text-xl ${getModifierColor(calendar.travel_modifier)}`}
+                            >
                                 {formatModifier(calendar.travel_modifier)}
                             </div>
                             <p className="font-pixel text-[10px] text-stone-500 mt-1">
                                 {calendar.travel_modifier > 1
-                                    ? 'Roads are difficult'
+                                    ? "Roads are difficult"
                                     : calendar.travel_modifier < 1
-                                    ? 'Clear skies ahead'
-                                    : 'Normal conditions'}
+                                      ? "Clear skies ahead"
+                                      : "Normal conditions"}
                             </p>
                         </div>
 
@@ -188,17 +207,21 @@ export default function CalendarIndex() {
                                 ) : (
                                     <Leaf className="h-4 w-4 text-stone-400" />
                                 )}
-                                <span className="font-pixel text-xs text-stone-400">Gathering Yield</span>
+                                <span className="font-pixel text-xs text-stone-400">
+                                    Gathering Yield
+                                </span>
                             </div>
-                            <div className={`font-pixel text-xl ${getModifierColor(calendar.gathering_modifier, true)}`}>
+                            <div
+                                className={`font-pixel text-xl ${getModifierColor(calendar.gathering_modifier, true)}`}
+                            >
                                 {formatModifier(calendar.gathering_modifier)}
                             </div>
                             <p className="font-pixel text-[10px] text-stone-500 mt-1">
                                 {calendar.gathering_modifier > 1
-                                    ? 'Abundant resources'
+                                    ? "Abundant resources"
                                     : calendar.gathering_modifier < 1
-                                    ? 'Scarce resources'
-                                    : 'Normal yields'}
+                                      ? "Scarce resources"
+                                      : "Normal yields"}
                             </p>
                         </div>
                     </div>
@@ -206,18 +229,22 @@ export default function CalendarIndex() {
                     {/* Year Progress */}
                     <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4">
                         <div className="flex items-center justify-between mb-3">
-                            <span className="font-pixel text-xs text-stone-400">Year {calendar.year} Progress</span>
+                            <span className="font-pixel text-xs text-stone-400">
+                                Year {calendar.year} Progress
+                            </span>
                             <span className="font-pixel text-xs text-stone-500">
                                 {calendar.week_of_year} / 48 weeks
                             </span>
                         </div>
                         <div className="grid grid-cols-4 gap-1 mb-2">
-                            {(['spring', 'summer', 'autumn', 'winter'] as const).map((season) => {
+                            {(["spring", "summer", "autumn", "winter"] as const).map((season) => {
                                 const sConfig = seasonConfig[season];
                                 const isCurrentSeason = calendar.season === season;
                                 const isPastSeason =
-                                    ['spring', 'summer', 'autumn', 'winter'].indexOf(season) <
-                                    ['spring', 'summer', 'autumn', 'winter'].indexOf(calendar.season);
+                                    ["spring", "summer", "autumn", "winter"].indexOf(season) <
+                                    ["spring", "summer", "autumn", "winter"].indexOf(
+                                        calendar.season,
+                                    );
 
                                 return (
                                     <div
@@ -226,8 +253,8 @@ export default function CalendarIndex() {
                                             isCurrentSeason
                                                 ? sConfig.accent
                                                 : isPastSeason
-                                                ? 'bg-stone-500'
-                                                : 'bg-stone-700'
+                                                  ? "bg-stone-500"
+                                                  : "bg-stone-700"
                                         }`}
                                         style={
                                             isCurrentSeason
@@ -239,14 +266,14 @@ export default function CalendarIndex() {
                             })}
                         </div>
                         <div className="flex justify-between">
-                            {(['spring', 'summer', 'autumn', 'winter'] as const).map((season) => {
+                            {(["spring", "summer", "autumn", "winter"] as const).map((season) => {
                                 const sConfig = seasonConfig[season];
                                 const isCurrentSeason = calendar.season === season;
                                 return (
                                     <span
                                         key={season}
                                         className={`font-pixel text-[10px] capitalize ${
-                                            isCurrentSeason ? sConfig.text : 'text-stone-600'
+                                            isCurrentSeason ? sConfig.text : "text-stone-600"
                                         }`}
                                     >
                                         {season}
@@ -258,7 +285,9 @@ export default function CalendarIndex() {
 
                     {/* Info Box */}
                     <div className="mt-6 rounded-lg border border-stone-600 bg-stone-800/30 p-4">
-                        <h3 className="mb-2 font-pixel text-sm text-stone-300">About the Calendar</h3>
+                        <h3 className="mb-2 font-pixel text-sm text-stone-300">
+                            About the Calendar
+                        </h3>
                         <ul className="space-y-1 font-pixel text-[10px] text-stone-400">
                             <li>- Each year has 4 seasons with 12 weeks each (48 weeks total)</li>
                             <li>- 1 real day = 1 game week</li>

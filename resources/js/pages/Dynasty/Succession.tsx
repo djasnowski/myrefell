@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router } from "@inertiajs/react";
 import {
     AlertTriangle,
     ArrowLeft,
@@ -9,10 +9,10 @@ import {
     User,
     UserMinus,
     Users,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface SuccessionMember {
     id: number;
@@ -80,24 +80,24 @@ export default function Succession({
 
     // Form state
     const [formData, setFormData] = useState({
-        succession_type: rules?.succession_type || 'primogeniture',
-        gender_law: rules?.gender_law || 'agnatic-cognatic',
+        succession_type: rules?.succession_type || "primogeniture",
+        gender_law: rules?.gender_law || "agnatic-cognatic",
         allows_bastards: rules?.allows_bastards || false,
         allows_adoption: rules?.allows_adoption || false,
         minimum_age: rules?.minimum_age || 16,
     });
-    const [disinheritReason, setDisinheritReason] = useState('');
+    const [disinheritReason, setDisinheritReason] = useState("");
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Dynasty', href: '/dynasty' },
-        { title: 'Succession', href: '/dynasty/succession' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Dynasty", href: "/dynasty" },
+        { title: "Succession", href: "/dynasty/succession" },
     ];
 
     const handleSaveRules = () => {
         if (saving) return;
         setSaving(true);
-        router.put('/dynasty/succession', formData, {
+        router.put("/dynasty/succession", formData, {
             preserveScroll: true,
             onSuccess: () => {
                 router.reload();
@@ -112,35 +112,39 @@ export default function Succession({
     const handleDisinherit = () => {
         if (!showDisinheritModal || saving) return;
         setSaving(true);
-        router.post(`/dynasty/succession/disinherit/${showDisinheritModal.id}`, {
-            reason: disinheritReason || null,
-        }, {
-            preserveScroll: true,
-            onSuccess: () => {
-                router.reload();
+        router.post(
+            `/dynasty/succession/disinherit/${showDisinheritModal.id}`,
+            {
+                reason: disinheritReason || null,
             },
-            onFinish: () => {
-                setSaving(false);
-                setShowDisinheritModal(null);
-                setDisinheritReason('');
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => {
+                    setSaving(false);
+                    setShowDisinheritModal(null);
+                    setDisinheritReason("");
+                },
             },
-        });
+        );
     };
 
     const getSuccessionTypeLabel = (value: string) => {
-        return succession_types.find(t => t.value === value)?.label || value;
+        return succession_types.find((t) => t.value === value)?.label || value;
     };
 
     const getSuccessionTypeDesc = (value: string) => {
-        return succession_types.find(t => t.value === value)?.description || '';
+        return succession_types.find((t) => t.value === value)?.description || "";
     };
 
     const getGenderLawLabel = (value: string) => {
-        return gender_laws.find(l => l.value === value)?.label || value;
+        return gender_laws.find((l) => l.value === value)?.label || value;
     };
 
     const getGenderLawDesc = (value: string) => {
-        return gender_laws.find(l => l.value === value)?.description || '';
+        return gender_laws.find((l) => l.value === value)?.description || "";
     };
 
     if (!rules) {
@@ -180,7 +184,9 @@ export default function Succession({
                         </Link>
                         <div>
                             <h1 className="font-pixel text-xl text-amber-400">Succession Rules</h1>
-                            <p className="font-pixel text-xs text-stone-500">House {dynasty.name}</p>
+                            <p className="font-pixel text-xs text-stone-500">
+                                House {dynasty.name}
+                            </p>
                         </div>
                     </div>
                     {is_head && (
@@ -205,7 +211,9 @@ export default function Succession({
 
                             <div className="space-y-4">
                                 <div className="rounded-lg border border-stone-700 bg-stone-800/30 p-3">
-                                    <div className="font-pixel text-[10px] text-stone-500">Succession Type</div>
+                                    <div className="font-pixel text-[10px] text-stone-500">
+                                        Succession Type
+                                    </div>
                                     <div className="font-pixel text-sm text-purple-400">
                                         {getSuccessionTypeLabel(rules.succession_type)}
                                     </div>
@@ -215,7 +223,9 @@ export default function Succession({
                                 </div>
 
                                 <div className="rounded-lg border border-stone-700 bg-stone-800/30 p-3">
-                                    <div className="font-pixel text-[10px] text-stone-500">Gender Law</div>
+                                    <div className="font-pixel text-[10px] text-stone-500">
+                                        Gender Law
+                                    </div>
                                     <div className="font-pixel text-sm text-blue-400">
                                         {getGenderLawLabel(rules.gender_law)}
                                     </div>
@@ -226,21 +236,31 @@ export default function Succession({
 
                                 <div className="grid grid-cols-2 gap-2">
                                     <div className="rounded-lg border border-stone-700 bg-stone-800/30 p-3">
-                                        <div className="font-pixel text-[10px] text-stone-500">Bastards</div>
-                                        <div className={`font-pixel text-xs ${rules.allows_bastards ? 'text-green-400' : 'text-red-400'}`}>
-                                            {rules.allows_bastards ? 'Eligible' : 'Not Eligible'}
+                                        <div className="font-pixel text-[10px] text-stone-500">
+                                            Bastards
+                                        </div>
+                                        <div
+                                            className={`font-pixel text-xs ${rules.allows_bastards ? "text-green-400" : "text-red-400"}`}
+                                        >
+                                            {rules.allows_bastards ? "Eligible" : "Not Eligible"}
                                         </div>
                                     </div>
                                     <div className="rounded-lg border border-stone-700 bg-stone-800/30 p-3">
-                                        <div className="font-pixel text-[10px] text-stone-500">Adoption</div>
-                                        <div className={`font-pixel text-xs ${rules.allows_adoption ? 'text-green-400' : 'text-red-400'}`}>
-                                            {rules.allows_adoption ? 'Allowed' : 'Not Allowed'}
+                                        <div className="font-pixel text-[10px] text-stone-500">
+                                            Adoption
+                                        </div>
+                                        <div
+                                            className={`font-pixel text-xs ${rules.allows_adoption ? "text-green-400" : "text-red-400"}`}
+                                        >
+                                            {rules.allows_adoption ? "Allowed" : "Not Allowed"}
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="rounded-lg border border-stone-700 bg-stone-800/30 p-3">
-                                    <div className="font-pixel text-[10px] text-stone-500">Minimum Age</div>
+                                    <div className="font-pixel text-[10px] text-stone-500">
+                                        Minimum Age
+                                    </div>
                                     <div className="font-pixel text-sm text-stone-300">
                                         {rules.minimum_age} years
                                     </div>
@@ -259,7 +279,9 @@ export default function Succession({
                                 <div className="font-pixel text-3xl text-amber-400">
                                     {dynasty.prestige.toLocaleString()}
                                 </div>
-                                <div className="font-pixel text-xs text-stone-500">prestige points</div>
+                                <div className="font-pixel text-xs text-stone-500">
+                                    prestige points
+                                </div>
                             </div>
 
                             <div className="space-y-2 rounded-lg border border-amber-600/30 bg-amber-900/10 p-3">
@@ -294,9 +316,12 @@ export default function Succession({
                         {succession_line.length === 0 ? (
                             <div className="py-8 text-center">
                                 <Users className="mx-auto mb-2 h-8 w-8 text-stone-600" />
-                                <div className="font-pixel text-xs text-stone-500">No eligible heirs</div>
+                                <div className="font-pixel text-xs text-stone-500">
+                                    No eligible heirs
+                                </div>
                                 <div className="mt-1 font-pixel text-[10px] text-stone-600">
-                                    The dynasty has no members who qualify under current succession rules.
+                                    The dynasty has no members who qualify under current succession
+                                    rules.
                                 </div>
                             </div>
                         ) : (
@@ -306,24 +331,34 @@ export default function Succession({
                                         key={member.id}
                                         className={`flex items-center justify-between rounded-lg border p-3 ${
                                             index === 0
-                                                ? 'border-purple-600/50 bg-purple-900/20'
-                                                : 'border-stone-700 bg-stone-800/30'
+                                                ? "border-purple-600/50 bg-purple-900/20"
+                                                : "border-stone-700 bg-stone-800/30"
                                         }`}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className={`flex h-8 w-8 items-center justify-center rounded-full font-pixel text-sm ${
-                                                index === 0
-                                                    ? 'bg-purple-900/50 text-purple-400'
-                                                    : 'bg-stone-700/50 text-stone-400'
-                                            }`}>
+                                            <div
+                                                className={`flex h-8 w-8 items-center justify-center rounded-full font-pixel text-sm ${
+                                                    index === 0
+                                                        ? "bg-purple-900/50 text-purple-400"
+                                                        : "bg-stone-700/50 text-stone-400"
+                                                }`}
+                                            >
                                                 {index + 1}
                                             </div>
-                                            <div className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                                                member.gender === 'male' ? 'bg-blue-900/50' : 'bg-pink-900/50'
-                                            }`}>
-                                                <User className={`h-4 w-4 ${
-                                                    member.gender === 'male' ? 'text-blue-400' : 'text-pink-400'
-                                                }`} />
+                                            <div
+                                                className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                                                    member.gender === "male"
+                                                        ? "bg-blue-900/50"
+                                                        : "bg-pink-900/50"
+                                                }`}
+                                            >
+                                                <User
+                                                    className={`h-4 w-4 ${
+                                                        member.gender === "male"
+                                                            ? "text-blue-400"
+                                                            : "text-pink-400"
+                                                    }`}
+                                                />
                                             </div>
                                             <div>
                                                 <div className="flex items-center gap-2">
@@ -336,9 +371,13 @@ export default function Succession({
                                                 </div>
                                                 <div className="flex items-center gap-2 font-pixel text-[10px] text-stone-500">
                                                     <span>Gen {member.generation}</span>
-                                                    {member.age !== null && <span>Age {member.age}</span>}
+                                                    {member.age !== null && (
+                                                        <span>Age {member.age}</span>
+                                                    )}
                                                     {!member.is_legitimate && (
-                                                        <span className="text-orange-400">Illegitimate</span>
+                                                        <span className="text-orange-400">
+                                                            Illegitimate
+                                                        </span>
                                                     )}
                                                 </div>
                                             </div>
@@ -367,7 +406,10 @@ export default function Succession({
                         <div className="mt-4 rounded-lg border border-stone-700 bg-stone-800/30 p-3">
                             <div className="flex items-start gap-2 font-pixel text-[10px] text-stone-500">
                                 <Star className="mt-0.5 h-3 w-3 text-purple-400" />
-                                <span>The heir will inherit leadership of the dynasty upon the death of the current head.</span>
+                                <span>
+                                    The heir will inherit leadership of the dynasty upon the death
+                                    of the current head.
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -378,7 +420,9 @@ export default function Succession({
             {showChangeModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                     <div className="w-full max-w-lg rounded-xl border-2 border-stone-700 bg-stone-800 p-6">
-                        <h3 className="mb-4 font-pixel text-lg text-amber-400">Change Succession Rules</h3>
+                        <h3 className="mb-4 font-pixel text-lg text-amber-400">
+                            Change Succession Rules
+                        </h3>
 
                         <div className="space-y-4">
                             {/* Succession Type */}
@@ -392,8 +436,8 @@ export default function Succession({
                                             key={type.value}
                                             className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${
                                                 formData.succession_type === type.value
-                                                    ? 'border-purple-600/50 bg-purple-900/20'
-                                                    : 'border-stone-700 hover:bg-stone-700/50'
+                                                    ? "border-purple-600/50 bg-purple-900/20"
+                                                    : "border-stone-700 hover:bg-stone-700/50"
                                             }`}
                                         >
                                             <input
@@ -401,12 +445,21 @@ export default function Succession({
                                                 name="succession_type"
                                                 value={type.value}
                                                 checked={formData.succession_type === type.value}
-                                                onChange={(e) => setFormData({ ...formData, succession_type: e.target.value })}
+                                                onChange={(e) =>
+                                                    setFormData({
+                                                        ...formData,
+                                                        succession_type: e.target.value,
+                                                    })
+                                                }
                                                 className="mt-1"
                                             />
                                             <div>
-                                                <div className="font-pixel text-sm text-stone-200">{type.label}</div>
-                                                <div className="font-pixel text-[10px] text-stone-500">{type.description}</div>
+                                                <div className="font-pixel text-sm text-stone-200">
+                                                    {type.label}
+                                                </div>
+                                                <div className="font-pixel text-[10px] text-stone-500">
+                                                    {type.description}
+                                                </div>
                                             </div>
                                         </label>
                                     ))}
@@ -424,8 +477,8 @@ export default function Succession({
                                             key={law.value}
                                             className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${
                                                 formData.gender_law === law.value
-                                                    ? 'border-blue-600/50 bg-blue-900/20'
-                                                    : 'border-stone-700 hover:bg-stone-700/50'
+                                                    ? "border-blue-600/50 bg-blue-900/20"
+                                                    : "border-stone-700 hover:bg-stone-700/50"
                                             }`}
                                         >
                                             <input
@@ -433,12 +486,21 @@ export default function Succession({
                                                 name="gender_law"
                                                 value={law.value}
                                                 checked={formData.gender_law === law.value}
-                                                onChange={(e) => setFormData({ ...formData, gender_law: e.target.value })}
+                                                onChange={(e) =>
+                                                    setFormData({
+                                                        ...formData,
+                                                        gender_law: e.target.value,
+                                                    })
+                                                }
                                                 className="mt-1"
                                             />
                                             <div>
-                                                <div className="font-pixel text-sm text-stone-200">{law.label}</div>
-                                                <div className="font-pixel text-[10px] text-stone-500">{law.description}</div>
+                                                <div className="font-pixel text-sm text-stone-200">
+                                                    {law.label}
+                                                </div>
+                                                <div className="font-pixel text-[10px] text-stone-500">
+                                                    {law.description}
+                                                </div>
                                             </div>
                                         </label>
                                     ))}
@@ -451,22 +513,40 @@ export default function Succession({
                                     <input
                                         type="checkbox"
                                         checked={formData.allows_bastards}
-                                        onChange={(e) => setFormData({ ...formData, allows_bastards: e.target.checked })}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                allows_bastards: e.target.checked,
+                                            })
+                                        }
                                     />
                                     <div>
-                                        <div className="font-pixel text-xs text-stone-200">Allow Bastards</div>
-                                        <div className="font-pixel text-[10px] text-stone-500">Can inherit</div>
+                                        <div className="font-pixel text-xs text-stone-200">
+                                            Allow Bastards
+                                        </div>
+                                        <div className="font-pixel text-[10px] text-stone-500">
+                                            Can inherit
+                                        </div>
                                     </div>
                                 </label>
                                 <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-stone-700 p-3 hover:bg-stone-700/50">
                                     <input
                                         type="checkbox"
                                         checked={formData.allows_adoption}
-                                        onChange={(e) => setFormData({ ...formData, allows_adoption: e.target.checked })}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                allows_adoption: e.target.checked,
+                                            })
+                                        }
                                     />
                                     <div>
-                                        <div className="font-pixel text-xs text-stone-200">Allow Adoption</div>
-                                        <div className="font-pixel text-[10px] text-stone-500">Can inherit</div>
+                                        <div className="font-pixel text-xs text-stone-200">
+                                            Allow Adoption
+                                        </div>
+                                        <div className="font-pixel text-[10px] text-stone-500">
+                                            Can inherit
+                                        </div>
                                     </div>
                                 </label>
                             </div>
@@ -481,7 +561,12 @@ export default function Succession({
                                     min="0"
                                     max="100"
                                     value={formData.minimum_age}
-                                    onChange={(e) => setFormData({ ...formData, minimum_age: parseInt(e.target.value) || 0 })}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            minimum_age: parseInt(e.target.value) || 0,
+                                        })
+                                    }
                                     className="w-full rounded-lg border border-stone-600 bg-stone-900 px-3 py-2 font-pixel text-sm text-stone-200"
                                 />
                             </div>
@@ -490,7 +575,9 @@ export default function Succession({
                         <div className="mt-6 rounded-lg border border-amber-600/30 bg-amber-900/10 p-3">
                             <div className="flex items-center gap-2 font-pixel text-xs text-amber-400">
                                 <AlertTriangle className="h-4 w-4" />
-                                <span>Cost: {change_cost} prestige (You have: {dynasty.prestige})</span>
+                                <span>
+                                    Cost: {change_cost} prestige (You have: {dynasty.prestige})
+                                </span>
                             </div>
                         </div>
 
@@ -506,7 +593,9 @@ export default function Succession({
                                 disabled={saving || dynasty.prestige < change_cost}
                                 className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-purple-600 py-2 font-pixel text-xs text-white transition hover:bg-purple-500 disabled:opacity-50"
                             >
-                                {saving ? 'Saving...' : (
+                                {saving ? (
+                                    "Saving..."
+                                ) : (
                                     <>
                                         <Check className="h-4 w-4" />
                                         Confirm Changes
@@ -522,14 +611,22 @@ export default function Succession({
             {showDisinheritModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                     <div className="w-full max-w-md rounded-xl border-2 border-red-700/50 bg-stone-800 p-6">
-                        <h3 className="mb-4 font-pixel text-lg text-red-400">Disinherit {showDisinheritModal.name}</h3>
+                        <h3 className="mb-4 font-pixel text-lg text-red-400">
+                            Disinherit {showDisinheritModal.name}
+                        </h3>
 
                         <div className="mb-4 rounded-lg border border-red-600/30 bg-red-900/10 p-3">
                             <div className="flex items-start gap-2 font-pixel text-xs text-red-400">
                                 <AlertTriangle className="mt-0.5 h-4 w-4" />
                                 <div>
-                                    <p>This action will permanently remove {showDisinheritModal.first_name} from the line of succession.</p>
-                                    <p className="mt-1 text-stone-500">Cost: {disinherit_cost} prestige</p>
+                                    <p>
+                                        This action will permanently remove{" "}
+                                        {showDisinheritModal.first_name} from the line of
+                                        succession.
+                                    </p>
+                                    <p className="mt-1 text-stone-500">
+                                        Cost: {disinherit_cost} prestige
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -552,7 +649,7 @@ export default function Succession({
                             <button
                                 onClick={() => {
                                     setShowDisinheritModal(null);
-                                    setDisinheritReason('');
+                                    setDisinheritReason("");
                                 }}
                                 className="flex-1 rounded-lg border border-stone-600 py-2 font-pixel text-xs text-stone-400 transition hover:bg-stone-700"
                             >
@@ -563,7 +660,9 @@ export default function Succession({
                                 disabled={saving || dynasty.prestige < disinherit_cost}
                                 className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-600 py-2 font-pixel text-xs text-white transition hover:bg-red-500 disabled:opacity-50"
                             >
-                                {saving ? 'Processing...' : (
+                                {saving ? (
+                                    "Processing..."
+                                ) : (
                                     <>
                                         <UserMinus className="h-4 w-4" />
                                         Disinherit

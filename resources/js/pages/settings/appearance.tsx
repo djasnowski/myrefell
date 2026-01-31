@@ -1,14 +1,14 @@
-import { Head } from '@inertiajs/react';
-import AppearanceTabs from '@/components/appearance-tabs';
-import Heading from '@/components/heading';
-import AppLayout from '@/layouts/app-layout';
-import SettingsLayout from '@/layouts/settings/layout';
-import { edit as editAppearance } from '@/routes/appearance';
-import type { BreadcrumbItem } from '@/types';
+import { Head } from "@inertiajs/react";
+import AppearanceTabs from "@/components/appearance-tabs";
+import Heading from "@/components/heading";
+import AppLayout from "@/layouts/app-layout";
+import SettingsLayout from "@/layouts/settings/layout";
+import { edit as editAppearance } from "@/routes/appearance";
+import type { BreadcrumbItem } from "@/types";
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Appearance settings',
+        title: "Appearance settings",
         href: editAppearance().url,
     },
 ];

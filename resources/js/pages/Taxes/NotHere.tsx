@@ -1,7 +1,7 @@
-import { Head, Link } from '@inertiajs/react';
-import { Landmark, MapPin } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, Link } from "@inertiajs/react";
+import { Landmark, MapPin } from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface PageProps {
     location: string;
@@ -10,8 +10,8 @@ interface PageProps {
 
 export default function NotHere({ location }: PageProps) {
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Taxes', href: '#' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Taxes", href: "#" },
     ];
 
     return (
@@ -24,7 +24,8 @@ export default function NotHere({ location }: PageProps) {
                     </div>
                     <h1 className="mb-2 font-pixel text-xl text-stone-300">Not at Location</h1>
                     <p className="mb-6 font-pixel text-sm text-stone-500">
-                        You need to be at <span className="text-amber-400">{location}</span> to view its treasury.
+                        You need to be at <span className="text-amber-400">{location}</span> to view
+                        its treasury.
                     </p>
                     <Link
                         href="/travel"

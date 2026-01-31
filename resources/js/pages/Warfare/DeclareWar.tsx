@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import {
     AlertTriangle,
     ArrowLeft,
@@ -12,14 +12,14 @@ import {
     Swords,
     Target,
     Users,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Target {
     id: number;
-    type: 'kingdom' | 'barony';
+    type: "kingdom" | "barony";
     name: string;
     ruler_name: string;
     kingdom_name?: string;
@@ -77,10 +77,10 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Warfare', href: '#' },
-    { title: 'Wars', href: '/warfare/wars' },
-    { title: 'Declare War', href: '#' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Warfare", href: "#" },
+    { title: "Wars", href: "/warfare/wars" },
+    { title: "Declare War", href: "#" },
 ];
 
 const casusBelliIcons: Record<string, typeof Sword> = {
@@ -103,21 +103,18 @@ export default function DeclareWar() {
         user_barony,
     } = usePage<PageProps>().props;
 
-    const [selectedTargetType, setSelectedTargetType] = useState<'kingdom' | 'barony' | ''>('');
+    const [selectedTargetType, setSelectedTargetType] = useState<"kingdom" | "barony" | "">("");
     const [selectedTargetId, setSelectedTargetId] = useState<number | null>(null);
-    const [selectedCasusBelli, setSelectedCasusBelli] = useState<string>('');
+    const [selectedCasusBelli, setSelectedCasusBelli] = useState<string>("");
     const [selectedWarGoals, setSelectedWarGoals] = useState<string[]>([]);
-    const [warName, setWarName] = useState<string>('');
+    const [warName, setWarName] = useState<string>("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const allTargets = [
-        ...potential_targets.kingdoms,
-        ...potential_targets.baronies,
-    ];
+    const allTargets = [...potential_targets.kingdoms, ...potential_targets.baronies];
 
     const selectedTarget = allTargets.find(
-        (t) => t.type === selectedTargetType && t.id === selectedTargetId
+        (t) => t.type === selectedTargetType && t.id === selectedTargetId,
     );
 
     const selectedCasusBelliInfo = casus_belli_types.find((c) => c.value === selectedCasusBelli);
@@ -126,9 +123,7 @@ export default function DeclareWar() {
 
     const toggleWarGoal = (goalValue: string) => {
         setSelectedWarGoals((prev) =>
-            prev.includes(goalValue)
-                ? prev.filter((g) => g !== goalValue)
-                : [...prev, goalValue]
+            prev.includes(goalValue) ? prev.filter((g) => g !== goalValue) : [...prev, goalValue],
         );
     };
 
@@ -141,8 +136,13 @@ export default function DeclareWar() {
     };
 
     const handleDeclareWar = async () => {
-        if (!selectedTargetType || !selectedTargetId || !selectedCasusBelli || selectedWarGoals.length === 0) {
-            setError('Please select a target, casus belli, and at least one war goal.');
+        if (
+            !selectedTargetType ||
+            !selectedTargetId ||
+            !selectedCasusBelli ||
+            selectedWarGoals.length === 0
+        ) {
+            setError("Please select a target, casus belli, and at least one war goal.");
             return;
         }
 
@@ -150,13 +150,13 @@ export default function DeclareWar() {
         setError(null);
 
         try {
-            const response = await fetch('/warfare/declare', {
-                method: 'POST',
+            const response = await fetch("/warfare/declare", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>(
-                        'meta[name="csrf-token"]'
-                    )?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify({
                     target_type: selectedTargetType,
@@ -172,10 +172,10 @@ export default function DeclareWar() {
             if (data.success) {
                 router.visit(`/warfare/wars/${data.war_id}`);
             } else {
-                setError(data.message || 'Failed to declare war.');
+                setError(data.message || "Failed to declare war.");
             }
         } catch {
-            setError('An error occurred while declaring war.');
+            setError("An error occurred while declaring war.");
         } finally {
             setIsSubmitting(false);
         }
@@ -254,13 +254,13 @@ export default function DeclareWar() {
                             <div className="mb-4 flex gap-2">
                                 <button
                                     onClick={() => {
-                                        setSelectedTargetType('kingdom');
+                                        setSelectedTargetType("kingdom");
                                         setSelectedTargetId(null);
                                     }}
                                     className={`flex items-center gap-2 rounded border px-3 py-1.5 font-pixel text-xs transition ${
-                                        selectedTargetType === 'kingdom'
-                                            ? 'border-amber-500/50 bg-amber-900/30 text-amber-300'
-                                            : 'border-stone-600/50 bg-stone-900/20 text-stone-400 hover:bg-stone-900/40'
+                                        selectedTargetType === "kingdom"
+                                            ? "border-amber-500/50 bg-amber-900/30 text-amber-300"
+                                            : "border-stone-600/50 bg-stone-900/20 text-stone-400 hover:bg-stone-900/40"
                                     }`}
                                 >
                                     <Crown className="h-3 w-3" />
@@ -268,13 +268,13 @@ export default function DeclareWar() {
                                 </button>
                                 <button
                                     onClick={() => {
-                                        setSelectedTargetType('barony');
+                                        setSelectedTargetType("barony");
                                         setSelectedTargetId(null);
                                     }}
                                     className={`flex items-center gap-2 rounded border px-3 py-1.5 font-pixel text-xs transition ${
-                                        selectedTargetType === 'barony'
-                                            ? 'border-amber-500/50 bg-amber-900/30 text-amber-300'
-                                            : 'border-stone-600/50 bg-stone-900/20 text-stone-400 hover:bg-stone-900/40'
+                                        selectedTargetType === "barony"
+                                            ? "border-amber-500/50 bg-amber-900/30 text-amber-300"
+                                            : "border-stone-600/50 bg-stone-900/20 text-stone-400 hover:bg-stone-900/40"
                                     }`}
                                 >
                                     <Castle className="h-3 w-3" />
@@ -284,59 +284,65 @@ export default function DeclareWar() {
 
                             {/* Target List */}
                             <div className="max-h-64 space-y-2 overflow-y-auto">
-                                {selectedTargetType === 'kingdom' &&
+                                {selectedTargetType === "kingdom" &&
                                     potential_targets.kingdoms.map((target) => (
                                         <button
                                             key={`kingdom-${target.id}`}
                                             onClick={() => setSelectedTargetId(target.id)}
                                             className={`w-full rounded-lg p-3 text-left transition ${
                                                 selectedTargetId === target.id
-                                                    ? 'border-2 border-red-500/50 bg-red-900/30'
-                                                    : 'bg-stone-900/50 hover:bg-stone-900/70'
+                                                    ? "border-2 border-red-500/50 bg-red-900/30"
+                                                    : "bg-stone-900/50 hover:bg-stone-900/70"
                                             }`}
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <Crown className="h-4 w-4 text-amber-400" />
-                                                    <span className="font-pixel text-sm text-white">{target.name}</span>
+                                                    <span className="font-pixel text-sm text-white">
+                                                        {target.name}
+                                                    </span>
                                                 </div>
                                                 {selectedTargetId === target.id && (
                                                     <Check className="h-4 w-4 text-green-400" />
                                                 )}
                                             </div>
                                             <div className="mt-1 font-pixel text-[10px] text-stone-400">
-                                                Ruler: {target.ruler_name} | Military: ~{target.estimated_troops} soldiers
+                                                Ruler: {target.ruler_name} | Military: ~
+                                                {target.estimated_troops} soldiers
                                             </div>
                                             {target.allies.length > 0 && (
                                                 <div className="mt-1 font-pixel text-[10px] text-stone-500">
-                                                    Allies: {target.allies.join(', ')}
+                                                    Allies: {target.allies.join(", ")}
                                                 </div>
                                             )}
                                         </button>
                                     ))}
 
-                                {selectedTargetType === 'barony' &&
+                                {selectedTargetType === "barony" &&
                                     potential_targets.baronies.map((target) => (
                                         <button
                                             key={`barony-${target.id}`}
                                             onClick={() => setSelectedTargetId(target.id)}
                                             className={`w-full rounded-lg p-3 text-left transition ${
                                                 selectedTargetId === target.id
-                                                    ? 'border-2 border-red-500/50 bg-red-900/30'
-                                                    : 'bg-stone-900/50 hover:bg-stone-900/70'
+                                                    ? "border-2 border-red-500/50 bg-red-900/30"
+                                                    : "bg-stone-900/50 hover:bg-stone-900/70"
                                             }`}
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <Castle className="h-4 w-4 text-purple-400" />
-                                                    <span className="font-pixel text-sm text-white">{target.name}</span>
+                                                    <span className="font-pixel text-sm text-white">
+                                                        {target.name}
+                                                    </span>
                                                 </div>
                                                 {selectedTargetId === target.id && (
                                                     <Check className="h-4 w-4 text-green-400" />
                                                 )}
                                             </div>
                                             <div className="mt-1 font-pixel text-[10px] text-stone-400">
-                                                Baron: {target.ruler_name} | Kingdom: {target.kingdom_name}
+                                                Baron: {target.ruler_name} | Kingdom:{" "}
+                                                {target.kingdom_name}
                                             </div>
                                             <div className="mt-1 font-pixel text-[10px] text-stone-500">
                                                 Military: ~{target.estimated_troops} soldiers
@@ -355,7 +361,9 @@ export default function DeclareWar() {
                         {/* Target Info Card */}
                         {selectedTarget && (
                             <div className="rounded-xl border-2 border-red-500/30 bg-red-900/20 p-4">
-                                <h3 className="mb-3 font-pixel text-sm text-red-400">Target Information</h3>
+                                <h3 className="mb-3 font-pixel text-sm text-red-400">
+                                    Target Information
+                                </h3>
                                 <div className="space-y-2 font-pixel text-xs">
                                     <div className="flex justify-between">
                                         <span className="text-stone-400">Name:</span>
@@ -363,16 +371,22 @@ export default function DeclareWar() {
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-stone-400">Ruler:</span>
-                                        <span className="text-white">{selectedTarget.ruler_name}</span>
+                                        <span className="text-white">
+                                            {selectedTarget.ruler_name}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-stone-400">Military:</span>
-                                        <span className="text-white">~{selectedTarget.estimated_troops} soldiers</span>
+                                        <span className="text-white">
+                                            ~{selectedTarget.estimated_troops} soldiers
+                                        </span>
                                     </div>
                                     {selectedTarget.allies.length > 0 && (
                                         <div className="flex justify-between">
                                             <span className="text-stone-400">Allies:</span>
-                                            <span className="text-white">{selectedTarget.allies.join(', ')}</span>
+                                            <span className="text-white">
+                                                {selectedTarget.allies.join(", ")}
+                                            </span>
                                         </div>
                                     )}
                                 </div>
@@ -398,25 +412,31 @@ export default function DeclareWar() {
                                             onClick={() => setSelectedCasusBelli(cb.value)}
                                             className={`w-full rounded-lg p-3 text-left transition ${
                                                 selectedCasusBelli === cb.value
-                                                    ? 'border-2 border-amber-500/50 bg-amber-900/30'
-                                                    : 'bg-stone-900/50 hover:bg-stone-900/70'
+                                                    ? "border-2 border-amber-500/50 bg-amber-900/30"
+                                                    : "bg-stone-900/50 hover:bg-stone-900/70"
                                             }`}
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <Icon className="h-4 w-4 text-amber-400" />
-                                                    <span className="font-pixel text-sm text-white">{cb.label}</span>
+                                                    <span className="font-pixel text-sm text-white">
+                                                        {cb.label}
+                                                    </span>
                                                 </div>
                                                 <span
                                                     className={`font-pixel text-[10px] ${
-                                                        cb.legitimacy_impact >= 0 ? 'text-green-400' : 'text-red-400'
+                                                        cb.legitimacy_impact >= 0
+                                                            ? "text-green-400"
+                                                            : "text-red-400"
                                                     }`}
                                                 >
-                                                    {cb.legitimacy_impact >= 0 ? '+' : ''}
+                                                    {cb.legitimacy_impact >= 0 ? "+" : ""}
                                                     {cb.legitimacy_impact} legitimacy
                                                 </span>
                                             </div>
-                                            <p className="mt-1 font-pixel text-[10px] text-stone-400">{cb.description}</p>
+                                            <p className="mt-1 font-pixel text-[10px] text-stone-400">
+                                                {cb.description}
+                                            </p>
                                         </button>
                                     );
                                 })}
@@ -437,17 +457,21 @@ export default function DeclareWar() {
                                         onClick={() => toggleWarGoal(goal.value)}
                                         className={`w-full rounded-lg p-3 text-left transition ${
                                             selectedWarGoals.includes(goal.value)
-                                                ? 'border-2 border-green-500/50 bg-green-900/30'
-                                                : 'bg-stone-900/50 hover:bg-stone-900/70'
+                                                ? "border-2 border-green-500/50 bg-green-900/30"
+                                                : "bg-stone-900/50 hover:bg-stone-900/70"
                                         }`}
                                     >
                                         <div className="flex items-center justify-between">
-                                            <span className="font-pixel text-sm text-white">{goal.label}</span>
+                                            <span className="font-pixel text-sm text-white">
+                                                {goal.label}
+                                            </span>
                                             {selectedWarGoals.includes(goal.value) && (
                                                 <Check className="h-4 w-4 text-green-400" />
                                             )}
                                         </div>
-                                        <p className="mt-1 font-pixel text-[10px] text-stone-400">{goal.description}</p>
+                                        <p className="mt-1 font-pixel text-[10px] text-stone-400">
+                                            {goal.description}
+                                        </p>
                                     </button>
                                 ))}
                             </div>
@@ -467,16 +491,22 @@ export default function DeclareWar() {
                         <div className="rounded-lg bg-stone-900/50 p-3">
                             <div className="mb-2 flex items-center gap-2">
                                 <Users className="h-4 w-4 text-stone-400" />
-                                <span className="font-pixel text-sm text-white">Total Military Strength</span>
+                                <span className="font-pixel text-sm text-white">
+                                    Total Military Strength
+                                </span>
                             </div>
                             <div className="grid grid-cols-2 gap-2 font-pixel text-xs">
                                 <div>
                                     <span className="text-stone-400">Soldiers: </span>
-                                    <span className="text-white">{player_strength.total_troops}</span>
+                                    <span className="text-white">
+                                        {player_strength.total_troops}
+                                    </span>
                                 </div>
                                 <div>
                                     <span className="text-stone-400">Attack Power: </span>
-                                    <span className="text-white">{player_strength.total_attack}</span>
+                                    <span className="text-white">
+                                        {player_strength.total_attack}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -484,16 +514,18 @@ export default function DeclareWar() {
                         {/* Win Chance Estimate */}
                         {selectedTarget && (
                             <div className="rounded-lg bg-stone-900/50 p-3">
-                                <div className="mb-2 font-pixel text-sm text-white">Estimated Chance of Victory</div>
+                                <div className="mb-2 font-pixel text-sm text-white">
+                                    Estimated Chance of Victory
+                                </div>
                                 <div className="flex items-center gap-3">
                                     <div className="h-3 flex-1 overflow-hidden rounded-full bg-stone-700">
                                         <div
                                             className={`h-full transition-all duration-300 ${
                                                 estimateWinChance() >= 60
-                                                    ? 'bg-green-500'
+                                                    ? "bg-green-500"
                                                     : estimateWinChance() >= 40
-                                                      ? 'bg-yellow-500'
-                                                      : 'bg-red-500'
+                                                      ? "bg-yellow-500"
+                                                      : "bg-red-500"
                                             }`}
                                             style={{ width: `${estimateWinChance()}%` }}
                                         />
@@ -501,10 +533,10 @@ export default function DeclareWar() {
                                     <span
                                         className={`font-pixel text-sm ${
                                             estimateWinChance() >= 60
-                                                ? 'text-green-400'
+                                                ? "text-green-400"
                                                 : estimateWinChance() >= 40
-                                                  ? 'text-yellow-400'
-                                                  : 'text-red-400'
+                                                  ? "text-yellow-400"
+                                                  : "text-red-400"
                                         }`}
                                     >
                                         {estimateWinChance()}%
@@ -517,16 +549,23 @@ export default function DeclareWar() {
                     {/* Armies List */}
                     {player_armies.length > 0 && (
                         <div className="mt-4">
-                            <div className="mb-2 font-pixel text-xs text-stone-400">Your Armies:</div>
+                            <div className="mb-2 font-pixel text-xs text-stone-400">
+                                Your Armies:
+                            </div>
                             <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
                                 {player_armies.map((army) => (
                                     <div key={army.id} className="rounded bg-stone-900/30 p-2">
                                         <div className="flex items-center justify-between">
-                                            <span className="font-pixel text-xs text-white">{army.name}</span>
-                                            <span className="font-pixel text-[10px] text-stone-500">{army.status}</span>
+                                            <span className="font-pixel text-xs text-white">
+                                                {army.name}
+                                            </span>
+                                            <span className="font-pixel text-[10px] text-stone-500">
+                                                {army.status}
+                                            </span>
                                         </div>
                                         <div className="mt-1 font-pixel text-[10px] text-stone-400">
-                                            {army.total_troops} troops | ATK: {army.total_attack} | DEF: {army.total_defense}
+                                            {army.total_troops} troops | ATK: {army.total_attack} |
+                                            DEF: {army.total_defense}
                                         </div>
                                     </div>
                                 ))}
@@ -556,15 +595,22 @@ export default function DeclareWar() {
 
                         <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
                             {potential_allies.map((ally) => (
-                                <div key={`${ally.type}-${ally.id}`} className="rounded-lg bg-stone-900/50 p-3">
+                                <div
+                                    key={`${ally.type}-${ally.id}`}
+                                    className="rounded-lg bg-stone-900/50 p-3"
+                                >
                                     <div className="flex items-center gap-2">
                                         <Crown className="h-4 w-4 text-amber-400" />
-                                        <span className="font-pixel text-sm text-white">{ally.name}</span>
+                                        <span className="font-pixel text-sm text-white">
+                                            {ally.name}
+                                        </span>
                                     </div>
                                     <div className="mt-1 font-pixel text-[10px] text-stone-400">
                                         +{ally.estimated_troops} soldiers
                                     </div>
-                                    <div className="mt-1 font-pixel text-[10px] text-stone-500">{ally.likelihood}</div>
+                                    <div className="mt-1 font-pixel text-[10px] text-stone-500">
+                                        {ally.likelihood}
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -597,15 +643,15 @@ export default function DeclareWar() {
                             </p>
                             {selectedCasusBelliInfo && (
                                 <p className="mt-1 font-pixel text-xs text-stone-400">
-                                    Your legitimacy will change by{' '}
+                                    Your legitimacy will change by{" "}
                                     <span
                                         className={
                                             selectedCasusBelliInfo.legitimacy_impact >= 0
-                                                ? 'text-green-400'
-                                                : 'text-red-400'
+                                                ? "text-green-400"
+                                                : "text-red-400"
                                         }
                                     >
-                                        {selectedCasusBelliInfo.legitimacy_impact >= 0 ? '+' : ''}
+                                        {selectedCasusBelliInfo.legitimacy_impact >= 0 ? "+" : ""}
                                         {selectedCasusBelliInfo.legitimacy_impact}
                                     </span>
                                     .
@@ -636,7 +682,7 @@ export default function DeclareWar() {
                             className="flex items-center gap-2 rounded border border-red-600/50 bg-red-900/20 px-4 py-2 font-pixel text-xs text-red-300 transition hover:bg-red-900/40 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             <Swords className="h-4 w-4" />
-                            {isSubmitting ? 'Declaring War...' : 'Declare War'}
+                            {isSubmitting ? "Declaring War..." : "Declare War"}
                         </button>
                     </div>
                 </div>

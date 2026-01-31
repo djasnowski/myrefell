@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from "@inertiajs/react";
 import {
     Axe,
     Bed,
@@ -10,10 +10,10 @@ import {
     Store,
     Users,
     Wheat,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface BusinessType {
     id: number;
@@ -86,9 +86,9 @@ const iconMap: Record<string, typeof Store> = {
 };
 
 const categoryColors: Record<string, string> = {
-    production: 'border-blue-500/50 bg-blue-900/20',
-    service: 'border-purple-500/50 bg-purple-900/20',
-    extraction: 'border-amber-500/50 bg-amber-900/20',
+    production: "border-blue-500/50 bg-blue-900/20",
+    service: "border-purple-500/50 bg-purple-900/20",
+    extraction: "border-amber-500/50 bg-amber-900/20",
 };
 
 function BusinessTypeCard({
@@ -109,7 +109,9 @@ function BusinessTypeCard({
     const canAfford = playerGold >= type.purchase_cost;
 
     return (
-        <div className={`rounded-xl border-2 ${categoryColors[type.category] || 'border-stone-600/50 bg-stone-800/50'} p-4`}>
+        <div
+            className={`rounded-xl border-2 ${categoryColors[type.category] || "border-stone-600/50 bg-stone-800/50"} p-4`}
+        >
             <div className="mb-3 flex items-start justify-between">
                 <div className="flex items-center gap-2">
                     <div className="rounded-lg bg-stone-800/50 p-2">
@@ -117,7 +119,9 @@ function BusinessTypeCard({
                     </div>
                     <div>
                         <h3 className="font-pixel text-sm text-amber-300">{type.name}</h3>
-                        <span className="font-pixel text-[10px] text-stone-400">{type.category_display}</span>
+                        <span className="font-pixel text-[10px] text-stone-400">
+                            {type.category_display}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -127,17 +131,23 @@ function BusinessTypeCard({
             <div className="mb-3 grid grid-cols-2 gap-2 rounded-lg bg-stone-800/50 p-2">
                 <div className="flex items-center gap-1">
                     <span className="font-pixel text-[10px] text-stone-400">Cost:</span>
-                    <span className={`font-pixel text-xs ${canAfford ? 'text-amber-300' : 'text-red-400'}`}>
+                    <span
+                        className={`font-pixel text-xs ${canAfford ? "text-amber-300" : "text-red-400"}`}
+                    >
                         {type.purchase_cost}g
                     </span>
                 </div>
                 <div className="flex items-center gap-1">
                     <span className="font-pixel text-[10px] text-stone-400">Upkeep:</span>
-                    <span className="font-pixel text-xs text-stone-300">{type.weekly_upkeep}g/week</span>
+                    <span className="font-pixel text-xs text-stone-300">
+                        {type.weekly_upkeep}g/week
+                    </span>
                 </div>
                 <div className="flex items-center gap-1">
                     <Users className="h-3 w-3 text-stone-400" />
-                    <span className="font-pixel text-xs text-stone-300">Max {type.max_employees}</span>
+                    <span className="font-pixel text-xs text-stone-300">
+                        Max {type.max_employees}
+                    </span>
                 </div>
                 {type.primary_skill && (
                     <div className="flex items-center gap-1">
@@ -166,7 +176,7 @@ function BusinessTypeCard({
                 disabled={loading || !canEstablish || !canAfford || !name.trim()}
                 className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-green-600 bg-green-900/30 px-4 py-2 font-pixel text-xs text-green-300 transition hover:bg-green-800/50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Establish Business'}
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Establish Business"}
             </button>
         </div>
     );
@@ -175,9 +185,9 @@ function BusinessTypeCard({
 function BusinessCard({ business, isOwner }: { business: Business; isOwner: boolean }) {
     const Icon = iconMap[business.type_icon] || Store;
     const statusColors: Record<string, string> = {
-        active: 'text-green-300 bg-green-800/50',
-        suspended: 'text-amber-300 bg-amber-800/50',
-        closed: 'text-red-300 bg-red-800/50',
+        active: "text-green-300 bg-green-800/50",
+        suspended: "text-amber-300 bg-amber-800/50",
+        closed: "text-red-300 bg-red-800/50",
     };
 
     return (
@@ -189,7 +199,9 @@ function BusinessCard({ business, isOwner }: { business: Business; isOwner: bool
                     </div>
                     <div>
                         <h3 className="font-pixel text-sm text-amber-300">{business.name}</h3>
-                        <span className="font-pixel text-[10px] text-stone-400">{business.type_name}</span>
+                        <span className="font-pixel text-[10px] text-stone-400">
+                            {business.type_name}
+                        </span>
                     </div>
                 </div>
                 <div className={`rounded-lg px-2 py-1 ${statusColors[business.status]}`}>
@@ -212,11 +224,17 @@ function BusinessCard({ business, isOwner }: { business: Business; isOwner: bool
                     <>
                         <div>
                             <span className="font-pixel text-[10px] text-stone-400">Treasury</span>
-                            <p className="font-pixel text-xs text-amber-300">{business.treasury}g</p>
+                            <p className="font-pixel text-xs text-amber-300">
+                                {business.treasury}g
+                            </p>
                         </div>
                         <div>
-                            <span className="font-pixel text-[10px] text-stone-400">Reputation</span>
-                            <p className="font-pixel text-xs text-stone-200">{business.reputation}/100</p>
+                            <span className="font-pixel text-[10px] text-stone-400">
+                                Reputation
+                            </span>
+                            <p className="font-pixel text-xs text-stone-200">
+                                {business.reputation}/100
+                            </p>
                         </div>
                     </>
                 )}
@@ -235,24 +253,32 @@ function BusinessCard({ business, isOwner }: { business: Business; isOwner: bool
 }
 
 export default function BusinessIndex() {
-    const { location_type, location_id, location_name, available_types, local_businesses, my_businesses, max_businesses, player } =
-        usePage<PageProps>().props;
+    const {
+        location_type,
+        location_id,
+        location_name,
+        available_types,
+        local_businesses,
+        my_businesses,
+        max_businesses,
+        player,
+    } = usePage<PageProps>().props;
 
     const [establishLoading, setEstablishLoading] = useState<number | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
+        { title: "Dashboard", href: "/dashboard" },
         { title: location_name, href: `/${location_type}s/${location_id}` },
-        { title: 'Businesses', href: '#' },
+        { title: "Businesses", href: "#" },
     ];
 
-    const myActiveBusinesses = my_businesses.filter((b) => b.status !== 'closed');
+    const myActiveBusinesses = my_businesses.filter((b) => b.status !== "closed");
     const canEstablishMore = myActiveBusinesses.length < max_businesses;
 
     const handleEstablish = (typeId: number, name: string) => {
         setEstablishLoading(typeId);
         router.post(
-            '/businesses/establish',
+            "/businesses/establish",
             {
                 business_type_id: typeId,
                 name: name,
@@ -262,7 +288,7 @@ export default function BusinessIndex() {
             {
                 preserveScroll: true,
                 onFinish: () => setEstablishLoading(null),
-            }
+            },
         );
     };
 
@@ -274,12 +300,16 @@ export default function BusinessIndex() {
                 <div className="mb-6 flex items-center justify-between">
                     <div>
                         <h1 className="font-pixel text-2xl text-amber-400">Businesses</h1>
-                        <p className="font-pixel text-sm text-stone-400">Establish or manage businesses in {location_name}</p>
+                        <p className="font-pixel text-sm text-stone-400">
+                            Establish or manage businesses in {location_name}
+                        </p>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2 rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2">
                             <Coins className="h-4 w-4 text-amber-400" />
-                            <span className="font-pixel text-sm text-amber-300">{player.gold}g</span>
+                            <span className="font-pixel text-sm text-amber-300">
+                                {player.gold}g
+                            </span>
                         </div>
                         <div className="rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2">
                             <span className="font-pixel text-xs text-stone-400">Owned:</span>
@@ -291,28 +321,45 @@ export default function BusinessIndex() {
                 </div>
 
                 {/* My Businesses Here */}
-                {my_businesses.filter((b) => b.location_type === location_type && b.location_id === location_id).length > 0 && (
+                {my_businesses.filter(
+                    (b) => b.location_type === location_type && b.location_id === location_id,
+                ).length > 0 && (
                     <div className="mb-6">
-                        <h2 className="mb-3 font-pixel text-lg text-green-400">Your Businesses Here</h2>
+                        <h2 className="mb-3 font-pixel text-lg text-green-400">
+                            Your Businesses Here
+                        </h2>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {my_businesses
-                                .filter((b) => b.location_type === location_type && b.location_id === location_id)
+                                .filter(
+                                    (b) =>
+                                        b.location_type === location_type &&
+                                        b.location_id === location_id,
+                                )
                                 .map((business) => (
-                                    <BusinessCard key={business.id} business={business} isOwner={true} />
+                                    <BusinessCard
+                                        key={business.id}
+                                        business={business}
+                                        isOwner={true}
+                                    />
                                 ))}
                         </div>
                     </div>
                 )}
 
                 {/* Local Businesses (other owners) */}
-                {local_businesses.filter((b) => !my_businesses.some((mb) => mb.id === b.id)).length > 0 && (
+                {local_businesses.filter((b) => !my_businesses.some((mb) => mb.id === b.id))
+                    .length > 0 && (
                     <div className="mb-6">
                         <h2 className="mb-3 font-pixel text-lg text-stone-300">Other Businesses</h2>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {local_businesses
                                 .filter((b) => !my_businesses.some((mb) => mb.id === b.id))
                                 .map((business) => (
-                                    <BusinessCard key={business.id} business={business} isOwner={false} />
+                                    <BusinessCard
+                                        key={business.id}
+                                        business={business}
+                                        isOwner={false}
+                                    />
                                 ))}
                         </div>
                     </div>
@@ -324,7 +371,8 @@ export default function BusinessIndex() {
                     {!canEstablishMore && (
                         <div className="mb-4 rounded-lg border-2 border-amber-600/50 bg-amber-900/20 p-3">
                             <p className="font-pixel text-xs text-amber-300">
-                                You own the maximum number of businesses ({max_businesses}). Close one to establish another.
+                                You own the maximum number of businesses ({max_businesses}). Close
+                                one to establish another.
                             </p>
                         </div>
                     )}
@@ -345,7 +393,9 @@ export default function BusinessIndex() {
                         <div className="flex flex-1 items-center justify-center py-12">
                             <div className="text-center">
                                 <Store className="mx-auto h-16 w-16 text-stone-600" />
-                                <p className="mt-3 font-pixel text-base text-stone-500">No business types available</p>
+                                <p className="mt-3 font-pixel text-base text-stone-500">
+                                    No business types available
+                                </p>
                                 <p className="font-pixel text-xs text-stone-600">
                                     You may need higher skill levels or be at a different location.
                                 </p>

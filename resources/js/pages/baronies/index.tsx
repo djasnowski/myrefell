@@ -1,8 +1,8 @@
-import { Head, Link } from '@inertiajs/react';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, Link } from "@inertiajs/react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Barony {
     id: number;
@@ -27,19 +27,19 @@ interface Props {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Baronies', href: '/baronies' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Baronies", href: "/baronies" },
 ];
 
 const biomeColors: Record<string, string> = {
-    plains: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    forest: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
-    tundra: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    coastal: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200',
-    desert: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
-    volcano: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    mountains: 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200',
-    swamps: 'bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200',
+    plains: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+    forest: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
+    tundra: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+    coastal: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200",
+    desert: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+    volcano: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+    mountains: "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200",
+    swamps: "bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200",
 };
 
 export default function BaroniesIndex({ baronies }: Props) {
@@ -66,7 +66,7 @@ export default function BaroniesIndex({ baronies }: Props) {
                                                 </span>
                                             )}
                                         </CardTitle>
-                                        <Badge className={biomeColors[barony.biome] || ''}>
+                                        <Badge className={biomeColors[barony.biome] || ""}>
                                             {barony.biome}
                                         </Badge>
                                     </div>
@@ -76,7 +76,9 @@ export default function BaroniesIndex({ baronies }: Props) {
                                     <div className="grid grid-cols-2 gap-4 text-sm">
                                         <div>
                                             <span className="text-muted-foreground">Kingdom:</span>
-                                            <p className="font-medium">{barony.kingdom?.name || 'None'}</p>
+                                            <p className="font-medium">
+                                                {barony.kingdom?.name || "None"}
+                                            </p>
                                         </div>
                                         <div>
                                             <span className="text-muted-foreground">Villages:</span>
@@ -87,8 +89,12 @@ export default function BaroniesIndex({ baronies }: Props) {
                                             <p className="font-medium">{barony.tax_rate}%</p>
                                         </div>
                                         <div>
-                                            <span className="text-muted-foreground">Coordinates:</span>
-                                            <p className="font-medium">({barony.coordinates.x}, {barony.coordinates.y})</p>
+                                            <span className="text-muted-foreground">
+                                                Coordinates:
+                                            </span>
+                                            <p className="font-medium">
+                                                ({barony.coordinates.x}, {barony.coordinates.y})
+                                            </p>
                                         </div>
                                     </div>
                                 </CardContent>

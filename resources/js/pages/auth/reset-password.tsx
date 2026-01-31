@@ -1,11 +1,11 @@
-import { Form, Head } from '@inertiajs/react';
-import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
-import AuthLayout from '@/layouts/auth-layout';
-import { update } from '@/routes/password';
+import { Form, Head } from "@inertiajs/react";
+import InputError from "@/components/input-error";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import AuthLayout from "@/layouts/auth-layout";
+import { update } from "@/routes/password";
 
 type Props = {
     token: string;
@@ -14,16 +14,13 @@ type Props = {
 
 export default function ResetPassword({ token, email }: Props) {
     return (
-        <AuthLayout
-            title="Reset password"
-            description="Please enter your new password below"
-        >
+        <AuthLayout title="Reset password" description="Please enter your new password below">
             <Head title="Reset password" />
 
             <Form
                 {...update.form()}
                 transform={(data) => ({ ...data, token, email })}
-                resetOnSuccess={['password', 'password_confirmation']}
+                resetOnSuccess={["password", "password_confirmation"]}
             >
                 {({ processing, errors }) => (
                     <div className="grid gap-6">
@@ -38,10 +35,7 @@ export default function ResetPassword({ token, email }: Props) {
                                 className="mt-1 block w-full"
                                 readOnly
                             />
-                            <InputError
-                                message={errors.email}
-                                className="mt-2"
-                            />
+                            <InputError message={errors.email} className="mt-2" />
                         </div>
 
                         <div className="grid gap-2">
@@ -59,9 +53,7 @@ export default function ResetPassword({ token, email }: Props) {
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="password_confirmation">
-                                Confirm password
-                            </Label>
+                            <Label htmlFor="password_confirmation">Confirm password</Label>
                             <Input
                                 id="password_confirmation"
                                 type="password"
@@ -70,10 +62,7 @@ export default function ResetPassword({ token, email }: Props) {
                                 className="mt-1 block w-full"
                                 placeholder="Confirm password"
                             />
-                            <InputError
-                                message={errors.password_confirmation}
-                                className="mt-2"
-                            />
+                            <InputError message={errors.password_confirmation} className="mt-2" />
                         </div>
 
                         <Button

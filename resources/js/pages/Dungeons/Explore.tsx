@@ -1,8 +1,8 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowDown, Cookie, Heart, Shield, Skull, Sword, Trophy, X, Zap } from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from "@inertiajs/react";
+import { ArrowDown, Cookie, Heart, Shield, Skull, Sword, Trophy, X, Zap } from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface DungeonFloor {
     id: number;
@@ -69,9 +69,9 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Dungeons', href: '/dungeons' },
-    { title: 'Explore', href: '#' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Dungeons", href: "/dungeons" },
+    { title: "Explore", href: "#" },
 ];
 
 export default function DungeonExplore() {
@@ -101,11 +101,13 @@ export default function DungeonExplore() {
         setLastResult(null);
 
         try {
-            const response = await fetch('/dungeons/fight', {
-                method: 'POST',
+            const response = await fetch("/dungeons/fight", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
             });
 
@@ -118,20 +120,20 @@ export default function DungeonExplore() {
                     floor_cleared: data.data?.floor_cleared,
                 });
 
-                if (data.data?.status === 'completed' || data.data?.status === 'failed') {
+                if (data.data?.status === "completed" || data.data?.status === "failed") {
                     router.reload();
                 } else {
-                    router.reload({ only: ['session', 'player_stats'] });
+                    router.reload({ only: ["session", "player_stats"] });
                 }
             } else {
-                if (data.data?.status === 'failed') {
+                if (data.data?.status === "failed") {
                     router.reload();
                 } else {
                     setError(data.message);
                 }
             }
         } catch {
-            setError('Failed to fight monster');
+            setError("Failed to fight monster");
         } finally {
             setIsFighting(false);
         }
@@ -145,11 +147,13 @@ export default function DungeonExplore() {
         setLastResult(null);
 
         try {
-            const response = await fetch('/dungeons/next-floor', {
-                method: 'POST',
+            const response = await fetch("/dungeons/next-floor", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
             });
 
@@ -162,7 +166,7 @@ export default function DungeonExplore() {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to advance');
+            setError("Failed to advance");
         } finally {
             setIsAdvancing(false);
         }
@@ -176,11 +180,13 @@ export default function DungeonExplore() {
         setShowFoodMenu(false);
 
         try {
-            const response = await fetch('/dungeons/eat', {
-                method: 'POST',
+            const response = await fetch("/dungeons/eat", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify({ inventory_slot_id: inventorySlotId }),
             });
@@ -189,12 +195,12 @@ export default function DungeonExplore() {
 
             if (data.success) {
                 setLastResult({ message: data.message });
-                router.reload({ only: ['player_stats', 'food'] });
+                router.reload({ only: ["player_stats", "food"] });
             } else {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to eat food');
+            setError("Failed to eat food");
         } finally {
             setIsEating(false);
         }
@@ -202,24 +208,31 @@ export default function DungeonExplore() {
 
     const abandonDungeon = async () => {
         if (isAbandoning) return;
-        if (!confirm('Are you sure you want to abandon this dungeon? You will lose all accumulated rewards.')) return;
+        if (
+            !confirm(
+                "Are you sure you want to abandon this dungeon? You will lose all accumulated rewards.",
+            )
+        )
+            return;
 
         setIsAbandoning(true);
         setError(null);
 
         try {
-            const response = await fetch('/dungeons/abandon', {
-                method: 'POST',
+            const response = await fetch("/dungeons/abandon", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
             });
 
             await response.json();
             router.reload();
         } catch {
-            setError('Failed to abandon dungeon');
+            setError("Failed to abandon dungeon");
         } finally {
             setIsAbandoning(false);
         }
@@ -234,7 +247,7 @@ export default function DungeonExplore() {
                     <div>
                         <h1 className="font-pixel text-2xl text-amber-400">{dungeon.name}</h1>
                         <p className="font-pixel text-sm text-stone-400">
-                            Floor {session.current_floor} of {dungeon.floor_count} -{' '}
+                            Floor {session.current_floor} of {dungeon.floor_count} -{" "}
                             {currentFloor?.display_name || `Floor ${session.current_floor}`}
                         </p>
                     </div>
@@ -279,7 +292,9 @@ export default function DungeonExplore() {
                                 <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
                                     <div
                                         className="h-full bg-gradient-to-r from-red-600 to-red-400"
-                                        style={{ width: `${(player_stats.hp / player_stats.max_hp) * 100}%` }}
+                                        style={{
+                                            width: `${(player_stats.hp / player_stats.max_hp) * 100}%`,
+                                        }}
                                     />
                                 </div>
                             </div>
@@ -289,7 +304,9 @@ export default function DungeonExplore() {
                                     <span className="font-pixel text-xs text-stone-300">
                                         {player_stats.attack}
                                         {equipment.atk_bonus > 0 && (
-                                            <span className="text-green-400">+{equipment.atk_bonus}</span>
+                                            <span className="text-green-400">
+                                                +{equipment.atk_bonus}
+                                            </span>
                                         )}
                                     </span>
                                 </div>
@@ -298,7 +315,9 @@ export default function DungeonExplore() {
                                     <span className="font-pixel text-xs text-stone-300">
                                         {player_stats.strength}
                                         {equipment.str_bonus > 0 && (
-                                            <span className="text-green-400">+{equipment.str_bonus}</span>
+                                            <span className="text-green-400">
+                                                +{equipment.str_bonus}
+                                            </span>
                                         )}
                                     </span>
                                 </div>
@@ -307,7 +326,9 @@ export default function DungeonExplore() {
                                     <span className="font-pixel text-xs text-stone-300">
                                         {player_stats.defense}
                                         {equipment.def_bonus > 0 && (
-                                            <span className="text-green-400">+{equipment.def_bonus}</span>
+                                            <span className="text-green-400">
+                                                +{equipment.def_bonus}
+                                            </span>
                                         )}
                                     </span>
                                 </div>
@@ -320,7 +341,9 @@ export default function DungeonExplore() {
                         <h3 className="mb-3 font-pixel text-sm text-amber-300">Floor Progress</h3>
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
-                                <span className="font-pixel text-xs text-stone-400">Monsters Defeated</span>
+                                <span className="font-pixel text-xs text-stone-400">
+                                    Monsters Defeated
+                                </span>
                                 <span className="font-pixel text-sm text-white">
                                     {session.monsters_defeated} / {session.total_monsters_on_floor}
                                 </span>
@@ -335,7 +358,9 @@ export default function DungeonExplore() {
                             </div>
                             {currentFloor?.is_boss_floor && (
                                 <div className="rounded bg-red-900/30 p-2 text-center">
-                                    <span className="font-pixel text-xs text-red-400">Boss Floor</span>
+                                    <span className="font-pixel text-xs text-red-400">
+                                        Boss Floor
+                                    </span>
                                 </div>
                             )}
                         </div>
@@ -354,7 +379,9 @@ export default function DungeonExplore() {
                         </div>
                         <div className="flex items-center gap-2">
                             <Trophy className="h-4 w-4 text-yellow-400" />
-                            <span className="font-pixel text-sm text-stone-300">{session.gold_accumulated} Gold</span>
+                            <span className="font-pixel text-sm text-stone-300">
+                                {session.gold_accumulated} Gold
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -375,7 +402,10 @@ export default function DungeonExplore() {
                                 +{lastResult.rewards.xp} XP, +{lastResult.rewards.gold} Gold
                                 {lastResult.rewards.items.length > 0 && (
                                     <span>
-                                        , Loot: {lastResult.rewards.items.map((i) => `${i.name} x${i.quantity}`).join(', ')}
+                                        , Loot:{" "}
+                                        {lastResult.rewards.items
+                                            .map((i) => `${i.name} x${i.quantity}`)
+                                            .join(", ")}
                                     </span>
                                 )}
                             </div>
@@ -390,7 +420,9 @@ export default function DungeonExplore() {
                         <div className="rounded-lg border border-stone-700 bg-stone-800 p-4">
                             <h4 className="mb-3 font-pixel text-sm text-amber-300">Select Food</h4>
                             {food.length === 0 ? (
-                                <p className="font-pixel text-xs text-stone-500">No food in inventory</p>
+                                <p className="font-pixel text-xs text-stone-500">
+                                    No food in inventory
+                                </p>
                             ) : (
                                 <div className="grid gap-2">
                                     {food.map((item) => (
@@ -403,7 +435,9 @@ export default function DungeonExplore() {
                                             <span className="font-pixel text-xs text-stone-300">
                                                 {item.name} x{item.quantity}
                                             </span>
-                                            <span className="font-pixel text-xs text-green-400">+{item.hp_bonus} HP</span>
+                                            <span className="font-pixel text-xs text-green-400">
+                                                +{item.hp_bonus} HP
+                                            </span>
                                         </button>
                                     ))}
                                 </div>
@@ -425,8 +459,8 @@ export default function DungeonExplore() {
                             disabled={isEating || food.length === 0}
                             className={`flex-1 rounded-lg border px-4 py-3 font-pixel text-sm transition ${
                                 food.length > 0
-                                    ? 'border-green-500/50 bg-green-900/30 text-green-400 hover:bg-green-900/50'
-                                    : 'cursor-not-allowed border-stone-600 bg-stone-800 text-stone-500'
+                                    ? "border-green-500/50 bg-green-900/30 text-green-400 hover:bg-green-900/50"
+                                    : "cursor-not-allowed border-stone-600 bg-stone-800 text-stone-500"
                             }`}
                         >
                             <Cookie className="mr-2 inline h-4 w-4" />
@@ -447,7 +481,7 @@ export default function DungeonExplore() {
                                     className="flex-1 rounded-lg bg-amber-600 px-4 py-3 font-pixel text-sm text-white transition hover:bg-amber-500"
                                 >
                                     <ArrowDown className="mr-2 inline h-4 w-4" />
-                                    {isAdvancing ? 'Descending...' : 'Next Floor'}
+                                    {isAdvancing ? "Descending..." : "Next Floor"}
                                 </button>
                             )
                         ) : (
@@ -456,12 +490,12 @@ export default function DungeonExplore() {
                                 disabled={isFighting || player_stats.hp <= 0}
                                 className={`flex-1 rounded-lg px-4 py-3 font-pixel text-sm transition ${
                                     player_stats.hp > 0 && !isFighting
-                                        ? 'bg-red-600 text-white hover:bg-red-500'
-                                        : 'cursor-not-allowed bg-stone-700 text-stone-500'
+                                        ? "bg-red-600 text-white hover:bg-red-500"
+                                        : "cursor-not-allowed bg-stone-700 text-stone-500"
                                 }`}
                             >
                                 <Sword className="mr-2 inline h-4 w-4" />
-                                {isFighting ? 'Fighting...' : 'Fight Monster'}
+                                {isFighting ? "Fighting..." : "Fight Monster"}
                             </button>
                         )}
                     </div>

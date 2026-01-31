@@ -8,14 +8,14 @@ import {
     Waves,
     Wind,
     Zap,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface Disaster {
     id: number;
     type: string;
     name: string;
-    severity: 'minor' | 'moderate' | 'severe' | 'catastrophic';
-    status: 'active' | 'ending';
+    severity: "minor" | "moderate" | "severe" | "catastrophic";
+    status: "active" | "ending";
     started_at: string;
     days_active: number;
     buildings_damaged: number;
@@ -41,31 +41,31 @@ const DISASTER_ICONS: Record<string, typeof Flame> = {
 
 const SEVERITY_CONFIG = {
     minor: {
-        color: 'text-yellow-400',
-        bg: 'bg-yellow-900/30',
-        border: 'border-yellow-600/50',
+        color: "text-yellow-400",
+        bg: "bg-yellow-900/30",
+        border: "border-yellow-600/50",
     },
     moderate: {
-        color: 'text-orange-400',
-        bg: 'bg-orange-900/30',
-        border: 'border-orange-600/50',
+        color: "text-orange-400",
+        bg: "bg-orange-900/30",
+        border: "border-orange-600/50",
     },
     severe: {
-        color: 'text-red-400',
-        bg: 'bg-red-900/30',
-        border: 'border-red-600/50',
+        color: "text-red-400",
+        bg: "bg-red-900/30",
+        border: "border-red-600/50",
     },
     catastrophic: {
-        color: 'text-red-300',
-        bg: 'bg-red-800/50',
-        border: 'border-red-500/50',
+        color: "text-red-300",
+        bg: "bg-red-800/50",
+        border: "border-red-500/50",
     },
 };
 
 export default function DisasterWidget({ disasters, compact = false }: Props) {
     if (disasters.length === 0) return null;
 
-    const activeDisasters = disasters.filter(d => d.status === 'active');
+    const activeDisasters = disasters.filter((d) => d.status === "active");
 
     if (compact) {
         return (
@@ -113,17 +113,23 @@ export default function DisasterWidget({ disasters, compact = false }: Props) {
                                         <span className={`font-pixel text-sm ${config.color}`}>
                                             {disaster.name}
                                         </span>
-                                        <span className={`rounded px-1.5 py-0.5 font-pixel text-[10px] capitalize ${config.bg} ${config.color}`}>
+                                        <span
+                                            className={`rounded px-1.5 py-0.5 font-pixel text-[10px] capitalize ${config.bg} ${config.color}`}
+                                        >
                                             {disaster.severity}
                                         </span>
                                     </div>
                                     <div className="mt-1 flex items-center gap-3 font-pixel text-[10px] text-stone-500">
                                         <span>Day {disaster.days_active}</span>
                                         {disaster.buildings_damaged > 0 && (
-                                            <span>{disaster.buildings_damaged} buildings damaged</span>
+                                            <span>
+                                                {disaster.buildings_damaged} buildings damaged
+                                            </span>
                                         )}
                                         {disaster.casualties > 0 && (
-                                            <span className="text-red-400">{disaster.casualties} casualties</span>
+                                            <span className="text-red-400">
+                                                {disaster.casualties} casualties
+                                            </span>
                                         )}
                                     </div>
                                 </div>

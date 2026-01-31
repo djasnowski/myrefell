@@ -1,8 +1,21 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowRight, ArrowUp, Beer, Check, ChefHat, Coins, Loader2, Lock, MessageCircle, Package, X, Zap } from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from "@inertiajs/react";
+import {
+    ArrowRight,
+    ArrowUp,
+    Beer,
+    Check,
+    ChefHat,
+    Coins,
+    Loader2,
+    Lock,
+    MessageCircle,
+    Package,
+    X,
+    Zap,
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Activity {
     id: number;
@@ -83,10 +96,10 @@ function RecipeCard({
         <div
             className={`rounded-lg border p-3 transition ${
                 recipe.is_locked
-                    ? 'border-stone-700 bg-stone-800/30 opacity-60'
+                    ? "border-stone-700 bg-stone-800/30 opacity-60"
                     : recipe.can_make
-                      ? 'border-orange-600/50 bg-orange-900/20'
-                      : 'border-stone-700 bg-stone-800/50'
+                      ? "border-orange-600/50 bg-orange-900/20"
+                      : "border-stone-700 bg-stone-800/50"
             }`}
         >
             <div className="mb-2 flex items-center justify-between">
@@ -100,7 +113,7 @@ function RecipeCard({
                     <div key={idx} className="flex items-center justify-between text-stone-400">
                         <span className="font-pixel text-[10px]">{material.name}</span>
                         <span
-                            className={`font-pixel text-[10px] ${material.has_enough ? 'text-green-400' : 'text-red-400'}`}
+                            className={`font-pixel text-[10px] ${material.has_enough ? "text-green-400" : "text-red-400"}`}
                         >
                             {material.have}/{material.required}
                         </span>
@@ -122,7 +135,9 @@ function RecipeCard({
                     <Zap className="h-3 w-3 text-yellow-500" />
                     {recipe.energy_cost}
                 </span>
-                <span className="font-pixel text-[10px] text-amber-400">+{recipe.xp_reward} XP</span>
+                <span className="font-pixel text-[10px] text-amber-400">
+                    +{recipe.xp_reward} XP
+                </span>
             </div>
 
             {/* Cook Button */}
@@ -138,8 +153,8 @@ function RecipeCard({
                     disabled={!recipe.can_make || loading !== null}
                     className={`flex w-full items-center justify-center gap-2 rounded-md px-2 py-1.5 font-pixel text-xs transition ${
                         recipe.can_make && !loading
-                            ? 'bg-orange-600 text-stone-900 hover:bg-orange-500'
-                            : 'cursor-not-allowed bg-stone-700 text-stone-500'
+                            ? "bg-orange-600 text-stone-900 hover:bg-orange-500"
+                            : "cursor-not-allowed bg-stone-700 text-stone-500"
                     }`}
                 >
                     {isLoading ? (
@@ -172,17 +187,17 @@ export default function TavernIndex() {
     const [currentEnergy, setCurrentEnergy] = useState(player.energy);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
+        { title: "Dashboard", href: "/dashboard" },
         ...(location
             ? [
                   { title: location.name, href: `/${location.type}s/${location.id}` },
-                  { title: 'Tavern', href: '#' },
+                  { title: "Tavern", href: "#" },
               ]
-            : [{ title: 'Tavern', href: '#' }]),
+            : [{ title: "Tavern", href: "#" }]),
     ];
 
     // Build the correct URL based on location type
-    const baseUrl = location ? `/${location.type}s/${location.id}/tavern` : '/villages/1/tavern';
+    const baseUrl = location ? `/${location.type}s/${location.id}/tavern` : "/villages/1/tavern";
 
     const handleRest = () => {
         setLoading(true);
@@ -195,7 +210,7 @@ export default function TavernIndex() {
                     router.reload();
                 },
                 onFinish: () => setLoading(false),
-            }
+            },
         );
     };
 
@@ -205,10 +220,13 @@ export default function TavernIndex() {
 
         try {
             const response = await fetch(`${baseUrl}/cook`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
                 },
                 body: JSON.stringify({ recipe: recipeId }),
             });
@@ -221,9 +239,9 @@ export default function TavernIndex() {
             }
 
             // Reload to update materials
-            router.reload({ only: ['cooking', 'player', 'sidebar'] });
+            router.reload({ only: ["cooking", "player", "sidebar"] });
         } catch {
-            setCookResult({ success: false, message: 'An error occurred' });
+            setCookResult({ success: false, message: "An error occurred" });
         } finally {
             setCookingLoading(null);
         }
@@ -231,7 +249,7 @@ export default function TavernIndex() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Tavern - ${location?.name || 'Unknown'}`} />
+            <Head title={`Tavern - ${location?.name || "Unknown"}`} />
             <div className="flex h-full flex-1 flex-col overflow-hidden p-4">
                 {/* Header */}
                 <div className="mb-6 flex items-center justify-between">
@@ -255,7 +273,9 @@ export default function TavernIndex() {
                         </div>
                         <div className="flex items-center gap-2 rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2">
                             <Coins className="h-4 w-4 text-amber-400" />
-                            <span className="font-pixel text-sm text-amber-300">{player.gold}g</span>
+                            <span className="font-pixel text-sm text-amber-300">
+                                {player.gold}g
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -264,7 +284,9 @@ export default function TavernIndex() {
                 <div className="mb-6 grid gap-6 lg:grid-cols-4">
                     {/* Rest Section */}
                     <div className="rounded-xl border-2 border-amber-600/50 bg-amber-900/20 p-6">
-                        <h2 className="mb-4 font-pixel text-lg text-amber-300">Rest & Recuperate</h2>
+                        <h2 className="mb-4 font-pixel text-lg text-amber-300">
+                            Rest & Recuperate
+                        </h2>
                         <p className="mb-4 text-sm text-stone-300">
                             Sit by the fire and recover your energy.
                         </p>
@@ -273,14 +295,18 @@ export default function TavernIndex() {
                             <div className="rounded-lg bg-stone-800/50 p-3 text-center">
                                 <div className="flex items-center justify-center gap-1">
                                     <Coins className="h-4 w-4 text-amber-400" />
-                                    <span className="font-pixel text-lg text-amber-300">{rest.cost}g</span>
+                                    <span className="font-pixel text-lg text-amber-300">
+                                        {rest.cost}g
+                                    </span>
                                 </div>
                                 <div className="font-pixel text-[10px] text-stone-500">Cost</div>
                             </div>
                             <div className="rounded-lg bg-stone-800/50 p-3 text-center">
                                 <div className="flex items-center justify-center gap-1">
                                     <Zap className="h-4 w-4 text-yellow-400" />
-                                    <span className="font-pixel text-lg text-yellow-300">+{rest.energy_restored}</span>
+                                    <span className="font-pixel text-lg text-yellow-300">
+                                        +{rest.energy_restored}
+                                    </span>
                                 </div>
                                 <div className="font-pixel text-[10px] text-stone-500">Energy</div>
                             </div>
@@ -288,7 +314,9 @@ export default function TavernIndex() {
 
                         {currentEnergy >= player.max_energy ? (
                             <div className="rounded-lg bg-green-900/30 p-3 text-center">
-                                <span className="font-pixel text-sm text-green-300">Fully rested!</span>
+                                <span className="font-pixel text-sm text-green-300">
+                                    Fully rested!
+                                </span>
                             </div>
                         ) : player.gold < rest.cost ? (
                             <div className="rounded-lg bg-red-900/30 p-3 text-center">
@@ -330,7 +358,9 @@ export default function TavernIndex() {
                         {cookResult && (
                             <div
                                 className={`mb-4 rounded-lg border p-3 ${
-                                    cookResult.success ? 'border-green-600/50 bg-green-900/20' : 'border-red-600/50 bg-red-900/20'
+                                    cookResult.success
+                                        ? "border-green-600/50 bg-green-900/20"
+                                        : "border-red-600/50 bg-red-900/20"
                                 }`}
                             >
                                 {cookResult.success && cookResult.item ? (
@@ -338,7 +368,8 @@ export default function TavernIndex() {
                                         <Package className="h-5 w-5 text-green-400" />
                                         <div>
                                             <div className="font-pixel text-sm text-green-300">
-                                                Cooked {cookResult.item.quantity}x {cookResult.item.name}
+                                                Cooked {cookResult.item.quantity}x{" "}
+                                                {cookResult.item.name}
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <span className="font-pixel text-[10px] text-amber-400">
@@ -354,7 +385,9 @@ export default function TavernIndex() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <span className="font-pixel text-sm text-red-400">{cookResult.message}</span>
+                                    <span className="font-pixel text-sm text-red-400">
+                                        {cookResult.message}
+                                    </span>
                                 )}
                             </div>
                         )}
@@ -383,10 +416,7 @@ export default function TavernIndex() {
                     {recent_activity.length > 0 ? (
                         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                             {recent_activity.slice(0, 8).map((activity) => (
-                                <div
-                                    key={activity.id}
-                                    className="rounded-lg bg-stone-900/50 p-3"
-                                >
+                                <div key={activity.id} className="rounded-lg bg-stone-900/50 p-3">
                                     <p className="text-sm text-stone-300">{activity.description}</p>
                                     <p className="mt-1 font-pixel text-[10px] text-stone-500">
                                         {activity.time_ago}

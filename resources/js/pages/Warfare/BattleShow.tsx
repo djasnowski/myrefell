@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from "@inertiajs/react";
 import {
     ArrowLeft,
     Calendar,
@@ -13,9 +13,9 @@ import {
     Target,
     Trophy,
     Users,
-} from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Location {
     id?: number;
@@ -86,39 +86,39 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Warfare', href: '#' },
-    { title: 'Wars', href: '/warfare/wars' },
-    { title: 'Battle', href: '#' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Warfare", href: "#" },
+    { title: "Wars", href: "/warfare/wars" },
+    { title: "Battle", href: "#" },
 ];
 
 const statusColors: Record<string, { bg: string; text: string; label: string }> = {
-    ongoing: { bg: 'bg-amber-900/30', text: 'text-amber-400', label: 'Ongoing' },
-    attacker_victory: { bg: 'bg-red-900/30', text: 'text-red-400', label: 'Attacker Victory' },
-    defender_victory: { bg: 'bg-blue-900/30', text: 'text-blue-400', label: 'Defender Victory' },
-    draw: { bg: 'bg-stone-900/30', text: 'text-stone-400', label: 'Draw' },
-    inconclusive: { bg: 'bg-stone-900/30', text: 'text-stone-500', label: 'Inconclusive' },
+    ongoing: { bg: "bg-amber-900/30", text: "text-amber-400", label: "Ongoing" },
+    attacker_victory: { bg: "bg-red-900/30", text: "text-red-400", label: "Attacker Victory" },
+    defender_victory: { bg: "bg-blue-900/30", text: "text-blue-400", label: "Defender Victory" },
+    draw: { bg: "bg-stone-900/30", text: "text-stone-400", label: "Draw" },
+    inconclusive: { bg: "bg-stone-900/30", text: "text-stone-500", label: "Inconclusive" },
 };
 
 const battleTypeLabels: Record<string, string> = {
-    field: 'Field Battle',
-    siege_assault: 'Siege Assault',
-    naval: 'Naval Battle',
-    skirmish: 'Skirmish',
+    field: "Field Battle",
+    siege_assault: "Siege Assault",
+    naval: "Naval Battle",
+    skirmish: "Skirmish",
 };
 
 const phaseLabels: Record<string, string> = {
-    engagement: 'Engagement',
-    melee: 'Melee',
-    pursuit: 'Pursuit',
-    aftermath: 'Aftermath',
+    engagement: "Engagement",
+    melee: "Melee",
+    pursuit: "Pursuit",
+    aftermath: "Aftermath",
 };
 
 const outcomeLabels: Record<string, { text: string; color: string }> = {
-    victory: { text: 'Victory', color: 'text-green-400' },
-    defeat: { text: 'Defeat', color: 'text-red-400' },
-    routed: { text: 'Routed', color: 'text-red-500' },
-    withdrew: { text: 'Withdrew', color: 'text-yellow-400' },
+    victory: { text: "Victory", color: "text-green-400" },
+    defeat: { text: "Defeat", color: "text-red-400" },
+    routed: { text: "Routed", color: "text-red-500" },
+    withdrew: { text: "Withdrew", color: "text-yellow-400" },
 };
 
 const locationTypeIcons: Record<string, typeof Castle> = {
@@ -128,18 +128,21 @@ const locationTypeIcons: Record<string, typeof Castle> = {
 };
 
 export default function BattleShow() {
-    const { battle, attackers, defenders, attacker_commander, defender_commander, war } = usePage<PageProps>().props;
+    const { battle, attackers, defenders, attacker_commander, defender_commander, war } =
+        usePage<PageProps>().props;
 
     const status = statusColors[battle.status] || statusColors.ongoing;
     const LocationIcon = locationTypeIcons[battle.location.type] || MapPin;
 
-    const attackerCasualtyRate = battle.attacker_troops_start > 0
-        ? Math.round((battle.attacker_casualties / battle.attacker_troops_start) * 100)
-        : 0;
+    const attackerCasualtyRate =
+        battle.attacker_troops_start > 0
+            ? Math.round((battle.attacker_casualties / battle.attacker_troops_start) * 100)
+            : 0;
 
-    const defenderCasualtyRate = battle.defender_troops_start > 0
-        ? Math.round((battle.defender_casualties / battle.defender_troops_start) * 100)
-        : 0;
+    const defenderCasualtyRate =
+        battle.defender_troops_start > 0
+            ? Math.round((battle.defender_casualties / battle.defender_troops_start) * 100)
+            : 0;
 
     const renderProgressBar = (value: number, maxValue: number, colorClass: string) => {
         const percentage = Math.min(100, Math.max(0, (value / maxValue) * 100));
@@ -157,7 +160,7 @@ export default function BattleShow() {
         return Object.entries(modifiers)
             .filter(([, value]) => value !== 0)
             .map(([key, value]) => ({
-                name: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                name: key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
                 value: value > 0 ? `+${value}%` : `${value}%`,
                 isPositive: value > 0,
             }));
@@ -175,11 +178,11 @@ export default function BattleShow() {
                     <div>
                         <div className="mb-2 flex items-center gap-2">
                             <Link
-                                href={war ? `/warfare/wars/${war.id}` : '/warfare/wars'}
+                                href={war ? `/warfare/wars/${war.id}` : "/warfare/wars"}
                                 className="flex items-center gap-1 font-pixel text-xs text-stone-400 transition hover:text-stone-300"
                             >
                                 <ArrowLeft className="h-3 w-3" />
-                                {war ? `Back to ${war.name}` : 'Back to Wars'}
+                                {war ? `Back to ${war.name}` : "Back to Wars"}
                             </Link>
                         </div>
                         <div className="flex items-center gap-3">
@@ -203,12 +206,15 @@ export default function BattleShow() {
                         </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                        <span className={`rounded px-3 py-1.5 font-pixel text-xs ${status.bg} ${status.text}`}>
+                        <span
+                            className={`rounded px-3 py-1.5 font-pixel text-xs ${status.bg} ${status.text}`}
+                        >
                             {status.label}
                         </span>
                         {battle.is_ongoing && (
                             <span className="font-pixel text-xs text-stone-400">
-                                Day {battle.day} | Phase: {phaseLabels[battle.phase] || battle.phase}
+                                Day {battle.day} | Phase:{" "}
+                                {phaseLabels[battle.phase] || battle.phase}
                             </span>
                         )}
                     </div>
@@ -227,7 +233,7 @@ export default function BattleShow() {
                                 {war.name}
                             </Link>
                             <span className="rounded bg-stone-700/50 px-2 py-0.5 text-[10px] capitalize text-stone-400">
-                                {war.status.replace('_', ' ')}
+                                {war.status.replace("_", " ")}
                             </span>
                         </div>
                     </div>
@@ -244,7 +250,7 @@ export default function BattleShow() {
                                     {terrainMods.map((mod, idx) => (
                                         <span
                                             key={idx}
-                                            className={`rounded px-2 py-0.5 ${mod.isPositive ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}
+                                            className={`rounded px-2 py-0.5 ${mod.isPositive ? "bg-green-900/30 text-green-400" : "bg-red-900/30 text-red-400"}`}
                                         >
                                             {mod.name} {mod.value}
                                         </span>
@@ -257,7 +263,7 @@ export default function BattleShow() {
                                     {weatherMods.map((mod, idx) => (
                                         <span
                                             key={idx}
-                                            className={`rounded px-2 py-0.5 ${mod.isPositive ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}
+                                            className={`rounded px-2 py-0.5 ${mod.isPositive ? "bg-green-900/30 text-green-400" : "bg-red-900/30 text-red-400"}`}
                                         >
                                             {mod.name} {mod.value}
                                         </span>
@@ -277,7 +283,7 @@ export default function BattleShow() {
                                 <Sword className="h-5 w-5 text-red-400" />
                                 <h2 className="font-pixel text-lg text-red-300">Attackers</h2>
                             </div>
-                            {battle.status === 'attacker_victory' && (
+                            {battle.status === "attacker_victory" && (
                                 <Trophy className="h-5 w-5 text-amber-400" />
                             )}
                         </div>
@@ -285,18 +291,26 @@ export default function BattleShow() {
                         {/* Commander */}
                         <div className="mb-3 rounded-lg bg-stone-900/50 p-3">
                             <div className="font-pixel text-xs text-stone-400">Commander</div>
-                            <div className="font-pixel text-sm text-white">{attacker_commander || 'Unknown'}</div>
+                            <div className="font-pixel text-sm text-white">
+                                {attacker_commander || "Unknown"}
+                            </div>
                         </div>
 
                         {/* Force Stats */}
                         <div className="mb-3 grid grid-cols-2 gap-3">
                             <div className="rounded-lg bg-stone-900/30 p-2 text-center">
                                 <div className="font-pixel text-[10px] text-stone-400">Initial</div>
-                                <div className="font-pixel text-lg text-white">{battle.attacker_troops_start}</div>
+                                <div className="font-pixel text-lg text-white">
+                                    {battle.attacker_troops_start}
+                                </div>
                             </div>
                             <div className="rounded-lg bg-stone-900/30 p-2 text-center">
-                                <div className="font-pixel text-[10px] text-stone-400">Remaining</div>
-                                <div className="font-pixel text-lg text-green-400">{battle.attacker_remaining}</div>
+                                <div className="font-pixel text-[10px] text-stone-400">
+                                    Remaining
+                                </div>
+                                <div className="font-pixel text-lg text-green-400">
+                                    {battle.attacker_remaining}
+                                </div>
                             </div>
                         </div>
 
@@ -311,19 +325,22 @@ export default function BattleShow() {
                                     {battle.attacker_casualties} ({attackerCasualtyRate}%)
                                 </span>
                             </div>
-                            {renderProgressBar(battle.attacker_casualties, battle.attacker_troops_start, 'bg-red-500')}
+                            {renderProgressBar(
+                                battle.attacker_casualties,
+                                battle.attacker_troops_start,
+                                "bg-red-500",
+                            )}
                         </div>
 
                         {/* Participating Armies */}
                         {attackers.length > 0 && (
                             <div>
-                                <div className="mb-2 font-pixel text-xs text-stone-400">Participating Armies</div>
+                                <div className="mb-2 font-pixel text-xs text-stone-400">
+                                    Participating Armies
+                                </div>
                                 <div className="space-y-2">
                                     {attackers.map((p) => (
-                                        <div
-                                            key={p.id}
-                                            className="rounded-lg bg-stone-900/50 p-2"
-                                        >
+                                        <div key={p.id} className="rounded-lg bg-stone-900/50 p-2">
                                             <div className="flex items-center justify-between">
                                                 <div>
                                                     <div className="flex items-center gap-2">
@@ -341,35 +358,54 @@ export default function BattleShow() {
                                                     </div>
                                                 </div>
                                                 {p.outcome && (
-                                                    <span className={`font-pixel text-xs ${outcomeLabels[p.outcome]?.color || 'text-stone-400'}`}>
-                                                        {outcomeLabels[p.outcome]?.text || p.outcome}
+                                                    <span
+                                                        className={`font-pixel text-xs ${outcomeLabels[p.outcome]?.color || "text-stone-400"}`}
+                                                    >
+                                                        {outcomeLabels[p.outcome]?.text ||
+                                                            p.outcome}
                                                     </span>
                                                 )}
                                             </div>
                                             <div className="mt-2 grid grid-cols-3 gap-2 font-pixel text-[10px]">
                                                 <div>
-                                                    <span className="text-stone-500">Troops:</span>{' '}
-                                                    <span className="text-white">{p.troops_committed}</span>
+                                                    <span className="text-stone-500">Troops:</span>{" "}
+                                                    <span className="text-white">
+                                                        {p.troops_committed}
+                                                    </span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-stone-500">Lost:</span>{' '}
-                                                    <span className="text-red-400">{p.casualties}</span>
+                                                    <span className="text-stone-500">Lost:</span>{" "}
+                                                    <span className="text-red-400">
+                                                        {p.casualties}
+                                                    </span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-stone-500">Rate:</span>{' '}
-                                                    <span className="text-amber-400">{Math.round(p.casualty_rate)}%</span>
+                                                    <span className="text-stone-500">Rate:</span>{" "}
+                                                    <span className="text-amber-400">
+                                                        {Math.round(p.casualty_rate)}%
+                                                    </span>
                                                 </div>
                                             </div>
                                             {p.morale_at_end !== null && (
                                                 <div className="mt-1 flex items-center gap-1 font-pixel text-[10px]">
                                                     <Heart className="h-3 w-3 text-red-400" />
                                                     <span className="text-stone-500">Morale:</span>
-                                                    <span className="text-white">{p.morale_at_start}%</span>
+                                                    <span className="text-white">
+                                                        {p.morale_at_start}%
+                                                    </span>
                                                     <span className="text-stone-500">→</span>
-                                                    <span className={p.morale_at_end >= 50 ? 'text-green-400' : 'text-red-400'}>
+                                                    <span
+                                                        className={
+                                                            p.morale_at_end >= 50
+                                                                ? "text-green-400"
+                                                                : "text-red-400"
+                                                        }
+                                                    >
                                                         {p.morale_at_end}%
                                                     </span>
-                                                    <span className="text-stone-500">(-{p.morale_loss})</span>
+                                                    <span className="text-stone-500">
+                                                        (-{p.morale_loss})
+                                                    </span>
                                                 </div>
                                             )}
                                         </div>
@@ -386,7 +422,7 @@ export default function BattleShow() {
                                 <Shield className="h-5 w-5 text-blue-400" />
                                 <h2 className="font-pixel text-lg text-blue-300">Defenders</h2>
                             </div>
-                            {battle.status === 'defender_victory' && (
+                            {battle.status === "defender_victory" && (
                                 <Trophy className="h-5 w-5 text-amber-400" />
                             )}
                         </div>
@@ -394,18 +430,26 @@ export default function BattleShow() {
                         {/* Commander */}
                         <div className="mb-3 rounded-lg bg-stone-900/50 p-3">
                             <div className="font-pixel text-xs text-stone-400">Commander</div>
-                            <div className="font-pixel text-sm text-white">{defender_commander || 'Unknown'}</div>
+                            <div className="font-pixel text-sm text-white">
+                                {defender_commander || "Unknown"}
+                            </div>
                         </div>
 
                         {/* Force Stats */}
                         <div className="mb-3 grid grid-cols-2 gap-3">
                             <div className="rounded-lg bg-stone-900/30 p-2 text-center">
                                 <div className="font-pixel text-[10px] text-stone-400">Initial</div>
-                                <div className="font-pixel text-lg text-white">{battle.defender_troops_start}</div>
+                                <div className="font-pixel text-lg text-white">
+                                    {battle.defender_troops_start}
+                                </div>
                             </div>
                             <div className="rounded-lg bg-stone-900/30 p-2 text-center">
-                                <div className="font-pixel text-[10px] text-stone-400">Remaining</div>
-                                <div className="font-pixel text-lg text-green-400">{battle.defender_remaining}</div>
+                                <div className="font-pixel text-[10px] text-stone-400">
+                                    Remaining
+                                </div>
+                                <div className="font-pixel text-lg text-green-400">
+                                    {battle.defender_remaining}
+                                </div>
                             </div>
                         </div>
 
@@ -420,19 +464,22 @@ export default function BattleShow() {
                                     {battle.defender_casualties} ({defenderCasualtyRate}%)
                                 </span>
                             </div>
-                            {renderProgressBar(battle.defender_casualties, battle.defender_troops_start, 'bg-red-500')}
+                            {renderProgressBar(
+                                battle.defender_casualties,
+                                battle.defender_troops_start,
+                                "bg-red-500",
+                            )}
                         </div>
 
                         {/* Participating Armies */}
                         {defenders.length > 0 && (
                             <div>
-                                <div className="mb-2 font-pixel text-xs text-stone-400">Participating Armies</div>
+                                <div className="mb-2 font-pixel text-xs text-stone-400">
+                                    Participating Armies
+                                </div>
                                 <div className="space-y-2">
                                     {defenders.map((p) => (
-                                        <div
-                                            key={p.id}
-                                            className="rounded-lg bg-stone-900/50 p-2"
-                                        >
+                                        <div key={p.id} className="rounded-lg bg-stone-900/50 p-2">
                                             <div className="flex items-center justify-between">
                                                 <div>
                                                     <div className="flex items-center gap-2">
@@ -450,35 +497,54 @@ export default function BattleShow() {
                                                     </div>
                                                 </div>
                                                 {p.outcome && (
-                                                    <span className={`font-pixel text-xs ${outcomeLabels[p.outcome]?.color || 'text-stone-400'}`}>
-                                                        {outcomeLabels[p.outcome]?.text || p.outcome}
+                                                    <span
+                                                        className={`font-pixel text-xs ${outcomeLabels[p.outcome]?.color || "text-stone-400"}`}
+                                                    >
+                                                        {outcomeLabels[p.outcome]?.text ||
+                                                            p.outcome}
                                                     </span>
                                                 )}
                                             </div>
                                             <div className="mt-2 grid grid-cols-3 gap-2 font-pixel text-[10px]">
                                                 <div>
-                                                    <span className="text-stone-500">Troops:</span>{' '}
-                                                    <span className="text-white">{p.troops_committed}</span>
+                                                    <span className="text-stone-500">Troops:</span>{" "}
+                                                    <span className="text-white">
+                                                        {p.troops_committed}
+                                                    </span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-stone-500">Lost:</span>{' '}
-                                                    <span className="text-red-400">{p.casualties}</span>
+                                                    <span className="text-stone-500">Lost:</span>{" "}
+                                                    <span className="text-red-400">
+                                                        {p.casualties}
+                                                    </span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-stone-500">Rate:</span>{' '}
-                                                    <span className="text-amber-400">{Math.round(p.casualty_rate)}%</span>
+                                                    <span className="text-stone-500">Rate:</span>{" "}
+                                                    <span className="text-amber-400">
+                                                        {Math.round(p.casualty_rate)}%
+                                                    </span>
                                                 </div>
                                             </div>
                                             {p.morale_at_end !== null && (
                                                 <div className="mt-1 flex items-center gap-1 font-pixel text-[10px]">
                                                     <Heart className="h-3 w-3 text-red-400" />
                                                     <span className="text-stone-500">Morale:</span>
-                                                    <span className="text-white">{p.morale_at_start}%</span>
+                                                    <span className="text-white">
+                                                        {p.morale_at_start}%
+                                                    </span>
                                                     <span className="text-stone-500">→</span>
-                                                    <span className={p.morale_at_end >= 50 ? 'text-green-400' : 'text-red-400'}>
+                                                    <span
+                                                        className={
+                                                            p.morale_at_end >= 50
+                                                                ? "text-green-400"
+                                                                : "text-red-400"
+                                                        }
+                                                    >
                                                         {p.morale_at_end}%
                                                     </span>
-                                                    <span className="text-stone-500">(-{p.morale_loss})</span>
+                                                    <span className="text-stone-500">
+                                                        (-{p.morale_loss})
+                                                    </span>
                                                 </div>
                                             )}
                                         </div>
@@ -499,10 +565,7 @@ export default function BattleShow() {
                     {battle.battle_log.length > 0 ? (
                         <div className="max-h-80 space-y-2 overflow-y-auto">
                             {[...battle.battle_log].reverse().map((entry, index) => (
-                                <div
-                                    key={index}
-                                    className="rounded-lg bg-stone-900/50 p-3"
-                                >
+                                <div key={index} className="rounded-lg bg-stone-900/50 p-3">
                                     <div className="mb-1 font-pixel text-xs text-amber-400">
                                         Day {entry.day}
                                     </div>
@@ -511,16 +574,18 @@ export default function BattleShow() {
                                     </div>
                                     {(entry.attacker_casualties || entry.defender_casualties) && (
                                         <div className="mt-2 flex gap-4 font-pixel text-[10px]">
-                                            {entry.attacker_casualties !== undefined && entry.attacker_casualties > 0 && (
-                                                <span className="text-red-400">
-                                                    Attackers: -{entry.attacker_casualties}
-                                                </span>
-                                            )}
-                                            {entry.defender_casualties !== undefined && entry.defender_casualties > 0 && (
-                                                <span className="text-blue-400">
-                                                    Defenders: -{entry.defender_casualties}
-                                                </span>
-                                            )}
+                                            {entry.attacker_casualties !== undefined &&
+                                                entry.attacker_casualties > 0 && (
+                                                    <span className="text-red-400">
+                                                        Attackers: -{entry.attacker_casualties}
+                                                    </span>
+                                                )}
+                                            {entry.defender_casualties !== undefined &&
+                                                entry.defender_casualties > 0 && (
+                                                    <span className="text-blue-400">
+                                                        Defenders: -{entry.defender_casualties}
+                                                    </span>
+                                                )}
                                         </div>
                                     )}
                                 </div>
@@ -529,40 +594,45 @@ export default function BattleShow() {
                     ) : (
                         <div className="rounded-lg bg-stone-900/50 p-4 text-center font-pixel text-xs text-stone-500">
                             {battle.is_ongoing
-                                ? 'Battle is just beginning. No events recorded yet.'
-                                : 'No battle log available.'}
+                                ? "Battle is just beginning. No events recorded yet."
+                                : "No battle log available."}
                         </div>
                     )}
                 </div>
 
                 {/* Battle Summary (for ended battles) */}
                 {battle.is_ended && (
-                    <div className={`rounded-xl border-2 p-4 ${
-                        battle.status === 'attacker_victory'
-                            ? 'border-red-600/50 bg-red-900/20'
-                            : battle.status === 'defender_victory'
-                                ? 'border-blue-600/50 bg-blue-900/20'
-                                : 'border-stone-600/50 bg-stone-800/30'
-                    }`}>
+                    <div
+                        className={`rounded-xl border-2 p-4 ${
+                            battle.status === "attacker_victory"
+                                ? "border-red-600/50 bg-red-900/20"
+                                : battle.status === "defender_victory"
+                                  ? "border-blue-600/50 bg-blue-900/20"
+                                  : "border-stone-600/50 bg-stone-800/30"
+                        }`}
+                    >
                         <div className="text-center">
-                            <Trophy className={`mx-auto mb-2 h-12 w-12 ${
-                                battle.status === 'attacker_victory'
-                                    ? 'text-red-400'
-                                    : battle.status === 'defender_victory'
-                                        ? 'text-blue-400'
-                                        : 'text-stone-400'
-                            }`} />
+                            <Trophy
+                                className={`mx-auto mb-2 h-12 w-12 ${
+                                    battle.status === "attacker_victory"
+                                        ? "text-red-400"
+                                        : battle.status === "defender_victory"
+                                          ? "text-blue-400"
+                                          : "text-stone-400"
+                                }`}
+                            />
                             <h3 className="font-pixel text-lg text-white">
-                                {battle.status === 'attacker_victory'
-                                    ? 'Attacker Victory!'
-                                    : battle.status === 'defender_victory'
-                                        ? 'Defender Victory!'
-                                        : battle.status === 'draw'
-                                            ? 'Battle Ended in Draw'
-                                            : 'Battle Inconclusive'}
+                                {battle.status === "attacker_victory"
+                                    ? "Attacker Victory!"
+                                    : battle.status === "defender_victory"
+                                      ? "Defender Victory!"
+                                      : battle.status === "draw"
+                                        ? "Battle Ended in Draw"
+                                        : "Battle Inconclusive"}
                             </h3>
                             <div className="mt-2 font-pixel text-sm text-stone-400">
-                                Total Casualties: {battle.attacker_casualties + battle.defender_casualties}
+                                Total Casualties:{" "}
+                                {battle.attacker_casualties + battle.defender_casualties}
                             </div>
                             {battle.ended_at && (
                                 <div className="mt-1 font-pixel text-xs text-stone-500">

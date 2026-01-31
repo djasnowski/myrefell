@@ -1,7 +1,7 @@
-import { Head, Link } from '@inertiajs/react';
-import { AlertTriangle, Clock, ThumbsDown, ThumbsUp } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, Link } from "@inertiajs/react";
+import { AlertTriangle, Clock, ThumbsDown, ThumbsUp } from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface NoConfidenceVote {
     id: number;
@@ -30,27 +30,36 @@ interface Props {
 
 export default function NoConfidenceIndex({ votes }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Elections', href: '/elections' },
-        { title: 'No Confidence Votes', href: '/no-confidence' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Elections", href: "/elections" },
+        { title: "No Confidence Votes", href: "/no-confidence" },
     ];
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'open': return 'bg-yellow-900/50 text-yellow-400';
-            case 'passed': return 'bg-red-900/50 text-red-400';
-            case 'failed': return 'bg-green-900/50 text-green-400';
-            case 'closed': return 'bg-stone-700 text-stone-400';
-            default: return 'bg-stone-700 text-stone-400';
+            case "open":
+                return "bg-yellow-900/50 text-yellow-400";
+            case "passed":
+                return "bg-red-900/50 text-red-400";
+            case "failed":
+                return "bg-green-900/50 text-green-400";
+            case "closed":
+                return "bg-stone-700 text-stone-400";
+            default:
+                return "bg-stone-700 text-stone-400";
         }
     };
 
     const getStatusIcon = (status: string) => {
         switch (status) {
-            case 'open': return <Clock className="h-4 w-4" />;
-            case 'passed': return <ThumbsDown className="h-4 w-4" />;
-            case 'failed': return <ThumbsUp className="h-4 w-4" />;
-            default: return <AlertTriangle className="h-4 w-4" />;
+            case "open":
+                return <Clock className="h-4 w-4" />;
+            case "passed":
+                return <ThumbsDown className="h-4 w-4" />;
+            case "failed":
+                return <ThumbsUp className="h-4 w-4" />;
+            default:
+                return <AlertTriangle className="h-4 w-4" />;
         }
     };
 
@@ -65,7 +74,9 @@ export default function NoConfidenceIndex({ votes }: Props) {
                     </div>
                     <div>
                         <h1 className="font-pixel text-2xl text-red-400">No Confidence Votes</h1>
-                        <p className="font-pixel text-xs text-stone-500">Challenge role holders in your domain</p>
+                        <p className="font-pixel text-xs text-stone-500">
+                            Challenge role holders in your domain
+                        </p>
                     </div>
                 </div>
 
@@ -74,7 +85,9 @@ export default function NoConfidenceIndex({ votes }: Props) {
                         <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-8 text-center">
                             <AlertTriangle className="mx-auto mb-2 h-12 w-12 text-stone-600" />
                             <div className="font-pixel text-sm text-stone-400">No active votes</div>
-                            <div className="font-pixel text-xs text-stone-600">All leaders maintain the trust of their people.</div>
+                            <div className="font-pixel text-xs text-stone-600">
+                                All leaders maintain the trust of their people.
+                            </div>
                         </div>
                     ) : (
                         <div className="space-y-3">
@@ -92,8 +105,10 @@ export default function NoConfidenceIndex({ votes }: Props) {
                                             <div>
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-pixel text-sm text-stone-200">
-                                                        Vote against{' '}
-                                                        <span className="text-red-400">{vote.target_player.username}</span>
+                                                        Vote against{" "}
+                                                        <span className="text-red-400">
+                                                            {vote.target_player.username}
+                                                        </span>
                                                     </span>
                                                     <span className="font-pixel text-xs text-stone-500 capitalize">
                                                         ({vote.target_role})
@@ -101,8 +116,12 @@ export default function NoConfidenceIndex({ votes }: Props) {
                                                 </div>
                                                 <div className="mt-1 flex items-center gap-3 font-pixel text-[10px] text-stone-500">
                                                     <span>{vote.domain_name}</span>
-                                                    <span className="capitalize">{vote.domain_type}</span>
-                                                    <span className={`flex items-center gap-1 rounded px-2 py-0.5 ${getStatusColor(vote.status)}`}>
+                                                    <span className="capitalize">
+                                                        {vote.domain_type}
+                                                    </span>
+                                                    <span
+                                                        className={`flex items-center gap-1 rounded px-2 py-0.5 ${getStatusColor(vote.status)}`}
+                                                    >
                                                         {getStatusIcon(vote.status)}
                                                         {vote.status}
                                                     </span>
@@ -113,11 +132,15 @@ export default function NoConfidenceIndex({ votes }: Props) {
                                             <div className="flex items-center gap-3">
                                                 <div className="flex items-center gap-1">
                                                     <ThumbsUp className="h-3 w-3 text-red-400" />
-                                                    <span className="font-pixel text-xs text-red-400">{vote.votes_for}</span>
+                                                    <span className="font-pixel text-xs text-red-400">
+                                                        {vote.votes_for}
+                                                    </span>
                                                 </div>
                                                 <div className="flex items-center gap-1">
                                                     <ThumbsDown className="h-3 w-3 text-green-400" />
-                                                    <span className="font-pixel text-xs text-green-400">{vote.votes_against}</span>
+                                                    <span className="font-pixel text-xs text-green-400">
+                                                        {vote.votes_against}
+                                                    </span>
                                                 </div>
                                             </div>
                                             <div className="mt-1 font-pixel text-[10px] text-stone-500">
@@ -143,13 +166,13 @@ export default function NoConfidenceIndex({ votes }: Props) {
                             {votes.links.map((link, index) => (
                                 <Link
                                     key={index}
-                                    href={link.url || '#'}
+                                    href={link.url || "#"}
                                     className={`rounded px-3 py-1 font-pixel text-xs ${
                                         link.active
-                                            ? 'bg-red-600 text-white'
+                                            ? "bg-red-600 text-white"
                                             : link.url
-                                            ? 'bg-stone-700 text-stone-300 hover:bg-stone-600'
-                                            : 'bg-stone-800 text-stone-600 cursor-not-allowed'
+                                              ? "bg-stone-700 text-stone-300 hover:bg-stone-600"
+                                              : "bg-stone-800 text-stone-600 cursor-not-allowed"
                                     }`}
                                     dangerouslySetInnerHTML={{ __html: link.label }}
                                 />
@@ -159,23 +182,29 @@ export default function NoConfidenceIndex({ votes }: Props) {
 
                     {/* Info Box */}
                     <div className="mt-6 rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
-                        <h2 className="mb-3 font-pixel text-sm text-stone-300">How No Confidence Votes Work</h2>
+                        <h2 className="mb-3 font-pixel text-sm text-stone-300">
+                            How No Confidence Votes Work
+                        </h2>
                         <ul className="space-y-2 font-pixel text-[10px] text-stone-400">
                             <li className="flex items-start gap-2">
                                 <span className="text-red-400">1.</span>
-                                Any resident can initiate a vote against a role holder in their domain.
+                                Any resident can initiate a vote against a role holder in their
+                                domain.
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-red-400">2.</span>
-                                Voting lasts 48 hours. A majority of voters must participate for the vote to count.
+                                Voting lasts 48 hours. A majority of voters must participate for the
+                                vote to count.
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-red-400">3.</span>
-                                If more people vote for removal than against, the role holder loses their position.
+                                If more people vote for removal than against, the role holder loses
+                                their position.
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-red-400">4.</span>
-                                The role becomes vacant - a new election or appointment can fill the position.
+                                The role becomes vacant - a new election or appointment can fill the
+                                position.
                             </li>
                         </ul>
                     </div>

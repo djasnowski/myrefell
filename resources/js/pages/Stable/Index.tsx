@@ -1,10 +1,10 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { Coins, Gauge, Heart, ShoppingCart, Sparkles, Zap } from 'lucide-react';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from "@inertiajs/react";
+import { Coins, Gauge, Heart, ShoppingCart, Sparkles, Zap } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface HorseStock {
     id: number;
@@ -47,53 +47,56 @@ interface PageProps {
     [key: string]: unknown;
 }
 
-const rarityConfig: Record<string, { border: string; bg: string; badge: string; glow: string; icon: string }> = {
+const rarityConfig: Record<
+    string,
+    { border: string; bg: string; badge: string; glow: string; icon: string }
+> = {
     common: {
-        border: 'border-stone-600/50',
-        bg: 'bg-gradient-to-br from-stone-900/80 to-stone-950/90',
-        badge: 'bg-stone-700 text-stone-300',
-        glow: '',
-        icon: 'text-stone-500',
+        border: "border-stone-600/50",
+        bg: "bg-gradient-to-br from-stone-900/80 to-stone-950/90",
+        badge: "bg-stone-700 text-stone-300",
+        glow: "",
+        icon: "text-stone-500",
     },
     uncommon: {
-        border: 'border-green-600/50',
-        bg: 'bg-gradient-to-br from-green-950/40 to-stone-950/90',
-        badge: 'bg-green-900/80 text-green-300',
-        glow: 'shadow-green-900/20 shadow-lg',
-        icon: 'text-green-500',
+        border: "border-green-600/50",
+        bg: "bg-gradient-to-br from-green-950/40 to-stone-950/90",
+        badge: "bg-green-900/80 text-green-300",
+        glow: "shadow-green-900/20 shadow-lg",
+        icon: "text-green-500",
     },
     rare: {
-        border: 'border-blue-500/50',
-        bg: 'bg-gradient-to-br from-blue-950/40 to-stone-950/90',
-        badge: 'bg-blue-900/80 text-blue-300',
-        glow: 'shadow-blue-900/30 shadow-lg',
-        icon: 'text-blue-400',
+        border: "border-blue-500/50",
+        bg: "bg-gradient-to-br from-blue-950/40 to-stone-950/90",
+        badge: "bg-blue-900/80 text-blue-300",
+        glow: "shadow-blue-900/30 shadow-lg",
+        icon: "text-blue-400",
     },
     epic: {
-        border: 'border-purple-500/50',
-        bg: 'bg-gradient-to-br from-purple-950/40 to-stone-950/90',
-        badge: 'bg-purple-900/80 text-purple-300',
-        glow: 'shadow-purple-900/40 shadow-xl',
-        icon: 'text-purple-400',
+        border: "border-purple-500/50",
+        bg: "bg-gradient-to-br from-purple-950/40 to-stone-950/90",
+        badge: "bg-purple-900/80 text-purple-300",
+        glow: "shadow-purple-900/40 shadow-xl",
+        icon: "text-purple-400",
     },
     legendary: {
-        border: 'border-amber-400/60',
-        bg: 'bg-gradient-to-br from-amber-950/50 to-stone-950/90',
-        badge: 'bg-amber-900/80 text-amber-300',
-        glow: 'shadow-amber-900/50 shadow-xl',
-        icon: 'text-amber-400',
+        border: "border-amber-400/60",
+        bg: "bg-gradient-to-br from-amber-950/50 to-stone-950/90",
+        badge: "bg-amber-900/80 text-amber-300",
+        glow: "shadow-amber-900/50 shadow-xl",
+        icon: "text-amber-400",
     },
 };
 
 const locationTypeToPlural: Record<string, string> = {
-    town: 'towns',
-    barony: 'baronies',
-    duchy: 'duchies',
-    kingdom: 'kingdoms',
+    town: "towns",
+    barony: "baronies",
+    duchy: "duchies",
+    kingdom: "kingdoms",
 };
 
 function getBreadcrumbs(location?: LocationContext): BreadcrumbItem[] {
-    const crumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
+    const crumbs: BreadcrumbItem[] = [{ title: "Dashboard", href: "/dashboard" }];
 
     if (location) {
         const plural = locationTypeToPlural[location.type] || `${location.type}s`;
@@ -102,11 +105,11 @@ function getBreadcrumbs(location?: LocationContext): BreadcrumbItem[] {
             href: `/${plural}/${location.id}`,
         });
         crumbs.push({
-            title: 'Stables',
+            title: "Stables",
             href: `/${plural}/${location.id}/stables`,
         });
     } else {
-        crumbs.push({ title: 'Stables', href: '/stable' });
+        crumbs.push({ title: "Stables", href: "/stable" });
     }
 
     return crumbs;
@@ -115,7 +118,7 @@ function getBreadcrumbs(location?: LocationContext): BreadcrumbItem[] {
 export default function StableIndex() {
     const { stock, userHorse, userGold, location } = usePage<PageProps>().props;
     const [buyingId, setBuyingId] = useState<number | null>(null);
-    const [customName, setCustomName] = useState('');
+    const [customName, setCustomName] = useState("");
     const [loading, setLoading] = useState(false);
 
     const breadcrumbs = getBreadcrumbs(location);
@@ -123,7 +126,7 @@ export default function StableIndex() {
     const handleBuy = (horse: HorseStock) => {
         setLoading(true);
         router.post(
-            '/stable/buy',
+            "/stable/buy",
             {
                 horse_id: horse.id,
                 price: horse.price,
@@ -134,18 +137,18 @@ export default function StableIndex() {
                 onSuccess: () => {
                     router.reload();
                     setBuyingId(null);
-                    setCustomName('');
+                    setCustomName("");
                 },
                 onFinish: () => setLoading(false),
-            }
+            },
         );
     };
 
     const handleSell = () => {
-        if (!confirm('Are you sure you want to sell your horse?')) return;
+        if (!confirm("Are you sure you want to sell your horse?")) return;
         setLoading(true);
         router.post(
-            '/stable/sell',
+            "/stable/sell",
             {},
             {
                 preserveScroll: true,
@@ -153,13 +156,13 @@ export default function StableIndex() {
                     router.reload();
                 },
                 onFinish: () => setLoading(false),
-            }
+            },
         );
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={location ? `Stables - ${location.name}` : 'Stables'} />
+            <Head title={location ? `Stables - ${location.name}` : "Stables"} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
@@ -170,11 +173,9 @@ export default function StableIndex() {
                         </div>
                         <div>
                             <h1 className="font-[Cinzel] text-2xl font-bold text-stone-100">
-                                {location ? `${location.name} Stables` : 'Stables'}
+                                {location ? `${location.name} Stables` : "Stables"}
                             </h1>
-                            <p className="text-sm text-stone-400">
-                                Buy and manage your horse
-                            </p>
+                            <p className="text-sm text-stone-400">Buy and manage your horse</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 text-amber-400">
@@ -186,17 +187,13 @@ export default function StableIndex() {
                 {/* Your Horse */}
                 {userHorse && (
                     <div className="rounded-xl border border-amber-900/50 bg-amber-900/20 p-4">
-                        <h3 className="font-[Cinzel] font-semibold text-amber-400">
-                            Your Horse
-                        </h3>
+                        <h3 className="font-[Cinzel] font-semibold text-amber-400">Your Horse</h3>
                         <div className="mt-3 flex items-center justify-between">
                             <div>
                                 <p className="text-lg font-semibold text-stone-100">
                                     {userHorse.custom_name || userHorse.horse.name}
                                 </p>
-                                <p className="text-sm text-stone-400">
-                                    {userHorse.horse.breed}
-                                </p>
+                                <p className="text-sm text-stone-400">{userHorse.horse.breed}</p>
                                 <div className="mt-2 flex items-center gap-4 text-sm">
                                     <span className="flex items-center gap-1 text-stone-400">
                                         <Gauge className="size-4 text-blue-400" />
@@ -208,7 +205,7 @@ export default function StableIndex() {
                                     </span>
                                 </div>
                                 <p className="mt-1 text-xs text-stone-500">
-                                    {userHorse.is_stabled ? 'Currently stabled' : 'With you'}
+                                    {userHorse.is_stabled ? "Currently stabled" : "With you"}
                                 </p>
                             </div>
                             <div className="text-right">
@@ -257,8 +254,12 @@ export default function StableIndex() {
                                     >
                                         {/* Rarity Badge */}
                                         <div className="absolute right-3 top-3">
-                                            <span className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium capitalize ${rarity.badge}`}>
-                                                {horse.rarity === 'legendary' && <Sparkles className="size-3" />}
+                                            <span
+                                                className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium capitalize ${rarity.badge}`}
+                                            >
+                                                {horse.rarity === "legendary" && (
+                                                    <Sparkles className="size-3" />
+                                                )}
                                                 {horse.rarity}
                                             </span>
                                         </div>
@@ -266,14 +267,18 @@ export default function StableIndex() {
                                         {/* Horse Icon & Name */}
                                         <div className="p-5 pb-3">
                                             <div className="flex items-start gap-3">
-                                                <div className={`rounded-lg bg-stone-900/60 p-2.5 ${rarity.icon}`}>
+                                                <div
+                                                    className={`rounded-lg bg-stone-900/60 p-2.5 ${rarity.icon}`}
+                                                >
                                                     <Gauge className="size-6" />
                                                 </div>
                                                 <div className="flex-1 pt-0.5">
                                                     <h3 className="font-[Cinzel] text-lg font-bold text-stone-100">
                                                         {horse.name}
                                                     </h3>
-                                                    <p className="text-sm text-stone-500">{horse.breed}</p>
+                                                    <p className="text-sm text-stone-500">
+                                                        {horse.breed}
+                                                    </p>
                                                 </div>
                                             </div>
 
@@ -294,7 +299,9 @@ export default function StableIndex() {
                                                 <div className="mt-1 font-[Cinzel] text-xl font-bold text-stone-100">
                                                     {horse.speed_multiplier}x
                                                 </div>
-                                                <div className="text-xs text-stone-600">travel speed</div>
+                                                <div className="text-xs text-stone-600">
+                                                    travel speed
+                                                </div>
                                             </div>
                                             <div className="rounded-lg bg-stone-900/60 p-3">
                                                 <div className="flex items-center gap-1.5 text-xs font-medium text-stone-500">
@@ -304,7 +311,9 @@ export default function StableIndex() {
                                                 <div className="mt-1 font-[Cinzel] text-xl font-bold text-stone-100">
                                                     {horse.max_stamina}
                                                 </div>
-                                                <div className="text-xs text-stone-600">max endurance</div>
+                                                <div className="text-xs text-stone-600">
+                                                    max endurance
+                                                </div>
                                             </div>
                                         </div>
 
@@ -315,7 +324,9 @@ export default function StableIndex() {
                                                     <Input
                                                         placeholder="Give your horse a name (optional)"
                                                         value={customName}
-                                                        onChange={(e) => setCustomName(e.target.value)}
+                                                        onChange={(e) =>
+                                                            setCustomName(e.target.value)
+                                                        }
                                                         className="border-stone-700 bg-stone-900/80 text-sm"
                                                     />
                                                     <div className="flex gap-2">
@@ -325,13 +336,14 @@ export default function StableIndex() {
                                                             disabled={loading || !canBuy}
                                                         >
                                                             <Coins className="size-4" />
-                                                            Purchase for {horse.price.toLocaleString()}g
+                                                            Purchase for{" "}
+                                                            {horse.price.toLocaleString()}g
                                                         </Button>
                                                         <Button
                                                             variant="ghost"
                                                             onClick={() => {
                                                                 setBuyingId(null);
-                                                                setCustomName('');
+                                                                setCustomName("");
                                                             }}
                                                         >
                                                             Cancel
@@ -359,7 +371,11 @@ export default function StableIndex() {
                                                     <Button
                                                         onClick={() => setBuyingId(horse.id)}
                                                         disabled={!canBuy}
-                                                        className={canBuy ? 'bg-amber-600 hover:bg-amber-500' : ''}
+                                                        className={
+                                                            canBuy
+                                                                ? "bg-amber-600 hover:bg-amber-500"
+                                                                : ""
+                                                        }
                                                     >
                                                         <ShoppingCart className="size-4" />
                                                         Buy

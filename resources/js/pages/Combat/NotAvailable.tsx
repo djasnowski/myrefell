@@ -1,7 +1,7 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { Sword } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, Link, usePage } from "@inertiajs/react";
+import { Sword } from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface PageProps {
     message: string;
@@ -9,8 +9,8 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Combat', href: '/combat' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Combat", href: "/combat" },
 ];
 
 export default function CombatNotAvailable() {

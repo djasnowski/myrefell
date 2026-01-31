@@ -1,12 +1,5 @@
-import { Head } from '@inertiajs/react';
-import {
-    Activity,
-    Shield,
-    UserCheck,
-    UserPlus,
-    Users,
-    UserX,
-} from 'lucide-react';
+import { Head } from "@inertiajs/react";
+import { Activity, Shield, UserCheck, UserPlus, Users, UserX } from "lucide-react";
 import {
     CartesianGrid,
     Line,
@@ -15,18 +8,12 @@ import {
     Tooltip,
     XAxis,
     YAxis,
-} from 'recharts';
-import { ActivityFeed } from '@/components/admin/activity-feed';
-import { LatestPlayers } from '@/components/admin/latest-players';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
-import AdminLayout from '@/layouts/admin-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "recharts";
+import { ActivityFeed } from "@/components/admin/activity-feed";
+import { LatestPlayers } from "@/components/admin/latest-players";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import AdminLayout from "@/layouts/admin-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface ActivityItem {
     id: number;
@@ -63,8 +50,8 @@ interface Props {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Admin', href: '/admin' },
-    { title: 'Dashboard', href: '/admin' },
+    { title: "Admin", href: "/admin" },
+    { title: "Dashboard", href: "/admin" },
 ];
 
 export default function Dashboard({
@@ -76,50 +63,50 @@ export default function Dashboard({
 }: Props) {
     const statCards = [
         {
-            title: 'Total Users',
+            title: "Total Users",
             value: stats.totalUsers.toLocaleString(),
-            description: 'All registered accounts',
+            description: "All registered accounts",
             icon: Users,
-            color: 'text-blue-400',
-            bgColor: 'bg-blue-900/20',
+            color: "text-blue-400",
+            bgColor: "bg-blue-900/20",
         },
         {
-            title: 'Active Users',
+            title: "Active Users",
             value: stats.activeUsers.toLocaleString(),
-            description: 'Last 7 days',
+            description: "Last 7 days",
             icon: UserCheck,
-            color: 'text-green-400',
-            bgColor: 'bg-green-900/20',
+            color: "text-green-400",
+            bgColor: "bg-green-900/20",
         },
         {
-            title: 'New Today',
+            title: "New Today",
             value: stats.newUsersToday.toLocaleString(),
-            description: 'Registered today',
+            description: "Registered today",
             icon: UserPlus,
-            color: 'text-amber-400',
-            bgColor: 'bg-amber-900/20',
+            color: "text-amber-400",
+            bgColor: "bg-amber-900/20",
         },
         {
-            title: 'Banned Users',
+            title: "Banned Users",
             value: stats.bannedUsers.toLocaleString(),
-            description: 'Currently banned',
+            description: "Currently banned",
             icon: UserX,
-            color: 'text-red-400',
-            bgColor: 'bg-red-900/20',
+            color: "text-red-400",
+            bgColor: "bg-red-900/20",
         },
         {
-            title: 'Admins',
+            title: "Admins",
             value: stats.adminUsers.toLocaleString(),
-            description: 'Admin accounts',
+            description: "Admin accounts",
             icon: Shield,
-            color: 'text-purple-400',
-            bgColor: 'bg-purple-900/20',
+            color: "text-purple-400",
+            bgColor: "bg-purple-900/20",
         },
     ];
 
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
     };
 
     return (
@@ -136,19 +123,14 @@ export default function Dashboard({
                         <h1 className="font-[Cinzel] text-2xl font-bold text-stone-100">
                             Admin Dashboard
                         </h1>
-                        <p className="text-sm text-stone-400">
-                            User management and analytics
-                        </p>
+                        <p className="text-sm text-stone-400">User management and analytics</p>
                     </div>
                 </div>
 
                 {/* Stats Cards */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                     {statCards.map((stat) => (
-                        <Card
-                            key={stat.title}
-                            className="border-stone-800 bg-stone-900/50"
-                        >
+                        <Card key={stat.title} className="border-stone-800 bg-stone-900/50">
                             <CardHeader className="pb-2">
                                 <div className="flex items-center justify-between">
                                     <CardDescription className="text-stone-400">
@@ -163,9 +145,7 @@ export default function Dashboard({
                                 <div className="text-2xl font-bold text-stone-100">
                                     {stat.value}
                                 </div>
-                                <p className="text-xs text-stone-500">
-                                    {stat.description}
-                                </p>
+                                <p className="text-xs text-stone-500">{stat.description}</p>
                             </CardContent>
                         </Card>
                     ))}
@@ -198,10 +178,7 @@ export default function Dashboard({
                             <div className="h-[300px]">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <LineChart data={registrationTrend}>
-                                        <CartesianGrid
-                                            strokeDasharray="3 3"
-                                            stroke="#44403c"
-                                        />
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#44403c" />
                                         <XAxis
                                             dataKey="date"
                                             tickFormatter={formatDate}
@@ -215,12 +192,12 @@ export default function Dashboard({
                                         />
                                         <Tooltip
                                             contentStyle={{
-                                                backgroundColor: '#1c1917',
-                                                border: '1px solid #44403c',
-                                                borderRadius: '8px',
+                                                backgroundColor: "#1c1917",
+                                                border: "1px solid #44403c",
+                                                borderRadius: "8px",
                                             }}
-                                            labelStyle={{ color: '#e7e5e4' }}
-                                            itemStyle={{ color: '#fbbf24' }}
+                                            labelStyle={{ color: "#e7e5e4" }}
+                                            itemStyle={{ color: "#fbbf24" }}
                                             labelFormatter={formatDate}
                                         />
                                         <Line
@@ -253,10 +230,7 @@ export default function Dashboard({
                             <div className="h-[300px]">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <LineChart data={activeUsersTrend}>
-                                        <CartesianGrid
-                                            strokeDasharray="3 3"
-                                            stroke="#44403c"
-                                        />
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#44403c" />
                                         <XAxis
                                             dataKey="date"
                                             tickFormatter={formatDate}
@@ -270,12 +244,12 @@ export default function Dashboard({
                                         />
                                         <Tooltip
                                             contentStyle={{
-                                                backgroundColor: '#1c1917',
-                                                border: '1px solid #44403c',
-                                                borderRadius: '8px',
+                                                backgroundColor: "#1c1917",
+                                                border: "1px solid #44403c",
+                                                borderRadius: "8px",
                                             }}
-                                            labelStyle={{ color: '#e7e5e4' }}
-                                            itemStyle={{ color: '#4ade80' }}
+                                            labelStyle={{ color: "#e7e5e4" }}
+                                            itemStyle={{ color: "#4ade80" }}
                                             labelFormatter={formatDate}
                                         />
                                         <Line

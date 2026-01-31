@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from "@inertiajs/react";
 import {
     Axe,
     Bed,
@@ -10,9 +10,9 @@ import {
     Store,
     Users,
     Wheat,
-} from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Business {
     id: number;
@@ -57,9 +57,9 @@ const iconMap: Record<string, typeof Store> = {
 };
 
 const statusColors: Record<string, string> = {
-    active: 'text-green-300 bg-green-800/50 border-green-600/50',
-    suspended: 'text-amber-300 bg-amber-800/50 border-amber-600/50',
-    closed: 'text-red-300 bg-red-800/50 border-red-600/50',
+    active: "text-green-300 bg-green-800/50 border-green-600/50",
+    suspended: "text-amber-300 bg-amber-800/50 border-amber-600/50",
+    closed: "text-red-300 bg-red-800/50 border-red-600/50",
 };
 
 function BusinessCard({ business }: { business: Business }) {
@@ -77,7 +77,9 @@ function BusinessCard({ business }: { business: Business }) {
                     </div>
                     <div>
                         <h3 className="font-pixel text-sm text-amber-300">{business.name}</h3>
-                        <span className="font-pixel text-[10px] text-stone-400">{business.type_name}</span>
+                        <span className="font-pixel text-[10px] text-stone-400">
+                            {business.type_name}
+                        </span>
                     </div>
                 </div>
                 <div className={`rounded-lg border px-2 py-1 ${statusColors[business.status]}`}>
@@ -113,13 +115,19 @@ function BusinessCard({ business }: { business: Business }) {
                 </div>
                 <div>
                     <span className="font-pixel text-[10px] text-stone-400">Upkeep</span>
-                    <p className="font-pixel text-xs text-red-300">{business.weekly_upkeep}g/week</p>
+                    <p className="font-pixel text-xs text-red-300">
+                        {business.weekly_upkeep}g/week
+                    </p>
                 </div>
             </div>
 
             <div className="mt-3 flex justify-between text-[10px]">
-                <span className="font-pixel text-green-400">Revenue: {business.total_revenue}g</span>
-                <span className="font-pixel text-red-400">Expenses: {business.total_expenses}g</span>
+                <span className="font-pixel text-green-400">
+                    Revenue: {business.total_revenue}g
+                </span>
+                <span className="font-pixel text-red-400">
+                    Expenses: {business.total_expenses}g
+                </span>
             </div>
         </div>
     );
@@ -129,12 +137,12 @@ export default function MyBusinesses() {
     const { businesses, max_businesses, player } = usePage<PageProps>().props;
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'My Businesses', href: '#' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "My Businesses", href: "#" },
     ];
 
-    const activeBusinesses = businesses.filter((b) => b.status !== 'closed');
-    const closedBusinesses = businesses.filter((b) => b.status === 'closed');
+    const activeBusinesses = businesses.filter((b) => b.status !== "closed");
+    const closedBusinesses = businesses.filter((b) => b.status === "closed");
 
     const totalTreasury = activeBusinesses.reduce((sum, b) => sum + b.treasury, 0);
     const totalUpkeep = activeBusinesses.reduce((sum, b) => sum + b.weekly_upkeep, 0);
@@ -147,12 +155,16 @@ export default function MyBusinesses() {
                 <div className="mb-6 flex items-center justify-between">
                     <div>
                         <h1 className="font-pixel text-2xl text-amber-400">My Businesses</h1>
-                        <p className="font-pixel text-sm text-stone-400">Manage your business empire</p>
+                        <p className="font-pixel text-sm text-stone-400">
+                            Manage your business empire
+                        </p>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2 rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2">
                             <Coins className="h-4 w-4 text-amber-400" />
-                            <span className="font-pixel text-sm text-amber-300">{player.gold}g</span>
+                            <span className="font-pixel text-sm text-amber-300">
+                                {player.gold}g
+                            </span>
                         </div>
                         <div className="rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2">
                             <span className="font-pixel text-xs text-stone-400">Owned:</span>
@@ -167,20 +179,30 @@ export default function MyBusinesses() {
                 {activeBusinesses.length > 0 && (
                     <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
                         <div className="rounded-xl border-2 border-stone-600/50 bg-stone-800/50 p-4 text-center">
-                            <span className="font-pixel text-[10px] text-stone-400">Total Treasury</span>
+                            <span className="font-pixel text-[10px] text-stone-400">
+                                Total Treasury
+                            </span>
                             <p className="font-pixel text-xl text-amber-300">{totalTreasury}g</p>
                         </div>
                         <div className="rounded-xl border-2 border-stone-600/50 bg-stone-800/50 p-4 text-center">
-                            <span className="font-pixel text-[10px] text-stone-400">Weekly Upkeep</span>
+                            <span className="font-pixel text-[10px] text-stone-400">
+                                Weekly Upkeep
+                            </span>
                             <p className="font-pixel text-xl text-red-300">{totalUpkeep}g</p>
                         </div>
                         <div className="rounded-xl border-2 border-stone-600/50 bg-stone-800/50 p-4 text-center">
-                            <span className="font-pixel text-[10px] text-stone-400">Active Businesses</span>
-                            <p className="font-pixel text-xl text-green-300">{activeBusinesses.filter((b) => b.status === 'active').length}</p>
+                            <span className="font-pixel text-[10px] text-stone-400">
+                                Active Businesses
+                            </span>
+                            <p className="font-pixel text-xl text-green-300">
+                                {activeBusinesses.filter((b) => b.status === "active").length}
+                            </p>
                         </div>
                         <div className="rounded-xl border-2 border-stone-600/50 bg-stone-800/50 p-4 text-center">
                             <span className="font-pixel text-[10px] text-stone-400">Suspended</span>
-                            <p className="font-pixel text-xl text-amber-300">{activeBusinesses.filter((b) => b.status === 'suspended').length}</p>
+                            <p className="font-pixel text-xl text-amber-300">
+                                {activeBusinesses.filter((b) => b.status === "suspended").length}
+                            </p>
                         </div>
                     </div>
                 )}
@@ -188,7 +210,9 @@ export default function MyBusinesses() {
                 {/* Active Businesses */}
                 {activeBusinesses.length > 0 ? (
                     <div className="mb-6">
-                        <h2 className="mb-3 font-pixel text-lg text-stone-300">Active Businesses</h2>
+                        <h2 className="mb-3 font-pixel text-lg text-stone-300">
+                            Active Businesses
+                        </h2>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {activeBusinesses.map((business) => (
                                 <BusinessCard key={business.id} business={business} />
@@ -199,7 +223,9 @@ export default function MyBusinesses() {
                     <div className="flex flex-1 items-center justify-center py-12">
                         <div className="text-center">
                             <Store className="mx-auto h-16 w-16 text-stone-600" />
-                            <p className="mt-3 font-pixel text-base text-stone-500">No businesses owned</p>
+                            <p className="mt-3 font-pixel text-base text-stone-500">
+                                No businesses owned
+                            </p>
                             <p className="font-pixel text-xs text-stone-600">
                                 Visit a village or town to establish your first business.
                             </p>
@@ -210,15 +236,24 @@ export default function MyBusinesses() {
                 {/* Closed Businesses */}
                 {closedBusinesses.length > 0 && (
                     <div>
-                        <h2 className="mb-3 font-pixel text-lg text-stone-500">Closed Businesses</h2>
+                        <h2 className="mb-3 font-pixel text-lg text-stone-500">
+                            Closed Businesses
+                        </h2>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {closedBusinesses.map((business) => (
-                                <div key={business.id} className="rounded-xl border-2 border-stone-700/30 bg-stone-900/30 p-4 opacity-60">
+                                <div
+                                    key={business.id}
+                                    className="rounded-xl border-2 border-stone-700/30 bg-stone-900/30 p-4 opacity-60"
+                                >
                                     <div className="flex items-center gap-3">
                                         <Store className="h-6 w-6 text-stone-600" />
                                         <div>
-                                            <h3 className="font-pixel text-sm text-stone-500">{business.name}</h3>
-                                            <span className="font-pixel text-[10px] text-stone-600">{business.type_name}</span>
+                                            <h3 className="font-pixel text-sm text-stone-500">
+                                                {business.name}
+                                            </h3>
+                                            <span className="font-pixel text-[10px] text-stone-600">
+                                                {business.type_name}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>

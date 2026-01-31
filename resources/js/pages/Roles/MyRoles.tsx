@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from "@inertiajs/react";
 import {
     Award,
     Briefcase,
@@ -18,10 +18,10 @@ import {
     Users,
     Wallet,
     Wrench,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface UserRole {
     id: number;
@@ -69,24 +69,24 @@ const iconMap: Record<string, typeof Crown> = {
 };
 
 const tierBadgeColors: Record<number, string> = {
-    1: 'bg-stone-700 text-stone-300',
-    2: 'bg-blue-800 text-blue-200',
-    3: 'bg-purple-800 text-purple-200',
-    4: 'bg-amber-800 text-amber-200',
-    5: 'bg-red-800 text-red-200',
+    1: "bg-stone-700 text-stone-300",
+    2: "bg-blue-800 text-blue-200",
+    3: "bg-purple-800 text-purple-200",
+    4: "bg-amber-800 text-amber-200",
+    5: "bg-red-800 text-red-200",
 };
 
 const locationTypeColors: Record<string, string> = {
-    village: 'text-green-300',
-    barony: 'text-purple-300',
-    kingdom: 'text-amber-300',
+    village: "text-green-300",
+    barony: "text-purple-300",
+    kingdom: "text-amber-300",
 };
 
 function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
+    return new Date(dateString).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
     });
 }
 
@@ -111,7 +111,9 @@ function MyRoleCard({
                     <div>
                         <h3 className="font-pixel text-sm text-amber-300">{role.name}</h3>
                         <div className="flex items-center gap-2">
-                            <span className={`rounded px-1.5 py-0.5 font-pixel text-[10px] ${tierBadgeColors[role.tier] || tierBadgeColors[1]}`}>
+                            <span
+                                className={`rounded px-1.5 py-0.5 font-pixel text-[10px] ${tierBadgeColors[role.tier] || tierBadgeColors[1]}`}
+                            >
                                 Tier {role.tier}
                             </span>
                         </div>
@@ -127,10 +129,14 @@ function MyRoleCard({
             {/* Location */}
             <div className="mb-3 flex items-center gap-2 rounded-lg bg-stone-800/50 p-2">
                 <MapPin className="h-4 w-4 text-stone-400" />
-                <span className={`font-pixel text-xs ${locationTypeColors[role.location_type] || 'text-stone-300'}`}>
+                <span
+                    className={`font-pixel text-xs ${locationTypeColors[role.location_type] || "text-stone-300"}`}
+                >
                     {role.location_name}
                 </span>
-                <span className="font-pixel text-[10px] text-stone-500">({role.location_type})</span>
+                <span className="font-pixel text-[10px] text-stone-500">
+                    ({role.location_type})
+                </span>
             </div>
 
             {/* Stats */}
@@ -143,11 +149,15 @@ function MyRoleCard({
                 <div className="flex items-center gap-1">
                     <Coins className="h-3 w-3 text-green-400" />
                     <span className="font-pixel text-[10px] text-stone-400">Earned:</span>
-                    <span className="font-pixel text-xs text-green-300">{role.total_salary_earned}g</span>
+                    <span className="font-pixel text-xs text-green-300">
+                        {role.total_salary_earned}g
+                    </span>
                 </div>
                 <div className="col-span-2 flex items-center gap-1">
                     <Clock className="h-3 w-3 text-stone-400" />
-                    <span className="font-pixel text-[10px] text-stone-400">Since {formatDate(role.appointed_at)}</span>
+                    <span className="font-pixel text-[10px] text-stone-400">
+                        Since {formatDate(role.appointed_at)}
+                    </span>
                 </div>
             </div>
 
@@ -160,8 +170,11 @@ function MyRoleCard({
                     </div>
                     <div className="flex flex-wrap gap-1">
                         {role.permissions.map((perm) => (
-                            <span key={perm} className="rounded bg-blue-900/50 px-1.5 py-0.5 font-pixel text-[10px] text-blue-300">
-                                {perm.replace(/_/g, ' ')}
+                            <span
+                                key={perm}
+                                className="rounded bg-blue-900/50 px-1.5 py-0.5 font-pixel text-[10px] text-blue-300"
+                            >
+                                {perm.replace(/_/g, " ")}
                             </span>
                         ))}
                     </div>
@@ -192,8 +205,8 @@ export default function MyRoles() {
     const [resignLoading, setResignLoading] = useState<number | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'My Roles', href: '#' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "My Roles", href: "#" },
     ];
 
     const handleResign = (playerRoleId: number) => {
@@ -204,7 +217,7 @@ export default function MyRoles() {
             {
                 preserveScroll: true,
                 onFinish: () => setResignLoading(null),
-            }
+            },
         );
     };
 
@@ -216,11 +229,15 @@ export default function MyRoles() {
                 <div className="mb-6 flex items-center justify-between">
                     <div>
                         <h1 className="font-pixel text-2xl text-amber-400">My Roles</h1>
-                        <p className="font-pixel text-sm text-stone-400">Official positions you hold</p>
+                        <p className="font-pixel text-sm text-stone-400">
+                            Official positions you hold
+                        </p>
                     </div>
                     <div className="rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2">
                         <span className="font-pixel text-xs text-stone-400">Total Roles:</span>
-                        <span className="ml-2 font-pixel text-sm text-amber-300">{roles.length}</span>
+                        <span className="ml-2 font-pixel text-sm text-amber-300">
+                            {roles.length}
+                        </span>
                     </div>
                 </div>
 
@@ -228,7 +245,12 @@ export default function MyRoles() {
                 {roles.length > 0 ? (
                     <div className="grid gap-4 overflow-y-auto md:grid-cols-2 lg:grid-cols-3">
                         {roles.map((role) => (
-                            <MyRoleCard key={role.id} role={role} onResign={handleResign} resignLoading={resignLoading} />
+                            <MyRoleCard
+                                key={role.id}
+                                role={role}
+                                onResign={handleResign}
+                                resignLoading={resignLoading}
+                            />
                         ))}
                     </div>
                 ) : (

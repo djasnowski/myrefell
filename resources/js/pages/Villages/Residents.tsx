@@ -1,7 +1,7 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { Crown, Shield, Sword, User, Users } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, Link, usePage } from "@inertiajs/react";
+import { Crown, Shield, Sword, User, Users } from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Resident {
     id: number;
@@ -25,10 +25,10 @@ interface PageProps {
 }
 
 const titleColors: Record<number, string> = {
-    1: 'text-stone-400', // Peasant
-    2: 'text-blue-400', // Knight
-    3: 'text-purple-400', // Lord
-    4: 'text-yellow-400', // King
+    1: "text-stone-400", // Peasant
+    2: "text-blue-400", // Knight
+    3: "text-purple-400", // Lord
+    4: "text-yellow-400", // King
 };
 
 function getTitleIcon(tier: number | null) {
@@ -47,9 +47,9 @@ export default function Residents() {
     const { village, residents, count } = usePage<PageProps>().props;
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
+        { title: "Dashboard", href: "/dashboard" },
         { title: village.name, href: `/villages/${village.id}` },
-        { title: 'Residents', href: '#' },
+        { title: "Residents", href: "#" },
     ];
 
     return (
@@ -64,7 +64,7 @@ export default function Residents() {
                     <div>
                         <h1 className="font-pixel text-2xl text-amber-400">Residents</h1>
                         <p className="font-pixel text-xs text-stone-400">
-                            {count} {count === 1 ? 'person' : 'people'} living in {village.name}
+                            {count} {count === 1 ? "person" : "people"} living in {village.name}
                         </p>
                     </div>
                 </div>
@@ -75,7 +75,8 @@ export default function Residents() {
                         <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
                             <div className="space-y-2">
                                 {residents.map((resident) => {
-                                    const titleColor = titleColors[resident.title_tier || 1] || 'text-stone-400';
+                                    const titleColor =
+                                        titleColors[resident.title_tier || 1] || "text-stone-400";
                                     const titleIcon = getTitleIcon(resident.title_tier);
 
                                     return (
@@ -90,7 +91,9 @@ export default function Residents() {
                                                         {resident.username}
                                                     </div>
                                                     {resident.primary_title && (
-                                                        <div className={`font-pixel text-[10px] capitalize ${titleColor}`}>
+                                                        <div
+                                                            className={`font-pixel text-[10px] capitalize ${titleColor}`}
+                                                        >
                                                             {resident.primary_title}
                                                         </div>
                                                     )}
@@ -111,7 +114,9 @@ export default function Residents() {
                         <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-8 text-center">
                             <Users className="mx-auto mb-3 h-12 w-12 text-stone-600" />
                             <p className="font-pixel text-sm text-stone-500">No residents yet</p>
-                            <p className="font-pixel text-xs text-stone-600">This village is empty</p>
+                            <p className="font-pixel text-xs text-stone-600">
+                                This village is empty
+                            </p>
                         </div>
                     )}
 

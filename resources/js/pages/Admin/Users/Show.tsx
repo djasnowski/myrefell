@@ -1,5 +1,5 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { formatDistanceToNow } from 'date-fns';
+import { Head, Link, router, usePage } from "@inertiajs/react";
+import { formatDistanceToNow } from "date-fns";
 import {
     Activity,
     ArrowLeft,
@@ -28,29 +28,23 @@ import {
     UserX,
     Users,
     Zap,
-} from 'lucide-react';
-import { useState } from 'react';
-import { ActivityTable } from '@/components/admin/activity-table';
-import { EquipmentSlots } from '@/components/admin/equipment-slots';
-import { InventoryGrid } from '@/components/admin/inventory-grid';
-import { SkillCard } from '@/components/admin/skill-card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import AdminLayout from '@/layouts/admin-layout';
-import { cn } from '@/lib/utils';
-import type { BreadcrumbItem, SharedData } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
 import {
     edit as editUser,
     index as usersIndex,
-} from '@/actions/App/Http/Controllers/Admin/UserController';
+} from "@/actions/App/Http/Controllers/Admin/UserController";
+import { ActivityTable } from "@/components/admin/activity-table";
+import { EquipmentSlots } from "@/components/admin/equipment-slots";
+import { InventoryGrid } from "@/components/admin/inventory-grid";
+import { SkillCard } from "@/components/admin/skill-card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import AdminLayout from "@/layouts/admin-layout";
+import { cn } from "@/lib/utils";
+import type { BreadcrumbItem, SharedData } from "@/types";
 
 interface Ban {
     id: number;
@@ -196,14 +190,6 @@ interface BankAccount {
     account_type: string;
 }
 
-interface Quest {
-    id: number;
-    quest_name: string | null;
-    status: string;
-    started_at: string | null;
-    completed_at: string | null;
-}
-
 interface Props {
     user: UserData;
     skills: Skill[];
@@ -217,30 +203,29 @@ interface Props {
     diseases: Disease[];
     activities: ActivityItem[];
     bankAccounts: BankAccount[];
-    quests: Quest[];
 }
 
 type TabType =
-    | 'overview'
-    | 'skills'
-    | 'inventory'
-    | 'titles'
-    | 'dynasty'
-    | 'religion'
-    | 'employment'
-    | 'activity'
-    | 'admin';
+    | "overview"
+    | "skills"
+    | "inventory"
+    | "titles"
+    | "dynasty"
+    | "religion"
+    | "employment"
+    | "activity"
+    | "admin";
 
 const tabs: { id: TabType; label: string; icon: typeof User }[] = [
-    { id: 'overview', label: 'Overview', icon: User },
-    { id: 'skills', label: 'Skills', icon: Swords },
-    { id: 'inventory', label: 'Inventory', icon: Backpack },
-    { id: 'titles', label: 'Titles & Roles', icon: Crown },
-    { id: 'dynasty', label: 'Dynasty', icon: Users },
-    { id: 'religion', label: 'Religion', icon: Church },
-    { id: 'employment', label: 'Employment', icon: Briefcase },
-    { id: 'activity', label: 'Activity Log', icon: Activity },
-    { id: 'admin', label: 'Admin Actions', icon: Shield },
+    { id: "overview", label: "Overview", icon: User },
+    { id: "skills", label: "Skills", icon: Swords },
+    { id: "inventory", label: "Inventory", icon: Backpack },
+    { id: "titles", label: "Titles & Roles", icon: Crown },
+    { id: "dynasty", label: "Dynasty", icon: Users },
+    { id: "religion", label: "Religion", icon: Church },
+    { id: "employment", label: "Employment", icon: Briefcase },
+    { id: "activity", label: "Activity Log", icon: Activity },
+    { id: "admin", label: "Admin Actions", icon: Shield },
 ];
 
 export default function Show({
@@ -256,29 +241,28 @@ export default function Show({
     diseases,
     activities,
     bankAccounts,
-    quests,
 }: Props) {
     const { auth } = usePage<SharedData>().props;
-    const [activeTab, setActiveTab] = useState<TabType>('overview');
-    const [banReason, setBanReason] = useState('');
-    const [unbanReason, setUnbanReason] = useState('');
+    const [activeTab, setActiveTab] = useState<TabType>("overview");
+    const [banReason, setBanReason] = useState("");
+    const [unbanReason, setUnbanReason] = useState("");
     const [showBanForm, setShowBanForm] = useState(false);
     const [showUnbanForm, setShowUnbanForm] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Admin', href: '/admin' },
-        { title: 'Users', href: '/admin/users' },
+        { title: "Admin", href: "/admin" },
+        { title: "Users", href: "/admin/users" },
         { title: user.username, href: `/admin/users/${user.id}` },
     ];
 
     const formatDateTime = (dateStr: string) => {
-        return new Date(dateStr).toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
+        return new Date(dateStr).toLocaleString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
         });
     };
 
@@ -295,11 +279,11 @@ export default function Show({
                 preserveScroll: true,
                 onSuccess: () => {
                     router.reload();
-                    setBanReason('');
+                    setBanReason("");
                     setShowBanForm(false);
                 },
                 onFinish: () => setLoading(false),
-            }
+            },
         );
     };
 
@@ -312,24 +296,25 @@ export default function Show({
                 preserveScroll: true,
                 onSuccess: () => {
                     router.reload();
-                    setUnbanReason('');
+                    setUnbanReason("");
                     setShowUnbanForm(false);
                 },
                 onFinish: () => setLoading(false),
-            }
+            },
         );
     };
 
     const combatSkills = skills.filter((s) => s.is_combat);
     const gatheringSkills = skills.filter(
-        (s) => !s.is_combat && ['mining', 'woodcutting', 'fishing', 'farming'].includes(s.skill_name)
+        (s) =>
+            !s.is_combat && ["mining", "woodcutting", "fishing", "farming"].includes(s.skill_name),
     );
     const craftingSkills = skills.filter(
-        (s) => !s.is_combat && ['cooking', 'smithing', 'crafting'].includes(s.skill_name)
+        (s) => !s.is_combat && ["cooking", "smithing", "crafting"].includes(s.skill_name),
     );
 
     const activeTitles = titles.filter((t) => t.is_active);
-    const activeRoles = roles.filter((r) => r.status === 'active');
+    const activeRoles = roles.filter((r) => r.status === "active");
 
     return (
         <AdminLayout breadcrumbs={breadcrumbs}>
@@ -402,10 +387,10 @@ export default function Show({
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={cn(
-                                    'flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors',
+                                    "flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
                                     activeTab === tab.id
-                                        ? 'bg-stone-800 text-stone-100'
-                                        : 'text-stone-400 hover:bg-stone-800/50 hover:text-stone-300'
+                                        ? "bg-stone-800 text-stone-100"
+                                        : "text-stone-400 hover:bg-stone-800/50 hover:text-stone-300",
                                 )}
                             >
                                 <Icon className="size-4" />
@@ -418,7 +403,7 @@ export default function Show({
                 {/* Tab Content */}
                 <div className="min-h-[400px]">
                     {/* Overview Tab */}
-                    {activeTab === 'overview' && (
+                    {activeTab === "overview" && (
                         <div className="grid gap-6 lg:grid-cols-3">
                             <div className="space-y-6 lg:col-span-2">
                                 {/* Account Info */}
@@ -447,7 +432,7 @@ export default function Show({
                                                 <dd className="mt-1 text-stone-100">
                                                     {user.email_verified_at
                                                         ? formatDateTime(user.email_verified_at)
-                                                        : 'Not verified'}
+                                                        : "Not verified"}
                                                 </dd>
                                             </div>
                                             <div>
@@ -465,7 +450,7 @@ export default function Show({
                                                     Title
                                                 </dt>
                                                 <dd className="mt-1 capitalize text-stone-100">
-                                                    {user.primary_title || 'Peasant'}
+                                                    {user.primary_title || "Peasant"}
                                                 </dd>
                                             </div>
                                             <div>
@@ -474,7 +459,7 @@ export default function Show({
                                                     Registration IP
                                                 </dt>
                                                 <dd className="mt-1 font-mono text-sm text-stone-100">
-                                                    {user.registration_ip || 'Not recorded'}
+                                                    {user.registration_ip || "Not recorded"}
                                                 </dd>
                                             </div>
                                             <div>
@@ -483,7 +468,7 @@ export default function Show({
                                                     Last Login IP
                                                 </dt>
                                                 <dd className="mt-1 font-mono text-sm text-stone-100">
-                                                    {user.last_login_ip || 'Never logged in'}
+                                                    {user.last_login_ip || "Never logged in"}
                                                 </dd>
                                             </div>
                                             <div className="sm:col-span-2">
@@ -494,7 +479,7 @@ export default function Show({
                                                 <dd className="mt-1 text-stone-100">
                                                     {user.last_login_at
                                                         ? formatDateTime(user.last_login_at)
-                                                        : 'Never logged in'}
+                                                        : "Never logged in"}
                                                 </dd>
                                             </div>
                                         </dl>
@@ -504,9 +489,7 @@ export default function Show({
                                 {/* Game Stats */}
                                 <Card className="border-stone-800 bg-stone-900/50">
                                     <CardHeader>
-                                        <CardTitle className="text-stone-100">
-                                            Game Stats
-                                        </CardTitle>
+                                        <CardTitle className="text-stone-100">Game Stats</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -543,7 +526,7 @@ export default function Show({
                                                     Class
                                                 </dt>
                                                 <dd className="mt-1 text-lg font-semibold capitalize text-stone-100">
-                                                    {user.social_class || 'Serf'}
+                                                    {user.social_class || "Serf"}
                                                 </dd>
                                             </div>
                                         </dl>
@@ -558,8 +541,8 @@ export default function Show({
                                             Ban History
                                         </CardTitle>
                                         <CardDescription className="text-stone-400">
-                                            {user.bans.length} total{' '}
-                                            {user.bans.length === 1 ? 'ban' : 'bans'}
+                                            {user.bans.length} total{" "}
+                                            {user.bans.length === 1 ? "ban" : "bans"}
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent>
@@ -573,10 +556,10 @@ export default function Show({
                                                     <div
                                                         key={ban.id}
                                                         className={cn(
-                                                            'rounded-lg border p-4',
+                                                            "rounded-lg border p-4",
                                                             ban.is_active
-                                                                ? 'border-red-900/50 bg-red-900/10'
-                                                                : 'border-stone-800 bg-stone-900/30'
+                                                                ? "border-red-900/50 bg-red-900/10"
+                                                                : "border-stone-800 bg-stone-900/30",
                                                         )}
                                                     >
                                                         <div className="flex items-start justify-between">
@@ -599,7 +582,7 @@ export default function Show({
                                                                     )}
                                                                     <span className="text-sm text-stone-400">
                                                                         {formatDateTime(
-                                                                            ban.banned_at
+                                                                            ban.banned_at,
                                                                         )}
                                                                     </span>
                                                                 </div>
@@ -620,22 +603,20 @@ export default function Show({
                             <div className="space-y-6">
                                 <Card className="border-stone-800 bg-stone-900/50">
                                     <CardHeader>
-                                        <CardTitle className="text-stone-100">
-                                            Quick Info
-                                        </CardTitle>
+                                        <CardTitle className="text-stone-100">Quick Info</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <dl className="space-y-3">
                                             <div className="flex justify-between">
                                                 <dt className="text-stone-400">Gender</dt>
                                                 <dd className="capitalize text-stone-100">
-                                                    {user.gender || 'Unknown'}
+                                                    {user.gender || "Unknown"}
                                                 </dd>
                                             </div>
                                             <div className="flex justify-between">
                                                 <dt className="text-stone-400">Home Village</dt>
                                                 <dd className="text-stone-100">
-                                                    {user.home_village?.name || 'None'}
+                                                    {user.home_village?.name || "None"}
                                                 </dd>
                                             </div>
                                             <div className="flex justify-between">
@@ -677,7 +658,7 @@ export default function Show({
                                                 <div className="flex justify-between">
                                                     <dt className="text-stone-400">Type</dt>
                                                     <dd className="text-stone-100">
-                                                        {horse.horse_type || 'Unknown'}
+                                                        {horse.horse_type || "Unknown"}
                                                     </dd>
                                                 </div>
                                                 <div className="flex justify-between">
@@ -696,8 +677,8 @@ export default function Show({
                                                     <dt className="text-stone-400">Status</dt>
                                                     <dd className="text-stone-100">
                                                         {horse.is_stabled
-                                                            ? 'Stabled'
-                                                            : 'With Player'}
+                                                            ? "Stabled"
+                                                            : "With Player"}
                                                     </dd>
                                                 </div>
                                             </dl>
@@ -742,7 +723,7 @@ export default function Show({
                     )}
 
                     {/* Skills Tab */}
-                    {activeTab === 'skills' && (
+                    {activeTab === "skills" && (
                         <div className="space-y-6">
                             <Card className="border-stone-800 bg-stone-900/50">
                                 <CardHeader>
@@ -816,7 +797,7 @@ export default function Show({
                     )}
 
                     {/* Inventory Tab */}
-                    {activeTab === 'inventory' && (
+                    {activeTab === "inventory" && (
                         <div className="grid gap-6 lg:grid-cols-3">
                             <div className="lg:col-span-2">
                                 <Card className="border-stone-800 bg-stone-900/50">
@@ -826,8 +807,7 @@ export default function Show({
                                             Inventory
                                         </CardTitle>
                                         <CardDescription className="text-stone-400">
-                                            {inventory.filter((i) => i.item).length} / 28 slots
-                                            used
+                                            {inventory.filter((i) => i.item).length} / 28 slots used
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent>
@@ -838,9 +818,7 @@ export default function Show({
                             <div>
                                 <Card className="border-stone-800 bg-stone-900/50">
                                     <CardHeader>
-                                        <CardTitle className="text-stone-100">
-                                            Equipment
-                                        </CardTitle>
+                                        <CardTitle className="text-stone-100">Equipment</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <EquipmentSlots inventory={inventory} />
@@ -851,7 +829,7 @@ export default function Show({
                     )}
 
                     {/* Titles & Roles Tab */}
-                    {activeTab === 'titles' && (
+                    {activeTab === "titles" && (
                         <div className="grid gap-6 lg:grid-cols-2">
                             <Card className="border-stone-800 bg-stone-900/50">
                                 <CardHeader>
@@ -860,25 +838,23 @@ export default function Show({
                                         Titles
                                     </CardTitle>
                                     <CardDescription className="text-stone-400">
-                                        {activeTitles.length} active,{' '}
+                                        {activeTitles.length} active,{" "}
                                         {titles.length - activeTitles.length} revoked
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     {titles.length === 0 ? (
-                                        <p className="py-4 text-center text-stone-500">
-                                            No titles
-                                        </p>
+                                        <p className="py-4 text-center text-stone-500">No titles</p>
                                     ) : (
                                         <div className="space-y-3">
                                             {titles.map((title) => (
                                                 <div
                                                     key={title.id}
                                                     className={cn(
-                                                        'rounded-lg border p-3',
+                                                        "rounded-lg border p-3",
                                                         title.is_active
-                                                            ? 'border-amber-900/50 bg-amber-900/10'
-                                                            : 'border-stone-800 bg-stone-900/30'
+                                                            ? "border-amber-900/50 bg-amber-900/10"
+                                                            : "border-stone-800 bg-stone-900/30",
                                                     )}
                                                 >
                                                     <div className="flex items-center justify-between">
@@ -888,13 +864,13 @@ export default function Show({
                                                         <Badge
                                                             variant={
                                                                 title.is_active
-                                                                    ? 'default'
-                                                                    : 'secondary'
+                                                                    ? "default"
+                                                                    : "secondary"
                                                             }
                                                             className={
                                                                 title.is_active
-                                                                    ? 'bg-amber-900/30 text-amber-400'
-                                                                    : 'bg-stone-800 text-stone-500'
+                                                                    ? "bg-amber-900/30 text-amber-400"
+                                                                    : "bg-stone-800 text-stone-500"
                                                             }
                                                         >
                                                             Tier {title.tier}
@@ -906,14 +882,12 @@ export default function Show({
                                                                 {title.domain_type}
                                                             </span>
                                                         )}
-                                                        <span>
-                                                            Legitimacy: {title.legitimacy}
-                                                        </span>
+                                                        <span>Legitimacy: {title.legitimacy}</span>
                                                         {title.granted_at && (
                                                             <span>
                                                                 {formatDistanceToNow(
                                                                     new Date(title.granted_at),
-                                                                    { addSuffix: true }
+                                                                    { addSuffix: true },
                                                                 )}
                                                             </span>
                                                         )}
@@ -937,36 +911,34 @@ export default function Show({
                                 </CardHeader>
                                 <CardContent>
                                     {roles.length === 0 ? (
-                                        <p className="py-4 text-center text-stone-500">
-                                            No roles
-                                        </p>
+                                        <p className="py-4 text-center text-stone-500">No roles</p>
                                     ) : (
                                         <div className="space-y-3">
                                             {roles.map((role) => (
                                                 <div
                                                     key={role.id}
                                                     className={cn(
-                                                        'rounded-lg border p-3',
-                                                        role.status === 'active'
-                                                            ? 'border-cyan-900/50 bg-cyan-900/10'
-                                                            : 'border-stone-800 bg-stone-900/30'
+                                                        "rounded-lg border p-3",
+                                                        role.status === "active"
+                                                            ? "border-cyan-900/50 bg-cyan-900/10"
+                                                            : "border-stone-800 bg-stone-900/30",
                                                     )}
                                                 >
                                                     <div className="flex items-center justify-between">
                                                         <span className="font-medium text-stone-100">
-                                                            {role.role_name || 'Unknown Role'}
+                                                            {role.role_name || "Unknown Role"}
                                                         </span>
                                                         <Badge
                                                             variant={
-                                                                role.status === 'active'
-                                                                    ? 'default'
-                                                                    : 'secondary'
+                                                                role.status === "active"
+                                                                    ? "default"
+                                                                    : "secondary"
                                                             }
                                                             className={cn(
-                                                                role.status === 'active'
-                                                                    ? 'bg-green-900/30 text-green-400'
-                                                                    : 'bg-stone-800 text-stone-500',
-                                                                'capitalize'
+                                                                role.status === "active"
+                                                                    ? "bg-green-900/30 text-green-400"
+                                                                    : "bg-stone-800 text-stone-500",
+                                                                "capitalize",
                                                             )}
                                                         >
                                                             {role.status}
@@ -991,7 +963,7 @@ export default function Show({
                     )}
 
                     {/* Dynasty Tab */}
-                    {activeTab === 'dynasty' && (
+                    {activeTab === "dynasty" && (
                         <Card className="border-stone-800 bg-stone-900/50">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2 text-stone-100">
@@ -1003,11 +975,9 @@ export default function Show({
                                 {dynasty ? (
                                     <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                         <div className="rounded-lg border border-stone-800 bg-stone-900/30 p-3">
-                                            <dt className="text-sm text-stone-400">
-                                                Dynasty Name
-                                            </dt>
+                                            <dt className="text-sm text-stone-400">Dynasty Name</dt>
                                             <dd className="mt-1 text-lg font-semibold text-stone-100">
-                                                {dynasty.dynasty_name || 'Unknown'}
+                                                {dynasty.dynasty_name || "Unknown"}
                                             </dd>
                                         </div>
                                         <div className="rounded-lg border border-stone-800 bg-stone-900/30 p-3">
@@ -1036,14 +1006,14 @@ export default function Show({
                                                         Yes
                                                     </Badge>
                                                 ) : (
-                                                    'No'
+                                                    "No"
                                                 )}
                                             </dd>
                                         </div>
                                         <div className="rounded-lg border border-stone-800 bg-stone-900/30 p-3">
                                             <dt className="text-sm text-stone-400">Legitimate</dt>
                                             <dd className="mt-1 text-lg font-semibold text-stone-100">
-                                                {dynasty.is_legitimate ? 'Yes' : 'No'}
+                                                {dynasty.is_legitimate ? "Yes" : "No"}
                                             </dd>
                                         </div>
                                     </dl>
@@ -1057,7 +1027,7 @@ export default function Show({
                     )}
 
                     {/* Religion Tab */}
-                    {activeTab === 'religion' && (
+                    {activeTab === "religion" && (
                         <Card className="border-stone-800 bg-stone-900/50">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2 text-stone-100">
@@ -1071,7 +1041,7 @@ export default function Show({
                                         <div className="rounded-lg border border-stone-800 bg-stone-900/30 p-3">
                                             <dt className="text-sm text-stone-400">Religion</dt>
                                             <dd className="mt-1 text-lg font-semibold text-stone-100">
-                                                {religion.religion_name || 'Unknown'}
+                                                {religion.religion_name || "Unknown"}
                                             </dd>
                                         </div>
                                         <div className="rounded-lg border border-stone-800 bg-stone-900/30 p-3">
@@ -1092,9 +1062,9 @@ export default function Show({
                                                 {religion.joined_at
                                                     ? formatDistanceToNow(
                                                           new Date(religion.joined_at),
-                                                          { addSuffix: true }
+                                                          { addSuffix: true },
                                                       )
-                                                    : 'Unknown'}
+                                                    : "Unknown"}
                                             </dd>
                                         </div>
                                     </dl>
@@ -1108,7 +1078,7 @@ export default function Show({
                     )}
 
                     {/* Employment Tab */}
-                    {activeTab === 'employment' && (
+                    {activeTab === "employment" && (
                         <div className="grid gap-6 lg:grid-cols-2">
                             <Card className="border-stone-800 bg-stone-900/50">
                                 <CardHeader>
@@ -1128,10 +1098,10 @@ export default function Show({
                                                 <div
                                                     key={emp.id}
                                                     className={cn(
-                                                        'rounded-lg border p-3',
-                                                        emp.status === 'employed'
-                                                            ? 'border-green-900/50 bg-green-900/10'
-                                                            : 'border-stone-800 bg-stone-900/30'
+                                                        "rounded-lg border p-3",
+                                                        emp.status === "employed"
+                                                            ? "border-green-900/50 bg-green-900/10"
+                                                            : "border-stone-800 bg-stone-900/30",
                                                     )}
                                                 >
                                                     <div className="flex items-center justify-between">
@@ -1140,15 +1110,15 @@ export default function Show({
                                                         </span>
                                                         <Badge
                                                             variant={
-                                                                emp.status === 'employed'
-                                                                    ? 'default'
-                                                                    : 'secondary'
+                                                                emp.status === "employed"
+                                                                    ? "default"
+                                                                    : "secondary"
                                                             }
                                                             className={cn(
-                                                                emp.status === 'employed'
-                                                                    ? 'bg-green-900/30 text-green-400'
-                                                                    : 'bg-stone-800 text-stone-500',
-                                                                'capitalize'
+                                                                emp.status === "employed"
+                                                                    ? "bg-green-900/30 text-green-400"
+                                                                    : "bg-stone-800 text-stone-500",
+                                                                "capitalize",
                                                             )}
                                                         >
                                                             {emp.status}
@@ -1156,16 +1126,16 @@ export default function Show({
                                                     </div>
                                                     <div className="mt-2 flex items-center gap-4 text-xs text-stone-500">
                                                         <span>
-                                                            Total Earnings:{' '}
-                                                            {emp.total_earnings.toLocaleString()}{' '}
+                                                            Total Earnings:{" "}
+                                                            {emp.total_earnings.toLocaleString()}{" "}
                                                             gold
                                                         </span>
                                                         {emp.hired_at && (
                                                             <span>
-                                                                Hired{' '}
+                                                                Hired{" "}
                                                                 {formatDistanceToNow(
                                                                     new Date(emp.hired_at),
-                                                                    { addSuffix: true }
+                                                                    { addSuffix: true },
                                                                 )}
                                                             </span>
                                                         )}
@@ -1197,7 +1167,7 @@ export default function Show({
                                                     className="flex items-center justify-between rounded-lg border border-stone-800 bg-stone-900/30 p-3"
                                                 >
                                                     <span className="font-medium capitalize text-stone-100">
-                                                        {acc.account_type || 'Savings'}
+                                                        {acc.account_type || "Savings"}
                                                     </span>
                                                     <span className="text-lg font-semibold text-amber-400">
                                                         {acc.balance.toLocaleString()} gold
@@ -1212,7 +1182,7 @@ export default function Show({
                     )}
 
                     {/* Activity Tab */}
-                    {activeTab === 'activity' && (
+                    {activeTab === "activity" && (
                         <Card className="border-stone-800 bg-stone-900/50">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2 text-stone-100">
@@ -1230,7 +1200,7 @@ export default function Show({
                     )}
 
                     {/* Admin Actions Tab */}
-                    {activeTab === 'admin' && (
+                    {activeTab === "admin" && (
                         <div className="grid gap-6 lg:grid-cols-2">
                             <Card className="border-stone-800 bg-stone-900/50">
                                 <CardHeader>
@@ -1269,14 +1239,14 @@ export default function Show({
                                                     onClick={handleBan}
                                                     disabled={loading || !banReason.trim()}
                                                 >
-                                                    {loading ? 'Banning...' : 'Confirm Ban'}
+                                                    {loading ? "Banning..." : "Confirm Ban"}
                                                 </Button>
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
                                                     onClick={() => {
                                                         setShowBanForm(false);
-                                                        setBanReason('');
+                                                        setBanReason("");
                                                     }}
                                                     className="border-stone-700"
                                                 >
@@ -1317,14 +1287,14 @@ export default function Show({
                                                     disabled={loading}
                                                     className="bg-green-600 hover:bg-green-700"
                                                 >
-                                                    {loading ? 'Unbanning...' : 'Confirm Unban'}
+                                                    {loading ? "Unbanning..." : "Confirm Unban"}
                                                 </Button>
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
                                                     onClick={() => {
                                                         setShowUnbanForm(false);
-                                                        setUnbanReason('');
+                                                        setUnbanReason("");
                                                     }}
                                                     className="border-stone-700"
                                                 >
@@ -1355,8 +1325,8 @@ export default function Show({
                                         Full Ban History
                                     </CardTitle>
                                     <CardDescription className="text-stone-400">
-                                        {user.bans.length} total{' '}
-                                        {user.bans.length === 1 ? 'ban' : 'bans'}
+                                        {user.bans.length} total{" "}
+                                        {user.bans.length === 1 ? "ban" : "bans"}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
@@ -1370,10 +1340,10 @@ export default function Show({
                                                 <div
                                                     key={ban.id}
                                                     className={cn(
-                                                        'rounded-lg border p-4',
+                                                        "rounded-lg border p-4",
                                                         ban.is_active
-                                                            ? 'border-red-900/50 bg-red-900/10'
-                                                            : 'border-stone-800 bg-stone-900/30'
+                                                            ? "border-red-900/50 bg-red-900/10"
+                                                            : "border-stone-800 bg-stone-900/30",
                                                     )}
                                                 >
                                                     <div className="flex items-start justify-between">
@@ -1402,9 +1372,9 @@ export default function Show({
                                                                 {ban.reason}
                                                             </p>
                                                             <p className="mt-1 text-xs text-stone-500">
-                                                                Banned by:{' '}
+                                                                Banned by:{" "}
                                                                 {ban.banned_by?.username ||
-                                                                    'Unknown'}
+                                                                    "Unknown"}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -1412,13 +1382,10 @@ export default function Show({
                                                         <div className="mt-3 border-t border-stone-800 pt-3">
                                                             <p className="text-sm text-green-400">
                                                                 <CheckCircle className="mr-1 inline size-4" />
-                                                                Unbanned{' '}
-                                                                {formatDateTime(
-                                                                    ban.unbanned_at
-                                                                )}{' '}
-                                                                by{' '}
+                                                                Unbanned{" "}
+                                                                {formatDateTime(ban.unbanned_at)} by{" "}
                                                                 {ban.unbanned_by?.username ||
-                                                                    'Unknown'}
+                                                                    "Unknown"}
                                                             </p>
                                                             {ban.unban_reason && (
                                                                 <p className="mt-1 text-sm text-stone-400">

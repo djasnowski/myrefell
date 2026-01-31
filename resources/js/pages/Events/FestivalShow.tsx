@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import {
     ArrowLeft,
     Calendar,
@@ -17,10 +17,10 @@ import {
     Trophy,
     Utensils,
     Users,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface FestivalType {
     id: number;
@@ -36,7 +36,7 @@ interface Festival {
     id: number;
     name: string;
     type: FestivalType;
-    status: 'scheduled' | 'active' | 'completed' | 'cancelled';
+    status: "scheduled" | "active" | "completed" | "cancelled";
     location_type: string;
     location_id: number;
     location_name: string;
@@ -79,7 +79,7 @@ interface Tournament {
     id: number;
     name: string;
     type: TournamentType;
-    status: 'registration' | 'in_progress' | 'completed' | 'cancelled';
+    status: "registration" | "in_progress" | "completed" | "cancelled";
     location_type: string;
     location_id: number;
     location_name: string;
@@ -115,31 +115,31 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Events', href: '/events' },
-    { title: 'Festival Details', href: '#' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Events", href: "/events" },
+    { title: "Festival Details", href: "#" },
 ];
 
 const festivalCategoryColors: Record<string, { bg: string; text: string; border: string }> = {
-    seasonal: { bg: 'bg-green-900/30', text: 'text-green-400', border: 'border-green-600/50' },
-    religious: { bg: 'bg-purple-900/30', text: 'text-purple-400', border: 'border-purple-600/50' },
-    royal: { bg: 'bg-amber-900/30', text: 'text-amber-400', border: 'border-amber-600/50' },
-    special: { bg: 'bg-blue-900/30', text: 'text-blue-400', border: 'border-blue-600/50' },
+    seasonal: { bg: "bg-green-900/30", text: "text-green-400", border: "border-green-600/50" },
+    religious: { bg: "bg-purple-900/30", text: "text-purple-400", border: "border-purple-600/50" },
+    royal: { bg: "bg-amber-900/30", text: "text-amber-400", border: "border-amber-600/50" },
+    special: { bg: "bg-blue-900/30", text: "text-blue-400", border: "border-blue-600/50" },
 };
 
 const statusColors: Record<string, { bg: string; text: string; label: string }> = {
-    scheduled: { bg: 'bg-blue-900/30', text: 'text-blue-400', label: 'Scheduled' },
-    active: { bg: 'bg-green-900/30', text: 'text-green-400', label: 'Active' },
-    completed: { bg: 'bg-stone-900/30', text: 'text-stone-400', label: 'Completed' },
-    cancelled: { bg: 'bg-stone-900/30', text: 'text-stone-500', label: 'Cancelled' },
+    scheduled: { bg: "bg-blue-900/30", text: "text-blue-400", label: "Scheduled" },
+    active: { bg: "bg-green-900/30", text: "text-green-400", label: "Active" },
+    completed: { bg: "bg-stone-900/30", text: "text-stone-400", label: "Completed" },
+    cancelled: { bg: "bg-stone-900/30", text: "text-stone-500", label: "Cancelled" },
 };
 
 const roleColors: Record<string, { bg: string; text: string }> = {
-    attendee: { bg: 'bg-blue-900/30', text: 'text-blue-400' },
-    performer: { bg: 'bg-purple-900/30', text: 'text-purple-400' },
-    vendor: { bg: 'bg-amber-900/30', text: 'text-amber-400' },
-    organizer: { bg: 'bg-green-900/30', text: 'text-green-400' },
-    competitor: { bg: 'bg-red-900/30', text: 'text-red-400' },
+    attendee: { bg: "bg-blue-900/30", text: "text-blue-400" },
+    performer: { bg: "bg-purple-900/30", text: "text-purple-400" },
+    vendor: { bg: "bg-amber-900/30", text: "text-amber-400" },
+    organizer: { bg: "bg-green-900/30", text: "text-green-400" },
+    competitor: { bg: "bg-red-900/30", text: "text-red-400" },
 };
 
 const activityIcons: Record<string, typeof PartyPopper> = {
@@ -178,32 +178,35 @@ export default function FestivalShow() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
-    const categoryStyle = festivalCategoryColors[festival.type.category] || festivalCategoryColors.special;
+    const categoryStyle =
+        festivalCategoryColors[festival.type.category] || festivalCategoryColors.special;
     const statusStyle = statusColors[festival.status] || statusColors.scheduled;
 
-    const joinFestival = async (role: string = 'attendee') => {
+    const joinFestival = async (role: string = "attendee") => {
         setJoining(true);
         setError(null);
 
         try {
             const response = await fetch(`/events/festivals/${festival.id}/join`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
                 body: JSON.stringify({ role }),
             });
 
             const data = await response.json();
             if (data.success) {
-                setSuccess('You have joined the festival!');
+                setSuccess("You have joined the festival!");
                 router.reload();
             } else {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to join festival');
+            setError("Failed to join festival");
         } finally {
             setJoining(false);
         }
@@ -215,22 +218,24 @@ export default function FestivalShow() {
 
         try {
             const response = await fetch(`/events/festivals/${festival.id}/leave`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
             });
 
             const data = await response.json();
             if (data.success) {
-                setSuccess('You have left the festival.');
+                setSuccess("You have left the festival.");
                 router.reload();
             } else {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to leave festival');
+            setError("Failed to leave festival");
         } finally {
             setLeaving(false);
         }
@@ -242,37 +247,43 @@ export default function FestivalShow() {
 
         try {
             const response = await fetch(`/events/tournaments/${tournamentId}/register`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
                 },
             });
 
             const data = await response.json();
             if (data.success) {
-                setSuccess('You have registered for the tournament!');
+                setSuccess("You have registered for the tournament!");
                 router.reload();
             } else {
                 setError(data.message);
             }
         } catch {
-            setError('Failed to register for tournament');
+            setError("Failed to register for tournament");
         } finally {
             setRegisteringTournament(null);
         }
     };
 
     // Calculate progress percentage for active festivals
-    const progressPercent = festival.current_day && festival.duration_days
-        ? Math.min(100, Math.round((festival.current_day / festival.duration_days) * 100))
-        : 0;
+    const progressPercent =
+        festival.current_day && festival.duration_days
+            ? Math.min(100, Math.round((festival.current_day / festival.duration_days) * 100))
+            : 0;
 
     // Count participants by role
-    const participantsByRole = participants.reduce((acc, p) => {
-        acc[p.role] = (acc[p.role] || 0) + 1;
-        return acc;
-    }, {} as Record<string, number>);
+    const participantsByRole = participants.reduce(
+        (acc, p) => {
+            acc[p.role] = (acc[p.role] || 0) + 1;
+            return acc;
+        },
+        {} as Record<string, number>,
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -300,14 +311,18 @@ export default function FestivalShow() {
                 )}
 
                 {/* Header */}
-                <div className={`rounded-xl border-2 ${categoryStyle.border} ${categoryStyle.bg} p-4`}>
+                <div
+                    className={`rounded-xl border-2 ${categoryStyle.border} ${categoryStyle.bg} p-4`}
+                >
                     <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="flex items-center gap-3">
                             <PartyPopper className={`h-8 w-8 ${categoryStyle.text}`} />
                             <div>
                                 <h1 className="font-pixel text-2xl text-white">{festival.name}</h1>
                                 <div className="flex flex-wrap items-center gap-3 font-pixel text-sm text-stone-400">
-                                    <span className={`rounded px-2 py-0.5 text-[10px] capitalize ${categoryStyle.bg} ${categoryStyle.text}`}>
+                                    <span
+                                        className={`rounded px-2 py-0.5 text-[10px] capitalize ${categoryStyle.bg} ${categoryStyle.text}`}
+                                    >
                                         {festival.type.category}
                                     </span>
                                     <span className="flex items-center gap-1">
@@ -318,7 +333,9 @@ export default function FestivalShow() {
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
-                            <span className={`rounded px-3 py-1.5 font-pixel text-xs ${statusStyle.bg} ${statusStyle.text}`}>
+                            <span
+                                className={`rounded px-3 py-1.5 font-pixel text-xs ${statusStyle.bg} ${statusStyle.text}`}
+                            >
                                 {statusStyle.label}
                             </span>
                         </div>
@@ -342,7 +359,9 @@ export default function FestivalShow() {
                                     <span className="font-pixel text-sm text-white">
                                         You are participating!
                                     </span>
-                                    <span className={`ml-2 rounded px-2 py-0.5 font-pixel text-[10px] capitalize ${roleColors[user_participation.role]?.bg || 'bg-stone-700'} ${roleColors[user_participation.role]?.text || 'text-stone-300'}`}>
+                                    <span
+                                        className={`ml-2 rounded px-2 py-0.5 font-pixel text-[10px] capitalize ${roleColors[user_participation.role]?.bg || "bg-stone-700"} ${roleColors[user_participation.role]?.text || "text-stone-300"}`}
+                                    >
                                         {user_participation.role}
                                     </span>
                                 </div>
@@ -350,19 +369,23 @@ export default function FestivalShow() {
                             <div className="flex items-center gap-4 font-pixel text-xs">
                                 <div>
                                     <span className="text-stone-400">Spent: </span>
-                                    <span className="text-yellow-400">{user_participation.gold_spent}g</span>
+                                    <span className="text-yellow-400">
+                                        {user_participation.gold_spent}g
+                                    </span>
                                 </div>
                                 <div>
                                     <span className="text-stone-400">Earned: </span>
-                                    <span className="text-green-400">{user_participation.gold_earned}g</span>
+                                    <span className="text-green-400">
+                                        {user_participation.gold_earned}g
+                                    </span>
                                 </div>
-                                {festival.status !== 'completed' && (
+                                {festival.status !== "completed" && (
                                     <button
                                         onClick={leaveFestival}
                                         disabled={leaving}
                                         className="rounded border border-red-600/50 bg-red-900/20 px-3 py-1 font-pixel text-xs text-red-300 transition hover:bg-red-900/40 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
-                                        {leaving ? 'Leaving...' : 'Leave Festival'}
+                                        {leaving ? "Leaving..." : "Leave Festival"}
                                     </button>
                                 )}
                             </div>
@@ -371,7 +394,7 @@ export default function FestivalShow() {
                 )}
 
                 {/* Progress Bar for Active Festivals */}
-                {festival.status === 'active' && festival.current_day && (
+                {festival.status === "active" && festival.current_day && (
                     <div className="rounded-xl border-2 border-stone-600/50 bg-stone-800/30 p-4">
                         <div className="mb-2 flex items-center justify-between font-pixel text-xs">
                             <span className="flex items-center gap-2 text-stone-300">
@@ -402,7 +425,9 @@ export default function FestivalShow() {
                             <CalendarDays className="h-4 w-4 text-blue-400" />
                             <span className="font-pixel text-[10px] text-stone-400">Duration</span>
                         </div>
-                        <div className="font-pixel text-lg text-white">{festival.duration_days} days</div>
+                        <div className="font-pixel text-lg text-white">
+                            {festival.duration_days} days
+                        </div>
                         {festival.starts_at_formatted && (
                             <div className="font-pixel text-[10px] text-stone-500">
                                 {festival.starts_at_formatted} - {festival.ends_at_formatted}
@@ -414,9 +439,13 @@ export default function FestivalShow() {
                     <div className="rounded-lg bg-stone-800/50 p-3 text-center">
                         <div className="flex items-center justify-center gap-1">
                             <Users className="h-4 w-4 text-green-400" />
-                            <span className="font-pixel text-[10px] text-stone-400">Participants</span>
+                            <span className="font-pixel text-[10px] text-stone-400">
+                                Participants
+                            </span>
                         </div>
-                        <div className="font-pixel text-lg text-white">{festival.attendance_count}</div>
+                        <div className="font-pixel text-lg text-white">
+                            {festival.attendance_count}
+                        </div>
                     </div>
 
                     {/* Budget */}
@@ -424,9 +453,13 @@ export default function FestivalShow() {
                         <div className="rounded-lg bg-stone-800/50 p-3 text-center">
                             <div className="flex items-center justify-center gap-1">
                                 <Coins className="h-4 w-4 text-yellow-400" />
-                                <span className="font-pixel text-[10px] text-stone-400">Budget</span>
+                                <span className="font-pixel text-[10px] text-stone-400">
+                                    Budget
+                                </span>
                             </div>
-                            <div className="font-pixel text-lg text-yellow-300">{festival.budget}g</div>
+                            <div className="font-pixel text-lg text-yellow-300">
+                                {festival.budget}g
+                            </div>
                         </div>
                     )}
 
@@ -435,9 +468,13 @@ export default function FestivalShow() {
                         <div className="rounded-lg bg-stone-800/50 p-3 text-center">
                             <div className="flex items-center justify-center gap-1">
                                 <Star className="h-4 w-4 text-amber-400" />
-                                <span className="font-pixel text-[10px] text-stone-400">Organizer</span>
+                                <span className="font-pixel text-[10px] text-stone-400">
+                                    Organizer
+                                </span>
                             </div>
-                            <div className="font-pixel text-sm text-white">{festival.organizer_name}</div>
+                            <div className="font-pixel text-sm text-white">
+                                {festival.organizer_name}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -451,21 +488,25 @@ export default function FestivalShow() {
                         </h2>
                         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                             {festival.type.activities.map((activity, i) => {
-                                const ActivityIcon = activityIcons[activity.toLowerCase()] || PartyPopper;
-                                const isCompleted = user_participation?.activities_completed?.includes(activity);
+                                const ActivityIcon =
+                                    activityIcons[activity.toLowerCase()] || PartyPopper;
+                                const isCompleted =
+                                    user_participation?.activities_completed?.includes(activity);
                                 return (
                                     <div
                                         key={i}
                                         className={`flex items-center gap-3 rounded-lg p-3 ${
                                             isCompleted
-                                                ? 'border border-green-500/30 bg-green-900/20'
-                                                : 'bg-stone-900/50'
+                                                ? "border border-green-500/30 bg-green-900/20"
+                                                : "bg-stone-900/50"
                                         }`}
                                     >
-                                        <ActivityIcon className={`h-5 w-5 ${isCompleted ? 'text-green-400' : categoryStyle.text}`} />
+                                        <ActivityIcon
+                                            className={`h-5 w-5 ${isCompleted ? "text-green-400" : categoryStyle.text}`}
+                                        />
                                         <div className="flex-1">
                                             <span className="font-pixel text-sm capitalize text-white">
-                                                {activity.replace('_', ' ')}
+                                                {activity.replace("_", " ")}
                                             </span>
                                             {isCompleted && (
                                                 <span className="ml-2 font-pixel text-[10px] text-green-400">
@@ -494,10 +535,13 @@ export default function FestivalShow() {
                                     className="flex items-center justify-between rounded-lg bg-stone-900/50 p-2"
                                 >
                                     <span className="font-pixel text-xs capitalize text-stone-300">
-                                        {key.replace('_', ' ')}
+                                        {key.replace("_", " ")}
                                     </span>
-                                    <span className={`font-pixel text-xs ${Number(value) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                        {Number(value) >= 0 ? '+' : ''}{value}%
+                                    <span
+                                        className={`font-pixel text-xs ${Number(value) >= 0 ? "text-green-400" : "text-red-400"}`}
+                                    >
+                                        {Number(value) >= 0 ? "+" : ""}
+                                        {value}%
                                     </span>
                                 </div>
                             ))}
@@ -514,9 +558,12 @@ export default function FestivalShow() {
                         </h2>
                         <div className="grid gap-4 md:grid-cols-2">
                             {tournaments.map((tournament) => {
-                                const CombatIcon = combatTypeIcons[tournament.type.combat_type] || Swords;
-                                const tournamentStatusStyle = statusColors[tournament.status] || statusColors.scheduled;
-                                const canRegister = tournament.is_registration_open && !tournament.is_registered;
+                                const CombatIcon =
+                                    combatTypeIcons[tournament.type.combat_type] || Swords;
+                                const tournamentStatusStyle =
+                                    statusColors[tournament.status] || statusColors.scheduled;
+                                const canRegister =
+                                    tournament.is_registration_open && !tournament.is_registered;
                                 const meetsLevel = user_combat_level >= tournament.type.min_level;
                                 const hasGold = user_gold >= tournament.type.entry_fee;
 
@@ -529,7 +576,9 @@ export default function FestivalShow() {
                                         <div className="mb-3 flex items-start justify-between">
                                             <div className="flex items-center gap-2">
                                                 <CombatIcon className="h-5 w-5 text-red-400" />
-                                                <span className="font-pixel text-sm text-white">{tournament.name}</span>
+                                                <span className="font-pixel text-sm text-white">
+                                                    {tournament.name}
+                                                </span>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 {tournament.type.is_lethal && (
@@ -538,8 +587,10 @@ export default function FestivalShow() {
                                                         Lethal
                                                     </span>
                                                 )}
-                                                <span className={`rounded px-2 py-0.5 font-pixel text-[10px] capitalize ${tournamentStatusStyle.bg} ${tournamentStatusStyle.text}`}>
-                                                    {tournament.status.replace('_', ' ')}
+                                                <span
+                                                    className={`rounded px-2 py-0.5 font-pixel text-[10px] capitalize ${tournamentStatusStyle.bg} ${tournamentStatusStyle.text}`}
+                                                >
+                                                    {tournament.status.replace("_", " ")}
                                                 </span>
                                             </div>
                                         </div>
@@ -552,54 +603,77 @@ export default function FestivalShow() {
                                         {/* Stats */}
                                         <div className="mb-3 grid grid-cols-3 gap-2">
                                             <div className="rounded bg-stone-800/50 p-2 text-center">
-                                                <div className="font-pixel text-[10px] text-stone-400">Prize</div>
-                                                <div className="font-pixel text-sm text-yellow-300">{tournament.prize_pool}g</div>
-                                            </div>
-                                            <div className="rounded bg-stone-800/50 p-2 text-center">
-                                                <div className="font-pixel text-[10px] text-stone-400">Competitors</div>
-                                                <div className="font-pixel text-sm text-white">
-                                                    {tournament.competitor_count}/{tournament.type.max_participants}
+                                                <div className="font-pixel text-[10px] text-stone-400">
+                                                    Prize
+                                                </div>
+                                                <div className="font-pixel text-sm text-yellow-300">
+                                                    {tournament.prize_pool}g
                                                 </div>
                                             </div>
                                             <div className="rounded bg-stone-800/50 p-2 text-center">
-                                                <div className="font-pixel text-[10px] text-stone-400">Entry</div>
-                                                <div className="font-pixel text-sm text-white">{tournament.type.entry_fee}g</div>
+                                                <div className="font-pixel text-[10px] text-stone-400">
+                                                    Competitors
+                                                </div>
+                                                <div className="font-pixel text-sm text-white">
+                                                    {tournament.competitor_count}/
+                                                    {tournament.type.max_participants}
+                                                </div>
+                                            </div>
+                                            <div className="rounded bg-stone-800/50 p-2 text-center">
+                                                <div className="font-pixel text-[10px] text-stone-400">
+                                                    Entry
+                                                </div>
+                                                <div className="font-pixel text-sm text-white">
+                                                    {tournament.type.entry_fee}g
+                                                </div>
                                             </div>
                                         </div>
 
                                         {/* Registration info */}
-                                        {tournament.status === 'registration' && tournament.registration_ends_formatted && (
-                                            <div className="mb-3 flex items-center gap-2 font-pixel text-[10px] text-stone-400">
-                                                <Calendar className="h-3 w-3" />
-                                                Registration ends: {tournament.registration_ends_formatted}
-                                            </div>
-                                        )}
+                                        {tournament.status === "registration" &&
+                                            tournament.registration_ends_formatted && (
+                                                <div className="mb-3 flex items-center gap-2 font-pixel text-[10px] text-stone-400">
+                                                    <Calendar className="h-3 w-3" />
+                                                    Registration ends:{" "}
+                                                    {tournament.registration_ends_formatted}
+                                                </div>
+                                            )}
 
                                         {/* Progress for in-progress */}
-                                        {tournament.status === 'in_progress' && tournament.current_round && (
-                                            <div className="mb-3 flex items-center gap-2 font-pixel text-[10px] text-amber-300">
-                                                <Trophy className="h-3 w-3" />
-                                                Round {tournament.current_round} / {tournament.total_rounds}
-                                            </div>
-                                        )}
+                                        {tournament.status === "in_progress" &&
+                                            tournament.current_round && (
+                                                <div className="mb-3 flex items-center gap-2 font-pixel text-[10px] text-amber-300">
+                                                    <Trophy className="h-3 w-3" />
+                                                    Round {tournament.current_round} /{" "}
+                                                    {tournament.total_rounds}
+                                                </div>
+                                            )}
 
                                         {/* Action */}
                                         {canRegister && (
                                             <button
                                                 onClick={() => registerForTournament(tournament.id)}
-                                                disabled={registeringTournament === tournament.id || !meetsLevel || !hasGold}
+                                                disabled={
+                                                    registeringTournament === tournament.id ||
+                                                    !meetsLevel ||
+                                                    !hasGold
+                                                }
                                                 className="w-full rounded border border-red-600/50 bg-red-900/30 px-3 py-1.5 font-pixel text-xs text-red-300 transition hover:bg-red-900/50 disabled:cursor-not-allowed disabled:opacity-50"
                                             >
                                                 {registeringTournament === tournament.id
-                                                    ? 'Registering...'
+                                                    ? "Registering..."
                                                     : `Register (${tournament.type.entry_fee}g)`}
                                             </button>
                                         )}
                                         {tournament.is_registered && (
                                             <div className="rounded bg-green-900/30 px-3 py-1.5 text-center font-pixel text-xs text-green-400">
-                                                Registered {tournament.user_status && tournament.user_status !== 'registered' && (
-                                                    <span className="capitalize">- {tournament.user_status}</span>
-                                                )}
+                                                Registered{" "}
+                                                {tournament.user_status &&
+                                                    tournament.user_status !== "registered" && (
+                                                        <span className="capitalize">
+                                                            - {tournament.user_status}
+                                                        </span>
+                                                    )}
                                             </div>
                                         )}
                                     </div>
@@ -614,7 +688,9 @@ export default function FestivalShow() {
                     <h2 className="mb-4 flex items-center gap-2 font-pixel text-lg text-white">
                         <Users className="h-5 w-5 text-blue-400" />
                         Participants
-                        <span className="font-pixel text-xs text-stone-400">({participants.length})</span>
+                        <span className="font-pixel text-xs text-stone-400">
+                            ({participants.length})
+                        </span>
                     </h2>
 
                     {/* Role summary */}
@@ -636,7 +712,8 @@ export default function FestivalShow() {
                         <div className="max-h-64 overflow-y-auto">
                             <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
                                 {participants.slice(0, 50).map((participant) => {
-                                    const roleStyle = roleColors[participant.role] || roleColors.attendee;
+                                    const roleStyle =
+                                        roleColors[participant.role] || roleColors.attendee;
                                     return (
                                         <div
                                             key={participant.id}
@@ -648,7 +725,9 @@ export default function FestivalShow() {
                                                     {participant.username}
                                                 </span>
                                             </div>
-                                            <span className={`rounded px-1.5 py-0.5 font-pixel text-[10px] capitalize ${roleStyle.bg} ${roleStyle.text}`}>
+                                            <span
+                                                className={`rounded px-1.5 py-0.5 font-pixel text-[10px] capitalize ${roleStyle.bg} ${roleStyle.text}`}
+                                            >
                                                 {participant.role}
                                             </span>
                                         </div>
@@ -669,8 +748,10 @@ export default function FestivalShow() {
                 </div>
 
                 {/* Join Festival Action */}
-                {!is_participating && festival.status === 'active' && (
-                    <div className={`rounded-xl border-2 ${categoryStyle.border} ${categoryStyle.bg} p-4`}>
+                {!is_participating && festival.status === "active" && (
+                    <div
+                        className={`rounded-xl border-2 ${categoryStyle.border} ${categoryStyle.bg} p-4`}
+                    >
                         <h2 className="mb-4 flex items-center gap-2 font-pixel text-lg text-white">
                             <PartyPopper className="h-5 w-5" />
                             Join the Festival
@@ -680,35 +761,35 @@ export default function FestivalShow() {
                         </p>
                         <div className="flex flex-wrap gap-3">
                             <button
-                                onClick={() => joinFestival('attendee')}
+                                onClick={() => joinFestival("attendee")}
                                 disabled={joining}
                                 className={`flex items-center gap-2 rounded border ${categoryStyle.border} ${categoryStyle.bg} px-4 py-2 font-pixel text-xs ${categoryStyle.text} transition hover:brightness-125 disabled:cursor-not-allowed disabled:opacity-50`}
                             >
                                 <Users className="h-4 w-4" />
-                                {joining ? 'Joining...' : 'Join as Attendee'}
+                                {joining ? "Joining..." : "Join as Attendee"}
                             </button>
                             <button
-                                onClick={() => joinFestival('performer')}
+                                onClick={() => joinFestival("performer")}
                                 disabled={joining}
                                 className="flex items-center gap-2 rounded border border-purple-600/50 bg-purple-900/20 px-4 py-2 font-pixel text-xs text-purple-300 transition hover:brightness-125 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <Music className="h-4 w-4" />
-                                {joining ? 'Joining...' : 'Join as Performer'}
+                                {joining ? "Joining..." : "Join as Performer"}
                             </button>
                             <button
-                                onClick={() => joinFestival('vendor')}
+                                onClick={() => joinFestival("vendor")}
                                 disabled={joining}
                                 className="flex items-center gap-2 rounded border border-amber-600/50 bg-amber-900/20 px-4 py-2 font-pixel text-xs text-amber-300 transition hover:brightness-125 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <Coins className="h-4 w-4" />
-                                {joining ? 'Joining...' : 'Join as Vendor'}
+                                {joining ? "Joining..." : "Join as Vendor"}
                             </button>
                         </div>
                     </div>
                 )}
 
                 {/* Scheduled Festival Info */}
-                {festival.status === 'scheduled' && (
+                {festival.status === "scheduled" && (
                     <div className="rounded-xl border-2 border-blue-600/50 bg-blue-900/20 p-4 text-center">
                         <Calendar className="mx-auto mb-2 h-8 w-8 text-blue-400" />
                         <p className="font-pixel text-sm text-blue-300">
@@ -721,12 +802,10 @@ export default function FestivalShow() {
                 )}
 
                 {/* Completed Festival Info */}
-                {festival.status === 'completed' && (
+                {festival.status === "completed" && (
                     <div className="rounded-xl border-2 border-stone-600/50 bg-stone-800/30 p-4 text-center">
                         <Trophy className="mx-auto mb-2 h-8 w-8 text-amber-400" />
-                        <p className="font-pixel text-sm text-stone-300">
-                            This festival has ended
-                        </p>
+                        <p className="font-pixel text-sm text-stone-300">This festival has ended</p>
                         <p className="font-pixel text-xs text-stone-500">
                             {festival.ends_at_formatted}
                         </p>

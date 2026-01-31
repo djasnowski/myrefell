@@ -1,7 +1,7 @@
-import { Head, usePage } from '@inertiajs/react';
-import { Church } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, usePage } from "@inertiajs/react";
+import { Church } from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface PageProps {
     message: string;
@@ -9,8 +9,8 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Religions', href: '/religions' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Religions", href: "/religions" },
 ];
 
 export default function ReligionsNotAvailable() {
@@ -22,7 +22,9 @@ export default function ReligionsNotAvailable() {
             <div className="flex h-full flex-1 items-center justify-center p-4">
                 <div className="text-center">
                     <Church className="mx-auto mb-4 h-16 w-16 text-stone-600" />
-                    <h1 className="mb-2 font-pixel text-xl text-amber-400">Religions Unavailable</h1>
+                    <h1 className="mb-2 font-pixel text-xl text-amber-400">
+                        Religions Unavailable
+                    </h1>
                     <p className="font-pixel text-sm text-stone-400">{message}</p>
                     <a
                         href="/dashboard"

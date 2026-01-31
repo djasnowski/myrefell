@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from "@inertiajs/react";
 import {
     ArrowLeft,
     Calendar,
@@ -13,9 +13,9 @@ import {
     Target,
     Trophy,
     Users,
-} from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface WarSide {
     type: string;
@@ -30,8 +30,8 @@ interface Participant {
     participant_type: string;
     participant_id: number;
     name: string;
-    side: 'attacker' | 'defender';
-    role: 'primary' | 'ally' | 'vassal';
+    side: "attacker" | "defender";
+    role: "primary" | "ally" | "vassal";
     is_war_leader: boolean;
     contribution_score: number;
     joined_at: string | null;
@@ -80,7 +80,7 @@ interface PeaceTreaty {
 }
 
 interface UserParticipation {
-    side: 'attacker' | 'defender';
+    side: "attacker" | "defender";
     role: string;
     is_war_leader: boolean;
     contribution_score: number;
@@ -119,55 +119,55 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Warfare', href: '#' },
-    { title: 'Wars', href: '/warfare/wars' },
-    { title: 'War Details', href: '#' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Warfare", href: "#" },
+    { title: "Wars", href: "/warfare/wars" },
+    { title: "War Details", href: "#" },
 ];
 
 const statusColors: Record<string, { bg: string; text: string; label: string }> = {
-    active: { bg: 'bg-amber-900/30', text: 'text-amber-400', label: 'Active' },
-    attacker_winning: { bg: 'bg-red-900/30', text: 'text-red-400', label: 'Attackers Winning' },
-    defender_winning: { bg: 'bg-blue-900/30', text: 'text-blue-400', label: 'Defenders Winning' },
-    white_peace: { bg: 'bg-stone-900/30', text: 'text-stone-400', label: 'White Peace' },
-    attacker_victory: { bg: 'bg-red-900/30', text: 'text-red-400', label: 'Attacker Victory' },
-    defender_victory: { bg: 'bg-blue-900/30', text: 'text-blue-400', label: 'Defender Victory' },
+    active: { bg: "bg-amber-900/30", text: "text-amber-400", label: "Active" },
+    attacker_winning: { bg: "bg-red-900/30", text: "text-red-400", label: "Attackers Winning" },
+    defender_winning: { bg: "bg-blue-900/30", text: "text-blue-400", label: "Defenders Winning" },
+    white_peace: { bg: "bg-stone-900/30", text: "text-stone-400", label: "White Peace" },
+    attacker_victory: { bg: "bg-red-900/30", text: "text-red-400", label: "Attacker Victory" },
+    defender_victory: { bg: "bg-blue-900/30", text: "text-blue-400", label: "Defender Victory" },
 };
 
 const casusBelliLabels: Record<string, { label: string; icon: typeof Sword }> = {
-    claim: { label: 'Pressing Claim', icon: Crown },
-    conquest: { label: 'Conquest', icon: Sword },
-    rebellion: { label: 'Rebellion', icon: Flag },
-    holy_war: { label: 'Holy War', icon: Target },
-    defense: { label: 'Defensive War', icon: Shield },
-    raid: { label: 'Raid', icon: Skull },
+    claim: { label: "Pressing Claim", icon: Crown },
+    conquest: { label: "Conquest", icon: Sword },
+    rebellion: { label: "Rebellion", icon: Flag },
+    holy_war: { label: "Holy War", icon: Target },
+    defense: { label: "Defensive War", icon: Shield },
+    raid: { label: "Raid", icon: Skull },
 };
 
 const battleStatusColors: Record<string, { text: string; label: string }> = {
-    ongoing: { text: 'text-amber-400', label: 'Ongoing' },
-    attacker_victory: { text: 'text-red-400', label: 'Attacker Victory' },
-    defender_victory: { text: 'text-blue-400', label: 'Defender Victory' },
-    draw: { text: 'text-stone-400', label: 'Draw' },
-    inconclusive: { text: 'text-stone-400', label: 'Inconclusive' },
+    ongoing: { text: "text-amber-400", label: "Ongoing" },
+    attacker_victory: { text: "text-red-400", label: "Attacker Victory" },
+    defender_victory: { text: "text-blue-400", label: "Defender Victory" },
+    draw: { text: "text-stone-400", label: "Draw" },
+    inconclusive: { text: "text-stone-400", label: "Inconclusive" },
 };
 
 const siegeStatusColors: Record<string, { text: string; label: string }> = {
-    active: { text: 'text-amber-400', label: 'Under Siege' },
-    assault: { text: 'text-red-400', label: 'Assault' },
-    breached: { text: 'text-orange-400', label: 'Breached' },
-    captured: { text: 'text-green-400', label: 'Captured' },
-    lifted: { text: 'text-stone-400', label: 'Lifted' },
-    abandoned: { text: 'text-stone-500', label: 'Abandoned' },
+    active: { text: "text-amber-400", label: "Under Siege" },
+    assault: { text: "text-red-400", label: "Assault" },
+    breached: { text: "text-orange-400", label: "Breached" },
+    captured: { text: "text-green-400", label: "Captured" },
+    lifted: { text: "text-stone-400", label: "Lifted" },
+    abandoned: { text: "text-stone-500", label: "Abandoned" },
 };
 
 const goalTypeLabels: Record<string, string> = {
-    conquer_territory: 'Conquer Territory',
-    subjugation: 'Subjugation',
-    independence: 'Independence',
-    raid: 'Raid',
-    humiliate: 'Humiliate',
-    enforce_claim: 'Enforce Claim',
-    holy_conquest: 'Holy Conquest',
+    conquer_territory: "Conquer Territory",
+    subjugation: "Subjugation",
+    independence: "Independence",
+    raid: "Raid",
+    humiliate: "Humiliate",
+    enforce_claim: "Enforce Claim",
+    holy_conquest: "Holy Conquest",
 };
 
 export default function WarShow() {
@@ -176,10 +176,12 @@ export default function WarShow() {
     const status = statusColors[war.status] || statusColors.active;
     const casusBelli = casusBelliLabels[war.casus_belli] || { label: war.casus_belli, icon: Sword };
     const CasusBelliIcon = casusBelli.icon;
-    const isEnded = ['white_peace', 'attacker_victory', 'defender_victory'].includes(war.status);
+    const isEnded = ["white_peace", "attacker_victory", "defender_victory"].includes(war.status);
 
-    const totalAttackerContribution = war.attacker_participants?.reduce((sum, p) => sum + p.contribution_score, 0) || 0;
-    const totalDefenderContribution = war.defender_participants?.reduce((sum, p) => sum + p.contribution_score, 0) || 0;
+    const totalAttackerContribution =
+        war.attacker_participants?.reduce((sum, p) => sum + p.contribution_score, 0) || 0;
+    const totalDefenderContribution =
+        war.defender_participants?.reduce((sum, p) => sum + p.contribution_score, 0) || 0;
     const totalAttackerCasualties = all_battles.reduce((sum, b) => sum + b.attacker_casualties, 0);
     const totalDefenderCasualties = all_battles.reduce((sum, b) => sum + b.defender_casualties, 0);
 
@@ -244,7 +246,9 @@ export default function WarShow() {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <span className={`rounded px-3 py-1.5 font-pixel text-xs ${status.bg} ${status.text}`}>
+                        <span
+                            className={`rounded px-3 py-1.5 font-pixel text-xs ${status.bg} ${status.text}`}
+                        >
                             {status.label}
                         </span>
                         {can_offer_peace && (
@@ -261,18 +265,24 @@ export default function WarShow() {
 
                 {/* User Participation Banner */}
                 {war.user_participation && (
-                    <div className={`rounded-xl border-2 p-4 ${
-                        war.user_participation.side === 'attacker'
-                            ? 'border-red-500/30 bg-red-900/20'
-                            : 'border-blue-500/30 bg-blue-900/20'
-                    }`}>
+                    <div
+                        className={`rounded-xl border-2 p-4 ${
+                            war.user_participation.side === "attacker"
+                                ? "border-red-500/30 bg-red-900/20"
+                                : "border-blue-500/30 bg-blue-900/20"
+                        }`}
+                    >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex items-center gap-3">
                                 <Users className="h-5 w-5 text-amber-400" />
                                 <div>
                                     <span className="font-pixel text-sm text-white">
-                                        Your Role: {war.user_participation.role === 'primary' ? 'Primary Belligerent' :
-                                            war.user_participation.role === 'ally' ? 'Allied Power' : 'Vassal'}
+                                        Your Role:{" "}
+                                        {war.user_participation.role === "primary"
+                                            ? "Primary Belligerent"
+                                            : war.user_participation.role === "ally"
+                                              ? "Allied Power"
+                                              : "Vassal"}
                                     </span>
                                     {war.user_participation.is_war_leader && (
                                         <span className="ml-2 rounded bg-amber-900/50 px-2 py-0.5 font-pixel text-[10px] text-amber-300">
@@ -283,7 +293,9 @@ export default function WarShow() {
                             </div>
                             <div className="font-pixel text-sm">
                                 <span className="text-stone-400">Contribution: </span>
-                                <span className="text-amber-300">{war.user_participation.contribution_score} pts</span>
+                                <span className="text-amber-300">
+                                    {war.user_participation.contribution_score} pts
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -297,9 +309,13 @@ export default function WarShow() {
                             War Score
                         </h2>
                         <div className="mb-2 flex justify-between font-pixel text-xs">
-                            <span className="text-red-400">Attackers: {war.attacker_war_score}</span>
+                            <span className="text-red-400">
+                                Attackers: {war.attacker_war_score}
+                            </span>
                             <span className="text-stone-400">100 to win</span>
-                            <span className="text-blue-400">Defenders: {war.defender_war_score}</span>
+                            <span className="text-blue-400">
+                                Defenders: {war.defender_war_score}
+                            </span>
                         </div>
                         {renderWarScoreBar(war.attacker_war_score, war.defender_war_score)}
                     </div>
@@ -315,24 +331,38 @@ export default function WarShow() {
                         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
                             <div className="font-pixel text-xs">
                                 <span className="text-stone-400">Treaty Type: </span>
-                                <span className="capitalize text-white">{war.peace_treaty.treaty_type.replace('_', ' ')}</span>
+                                <span className="capitalize text-white">
+                                    {war.peace_treaty.treaty_type.replace("_", " ")}
+                                </span>
                             </div>
                             <div className="font-pixel text-xs">
                                 <span className="text-stone-400">Victor: </span>
-                                <span className={war.peace_treaty.winner_side === 'attacker' ? 'text-red-400' : 'text-blue-400'}>
-                                    {war.peace_treaty.winner_side === 'attacker' ? 'Attackers' : 'Defenders'}
+                                <span
+                                    className={
+                                        war.peace_treaty.winner_side === "attacker"
+                                            ? "text-red-400"
+                                            : "text-blue-400"
+                                    }
+                                >
+                                    {war.peace_treaty.winner_side === "attacker"
+                                        ? "Attackers"
+                                        : "Defenders"}
                                 </span>
                             </div>
                             {war.peace_treaty.gold_payment > 0 && (
                                 <div className="font-pixel text-xs">
                                     <span className="text-stone-400">War Indemnity: </span>
-                                    <span className="text-yellow-400">{war.peace_treaty.gold_payment}g</span>
+                                    <span className="text-yellow-400">
+                                        {war.peace_treaty.gold_payment}g
+                                    </span>
                                 </div>
                             )}
                             {war.peace_treaty.truce_days > 0 && (
                                 <div className="font-pixel text-xs">
                                     <span className="text-stone-400">Truce Duration: </span>
-                                    <span className="text-white">{war.peace_treaty.truce_days} days</span>
+                                    <span className="text-white">
+                                        {war.peace_treaty.truce_days} days
+                                    </span>
                                 </div>
                             )}
                         </div>
@@ -357,10 +387,14 @@ export default function WarShow() {
                         <div className="mb-3 rounded-lg bg-stone-900/50 p-3">
                             <div className="flex items-center gap-2">
                                 <Crown className="h-4 w-4 text-amber-400" />
-                                <span className="font-pixel text-sm text-white">{war.attacker.name}</span>
-                                <span className="font-pixel text-[10px] text-stone-500">(War Leader)</span>
+                                <span className="font-pixel text-sm text-white">
+                                    {war.attacker.name}
+                                </span>
+                                <span className="font-pixel text-[10px] text-stone-500">
+                                    (War Leader)
+                                </span>
                             </div>
-                            {war.attacker.kingdom_name && war.attacker.type !== 'kingdom' && (
+                            {war.attacker.kingdom_name && war.attacker.type !== "kingdom" && (
                                 <div className="mt-1 font-pixel text-[10px] text-stone-400">
                                     Kingdom: {war.attacker.kingdom_name}
                                 </div>
@@ -370,16 +404,27 @@ export default function WarShow() {
                         {/* Allied Participants */}
                         {war.attacker_participants && war.attacker_participants.length > 0 && (
                             <div className="space-y-2">
-                                <div className="font-pixel text-[10px] text-stone-400">Allies & Vassals:</div>
+                                <div className="font-pixel text-[10px] text-stone-400">
+                                    Allies & Vassals:
+                                </div>
                                 {war.attacker_participants
-                                    .filter(p => !p.is_war_leader)
+                                    .filter((p) => !p.is_war_leader)
                                     .map((p) => (
-                                        <div key={p.id} className="flex items-center justify-between rounded bg-stone-900/30 px-2 py-1">
+                                        <div
+                                            key={p.id}
+                                            className="flex items-center justify-between rounded bg-stone-900/30 px-2 py-1"
+                                        >
                                             <div className="flex items-center gap-2">
-                                                <span className="font-pixel text-xs text-stone-300">{p.name}</span>
-                                                <span className="font-pixel text-[10px] text-stone-500">({p.role})</span>
+                                                <span className="font-pixel text-xs text-stone-300">
+                                                    {p.name}
+                                                </span>
+                                                <span className="font-pixel text-[10px] text-stone-500">
+                                                    ({p.role})
+                                                </span>
                                             </div>
-                                            <span className="font-pixel text-[10px] text-amber-300">+{p.contribution_score}</span>
+                                            <span className="font-pixel text-[10px] text-amber-300">
+                                                +{p.contribution_score}
+                                            </span>
                                         </div>
                                     ))}
                             </div>
@@ -416,10 +461,14 @@ export default function WarShow() {
                         <div className="mb-3 rounded-lg bg-stone-900/50 p-3">
                             <div className="flex items-center gap-2">
                                 <Crown className="h-4 w-4 text-amber-400" />
-                                <span className="font-pixel text-sm text-white">{war.defender.name}</span>
-                                <span className="font-pixel text-[10px] text-stone-500">(War Leader)</span>
+                                <span className="font-pixel text-sm text-white">
+                                    {war.defender.name}
+                                </span>
+                                <span className="font-pixel text-[10px] text-stone-500">
+                                    (War Leader)
+                                </span>
                             </div>
-                            {war.defender.kingdom_name && war.defender.type !== 'kingdom' && (
+                            {war.defender.kingdom_name && war.defender.type !== "kingdom" && (
                                 <div className="mt-1 font-pixel text-[10px] text-stone-400">
                                     Kingdom: {war.defender.kingdom_name}
                                 </div>
@@ -429,16 +478,27 @@ export default function WarShow() {
                         {/* Allied Participants */}
                         {war.defender_participants && war.defender_participants.length > 0 && (
                             <div className="space-y-2">
-                                <div className="font-pixel text-[10px] text-stone-400">Allies & Vassals:</div>
+                                <div className="font-pixel text-[10px] text-stone-400">
+                                    Allies & Vassals:
+                                </div>
                                 {war.defender_participants
-                                    .filter(p => !p.is_war_leader)
+                                    .filter((p) => !p.is_war_leader)
                                     .map((p) => (
-                                        <div key={p.id} className="flex items-center justify-between rounded bg-stone-900/30 px-2 py-1">
+                                        <div
+                                            key={p.id}
+                                            className="flex items-center justify-between rounded bg-stone-900/30 px-2 py-1"
+                                        >
                                             <div className="flex items-center gap-2">
-                                                <span className="font-pixel text-xs text-stone-300">{p.name}</span>
-                                                <span className="font-pixel text-[10px] text-stone-500">({p.role})</span>
+                                                <span className="font-pixel text-xs text-stone-300">
+                                                    {p.name}
+                                                </span>
+                                                <span className="font-pixel text-[10px] text-stone-500">
+                                                    ({p.role})
+                                                </span>
                                             </div>
-                                            <span className="font-pixel text-[10px] text-amber-300">+{p.contribution_score}</span>
+                                            <span className="font-pixel text-[10px] text-amber-300">
+                                                +{p.contribution_score}
+                                            </span>
                                         </div>
                                     ))}
                             </div>
@@ -473,8 +533,8 @@ export default function WarShow() {
                                     key={goal.id}
                                     className={`flex items-center justify-between rounded-lg p-3 ${
                                         goal.is_achieved
-                                            ? 'border border-green-500/30 bg-green-900/20'
-                                            : 'bg-stone-900/50'
+                                            ? "border border-green-500/30 bg-green-900/20"
+                                            : "bg-stone-900/50"
                                     }`}
                                 >
                                     <div className="flex items-center gap-2">
@@ -483,11 +543,16 @@ export default function WarShow() {
                                         ) : (
                                             <Target className="h-4 w-4 text-stone-400" />
                                         )}
-                                        <span className={`font-pixel text-xs ${goal.is_achieved ? 'text-green-300' : 'text-stone-300'}`}>
-                                            {goalTypeLabels[goal.goal_type] || goal.goal_type.replace('_', ' ')}
+                                        <span
+                                            className={`font-pixel text-xs ${goal.is_achieved ? "text-green-300" : "text-stone-300"}`}
+                                        >
+                                            {goalTypeLabels[goal.goal_type] ||
+                                                goal.goal_type.replace("_", " ")}
                                         </span>
                                     </div>
-                                    <span className={`font-pixel text-xs ${goal.is_achieved ? 'text-green-400' : 'text-amber-400'}`}>
+                                    <span
+                                        className={`font-pixel text-xs ${goal.is_achieved ? "text-green-400" : "text-amber-400"}`}
+                                    >
                                         +{goal.war_score_value}
                                     </span>
                                 </div>
@@ -513,7 +578,10 @@ export default function WarShow() {
                         {war.active_sieges && war.active_sieges.length > 0 ? (
                             <div className="space-y-2">
                                 {war.active_sieges.map((siege) => {
-                                    const siegeStatus = siegeStatusColors[siege.status] || { text: 'text-stone-400', label: siege.status };
+                                    const siegeStatus = siegeStatusColors[siege.status] || {
+                                        text: "text-stone-400",
+                                        label: siege.status,
+                                    };
                                     return (
                                         <Link
                                             key={siege.id}
@@ -523,25 +591,43 @@ export default function WarShow() {
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <Castle className="h-4 w-4 text-purple-400" />
-                                                    <span className="font-pixel text-sm text-white">{siege.target_name}</span>
+                                                    <span className="font-pixel text-sm text-white">
+                                                        {siege.target_name}
+                                                    </span>
                                                 </div>
-                                                <span className={`font-pixel text-[10px] ${siegeStatus.text}`}>
+                                                <span
+                                                    className={`font-pixel text-[10px] ${siegeStatus.text}`}
+                                                >
                                                     {siegeStatus.label}
-                                                    {siege.has_breach && ' (Breached)'}
+                                                    {siege.has_breach && " (Breached)"}
                                                 </span>
                                             </div>
                                             <div className="mt-2 grid grid-cols-3 gap-2 font-pixel text-[10px]">
                                                 <div>
                                                     <span className="text-stone-400">Day: </span>
-                                                    <span className="text-white">{siege.days_besieged}</span>
+                                                    <span className="text-white">
+                                                        {siege.days_besieged}
+                                                    </span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-stone-400">Garrison: </span>
-                                                    <span className="text-white">{siege.garrison_strength}</span>
+                                                    <span className="text-stone-400">
+                                                        Garrison:{" "}
+                                                    </span>
+                                                    <span className="text-white">
+                                                        {siege.garrison_strength}
+                                                    </span>
                                                 </div>
                                                 <div>
                                                     <span className="text-stone-400">Morale: </span>
-                                                    <span className={siege.garrison_morale >= 50 ? 'text-green-400' : siege.garrison_morale >= 25 ? 'text-yellow-400' : 'text-red-400'}>
+                                                    <span
+                                                        className={
+                                                            siege.garrison_morale >= 50
+                                                                ? "text-green-400"
+                                                                : siege.garrison_morale >= 25
+                                                                  ? "text-yellow-400"
+                                                                  : "text-red-400"
+                                                        }
+                                                    >
                                                         {siege.garrison_morale}%
                                                     </span>
                                                 </div>
@@ -551,9 +637,7 @@ export default function WarShow() {
                                 })}
                             </div>
                         ) : (
-                            <p className="font-pixel text-sm text-stone-500">
-                                No active sieges
-                            </p>
+                            <p className="font-pixel text-sm text-stone-500">No active sieges</p>
                         )}
 
                         {/* All Sieges Summary */}
@@ -581,7 +665,10 @@ export default function WarShow() {
                         {all_battles.length > 0 ? (
                             <div className="space-y-2">
                                 {all_battles.slice(0, 5).map((battle) => {
-                                    const battleStatus = battleStatusColors[battle.status] || { text: 'text-stone-400', label: battle.status };
+                                    const battleStatus = battleStatusColors[battle.status] || {
+                                        text: "text-stone-400",
+                                        label: battle.status,
+                                    };
                                     return (
                                         <div
                                             key={battle.id}
@@ -594,30 +681,45 @@ export default function WarShow() {
                                                         Battle at {battle.location_name}
                                                     </span>
                                                 </div>
-                                                <span className={`font-pixel text-[10px] ${battleStatus.text}`}>
+                                                <span
+                                                    className={`font-pixel text-[10px] ${battleStatus.text}`}
+                                                >
                                                     {battleStatus.label}
                                                 </span>
                                             </div>
                                             <div className="mt-2 grid grid-cols-2 gap-4 font-pixel text-[10px]">
                                                 <div className="text-red-300">
-                                                    <span className="text-stone-400">Attackers: </span>
+                                                    <span className="text-stone-400">
+                                                        Attackers:{" "}
+                                                    </span>
                                                     {battle.attacker_troops_start} troops
                                                     {battle.attacker_casualties > 0 && (
-                                                        <span className="text-red-500"> (-{battle.attacker_casualties})</span>
+                                                        <span className="text-red-500">
+                                                            {" "}
+                                                            (-{battle.attacker_casualties})
+                                                        </span>
                                                     )}
                                                 </div>
                                                 <div className="text-blue-300">
-                                                    <span className="text-stone-400">Defenders: </span>
+                                                    <span className="text-stone-400">
+                                                        Defenders:{" "}
+                                                    </span>
                                                     {battle.defender_troops_start} troops
                                                     {battle.defender_casualties > 0 && (
-                                                        <span className="text-blue-500"> (-{battle.defender_casualties})</span>
+                                                        <span className="text-blue-500">
+                                                            {" "}
+                                                            (-{battle.defender_casualties})
+                                                        </span>
                                                     )}
                                                 </div>
                                             </div>
                                             {battle.started_at && (
                                                 <div className="mt-1 font-pixel text-[10px] text-stone-500">
-                                                    {new Date(battle.started_at).toLocaleDateString()}
-                                                    {battle.ended_at && ` - ${new Date(battle.ended_at).toLocaleDateString()}`}
+                                                    {new Date(
+                                                        battle.started_at,
+                                                    ).toLocaleDateString()}
+                                                    {battle.ended_at &&
+                                                        ` - ${new Date(battle.ended_at).toLocaleDateString()}`}
                                                 </div>
                                             )}
                                         </div>
@@ -649,16 +751,26 @@ export default function WarShow() {
                             <div className="font-pixel text-[10px] text-stone-400">Days Active</div>
                         </div>
                         <div className="rounded-lg bg-stone-900/50 p-3 text-center">
-                            <div className="font-pixel text-2xl text-white">{war.participant_count}</div>
-                            <div className="font-pixel text-[10px] text-stone-400">Participants</div>
+                            <div className="font-pixel text-2xl text-white">
+                                {war.participant_count}
+                            </div>
+                            <div className="font-pixel text-[10px] text-stone-400">
+                                Participants
+                            </div>
                         </div>
                         <div className="rounded-lg bg-stone-900/50 p-3 text-center">
                             <div className="font-pixel text-2xl text-white">{war.battle_count}</div>
-                            <div className="font-pixel text-[10px] text-stone-400">Battles Fought</div>
+                            <div className="font-pixel text-[10px] text-stone-400">
+                                Battles Fought
+                            </div>
                         </div>
                         <div className="rounded-lg bg-stone-900/50 p-3 text-center">
-                            <div className="font-pixel text-2xl text-red-400">{totalAttackerCasualties + totalDefenderCasualties}</div>
-                            <div className="font-pixel text-[10px] text-stone-400">Total Casualties</div>
+                            <div className="font-pixel text-2xl text-red-400">
+                                {totalAttackerCasualties + totalDefenderCasualties}
+                            </div>
+                            <div className="font-pixel text-[10px] text-stone-400">
+                                Total Casualties
+                            </div>
                         </div>
                     </div>
                 </div>

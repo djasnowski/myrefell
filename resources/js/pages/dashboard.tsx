@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from "@inertiajs/react";
 import {
     Anchor,
     ArrowRight,
@@ -29,12 +29,12 @@ import {
     Users,
     UsersRound,
     Vote,
-} from 'lucide-react';
-import { useState } from 'react';
-import TutorialModal from '@/components/tutorial-modal';
-import HealthStatusWidget from '@/components/widgets/health-status-widget';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import TutorialModal from "@/components/tutorial-modal";
+import HealthStatusWidget from "@/components/widgets/health-status-widget";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface LocationFeatures {
     market: boolean;
@@ -53,7 +53,7 @@ interface LocationFeatures {
 interface DiseaseInfection {
     id: number;
     disease_name: string;
-    status: 'incubating' | 'symptomatic' | 'recovering';
+    status: "incubating" | "symptomatic" | "recovering";
     severity: string;
     days_infected: number;
     is_treated: boolean;
@@ -94,7 +94,8 @@ interface SidebarData {
 }
 
 export default function Dashboard() {
-    const { sidebar, showTutorial } = usePage<{ sidebar: SidebarData; showTutorial: boolean }>().props;
+    const { sidebar, showTutorial } = usePage<{ sidebar: SidebarData; showTutorial: boolean }>()
+        .props;
     const [tutorialOpen, setTutorialOpen] = useState(showTutorial);
 
     const player = sidebar?.player;
@@ -103,22 +104,66 @@ export default function Dashboard() {
     const health = sidebar?.health;
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
+        { title: "Dashboard", href: "/dashboard" },
         ...(location ? [{ title: location.name, href: `/${location.type}s/${location.id}` }] : []),
     ];
 
     const quickActions = [
-        { title: 'World Map', description: 'Travel the realm', icon: Map, href: '/travel', color: 'amber' },
-        { title: 'Skills', description: 'View your levels', icon: BarChart3, href: '/skills', color: 'blue' },
-        { title: 'Inventory', description: 'Your items', icon: Backpack, href: '/inventory', color: 'emerald' },
-        { title: 'Quests', description: 'Active quests', icon: ScrollText, href: '/quests', color: 'purple' },
+        {
+            title: "World Map",
+            description: "Travel the realm",
+            icon: Map,
+            href: "/travel",
+            color: "amber",
+        },
+        {
+            title: "Skills",
+            description: "View your levels",
+            icon: BarChart3,
+            href: "/skills",
+            color: "blue",
+        },
+        {
+            title: "Inventory",
+            description: "Your items",
+            icon: Backpack,
+            href: "/inventory",
+            color: "emerald",
+        },
+        {
+            title: "Quests",
+            description: "Active quests",
+            icon: ScrollText,
+            href: "/quests",
+            color: "purple",
+        },
     ];
 
     const gettingStarted = [
-        { title: 'Train Combat', description: 'Improve Attack, Strength, Defense', href: location ? `/${location.type}s/${location.id}/training` : '/villages', icon: Swords },
-        { title: 'Gather Resources', description: 'Mine, fish, or chop wood', href: location?.type === 'village' ? `/villages/${location.id}/gathering` : '/villages', icon: Pickaxe },
-        { title: 'Visit Market', description: 'Buy and sell goods', href: location ? `/${location.type}s/${location.id}/market` : '/villages', icon: Coins },
-        { title: 'Find Work', description: 'Apply for a job', href: location ? `/${location.type}s/${location.id}/jobs` : '/villages', icon: Briefcase },
+        {
+            title: "Train Combat",
+            description: "Improve Attack, Strength, Defense",
+            href: location ? `/${location.type}s/${location.id}/training` : "/villages",
+            icon: Swords,
+        },
+        {
+            title: "Gather Resources",
+            description: "Mine, fish, or chop wood",
+            href: location?.type === "village" ? `/villages/${location.id}/gathering` : "/villages",
+            icon: Pickaxe,
+        },
+        {
+            title: "Visit Market",
+            description: "Buy and sell goods",
+            href: location ? `/${location.type}s/${location.id}/market` : "/villages",
+            icon: Coins,
+        },
+        {
+            title: "Find Work",
+            description: "Apply for a job",
+            href: location ? `/${location.type}s/${location.id}/jobs` : "/villages",
+            icon: Briefcase,
+        },
     ];
 
     // What you can do - organized by category, filtered by location features
@@ -126,65 +171,93 @@ export default function Dashboard() {
 
     const gameFeatures = [
         {
-            category: 'Combat & Adventure',
-            color: 'red',
+            category: "Combat & Adventure",
+            color: "red",
             items: [
-                features?.training && { name: 'Training', href: location ? `/${location.type}s/${location.id}/training` : '/villages', icon: Swords },
-                { name: 'Combat', href: '/combat', icon: Shield },
-                features?.dungeon && { name: 'Dungeons', href: '/dungeons', icon: Sparkles },
+                features?.training && {
+                    name: "Training",
+                    href: location ? `/${location.type}s/${location.id}/training` : "/villages",
+                    icon: Swords,
+                },
+                { name: "Combat", href: "/combat", icon: Shield },
+                features?.dungeon && { name: "Dungeons", href: "/dungeons", icon: Sparkles },
             ].filter(Boolean),
         },
         {
-            category: 'Economy & Trade',
-            color: 'amber',
+            category: "Economy & Trade",
+            color: "amber",
             items: [
-                features?.bank && { name: 'Banking', href: location ? `/${location.type}s/${location.id}/bank` : '/villages', icon: Banknote },
-                features?.market && { name: 'Market', href: location ? `/${location.type}s/${location.id}/market` : '/villages', icon: Store },
-                features?.crafting && { name: 'Crafting', href: location ? `/${location.type}s/${location.id}/crafting` : '/villages', icon: Hammer },
-                { name: 'Caravans', href: '/trade/caravans', icon: Truck },
-                features?.jobs && { name: 'Jobs', href: location ? `/${location.type}s/${location.id}/jobs` : '/villages', icon: Briefcase },
+                features?.bank && {
+                    name: "Banking",
+                    href: location ? `/${location.type}s/${location.id}/bank` : "/villages",
+                    icon: Banknote,
+                },
+                features?.market && {
+                    name: "Market",
+                    href: location ? `/${location.type}s/${location.id}/market` : "/villages",
+                    icon: Store,
+                },
+                features?.crafting && {
+                    name: "Crafting",
+                    href: location ? `/${location.type}s/${location.id}/crafting` : "/villages",
+                    icon: Hammer,
+                },
+                { name: "Caravans", href: "/trade/caravans", icon: Truck },
+                features?.jobs && {
+                    name: "Jobs",
+                    href: location ? `/${location.type}s/${location.id}/jobs` : "/villages",
+                    icon: Briefcase,
+                },
             ].filter(Boolean),
         },
         {
-            category: 'Social & Family',
-            color: 'pink',
+            category: "Social & Family",
+            color: "pink",
             items: [
-                { name: 'Dynasty', href: '/dynasty', icon: Crown },
-                { name: 'Marriage', href: '/dynasty/proposals', icon: Heart },
-                features?.guilds && { name: 'Guilds', href: '/guilds', icon: UsersRound },
-                { name: 'Religion', href: '/religions', icon: Church },
+                { name: "Dynasty", href: "/dynasty", icon: Crown },
+                { name: "Marriage", href: "/dynasty/proposals", icon: Heart },
+                features?.guilds && { name: "Guilds", href: "/guilds", icon: UsersRound },
+                { name: "Religion", href: "/religions", icon: Church },
             ].filter(Boolean),
         },
         {
-            category: 'Politics & Law',
-            color: 'blue',
+            category: "Politics & Law",
+            color: "blue",
             items: [
-                features?.elections && { name: 'Elections', href: '/elections', icon: Vote },
-                { name: 'Roles', href: '/roles', icon: Crown },
-                { name: 'Crime & Law', href: '/crime', icon: Gavel },
-                { name: 'Social Class', href: '/social-class', icon: Users },
+                features?.elections && { name: "Elections", href: "/elections", icon: Vote },
+                { name: "Roles", href: "/roles", icon: Crown },
+                { name: "Crime & Law", href: "/crime", icon: Gavel },
+                { name: "Social Class", href: "/social-class", icon: Users },
             ].filter(Boolean),
         },
         {
-            category: 'Warfare',
-            color: 'orange',
+            category: "Warfare",
+            color: "orange",
             items: [
-                { name: 'Armies', href: '/warfare/armies', icon: Shield },
-                { name: 'Wars', href: '/warfare/wars', icon: Swords },
+                { name: "Armies", href: "/warfare/armies", icon: Shield },
+                { name: "Wars", href: "/warfare/wars", icon: Swords },
             ],
         },
         {
-            category: 'World & Travel',
-            color: 'green',
+            category: "World & Travel",
+            color: "green",
             items: [
-                { name: 'Travel', href: '/travel', icon: Map },
-                features?.stables && { name: 'Stables', href: location ? `/${location.type}s/${location.id}/stables` : '/towns', icon: Gauge },
-                features?.port && { name: 'Sea Port', href: location ? `/${location.type}s/${location.id}/port` : '/villages', icon: Anchor },
-                { name: 'Calendar', href: '/calendar', icon: Calendar },
-                { name: 'Events', href: '/events', icon: Sparkles },
+                { name: "Travel", href: "/travel", icon: Map },
+                features?.stables && {
+                    name: "Stables",
+                    href: location ? `/${location.type}s/${location.id}/stables` : "/towns",
+                    icon: Gauge,
+                },
+                features?.port && {
+                    name: "Sea Port",
+                    href: location ? `/${location.type}s/${location.id}/port` : "/villages",
+                    icon: Anchor,
+                },
+                { name: "Calendar", href: "/calendar", icon: Calendar },
+                { name: "Events", href: "/events", icon: Sparkles },
             ].filter(Boolean),
         },
-    ].filter(category => category.items.length > 0) as Array<{
+    ].filter((category) => category.items.length > 0) as Array<{
         category: string;
         color: string;
         items: Array<{ name: string; href: string; icon: typeof Swords }>;
@@ -197,7 +270,7 @@ export default function Dashboard() {
             {/* Tutorial Modal */}
             {tutorialOpen && (
                 <TutorialModal
-                    playerName={player?.username ?? 'Traveler'}
+                    playerName={player?.username ?? "Traveler"}
                     location={location}
                     onClose={() => setTutorialOpen(false)}
                 />
@@ -205,9 +278,7 @@ export default function Dashboard() {
 
             <div className="space-y-6 p-6">
                 {/* Health Alert */}
-                {health?.infection && (
-                    <HealthStatusWidget infection={health.infection} />
-                )}
+                {health?.infection && <HealthStatusWidget infection={health.infection} />}
 
                 {/* Welcome Header with Location */}
                 <div className="grid gap-4 lg:grid-cols-3">
@@ -219,10 +290,11 @@ export default function Dashboard() {
                             </div>
                             <div className="flex-1">
                                 <h1 className="font-[Cinzel] text-xl font-bold text-stone-100">
-                                    Welcome, {player?.username ?? 'Traveler'}
+                                    Welcome, {player?.username ?? "Traveler"}
                                 </h1>
                                 <p className="text-sm text-stone-400">
-                                    You are a {player?.primary_title ?? 'peasant'}. Your journey begins here.
+                                    You are a {player?.primary_title ?? "peasant"}. Your journey
+                                    begins here.
                                 </p>
                             </div>
                         </div>
@@ -293,7 +365,13 @@ export default function Dashboard() {
                             {homeVillage && homeVillage.id !== location.id && (
                                 <div className="mt-2 flex items-center gap-1 text-xs text-stone-500">
                                     <Home className="h-3 w-3" />
-                                    Home: <Link href={`/villages/${homeVillage.id}`} className="text-amber-400 hover:underline">{homeVillage.name}</Link>
+                                    Home:{" "}
+                                    <Link
+                                        href={`/villages/${homeVillage.id}`}
+                                        className="text-amber-400 hover:underline"
+                                    >
+                                        {homeVillage.name}
+                                    </Link>
                                 </div>
                             )}
                         </div>
@@ -304,7 +382,9 @@ export default function Dashboard() {
                 <div className="grid gap-4 lg:grid-cols-2">
                     {/* Quick Actions */}
                     <div>
-                        <h2 className="mb-2 font-[Cinzel] text-sm font-bold text-stone-100">Quick Actions</h2>
+                        <h2 className="mb-2 font-[Cinzel] text-sm font-bold text-stone-100">
+                            Quick Actions
+                        </h2>
                         <div className="grid grid-cols-2 gap-2">
                             {quickActions.map((action) => (
                                 <Link
@@ -313,11 +393,17 @@ export default function Dashboard() {
                                     className="group flex items-center gap-2 rounded-lg border border-stone-800 bg-stone-900/50 p-2 transition hover:border-stone-700"
                                 >
                                     <div className={`rounded bg-${action.color}-900/30 p-1.5`}>
-                                        <action.icon className={`h-4 w-4 text-${action.color}-400`} />
+                                        <action.icon
+                                            className={`h-4 w-4 text-${action.color}-400`}
+                                        />
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <div className="text-sm font-medium text-stone-100 group-hover:text-amber-400">{action.title}</div>
-                                        <div className="truncate text-xs text-stone-500">{action.description}</div>
+                                        <div className="text-sm font-medium text-stone-100 group-hover:text-amber-400">
+                                            {action.title}
+                                        </div>
+                                        <div className="truncate text-xs text-stone-500">
+                                            {action.description}
+                                        </div>
                                     </div>
                                 </Link>
                             ))}
@@ -326,7 +412,9 @@ export default function Dashboard() {
 
                     {/* Getting Started */}
                     <div>
-                        <h2 className="mb-2 font-[Cinzel] text-sm font-bold text-stone-100">Getting Started</h2>
+                        <h2 className="mb-2 font-[Cinzel] text-sm font-bold text-stone-100">
+                            Getting Started
+                        </h2>
                         <div className="grid grid-cols-2 gap-2">
                             {gettingStarted.map((step, index) => (
                                 <Link
@@ -338,8 +426,12 @@ export default function Dashboard() {
                                         {index + 1}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <div className="text-sm font-medium text-stone-100 group-hover:text-amber-400">{step.title}</div>
-                                        <div className="truncate text-xs text-stone-500">{step.description}</div>
+                                        <div className="text-sm font-medium text-stone-100 group-hover:text-amber-400">
+                                            {step.title}
+                                        </div>
+                                        <div className="truncate text-xs text-stone-500">
+                                            {step.description}
+                                        </div>
                                     </div>
                                 </Link>
                             ))}
@@ -349,22 +441,64 @@ export default function Dashboard() {
 
                 {/* What You Can Do - Game Features */}
                 <div>
-                    <h2 className="mb-3 font-[Cinzel] text-sm font-bold text-stone-100">What You Can Do</h2>
+                    <h2 className="mb-3 font-[Cinzel] text-sm font-bold text-stone-100">
+                        What You Can Do
+                    </h2>
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {gameFeatures.map((category) => {
-                            const colorClasses: Record<string, { border: string; bg: string; text: string; iconBg: string }> = {
-                                red: { border: 'border-red-900/50', bg: 'bg-red-900/10', text: 'text-red-400', iconBg: 'bg-red-900/30' },
-                                amber: { border: 'border-amber-900/50', bg: 'bg-amber-900/10', text: 'text-amber-400', iconBg: 'bg-amber-900/30' },
-                                pink: { border: 'border-pink-900/50', bg: 'bg-pink-900/10', text: 'text-pink-400', iconBg: 'bg-pink-900/30' },
-                                blue: { border: 'border-blue-900/50', bg: 'bg-blue-900/10', text: 'text-blue-400', iconBg: 'bg-blue-900/30' },
-                                orange: { border: 'border-orange-900/50', bg: 'bg-orange-900/10', text: 'text-orange-400', iconBg: 'bg-orange-900/30' },
-                                green: { border: 'border-green-900/50', bg: 'bg-green-900/10', text: 'text-green-400', iconBg: 'bg-green-900/30' },
+                            const colorClasses: Record<
+                                string,
+                                { border: string; bg: string; text: string; iconBg: string }
+                            > = {
+                                red: {
+                                    border: "border-red-900/50",
+                                    bg: "bg-red-900/10",
+                                    text: "text-red-400",
+                                    iconBg: "bg-red-900/30",
+                                },
+                                amber: {
+                                    border: "border-amber-900/50",
+                                    bg: "bg-amber-900/10",
+                                    text: "text-amber-400",
+                                    iconBg: "bg-amber-900/30",
+                                },
+                                pink: {
+                                    border: "border-pink-900/50",
+                                    bg: "bg-pink-900/10",
+                                    text: "text-pink-400",
+                                    iconBg: "bg-pink-900/30",
+                                },
+                                blue: {
+                                    border: "border-blue-900/50",
+                                    bg: "bg-blue-900/10",
+                                    text: "text-blue-400",
+                                    iconBg: "bg-blue-900/30",
+                                },
+                                orange: {
+                                    border: "border-orange-900/50",
+                                    bg: "bg-orange-900/10",
+                                    text: "text-orange-400",
+                                    iconBg: "bg-orange-900/30",
+                                },
+                                green: {
+                                    border: "border-green-900/50",
+                                    bg: "bg-green-900/10",
+                                    text: "text-green-400",
+                                    iconBg: "bg-green-900/30",
+                                },
                             };
                             const colors = colorClasses[category.color] || colorClasses.amber;
 
                             return (
-                                <div key={category.category} className={`rounded-xl border ${colors.border} ${colors.bg} p-4`}>
-                                    <h3 className={`mb-3 font-[Cinzel] text-sm font-semibold ${colors.text}`}>{category.category}</h3>
+                                <div
+                                    key={category.category}
+                                    className={`rounded-xl border ${colors.border} ${colors.bg} p-4`}
+                                >
+                                    <h3
+                                        className={`mb-3 font-[Cinzel] text-sm font-semibold ${colors.text}`}
+                                    >
+                                        {category.category}
+                                    </h3>
                                     <div className="grid grid-cols-3 gap-2">
                                         {category.items.map((item) => (
                                             <Link
@@ -373,9 +507,13 @@ export default function Dashboard() {
                                                 className="group flex flex-col items-center gap-1 rounded-lg border border-stone-800 bg-stone-900/50 p-3 transition hover:border-stone-600 hover:bg-stone-800/80"
                                             >
                                                 <div className={`rounded-lg ${colors.iconBg} p-2`}>
-                                                    <item.icon className={`h-5 w-5 ${colors.text} group-hover:scale-110 transition-transform`} />
+                                                    <item.icon
+                                                        className={`h-5 w-5 ${colors.text} group-hover:scale-110 transition-transform`}
+                                                    />
                                                 </div>
-                                                <span className="text-center text-xs text-stone-300 group-hover:text-white">{item.name}</span>
+                                                <span className="text-center text-xs text-stone-300 group-hover:text-white">
+                                                    {item.name}
+                                                </span>
                                             </Link>
                                         ))}
                                     </div>
@@ -392,7 +530,9 @@ export default function Dashboard() {
                         <h3 className="font-[Cinzel] text-sm font-bold text-amber-400">Tips</h3>
                     </div>
                     <div className="grid gap-x-6 gap-y-1 text-xs text-stone-400 sm:grid-cols-2">
-                        <div>• Energy regenerates over time - use it for training and gathering</div>
+                        <div>
+                            • Energy regenerates over time - use it for training and gathering
+                        </div>
                         <div>• Complete daily tasks for bonus rewards</div>
                         <div>• Check the notice board for quests</div>
                         <div>• Travel costs energy - plan journeys carefully</div>

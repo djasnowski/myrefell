@@ -1,6 +1,5 @@
-import { usePage } from '@inertiajs/react';
-import type {
-    LucideIcon} from 'lucide-react';
+import { usePage } from "@inertiajs/react";
+import type { LucideIcon } from "lucide-react";
 import {
     Beef,
     BicepsFlexed,
@@ -15,9 +14,9 @@ import {
     Target,
     TreeDeciduous,
     Wheat,
-} from 'lucide-react';
-import { useSidebar } from '@/components/ui/sidebar';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+} from "lucide-react";
+import { useSidebar } from "@/components/ui/sidebar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Skill {
     name: string;
@@ -31,7 +30,21 @@ interface SidebarData {
     skills: Skill[];
 }
 
-const skillOrder = ['attack', 'strength', 'defense', 'hitpoints', 'range', 'prayer', 'farming', 'mining', 'fishing', 'woodcutting', 'cooking', 'smithing', 'crafting'];
+const skillOrder = [
+    "attack",
+    "strength",
+    "defense",
+    "hitpoints",
+    "range",
+    "prayer",
+    "farming",
+    "mining",
+    "fishing",
+    "woodcutting",
+    "cooking",
+    "smithing",
+    "crafting",
+];
 
 const skillIcons: Record<string, LucideIcon> = {
     hitpoints: Heart,
@@ -92,13 +105,13 @@ export function NavSkills() {
     if (!sidebar || !sidebar.skills || sidebar.skills.length === 0) return null;
 
     // When collapsed, show nothing (skills are too complex for icon-only view)
-    if (state === 'collapsed') {
+    if (state === "collapsed") {
         return null;
     }
 
     // Sort skills by defined order (combat skills first)
     const sortedSkills = [...sidebar.skills].sort(
-        (a, b) => skillOrder.indexOf(a.name) - skillOrder.indexOf(b.name)
+        (a, b) => skillOrder.indexOf(a.name) - skillOrder.indexOf(b.name),
     );
 
     return (

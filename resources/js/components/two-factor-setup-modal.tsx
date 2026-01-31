@@ -1,27 +1,23 @@
-import { Form } from '@inertiajs/react';
-import { REGEXP_ONLY_DIGITS } from 'input-otp';
-import { Check, Copy, ScanLine } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
+import { Form } from "@inertiajs/react";
+import { REGEXP_ONLY_DIGITS } from "input-otp";
+import { Check, Copy, ScanLine } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import InputError from "@/components/input-error";
+import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogContent,
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from '@/components/ui/dialog';
-import {
-    InputOTP,
-    InputOTPGroup,
-    InputOTPSlot,
-} from '@/components/ui/input-otp';
-import { useAppearance } from '@/hooks/use-appearance';
-import { useClipboard } from '@/hooks/use-clipboard';
-import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
-import { confirm } from '@/routes/two-factor';
-import AlertError from './alert-error';
-import { Spinner } from './ui/spinner';
+} from "@/components/ui/dialog";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { useAppearance } from "@/hooks/use-appearance";
+import { useClipboard } from "@/hooks/use-clipboard";
+import { OTP_MAX_LENGTH } from "@/hooks/use-two-factor-auth";
+import { confirm } from "@/routes/two-factor";
+import AlertError from "./alert-error";
+import { Spinner } from "./ui/spinner";
 
 function GridScanIcon() {
     return (
@@ -83,8 +79,8 @@ function TwoFactorSetupStep({
                                         }}
                                         style={{
                                             filter:
-                                                resolvedAppearance === 'dark'
-                                                    ? 'invert(1) brightness(1.5)'
+                                                resolvedAppearance === "dark"
+                                                    ? "invert(1) brightness(1.5)"
                                                     : undefined,
                                         }}
                                     />
@@ -145,22 +141,17 @@ function TwoFactorVerificationStep({
     onClose: () => void;
     onBack: () => void;
 }) {
-    const [code, setCode] = useState<string>('');
+    const [code, setCode] = useState<string>("");
     const pinInputContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setTimeout(() => {
-            pinInputContainerRef.current?.querySelector('input')?.focus();
+            pinInputContainerRef.current?.querySelector("input")?.focus();
         }, 0);
     }, []);
 
     return (
-        <Form
-            {...confirm.form()}
-            onSuccess={() => onClose()}
-            resetOnError
-            resetOnSuccess
-        >
+        <Form {...confirm.form()} onSuccess={() => onClose()} resetOnError resetOnSuccess>
             {({
                 processing,
                 errors,
@@ -169,10 +160,7 @@ function TwoFactorVerificationStep({
                 errors?: { confirmTwoFactorAuthentication?: { code?: string } };
             }) => (
                 <>
-                    <div
-                        ref={pinInputContainerRef}
-                        className="relative w-full space-y-3"
-                    >
+                    <div ref={pinInputContainerRef} className="relative w-full space-y-3">
                         <div className="flex w-full flex-col items-center space-y-3 py-2">
                             <InputOTP
                                 id="otp"
@@ -183,22 +171,12 @@ function TwoFactorVerificationStep({
                                 pattern={REGEXP_ONLY_DIGITS}
                             >
                                 <InputOTPGroup>
-                                    {Array.from(
-                                        { length: OTP_MAX_LENGTH },
-                                        (_, index) => (
-                                            <InputOTPSlot
-                                                key={index}
-                                                index={index}
-                                            />
-                                        ),
-                                    )}
+                                    {Array.from({ length: OTP_MAX_LENGTH }, (_, index) => (
+                                        <InputOTPSlot key={index} index={index} />
+                                    ))}
                                 </InputOTPGroup>
                             </InputOTP>
-                            <InputError
-                                message={
-                                    errors?.confirmTwoFactorAuthentication?.code
-                                }
-                            />
+                            <InputError message={errors?.confirmTwoFactorAuthentication?.code} />
                         </div>
 
                         <div className="flex w-full space-x-5">
@@ -214,9 +192,7 @@ function TwoFactorVerificationStep({
                             <Button
                                 type="submit"
                                 className="flex-1"
-                                disabled={
-                                    processing || code.length < OTP_MAX_LENGTH
-                                }
+                                disabled={processing || code.length < OTP_MAX_LENGTH}
                             >
                                 Confirm
                             </Button>
@@ -251,8 +227,7 @@ export default function TwoFactorSetupModal({
     fetchSetupData,
     errors,
 }: Props) {
-    const [showVerificationStep, setShowVerificationStep] =
-        useState<boolean>(false);
+    const [showVerificationStep, setShowVerificationStep] = useState<boolean>(false);
 
     const modalConfig = useMemo<{
         title: string;
@@ -261,27 +236,26 @@ export default function TwoFactorSetupModal({
     }>(() => {
         if (twoFactorEnabled) {
             return {
-                title: 'Two-Factor Authentication Enabled',
+                title: "Two-Factor Authentication Enabled",
                 description:
-                    'Two-factor authentication is now enabled. Scan the QR code or enter the setup key in your authenticator app.',
-                buttonText: 'Close',
+                    "Two-factor authentication is now enabled. Scan the QR code or enter the setup key in your authenticator app.",
+                buttonText: "Close",
             };
         }
 
         if (showVerificationStep) {
             return {
-                title: 'Verify Authentication Code',
-                description:
-                    'Enter the 6-digit code from your authenticator app',
-                buttonText: 'Continue',
+                title: "Verify Authentication Code",
+                description: "Enter the 6-digit code from your authenticator app",
+                buttonText: "Continue",
             };
         }
 
         return {
-            title: 'Enable Two-Factor Authentication',
+            title: "Enable Two-Factor Authentication",
             description:
-                'To finish enabling two-factor authentication, scan the QR code or enter the setup key in your authenticator app',
-            buttonText: 'Continue',
+                "To finish enabling two-factor authentication, scan the QR code or enter the setup key in your authenticator app",
+            buttonText: "Continue",
         };
     }, [twoFactorEnabled, showVerificationStep]);
 

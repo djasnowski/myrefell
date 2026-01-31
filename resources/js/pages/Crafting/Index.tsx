@@ -1,8 +1,21 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowRight, ArrowUp, Backpack, Beef, Check, Hammer, Loader2, Lock, Package, Scissors, X, Zap } from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from "@inertiajs/react";
+import {
+    ArrowRight,
+    ArrowUp,
+    Backpack,
+    Beef,
+    Check,
+    Hammer,
+    Loader2,
+    Lock,
+    Package,
+    Scissors,
+    X,
+    Zap,
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Material {
     name: string;
@@ -58,9 +71,12 @@ interface PageProps {
 }
 
 const getBreadcrumbs = (location?: Location): BreadcrumbItem[] => [
-    { title: 'Dashboard', href: '/dashboard' },
+    { title: "Dashboard", href: "/dashboard" },
     ...(location ? [{ title: location.name, href: `/${location.type}s/${location.id}` }] : []),
-    { title: 'Crafting', href: location ? `/${location.type}s/${location.id}/crafting` : '/crafting' },
+    {
+        title: "Crafting",
+        href: location ? `/${location.type}s/${location.id}/crafting` : "/crafting",
+    },
 ];
 
 const categoryIcons: Record<string, typeof Hammer> = {
@@ -70,9 +86,9 @@ const categoryIcons: Record<string, typeof Hammer> = {
 };
 
 const categoryLabels: Record<string, string> = {
-    smithing: 'Smithing',
-    cooking: 'Cooking',
-    crafting: 'Crafting',
+    smithing: "Smithing",
+    cooking: "Cooking",
+    crafting: "Crafting",
 };
 
 function RecipeCard({
@@ -91,10 +107,10 @@ function RecipeCard({
         <div
             className={`rounded-lg border p-3 transition ${
                 recipe.is_locked
-                    ? 'border-stone-700 bg-stone-800/30 opacity-60'
+                    ? "border-stone-700 bg-stone-800/30 opacity-60"
                     : recipe.can_make
-                      ? 'border-amber-600/50 bg-stone-800/50'
-                      : 'border-stone-700 bg-stone-800/50'
+                      ? "border-amber-600/50 bg-stone-800/50"
+                      : "border-stone-700 bg-stone-800/50"
             }`}
         >
             <div className="mb-3 flex items-center justify-between">
@@ -111,7 +127,7 @@ function RecipeCard({
                     <div key={idx} className="flex items-center justify-between text-stone-400">
                         <span className="font-pixel text-[10px]">{material.name}</span>
                         <span
-                            className={`font-pixel text-[10px] ${material.has_enough ? 'text-green-400' : 'text-red-400'}`}
+                            className={`font-pixel text-[10px] ${material.has_enough ? "text-green-400" : "text-red-400"}`}
                         >
                             {material.have}/{material.required}
                         </span>
@@ -133,7 +149,9 @@ function RecipeCard({
                     <Zap className="h-3 w-3 text-yellow-500" />
                     {recipe.energy_cost}
                 </span>
-                <span className="font-pixel text-[10px] text-amber-400">+{recipe.xp_reward} XP</span>
+                <span className="font-pixel text-[10px] text-amber-400">
+                    +{recipe.xp_reward} XP
+                </span>
             </div>
 
             {/* Craft Button */}
@@ -149,8 +167,8 @@ function RecipeCard({
                     disabled={!recipe.can_make || loading !== null}
                     className={`flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 font-pixel text-xs transition ${
                         recipe.can_make && !loading
-                            ? 'bg-amber-600 text-stone-900 hover:bg-amber-500'
-                            : 'cursor-not-allowed bg-stone-700 text-stone-500'
+                            ? "bg-amber-600 text-stone-900 hover:bg-amber-500"
+                            : "cursor-not-allowed bg-stone-700 text-stone-500"
                     }`}
                 >
                     {isLoading ? (
@@ -179,13 +197,13 @@ export default function CraftingIndex() {
     const { crafting_info, location } = usePage<PageProps>().props;
     const [loading, setLoading] = useState<string | null>(null);
     const [result, setResult] = useState<CraftResult | null>(null);
-    const [activeCategory, setActiveCategory] = useState<string>('all');
+    const [activeCategory, setActiveCategory] = useState<string>("all");
     const [currentEnergy, setCurrentEnergy] = useState(crafting_info.player_energy);
 
     // Build the craft URL based on location
     const craftUrl = location
         ? `/${location.type}s/${location.id}/crafting/craft`
-        : '/crafting/craft';
+        : "/crafting/craft";
 
     const handleCraft = async (recipeId: string) => {
         setLoading(recipeId);
@@ -193,10 +211,13 @@ export default function CraftingIndex() {
 
         try {
             const response = await fetch(craftUrl, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
                 },
                 body: JSON.stringify({ recipe: recipeId }),
             });
@@ -209,9 +230,9 @@ export default function CraftingIndex() {
             }
 
             // Reload to update materials
-            router.reload({ only: ['crafting_info', 'sidebar'] });
+            router.reload({ only: ["crafting_info", "sidebar"] });
         } catch {
-            setResult({ success: false, message: 'An error occurred' });
+            setResult({ success: false, message: "An error occurred" });
         } finally {
             setLoading(null);
         }
@@ -220,11 +241,9 @@ export default function CraftingIndex() {
     // Combine all recipes for display
     const allRecipes = Object.entries(crafting_info.all_recipes).flatMap(([, recipes]) => recipes);
     const displayRecipes =
-        activeCategory === 'all'
-            ? allRecipes
-            : crafting_info.all_recipes[activeCategory] || [];
+        activeCategory === "all" ? allRecipes : crafting_info.all_recipes[activeCategory] || [];
 
-    const categories = ['all', ...Object.keys(crafting_info.all_recipes)];
+    const categories = ["all", ...Object.keys(crafting_info.all_recipes)];
 
     return (
         <AppLayout breadcrumbs={getBreadcrumbs(location)}>
@@ -237,7 +256,9 @@ export default function CraftingIndex() {
                     </div>
                     <div>
                         <h1 className="font-pixel text-2xl text-amber-400">Crafting</h1>
-                        <p className="font-pixel text-xs text-stone-400">Create items from raw materials</p>
+                        <p className="font-pixel text-xs text-stone-400">
+                            Create items from raw materials
+                        </p>
                     </div>
                 </div>
 
@@ -251,7 +272,9 @@ export default function CraftingIndex() {
                         <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
                             <div
                                 className="h-full bg-gradient-to-r from-yellow-600 to-yellow-400 transition-all"
-                                style={{ width: `${(currentEnergy / crafting_info.max_energy) * 100}%` }}
+                                style={{
+                                    width: `${(currentEnergy / crafting_info.max_energy) * 100}%`,
+                                }}
                             />
                         </div>
                         <div className="mt-1 font-pixel text-[10px] text-stone-400">
@@ -263,7 +286,9 @@ export default function CraftingIndex() {
                             <Backpack className="h-3 w-3" />
                             Inventory
                         </div>
-                        <div className="font-pixel text-lg text-stone-300">{crafting_info.free_slots} slots</div>
+                        <div className="font-pixel text-lg text-stone-300">
+                            {crafting_info.free_slots} slots
+                        </div>
                     </div>
                 </div>
 
@@ -271,7 +296,9 @@ export default function CraftingIndex() {
                 {result && (
                     <div
                         className={`mb-4 rounded-lg border p-3 ${
-                            result.success ? 'border-green-600/50 bg-green-900/20' : 'border-red-600/50 bg-red-900/20'
+                            result.success
+                                ? "border-green-600/50 bg-green-900/20"
+                                : "border-red-600/50 bg-red-900/20"
                         }`}
                     >
                         <div className="flex items-center gap-3">
@@ -296,7 +323,11 @@ export default function CraftingIndex() {
                                     </div>
                                 </>
                             )}
-                            {!result.success && <span className="font-pixel text-sm text-red-400">{result.message}</span>}
+                            {!result.success && (
+                                <span className="font-pixel text-sm text-red-400">
+                                    {result.message}
+                                </span>
+                            )}
                         </div>
                     </div>
                 )}
@@ -305,7 +336,7 @@ export default function CraftingIndex() {
                 <div className="mb-4 flex gap-2 overflow-x-auto">
                     {categories.map((cat) => {
                         const Icon = categoryIcons[cat];
-                        const label = cat === 'all' ? 'All' : categoryLabels[cat] || cat;
+                        const label = cat === "all" ? "All" : categoryLabels[cat] || cat;
 
                         return (
                             <button
@@ -313,8 +344,8 @@ export default function CraftingIndex() {
                                 onClick={() => setActiveCategory(cat)}
                                 className={`flex items-center gap-1 whitespace-nowrap rounded-lg px-3 py-1.5 font-pixel text-xs transition ${
                                     activeCategory === cat
-                                        ? 'bg-amber-600 text-stone-900'
-                                        : 'bg-stone-800 text-stone-400 hover:bg-stone-700'
+                                        ? "bg-amber-600 text-stone-900"
+                                        : "bg-stone-800 text-stone-400 hover:bg-stone-700"
                                 }`}
                             >
                                 {Icon && <Icon className="h-3 w-3" />}
@@ -327,7 +358,12 @@ export default function CraftingIndex() {
                 {/* Recipe Grid */}
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {displayRecipes.map((recipe) => (
-                        <RecipeCard key={recipe.id} recipe={recipe} onCraft={handleCraft} loading={loading} />
+                        <RecipeCard
+                            key={recipe.id}
+                            recipe={recipe}
+                            onCraft={handleCraft}
+                            loading={loading}
+                        />
                     ))}
                 </div>
 
@@ -335,7 +371,9 @@ export default function CraftingIndex() {
                     <div className="flex flex-1 items-center justify-center">
                         <div className="text-center">
                             <Hammer className="mx-auto mb-3 h-12 w-12 text-stone-600" />
-                            <p className="font-pixel text-sm text-stone-500">No recipes available</p>
+                            <p className="font-pixel text-sm text-stone-500">
+                                No recipes available
+                            </p>
                         </div>
                     </div>
                 )}

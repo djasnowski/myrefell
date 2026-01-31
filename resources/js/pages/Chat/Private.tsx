@@ -1,8 +1,8 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Loader2, MessageCircle, Send, User } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from "@inertiajs/react";
+import { ArrowLeft, Loader2, MessageCircle, Send, User } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface ChatMessage {
     id: number;
@@ -36,23 +36,27 @@ interface PageProps {
 }
 
 export default function PrivateChat() {
-    const { messages: initialMessages, conversations, other_user, max_message_length } =
-        usePage<PageProps>().props;
+    const {
+        messages: initialMessages,
+        conversations,
+        other_user,
+        max_message_length,
+    } = usePage<PageProps>().props;
 
     const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
-    const [newMessage, setNewMessage] = useState('');
+    const [newMessage, setNewMessage] = useState("");
     const [sending, setSending] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Chat', href: '/chat' },
-        { title: other_user.username, href: '#' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Chat", href: "/chat" },
+        { title: other_user.username, href: "#" },
     ];
 
     const scrollToBottom = useCallback(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, []);
 
     useEffect(() => {
@@ -65,11 +69,14 @@ export default function PrivateChat() {
             const lastMessageId = messages[messages.length - 1]?.id || 0;
 
             try {
-                const response = await fetch('/chat/poll/private', {
-                    method: 'POST',
+                const response = await fetch("/chat/poll/private", {
+                    method: "POST",
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN":
+                            document
+                                .querySelector('meta[name="csrf-token"]')
+                                ?.getAttribute("content") || "",
                     },
                     body: JSON.stringify({
                         other_user_id: other_user.id,
@@ -80,7 +87,7 @@ export default function PrivateChat() {
                 if (response.ok) {
                     const data = await response.json();
                     if (data.success && data.messages.length > 0) {
-                        setMessages(prev => [...prev, ...data.messages]);
+                        setMessages((prev) => [...prev, ...data.messages]);
                     }
                 }
             } catch {
@@ -102,11 +109,14 @@ export default function PrivateChat() {
 
         setSending(true);
         try {
-            const response = await fetch('/chat/send/private', {
-                method: 'POST',
+            const response = await fetch("/chat/send/private", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
                 },
                 body: JSON.stringify({
                     content: newMessage,
@@ -116,8 +126,8 @@ export default function PrivateChat() {
 
             const data = await response.json();
             if (data.success && data.message) {
-                setMessages(prev => [...prev, data.message]);
-                setNewMessage('');
+                setMessages((prev) => [...prev, data.message]);
+                setNewMessage("");
             }
         } finally {
             setSending(false);
@@ -125,7 +135,7 @@ export default function PrivateChat() {
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             handleSend();
         }
@@ -133,7 +143,7 @@ export default function PrivateChat() {
 
     const formatTime = (dateString: string) => {
         const date = new Date(dateString);
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     };
 
     return (
@@ -143,7 +153,7 @@ export default function PrivateChat() {
                 {/* Header */}
                 <div className="mb-4 flex items-center gap-3">
                     <button
-                        onClick={() => router.visit('/chat')}
+                        onClick={() => router.visit("/chat")}
                         className="rounded-lg bg-stone-700 p-2 transition hover:bg-stone-600"
                     >
                         <ArrowLeft className="h-5 w-5 text-stone-400" />
@@ -152,7 +162,9 @@ export default function PrivateChat() {
                         <User className="h-8 w-8 text-purple-400" />
                     </div>
                     <div>
-                        <h1 className="font-pixel text-2xl text-purple-400">{other_user.username}</h1>
+                        <h1 className="font-pixel text-2xl text-purple-400">
+                            {other_user.username}
+                        </h1>
                         <p className="font-pixel text-xs text-stone-400">Private conversation</p>
                     </div>
                 </div>
@@ -166,20 +178,27 @@ export default function PrivateChat() {
                                 {conversations.map((conv) => (
                                     <button
                                         key={conv.user_id}
-                                        onClick={() => router.visit(`/chat/private/${conv.user_id}`)}
+                                        onClick={() =>
+                                            router.visit(`/chat/private/${conv.user_id}`)
+                                        }
                                         className={`w-full rounded-lg p-2 text-left transition ${
                                             conv.user_id === other_user.id
-                                                ? 'bg-purple-900/30 border border-purple-600/50'
-                                                : 'bg-stone-900/50 hover:bg-stone-700/50'
+                                                ? "bg-purple-900/30 border border-purple-600/50"
+                                                : "bg-stone-900/50 hover:bg-stone-700/50"
                                         }`}
                                     >
-                                        <div className={`font-pixel text-xs ${
-                                            conv.user_id === other_user.id ? 'text-purple-300' : 'text-stone-300'
-                                        }`}>
+                                        <div
+                                            className={`font-pixel text-xs ${
+                                                conv.user_id === other_user.id
+                                                    ? "text-purple-300"
+                                                    : "text-stone-300"
+                                            }`}
+                                        >
                                             {conv.username}
                                         </div>
                                         <div className="truncate font-pixel text-[10px] text-stone-500">
-                                            {conv.is_from_me ? 'You: ' : ''}{conv.last_message}
+                                            {conv.is_from_me ? "You: " : ""}
+                                            {conv.last_message}
                                         </div>
                                     </button>
                                 ))}
@@ -187,7 +206,9 @@ export default function PrivateChat() {
                         ) : (
                             <div className="py-4 text-center">
                                 <User className="mx-auto mb-2 h-6 w-6 text-stone-600" />
-                                <p className="font-pixel text-[10px] text-stone-500">No other conversations</p>
+                                <p className="font-pixel text-[10px] text-stone-500">
+                                    No other conversations
+                                </p>
                             </div>
                         )}
                     </div>
@@ -201,26 +222,44 @@ export default function PrivateChat() {
                                     {messages.map((msg) => (
                                         <div
                                             key={msg.id}
-                                            className={`flex gap-3 ${msg.is_from_me ? 'flex-row-reverse' : ''}`}
+                                            className={`flex gap-3 ${msg.is_from_me ? "flex-row-reverse" : ""}`}
                                         >
-                                            <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${
-                                                msg.is_from_me ? 'bg-purple-700' : 'bg-stone-700'
-                                            }`}>
-                                                <User className={`h-4 w-4 ${msg.is_from_me ? 'text-purple-300' : 'text-stone-400'}`} />
+                                            <div
+                                                className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${
+                                                    msg.is_from_me
+                                                        ? "bg-purple-700"
+                                                        : "bg-stone-700"
+                                                }`}
+                                            >
+                                                <User
+                                                    className={`h-4 w-4 ${msg.is_from_me ? "text-purple-300" : "text-stone-400"}`}
+                                                />
                                             </div>
-                                            <div className={`max-w-[70%] ${msg.is_from_me ? 'text-right' : ''}`}>
-                                                <div className={`flex items-center gap-2 ${msg.is_from_me ? 'flex-row-reverse' : ''}`}>
-                                                    <span className={`font-pixel text-xs ${msg.is_from_me ? 'text-purple-400' : 'text-blue-400'}`}>
+                                            <div
+                                                className={`max-w-[70%] ${msg.is_from_me ? "text-right" : ""}`}
+                                            >
+                                                <div
+                                                    className={`flex items-center gap-2 ${msg.is_from_me ? "flex-row-reverse" : ""}`}
+                                                >
+                                                    <span
+                                                        className={`font-pixel text-xs ${msg.is_from_me ? "text-purple-400" : "text-blue-400"}`}
+                                                    >
                                                         {msg.sender_username}
                                                     </span>
-                                                    <span className="font-pixel text-[10px] text-stone-500">{formatTime(msg.created_at)}</span>
+                                                    <span className="font-pixel text-[10px] text-stone-500">
+                                                        {formatTime(msg.created_at)}
+                                                    </span>
                                                 </div>
-                                                <div className={`mt-1 inline-block rounded-lg px-3 py-2 ${
-                                                    msg.is_from_me
-                                                        ? 'bg-purple-900/30 text-purple-200'
-                                                        : 'bg-stone-700/50 text-stone-300'
-                                                }`}>
-                                                    <p className="font-pixel text-xs">{msg.content}</p>
+                                                <div
+                                                    className={`mt-1 inline-block rounded-lg px-3 py-2 ${
+                                                        msg.is_from_me
+                                                            ? "bg-purple-900/30 text-purple-200"
+                                                            : "bg-stone-700/50 text-stone-300"
+                                                    }`}
+                                                >
+                                                    <p className="font-pixel text-xs">
+                                                        {msg.content}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
@@ -230,8 +269,12 @@ export default function PrivateChat() {
                             ) : (
                                 <div className="flex h-full flex-col items-center justify-center">
                                     <MessageCircle className="mb-2 h-10 w-10 text-stone-600" />
-                                    <p className="font-pixel text-xs text-stone-500">No messages yet</p>
-                                    <p className="font-pixel text-[10px] text-stone-600">Start the conversation!</p>
+                                    <p className="font-pixel text-xs text-stone-500">
+                                        No messages yet
+                                    </p>
+                                    <p className="font-pixel text-[10px] text-stone-600">
+                                        Start the conversation!
+                                    </p>
                                 </div>
                             )}
                         </div>
@@ -253,8 +296,8 @@ export default function PrivateChat() {
                                     disabled={sending || !newMessage.trim()}
                                     className={`flex items-center gap-2 rounded-lg px-4 py-2 font-pixel text-xs transition ${
                                         sending || !newMessage.trim()
-                                            ? 'cursor-not-allowed bg-stone-700 text-stone-500'
-                                            : 'bg-purple-600 text-stone-100 hover:bg-purple-500'
+                                            ? "cursor-not-allowed bg-stone-700 text-stone-500"
+                                            : "bg-purple-600 text-stone-100 hover:bg-purple-500"
                                     }`}
                                 >
                                     {sending ? (

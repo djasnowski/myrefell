@@ -1,16 +1,8 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    AlertTriangle,
-    ArrowLeft,
-    ChevronDown,
-    FileText,
-    Gavel,
-    Search,
-    User,
-} from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, Link, router, usePage } from "@inertiajs/react";
+import { AlertTriangle, ArrowLeft, ChevronDown, FileText, Gavel, Search, User } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface CrimeType {
     slug: string;
@@ -35,28 +27,28 @@ interface PageProps {
 }
 
 const severityColors: Record<string, { bg: string; text: string }> = {
-    minor: { bg: 'bg-green-900/30', text: 'text-green-400' },
-    moderate: { bg: 'bg-yellow-900/30', text: 'text-yellow-400' },
-    major: { bg: 'bg-orange-900/30', text: 'text-orange-400' },
-    capital: { bg: 'bg-red-900/30', text: 'text-red-400' },
+    minor: { bg: "bg-green-900/30", text: "text-green-400" },
+    moderate: { bg: "bg-yellow-900/30", text: "text-yellow-400" },
+    major: { bg: "bg-orange-900/30", text: "text-orange-400" },
+    capital: { bg: "bg-red-900/30", text: "text-red-400" },
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Criminal Record', href: '/crime' },
-    { title: 'File Accusation', href: '#' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Criminal Record", href: "/crime" },
+    { title: "File Accusation", href: "#" },
 ];
 
 export default function Accuse() {
     const { crime_types, players_in_location, current_location } = usePage<PageProps>().props;
 
     const [formData, setFormData] = useState({
-        accused_id: '',
-        crime_type_slug: '',
-        accusation_text: '',
-        evidence: '',
+        accused_id: "",
+        crime_type_slug: "",
+        accusation_text: "",
+        evidence: "",
     });
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [crimeDropdownOpen, setCrimeDropdownOpen] = useState(false);
@@ -65,16 +57,19 @@ export default function Accuse() {
     // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (crimeDropdownRef.current && !crimeDropdownRef.current.contains(event.target as Node)) {
+            if (
+                crimeDropdownRef.current &&
+                !crimeDropdownRef.current.contains(event.target as Node)
+            ) {
                 setCrimeDropdownOpen(false);
             }
         };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     const filteredPlayers = players_in_location.filter((p) =>
-        p.username.toLowerCase().includes(searchTerm.toLowerCase())
+        p.username.toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
     const selectedPlayer = players_in_location.find((p) => p.id.toString() === formData.accused_id);
@@ -84,7 +79,7 @@ export default function Accuse() {
         e.preventDefault();
 
         if (!formData.accused_id || !formData.crime_type_slug || !formData.accusation_text.trim()) {
-            setError('Please fill in all required fields.');
+            setError("Please fill in all required fields.");
             return;
         }
 
@@ -92,7 +87,7 @@ export default function Accuse() {
         setError(null);
 
         router.post(
-            '/crime/accuse',
+            "/crime/accuse",
             {
                 accused_id: parseInt(formData.accused_id),
                 crime_type_slug: formData.crime_type_slug,
@@ -104,13 +99,15 @@ export default function Accuse() {
                     // Redirect happens automatically via Inertia
                 },
                 onError: (errors) => {
-                    setError(Object.values(errors).flat().join(', ') || 'Failed to file accusation.');
+                    setError(
+                        Object.values(errors).flat().join(", ") || "Failed to file accusation.",
+                    );
                     setIsSubmitting(false);
                 },
                 onFinish: () => {
                     setIsSubmitting(false);
                 },
-            }
+            },
         );
     };
 
@@ -144,8 +141,9 @@ export default function Accuse() {
                         <div>
                             <h2 className="font-pixel text-sm text-amber-300">Warning</h2>
                             <p className="font-pixel text-xs text-stone-400">
-                                Filing a false accusation is itself a crime! If your accusation is found to be knowingly false,
-                                you may face charges for false accusation.
+                                Filing a false accusation is itself a crime! If your accusation is
+                                found to be knowingly false, you may face charges for false
+                                accusation.
                             </p>
                         </div>
                     </div>
@@ -199,8 +197,8 @@ export default function Accuse() {
                                         key={player.id}
                                         className={`flex cursor-pointer items-center gap-3 rounded-lg border p-2 transition ${
                                             formData.accused_id === player.id.toString()
-                                                ? 'border-amber-500/50 bg-amber-900/20'
-                                                : 'border-stone-700 bg-stone-800/50 hover:border-stone-600'
+                                                ? "border-amber-500/50 bg-amber-900/20"
+                                                : "border-stone-700 bg-stone-800/50 hover:border-stone-600"
                                         }`}
                                     >
                                         <input
@@ -208,10 +206,17 @@ export default function Accuse() {
                                             name="accused_id"
                                             value={player.id}
                                             checked={formData.accused_id === player.id.toString()}
-                                            onChange={(e) => setFormData({ ...formData, accused_id: e.target.value })}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    accused_id: e.target.value,
+                                                })
+                                            }
                                             className="h-4 w-4 border-stone-600 bg-stone-700 text-amber-500 focus:ring-amber-500"
                                         />
-                                        <span className="font-pixel text-sm text-white">{player.username}</span>
+                                        <span className="font-pixel text-sm text-white">
+                                            {player.username}
+                                        </span>
                                     </label>
                                 ))}
                             </div>
@@ -242,14 +247,22 @@ export default function Accuse() {
                                     <div className="flex items-center gap-2">
                                         <span
                                             className={`h-2.5 w-2.5 rounded-full ${
-                                                severityColors[selectedCrime.severity]?.bg.replace('/30', '') || 'bg-stone-500'
+                                                severityColors[selectedCrime.severity]?.bg.replace(
+                                                    "/30",
+                                                    "",
+                                                ) || "bg-stone-500"
                                             }`}
                                             style={{
                                                 backgroundColor:
-                                                    selectedCrime.severity === 'minor' ? '#4ade80' :
-                                                    selectedCrime.severity === 'moderate' ? '#facc15' :
-                                                    selectedCrime.severity === 'major' ? '#fb923c' :
-                                                    selectedCrime.severity === 'capital' ? '#f87171' : '#78716c'
+                                                    selectedCrime.severity === "minor"
+                                                        ? "#4ade80"
+                                                        : selectedCrime.severity === "moderate"
+                                                          ? "#facc15"
+                                                          : selectedCrime.severity === "major"
+                                                            ? "#fb923c"
+                                                            : selectedCrime.severity === "capital"
+                                                              ? "#f87171"
+                                                              : "#78716c",
                                             }}
                                         />
                                         <span>{selectedCrime.name}</span>
@@ -257,7 +270,9 @@ export default function Accuse() {
                                 ) : (
                                     <span className="text-stone-500">-- Select a crime --</span>
                                 )}
-                                <ChevronDown className={`h-4 w-4 text-stone-400 transition-transform ${crimeDropdownOpen ? 'rotate-180' : ''}`} />
+                                <ChevronDown
+                                    className={`h-4 w-4 text-stone-400 transition-transform ${crimeDropdownOpen ? "rotate-180" : ""}`}
+                                />
                             </button>
 
                             {crimeDropdownOpen && (
@@ -267,31 +282,46 @@ export default function Accuse() {
                                             key={ct.slug}
                                             type="button"
                                             onClick={() => {
-                                                setFormData({ ...formData, crime_type_slug: ct.slug });
+                                                setFormData({
+                                                    ...formData,
+                                                    crime_type_slug: ct.slug,
+                                                });
                                                 setCrimeDropdownOpen(false);
                                             }}
                                             className={`flex w-full items-center gap-3 px-3 py-2 text-left transition hover:bg-stone-700 ${
-                                                formData.crime_type_slug === ct.slug ? 'bg-stone-700/50' : ''
+                                                formData.crime_type_slug === ct.slug
+                                                    ? "bg-stone-700/50"
+                                                    : ""
                                             }`}
                                         >
                                             <span
                                                 className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
                                                 style={{
                                                     backgroundColor:
-                                                        ct.severity === 'minor' ? '#4ade80' :
-                                                        ct.severity === 'moderate' ? '#facc15' :
-                                                        ct.severity === 'major' ? '#fb923c' :
-                                                        ct.severity === 'capital' ? '#f87171' : '#78716c'
+                                                        ct.severity === "minor"
+                                                            ? "#4ade80"
+                                                            : ct.severity === "moderate"
+                                                              ? "#facc15"
+                                                              : ct.severity === "major"
+                                                                ? "#fb923c"
+                                                                : ct.severity === "capital"
+                                                                  ? "#f87171"
+                                                                  : "#78716c",
                                                 }}
                                             />
                                             <div className="flex-1">
-                                                <div className="font-pixel text-sm text-white">{ct.name}</div>
-                                                <div className="font-pixel text-[10px] text-stone-500">{ct.description}</div>
+                                                <div className="font-pixel text-sm text-white">
+                                                    {ct.name}
+                                                </div>
+                                                <div className="font-pixel text-[10px] text-stone-500">
+                                                    {ct.description}
+                                                </div>
                                             </div>
                                             <span
                                                 className={`rounded px-1.5 py-0.5 font-pixel text-[10px] ${
-                                                    severityColors[ct.severity]?.bg || 'bg-stone-700'
-                                                } ${severityColors[ct.severity]?.text || 'text-stone-300'}`}
+                                                    severityColors[ct.severity]?.bg ||
+                                                    "bg-stone-700"
+                                                } ${severityColors[ct.severity]?.text || "text-stone-300"}`}
                                             >
                                                 {ct.severity_display}
                                             </span>
@@ -305,16 +335,21 @@ export default function Accuse() {
                         {selectedCrime && (
                             <div className="mt-3 rounded-lg border border-stone-700 bg-stone-900/50 p-3">
                                 <div className="mb-2 flex items-center justify-between">
-                                    <span className="font-pixel text-sm text-white">{selectedCrime.name}</span>
+                                    <span className="font-pixel text-sm text-white">
+                                        {selectedCrime.name}
+                                    </span>
                                     <span
                                         className={`rounded px-2 py-0.5 font-pixel text-[10px] ${
-                                            severityColors[selectedCrime.severity]?.bg || 'bg-stone-700'
-                                        } ${severityColors[selectedCrime.severity]?.text || 'text-stone-300'}`}
+                                            severityColors[selectedCrime.severity]?.bg ||
+                                            "bg-stone-700"
+                                        } ${severityColors[selectedCrime.severity]?.text || "text-stone-300"}`}
                                     >
                                         {selectedCrime.severity_display}
                                     </span>
                                 </div>
-                                <p className="mb-2 font-pixel text-xs text-stone-400">{selectedCrime.description}</p>
+                                <p className="mb-2 font-pixel text-xs text-stone-400">
+                                    {selectedCrime.description}
+                                </p>
                                 <div className="flex items-center gap-1 font-pixel text-[10px] text-stone-500">
                                     <Gavel className="h-3 w-3" />
                                     Tried at: {selectedCrime.court_display}
@@ -331,7 +366,9 @@ export default function Accuse() {
                         </label>
                         <textarea
                             value={formData.accusation_text}
-                            onChange={(e) => setFormData({ ...formData, accusation_text: e.target.value })}
+                            onChange={(e) =>
+                                setFormData({ ...formData, accusation_text: e.target.value })
+                            }
                             maxLength={2000}
                             rows={4}
                             placeholder="Describe what happened in detail..."
@@ -346,7 +383,10 @@ export default function Accuse() {
                     <div className="rounded-xl border-2 border-stone-600/50 bg-stone-800/30 p-4">
                         <label className="mb-3 flex items-center gap-2 font-pixel text-sm text-stone-300">
                             <FileText className="h-4 w-4" />
-                            Evidence <span className="font-pixel text-[10px] text-stone-500">(Optional)</span>
+                            Evidence{" "}
+                            <span className="font-pixel text-[10px] text-stone-500">
+                                (Optional)
+                            </span>
                         </label>
                         <textarea
                             value={formData.evidence}
@@ -379,7 +419,7 @@ export default function Accuse() {
                             }
                             className="flex-1 rounded border-2 border-amber-600/50 bg-amber-900/30 py-3 font-pixel text-sm text-amber-300 transition hover:bg-amber-900/50 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                            {isSubmitting ? 'Filing...' : 'File Accusation'}
+                            {isSubmitting ? "Filing..." : "File Accusation"}
                         </button>
                     </div>
                 </form>

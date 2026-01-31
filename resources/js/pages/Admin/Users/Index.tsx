@@ -1,28 +1,20 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    ChevronLeft,
-    ChevronRight,
-    Eye,
-    Search,
-    Shield,
-    UserX,
-    Users,
-} from 'lucide-react';
-import { useState } from 'react';
-import { show as showUser } from '@/actions/App/Http/Controllers/Admin/UserController';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Head, Link, router } from "@inertiajs/react";
+import { ChevronLeft, ChevronRight, Eye, Search, Shield, UserX, Users } from "lucide-react";
+import { useState } from "react";
+import { show as showUser } from "@/actions/App/Http/Controllers/Admin/UserController";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from '@/components/ui/select';
-import AdminLayout from '@/layouts/admin-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "@/components/ui/select";
+import AdminLayout from "@/layouts/admin-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface User {
     id: number;
@@ -63,8 +55,8 @@ interface Props {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Admin', href: '/admin' },
-    { title: 'Users', href: '/admin/users' },
+    { title: "Admin", href: "/admin" },
+    { title: "Users", href: "/admin/users" },
 ];
 
 export default function Index({ users, filters }: Props) {
@@ -72,18 +64,18 @@ export default function Index({ users, filters }: Props) {
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/admin/users', { ...filters, search }, { preserveState: true });
+        router.get("/admin/users", { ...filters, search }, { preserveState: true });
     };
 
     const handleFilterChange = (key: string, value: string) => {
-        router.get('/admin/users', { ...filters, [key]: value }, { preserveState: true });
+        router.get("/admin/users", { ...filters, [key]: value }, { preserveState: true });
     };
 
     const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
+        return new Date(dateStr).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
         });
     };
 
@@ -127,9 +119,9 @@ export default function Index({ users, filters }: Props) {
 
                             {/* Banned Filter */}
                             <Select
-                                value={filters.banned || 'all'}
+                                value={filters.banned || "all"}
                                 onValueChange={(value) =>
-                                    handleFilterChange('banned', value === 'all' ? '' : value)
+                                    handleFilterChange("banned", value === "all" ? "" : value)
                                 }
                             >
                                 <SelectTrigger className="w-[150px] border-stone-700 bg-stone-900/50">
@@ -144,9 +136,9 @@ export default function Index({ users, filters }: Props) {
 
                             {/* Admin Filter */}
                             <Select
-                                value={filters.admin || 'all'}
+                                value={filters.admin || "all"}
                                 onValueChange={(value) =>
-                                    handleFilterChange('admin', value === 'all' ? '' : value)
+                                    handleFilterChange("admin", value === "all" ? "" : value)
                                 }
                             >
                                 <SelectTrigger className="w-[150px] border-stone-700 bg-stone-900/50">
@@ -234,8 +226,9 @@ export default function Index({ users, filters }: Props) {
                                                     )}
                                                     {user.bans_count > 0 && !user.is_banned && (
                                                         <span className="text-xs text-stone-500">
-                                                            ({user.bans_count} prior{' '}
-                                                            {user.bans_count === 1 ? 'ban' : 'bans'})
+                                                            ({user.bans_count} prior{" "}
+                                                            {user.bans_count === 1 ? "ban" : "bans"}
+                                                            )
                                                         </span>
                                                     )}
                                                 </div>
@@ -269,32 +262,28 @@ export default function Index({ users, filters }: Props) {
                                 </p>
                                 <div className="flex gap-2">
                                     {users.links.map((link, index) => {
-                                        if (link.label.includes('Previous')) {
+                                        if (link.label.includes("Previous")) {
                                             return (
                                                 <Button
                                                     key={index}
                                                     variant="outline"
                                                     size="sm"
                                                     disabled={!link.url}
-                                                    onClick={() =>
-                                                        link.url && router.get(link.url)
-                                                    }
+                                                    onClick={() => link.url && router.get(link.url)}
                                                     className="border-stone-700"
                                                 >
                                                     <ChevronLeft className="size-4" />
                                                 </Button>
                                             );
                                         }
-                                        if (link.label.includes('Next')) {
+                                        if (link.label.includes("Next")) {
                                             return (
                                                 <Button
                                                     key={index}
                                                     variant="outline"
                                                     size="sm"
                                                     disabled={!link.url}
-                                                    onClick={() =>
-                                                        link.url && router.get(link.url)
-                                                    }
+                                                    onClick={() => link.url && router.get(link.url)}
                                                     className="border-stone-700"
                                                 >
                                                     <ChevronRight className="size-4" />
@@ -304,16 +293,10 @@ export default function Index({ users, filters }: Props) {
                                         return (
                                             <Button
                                                 key={index}
-                                                variant={link.active ? 'default' : 'outline'}
+                                                variant={link.active ? "default" : "outline"}
                                                 size="sm"
-                                                onClick={() =>
-                                                    link.url && router.get(link.url)
-                                                }
-                                                className={
-                                                    link.active
-                                                        ? ''
-                                                        : 'border-stone-700'
-                                                }
+                                                onClick={() => link.url && router.get(link.url)}
+                                                className={link.active ? "" : "border-stone-700"}
                                             >
                                                 {link.label}
                                             </Button>

@@ -5,7 +5,7 @@ export type User = {
     avatar?: string;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;
-    gender?: 'male' | 'female';
+    gender?: "male" | "female";
     combat_level?: number;
     created_at: string;
     updated_at: string;

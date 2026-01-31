@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from "@inertiajs/react";
 import {
     Axe,
     Bug,
@@ -13,10 +13,10 @@ import {
     Swords,
     Trash2,
     Utensils,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface PlayerQuest {
     id: number;
@@ -44,13 +44,13 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Quest Log', href: '/quests' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Quest Log", href: "/quests" },
 ];
 
 const iconMap: Record<string, typeof ScrollText> = {
     bug: Bug,
-    'paw-print': PawPrint,
+    "paw-print": PawPrint,
     gem: Gem,
     fish: Fish,
     axe: Axe,
@@ -74,13 +74,16 @@ export default function QuestLog() {
         setAbandonLoading(playerQuestId);
         try {
             await fetch(`/quests/${playerQuestId}/abandon`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
                 },
             });
-            router.reload({ only: ['active_quests', 'completed_quests', 'sidebar'] });
+            router.reload({ only: ["active_quests", "completed_quests", "sidebar"] });
         } finally {
             setAbandonLoading(null);
         }
@@ -90,13 +93,16 @@ export default function QuestLog() {
         setClaimLoading(playerQuestId);
         try {
             await fetch(`/quests/${playerQuestId}/claim`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
                 },
             });
-            router.reload({ only: ['active_quests', 'completed_quests', 'sidebar'] });
+            router.reload({ only: ["active_quests", "completed_quests", "sidebar"] });
         } finally {
             setClaimLoading(null);
         }
@@ -123,14 +129,24 @@ export default function QuestLog() {
                     {/* Completed Quests Ready to Claim */}
                     {completed_quests.length > 0 && (
                         <div className="rounded-xl border-2 border-green-600/50 bg-green-900/20 p-4">
-                            <h2 className="mb-4 font-pixel text-sm text-green-300">Ready to Claim</h2>
+                            <h2 className="mb-4 font-pixel text-sm text-green-300">
+                                Ready to Claim
+                            </h2>
                             <div className="space-y-3">
                                 {completed_quests.map((pq) => (
-                                    <div key={pq.id} className="flex items-center justify-between rounded-lg bg-stone-900/50 p-3">
+                                    <div
+                                        key={pq.id}
+                                        className="flex items-center justify-between rounded-lg bg-stone-900/50 p-3"
+                                    >
                                         <div className="flex items-center gap-3">
-                                            <QuestIcon icon={pq.icon} className="h-5 w-5 text-green-400" />
+                                            <QuestIcon
+                                                icon={pq.icon}
+                                                className="h-5 w-5 text-green-400"
+                                            />
                                             <div>
-                                                <div className="font-pixel text-sm text-stone-300">{pq.name}</div>
+                                                <div className="font-pixel text-sm text-stone-300">
+                                                    {pq.name}
+                                                </div>
                                                 <div className="flex items-center gap-2">
                                                     <span className="flex items-center gap-1 font-pixel text-[10px] text-yellow-400">
                                                         <Coins className="h-3 w-3" />
@@ -171,8 +187,13 @@ export default function QuestLog() {
                                     <div key={pq.id} className="rounded-lg bg-stone-900/50 p-4">
                                         <div className="mb-2 flex items-center justify-between">
                                             <div className="flex items-center gap-2">
-                                                <QuestIcon icon={pq.icon} className="h-5 w-5 text-amber-400" />
-                                                <span className="font-pixel text-sm text-amber-300">{pq.name}</span>
+                                                <QuestIcon
+                                                    icon={pq.icon}
+                                                    className="h-5 w-5 text-amber-400"
+                                                />
+                                                <span className="font-pixel text-sm text-amber-300">
+                                                    {pq.name}
+                                                </span>
                                             </div>
                                             <button
                                                 onClick={() => handleAbandon(pq.id)}
@@ -187,7 +208,9 @@ export default function QuestLog() {
                                                 )}
                                             </button>
                                         </div>
-                                        <p className="mb-3 font-pixel text-xs text-stone-400">{pq.objective}</p>
+                                        <p className="mb-3 font-pixel text-xs text-stone-400">
+                                            {pq.objective}
+                                        </p>
 
                                         {/* Progress */}
                                         <div className="mb-1 flex justify-between font-pixel text-[10px] text-stone-500">
@@ -221,8 +244,12 @@ export default function QuestLog() {
                         ) : (
                             <div className="py-8 text-center">
                                 <ScrollText className="mx-auto mb-3 h-12 w-12 text-stone-600" />
-                                <p className="font-pixel text-sm text-stone-500">No active quests</p>
-                                <p className="font-pixel text-xs text-stone-600">Visit a village notice board to find work</p>
+                                <p className="font-pixel text-sm text-stone-500">
+                                    No active quests
+                                </p>
+                                <p className="font-pixel text-xs text-stone-600">
+                                    Visit a village notice board to find work
+                                </p>
                             </div>
                         )}
                     </div>

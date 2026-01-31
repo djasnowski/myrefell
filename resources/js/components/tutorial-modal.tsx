@@ -1,4 +1,4 @@
-import { router } from '@inertiajs/react';
+import { router } from "@inertiajs/react";
 import {
     Briefcase,
     Coins,
@@ -13,9 +13,9 @@ import {
     Vote,
     Wheat,
     X,
-} from 'lucide-react';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+} from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface LocationInfo {
     name: string;
@@ -29,34 +29,41 @@ interface Props {
 }
 
 const biomeDescriptions: Record<string, string> = {
-    plains: 'Rolling golden grasslands stretch to the horizon, dotted with wildflowers swaying in the gentle breeze. The open sky feels endless here.',
-    tundra: 'A harsh frozen landscape greets you, where the biting wind carries flurries of snow across the icy ground. Survival here demands resilience.',
-    coastal: 'The salty sea air fills your lungs as waves crash against the shore. Seabirds cry overhead and fishing boats bob in the harbor.',
-    volcano: 'The air is thick with ash and the distant rumble of the mountain reminds you of the fire sleeping beneath. Heat rises from the blackened earth.',
-    forest: 'Ancient trees tower above you, their canopy filtering sunlight into dancing shadows. The rustle of leaves and chirping birds fill the woodland.',
-    desert: 'Sun-scorched sands shimmer under the relentless heat. Dunes roll endlessly, hiding oases and secrets beneath their golden waves.',
-    swamp: 'Murky waters and twisted trees surround you, the air thick with the smell of decay and buzzing insects. Watch your step here.',
-    mountain: 'Jagged peaks pierce the clouds above, their slopes covered in pine and stone. The thin air carries the distant cry of eagles.',
+    plains: "Rolling golden grasslands stretch to the horizon, dotted with wildflowers swaying in the gentle breeze. The open sky feels endless here.",
+    tundra: "A harsh frozen landscape greets you, where the biting wind carries flurries of snow across the icy ground. Survival here demands resilience.",
+    coastal:
+        "The salty sea air fills your lungs as waves crash against the shore. Seabirds cry overhead and fishing boats bob in the harbor.",
+    volcano:
+        "The air is thick with ash and the distant rumble of the mountain reminds you of the fire sleeping beneath. Heat rises from the blackened earth.",
+    forest: "Ancient trees tower above you, their canopy filtering sunlight into dancing shadows. The rustle of leaves and chirping birds fill the woodland.",
+    desert: "Sun-scorched sands shimmer under the relentless heat. Dunes roll endlessly, hiding oases and secrets beneath their golden waves.",
+    swamp: "Murky waters and twisted trees surround you, the air thick with the smell of decay and buzzing insects. Watch your step here.",
+    mountain:
+        "Jagged peaks pierce the clouds above, their slopes covered in pine and stone. The thin air carries the distant cry of eagles.",
 };
 
 export default function TutorialModal({ playerName, location, onClose }: Props) {
     const [step, setStep] = useState(0);
 
-    const locationName = location?.name ?? 'an unknown village';
-    const biome = location?.biome ?? 'plains';
+    const locationName = location?.name ?? "an unknown village";
+    const biome = location?.biome ?? "plains";
     const biomeDescription = biomeDescriptions[biome] ?? biomeDescriptions.plains;
 
     const handleDismiss = () => {
-        router.post('/tutorial/dismiss', {}, {
-            preserveScroll: true,
-            onSuccess: onClose,
-        });
+        router.post(
+            "/tutorial/dismiss",
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: onClose,
+            },
+        );
     };
 
     const steps = [
         // Step 1: Welcome - Dynamic based on location
         {
-            title: 'You Awaken',
+            title: "You Awaken",
             content: (
                 <div className="space-y-4">
                     <div className="flex justify-center">
@@ -65,20 +72,24 @@ export default function TutorialModal({ playerName, location, onClose }: Props) 
                         </div>
                     </div>
                     <p className="text-center text-muted-foreground">
-                        You wake in <span className="font-semibold text-foreground">{locationName}</span> with only the faintest memory of how you arrived...
+                        You wake in{" "}
+                        <span className="font-semibold text-foreground">{locationName}</span> with
+                        only the faintest memory of how you arrived...
                     </p>
                     <p className="text-center text-sm italic text-muted-foreground/80">
                         {biomeDescription}
                     </p>
                     <p className="text-center text-muted-foreground">
-                        You are <span className="font-semibold text-foreground">{playerName}</span>, a <span className="font-semibold text-primary">peasant</span> — the lowest rung of society. But every king was once a commoner.
+                        You are <span className="font-semibold text-foreground">{playerName}</span>,
+                        a <span className="font-semibold text-primary">peasant</span> — the lowest
+                        rung of society. But every king was once a commoner.
                     </p>
                 </div>
             ),
         },
         // Step 2: The World
         {
-            title: 'A Living World',
+            title: "A Living World",
             content: (
                 <div className="space-y-4">
                     <div className="grid grid-cols-3 gap-3">
@@ -96,17 +107,19 @@ export default function TutorialModal({ playerName, location, onClose }: Props) 
                         </div>
                     </div>
                     <p className="text-center text-muted-foreground">
-                        Myrefell is a vast realm of unexplored lands, bustling villages, and great kingdoms. The world lives and breathes — even when you're away.
+                        Myrefell is a vast realm of unexplored lands, bustling villages, and great
+                        kingdoms. The world lives and breathes — even when you're away.
                     </p>
                     <p className="text-center text-sm text-muted-foreground/70">
-                        NPCs work, trade, marry, and die. Seasons change. Wars are fought. History is written.
+                        NPCs work, trade, marry, and die. Seasons change. Wars are fought. History
+                        is written.
                     </p>
                 </div>
             ),
         },
         // Step 3: Survival & Skills
         {
-            title: 'Train & Survive',
+            title: "Train & Survive",
             content: (
                 <div className="space-y-4">
                     <div className="grid grid-cols-4 gap-2">
@@ -124,11 +137,15 @@ export default function TutorialModal({ playerName, location, onClose }: Props) 
                         </div>
                         <div className="flex flex-col items-center rounded-lg border border-border/50 bg-card/50 p-2">
                             <Heart className="h-5 w-5 text-pink-400" />
-                            <span className="mt-1 text-[10px] text-muted-foreground">Hitpoints</span>
+                            <span className="mt-1 text-[10px] text-muted-foreground">
+                                Hitpoints
+                            </span>
                         </div>
                     </div>
                     <p className="text-center text-muted-foreground">
-                        Train <span className="text-primary">12 skills</span> to become stronger. Combat skills protect you. Gathering skills provide resources. Crafting skills create valuable goods.
+                        Train <span className="text-primary">12 skills</span> to become stronger.
+                        Combat skills protect you. Gathering skills provide resources. Crafting
+                        skills create valuable goods.
                     </p>
                     <p className="text-center text-sm text-muted-foreground/70">
                         Your body is your instrument — hone it well.
@@ -138,7 +155,7 @@ export default function TutorialModal({ playerName, location, onClose }: Props) 
         },
         // Step 4: Economy
         {
-            title: 'Work & Trade',
+            title: "Work & Trade",
             content: (
                 <div className="space-y-4">
                     <div className="grid grid-cols-3 gap-3">
@@ -156,7 +173,9 @@ export default function TutorialModal({ playerName, location, onClose }: Props) 
                         </div>
                     </div>
                     <p className="text-center text-muted-foreground">
-                        Villages need workers. Farms need farmers. Mines need miners. Find a <span className="text-primary">job</span> to earn wages, or gather resources and sell them at the <span className="text-primary">market</span>.
+                        Villages need workers. Farms need farmers. Mines need miners. Find a{" "}
+                        <span className="text-primary">job</span> to earn wages, or gather resources
+                        and sell them at the <span className="text-primary">market</span>.
                     </p>
                     <p className="text-center text-sm text-muted-foreground/70">
                         Gold opens doors. Poverty closes them.
@@ -166,7 +185,7 @@ export default function TutorialModal({ playerName, location, onClose }: Props) 
         },
         // Step 5: Rise to Power
         {
-            title: 'Rise to Power',
+            title: "Rise to Power",
             content: (
                 <div className="space-y-4">
                     <div className="grid grid-cols-3 gap-3">
@@ -184,7 +203,9 @@ export default function TutorialModal({ playerName, location, onClose }: Props) 
                         </div>
                     </div>
                     <p className="text-center text-muted-foreground">
-                        Climb the <span className="text-primary">social ladder</span>. Earn your freedom, gain citizenship, join a guild, or achieve nobility. Hold office. Build a dynasty. Perhaps one day... wear the crown.
+                        Climb the <span className="text-primary">social ladder</span>. Earn your
+                        freedom, gain citizenship, join a guild, or achieve nobility. Hold office.
+                        Build a dynasty. Perhaps one day... wear the crown.
                     </p>
                     <p className="text-center text-sm text-muted-foreground/70">
                         Every position of power is earned, not given.
@@ -194,7 +215,7 @@ export default function TutorialModal({ playerName, location, onClose }: Props) 
         },
         // Step 6: Your Journey Begins
         {
-            title: 'Your Story Begins',
+            title: "Your Story Begins",
             content: (
                 <div className="space-y-4">
                     <div className="flex justify-center">
@@ -203,11 +224,13 @@ export default function TutorialModal({ playerName, location, onClose }: Props) 
                         </div>
                     </div>
                     <p className="text-center text-muted-foreground">
-                        The path ahead is yours to forge. Will you become a wealthy merchant? A fearsome warrior? A cunning politician? A beloved leader?
+                        The path ahead is yours to forge. Will you become a wealthy merchant? A
+                        fearsome warrior? A cunning politician? A beloved leader?
                     </p>
                     <div className="rounded-lg border border-primary/30 bg-primary/10 p-3">
                         <p className="text-center text-sm text-primary">
-                            Start by exploring your village, training your skills, and finding work. The world of Myrefell awaits.
+                            Start by exploring your village, training your skills, and finding work.
+                            The world of Myrefell awaits.
                         </p>
                     </div>
                     <p className="text-center text-xs text-muted-foreground/70">
@@ -225,7 +248,10 @@ export default function TutorialModal({ playerName, location, onClose }: Props) 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={handleDismiss} />
+            <div
+                className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+                onClick={handleDismiss}
+            />
 
             {/* Modal */}
             <div className="relative w-full max-w-md">
@@ -256,7 +282,11 @@ export default function TutorialModal({ playerName, location, onClose }: Props) 
                                 <div
                                     key={i}
                                     className={`h-1.5 w-1.5 rounded-full transition-colors ${
-                                        i === step ? 'bg-primary' : i < step ? 'bg-primary/50' : 'bg-muted'
+                                        i === step
+                                            ? "bg-primary"
+                                            : i < step
+                                              ? "bg-primary/50"
+                                              : "bg-muted"
                                     }`}
                                 />
                             ))}
@@ -264,9 +294,7 @@ export default function TutorialModal({ playerName, location, onClose }: Props) 
                     </div>
 
                     {/* Content */}
-                    <div className="px-6 py-6">
-                        {currentStep.content}
-                    </div>
+                    <div className="px-6 py-6">{currentStep.content}</div>
 
                     {/* Footer */}
                     <div className="border-t border-border/50 px-6 py-4">
@@ -276,17 +304,13 @@ export default function TutorialModal({ playerName, location, onClose }: Props) 
                                 size="sm"
                                 onClick={() => setStep(step - 1)}
                                 disabled={isFirstStep}
-                                className={isFirstStep ? 'invisible' : ''}
+                                className={isFirstStep ? "invisible" : ""}
                             >
                                 Back
                             </Button>
 
                             <div className="flex gap-2">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={handleDismiss}
-                                >
+                                <Button variant="ghost" size="sm" onClick={handleDismiss}>
                                     Skip
                                 </Button>
                                 {isLastStep ? (

@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router } from "@inertiajs/react";
 import {
     AlertTriangle,
     Calendar,
@@ -10,15 +10,15 @@ import {
     Shield,
     Swords,
     X,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface Alliance {
     id: number;
-    type: 'marriage' | 'pact' | 'blood_oath';
-    status: 'active' | 'broken' | 'expired';
+    type: "marriage" | "pact" | "blood_oath";
+    status: "active" | "broken" | "expired";
     other_dynasty: {
         id: number;
         name: string;
@@ -57,15 +57,15 @@ const ALLIANCE_ICONS = {
 };
 
 const ALLIANCE_COLORS = {
-    marriage: { border: 'border-pink-600/50', bg: 'bg-pink-900/20', text: 'text-pink-400' },
-    pact: { border: 'border-blue-600/50', bg: 'bg-blue-900/20', text: 'text-blue-400' },
-    blood_oath: { border: 'border-red-600/50', bg: 'bg-red-900/20', text: 'text-red-400' },
+    marriage: { border: "border-pink-600/50", bg: "bg-pink-900/20", text: "text-pink-400" },
+    pact: { border: "border-blue-600/50", bg: "bg-blue-900/20", text: "text-blue-400" },
+    blood_oath: { border: "border-red-600/50", bg: "bg-red-900/20", text: "text-red-400" },
 };
 
 const ALLIANCE_LABELS = {
-    marriage: 'Marriage Alliance',
-    pact: 'Diplomatic Pact',
-    blood_oath: 'Blood Oath',
+    marriage: "Marriage Alliance",
+    pact: "Diplomatic Pact",
+    blood_oath: "Blood Oath",
 };
 
 export default function DynastyAlliances({
@@ -78,44 +78,60 @@ export default function DynastyAlliances({
     const [confirmBreak, setConfirmBreak] = useState<number | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Dynasty', href: '/dynasty' },
-        { title: 'Alliances', href: '/dynasty/alliances' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Dynasty", href: "/dynasty" },
+        { title: "Alliances", href: "/dynasty/alliances" },
     ];
 
     const handleBreakAlliance = (allianceId: number) => {
         setBreaking(allianceId);
-        router.post(`/dynasty/alliances/${allianceId}/break`, {}, {
-            onSuccess: () => {
-                router.reload();
+        router.post(
+            `/dynasty/alliances/${allianceId}/break`,
+            {},
+            {
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => {
+                    setBreaking(null);
+                    setConfirmBreak(null);
+                },
             },
-            onFinish: () => {
-                setBreaking(null);
-                setConfirmBreak(null);
-            },
-        });
+        );
     };
 
-    const AllianceCard = ({ alliance, showActions = false }: { alliance: Alliance; showActions?: boolean }) => {
+    const AllianceCard = ({
+        alliance,
+        showActions = false,
+    }: {
+        alliance: Alliance;
+        showActions?: boolean;
+    }) => {
         const Icon = ALLIANCE_ICONS[alliance.type];
         const colors = ALLIANCE_COLORS[alliance.type];
-        const isExpired = alliance.status === 'expired';
-        const isBroken = alliance.status === 'broken';
+        const isExpired = alliance.status === "expired";
+        const isBroken = alliance.status === "broken";
 
         return (
-            <div className={`rounded-lg border ${
-                isExpired || isBroken
-                    ? 'border-stone-700 bg-stone-800/30 opacity-75'
-                    : `${colors.border} ${colors.bg}`
-            } p-4`}>
+            <div
+                className={`rounded-lg border ${
+                    isExpired || isBroken
+                        ? "border-stone-700 bg-stone-800/30 opacity-75"
+                        : `${colors.border} ${colors.bg}`
+                } p-4`}
+            >
                 <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
-                        <div className={`rounded-lg p-2 ${
-                            isExpired || isBroken ? 'bg-stone-800' : colors.bg
-                        }`}>
-                            <Icon className={`h-5 w-5 ${
-                                isExpired || isBroken ? 'text-stone-500' : colors.text
-                            }`} />
+                        <div
+                            className={`rounded-lg p-2 ${
+                                isExpired || isBroken ? "bg-stone-800" : colors.bg
+                            }`}
+                        >
+                            <Icon
+                                className={`h-5 w-5 ${
+                                    isExpired || isBroken ? "text-stone-500" : colors.text
+                                }`}
+                            />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
@@ -152,7 +168,7 @@ export default function DynastyAlliances({
                 </div>
 
                 {/* Marriage info */}
-                {alliance.type === 'marriage' && alliance.marriage && (
+                {alliance.type === "marriage" && alliance.marriage && (
                     <div className="mt-3 rounded-lg border border-stone-700 bg-stone-800/30 p-2">
                         <div className="flex items-center gap-2 font-pixel text-xs text-stone-400">
                             <Heart className="h-3 w-3 text-pink-400" />
@@ -167,7 +183,10 @@ export default function DynastyAlliances({
                         <div className="font-pixel text-[10px] text-stone-500">Terms:</div>
                         <ul className="space-y-1">
                             {alliance.terms.map((term, i) => (
-                                <li key={i} className="flex items-center gap-2 font-pixel text-xs text-stone-400">
+                                <li
+                                    key={i}
+                                    className="flex items-center gap-2 font-pixel text-xs text-stone-400"
+                                >
                                     <span className="h-1 w-1 rounded-full bg-stone-500" />
                                     {term}
                                 </li>
@@ -201,13 +220,15 @@ export default function DynastyAlliances({
                     <div className="mt-3 border-t border-stone-700 pt-3">
                         {confirmBreak === alliance.id ? (
                             <div className="flex items-center gap-2">
-                                <span className="font-pixel text-xs text-red-400">Break alliance?</span>
+                                <span className="font-pixel text-xs text-red-400">
+                                    Break alliance?
+                                </span>
                                 <button
                                     onClick={() => handleBreakAlliance(alliance.id)}
                                     disabled={breaking === alliance.id}
                                     className="rounded bg-red-600 px-3 py-1 font-pixel text-xs text-white transition hover:bg-red-500 disabled:opacity-50"
                                 >
-                                    {breaking === alliance.id ? 'Breaking...' : 'Confirm'}
+                                    {breaking === alliance.id ? "Breaking..." : "Confirm"}
                                 </button>
                                 <button
                                     onClick={() => setConfirmBreak(null)}
@@ -261,25 +282,29 @@ export default function DynastyAlliances({
                             <div className="flex items-center justify-center gap-2">
                                 <Heart className="h-4 w-4 text-pink-400" />
                                 <span className="font-pixel text-lg text-pink-400">
-                                    {active_alliances.filter(a => a.type === 'marriage').length}
+                                    {active_alliances.filter((a) => a.type === "marriage").length}
                                 </span>
                             </div>
-                            <div className="font-pixel text-[10px] text-stone-500">Marriage Alliances</div>
+                            <div className="font-pixel text-[10px] text-stone-500">
+                                Marriage Alliances
+                            </div>
                         </div>
                         <div className="rounded-lg border border-blue-600/50 bg-blue-900/20 p-3 text-center">
                             <div className="flex items-center justify-center gap-2">
                                 <Handshake className="h-4 w-4 text-blue-400" />
                                 <span className="font-pixel text-lg text-blue-400">
-                                    {active_alliances.filter(a => a.type === 'pact').length}
+                                    {active_alliances.filter((a) => a.type === "pact").length}
                                 </span>
                             </div>
-                            <div className="font-pixel text-[10px] text-stone-500">Diplomatic Pacts</div>
+                            <div className="font-pixel text-[10px] text-stone-500">
+                                Diplomatic Pacts
+                            </div>
                         </div>
                         <div className="rounded-lg border border-red-600/50 bg-red-900/20 p-3 text-center">
                             <div className="flex items-center justify-center gap-2">
                                 <Swords className="h-4 w-4 text-red-400" />
                                 <span className="font-pixel text-lg text-red-400">
-                                    {active_alliances.filter(a => a.type === 'blood_oath').length}
+                                    {active_alliances.filter((a) => a.type === "blood_oath").length}
                                 </span>
                             </div>
                             <div className="font-pixel text-[10px] text-stone-500">Blood Oaths</div>
@@ -296,7 +321,9 @@ export default function DynastyAlliances({
                         {active_alliances.length === 0 ? (
                             <div className="py-8 text-center">
                                 <Handshake className="mx-auto mb-3 h-10 w-10 text-stone-600" />
-                                <div className="font-pixel text-sm text-stone-500">No active alliances</div>
+                                <div className="font-pixel text-sm text-stone-500">
+                                    No active alliances
+                                </div>
                                 <p className="mt-1 font-pixel text-xs text-stone-600">
                                     Form alliances through marriage or diplomatic pacts
                                 </p>
@@ -347,16 +374,21 @@ export default function DynastyAlliances({
                             <div className="rounded-lg border border-pink-600/30 bg-pink-900/10 p-3">
                                 <div className="flex items-center gap-2 mb-1">
                                     <Heart className="h-4 w-4 text-pink-400" />
-                                    <span className="font-pixel text-xs text-pink-400">Marriage Alliance</span>
+                                    <span className="font-pixel text-xs text-pink-400">
+                                        Marriage Alliance
+                                    </span>
                                 </div>
                                 <p className="font-pixel text-[10px] text-stone-500">
-                                    Formed through marriage between dynasty members. Strongest and most permanent.
+                                    Formed through marriage between dynasty members. Strongest and
+                                    most permanent.
                                 </p>
                             </div>
                             <div className="rounded-lg border border-blue-600/30 bg-blue-900/10 p-3">
                                 <div className="flex items-center gap-2 mb-1">
                                     <Handshake className="h-4 w-4 text-blue-400" />
-                                    <span className="font-pixel text-xs text-blue-400">Diplomatic Pact</span>
+                                    <span className="font-pixel text-xs text-blue-400">
+                                        Diplomatic Pact
+                                    </span>
                                 </div>
                                 <p className="font-pixel text-[10px] text-stone-500">
                                     Formal agreement between houses. May have an expiration date.
@@ -365,10 +397,13 @@ export default function DynastyAlliances({
                             <div className="rounded-lg border border-red-600/30 bg-red-900/10 p-3">
                                 <div className="flex items-center gap-2 mb-1">
                                     <Swords className="h-4 w-4 text-red-400" />
-                                    <span className="font-pixel text-xs text-red-400">Blood Oath</span>
+                                    <span className="font-pixel text-xs text-red-400">
+                                        Blood Oath
+                                    </span>
                                 </div>
                                 <p className="font-pixel text-[10px] text-stone-500">
-                                    Sacred oath of mutual defense. Breaking incurs severe prestige penalty.
+                                    Sacred oath of mutual defense. Breaking incurs severe prestige
+                                    penalty.
                                 </p>
                             </div>
                         </div>

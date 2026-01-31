@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from "@inertiajs/react";
 import {
     Calendar,
     Crown,
@@ -11,9 +11,9 @@ import {
     Target,
     Trophy,
     Users,
-} from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface WarSide {
     type: string;
@@ -28,8 +28,8 @@ interface Participant {
     participant_type: string;
     participant_id: number;
     name: string;
-    side: 'attacker' | 'defender';
-    role: 'primary' | 'ally' | 'vassal';
+    side: "attacker" | "defender";
+    role: "primary" | "ally" | "vassal";
     is_war_leader: boolean;
     contribution_score: number;
     joined_at: string | null;
@@ -78,7 +78,7 @@ interface PeaceTreaty {
 }
 
 interface UserParticipation {
-    side: 'attacker' | 'defender';
+    side: "attacker" | "defender";
     role: string;
     is_war_leader: boolean;
     contribution_score: number;
@@ -122,44 +122,44 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Warfare', href: '#' },
-    { title: 'Wars', href: '/warfare/wars' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Warfare", href: "#" },
+    { title: "Wars", href: "/warfare/wars" },
 ];
 
 const statusColors: Record<string, { bg: string; text: string; label: string }> = {
-    active: { bg: 'bg-amber-900/30', text: 'text-amber-400', label: 'Active' },
-    attacker_winning: { bg: 'bg-red-900/30', text: 'text-red-400', label: 'Attackers Winning' },
-    defender_winning: { bg: 'bg-blue-900/30', text: 'text-blue-400', label: 'Defenders Winning' },
-    white_peace: { bg: 'bg-stone-900/30', text: 'text-stone-400', label: 'White Peace' },
-    attacker_victory: { bg: 'bg-red-900/30', text: 'text-red-400', label: 'Attacker Victory' },
-    defender_victory: { bg: 'bg-blue-900/30', text: 'text-blue-400', label: 'Defender Victory' },
+    active: { bg: "bg-amber-900/30", text: "text-amber-400", label: "Active" },
+    attacker_winning: { bg: "bg-red-900/30", text: "text-red-400", label: "Attackers Winning" },
+    defender_winning: { bg: "bg-blue-900/30", text: "text-blue-400", label: "Defenders Winning" },
+    white_peace: { bg: "bg-stone-900/30", text: "text-stone-400", label: "White Peace" },
+    attacker_victory: { bg: "bg-red-900/30", text: "text-red-400", label: "Attacker Victory" },
+    defender_victory: { bg: "bg-blue-900/30", text: "text-blue-400", label: "Defender Victory" },
 };
 
 const casusBelliLabels: Record<string, { label: string; icon: typeof Sword }> = {
-    claim: { label: 'Pressing Claim', icon: Crown },
-    conquest: { label: 'Conquest', icon: Sword },
-    rebellion: { label: 'Rebellion', icon: Flag },
-    holy_war: { label: 'Holy War', icon: Target },
-    defense: { label: 'Defensive War', icon: Shield },
-    raid: { label: 'Raid', icon: Skull },
+    claim: { label: "Pressing Claim", icon: Crown },
+    conquest: { label: "Conquest", icon: Sword },
+    rebellion: { label: "Rebellion", icon: Flag },
+    holy_war: { label: "Holy War", icon: Target },
+    defense: { label: "Defensive War", icon: Shield },
+    raid: { label: "Raid", icon: Skull },
 };
 
 const battleStatusColors: Record<string, string> = {
-    ongoing: 'text-amber-400',
-    attacker_victory: 'text-red-400',
-    defender_victory: 'text-blue-400',
-    draw: 'text-stone-400',
-    inconclusive: 'text-stone-400',
+    ongoing: "text-amber-400",
+    attacker_victory: "text-red-400",
+    defender_victory: "text-blue-400",
+    draw: "text-stone-400",
+    inconclusive: "text-stone-400",
 };
 
 const siegeStatusColors: Record<string, string> = {
-    active: 'text-amber-400',
-    assault: 'text-red-400',
-    breached: 'text-orange-400',
-    captured: 'text-green-400',
-    lifted: 'text-stone-400',
-    abandoned: 'text-stone-500',
+    active: "text-amber-400",
+    assault: "text-red-400",
+    breached: "text-orange-400",
+    captured: "text-green-400",
+    lifted: "text-stone-400",
+    abandoned: "text-stone-500",
 };
 
 export default function Wars() {
@@ -195,7 +195,10 @@ export default function Wars() {
 
     const renderWarCard = (war: War, isActive: boolean = true) => {
         const status = statusColors[war.status] || statusColors.active;
-        const casusBelli = casusBelliLabels[war.casus_belli] || { label: war.casus_belli, icon: Sword };
+        const casusBelli = casusBelliLabels[war.casus_belli] || {
+            label: war.casus_belli,
+            icon: Sword,
+        };
         const CasusBelliIcon = casusBelli.icon;
 
         return (
@@ -209,7 +212,9 @@ export default function Wars() {
                         <Swords className="h-5 w-5 text-red-400" />
                         <h3 className="font-pixel text-base text-white">{war.name}</h3>
                     </div>
-                    <span className={`rounded px-2 py-1 font-pixel text-[10px] ${status.bg} ${status.text}`}>
+                    <span
+                        className={`rounded px-2 py-1 font-pixel text-[10px] ${status.bg} ${status.text}`}
+                    >
                         {status.label}
                     </span>
                 </div>
@@ -231,7 +236,7 @@ export default function Wars() {
                                 ATTACKERS
                             </div>
                             <div className="font-pixel text-sm text-white">{war.attacker.name}</div>
-                            {war.attacker.kingdom_name && war.attacker.type !== 'kingdom' && (
+                            {war.attacker.kingdom_name && war.attacker.type !== "kingdom" && (
                                 <div className="font-pixel text-[10px] text-stone-400">
                                     ({war.attacker.kingdom_name})
                                 </div>
@@ -250,7 +255,7 @@ export default function Wars() {
                                 DEFENDERS
                             </div>
                             <div className="font-pixel text-sm text-white">{war.defender.name}</div>
-                            {war.defender.kingdom_name && war.defender.type !== 'kingdom' && (
+                            {war.defender.kingdom_name && war.defender.type !== "kingdom" && (
                                 <div className="font-pixel text-[10px] text-stone-400">
                                     ({war.defender.kingdom_name})
                                 </div>
@@ -267,8 +272,12 @@ export default function Wars() {
                     {isActive && (
                         <div className="mt-2">
                             <div className="mb-1 flex justify-between font-pixel text-[10px]">
-                                <span className="text-red-400">War Score: {war.attacker_war_score}</span>
-                                <span className="text-blue-400">War Score: {war.defender_war_score}</span>
+                                <span className="text-red-400">
+                                    War Score: {war.attacker_war_score}
+                                </span>
+                                <span className="text-blue-400">
+                                    War Score: {war.defender_war_score}
+                                </span>
                             </div>
                             {renderWarScoreBar(war.attacker_war_score, war.defender_war_score)}
                         </div>
@@ -296,18 +305,24 @@ export default function Wars() {
 
                 {/* User Participation Badge */}
                 {war.user_participation && (
-                    <div className={`mb-3 rounded-lg p-2 ${
-                        war.user_participation.side === 'attacker'
-                            ? 'border border-red-500/30 bg-red-900/20'
-                            : 'border border-blue-500/30 bg-blue-900/20'
-                    }`}>
+                    <div
+                        className={`mb-3 rounded-lg p-2 ${
+                            war.user_participation.side === "attacker"
+                                ? "border border-red-500/30 bg-red-900/20"
+                                : "border border-blue-500/30 bg-blue-900/20"
+                        }`}
+                    >
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <Users className="h-3 w-3 text-amber-400" />
                                 <span className="font-pixel text-xs text-stone-300">
-                                    Your Role: {war.user_participation.role === 'primary' ? 'Primary Belligerent' :
-                                        war.user_participation.role === 'ally' ? 'Allied Power' : 'Vassal'}
-                                    {war.user_participation.is_war_leader && ' (War Leader)'}
+                                    Your Role:{" "}
+                                    {war.user_participation.role === "primary"
+                                        ? "Primary Belligerent"
+                                        : war.user_participation.role === "ally"
+                                          ? "Allied Power"
+                                          : "Vassal"}
+                                    {war.user_participation.is_war_leader && " (War Leader)"}
                                 </span>
                             </div>
                             <span className="font-pixel text-xs text-amber-300">
@@ -320,7 +335,9 @@ export default function Wars() {
                 {/* Recent Battles (for active wars) */}
                 {isActive && war.recent_battles && war.recent_battles.length > 0 && (
                     <div className="mb-3">
-                        <div className="mb-1 font-pixel text-[10px] text-stone-400">Recent Battles:</div>
+                        <div className="mb-1 font-pixel text-[10px] text-stone-400">
+                            Recent Battles:
+                        </div>
                         <div className="space-y-1">
                             {war.recent_battles.map((battle) => (
                                 <div
@@ -333,8 +350,10 @@ export default function Wars() {
                                             {battle.location_name}
                                         </span>
                                     </div>
-                                    <span className={`font-pixel text-[10px] capitalize ${battleStatusColors[battle.status] || 'text-stone-400'}`}>
-                                        {battle.status.replace('_', ' ')}
+                                    <span
+                                        className={`font-pixel text-[10px] capitalize ${battleStatusColors[battle.status] || "text-stone-400"}`}
+                                    >
+                                        {battle.status.replace("_", " ")}
                                     </span>
                                 </div>
                             ))}
@@ -345,7 +364,9 @@ export default function Wars() {
                 {/* Active Sieges */}
                 {isActive && war.active_sieges && war.active_sieges.length > 0 && (
                     <div className="mb-3">
-                        <div className="mb-1 font-pixel text-[10px] text-stone-400">Active Sieges:</div>
+                        <div className="mb-1 font-pixel text-[10px] text-stone-400">
+                            Active Sieges:
+                        </div>
                         <div className="space-y-1">
                             {war.active_sieges.map((siege) => (
                                 <Link
@@ -362,9 +383,11 @@ export default function Wars() {
                                             Day {siege.days_besieged}
                                         </span>
                                     </div>
-                                    <span className={`font-pixel text-[10px] capitalize ${siegeStatusColors[siege.status] || 'text-stone-400'}`}>
+                                    <span
+                                        className={`font-pixel text-[10px] capitalize ${siegeStatusColors[siege.status] || "text-stone-400"}`}
+                                    >
                                         {siege.status}
-                                        {siege.has_breach && ' (Breached)'}
+                                        {siege.has_breach && " (Breached)"}
                                     </span>
                                 </Link>
                             ))}
@@ -382,12 +405,12 @@ export default function Wars() {
                                     key={goal.id}
                                     className={`rounded px-2 py-0.5 font-pixel text-[10px] ${
                                         goal.is_achieved
-                                            ? 'bg-green-900/30 text-green-400'
-                                            : 'bg-stone-700/50 text-stone-300'
+                                            ? "bg-green-900/30 text-green-400"
+                                            : "bg-stone-700/50 text-stone-300"
                                     }`}
                                 >
-                                    {goal.goal_type.replace('_', ' ')} (+{goal.war_score_value})
-                                    {goal.is_achieved && ' ✓'}
+                                    {goal.goal_type.replace("_", " ")} (+{goal.war_score_value})
+                                    {goal.is_achieved && " ✓"}
                                 </span>
                             ))}
                         </div>
@@ -401,7 +424,7 @@ export default function Wars() {
                             <Trophy className="h-3 w-3 text-amber-400" />
                             <span className="text-stone-400">Peace Treaty:</span>
                             <span className="capitalize text-white">
-                                {war.peace_treaty.treaty_type.replace('_', ' ')}
+                                {war.peace_treaty.treaty_type.replace("_", " ")}
                             </span>
                         </div>
                         {war.peace_treaty.gold_payment > 0 && (
@@ -425,9 +448,14 @@ export default function Wars() {
                         </summary>
                         <div className="mt-2 grid grid-cols-2 gap-2">
                             <div>
-                                <div className="mb-1 font-pixel text-[10px] text-red-400">Attackers:</div>
+                                <div className="mb-1 font-pixel text-[10px] text-red-400">
+                                    Attackers:
+                                </div>
                                 {war.attacker_participants.map((p) => (
-                                    <div key={p.id} className="font-pixel text-[10px] text-stone-300">
+                                    <div
+                                        key={p.id}
+                                        className="font-pixel text-[10px] text-stone-300"
+                                    >
                                         {p.name}
                                         {p.is_war_leader && (
                                             <Crown className="ml-1 inline h-2 w-2 text-amber-400" />
@@ -437,9 +465,14 @@ export default function Wars() {
                                 ))}
                             </div>
                             <div>
-                                <div className="mb-1 font-pixel text-[10px] text-blue-400">Defenders:</div>
+                                <div className="mb-1 font-pixel text-[10px] text-blue-400">
+                                    Defenders:
+                                </div>
                                 {war.defender_participants?.map((p) => (
-                                    <div key={p.id} className="font-pixel text-[10px] text-stone-300">
+                                    <div
+                                        key={p.id}
+                                        className="font-pixel text-[10px] text-stone-300"
+                                    >
                                         {p.name}
                                         {p.is_war_leader && (
                                             <Crown className="ml-1 inline h-2 w-2 text-amber-400" />

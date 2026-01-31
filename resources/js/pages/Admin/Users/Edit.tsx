@@ -1,13 +1,13 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save, User } from 'lucide-react';
-import { useState } from 'react';
-import { show as showUser } from '@/actions/App/Http/Controllers/Admin/UserController';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import AdminLayout from '@/layouts/admin-layout';
-import type { BreadcrumbItem, SharedData } from '@/types';
+import { Head, Link, router, usePage } from "@inertiajs/react";
+import { ArrowLeft, Save, User } from "lucide-react";
+import { useState } from "react";
+import { show as showUser } from "@/actions/App/Http/Controllers/Admin/UserController";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import AdminLayout from "@/layouts/admin-layout";
+import type { BreadcrumbItem, SharedData } from "@/types";
 
 interface UserData {
     id: number;
@@ -32,10 +32,10 @@ export default function Edit({ user }: Props) {
     const [loading, setLoading] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Admin', href: '/admin' },
-        { title: 'Users', href: '/admin/users' },
+        { title: "Admin", href: "/admin" },
+        { title: "Users", href: "/admin/users" },
         { title: user.username, href: `/admin/users/${user.id}` },
-        { title: 'Edit', href: `/admin/users/${user.id}/edit` },
+        { title: "Edit", href: `/admin/users/${user.id}/edit` },
     ];
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -50,7 +50,7 @@ export default function Edit({ user }: Props) {
                     router.reload();
                 },
                 onFinish: () => setLoading(false),
-            }
+            },
         );
     };
 
@@ -75,9 +75,7 @@ export default function Edit({ user }: Props) {
                             <h1 className="font-[Cinzel] text-2xl font-bold text-stone-100">
                                 Edit User
                             </h1>
-                            <p className="text-sm text-stone-400">
-                                Editing {user.username}
-                            </p>
+                            <p className="text-sm text-stone-400">Editing {user.username}</p>
                         </div>
                     </div>
                 </div>
@@ -85,9 +83,7 @@ export default function Edit({ user }: Props) {
                 <div className="mx-auto max-w-2xl">
                     <Card className="border-stone-800 bg-stone-900/50">
                         <CardHeader>
-                            <CardTitle className="text-stone-100">
-                                User Information
-                            </CardTitle>
+                            <CardTitle className="text-stone-100">User Information</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={handleSubmit} className="space-y-6">
@@ -104,9 +100,7 @@ export default function Edit({ user }: Props) {
                                         aria-invalid={!!errors.username}
                                     />
                                     {errors.username && (
-                                        <p className="text-sm text-red-400">
-                                            {errors.username}
-                                        </p>
+                                        <p className="text-sm text-red-400">{errors.username}</p>
                                     )}
                                 </div>
 
@@ -139,7 +133,7 @@ export default function Edit({ user }: Props) {
                                     </Link>
                                     <Button type="submit" disabled={loading}>
                                         <Save className="size-4" />
-                                        {loading ? 'Saving...' : 'Save Changes'}
+                                        {loading ? "Saving..." : "Save Changes"}
                                     </Button>
                                 </div>
                             </form>

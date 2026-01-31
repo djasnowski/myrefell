@@ -1,8 +1,8 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { Check, Coins, FileText, Loader2, MapPin, User, X } from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from "@inertiajs/react";
+import { Check, Coins, FileText, Loader2, MapPin, User, X } from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface ManumissionRequest {
     id: number;
@@ -36,9 +36,9 @@ interface PageProps {
 
 const requestTypeDisplay: Record<string, string> = {
     decree: "Baron's Decree",
-    purchase: 'Purchase Freedom',
-    military_service: 'Military Service',
-    exceptional_service: 'Exceptional Service',
+    purchase: "Purchase Freedom",
+    military_service: "Military Service",
+    exceptional_service: "Exceptional Service",
 };
 
 function RequestCard({
@@ -52,7 +52,7 @@ function RequestCard({
     onDeny: (id: number, message: string) => void;
     loading: number | null;
 }) {
-    const [responseMessage, setResponseMessage] = useState('');
+    const [responseMessage, setResponseMessage] = useState("");
     const [showResponse, setShowResponse] = useState(false);
     const isLoading = loading === request.id;
 
@@ -64,14 +64,20 @@ function RequestCard({
                         <User className="h-5 w-5 text-stone-300" />
                     </div>
                     <div>
-                        <h3 className="font-pixel text-sm text-amber-300">{request.serf.username}</h3>
-                        <p className="font-pixel text-xs text-stone-400">{requestTypeDisplay[request.request_type]}</p>
+                        <h3 className="font-pixel text-sm text-amber-300">
+                            {request.serf.username}
+                        </h3>
+                        <p className="font-pixel text-xs text-stone-400">
+                            {requestTypeDisplay[request.request_type]}
+                        </p>
                     </div>
                 </div>
                 {request.gold_offered > 0 && (
                     <div className="flex items-center gap-1 rounded-lg bg-amber-900/30 px-2 py-1">
                         <Coins className="h-4 w-4 text-amber-400" />
-                        <span className="font-pixel text-xs text-amber-300">{request.gold_offered.toLocaleString()}g</span>
+                        <span className="font-pixel text-xs text-amber-300">
+                            {request.gold_offered.toLocaleString()}g
+                        </span>
                     </div>
                 )}
             </div>
@@ -88,7 +94,9 @@ function RequestCard({
                 </div>
             )}
 
-            <p className="mb-3 font-pixel text-[10px] text-stone-500">Submitted {request.created_at}</p>
+            <p className="mb-3 font-pixel text-[10px] text-stone-500">
+                Submitted {request.created_at}
+            </p>
 
             {!showResponse ? (
                 <div className="flex gap-2">
@@ -123,7 +131,11 @@ function RequestCard({
                             disabled={isLoading}
                             className="flex flex-1 items-center justify-center gap-2 rounded border-2 border-green-600/50 bg-green-900/20 px-3 py-2 font-pixel text-xs text-green-300 transition hover:bg-green-800/30 disabled:opacity-50"
                         >
-                            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                            {isLoading ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Check className="h-4 w-4" />
+                            )}
                             Grant Freedom
                         </button>
                         <button
@@ -131,7 +143,11 @@ function RequestCard({
                             disabled={isLoading}
                             className="flex flex-1 items-center justify-center gap-2 rounded border-2 border-red-600/50 bg-red-900/20 px-3 py-2 font-pixel text-xs text-red-300 transition hover:bg-red-800/30 disabled:opacity-50"
                         >
-                            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                            {isLoading ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <X className="h-4 w-4" />
+                            )}
                             Deny
                         </button>
                     </div>
@@ -152,9 +168,9 @@ export default function ManumissionRequests() {
     const [loading, setLoading] = useState<number | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Social Class', href: '/social-class' },
-        { title: 'Manumission Requests', href: '#' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Social Class", href: "/social-class" },
+        { title: "Manumission Requests", href: "#" },
     ];
 
     const handleApprove = (id: number, message: string) => {
@@ -165,7 +181,7 @@ export default function ManumissionRequests() {
             {
                 preserveScroll: true,
                 onFinish: () => setLoading(null),
-            }
+            },
         );
     };
 
@@ -177,7 +193,7 @@ export default function ManumissionRequests() {
             {
                 preserveScroll: true,
                 onFinish: () => setLoading(null),
-            }
+            },
         );
     };
 
@@ -188,11 +204,15 @@ export default function ManumissionRequests() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="font-pixel text-2xl text-amber-400">Manumission Requests</h1>
-                        <p className="font-pixel text-sm text-stone-400">Serfs petitioning for freedom</p>
+                        <p className="font-pixel text-sm text-stone-400">
+                            Serfs petitioning for freedom
+                        </p>
                     </div>
                     <div className="rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2">
                         <span className="font-pixel text-xs text-stone-400">Pending:</span>
-                        <span className="ml-2 font-pixel text-sm text-amber-300">{requests.total}</span>
+                        <span className="ml-2 font-pixel text-sm text-amber-300">
+                            {requests.total}
+                        </span>
                     </div>
                 </div>
 
@@ -212,8 +232,12 @@ export default function ManumissionRequests() {
                     <div className="flex flex-1 items-center justify-center py-12">
                         <div className="text-center">
                             <FileText className="mx-auto mb-3 h-16 w-16 text-stone-600" />
-                            <p className="font-pixel text-base text-stone-500">No pending requests</p>
-                            <p className="font-pixel text-xs text-stone-600">All manumission requests have been processed.</p>
+                            <p className="font-pixel text-base text-stone-500">
+                                No pending requests
+                            </p>
+                            <p className="font-pixel text-xs text-stone-600">
+                                All manumission requests have been processed.
+                            </p>
                         </div>
                     </div>
                 )}

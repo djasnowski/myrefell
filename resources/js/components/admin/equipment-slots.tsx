@@ -1,10 +1,5 @@
-import { cn } from '@/lib/utils';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface InventoryItem {
     id: number;
@@ -28,43 +23,43 @@ interface Props {
 }
 
 const EQUIPMENT_SLOTS = [
-    'head',
-    'chest',
-    'legs',
-    'feet',
-    'hands',
-    'weapon',
-    'shield',
-    'ring',
-    'amulet',
+    "head",
+    "chest",
+    "legs",
+    "feet",
+    "hands",
+    "weapon",
+    "shield",
+    "ring",
+    "amulet",
 ] as const;
 
 const slotLabels: Record<string, string> = {
-    head: 'Head',
-    chest: 'Chest',
-    legs: 'Legs',
-    feet: 'Feet',
-    hands: 'Hands',
-    weapon: 'Weapon',
-    shield: 'Shield',
-    ring: 'Ring',
-    amulet: 'Amulet',
+    head: "Head",
+    chest: "Chest",
+    legs: "Legs",
+    feet: "Feet",
+    hands: "Hands",
+    weapon: "Weapon",
+    shield: "Shield",
+    ring: "Ring",
+    amulet: "Amulet",
 };
 
 const rarityColors: Record<string, string> = {
-    common: 'border-stone-600 bg-stone-800/50',
-    uncommon: 'border-green-600 bg-green-900/30',
-    rare: 'border-blue-600 bg-blue-900/30',
-    epic: 'border-purple-600 bg-purple-900/30',
-    legendary: 'border-amber-500 bg-amber-900/30',
+    common: "border-stone-600 bg-stone-800/50",
+    uncommon: "border-green-600 bg-green-900/30",
+    rare: "border-blue-600 bg-blue-900/30",
+    epic: "border-purple-600 bg-purple-900/30",
+    legendary: "border-amber-500 bg-amber-900/30",
 };
 
 const rarityTextColors: Record<string, string> = {
-    common: 'text-stone-300',
-    uncommon: 'text-green-400',
-    rare: 'text-blue-400',
-    epic: 'text-purple-400',
-    legendary: 'text-amber-400',
+    common: "text-stone-300",
+    uncommon: "text-green-400",
+    rare: "text-blue-400",
+    epic: "text-purple-400",
+    legendary: "text-amber-400",
 };
 
 export function EquipmentSlots({ inventory }: Props) {
@@ -90,10 +85,10 @@ export function EquipmentSlots({ inventory }: Props) {
                                 <TooltipTrigger asChild>
                                     <div
                                         className={cn(
-                                            'flex flex-col items-center justify-center rounded-lg border p-2',
+                                            "flex flex-col items-center justify-center rounded-lg border p-2",
                                             item
                                                 ? rarityColors[item.rarity] || rarityColors.common
-                                                : 'border-stone-800 bg-stone-900/30'
+                                                : "border-stone-800 bg-stone-900/30",
                                         )}
                                     >
                                         <span className="text-xs text-stone-500">
@@ -102,9 +97,9 @@ export function EquipmentSlots({ inventory }: Props) {
                                         {item ? (
                                             <span
                                                 className={cn(
-                                                    'mt-1 truncate text-xs font-medium',
+                                                    "mt-1 truncate text-xs font-medium",
                                                     rarityTextColors[item.rarity] ||
-                                                        rarityTextColors.common
+                                                        rarityTextColors.common,
                                                 )}
                                             >
                                                 {item.name}
@@ -124,9 +119,9 @@ export function EquipmentSlots({ inventory }: Props) {
                                         <div className="space-y-1">
                                             <p
                                                 className={cn(
-                                                    'font-medium',
+                                                    "font-medium",
                                                     rarityTextColors[item.rarity] ||
-                                                        rarityTextColors.common
+                                                        rarityTextColors.common,
                                                 )}
                                             >
                                                 {item.name}

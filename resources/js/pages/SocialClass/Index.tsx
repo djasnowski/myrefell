@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from "@inertiajs/react";
 import {
     Award,
     Ban,
@@ -21,10 +21,10 @@ import {
     Users,
     Vote,
     X,
-} from 'lucide-react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface ManumissionRequest {
     id: number;
@@ -90,29 +90,35 @@ interface PageProps {
 }
 
 const classColors: Record<string, string> = {
-    serf: 'text-stone-400 border-stone-500 bg-stone-900/50',
-    freeman: 'text-green-300 border-green-500 bg-green-900/50',
-    burgher: 'text-blue-300 border-blue-500 bg-blue-900/50',
-    noble: 'text-purple-300 border-purple-500 bg-purple-900/50',
-    clergy: 'text-amber-300 border-amber-500 bg-amber-900/50',
+    serf: "text-stone-400 border-stone-500 bg-stone-900/50",
+    freeman: "text-green-300 border-green-500 bg-green-900/50",
+    burgher: "text-blue-300 border-blue-500 bg-blue-900/50",
+    noble: "text-purple-300 border-purple-500 bg-purple-900/50",
+    clergy: "text-amber-300 border-amber-500 bg-amber-900/50",
 };
 
 const statusColors: Record<string, string> = {
-    pending: 'text-yellow-300 bg-yellow-900/50',
-    approved: 'text-green-300 bg-green-900/50',
-    denied: 'text-red-300 bg-red-900/50',
-    cancelled: 'text-stone-400 bg-stone-800/50',
+    pending: "text-yellow-300 bg-yellow-900/50",
+    approved: "text-green-300 bg-green-900/50",
+    denied: "text-red-300 bg-red-900/50",
+    cancelled: "text-stone-400 bg-stone-800/50",
 };
 
 function RightBadge({ name, has }: { name: string; has: boolean }) {
     return (
         <div
             className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${
-                has ? 'border-green-600/50 bg-green-900/20' : 'border-red-600/50 bg-red-900/20'
+                has ? "border-green-600/50 bg-green-900/20" : "border-red-600/50 bg-red-900/20"
             }`}
         >
-            {has ? <Check className="h-4 w-4 text-green-400" /> : <X className="h-4 w-4 text-red-400" />}
-            <span className={`font-pixel text-xs ${has ? 'text-green-300' : 'text-red-300'}`}>{name}</span>
+            {has ? (
+                <Check className="h-4 w-4 text-green-400" />
+            ) : (
+                <X className="h-4 w-4 text-red-400" />
+            )}
+            <span className={`font-pixel text-xs ${has ? "text-green-300" : "text-red-300"}`}>
+                {name}
+            </span>
         </div>
     );
 }
@@ -124,21 +130,25 @@ function RequestCard({
     cancelLoading,
 }: {
     request: ManumissionRequest | EnnoblementRequest;
-    type: 'manumission' | 'ennoblement';
+    type: "manumission" | "ennoblement";
     onCancel: (id: number) => void;
     cancelLoading: number | null;
 }) {
-    const isPending = request.status === 'pending';
-    const isEnnoblement = type === 'ennoblement';
+    const isPending = request.status === "pending";
+    const isEnnoblement = type === "ennoblement";
     const ennoblementRequest = request as EnnoblementRequest;
 
     return (
         <div className="rounded-lg border border-stone-600/50 bg-stone-800/50 p-3">
             <div className="mb-2 flex items-start justify-between">
                 <div>
-                    <span className="font-pixel text-sm text-amber-300">{request.type_display}</span>
+                    <span className="font-pixel text-sm text-amber-300">
+                        {request.type_display}
+                    </span>
                     <div className="flex items-center gap-2">
-                        <span className={`rounded px-1.5 py-0.5 font-pixel text-[10px] ${statusColors[request.status]}`}>
+                        <span
+                            className={`rounded px-1.5 py-0.5 font-pixel text-[10px] ${statusColors[request.status]}`}
+                        >
                             {request.status}
                         </span>
                         {isEnnoblement && ennoblementRequest.title_granted && (
@@ -151,7 +161,9 @@ function RequestCard({
                 {request.gold_offered > 0 && (
                     <div className="flex items-center gap-1">
                         <Coins className="h-3 w-3 text-amber-400" />
-                        <span className="font-pixel text-xs text-amber-300">{request.gold_offered.toLocaleString()}g</span>
+                        <span className="font-pixel text-xs text-amber-300">
+                            {request.gold_offered.toLocaleString()}g
+                        </span>
                     </div>
                 )}
             </div>
@@ -176,7 +188,11 @@ function RequestCard({
                     disabled={cancelLoading === request.id}
                     className="mt-2 flex w-full items-center justify-center gap-1 rounded border border-red-600/50 bg-red-900/20 px-2 py-1 font-pixel text-[10px] text-red-300 transition hover:bg-red-800/30 disabled:opacity-50"
                 >
-                    {cancelLoading === request.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+                    {cancelLoading === request.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                        <X className="h-3 w-3" />
+                    )}
                     Cancel Request
                 </button>
             )}
@@ -195,8 +211,8 @@ function ManumissionForm({
     onSubmit: (data: { request_type: string; reason?: string; gold_offered?: number }) => void;
     loading: boolean;
 }) {
-    const [requestType, setRequestType] = useState('decree');
-    const [reason, setReason] = useState('');
+    const [requestType, setRequestType] = useState("decree");
+    const [reason, setReason] = useState("");
     const [goldOffered, setGoldOffered] = useState(cost);
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -204,7 +220,7 @@ function ManumissionForm({
         onSubmit({
             request_type: requestType,
             reason: reason || undefined,
-            gold_offered: requestType === 'purchase' ? goldOffered : undefined,
+            gold_offered: requestType === "purchase" ? goldOffered : undefined,
         });
     };
 
@@ -224,9 +240,11 @@ function ManumissionForm({
                 </select>
             </div>
 
-            {requestType === 'purchase' && (
+            {requestType === "purchase" && (
                 <div>
-                    <label className="mb-1 block font-pixel text-xs text-stone-400">Gold Offered</label>
+                    <label className="mb-1 block font-pixel text-xs text-stone-400">
+                        Gold Offered
+                    </label>
                     <input
                         type="number"
                         value={goldOffered}
@@ -242,7 +260,9 @@ function ManumissionForm({
             )}
 
             <div>
-                <label className="mb-1 block font-pixel text-xs text-stone-400">Reason (Optional)</label>
+                <label className="mb-1 block font-pixel text-xs text-stone-400">
+                    Reason (Optional)
+                </label>
                 <textarea
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
@@ -255,10 +275,14 @@ function ManumissionForm({
 
             <button
                 type="submit"
-                disabled={loading || (requestType === 'purchase' && gold < cost)}
+                disabled={loading || (requestType === "purchase" && gold < cost)}
                 className="flex w-full items-center justify-center gap-2 rounded border-2 border-green-600/50 bg-green-900/20 px-4 py-2 font-pixel text-xs text-green-300 transition hover:bg-green-800/30 disabled:cursor-not-allowed disabled:opacity-50"
             >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                    <FileText className="h-4 w-4" />
+                )}
                 Submit Request
             </button>
         </form>
@@ -273,11 +297,16 @@ function EnnoblementForm({
 }: {
     gold: number;
     cost: number;
-    onSubmit: (data: { kingdom_id: number; request_type: string; reason?: string; gold_offered?: number }) => void;
+    onSubmit: (data: {
+        kingdom_id: number;
+        request_type: string;
+        reason?: string;
+        gold_offered?: number;
+    }) => void;
     loading: boolean;
 }) {
-    const [requestType, setRequestType] = useState('royal_decree');
-    const [reason, setReason] = useState('');
+    const [requestType, setRequestType] = useState("royal_decree");
+    const [reason, setReason] = useState("");
     const [goldOffered, setGoldOffered] = useState(cost);
     const [kingdomId, setKingdomId] = useState(1); // Default to first kingdom
 
@@ -287,7 +316,7 @@ function EnnoblementForm({
             kingdom_id: kingdomId,
             request_type: requestType,
             reason: reason || undefined,
-            gold_offered: requestType === 'purchase' ? goldOffered : undefined,
+            gold_offered: requestType === "purchase" ? goldOffered : undefined,
         });
     };
 
@@ -318,9 +347,11 @@ function EnnoblementForm({
                 </select>
             </div>
 
-            {requestType === 'purchase' && (
+            {requestType === "purchase" && (
                 <div>
-                    <label className="mb-1 block font-pixel text-xs text-stone-400">Gold Offered</label>
+                    <label className="mb-1 block font-pixel text-xs text-stone-400">
+                        Gold Offered
+                    </label>
                     <input
                         type="number"
                         value={goldOffered}
@@ -336,7 +367,9 @@ function EnnoblementForm({
             )}
 
             <div>
-                <label className="mb-1 block font-pixel text-xs text-stone-400">Reason (Optional)</label>
+                <label className="mb-1 block font-pixel text-xs text-stone-400">
+                    Reason (Optional)
+                </label>
                 <textarea
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
@@ -349,10 +382,14 @@ function EnnoblementForm({
 
             <button
                 type="submit"
-                disabled={loading || (requestType === 'purchase' && gold < cost)}
+                disabled={loading || (requestType === "purchase" && gold < cost)}
                 className="flex w-full items-center justify-center gap-2 rounded border-2 border-purple-600/50 bg-purple-900/20 px-4 py-2 font-pixel text-xs text-purple-300 transition hover:bg-purple-800/30 disabled:cursor-not-allowed disabled:opacity-50"
             >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
+                {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                    <Crown className="h-4 w-4" />
+                )}
                 Submit Request
             </button>
         </form>
@@ -360,8 +397,15 @@ function EnnoblementForm({
 }
 
 export default function SocialClassIndex() {
-    const { player, rights, manumission_requests, ennoblement_requests, class_history, manumission_cost, ennoblement_cost } =
-        usePage<PageProps>().props;
+    const {
+        player,
+        rights,
+        manumission_requests,
+        ennoblement_requests,
+        class_history,
+        manumission_cost,
+        ennoblement_cost,
+    } = usePage<PageProps>().props;
 
     const [manumissionLoading, setManumissionLoading] = useState(false);
     const [ennoblementLoading, setEnnoblementLoading] = useState(false);
@@ -372,19 +416,23 @@ export default function SocialClassIndex() {
     const [showHistory, setShowHistory] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Social Class', href: '#' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Social Class", href: "#" },
     ];
 
-    const isSerf = player.social_class === 'serf';
-    const isFreeman = player.social_class === 'freeman';
-    const isNoble = player.social_class === 'noble';
-    const hasPendingManumission = manumission_requests.some((r) => r.status === 'pending');
-    const hasPendingEnnoblement = ennoblement_requests.some((r) => r.status === 'pending');
+    const isSerf = player.social_class === "serf";
+    const isFreeman = player.social_class === "freeman";
+    const isNoble = player.social_class === "noble";
+    const hasPendingManumission = manumission_requests.some((r) => r.status === "pending");
+    const hasPendingEnnoblement = ennoblement_requests.some((r) => r.status === "pending");
 
-    const handleManumission = (data: { request_type: string; reason?: string; gold_offered?: number }) => {
+    const handleManumission = (data: {
+        request_type: string;
+        reason?: string;
+        gold_offered?: number;
+    }) => {
         setManumissionLoading(true);
-        router.post('/social-class/manumission', data, {
+        router.post("/social-class/manumission", data, {
             preserveScroll: true,
             onFinish: () => {
                 setManumissionLoading(false);
@@ -393,9 +441,14 @@ export default function SocialClassIndex() {
         });
     };
 
-    const handleEnnoblement = (data: { kingdom_id: number; request_type: string; reason?: string; gold_offered?: number }) => {
+    const handleEnnoblement = (data: {
+        kingdom_id: number;
+        request_type: string;
+        reason?: string;
+        gold_offered?: number;
+    }) => {
         setEnnoblementLoading(true);
-        router.post('/social-class/ennoblement', data, {
+        router.post("/social-class/ennoblement", data, {
             preserveScroll: true,
             onFinish: () => {
                 setEnnoblementLoading(false);
@@ -407,12 +460,12 @@ export default function SocialClassIndex() {
     const handleBecomeBurgher = () => {
         setBurgherLoading(true);
         router.post(
-            '/social-class/burgher',
+            "/social-class/burgher",
             {},
             {
                 preserveScroll: true,
                 onFinish: () => setBurgherLoading(false),
-            }
+            },
         );
     };
 
@@ -424,7 +477,7 @@ export default function SocialClassIndex() {
             {
                 preserveScroll: true,
                 onFinish: () => setCancelLoading(null),
-            }
+            },
         );
     };
 
@@ -436,7 +489,7 @@ export default function SocialClassIndex() {
             {
                 preserveScroll: true,
                 onFinish: () => setCancelLoading(null),
-            }
+            },
         );
     };
 
@@ -452,13 +505,19 @@ export default function SocialClassIndex() {
                                 <User className="h-6 w-6" />
                             </div>
                             <div>
-                                <h1 className="font-pixel text-xl">{player.social_class_display}</h1>
-                                <p className="font-pixel text-xs text-stone-400">{player.username}</p>
+                                <h1 className="font-pixel text-xl">
+                                    {player.social_class_display}
+                                </h1>
+                                <p className="font-pixel text-xs text-stone-400">
+                                    {player.username}
+                                </p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
                             <Coins className="h-5 w-5 text-amber-400" />
-                            <span className="font-pixel text-lg text-amber-300">{player.gold.toLocaleString()}g</span>
+                            <span className="font-pixel text-lg text-amber-300">
+                                {player.gold.toLocaleString()}g
+                            </span>
                         </div>
                     </div>
 
@@ -467,20 +526,26 @@ export default function SocialClassIndex() {
                         <div className="rounded-lg border border-stone-600/50 bg-stone-800/50 p-3">
                             <div className="mb-2 flex items-center gap-2">
                                 <MapPin className="h-4 w-4 text-stone-400" />
-                                <span className="font-pixel text-sm text-stone-300">Bound to: {player.bound_to_barony.name}</span>
+                                <span className="font-pixel text-sm text-stone-300">
+                                    Bound to: {player.bound_to_barony.name}
+                                </span>
                             </div>
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2">
                                     <Clock className="h-4 w-4 text-amber-400" />
-                                    <span className="font-pixel text-xs text-stone-400">Labor Days:</span>
+                                    <span className="font-pixel text-xs text-stone-400">
+                                        Labor Days:
+                                    </span>
                                     <span className="font-pixel text-sm text-amber-300">
                                         {player.labor_days_completed} / {player.labor_days_owed}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="font-pixel text-xs text-stone-400">Remaining:</span>
+                                    <span className="font-pixel text-xs text-stone-400">
+                                        Remaining:
+                                    </span>
                                     <span
-                                        className={`font-pixel text-sm ${player.remaining_labor_days > 0 ? 'text-red-300' : 'text-green-300'}`}
+                                        className={`font-pixel text-sm ${player.remaining_labor_days > 0 ? "text-red-300" : "text-green-300"}`}
                                     >
                                         {player.remaining_labor_days}
                                     </span>
@@ -555,8 +620,9 @@ export default function SocialClassIndex() {
                                 Request Manumission
                             </h2>
                             <p className="mb-3 text-xs text-stone-400">
-                                Petition your baron for freedom. You can purchase it for {manumission_cost.toLocaleString()} gold, or
-                                request it through service.
+                                Petition your baron for freedom. You can purchase it for{" "}
+                                {manumission_cost.toLocaleString()} gold, or request it through
+                                service.
                             </p>
 
                             {hasPendingManumission ? (
@@ -608,7 +674,11 @@ export default function SocialClassIndex() {
                                 disabled={burgherLoading}
                                 className="flex w-full items-center justify-center gap-2 rounded border-2 border-blue-600/50 bg-blue-900/20 px-4 py-2 font-pixel text-xs text-blue-300 transition hover:bg-blue-800/30 disabled:opacity-50"
                             >
-                                {burgherLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Building2 className="h-4 w-4" />}
+                                {burgherLoading ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Building2 className="h-4 w-4" />
+                                )}
                                 Become Burgher
                             </button>
                         </div>
@@ -622,8 +692,9 @@ export default function SocialClassIndex() {
                                 Request Ennoblement
                             </h2>
                             <p className="mb-3 text-xs text-stone-400">
-                                Petition the king for a noble title. You can purchase it for {ennoblement_cost.toLocaleString()} gold,
-                                or earn it through service.
+                                Petition the king for a noble title. You can purchase it for{" "}
+                                {ennoblement_cost.toLocaleString()} gold, or earn it through
+                                service.
                             </p>
 
                             {hasPendingEnnoblement ? (
@@ -712,15 +783,24 @@ export default function SocialClassIndex() {
                         {showHistory && (
                             <div className="mt-3 space-y-2">
                                 {class_history.map((entry, i) => (
-                                    <div key={i} className="rounded-lg border border-stone-600/50 bg-stone-800/50 p-2">
+                                    <div
+                                        key={i}
+                                        className="rounded-lg border border-stone-600/50 bg-stone-800/50 p-2"
+                                    >
                                         <div className="flex items-center gap-2">
-                                            <span className="font-pixel text-xs text-stone-400">{entry.old_class}</span>
+                                            <span className="font-pixel text-xs text-stone-400">
+                                                {entry.old_class}
+                                            </span>
                                             <span className="text-stone-500">&rarr;</span>
-                                            <span className="font-pixel text-xs text-amber-300">{entry.new_class}</span>
+                                            <span className="font-pixel text-xs text-amber-300">
+                                                {entry.new_class}
+                                            </span>
                                         </div>
                                         <p className="text-[10px] text-stone-400">{entry.reason}</p>
                                         <div className="flex items-center justify-between text-[10px] text-stone-500">
-                                            {entry.granted_by && <span>By: {entry.granted_by}</span>}
+                                            {entry.granted_by && (
+                                                <span>By: {entry.granted_by}</span>
+                                            )}
                                             <span>{entry.created_at}</span>
                                         </div>
                                     </div>

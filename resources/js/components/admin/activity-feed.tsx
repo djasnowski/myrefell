@@ -1,4 +1,5 @@
-import { Link } from '@inertiajs/react';
+import { Link } from "@inertiajs/react";
+import { formatDistanceToNow } from "date-fns";
 import {
     Activity,
     Axe,
@@ -13,16 +14,9 @@ import {
     ShoppingCart,
     Swords,
     Wheat,
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
-import { show as showUser } from '@/actions/App/Http/Controllers/Admin/UserController';
+} from "lucide-react";
+import { show as showUser } from "@/actions/App/Http/Controllers/Admin/UserController";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ActivityItem {
     id: number;
@@ -40,22 +34,19 @@ interface Props {
     activities: ActivityItem[];
 }
 
-const activityConfig: Record<
-    string,
-    { icon: typeof Activity; color: string; bgColor: string }
-> = {
-    training: { icon: Swords, color: 'text-blue-400', bgColor: 'bg-blue-900/30' },
-    gathering: { icon: Axe, color: 'text-green-400', bgColor: 'bg-green-900/30' },
-    crafting: { icon: Hammer, color: 'text-orange-400', bgColor: 'bg-orange-900/30' },
-    trading: { icon: ShoppingCart, color: 'text-yellow-400', bgColor: 'bg-yellow-900/30' },
-    healing: { icon: Cross, color: 'text-red-400', bgColor: 'bg-red-900/30' },
-    blessing: { icon: Church, color: 'text-purple-400', bgColor: 'bg-purple-900/30' },
-    banking: { icon: Banknote, color: 'text-emerald-400', bgColor: 'bg-emerald-900/30' },
-    working: { icon: Briefcase, color: 'text-cyan-400', bgColor: 'bg-cyan-900/30' },
-    farming: { icon: Wheat, color: 'text-lime-400', bgColor: 'bg-lime-900/30' },
-    travel: { icon: Footprints, color: 'text-amber-400', bgColor: 'bg-amber-900/30' },
-    rest: { icon: Bed, color: 'text-indigo-400', bgColor: 'bg-indigo-900/30' },
-    cooking: { icon: ChefHat, color: 'text-rose-400', bgColor: 'bg-rose-900/30' },
+const activityConfig: Record<string, { icon: typeof Activity; color: string; bgColor: string }> = {
+    training: { icon: Swords, color: "text-blue-400", bgColor: "bg-blue-900/30" },
+    gathering: { icon: Axe, color: "text-green-400", bgColor: "bg-green-900/30" },
+    crafting: { icon: Hammer, color: "text-orange-400", bgColor: "bg-orange-900/30" },
+    trading: { icon: ShoppingCart, color: "text-yellow-400", bgColor: "bg-yellow-900/30" },
+    healing: { icon: Cross, color: "text-red-400", bgColor: "bg-red-900/30" },
+    blessing: { icon: Church, color: "text-purple-400", bgColor: "bg-purple-900/30" },
+    banking: { icon: Banknote, color: "text-emerald-400", bgColor: "bg-emerald-900/30" },
+    working: { icon: Briefcase, color: "text-cyan-400", bgColor: "bg-cyan-900/30" },
+    farming: { icon: Wheat, color: "text-lime-400", bgColor: "bg-lime-900/30" },
+    travel: { icon: Footprints, color: "text-amber-400", bgColor: "bg-amber-900/30" },
+    rest: { icon: Bed, color: "text-indigo-400", bgColor: "bg-indigo-900/30" },
+    cooking: { icon: ChefHat, color: "text-rose-400", bgColor: "bg-rose-900/30" },
 };
 
 export function ActivityFeed({ activities }: Props) {
@@ -63,8 +54,8 @@ export function ActivityFeed({ activities }: Props) {
         return (
             activityConfig[type] || {
                 icon: Activity,
-                color: 'text-stone-400',
-                bgColor: 'bg-stone-900/30',
+                color: "text-stone-400",
+                bgColor: "bg-stone-900/30",
             }
         );
     };
@@ -82,9 +73,7 @@ export function ActivityFeed({ activities }: Props) {
             </CardHeader>
             <CardContent>
                 {activities.length === 0 ? (
-                    <p className="py-8 text-center text-stone-500">
-                        No recent activity
-                    </p>
+                    <p className="py-8 text-center text-stone-500">No recent activity</p>
                 ) : (
                     <div className="space-y-3">
                         {activities.map((activity) => {
@@ -95,12 +84,8 @@ export function ActivityFeed({ activities }: Props) {
                                     key={activity.id}
                                     className="flex items-start gap-3 rounded-lg border border-stone-800 bg-stone-900/30 p-3"
                                 >
-                                    <div
-                                        className={`rounded-lg ${config.bgColor} p-2`}
-                                    >
-                                        <Icon
-                                            className={`size-4 ${config.color}`}
-                                        />
+                                    <div className={`rounded-lg ${config.bgColor} p-2`}>
+                                        <Icon className={`size-4 ${config.color}`} />
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2">
@@ -113,7 +98,7 @@ export function ActivityFeed({ activities }: Props) {
                                             <span className="text-stone-500">
                                                 {formatDistanceToNow(
                                                     new Date(activity.created_at),
-                                                    { addSuffix: true }
+                                                    { addSuffix: true },
                                                 )}
                                             </span>
                                         </div>

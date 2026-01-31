@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link } from "@inertiajs/react";
 import {
     ChevronLeft,
     Crown,
@@ -12,10 +12,10 @@ import {
     Users,
     ZoomIn,
     ZoomOut,
-} from 'lucide-react';
-import { useMemo, useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface TreeMember {
     id: number;
@@ -63,20 +63,15 @@ interface Props {
     player_member_id: number | null;
 }
 
-export default function DynastyTree({
-    dynasty,
-    members,
-    marriages,
-    player_member_id,
-}: Props) {
+export default function DynastyTree({ dynasty, members, marriages, player_member_id }: Props) {
     const [showDeceased, setShowDeceased] = useState(true);
     const [zoomLevel, setZoomLevel] = useState(1);
     const [selectedMember, setSelectedMember] = useState<TreeMember | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Dynasty', href: '/dynasty' },
-        { title: 'Family Tree', href: '/dynasty/tree' },
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Dynasty", href: "/dynasty" },
+        { title: "Family Tree", href: "/dynasty/tree" },
     ];
 
     // Filter members based on show deceased setting
@@ -111,8 +106,7 @@ export default function DynastyTree({
     const getSpouse = (memberId: number): TreeMember | null => {
         const marriage = marriages.find(
             (m) =>
-                (m.spouse1_id === memberId || m.spouse2_id === memberId) &&
-                m.status === 'active'
+                (m.spouse1_id === memberId || m.spouse2_id === memberId) && m.status === "active",
         );
         if (!marriage) return null;
         const spouseId =
@@ -126,16 +120,14 @@ export default function DynastyTree({
             marriages.find(
                 (m) =>
                     (m.spouse1_id === member1Id && m.spouse2_id === member2Id) ||
-                    (m.spouse1_id === member2Id && m.spouse2_id === member1Id)
+                    (m.spouse1_id === member2Id && m.spouse2_id === member1Id),
             ) || null
         );
     };
 
     // Get children of a member
     const getChildren = (memberId: number): TreeMember[] => {
-        return filteredMembers.filter(
-            (m) => m.father_id === memberId || m.mother_id === memberId
-        );
+        return filteredMembers.filter((m) => m.father_id === memberId || m.mother_id === memberId);
     };
 
     const handleZoomIn = () => {
@@ -159,24 +151,24 @@ export default function DynastyTree({
                         onClick={() => setSelectedMember(isSelected ? null : member)}
                         className={`flex min-w-[100px] flex-col items-center rounded-lg border-2 p-2 transition ${
                             member.is_head
-                                ? 'border-amber-500/70 bg-amber-900/30 hover:bg-amber-900/40'
+                                ? "border-amber-500/70 bg-amber-900/30 hover:bg-amber-900/40"
                                 : member.is_heir
-                                    ? 'border-purple-500/70 bg-purple-900/30 hover:bg-purple-900/40'
-                                    : isPlayer
-                                        ? 'border-blue-500/70 bg-blue-900/30 hover:bg-blue-900/40'
-                                        : member.is_alive
-                                            ? 'border-stone-600 bg-stone-800/50 hover:bg-stone-800/70'
-                                            : 'border-stone-700/50 bg-stone-900/50 hover:bg-stone-900/70'
-                        } ${isSelected ? 'ring-2 ring-amber-400' : ''}`}
+                                  ? "border-purple-500/70 bg-purple-900/30 hover:bg-purple-900/40"
+                                  : isPlayer
+                                    ? "border-blue-500/70 bg-blue-900/30 hover:bg-blue-900/40"
+                                    : member.is_alive
+                                      ? "border-stone-600 bg-stone-800/50 hover:bg-stone-800/70"
+                                      : "border-stone-700/50 bg-stone-900/50 hover:bg-stone-900/70"
+                        } ${isSelected ? "ring-2 ring-amber-400" : ""}`}
                     >
                         {/* Avatar */}
                         <div
                             className={`flex h-10 w-10 items-center justify-center rounded-full ${
                                 !member.is_alive
-                                    ? 'bg-stone-700/50'
-                                    : member.gender === 'male'
-                                        ? 'bg-blue-900/50'
-                                        : 'bg-pink-900/50'
+                                    ? "bg-stone-700/50"
+                                    : member.gender === "male"
+                                      ? "bg-blue-900/50"
+                                      : "bg-pink-900/50"
                             }`}
                         >
                             {!member.is_alive ? (
@@ -184,9 +176,7 @@ export default function DynastyTree({
                             ) : (
                                 <User
                                     className={`h-5 w-5 ${
-                                        member.gender === 'male'
-                                            ? 'text-blue-400'
-                                            : 'text-pink-400'
+                                        member.gender === "male" ? "text-blue-400" : "text-pink-400"
                                     }`}
                                 />
                             )}
@@ -196,14 +186,12 @@ export default function DynastyTree({
                         <div className="mt-1 flex items-center gap-1">
                             <span
                                 className={`font-pixel text-[10px] ${
-                                    member.is_alive ? 'text-stone-200' : 'text-stone-500'
+                                    member.is_alive ? "text-stone-200" : "text-stone-500"
                                 }`}
                             >
                                 {member.first_name}
                             </span>
-                            {member.is_head && (
-                                <Crown className="h-3 w-3 text-amber-400" />
-                            )}
+                            {member.is_head && <Crown className="h-3 w-3 text-amber-400" />}
                             {member.is_heir && !member.is_head && (
                                 <Star className="h-3 w-3 text-purple-400" />
                             )}
@@ -211,13 +199,13 @@ export default function DynastyTree({
 
                         {/* Life years */}
                         <div className="font-pixel text-[8px] text-stone-500">
-                            {member.birth_year || '?'}
-                            {member.death_year ? ` - ${member.death_year}` : ''}
+                            {member.birth_year || "?"}
+                            {member.death_year ? ` - ${member.death_year}` : ""}
                         </div>
                     </button>
 
                     {/* Marriage connector and spouse */}
-                    {spouse && showDeceased || (spouse && spouse.is_alive) ? (
+                    {(spouse && showDeceased) || (spouse && spouse.is_alive) ? (
                         <>
                             <div className="flex items-center">
                                 <div className="h-px w-2 bg-pink-500/50" />
@@ -227,26 +215,26 @@ export default function DynastyTree({
                             <button
                                 onClick={() =>
                                     setSelectedMember(
-                                        selectedMember?.id === spouse.id ? null : spouse
+                                        selectedMember?.id === spouse.id ? null : spouse,
                                     )
                                 }
                                 className={`flex min-w-[100px] flex-col items-center rounded-lg border-2 p-2 transition ${
                                     spouse.is_head
-                                        ? 'border-amber-500/70 bg-amber-900/30 hover:bg-amber-900/40'
+                                        ? "border-amber-500/70 bg-amber-900/30 hover:bg-amber-900/40"
                                         : spouse.is_heir
-                                            ? 'border-purple-500/70 bg-purple-900/30 hover:bg-purple-900/40'
-                                            : spouse.is_alive
-                                                ? 'border-stone-600 bg-stone-800/50 hover:bg-stone-800/70'
-                                                : 'border-stone-700/50 bg-stone-900/50 hover:bg-stone-900/70'
-                                } ${selectedMember?.id === spouse.id ? 'ring-2 ring-amber-400' : ''}`}
+                                          ? "border-purple-500/70 bg-purple-900/30 hover:bg-purple-900/40"
+                                          : spouse.is_alive
+                                            ? "border-stone-600 bg-stone-800/50 hover:bg-stone-800/70"
+                                            : "border-stone-700/50 bg-stone-900/50 hover:bg-stone-900/70"
+                                } ${selectedMember?.id === spouse.id ? "ring-2 ring-amber-400" : ""}`}
                             >
                                 <div
                                     className={`flex h-10 w-10 items-center justify-center rounded-full ${
                                         !spouse.is_alive
-                                            ? 'bg-stone-700/50'
-                                            : spouse.gender === 'male'
-                                                ? 'bg-blue-900/50'
-                                                : 'bg-pink-900/50'
+                                            ? "bg-stone-700/50"
+                                            : spouse.gender === "male"
+                                              ? "bg-blue-900/50"
+                                              : "bg-pink-900/50"
                                     }`}
                                 >
                                     {!spouse.is_alive ? (
@@ -254,9 +242,9 @@ export default function DynastyTree({
                                     ) : (
                                         <User
                                             className={`h-5 w-5 ${
-                                                spouse.gender === 'male'
-                                                    ? 'text-blue-400'
-                                                    : 'text-pink-400'
+                                                spouse.gender === "male"
+                                                    ? "text-blue-400"
+                                                    : "text-pink-400"
                                             }`}
                                         />
                                     )}
@@ -264,23 +252,19 @@ export default function DynastyTree({
                                 <div className="mt-1 flex items-center gap-1">
                                     <span
                                         className={`font-pixel text-[10px] ${
-                                            spouse.is_alive
-                                                ? 'text-stone-200'
-                                                : 'text-stone-500'
+                                            spouse.is_alive ? "text-stone-200" : "text-stone-500"
                                         }`}
                                     >
                                         {spouse.first_name}
                                     </span>
-                                    {spouse.is_head && (
-                                        <Crown className="h-3 w-3 text-amber-400" />
-                                    )}
+                                    {spouse.is_head && <Crown className="h-3 w-3 text-amber-400" />}
                                     {spouse.is_heir && !spouse.is_head && (
                                         <Star className="h-3 w-3 text-purple-400" />
                                     )}
                                 </div>
                                 <div className="font-pixel text-[8px] text-stone-500">
-                                    {spouse.birth_year || '?'}
-                                    {spouse.death_year ? ` - ${spouse.death_year}` : ''}
+                                    {spouse.birth_year || "?"}
+                                    {spouse.death_year ? ` - ${spouse.death_year}` : ""}
                                 </div>
                             </button>
                         </>
@@ -321,12 +305,12 @@ export default function DynastyTree({
                             onClick={() => setShowDeceased(!showDeceased)}
                             className={`flex items-center gap-1 rounded-lg border px-2 py-1 font-pixel text-xs transition ${
                                 showDeceased
-                                    ? 'border-green-600/50 bg-green-900/30 text-green-400'
-                                    : 'border-stone-600 bg-stone-800 text-stone-400'
+                                    ? "border-green-600/50 bg-green-900/30 text-green-400"
+                                    : "border-stone-600 bg-stone-800 text-stone-400"
                             }`}
                         >
                             <Filter className="h-3 w-3" />
-                            {showDeceased ? 'All' : 'Living'}
+                            {showDeceased ? "All" : "Living"}
                         </button>
 
                         {/* Zoom controls */}
@@ -356,7 +340,7 @@ export default function DynastyTree({
                 <div className="flex-1 overflow-auto p-4">
                     <div
                         className="min-w-max transition-transform duration-200"
-                        style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center' }}
+                        style={{ transform: `scale(${zoomLevel})`, transformOrigin: "top center" }}
                     >
                         {/* Legend */}
                         <div className="mb-6 flex flex-wrap items-center justify-center gap-4 rounded-lg border border-stone-700 bg-stone-800/30 p-3">
@@ -370,11 +354,15 @@ export default function DynastyTree({
                             </div>
                             <div className="flex items-center gap-2">
                                 <Skull className="h-4 w-4 text-stone-500" />
-                                <span className="font-pixel text-[10px] text-stone-400">Deceased</span>
+                                <span className="font-pixel text-[10px] text-stone-400">
+                                    Deceased
+                                </span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Heart className="h-4 w-4 text-pink-400" />
-                                <span className="font-pixel text-[10px] text-stone-400">Marriage</span>
+                                <span className="font-pixel text-[10px] text-stone-400">
+                                    Marriage
+                                </span>
                             </div>
                         </div>
 
@@ -389,7 +377,12 @@ export default function DynastyTree({
                                 marriages.forEach((m) => {
                                     const spouse1 = members.find((mem) => mem.id === m.spouse1_id);
                                     const spouse2 = members.find((mem) => mem.id === m.spouse2_id);
-                                    if (spouse1 && spouse2 && spouse1.generation === gen && spouse2.generation === gen) {
+                                    if (
+                                        spouse1 &&
+                                        spouse2 &&
+                                        spouse1.generation === gen &&
+                                        spouse2.generation === gen
+                                    ) {
                                         // The spouse with higher ID is shown as the spouse
                                         shownAsSpouse.add(Math.max(m.spouse1_id, m.spouse2_id));
                                     }
@@ -397,7 +390,7 @@ export default function DynastyTree({
 
                                 // Filter out members who are shown as spouses
                                 const primaryMembers = genMembers.filter(
-                                    (m) => !shownAsSpouse.has(m.id)
+                                    (m) => !shownAsSpouse.has(m.id),
                                 );
 
                                 return (
@@ -412,7 +405,10 @@ export default function DynastyTree({
                                         {/* Members row */}
                                         <div className="flex flex-wrap items-start justify-center gap-6">
                                             {primaryMembers.map((member) => (
-                                                <div key={member.id} className="flex flex-col items-center">
+                                                <div
+                                                    key={member.id}
+                                                    className="flex flex-col items-center"
+                                                >
                                                     <MemberCard member={member} />
 
                                                     {/* Children connector */}
@@ -457,10 +453,10 @@ export default function DynastyTree({
                                     <div
                                         className={`flex h-14 w-14 items-center justify-center rounded-full ${
                                             !selectedMember.is_alive
-                                                ? 'bg-stone-700/50'
-                                                : selectedMember.gender === 'male'
-                                                    ? 'bg-blue-900/50'
-                                                    : 'bg-pink-900/50'
+                                                ? "bg-stone-700/50"
+                                                : selectedMember.gender === "male"
+                                                  ? "bg-blue-900/50"
+                                                  : "bg-pink-900/50"
                                         }`}
                                     >
                                         {!selectedMember.is_alive ? (
@@ -468,9 +464,9 @@ export default function DynastyTree({
                                         ) : (
                                             <User
                                                 className={`h-7 w-7 ${
-                                                    selectedMember.gender === 'male'
-                                                        ? 'text-blue-400'
-                                                        : 'text-pink-400'
+                                                    selectedMember.gender === "male"
+                                                        ? "text-blue-400"
+                                                        : "text-pink-400"
                                                 }`}
                                             />
                                         )}
@@ -503,7 +499,9 @@ export default function DynastyTree({
                                         </div>
                                         <div className="mt-1 flex items-center gap-3 font-pixel text-xs text-stone-500">
                                             <span>
-                                                {selectedMember.gender === 'male' ? 'Male' : 'Female'}
+                                                {selectedMember.gender === "male"
+                                                    ? "Male"
+                                                    : "Female"}
                                             </span>
                                             <span>Generation {selectedMember.generation}</span>
                                             {selectedMember.birth_year && (
@@ -513,9 +511,10 @@ export default function DynastyTree({
                                                         ` - Died ${selectedMember.death_year}`}
                                                 </span>
                                             )}
-                                            {selectedMember.age !== null && selectedMember.is_alive && (
-                                                <span>Age {selectedMember.age}</span>
-                                            )}
+                                            {selectedMember.age !== null &&
+                                                selectedMember.is_alive && (
+                                                    <span>Age {selectedMember.age}</span>
+                                                )}
                                         </div>
                                     </div>
                                 </div>
@@ -540,7 +539,8 @@ export default function DynastyTree({
                                                 <button
                                                     onClick={() => {
                                                         const father = members.find(
-                                                            (m) => m.id === selectedMember.father_id
+                                                            (m) =>
+                                                                m.id === selectedMember.father_id,
                                                         );
                                                         if (father) setSelectedMember(father);
                                                     }}
@@ -549,8 +549,9 @@ export default function DynastyTree({
                                                     <User className="h-3 w-3 text-blue-400" />
                                                     <span className="font-pixel text-[10px] text-stone-300">
                                                         {members.find(
-                                                            (m) => m.id === selectedMember.father_id
-                                                        )?.first_name || 'Unknown'}
+                                                            (m) =>
+                                                                m.id === selectedMember.father_id,
+                                                        )?.first_name || "Unknown"}
                                                     </span>
                                                     <span className="font-pixel text-[8px] text-stone-500">
                                                         (Father)
@@ -561,7 +562,8 @@ export default function DynastyTree({
                                                 <button
                                                     onClick={() => {
                                                         const mother = members.find(
-                                                            (m) => m.id === selectedMember.mother_id
+                                                            (m) =>
+                                                                m.id === selectedMember.mother_id,
                                                         );
                                                         if (mother) setSelectedMember(mother);
                                                     }}
@@ -570,8 +572,9 @@ export default function DynastyTree({
                                                     <User className="h-3 w-3 text-pink-400" />
                                                     <span className="font-pixel text-[10px] text-stone-300">
                                                         {members.find(
-                                                            (m) => m.id === selectedMember.mother_id
-                                                        )?.first_name || 'Unknown'}
+                                                            (m) =>
+                                                                m.id === selectedMember.mother_id,
+                                                        )?.first_name || "Unknown"}
                                                     </span>
                                                     <span className="font-pixel text-[8px] text-stone-500">
                                                         (Mother)
@@ -594,7 +597,10 @@ export default function DynastyTree({
                                     {(() => {
                                         const spouse = getSpouse(selectedMember.id);
                                         if (spouse) {
-                                            const marriage = getMarriage(selectedMember.id, spouse.id);
+                                            const marriage = getMarriage(
+                                                selectedMember.id,
+                                                spouse.id,
+                                            );
                                             return (
                                                 <div>
                                                     <button
@@ -640,9 +646,9 @@ export default function DynastyTree({
                                                         >
                                                             <User
                                                                 className={`h-3 w-3 ${
-                                                                    child.gender === 'male'
-                                                                        ? 'text-blue-400'
-                                                                        : 'text-pink-400'
+                                                                    child.gender === "male"
+                                                                        ? "text-blue-400"
+                                                                        : "text-pink-400"
                                                                 }`}
                                                             />
                                                             <span className="font-pixel text-[10px] text-stone-300">

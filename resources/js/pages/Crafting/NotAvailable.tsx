@@ -1,7 +1,7 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { Hammer, MapPin } from 'lucide-react';
-import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
+import { Head, Link, usePage } from "@inertiajs/react";
+import { Hammer, MapPin } from "lucide-react";
+import AppLayout from "@/layouts/app-layout";
+import type { BreadcrumbItem } from "@/types";
 
 interface PageProps {
     message: string;
@@ -9,8 +9,8 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Crafting', href: '/crafting' },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Crafting", href: "/crafting" },
 ];
 
 export default function NotAvailable() {
@@ -25,7 +25,9 @@ export default function NotAvailable() {
                         <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-stone-700/50">
                             <Hammer className="h-8 w-8 text-stone-500" />
                         </div>
-                        <h2 className="mb-2 font-pixel text-lg text-stone-300">Cannot Craft Here</h2>
+                        <h2 className="mb-2 font-pixel text-lg text-stone-300">
+                            Cannot Craft Here
+                        </h2>
                         <p className="mb-6 font-pixel text-xs text-stone-500">{message}</p>
                         <Link
                             href="/travel"
