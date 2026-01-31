@@ -77,6 +77,14 @@ interface PageProps {
     [key: string]: unknown;
 }
 
+const locationPaths: Record<string, string> = {
+    village: "villages",
+    barony: "baronies",
+    town: "towns",
+    duchy: "duchies",
+    kingdom: "kingdoms",
+};
+
 const locationIcons: Record<string, typeof Home> = {
     village: Home,
     barony: Castle,
@@ -153,7 +161,7 @@ export default function MarketIndex() {
         { title: "Dashboard", href: "/dashboard" },
         {
             title: market_info.location_name,
-            href: `/${market_info.location_type}s/${market_info.location_id}`,
+            href: `/${locationPaths[market_info.location_type] || market_info.location_type + "s"}/${market_info.location_id}`,
         },
         { title: "Market", href: "#" },
     ];

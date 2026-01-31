@@ -85,6 +85,14 @@ const iconMap: Record<string, typeof Store> = {
     building: Building,
 };
 
+const locationPaths: Record<string, string> = {
+    village: "villages",
+    barony: "baronies",
+    town: "towns",
+    duchy: "duchies",
+    kingdom: "kingdoms",
+};
+
 const categoryColors: Record<string, string> = {
     production: "border-blue-500/50 bg-blue-900/20",
     service: "border-purple-500/50 bg-purple-900/20",
@@ -268,7 +276,10 @@ export default function BusinessIndex() {
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
-        { title: location_name, href: `/${location_type}s/${location_id}` },
+        {
+            title: location_name,
+            href: `/${locationPaths[location_type] || location_type + "s"}/${location_id}`,
+        },
         { title: "Businesses", href: "#" },
     ];
 

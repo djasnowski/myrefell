@@ -31,6 +31,14 @@ interface PageProps {
     [key: string]: unknown;
 }
 
+const locationPaths: Record<string, string> = {
+    village: "villages",
+    barony: "baronies",
+    town: "towns",
+    duchy: "duchies",
+    kingdom: "kingdoms",
+};
+
 const locationIcons: Record<string, typeof Home> = {
     village: Home,
     barony: Castle,
@@ -84,7 +92,7 @@ export default function HealerIndex() {
         { title: "Dashboard", href: "/dashboard" },
         {
             title: healer_info.location_name,
-            href: `/${healer_info.location_type}s/${healer_info.location_id}`,
+            href: `/${locationPaths[healer_info.location_type] || healer_info.location_type + "s"}/${healer_info.location_id}`,
         },
         { title: healer_info.location_type === "village" ? "Healer" : "Infirmary", href: "#" },
     ];

@@ -120,6 +120,14 @@ const iconMap: Record<string, typeof Briefcase> = {
     beer: Beer,
 };
 
+const locationPaths: Record<string, string> = {
+    village: "villages",
+    barony: "baronies",
+    town: "towns",
+    duchy: "duchies",
+    kingdom: "kingdoms",
+};
+
 const categoryColors: Record<string, string> = {
     service: "border-purple-500/50 bg-purple-900/20",
     labor: "border-amber-500/50 bg-amber-900/20",
@@ -398,7 +406,10 @@ export default function JobsIndex() {
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
-        { title: location_name, href: `/${location_type}s/${location_id}` },
+        {
+            title: location_name,
+            href: `/${locationPaths[location_type] || location_type + "s"}/${location_id}`,
+        },
         { title: "Jobs", href: "#" },
     ];
 

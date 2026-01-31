@@ -86,6 +86,14 @@ interface PageProps {
     [key: string]: unknown;
 }
 
+const locationPaths: Record<string, string> = {
+    village: "villages",
+    barony: "baronies",
+    town: "towns",
+    duchy: "duchies",
+    kingdom: "kingdoms",
+};
+
 const locationIcons: Record<string, typeof Home> = {
     village: Home,
     barony: Castle,
@@ -121,7 +129,10 @@ export default function TaxesIndex() {
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
-        { title: location_name, href: `/${location_type}s/${location_id}` },
+        {
+            title: location_name,
+            href: `/${locationPaths[location_type] || location_type + "s"}/${location_id}`,
+        },
         { title: "Taxes", href: "#" },
     ];
 

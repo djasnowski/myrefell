@@ -48,6 +48,14 @@ interface PageProps {
     [key: string]: unknown;
 }
 
+const locationPaths: Record<string, string> = {
+    village: "villages",
+    barony: "baronies",
+    town: "towns",
+    duchy: "duchies",
+    kingdom: "kingdoms",
+};
+
 const locationIcons: Record<string, typeof Home> = {
     village: Home,
     barony: Castle,
@@ -71,7 +79,7 @@ export default function BankIndex() {
         { title: "Dashboard", href: "/dashboard" },
         {
             title: bank_info.location_name,
-            href: `/${bank_info.location_type}s/${bank_info.location_id}`,
+            href: `/${locationPaths[bank_info.location_type] || bank_info.location_type + "s"}/${bank_info.location_id}`,
         },
         { title: "Bank", href: "#" },
     ];
