@@ -14,6 +14,14 @@ use Inertia\Response;
 class TownController extends Controller
 {
     /**
+     * Display the towns index page.
+     */
+    public function index(): Response
+    {
+        return Inertia::render('Towns/Index');
+    }
+
+    /**
      * Display the specified town.
      */
     public function show(Request $request, Town $town): Response

@@ -143,6 +143,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('baronies/{barony}/villages', [BaronyController::class, 'villages'])->name('baronies.villages');
     Route::get('baronies/{barony}/towns', [BaronyController::class, 'towns'])->name('baronies.towns');
 
+    Route::get('towns', [TownController::class, 'index'])->name('towns.index');
     Route::get('towns/{town}', [TownController::class, 'show'])->name('towns.show');
     Route::get('towns/{town}/hall', [TownController::class, 'hall'])->name('towns.hall');
 

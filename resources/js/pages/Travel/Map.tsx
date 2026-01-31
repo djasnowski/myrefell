@@ -1,5 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { Anchor, Castle, Church, Clock, Compass, Crown, Home, Loader2, MapPin, Minus, Plus, RotateCcw, Search, Users, X, Zap } from 'lucide-react';
+import { Anchor, Castle, ChevronDown, ChevronUp, Church, Clock, Compass, Crown, Home, Loader2, MapPin, Minus, Plus, RotateCcw, Scroll, Search, Users, X, Zap } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { HealthStatusWidget, type DiseaseInfection, type DiseaseImmunity } from '@/components/ui/health-status-widget';
 import AppLayout from '@/layouts/app-layout';
@@ -248,8 +248,9 @@ export default function Dashboard() {
     const [mouseCoords, setMouseCoords] = useState<{ x: number; y: number } | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedResult, setSelectedResult] = useState<{ type: string; data: Location } | null>(null);
-    const [clickedLocation, setClickedLocation] = useState<{ type: string; data: Location & { population?: number; is_port?: boolean; kingdom_name?: string; barony_name?: string } } | null>(null);
+    const [clickedLocation, setClickedLocation] = useState<{ type: string; data: Location & { population?: number; is_port?: boolean; kingdom_name?: string; barony_name?: string; description?: string } } | null>(null);
     const [isTraveling, setIsTraveling] = useState(false);
+    const [loreExpanded, setLoreExpanded] = useState(false);
     const svgRef = useRef<SVGSVGElement>(null);
 
     // Prevent page scrolling on the map page
@@ -279,29 +280,371 @@ export default function Dashboard() {
         return "a thriving population";
     };
 
-    // Get rumor-style services
-    const getServiceRumors = (type: string, isPort?: boolean) => {
+    // Get rumor-style services - unique per location
+    const getServiceRumors = (type: string, name: string, biome: string, population?: number, isPort?: boolean) => {
         const rumors: string[] = [];
+        // Use name to seed variations
+        const seed = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const v = (options: string[]) => options[seed % options.length];
+
+        // Biome-specific flavor words
+        const biomeAdjectives: Record<string, string[]> = {
+            forest: ['woodland', 'sylvan', 'verdant', 'shaded'],
+            plains: ['prairie', 'grassland', 'windswept', 'golden'],
+            mountains: ['highland', 'alpine', 'craggy', 'stony'],
+            swamps: ['marsh', 'bogland', 'murky', 'fenland'],
+            desert: ['oasis', 'sunbaked', 'arid', 'dusty'],
+            tundra: ['frozen', 'northern', 'icebound', 'frigid'],
+            coastal: ['seaside', 'saltwater', 'tidal', 'harbor'],
+            volcano: ['ashen', 'smoky', 'ember-lit', 'volcanic'],
+        };
+        const adj = biomeAdjectives[biome]?.[seed % 4] || 'local';
+
         if (type === 'village') {
-            rumors.push("Folk speak of a healer");
-            rumors.push("There's said to be a bank");
-            if (isPort) rumors.push("Ships dock at the harbor");
+            // Healer rumors
+            const healerRumors = [
+                `A ${adj} healer tends to the sick here`,
+                `They say an old herbalist knows the cure for most ailments`,
+                `The village healer learned from wandering monks`,
+                `A wise woman offers remedies for coin`,
+                `Folk seek the ${adj} apothecary when illness strikes`,
+            ];
+            rumors.push(v(healerRumors));
+
+            // Bank/storage rumors
+            const bankRumors = [
+                `There's a vault where travelers store their coin`,
+                `The village elder keeps a strongbox for safekeeping`,
+                `A trusted merchant holds deposits for those passing through`,
+                `They've dug a secure cellar for valuables`,
+                `The ${adj} bank is said to be honest, at least`,
+            ];
+            rumors.push(v(bankRumors.slice(1).concat(bankRumors[0])));
+
+            // Market rumors based on population
+            if (population && population > 30) {
+                const marketRumors = [
+                    `A small market gathers on fair days`,
+                    `Peddlers bring goods from distant lands`,
+                    `The trading post sees regular caravans`,
+                ];
+                rumors.push(v(marketRumors));
+            }
+
+            // Port rumors
+            if (isPort) {
+                const portRumors = [
+                    `Ships from distant shores drop anchor in the harbor`,
+                    `The docks bustle with sailors and merchants`,
+                    `Sea captains swap tales at the waterfront tavern`,
+                    `Exotic goods arrive by ship from foreign ports`,
+                    `The ${adj} harbor shelters vessels from storms`,
+                ];
+                rumors.push(v(portRumors));
+            }
+
+            // Tavern rumors
+            const tavernRumors = [
+                `The local tavern serves a passable ale`,
+                `Travelers rest at a humble inn nearby`,
+                `There's a hearth where weary folk find warm meals`,
+                `The innkeeper knows all the local gossip`,
+            ];
+            rumors.push(v(tavernRumors));
+
         } else if (type === 'barony') {
-            rumors.push("Knights train in the barracks");
-            rumors.push("An arena for combat");
-            rumors.push("A secure vault");
+            // Training rumors
+            const trainingRumors = [
+                `Knights drill in the ${adj} barracks daily`,
+                `The Baron's men-at-arms train without rest`,
+                `Squires practice swordplay in the courtyard`,
+                `A weathered sergeant teaches the art of war`,
+                `The garrison keeps sharp through endless drills`,
+            ];
+            rumors.push(v(trainingRumors));
+
+            // Arena rumors
+            const arenaRumors = [
+                `An arena hosts contests of martial prowess`,
+                `Warriors test their mettle in the fighting pits`,
+                `Champions earn glory in the ${adj} coliseum`,
+                `Blood sports draw crowds from miles around`,
+                `The arena's sands have seen many a duel`,
+            ];
+            rumors.push(v(arenaRumors));
+
+            // Vault rumors
+            const vaultRumors = [
+                `The Baron's vault holds untold riches`,
+                `A fortified treasury guards the realm's coin`,
+                `Stone walls protect the ${adj} stronghold's wealth`,
+                `The castellan keeps strict watch over the coffers`,
+            ];
+            rumors.push(v(vaultRumors));
+
+            // Court rumors
+            const courtRumors = [
+                `Petitioners seek the Baron's justice daily`,
+                `Intrigue fills the halls of power`,
+                `The Baron holds court on matters of law`,
+                `Nobles jockey for favor in these halls`,
+            ];
+            rumors.push(v(courtRumors));
+
         } else if (type === 'town') {
-            rumors.push("A proper infirmary");
-            rumors.push("The town hall handles affairs");
-            rumors.push("Merchants trade freely");
+            // Infirmary rumors
+            const infirmaryRumors = [
+                `The town infirmary employs trained physicians`,
+                `Surgeons and herbalists practice their craft here`,
+                `The sick find proper care at the ${adj} hospital`,
+                `Healers from the guild tend to the afflicted`,
+                `Medical knowledge flows through the infirmary's halls`,
+            ];
+            rumors.push(v(infirmaryRumors));
+
+            // Town hall rumors
+            const hallRumors = [
+                `The town hall bustles with civic matters`,
+                `Councilors debate policy behind closed doors`,
+                `The mayor holds audience in the great chamber`,
+                `Bureaucrats shuffle papers and seal documents`,
+                `Guild masters gather to set prices and rules`,
+            ];
+            rumors.push(v(hallRumors));
+
+            // Merchant rumors
+            const merchantRumors = [
+                `Merchants hawk wares from across the realm`,
+                `The market square never sleeps, they say`,
+                `Traders strike deals in the ${adj} bazaar`,
+                `Fine goods and rare commodities change hands daily`,
+                `The merchant guild controls trade with an iron fist`,
+            ];
+            rumors.push(v(merchantRumors));
+
+            // Crafting rumors
+            const craftRumors = [
+                `Skilled artisans ply their trades here`,
+                `The smiths forge quality arms and tools`,
+                `Craftsmen take apprentices from far and wide`,
+                `Guild workshops produce fine wares`,
+            ];
+            rumors.push(v(craftRumors));
+
         } else if (type === 'kingdom') {
-            rumors.push("The seat of royal power");
+            // Royal rumors
+            const royalRumors = [
+                `The crown rules from this ancient seat of power`,
+                `Royal decrees echo from these hallowed halls`,
+                `The throne has weathered countless storms`,
+                `Courtiers whisper of the monarch's will`,
+                `The ${adj} palace gleams with imperial splendor`,
+            ];
+            rumors.push(v(royalRumors));
+
+            // Army rumors
+            const armyRumors = [
+                `The royal army musters at the king's command`,
+                `Elite guards protect the sovereign day and night`,
+                `War councils convene in times of strife`,
+                `The realm's finest warriors serve the crown`,
+            ];
+            rumors.push(v(armyRumors));
+
+            // Treasury rumors
+            const treasuryRumors = [
+                `The royal treasury overflows with tribute`,
+                `Tax collectors bring coin from every corner`,
+                `The crown's wealth funds armies and monuments`,
+            ];
+            rumors.push(v(treasuryRumors));
         }
+
         return rumors;
     };
 
-    const handleLocationClick = (type: string, data: Location & { population?: number; is_port?: boolean; kingdom_name?: string; barony_name?: string }) => {
+    // Find nearby locations for lore generation
+    const findNearbyLocations = useCallback((loc: Location, radius: number = 80) => {
+        const nearby: { name: string; type: string; distance: number }[] = [];
+
+        const calcDist = (other: Location) => Math.sqrt(
+            Math.pow(other.coordinates_x - loc.coordinates_x, 2) +
+            Math.pow(other.coordinates_y - loc.coordinates_y, 2)
+        );
+
+        villages.forEach(v => {
+            if (v.id !== loc.id || loc.biome !== v.biome) {
+                const dist = calcDist(v);
+                if (dist > 0 && dist < radius) nearby.push({ name: v.name, type: 'village', distance: dist });
+            }
+        });
+        baronies.forEach(b => {
+            const dist = calcDist(b);
+            if (dist > 0 && dist < radius) nearby.push({ name: b.name, type: 'barony', distance: dist });
+        });
+        towns.forEach(t => {
+            const dist = calcDist(t);
+            if (dist > 0 && dist < radius) nearby.push({ name: t.name, type: 'town', distance: dist });
+        });
+
+        return nearby.sort((a, b) => a.distance - b.distance).slice(0, 3);
+    }, [villages, baronies, towns]);
+
+    // Generate procedural lore based on biome, type, and nearby locations
+    const generateLore = useCallback((
+        type: string,
+        name: string,
+        biome: string,
+        loc: Location,
+        kingdomName?: string,
+        isPort?: boolean,
+        description?: string
+    ): string[] => {
+        const nearby = findNearbyLocations(loc);
+        const paragraphs: string[] = [];
+
+        // Biome-specific opening phrases
+        const biomeIntros: Record<string, string[]> = {
+            forest: [
+                `${name} lies nestled within ancient woodlands where towering oaks have witnessed centuries pass.`,
+                `The settlement of ${name} emerged from clearings carved into the primeval forest, where hunters first made camp generations ago.`,
+                `Shrouded by the canopy of the great woods, ${name} began as a refuge for those fleeing the conflicts of open lands.`,
+            ],
+            plains: [
+                `${name} stretches across the fertile grasslands, where golden wheat sways in the wind.`,
+                `Upon the open plains where the sky meets the earth in an endless embrace, ${name} was founded by settlers seeking rich soil.`,
+                `The vast meadows surrounding ${name} have sustained its people through countless harvests and lean winters alike.`,
+            ],
+            mountains: [
+                `${name} clings to the rocky slopes, built by those hardy enough to carve life from stone.`,
+                `High in the shadow of the peaks, ${name} guards the mountain passes as it has for generations.`,
+                `The folk of ${name} are as unyielding as the granite foundations upon which their homes are built.`,
+            ],
+            swamps: [
+                `${name} rises from the murky wetlands on stilts and stone, defying the marsh that surrounds it.`,
+                `In the mist-shrouded fens, ${name} persists where others would have been swallowed by the bog.`,
+                `The people of ${name} have learned the swamp's secrets - which paths are safe, which waters hide danger.`,
+            ],
+            desert: [
+                `${name} is an oasis of civilization amid the endless sands, sustained by hidden wells and ancient cisterns.`,
+                `The sun-scorched settlement of ${name} endures where water is more precious than gold.`,
+                `Beneath the burning sky, ${name} has flourished by the wisdom of those who understand the desert's cruel beauty.`,
+            ],
+            tundra: [
+                `${name} braves the frozen wastes, its hearths burning bright against the eternal cold.`,
+                `In the land of endless winter, ${name} stands as testament to human resilience against nature's harshest domain.`,
+                `The ice-locked settlement of ${name} was built by folk who found kinship in the howling winds.`,
+            ],
+            coastal: [
+                `${name} gazes out upon the restless sea, its fortunes forever tied to wind and wave.`,
+                `The salt-spray settlement of ${name} has weathered storms both natural and man-made since time immemorial.`,
+                `Where land meets sea, ${name} has prospered from the bounty of both worlds.`,
+            ],
+            volcano: [
+                `${name} lies in the shadow of the smoking mountain, its people living with fire as their neighbor.`,
+                `The ash-touched settlement of ${name} draws strength from the volcanic soil that gives life even as it threatens death.`,
+                `In the lands of fire and brimstone, ${name} endures through reverence for the mountain's terrible power.`,
+            ],
+        };
+
+        // Kingdom connections
+        const kingdomPhrases = kingdomName ? [
+            `Under the banner of ${kingdomName}, ${name} has known both protection and obligation.`,
+            `The crown of ${kingdomName} casts its shadow here, for better or worse.`,
+            `Fealty to ${kingdomName} has shaped the customs and laws of this place.`,
+        ] : [];
+
+        // Port-specific additions
+        const portPhrases = isPort ? [
+            `The harbor brings traders from distant shores, their strange tongues and stranger goods filling the docks.`,
+            `Ships from across the known world drop anchor here, carrying news of far-off wars and wonders.`,
+            `The smell of salt and tar mingles with the cries of gulls and merchants alike.`,
+        ] : [];
+
+        // Nearby location connections
+        const nearbyPhrases: string[] = [];
+        if (nearby.length > 0) {
+            const nearestVillage = nearby.find(n => n.type === 'village');
+            const nearestBarony = nearby.find(n => n.type === 'barony');
+            const nearestTown = nearby.find(n => n.type === 'town');
+
+            if (nearestBarony) {
+                nearbyPhrases.push(`The Baron of ${nearestBarony.name} holds influence over these lands, collecting tithes and dispensing what passes for justice.`);
+            }
+            if (nearestTown) {
+                nearbyPhrases.push(`Traders make regular journeys to ${nearestTown.name}, returning with goods unavailable in simpler settlements.`);
+            }
+            if (nearestVillage) {
+                nearbyPhrases.push(`Folk from ${nearestVillage.name} are often seen passing through, bound by ties of trade and kinship.`);
+            }
+        }
+
+        // Historical flavor based on type
+        const historyPhrases: Record<string, string[]> = {
+            village: [
+                `Tales are told of harder times, when plague and famine tested the resolve of every soul.`,
+                `The elders speak of the founding families, whose blood still runs in most who live here.`,
+                `A simple place with simple folk, yet every cottage holds stories the world has forgotten.`,
+            ],
+            town: [
+                `The town charter dates back generations, its privileges hard-won and jealously guarded.`,
+                `Guilds and merchants have shaped this place as much as any lord or king.`,
+                `The cobblestones remember the tread of armies, the cries of markets, the whispers of conspirators.`,
+            ],
+            barony: [
+                `The Baron's seat has changed hands through blood and treaty more times than any record tells.`,
+                `Stone walls and iron gates speak of an age when every neighbor was a potential enemy.`,
+                `The great hall has hosted feasts and funerals for the noble families who have ruled here.`,
+            ],
+            kingdom: [
+                `The throne has been contested by claimants just and unjust throughout the ages.`,
+                `Wars of succession, foreign invasions, and internal strife have forged the kingdom's character.`,
+                `From these halls, decrees have gone forth that changed the lives of thousands.`,
+                `The royal lineage is tangled with legend, and some say the blood of old heroes flows yet in the ruling house.`,
+            ],
+        };
+
+        // Build paragraphs based on type
+        const intro = biomeIntros[biome] || biomeIntros.plains;
+        const seededRandom = (name.length + loc.coordinates_x + loc.coordinates_y) % 3;
+
+        // First paragraph - always the biome intro
+        paragraphs.push(intro[seededRandom]);
+
+        // Second paragraph - connections and relationships
+        let secondPara = '';
+        if (kingdomPhrases.length > 0) {
+            secondPara += kingdomPhrases[seededRandom % kingdomPhrases.length] + ' ';
+        }
+        if (nearbyPhrases.length > 0) {
+            secondPara += nearbyPhrases[0];
+        }
+        if (portPhrases.length > 0) {
+            secondPara = portPhrases[seededRandom % portPhrases.length] + ' ' + secondPara;
+        }
+        if (secondPara.trim()) {
+            paragraphs.push(secondPara.trim());
+        } else {
+            // Fallback for isolated locations
+            paragraphs.push(historyPhrases[type]?.[seededRandom] || historyPhrases.village[seededRandom]);
+        }
+
+        // Third paragraph for kingdoms - deeper history
+        if (type === 'kingdom') {
+            const histIdx = (seededRandom + 1) % historyPhrases.kingdom.length;
+            paragraphs.push(historyPhrases.kingdom[histIdx]);
+            // Add description if available
+            if (description) {
+                paragraphs.push(description);
+            }
+        }
+
+        return paragraphs;
+    }, [findNearbyLocations]);
+
+    const handleLocationClick = (type: string, data: Location & { population?: number; is_port?: boolean; kingdom_name?: string; barony_name?: string; description?: string }) => {
         setClickedLocation({ type, data });
+        setLoreExpanded(false);
     };
 
     const handleTravel = () => {
@@ -439,7 +782,7 @@ export default function Dashboard() {
 
     // Generate terrain - large kingdom islands that encompass all locations
     const terrainRegions = useMemo(() => {
-        const regions: JSX.Element[] = [];
+        const regions: React.ReactNode[] = [];
 
         // Group all locations by kingdom
         const kingdomData: Record<number, { kingdom: Kingdom; locations: { x: number; y: number }[] }> = {};
@@ -944,7 +1287,7 @@ export default function Dashboard() {
                 {clickedLocation && (
                     <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/50" onClick={() => setClickedLocation(null)}>
                         <div
-                            className="mx-4 w-full max-w-sm rounded-lg border-2 border-amber-600/70 bg-stone-900/95 shadow-xl"
+                            className="mx-4 max-h-[85vh] w-full max-w-md overflow-y-auto rounded-lg border-2 border-amber-600/70 bg-stone-900/95 shadow-xl"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Header */}
@@ -972,6 +1315,59 @@ export default function Dashboard() {
                                     )}
                                 </div>
 
+                                {/* Lore / History Section */}
+                                {(() => {
+                                    const lore = generateLore(
+                                        clickedLocation.type === 'port' ? 'village' : clickedLocation.type,
+                                        clickedLocation.data.name,
+                                        clickedLocation.data.biome,
+                                        clickedLocation.data,
+                                        clickedLocation.data.kingdom_name,
+                                        clickedLocation.data.is_port,
+                                        clickedLocation.data.description
+                                    );
+                                    const firstPara = lore[0];
+                                    const restParas = lore.slice(1);
+
+                                    return (
+                                        <div className="rounded border border-stone-700/50 bg-stone-800/30">
+                                            <button
+                                                onClick={() => setLoreExpanded(!loreExpanded)}
+                                                className="flex w-full items-start gap-2 px-3 py-2 text-left transition hover:bg-stone-800/50"
+                                            >
+                                                <Scroll className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
+                                                <div className="min-w-0 flex-1">
+                                                    <p className={`text-sm leading-relaxed text-stone-300 ${!loreExpanded ? 'line-clamp-2' : ''}`}>
+                                                        {firstPara}
+                                                    </p>
+                                                    {!loreExpanded && restParas.length > 0 && (
+                                                        <span className="mt-1 flex items-center gap-1 text-xs text-amber-500">
+                                                            <ChevronDown className="h-3 w-3" />
+                                                            Read more...
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </button>
+                                            {loreExpanded && restParas.length > 0 && (
+                                                <div className="space-y-3 border-t border-stone-700/50 px-3 py-3">
+                                                    {restParas.map((para, idx) => (
+                                                        <p key={idx} className="text-sm leading-relaxed text-stone-300">
+                                                            {para}
+                                                        </p>
+                                                    ))}
+                                                    <button
+                                                        onClick={() => setLoreExpanded(false)}
+                                                        className="flex items-center gap-1 text-xs text-amber-500 transition hover:text-amber-400"
+                                                    >
+                                                        <ChevronUp className="h-3 w-3" />
+                                                        Show less
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
+
                                 {/* Population Rumor */}
                                 {clickedLocation.data.population && (
                                     <div className="flex items-start gap-2 text-sm">
@@ -986,7 +1382,7 @@ export default function Dashboard() {
                                 <div className="space-y-1">
                                     <div className="text-xs font-medium uppercase tracking-wide text-stone-500">Rumors speak of...</div>
                                     <ul className="space-y-1 text-sm text-stone-300">
-                                        {getServiceRumors(clickedLocation.type === 'port' ? 'village' : clickedLocation.type, clickedLocation.data.is_port).map((rumor, i) => (
+                                        {getServiceRumors(clickedLocation.type === 'port' ? 'village' : clickedLocation.type, clickedLocation.data.name, clickedLocation.data.biome, clickedLocation.data.population, clickedLocation.data.is_port).map((rumor, i) => (
                                             <li key={i} className="flex items-center gap-2">
                                                 <span className="text-stone-600">•</span>
                                                 <span className="italic">{rumor}</span>
