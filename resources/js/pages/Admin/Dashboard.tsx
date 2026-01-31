@@ -16,6 +16,8 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
+import { ActivityFeed } from '@/components/admin/activity-feed';
+import { LatestPlayers } from '@/components/admin/latest-players';
 import {
     Card,
     CardContent,
@@ -25,6 +27,26 @@ import {
 } from '@/components/ui/card';
 import AdminLayout from '@/layouts/admin-layout';
 import type { BreadcrumbItem } from '@/types';
+
+interface ActivityItem {
+    id: number;
+    username: string;
+    user_id: number;
+    activity_type: string;
+    activity_subtype: string | null;
+    description: string;
+    location_type: string;
+    location_name: string | null;
+    created_at: string;
+}
+
+interface PlayerItem {
+    id: number;
+    username: string;
+    created_at: string;
+    current_location_type: string | null;
+    combat_level: number;
+}
 
 interface Props {
     stats: {
@@ -36,6 +58,8 @@ interface Props {
     };
     registrationTrend: Array<{ date: string; count: number }>;
     activeUsersTrend: Array<{ date: string; count: number }>;
+    recentActivity: ActivityItem[];
+    latestUsers: PlayerItem[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -47,6 +71,8 @@ export default function Dashboard({
     stats,
     registrationTrend,
     activeUsersTrend,
+    recentActivity,
+    latestUsers,
 }: Props) {
     const statCards = [
         {
@@ -143,6 +169,16 @@ export default function Dashboard({
                             </CardContent>
                         </Card>
                     ))}
+                </div>
+
+                {/* Activity Feed and Latest Players */}
+                <div className="grid gap-6 lg:grid-cols-3">
+                    <div className="lg:col-span-2">
+                        <ActivityFeed activities={recentActivity} />
+                    </div>
+                    <div>
+                        <LatestPlayers players={latestUsers} />
+                    </div>
                 </div>
 
                 {/* Charts */}

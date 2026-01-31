@@ -20,6 +20,8 @@ class DashboardController extends Controller
             'stats' => $this->analytics->getDashboardStats(),
             'registrationTrend' => $this->analytics->getRegistrationTrend(30),
             'activeUsersTrend' => $this->analytics->getActiveUsersTrend(30),
+            'recentActivity' => $this->analytics->getRecentGlobalActivity(20),
+            'latestUsers' => $this->analytics->getLatestRegisteredUsers(10),
         ]);
     }
 }

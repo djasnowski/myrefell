@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BanUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
+use App\Models\LocationActivityLog;
+use App\Models\PlayerSkill;
+use App\Models\ReligionMember;
 use App\Models\User;
 use App\Models\UserBan;
 use Illuminate\Http\RedirectResponse;
@@ -78,7 +81,32 @@ class UserController extends Controller
         $user->load([
             'bans' => fn ($q) => $q->with(['bannedByUser', 'unbannedByUser'])->orderBy('banned_at', 'desc'),
             'homeVillage',
+            'skills',
+            'inventory.item',
+            'titles',
+            'playerRoles.role',
+            'employment',
+            'horse.horse',
+            'diseaseInfections.disease',
+            'bankAccounts',
+            'quests.quest',
         ]);
+
+        // Get religion membership separately since it's not a direct relation
+        $religionMember = ReligionMember::with('religion')
+            ->where('user_id', $user->id)
+            ->first();
+
+        // Get dynasty member info
+        $dynastyMember = $user->dynasty_member_id
+            ? \App\Models\DynastyMember::with('dynasty')->find($user->dynasty_member_id)
+            : null;
+
+        // Get recent activity
+        $activities = LocationActivityLog::where('user_id', $user->id)
+            ->orderByDesc('created_at')
+            ->limit(50)
+            ->get();
 
         return Inertia::render('Admin/Users/Show', [
             'user' => [
@@ -101,6 +129,8 @@ class UserController extends Controller
                 'energy' => $user->energy,
                 'max_energy' => $user->max_energy,
                 'primary_title' => $user->primary_title,
+                'title_tier' => $user->title_tier,
+                'combat_level' => $user->combat_level,
                 'home_village' => $user->homeVillage ? [
                     'id' => $user->homeVillage->id,
                     'name' => $user->homeVillage->name,
@@ -122,7 +152,137 @@ class UserController extends Controller
                     'is_active' => $ban->isActive(),
                 ]),
             ],
+            'skills' => $this->formatSkills($user),
+            'inventory' => $user->inventory->map(fn ($inv) => [
+                'id' => $inv->id,
+                'slot_number' => $inv->slot_number,
+                'quantity' => $inv->quantity,
+                'is_equipped' => $inv->is_equipped,
+                'item' => $inv->item ? [
+                    'id' => $inv->item->id,
+                    'name' => $inv->item->name,
+                    'type' => $inv->item->type,
+                    'rarity' => $inv->item->rarity,
+                    'equipment_slot' => $inv->item->equipment_slot,
+                    'atk_bonus' => $inv->item->atk_bonus,
+                    'str_bonus' => $inv->item->str_bonus,
+                    'def_bonus' => $inv->item->def_bonus,
+                ] : null,
+            ]),
+            'titles' => $user->titles->map(fn ($title) => [
+                'id' => $title->id,
+                'title' => $title->title,
+                'tier' => $title->tier,
+                'is_active' => $title->is_active,
+                'domain_type' => $title->domain_type,
+                'legitimacy' => $title->legitimacy,
+                'granted_at' => $title->granted_at?->toISOString(),
+                'revoked_at' => $title->revoked_at?->toISOString(),
+            ]),
+            'roles' => $user->playerRoles->map(fn ($pr) => [
+                'id' => $pr->id,
+                'role_name' => $pr->role?->name,
+                'location_type' => $pr->location_type,
+                'location_name' => $pr->location_name,
+                'status' => $pr->status,
+                'legitimacy' => $pr->legitimacy,
+                'appointed_at' => $pr->appointed_at?->toISOString(),
+            ]),
+            'dynasty' => $dynastyMember ? [
+                'id' => $dynastyMember->id,
+                'dynasty_name' => $dynastyMember->dynasty?->name,
+                'dynasty_id' => $dynastyMember->dynasty_id,
+                'first_name' => $dynastyMember->first_name,
+                'generation' => $dynastyMember->generation,
+                'is_heir' => $dynastyMember->is_heir,
+                'is_legitimate' => $dynastyMember->is_legitimate,
+                'status' => $dynastyMember->status,
+            ] : null,
+            'religion' => $religionMember ? [
+                'id' => $religionMember->id,
+                'religion_name' => $religionMember->religion?->name,
+                'religion_id' => $religionMember->religion_id,
+                'rank' => $religionMember->rank,
+                'devotion' => $religionMember->devotion,
+                'joined_at' => $religionMember->joined_at?->toISOString(),
+            ] : null,
+            'employment' => $user->employment->map(fn ($emp) => [
+                'id' => $emp->id,
+                'employer_type' => $emp->employer_type,
+                'status' => $emp->status,
+                'hired_at' => $emp->hired_at?->toISOString(),
+                'total_earnings' => $emp->total_earnings,
+            ]),
+            'horse' => $user->horse ? [
+                'id' => $user->horse->id,
+                'name' => $user->horse->name,
+                'horse_type' => $user->horse->horse?->name,
+                'health' => $user->horse->health,
+                'stamina' => $user->horse->stamina,
+                'max_stamina' => $user->horse->max_stamina,
+                'is_stabled' => $user->horse->is_stabled,
+            ] : null,
+            'diseases' => $user->diseaseInfections->map(fn ($infection) => [
+                'id' => $infection->id,
+                'disease_name' => $infection->disease?->name,
+                'severity' => $infection->severity,
+                'infected_at' => $infection->infected_at?->toISOString(),
+                'cured_at' => $infection->cured_at?->toISOString(),
+            ]),
+            'activities' => $activities->map(fn ($log) => [
+                'id' => $log->id,
+                'activity_type' => $log->activity_type,
+                'activity_subtype' => $log->activity_subtype,
+                'description' => $log->description,
+                'location_type' => $log->location_type,
+                'created_at' => $log->created_at->toISOString(),
+            ]),
+            'bankAccounts' => $user->bankAccounts->map(fn ($acc) => [
+                'id' => $acc->id,
+                'balance' => $acc->balance,
+                'account_type' => $acc->account_type,
+            ]),
+            'quests' => $user->quests->map(fn ($pq) => [
+                'id' => $pq->id,
+                'quest_name' => $pq->quest?->name,
+                'status' => $pq->status,
+                'started_at' => $pq->started_at?->toISOString(),
+                'completed_at' => $pq->completed_at?->toISOString(),
+            ]),
         ]);
+    }
+
+    /**
+     * Format skills data with all skills for display.
+     *
+     * @return array<int, array{
+     *     skill_name: string,
+     *     level: int,
+     *     xp: int,
+     *     progress: float,
+     *     is_combat: bool
+     * }>
+     */
+    private function formatSkills(User $user): array
+    {
+        $skills = $user->skills->keyBy('skill_name');
+        $allSkills = [];
+
+        foreach (PlayerSkill::SKILLS as $skillName) {
+            $skill = $skills->get($skillName);
+            $isCombat = in_array($skillName, PlayerSkill::COMBAT_SKILLS);
+            $defaultLevel = $isCombat ? 5 : 1;
+
+            $allSkills[] = [
+                'skill_name' => $skillName,
+                'level' => $skill?->level ?? $defaultLevel,
+                'xp' => $skill?->xp ?? 0,
+                'progress' => $skill?->progress ?? 0.0,
+                'is_combat' => $isCombat,
+            ];
+        }
+
+        return $allSkills;
     }
 
     /**
