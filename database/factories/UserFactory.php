@@ -35,8 +35,8 @@ class UserFactory extends Factory
             'current_location_id' => null,
             'hp' => 10,
             'max_hp' => 10,
-            'energy' => 150,
-            'max_energy' => 150,
+            'energy' => 300,
+            'max_energy' => 300,
             'weeks_without_food' => 0,
             'gold' => 100, // Starting gold
             'is_traveling' => false,

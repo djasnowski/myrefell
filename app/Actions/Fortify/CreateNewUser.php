@@ -8,6 +8,7 @@ use App\Models\PlayerSkill;
 use App\Models\User;
 use App\Services\BirthService;
 use App\Services\InventoryService;
+use App\Services\ReferralService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
@@ -18,7 +19,8 @@ class CreateNewUser implements CreatesNewUsers
 
     public function __construct(
         protected InventoryService $inventoryService,
-        protected BirthService $birthService
+        protected BirthService $birthService,
+        protected ReferralService $referralService
     ) {}
 
     /**
@@ -41,8 +43,8 @@ class CreateNewUser implements CreatesNewUsers
                 'gender' => $input['gender'],
                 'hp' => 10,
                 'max_hp' => 10,
-                'energy' => 150,
-                'max_energy' => 150,
+                'energy' => 300,
+                'max_energy' => 300,
                 'gold' => 100, // Starting gold
                 'registration_ip' => request()->ip(),
             ]);
@@ -55,6 +57,9 @@ class CreateNewUser implements CreatesNewUsers
 
             // Assign home village and title using BirthService
             $this->birthService->assignNewPlayer($user);
+
+            // Handle referral if a referral code was provided
+            $this->handleReferral($user, $input['referral_code'] ?? null);
 
             return $user;
         });
@@ -78,5 +83,27 @@ class CreateNewUser implements CreatesNewUsers
                 'xp' => $startingXp,
             ]);
         }
+    }
+
+    /**
+     * Handle referral tracking for a new user.
+     */
+    protected function handleReferral(User $user, ?string $referralCode): void
+    {
+        if (! $referralCode) {
+            return;
+        }
+
+        $referrer = $this->referralService->findReferrerByCode($referralCode);
+
+        if (! $referrer) {
+            return;
+        }
+
+        $this->referralService->createReferral(
+            $referrer,
+            $user,
+            request()->ip()
+        );
     }
 }
