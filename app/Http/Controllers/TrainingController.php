@@ -44,7 +44,7 @@ class TrainingController extends Controller
     /**
      * Show the training grounds (location-scoped).
      */
-    public function index(Request $request, Village|Town|Barony|Duchy|Kingdom $village = null, Town $town = null, Barony $barony = null, Duchy $duchy = null, Kingdom $kingdom = null): Response
+    public function index(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null): Response
     {
         // Get location from route binding
         $location = $village ?? $town ?? $barony ?? $duchy ?? $kingdom;

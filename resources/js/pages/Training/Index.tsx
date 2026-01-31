@@ -1,5 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowUp, Dumbbell, Heart, Loader2, Shield, Sword, Zap } from 'lucide-react';
+import { ArrowUp, Crosshair, Dumbbell, Heart, Loader2, Shield, Sword, Zap } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -18,26 +18,21 @@ interface Exercise {
     can_train: boolean;
 }
 
+interface StatInfo {
+    level: number;
+    xp: number;
+    progress: number;
+    xp_to_next_level: number;
+}
+
 interface CombatStats {
-    attack: {
-        level: number;
-        xp: number;
-        progress: number;
-        xp_to_next_level: number;
-    };
-    strength: {
-        level: number;
-        xp: number;
-        progress: number;
-        xp_to_next_level: number;
-    };
-    defense: {
-        level: number;
-        xp: number;
-        progress: number;
-        xp_to_next_level: number;
-    };
+    attack: StatInfo;
+    strength: StatInfo;
+    defense: StatInfo;
+    hitpoints: StatInfo;
+    range: StatInfo;
     combat_level: number;
+    [key: string]: StatInfo | number;
 }
 
 interface TrainResult {
@@ -67,6 +62,8 @@ const exerciseIcons: Record<string, typeof Sword> = {
     attack: Sword,
     strength: Dumbbell,
     defense: Shield,
+    hitpoints: Heart,
+    range: Crosshair,
 };
 
 const exerciseColors: Record<string, { bg: string; border: string; text: string }> = {
@@ -84,6 +81,16 @@ const exerciseColors: Record<string, { bg: string; border: string; text: string 
         bg: 'from-blue-900/50 to-stone-900',
         border: 'border-blue-600/50',
         text: 'text-blue-400',
+    },
+    hitpoints: {
+        bg: 'from-pink-900/50 to-stone-900',
+        border: 'border-pink-600/50',
+        text: 'text-pink-400',
+    },
+    range: {
+        bg: 'from-green-900/50 to-stone-900',
+        border: 'border-green-600/50',
+        text: 'text-green-400',
     },
 };
 
