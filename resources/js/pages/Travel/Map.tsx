@@ -625,7 +625,7 @@ export default function Dashboard() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="World Map" />
-            <div className="relative h-[calc(100dvh-4rem)] w-full overflow-hidden" style={{ backgroundColor: DEEP_WATER_COLOR }}>
+            <div className="absolute inset-0 top-16 overflow-hidden" style={{ backgroundColor: DEEP_WATER_COLOR }}>
                 {/* Right Controls */}
                 <div className="absolute right-4 top-4 z-10 flex flex-col gap-2">
                     <button onClick={handleZoomIn} className="rounded-lg border-2 border-stone-600 bg-stone-800/90 p-2 text-stone-300 transition hover:bg-stone-700" title="Zoom In">
