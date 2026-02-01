@@ -337,8 +337,9 @@ export default function MinigamesIndex() {
     const [spinResult, setSpinResult] = useState<SpinResult | null>(null);
     const [canPlayState, setCanPlayState] = useState(can_play);
     const [pendingResult, setPendingResult] = useState<SpinResult | null>(null);
-    // Store recent plays locally to prevent revealing reward before animation completes
-    const [recentPlaysState] = useState<RecentPlay[]>(recent_plays);
+    // Freeze recent plays during spin to prevent revealing reward early
+    const [frozenPlays, setFrozenPlays] = useState<RecentPlay[] | null>(null);
+    const displayedPlays = frozenPlays ?? recent_plays;
 
     // Only show error flashes, not results (results shown after animation)
     useEffect(() => {
@@ -351,6 +352,8 @@ export default function MinigamesIndex() {
         if (!canPlayState || spinning) return;
 
         setSpinning(true);
+        // Freeze recent plays so new reward doesn't appear until modal closes
+        setFrozenPlays(recent_plays);
 
         router.post(
             "/minigames/spin",
@@ -392,6 +395,8 @@ export default function MinigamesIndex() {
         setShowResultModal(false);
         setSpinResult(null);
         setTargetSegment(null);
+        // Unfreeze recent plays so updated list shows after reload
+        setFrozenPlays(null);
         // Reload to refresh CSRF and data
         router.reload();
     };
@@ -453,7 +458,7 @@ export default function MinigamesIndex() {
                                     <div className="mb-4 flex flex-col items-center gap-3 rounded-lg border border-amber-600/50 bg-amber-900/20 p-4">
                                         <Star className="h-8 w-8 text-amber-400" />
                                         <p className="font-pixel text-sm text-amber-300">
-                                            Come back tomorrow for another spin!
+                                            Come back tomorrow!
                                         </p>
                                         <TimeUntilReset />
                                     </div>
@@ -478,7 +483,7 @@ export default function MinigamesIndex() {
                                         Recent Rewards
                                     </h3>
                                 </div>
-                                <RecentPlaysHistory plays={recentPlaysState} />
+                                <RecentPlaysHistory plays={displayedPlays} />
                             </div>
                         </div>
                     </div>
