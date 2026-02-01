@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Kingdom;
+use App\Models\MigrationRequest;
 use App\Models\PlayerRole;
 use App\Models\Role;
+use App\Services\MigrationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -190,6 +192,77 @@ class KingdomController extends Controller
             'kingdom_name' => $kingdom->name,
             'baronies' => $baronies,
             'count' => $baronies->count(),
+        ]);
+    }
+
+    /**
+     * Display settlements available for settling in this kingdom.
+     */
+    public function settle(Request $request, Kingdom $kingdom, MigrationService $migrationService): Response
+    {
+        $user = $request->user();
+        $kingdom->load(['baronies.villages', 'baronies.towns']);
+
+        // Build list of all settlements
+        $settlements = [];
+        foreach ($kingdom->baronies as $barony) {
+            // Add towns
+            foreach ($barony->towns as $town) {
+                $settlements[] = [
+                    'id' => $town->id,
+                    'name' => $town->name,
+                    'type' => 'town',
+                    'barony_name' => $barony->name,
+                    'biome' => $town->biome ?? $barony->biome,
+                    'population' => $town->population,
+                    'resident_count' => $town->residents()->count(),
+                    'is_port' => $town->is_port,
+                    'is_home' => $user->home_village_id === $town->id,
+                ];
+            }
+
+            // Add villages
+            foreach ($barony->villages as $village) {
+                $settlements[] = [
+                    'id' => $village->id,
+                    'name' => $village->name,
+                    'type' => $village->isHamlet() ? 'hamlet' : 'village',
+                    'barony_name' => $barony->name,
+                    'biome' => $village->biome ?? $barony->biome,
+                    'population' => $village->population,
+                    'resident_count' => $village->residents()->count(),
+                    'is_port' => $village->is_port,
+                    'is_home' => $user->home_village_id === $village->id,
+                ];
+            }
+        }
+
+        // Sort by type (towns first) then name
+        usort($settlements, function ($a, $b) {
+            $typeOrder = ['town' => 0, 'village' => 1, 'hamlet' => 2];
+            $typeCompare = ($typeOrder[$a['type']] ?? 99) <=> ($typeOrder[$b['type']] ?? 99);
+            if ($typeCompare !== 0) {
+                return $typeCompare;
+            }
+
+            return strcmp($a['name'], $b['name']);
+        });
+
+        // Check for pending migration request
+        $hasPendingRequest = MigrationRequest::where('user_id', $user->id)
+            ->pending()
+            ->exists();
+
+        return Inertia::render('kingdoms/settle', [
+            'kingdom' => [
+                'id' => $kingdom->id,
+                'name' => $kingdom->name,
+                'biome' => $kingdom->biome,
+            ],
+            'settlements' => $settlements,
+            'can_migrate' => $migrationService->canMigrate($user),
+            'has_pending_request' => $hasPendingRequest,
+            'current_home_village_id' => $user->home_village_id,
         ]);
     }
 }

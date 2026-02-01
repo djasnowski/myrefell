@@ -138,6 +138,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('kingdoms', [KingdomController::class, 'index'])->name('kingdoms.index');
     Route::get('kingdoms/{kingdom}', [KingdomController::class, 'show'])->name('kingdoms.show');
     Route::get('kingdoms/{kingdom}/baronies', [KingdomController::class, 'baronies'])->name('kingdoms.baronies');
+    Route::get('kingdoms/{kingdom}/settle', [KingdomController::class, 'settle'])->name('kingdoms.settle');
 
     Route::get('duchies', [DuchyController::class, 'index'])->name('duchies.index');
     Route::get('duchies/{duchy}', [DuchyController::class, 'show'])->name('duchies.show');

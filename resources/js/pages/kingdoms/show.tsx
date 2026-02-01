@@ -524,6 +524,20 @@ export default function KingdomShow({ kingdom, current_user_id }: Props) {
                                 <p className="text-xs text-stone-500">Political affairs</p>
                             </div>
                         </Link>
+                        <Link
+                            href={`/kingdoms/${kingdom.id}/settle`}
+                            className="flex items-center gap-3 rounded-lg border-2 border-teal-600/50 bg-teal-900/20 p-4 transition hover:bg-teal-800/30"
+                        >
+                            <Home className="h-8 w-8 text-teal-400" />
+                            <div>
+                                <span className="font-pixel text-sm text-teal-300">
+                                    Settle Here
+                                </span>
+                                <p className="text-xs text-stone-500">
+                                    Find a home in this kingdom
+                                </p>
+                            </div>
+                        </Link>
                     </div>
                 </div>
 
