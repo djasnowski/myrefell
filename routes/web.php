@@ -52,6 +52,7 @@ use App\Http\Controllers\SuccessionController;
 use App\Http\Controllers\TariffController;
 use App\Http\Controllers\TavernController;
 use App\Http\Controllers\TaxController;
+use App\Http\Controllers\ThievingController;
 use App\Http\Controllers\TitleController;
 use App\Http\Controllers\TownController;
 use App\Http\Controllers\TradeRouteController;
@@ -289,6 +290,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('tavern', [TavernController::class, 'index'])->name('tavern');
         Route::post('tavern/rest', [TavernController::class, 'rest'])->name('tavern.rest');
         Route::post('tavern/cook', [TavernController::class, 'cook'])->name('tavern.cook');
+        Route::get('thieving', [ThievingController::class, 'index'])->name('thieving');
+        Route::post('thieving/attempt', [ThievingController::class, 'thieve'])->name('thieving.attempt');
     });
 
     // Location-scoped services: Towns
@@ -311,6 +314,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('tavern', [TavernController::class, 'index'])->name('tavern');
         Route::post('tavern/rest', [TavernController::class, 'rest'])->name('tavern.rest');
         Route::post('tavern/cook', [TavernController::class, 'cook'])->name('tavern.cook');
+        Route::get('thieving', [ThievingController::class, 'index'])->name('thieving');
+        Route::post('thieving/attempt', [ThievingController::class, 'thieve'])->name('thieving.attempt');
     });
 
     // Location-scoped services: Baronies
@@ -330,6 +335,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('tavern', [TavernController::class, 'index'])->name('tavern');
         Route::post('tavern/rest', [TavernController::class, 'rest'])->name('tavern.rest');
         Route::post('tavern/cook', [TavernController::class, 'cook'])->name('tavern.cook');
+        Route::get('thieving', [ThievingController::class, 'index'])->name('thieving');
+        Route::post('thieving/attempt', [ThievingController::class, 'thieve'])->name('thieving.attempt');
     });
 
     // Location-scoped services: Duchies
@@ -349,6 +356,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('tavern', [TavernController::class, 'index'])->name('tavern');
         Route::post('tavern/rest', [TavernController::class, 'rest'])->name('tavern.rest');
         Route::post('tavern/cook', [TavernController::class, 'cook'])->name('tavern.cook');
+        Route::get('thieving', [ThievingController::class, 'index'])->name('thieving');
+        Route::post('thieving/attempt', [ThievingController::class, 'thieve'])->name('thieving.attempt');
     });
 
     // Location-scoped services: Kingdoms
@@ -368,6 +377,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('tavern', [TavernController::class, 'index'])->name('tavern');
         Route::post('tavern/rest', [TavernController::class, 'rest'])->name('tavern.rest');
         Route::post('tavern/cook', [TavernController::class, 'cook'])->name('tavern.cook');
+        Route::get('thieving', [ThievingController::class, 'index'])->name('thieving');
+        Route::post('thieving/attempt', [ThievingController::class, 'thieve'])->name('thieving.attempt');
     });
 
     // Crafting Docket

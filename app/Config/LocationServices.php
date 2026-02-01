@@ -118,6 +118,12 @@ class LocationServices
             'icon' => 'store',
             'route' => 'businesses',
         ],
+        'thieving' => [
+            'name' => 'Thieving',
+            'description' => 'Pickpocket targets for gold and items',
+            'icon' => 'hand',
+            'route' => 'thieving',
+        ],
     ];
 
     /**
@@ -136,6 +142,7 @@ class LocationServices
             'jobs',
             'port',      // Only if is_port = true
             'tavern',
+            'thieving',
         ],
         'town' => [
             'training',
@@ -151,6 +158,7 @@ class LocationServices
             'hall',
             'stables',
             'tavern',
+            'thieving',
         ],
         'barony' => [
             'training',
@@ -163,6 +171,7 @@ class LocationServices
             'jobs',
             'stables',
             'tavern',
+            'thieving',
             'businesses',
             'chat',
             'taxes',
@@ -175,6 +184,7 @@ class LocationServices
             'jobs',
             'stables',
             'tavern',
+            'thieving',
         ],
         'kingdom' => [
             'training',
@@ -184,6 +194,7 @@ class LocationServices
             'jobs',
             'stables',
             'tavern',
+            'thieving',
         ],
     ];
 

@@ -8,6 +8,7 @@ import {
     Church,
     Dumbbell,
     Hammer,
+    Hand,
     HeartPulse,
     Landmark,
     MessageSquare,
@@ -50,6 +51,7 @@ const iconMap: Record<string, LucideIcon> = {
     hospital: Church,
     "message-square": MessageSquare,
     receipt: Receipt,
+    hand: Hand,
 };
 
 export function ServiceCard({
