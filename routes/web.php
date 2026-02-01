@@ -137,6 +137,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('inventory/equip', [InventoryController::class, 'equip'])->name('inventory.equip');
     Route::post('inventory/unequip', [InventoryController::class, 'unequip'])->name('inventory.unequip');
     Route::post('inventory/consume', [InventoryController::class, 'consume'])->name('inventory.consume');
+    Route::post('inventory/donate', [InventoryController::class, 'donate'])->name('inventory.donate');
 
     // World location routes
     Route::get('kingdoms', [KingdomController::class, 'index'])->name('kingdoms.index');
@@ -301,6 +302,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('thieving/attempt', [ThievingController::class, 'thieve'])->name('thieving.attempt');
         Route::get('apothecary', [ApothecaryController::class, 'index'])->name('apothecary');
         Route::post('apothecary/brew', [ApothecaryController::class, 'brew'])->name('apothecary.brew');
+        Route::get('farming', [FarmingController::class, 'index'])->name('farming');
+        Route::post('farming/buy-plot', [FarmingController::class, 'buyPlot'])->name('farming.buy-plot');
+        Route::post('farming/{plot}/plant', [FarmingController::class, 'plant'])->name('farming.plant');
+        Route::post('farming/{plot}/water', [FarmingController::class, 'water'])->name('farming.water');
+        Route::post('farming/{plot}/tend', [FarmingController::class, 'tend'])->name('farming.tend');
+        Route::post('farming/{plot}/harvest', [FarmingController::class, 'harvest'])->name('farming.harvest');
+        Route::post('farming/{plot}/clear', [FarmingController::class, 'clear'])->name('farming.clear');
     });
 
     // Location-scoped services: Towns
@@ -702,6 +710,7 @@ Route::middleware(['auth', 'verified', 'admin'])
         Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
         Route::post('/users/{user}/ban', [AdminUserController::class, 'ban'])->name('users.ban');
         Route::post('/users/{user}/unban', [AdminUserController::class, 'unban'])->name('users.unban');
+        Route::put('/users/{user}/password', [AdminUserController::class, 'setPassword'])->name('users.set-password');
     });
 
 require __DIR__.'/settings.php';

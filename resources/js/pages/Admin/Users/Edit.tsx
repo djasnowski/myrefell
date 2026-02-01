@@ -1,9 +1,9 @@
 import { Head, Link, router, usePage } from "@inertiajs/react";
-import { ArrowLeft, Save, User } from "lucide-react";
+import { ArrowLeft, Key, Save, User } from "lucide-react";
 import { useState } from "react";
 import { show as showUser } from "@/actions/App/Http/Controllers/Admin/UserController";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import AdminLayout from "@/layouts/admin-layout";
@@ -23,6 +23,8 @@ interface Props {
 interface Errors {
     username?: string;
     email?: string;
+    password?: string;
+    password_confirmation?: string;
 }
 
 export default function Edit({ user }: Props) {
@@ -30,6 +32,10 @@ export default function Edit({ user }: Props) {
     const [username, setUsername] = useState(user.username);
     const [email, setEmail] = useState(user.email);
     const [loading, setLoading] = useState(false);
+
+    const [password, setPassword] = useState("");
+    const [passwordConfirmation, setPasswordConfirmation] = useState("");
+    const [passwordLoading, setPasswordLoading] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Admin", href: "/admin" },
@@ -50,6 +56,27 @@ export default function Edit({ user }: Props) {
                     router.reload();
                 },
                 onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handlePasswordSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setPasswordLoading(true);
+        router.put(
+            `/admin/users/${user.id}/password`,
+            {
+                password,
+                password_confirmation: passwordConfirmation,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setPassword("");
+                    setPasswordConfirmation("");
+                    router.reload();
+                },
+                onFinish: () => setPasswordLoading(false),
             },
         );
     };
@@ -80,7 +107,8 @@ export default function Edit({ user }: Props) {
                     </div>
                 </div>
 
-                <div className="mx-auto max-w-2xl">
+                <div className="mx-auto max-w-2xl space-y-6">
+                    {/* User Information */}
                     <Card className="border-stone-800 bg-stone-900/50">
                         <CardHeader>
                             <CardTitle className="text-stone-100">User Information</CardTitle>
@@ -134,6 +162,77 @@ export default function Edit({ user }: Props) {
                                     <Button type="submit" disabled={loading}>
                                         <Save className="size-4" />
                                         {loading ? "Saving..." : "Save Changes"}
+                                    </Button>
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+
+                    {/* Set Password */}
+                    <Card className="border-stone-800 bg-stone-900/50">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-stone-100">
+                                <Key className="size-5" />
+                                Set Password
+                            </CardTitle>
+                            <CardDescription>
+                                Set a new password for this user. They will need to use this
+                                password to log in.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form onSubmit={handlePasswordSubmit} className="space-y-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="password" className="text-stone-300">
+                                        New Password
+                                    </Label>
+                                    <Input
+                                        id="password"
+                                        type="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="border-stone-700 bg-stone-900/50"
+                                        placeholder="Enter new password"
+                                        aria-invalid={!!errors.password}
+                                    />
+                                    {errors.password && (
+                                        <p className="text-sm text-red-400">{errors.password}</p>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label
+                                        htmlFor="password_confirmation"
+                                        className="text-stone-300"
+                                    >
+                                        Confirm Password
+                                    </Label>
+                                    <Input
+                                        id="password_confirmation"
+                                        type="password"
+                                        value={passwordConfirmation}
+                                        onChange={(e) => setPasswordConfirmation(e.target.value)}
+                                        className="border-stone-700 bg-stone-900/50"
+                                        placeholder="Confirm new password"
+                                        aria-invalid={!!errors.password_confirmation}
+                                    />
+                                    {errors.password_confirmation && (
+                                        <p className="text-sm text-red-400">
+                                            {errors.password_confirmation}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="flex justify-end border-t border-stone-800 pt-6">
+                                    <Button
+                                        type="submit"
+                                        disabled={
+                                            passwordLoading || !password || !passwordConfirmation
+                                        }
+                                        variant="destructive"
+                                    >
+                                        <Key className="size-4" />
+                                        {passwordLoading ? "Setting Password..." : "Set Password"}
                                     </Button>
                                 </div>
                             </form>

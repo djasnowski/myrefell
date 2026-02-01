@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BanUserRequest;
+use App\Http\Requests\Admin\SetUserPasswordRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\LocationActivityLog;
 use App\Models\PlayerSkill;
@@ -12,6 +13,7 @@ use App\Models\User;
 use App\Models\UserBan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -308,6 +310,18 @@ class UserController extends Controller
         $user->update($request->validated());
 
         return back()->with('success', 'User updated successfully.');
+    }
+
+    /**
+     * Set the password for the specified user.
+     */
+    public function setPassword(SetUserPasswordRequest $request, User $user): RedirectResponse
+    {
+        $user->update([
+            'password' => Hash::make($request->validated('password')),
+        ]);
+
+        return back()->with('success', "Password updated for {$user->username}.");
     }
 
     /**
