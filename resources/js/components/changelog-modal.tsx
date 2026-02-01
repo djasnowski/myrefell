@@ -314,8 +314,12 @@ export default function ChangelogModal({ onClose, hasUnread }: Props) {
                                     className="rounded-lg border border-border/50 bg-card/50 overflow-hidden"
                                 >
                                     {/* Entry Header */}
-                                    <div className="bg-muted/30 px-4 py-3 border-b border-border/30">
-                                        <div className="flex items-start gap-3">
+                                    <div className="relative bg-muted/30 px-4 py-3 border-b border-border/30">
+                                        {/* Date in top right */}
+                                        <span className="absolute top-2 right-3 text-xs text-muted-foreground">
+                                            {entry.date.replace(/(\w+)\s+(\d+),\s+\d+/, "$1 $2")}
+                                        </span>
+                                        <div className="flex items-start gap-3 pr-16">
                                             <div className="rounded-lg bg-primary/10 p-2 shrink-0">
                                                 {entry.icon}
                                             </div>
@@ -328,9 +332,6 @@ export default function ChangelogModal({ onClose, hasUnread }: Props) {
                                                         v{entry.version}
                                                     </span>
                                                 </div>
-                                                <p className="text-xs text-muted-foreground mt-0.5">
-                                                    {entry.date}
-                                                </p>
                                                 <p className="text-sm text-muted-foreground mt-2">
                                                     {entry.description}
                                                 </p>
