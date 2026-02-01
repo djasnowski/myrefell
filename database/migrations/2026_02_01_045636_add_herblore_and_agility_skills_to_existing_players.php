@@ -12,8 +12,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Update the check constraint to allow new skills
+        // First, drop the constraint so we can rename herbalism to herblore
         DB::statement('ALTER TABLE player_skills DROP CONSTRAINT IF EXISTS player_skills_skill_name_check');
+
+        // Rename any existing 'herbalism' skills to 'herblore' (from earlier migration)
+        DB::table('player_skills')
+            ->where('skill_name', 'herbalism')
+            ->update(['skill_name' => 'herblore']);
+
+        // Now add the constraint with the correct skill names
         DB::statement("
             ALTER TABLE player_skills
             ADD CONSTRAINT player_skills_skill_name_check

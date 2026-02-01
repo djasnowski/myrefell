@@ -75,14 +75,14 @@ const activityIcons: Record<string, typeof Pickaxe> = {
     mining: Pickaxe,
     fishing: Fish,
     woodcutting: Axe,
-    herbalism: Leaf,
+    herblore: Leaf,
 };
 
 const activityBgColors: Record<string, string> = {
     mining: "from-stone-800 to-stone-900 border-stone-600",
     fishing: "from-blue-900/50 to-stone-900 border-blue-600/50",
     woodcutting: "from-green-900/50 to-stone-900 border-green-600/50",
-    herbalism: "from-emerald-900/50 to-stone-900 border-emerald-600/50",
+    herblore: "from-emerald-900/50 to-stone-900 border-emerald-600/50",
 };
 
 const seasonIcons: Record<string, typeof Sun> = {

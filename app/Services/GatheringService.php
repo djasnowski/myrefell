@@ -17,7 +17,7 @@ class GatheringService
         'mining' => 'mining',
         'fishing' => 'fishing',
         'woodcutting' => 'woodcutting',
-        'herbalism' => 'herbalism',
+        'herblore' => 'herblore',
     ];
 
     /**
@@ -71,9 +71,9 @@ class GatheringService
                 ['name' => 'Yew Wood', 'weight' => 10, 'min_level' => 50, 'xp_bonus' => 40],
             ],
         ],
-        'herbalism' => [
-            'name' => 'Herbalism',
-            'skill' => 'herbalism',
+        'herblore' => [
+            'name' => 'Herblore',
+            'skill' => 'herblore',
             'energy_cost' => 3,
             'base_xp' => 8,
             'task_type' => 'forage',

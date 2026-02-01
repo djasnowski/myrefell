@@ -12,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Update the check constraint to allow 'agility' and 'herbalism'
+        // Update the check constraint to allow 'agility' and 'herblore'
         DB::statement('ALTER TABLE player_skills DROP CONSTRAINT IF EXISTS player_skills_skill_name_check');
         DB::statement("
             ALTER TABLE player_skills
@@ -21,7 +21,7 @@ return new class extends Migration
                 'attack', 'strength', 'defense', 'hitpoints', 'range',
                 'farming', 'mining', 'fishing', 'woodcutting',
                 'cooking', 'smithing', 'crafting', 'prayer', 'thieving',
-                'agility', 'herbalism'
+                'agility', 'herblore'
             ))
         ");
 
@@ -39,15 +39,15 @@ return new class extends Migration
             ]);
         }
 
-        // Add herbalism skill to all existing players who don't have it
+        // Add herblore skill to all existing players who don't have it
         $users = User::whereDoesntHave('skills', function ($query) {
-            $query->where('skill_name', 'herbalism');
+            $query->where('skill_name', 'herblore');
         })->get();
 
         foreach ($users as $user) {
             PlayerSkill::create([
                 'player_id' => $user->id,
-                'skill_name' => 'herbalism',
+                'skill_name' => 'herblore',
                 'level' => 1,
                 'xp' => 0,
             ]);
@@ -59,11 +59,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Delete all agility and herbalism skills
+        // Delete all agility and herblore skills
         PlayerSkill::where('skill_name', 'agility')->delete();
-        PlayerSkill::where('skill_name', 'herbalism')->delete();
+        PlayerSkill::where('skill_name', 'herblore')->delete();
 
-        // Restore the old constraint without 'agility' and 'herbalism'
+        // Restore the old constraint without 'agility' and 'herblore'
         DB::statement('ALTER TABLE player_skills DROP CONSTRAINT IF EXISTS player_skills_skill_name_check');
         DB::statement("
             ALTER TABLE player_skills

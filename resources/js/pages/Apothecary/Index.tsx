@@ -55,10 +55,10 @@ interface BrewingInfo {
     player_energy: number;
     max_energy: number;
     free_slots: number;
-    herbalism_level: number;
-    herbalism_xp: number;
-    herbalism_xp_progress: number;
-    herbalism_xp_to_next: number;
+    herblore_level: number;
+    herblore_xp: number;
+    herblore_xp_progress: number;
+    herblore_xp_to_next: number;
     herbs_in_inventory: IngredientInventory[];
 }
 
@@ -179,7 +179,7 @@ function RecipeCard({
             {recipe.is_locked ? (
                 <div className="rounded-md bg-stone-900/50 px-3 py-2 text-center">
                     <span className="font-pixel text-[10px] text-stone-500">
-                        Requires Level {recipe.required_level} Herbalism
+                        Requires Level {recipe.required_level} Herblore
                     </span>
                 </div>
             ) : (
@@ -377,22 +377,22 @@ export default function ApothecaryIndex() {
                         <div className="mb-1 flex items-center justify-between">
                             <div className="flex items-center gap-1 font-pixel text-xs text-emerald-400">
                                 <Leaf className="h-3 w-3" />
-                                Herbalism
+                                Herblore
                             </div>
                             <span className="font-pixel text-xs text-stone-300">
-                                {brewing_info.herbalism_level}/99
+                                {brewing_info.herblore_level}/99
                             </span>
                         </div>
                         <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
                             <div
                                 className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all"
                                 style={{
-                                    width: `${brewing_info.herbalism_xp_progress}%`,
+                                    width: `${brewing_info.herblore_xp_progress}%`,
                                 }}
                             />
                         </div>
                         <div className="mt-1 font-pixel text-[10px] text-stone-400">
-                            {brewing_info.herbalism_xp_to_next.toLocaleString()} XP to next level
+                            {brewing_info.herblore_xp_to_next.toLocaleString()} XP to next level
                         </div>
                     </div>
                 </div>
@@ -480,7 +480,7 @@ export default function ApothecaryIndex() {
                                 No recipes available
                             </p>
                             <p className="font-pixel text-xs text-stone-600">
-                                Increase your Herbalism level to unlock more
+                                Increase your Herblore level to unlock more
                             </p>
                         </div>
                     </div>

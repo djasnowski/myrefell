@@ -22,7 +22,7 @@ class ApothecaryService
         'minor_health_potion' => [
             'name' => 'Minor Health Potion',
             'category' => 'restoration',
-            'skill' => 'herbalism',
+            'skill' => 'herblore',
             'required_level' => 1,
             'xp_reward' => 10,
             'energy_cost' => 3,
@@ -36,7 +36,7 @@ class ApothecaryService
         'weak_antidote' => [
             'name' => 'Weak Antidote',
             'category' => 'restoration',
-            'skill' => 'herbalism',
+            'skill' => 'herblore',
             'required_level' => 5,
             'xp_reward' => 15,
             'energy_cost' => 4,
@@ -50,7 +50,7 @@ class ApothecaryService
         'energy_tonic' => [
             'name' => 'Energy Tonic',
             'category' => 'restoration',
-            'skill' => 'herbalism',
+            'skill' => 'herblore',
             'required_level' => 10,
             'xp_reward' => 20,
             'energy_cost' => 5,
@@ -67,7 +67,7 @@ class ApothecaryService
         'attack_potion' => [
             'name' => 'Attack Potion',
             'category' => 'combat',
-            'skill' => 'herbalism',
+            'skill' => 'herblore',
             'required_level' => 15,
             'xp_reward' => 25,
             'energy_cost' => 5,
@@ -82,7 +82,7 @@ class ApothecaryService
         'strength_potion' => [
             'name' => 'Strength Potion',
             'category' => 'combat',
-            'skill' => 'herbalism',
+            'skill' => 'herblore',
             'required_level' => 18,
             'xp_reward' => 28,
             'energy_cost' => 5,
@@ -97,7 +97,7 @@ class ApothecaryService
         'defense_potion' => [
             'name' => 'Defense Potion',
             'category' => 'combat',
-            'skill' => 'herbalism',
+            'skill' => 'herblore',
             'required_level' => 20,
             'xp_reward' => 30,
             'energy_cost' => 5,
@@ -112,7 +112,7 @@ class ApothecaryService
         'accuracy_potion' => [
             'name' => 'Accuracy Potion',
             'category' => 'combat',
-            'skill' => 'herbalism',
+            'skill' => 'herblore',
             'required_level' => 22,
             'xp_reward' => 32,
             'energy_cost' => 5,
@@ -127,7 +127,7 @@ class ApothecaryService
         'agility_potion' => [
             'name' => 'Agility Potion',
             'category' => 'combat',
-            'skill' => 'herbalism',
+            'skill' => 'herblore',
             'required_level' => 25,
             'xp_reward' => 35,
             'energy_cost' => 6,
@@ -144,7 +144,7 @@ class ApothecaryService
         'health_potion' => [
             'name' => 'Health Potion',
             'category' => 'restoration',
-            'skill' => 'herbalism',
+            'skill' => 'herblore',
             'required_level' => 25,
             'xp_reward' => 35,
             'energy_cost' => 6,
@@ -159,7 +159,7 @@ class ApothecaryService
         'super_attack_potion' => [
             'name' => 'Super Attack Potion',
             'category' => 'combat',
-            'skill' => 'herbalism',
+            'skill' => 'herblore',
             'required_level' => 30,
             'xp_reward' => 45,
             'energy_cost' => 7,
@@ -174,7 +174,7 @@ class ApothecaryService
         'super_strength_potion' => [
             'name' => 'Super Strength Potion',
             'category' => 'combat',
-            'skill' => 'herbalism',
+            'skill' => 'herblore',
             'required_level' => 33,
             'xp_reward' => 48,
             'energy_cost' => 7,
@@ -189,7 +189,7 @@ class ApothecaryService
         'super_defense_potion' => [
             'name' => 'Super Defense Potion',
             'category' => 'combat',
-            'skill' => 'herbalism',
+            'skill' => 'herblore',
             'required_level' => 36,
             'xp_reward' => 50,
             'energy_cost' => 7,
@@ -204,7 +204,7 @@ class ApothecaryService
         'prayer_potion' => [
             'name' => 'Prayer Potion',
             'category' => 'spiritual',
-            'skill' => 'herbalism',
+            'skill' => 'herblore',
             'required_level' => 38,
             'xp_reward' => 55,
             'energy_cost' => 7,
@@ -221,7 +221,7 @@ class ApothecaryService
         'greater_health_potion' => [
             'name' => 'Greater Health Potion',
             'category' => 'restoration',
-            'skill' => 'herbalism',
+            'skill' => 'herblore',
             'required_level' => 45,
             'xp_reward' => 65,
             'energy_cost' => 8,
@@ -236,7 +236,7 @@ class ApothecaryService
         'combat_potion' => [
             'name' => 'Combat Potion',
             'category' => 'combat',
-            'skill' => 'herbalism',
+            'skill' => 'herblore',
             'required_level' => 50,
             'xp_reward' => 75,
             'energy_cost' => 9,
@@ -251,7 +251,7 @@ class ApothecaryService
         'energy_elixir' => [
             'name' => 'Energy Elixir',
             'category' => 'restoration',
-            'skill' => 'herbalism',
+            'skill' => 'herblore',
             'required_level' => 55,
             'xp_reward' => 85,
             'energy_cost' => 10,
@@ -268,7 +268,7 @@ class ApothecaryService
         'overload_potion' => [
             'name' => 'Overload Potion',
             'category' => 'combat',
-            'skill' => 'herbalism',
+            'skill' => 'herblore',
             'required_level' => 65,
             'xp_reward' => 100,
             'energy_cost' => 12,
@@ -284,7 +284,7 @@ class ApothecaryService
         'elixir_of_life' => [
             'name' => 'Elixir of Life',
             'category' => 'restoration',
-            'skill' => 'herbalism',
+            'skill' => 'herblore',
             'required_level' => 75,
             'xp_reward' => 150,
             'energy_cost' => 15,
@@ -387,8 +387,8 @@ class ApothecaryService
             ];
         }
 
-        $yieldBonus = $this->townBonusService->getYieldBonus($user, 'herbalism');
-        $contributionRate = $this->townBonusService->getContributionRate($user, 'herbalism');
+        $yieldBonus = $this->townBonusService->getYieldBonus($user, 'herblore');
+        $contributionRate = $this->townBonusService->getContributionRate($user, 'herblore');
 
         return [
             'id' => $id,
@@ -468,7 +468,7 @@ class ApothecaryService
         if ($skillLevel < $recipe['required_level']) {
             return [
                 'success' => false,
-                'message' => "You need level {$recipe['required_level']} herbalism to brew this.",
+                'message' => "You need level {$recipe['required_level']} herblore to brew this.",
             ];
         }
 
@@ -516,13 +516,13 @@ class ApothecaryService
             }
 
             $baseQuantity = $recipe['output']['quantity'];
-            $yieldBonus = $this->townBonusService->getYieldBonus($user, 'herbalism');
+            $yieldBonus = $this->townBonusService->getYieldBonus($user, 'herblore');
             $bonusQuantity = $this->townBonusService->calculateBonusQuantity($yieldBonus, $baseQuantity);
             $totalQuantity = $baseQuantity + $bonusQuantity;
 
             $this->inventoryService->addItem($user, $outputItem, $totalQuantity);
 
-            $contributionRate = $this->townBonusService->getContributionRate($user, 'herbalism');
+            $contributionRate = $this->townBonusService->getContributionRate($user, 'herblore');
             $contribution = $this->townBonusService->calculateContribution($contributionRate, $totalQuantity);
             $contributedToStockpile = false;
             if ($contribution > 0) {
@@ -611,12 +611,12 @@ class ApothecaryService
 
         $bonuses = $this->townBonusService->getBonusInfo($user);
 
-        // Get herbalism skill info for XP progress
-        $herbalismSkill = $user->skills()->where('skill_name', 'herbalism')->first();
-        $herbalismLevel = $herbalismSkill?->level ?? 1;
-        $herbalismXp = $herbalismSkill?->xp ?? 0;
-        $herbalismXpProgress = $herbalismSkill?->getXpProgress() ?? 0;
-        $herbalismXpToNext = $herbalismSkill?->xpToNextLevel() ?? 60;
+        // Get herblore skill info for XP progress
+        $herbloreSkill = $user->skills()->where('skill_name', 'herblore')->first();
+        $herbloreLevel = $herbloreSkill?->level ?? 1;
+        $herbloreXp = $herbloreSkill?->xp ?? 0;
+        $herbloreXpProgress = $herbloreSkill?->getXpProgress() ?? 0;
+        $herbloreXpToNext = $herbloreSkill?->xpToNextLevel() ?? 60;
 
         // Get herbs in inventory
         $herbsInInventory = $this->getHerbsInInventory($user);
@@ -628,10 +628,10 @@ class ApothecaryService
             'player_energy' => $user->energy,
             'max_energy' => $user->max_energy,
             'free_slots' => $this->inventoryService->freeSlots($user),
-            'herbalism_level' => $herbalismLevel,
-            'herbalism_xp' => $herbalismXp,
-            'herbalism_xp_progress' => $herbalismXpProgress,
-            'herbalism_xp_to_next' => $herbalismXpToNext,
+            'herblore_level' => $herbloreLevel,
+            'herblore_xp' => $herbloreXp,
+            'herblore_xp_progress' => $herbloreXpProgress,
+            'herblore_xp_to_next' => $herbloreXpToNext,
             'herbs_in_inventory' => $herbsInInventory,
             'role_bonuses' => $bonuses,
         ];
