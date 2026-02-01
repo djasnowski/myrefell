@@ -201,7 +201,7 @@ export default function StableIndex() {
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    router.reload();
+                    router.reload({ only: ["userHorse", "userGold"] });
                 },
                 onFinish: () => setLoading(false),
             },
