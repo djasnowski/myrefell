@@ -206,7 +206,7 @@ class KingdomController extends Controller
         // Build list of all settlements
         $settlements = [];
         foreach ($kingdom->baronies as $barony) {
-            // Add towns
+            // Add towns (towns don't have residents - players settle in villages)
             foreach ($barony->towns as $town) {
                 $settlements[] = [
                     'id' => $town->id,
@@ -215,9 +215,9 @@ class KingdomController extends Controller
                     'barony_name' => $barony->name,
                     'biome' => $town->biome ?? $barony->biome,
                     'population' => $town->population,
-                    'resident_count' => $town->residents()->count(),
+                    'resident_count' => 0,
                     'is_port' => $town->is_port,
-                    'is_home' => $user->home_village_id === $town->id,
+                    'is_home' => false,
                 ];
             }
 
