@@ -23,11 +23,11 @@ class TavernController extends Controller
     /**
      * Show the tavern page.
      */
-    public function index(Request $request, ?Village $village = null, ?Town $town = null): Response
+    public function index(Request $request, ?Village $village = null, ?Town $town = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null): Response
     {
         $user = $request->user();
 
-        $location = $village ?? $town;
+        $location = $village ?? $town ?? $duchy ?? $kingdom;
         $locationType = $this->getLocationType($location);
 
         // Get recent activity at this location (rumors/gossip)
@@ -82,7 +82,7 @@ class TavernController extends Controller
     /**
      * Rest at the tavern to restore energy.
      */
-    public function rest(Request $request, ?Village $village = null, ?Town $town = null)
+    public function rest(Request $request, ?Village $village = null, ?Town $town = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null)
     {
         $user = $request->user();
         $restCost = 10;
@@ -121,13 +121,13 @@ class TavernController extends Controller
     /**
      * Cook a recipe at the tavern.
      */
-    public function cook(Request $request, ?Village $village = null, ?Town $town = null): JsonResponse
+    public function cook(Request $request, ?Village $village = null, ?Town $town = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null): JsonResponse
     {
         $request->validate([
             'recipe' => 'required|string',
         ]);
 
-        $location = $village ?? $town;
+        $location = $village ?? $town ?? $duchy ?? $kingdom;
         $locationType = $this->getLocationType($location);
 
         $user = $request->user();
