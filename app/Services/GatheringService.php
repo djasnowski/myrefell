@@ -17,6 +17,7 @@ class GatheringService
         'mining' => 'mining',
         'fishing' => 'fishing',
         'woodcutting' => 'woodcutting',
+        'herbalism' => 'herbalism',
     ];
 
     /**
@@ -68,6 +69,22 @@ class GatheringService
                 ['name' => 'Willow Wood', 'weight' => 25, 'min_level' => 20, 'xp_bonus' => 15],
                 ['name' => 'Maple Wood', 'weight' => 15, 'min_level' => 35, 'xp_bonus' => 25],
                 ['name' => 'Yew Wood', 'weight' => 10, 'min_level' => 50, 'xp_bonus' => 40],
+            ],
+        ],
+        'herbalism' => [
+            'name' => 'Herbalism',
+            'skill' => 'herbalism',
+            'energy_cost' => 3,
+            'base_xp' => 8,
+            'task_type' => 'forage',
+            'location_types' => ['village', 'town', 'wilderness'],
+            'resources' => [
+                ['name' => 'Herb', 'weight' => 50, 'min_level' => 1, 'xp_bonus' => 0],
+                ['name' => 'Healing Herb', 'weight' => 40, 'min_level' => 5, 'xp_bonus' => 5],
+                ['name' => 'Moonpetal', 'weight' => 30, 'min_level' => 15, 'xp_bonus' => 12],
+                ['name' => 'Bloodroot', 'weight' => 20, 'min_level' => 25, 'xp_bonus' => 20],
+                ['name' => 'Ghostcap Mushroom', 'weight' => 15, 'min_level' => 35, 'xp_bonus' => 28],
+                ['name' => 'Dragonvine', 'weight' => 10, 'min_level' => 50, 'xp_bonus' => 40],
             ],
         ],
     ];
