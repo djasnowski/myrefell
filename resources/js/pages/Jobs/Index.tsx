@@ -480,11 +480,39 @@ export default function JobsIndex() {
                                 {player.energy}/{player.max_energy}
                             </span>
                         </div>
-                        <div className="rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2">
+                        <div className="group relative rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2">
                             <span className="font-pixel text-xs text-stone-400">Jobs:</span>
                             <span className="ml-2 font-pixel text-sm text-amber-300">
                                 {all_employment.length}/{max_jobs}
                             </span>
+                            {all_employment.length > 0 && (
+                                <div className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden w-64 rounded-lg border border-stone-600 bg-stone-900 p-3 shadow-xl group-hover:block">
+                                    <div className="mb-2 font-pixel text-xs text-stone-400">
+                                        Your Jobs
+                                    </div>
+                                    <div className="space-y-2">
+                                        {all_employment.map((emp) => {
+                                            const EmpIcon = iconMap[emp.icon] || Briefcase;
+                                            return (
+                                                <div
+                                                    key={emp.id}
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    <EmpIcon className="h-4 w-4 text-amber-400" />
+                                                    <div className="flex-1 overflow-hidden">
+                                                        <div className="truncate font-pixel text-xs text-stone-200">
+                                                            {emp.name}
+                                                        </div>
+                                                        <div className="truncate font-pixel text-[10px] text-stone-500">
+                                                            {emp.location_name}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
