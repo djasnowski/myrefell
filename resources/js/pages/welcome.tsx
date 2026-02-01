@@ -67,7 +67,7 @@ function FramedCard({
 }
 
 export default function Welcome({ canRegister = true }: { canRegister?: boolean }) {
-    const { auth } = usePage<SharedData>().props;
+    const { auth, online_count } = usePage<SharedData>().props;
 
     return (
         <>
@@ -217,6 +217,22 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                 </div>
                             ))}
                         </div>
+
+                        {/* Players Online */}
+                        {online_count !== undefined && online_count > 0 && (
+                            <div className="mt-6 flex justify-center">
+                                <div className="inline-flex items-center gap-3 rounded-xl border border-green-500/30 bg-green-900/20 backdrop-blur-sm px-6 py-3">
+                                    <span className="relative flex h-3 w-3">
+                                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                                        <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500"></span>
+                                    </span>
+                                    <span className="text-lg font-semibold text-green-300">
+                                        {online_count} {online_count === 1 ? "player" : "players"}{" "}
+                                        online!
+                                    </span>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Scroll Indicator */}
