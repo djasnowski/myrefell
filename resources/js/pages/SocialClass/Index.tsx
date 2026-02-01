@@ -13,9 +13,11 @@ import {
     FileText,
     Gavel,
     Heart,
+    Info,
     Loader2,
     MapPin,
     Shield,
+    Star,
     Swords,
     User,
     Users,
@@ -24,6 +26,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { Button } from "@/components/ui/button";
 import { gameToast } from "@/components/ui/game-toast";
 import type { BreadcrumbItem } from "@/types";
 
@@ -422,6 +425,245 @@ function EnnoblementForm({
     );
 }
 
+function SocialClassInfoModal({ onClose }: { onClose: () => void }) {
+    const socialClasses = [
+        {
+            name: "Serf",
+            color: "text-stone-400",
+            bgColor: "bg-stone-900/50",
+            borderColor: "border-stone-600/50",
+            description:
+                "The lowest social standing. Serfs are bound to the land and owe labor to their lord.",
+            rights: [
+                "Cannot travel freely",
+                "Cannot own property",
+                "Cannot vote",
+                "Cannot join guilds",
+            ],
+            howToAdvance:
+                "Request manumission from your Baron through purchase (100,000g), military service, or exceptional deeds.",
+        },
+        {
+            name: "Freeman",
+            color: "text-green-300",
+            bgColor: "bg-green-900/30",
+            borderColor: "border-green-600/50",
+            description:
+                "A free commoner with basic citizenship rights. The starting class for most players.",
+            rights: ["Travel freely", "Own property", "Join guilds", "Vote in elections"],
+            howToAdvance:
+                "Move to a town to become a Burgher, or petition the King for ennoblement.",
+        },
+        {
+            name: "Burgher",
+            color: "text-blue-300",
+            bgColor: "bg-blue-900/30",
+            borderColor: "border-blue-600/50",
+            description:
+                "A town citizen with full economic rights. Burghers are the merchant and craftsman class.",
+            rights: [
+                "All Freeman rights",
+                "Own businesses",
+                "Hold town offices",
+                "Enhanced trade privileges",
+            ],
+            howToAdvance:
+                "Petition the King for ennoblement through gold (500,000g), military service, or royal favor.",
+        },
+        {
+            name: "Noble",
+            color: "text-purple-300",
+            bgColor: "bg-purple-900/30",
+            borderColor: "border-purple-600/50",
+            description:
+                "The aristocratic class with the highest social standing. Nobles can hold high offices and rule domains.",
+            rights: [
+                "All Burgher rights",
+                "Hold high offices",
+                "Bear noble arms",
+                "Rule domains",
+                "Attend royal court",
+            ],
+            howToAdvance:
+                "This is the highest social class. Advance through the Title system for greater prestige.",
+        },
+        {
+            name: "Clergy",
+            color: "text-amber-300",
+            bgColor: "bg-amber-900/30",
+            borderColor: "border-amber-600/50",
+            description:
+                "Members of religious orders. A separate class with unique privileges and restrictions.",
+            rights: [
+                "Sanctuary rights",
+                "Tax exemptions",
+                "Religious offices",
+                "Cannot marry",
+                "Cannot bear arms",
+            ],
+            howToAdvance: "Join a religious order or be ordained by the church.",
+        },
+    ];
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose} />
+
+            {/* Modal */}
+            <div className="relative w-full max-w-3xl max-h-[85vh] overflow-hidden">
+                {/* Corner decorations */}
+                <div className="absolute -top-2 -left-2 w-6 h-6 border-t-2 border-l-2 border-purple-500/60" />
+                <div className="absolute -top-2 -right-2 w-6 h-6 border-t-2 border-r-2 border-purple-500/60" />
+                <div className="absolute -bottom-2 -left-2 w-6 h-6 border-b-2 border-l-2 border-purple-500/60" />
+                <div className="absolute -bottom-2 -right-2 w-6 h-6 border-b-2 border-r-2 border-purple-500/60" />
+
+                <div className="relative bg-card border border-border/50 shadow-lg shadow-purple-500/5 flex flex-col max-h-[85vh]">
+                    {/* Close button */}
+                    <button
+                        onClick={onClose}
+                        className="absolute right-3 top-3 z-10 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    >
+                        <X className="h-4 w-4" />
+                        <span className="sr-only">Close</span>
+                    </button>
+
+                    {/* Header */}
+                    <div className="border-b border-border/50 px-6 py-4 shrink-0">
+                        <div className="flex items-center gap-3 pr-6">
+                            <Crown className="h-6 w-6 text-purple-400" />
+                            <h2 className="font-[Cinzel] text-xl font-bold text-foreground">
+                                Social Class System
+                            </h2>
+                        </div>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Understanding the social hierarchy of Myrefell
+                        </p>
+                    </div>
+
+                    {/* Content - Scrollable */}
+                    <div className="overflow-y-auto flex-1 px-6 py-4">
+                        {/* Overview */}
+                        <div className="mb-6 rounded-lg border border-border/50 bg-muted/20 p-4">
+                            <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
+                                <Users className="h-4 w-4 text-purple-400" />
+                                Overview
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                                Your social class determines your rights, privileges, and
+                                opportunities in the realm. Higher classes have more freedoms but
+                                come with greater responsibilities. Advancement is possible through
+                                wealth, service, or royal favor.
+                            </p>
+                        </div>
+
+                        {/* Social Classes */}
+                        <div className="space-y-4">
+                            {socialClasses.map((cls) => (
+                                <div
+                                    key={cls.name}
+                                    className={`rounded-lg border ${cls.borderColor} ${cls.bgColor} overflow-hidden`}
+                                >
+                                    <div className="border-b border-border/30 px-4 py-2">
+                                        <h3
+                                            className={`flex items-center gap-2 font-semibold ${cls.color}`}
+                                        >
+                                            <User className="h-4 w-4" />
+                                            {cls.name}
+                                        </h3>
+                                    </div>
+                                    <div className="px-4 py-3 space-y-3">
+                                        <p className="text-sm text-muted-foreground">
+                                            {cls.description}
+                                        </p>
+
+                                        <div>
+                                            <span className="text-xs font-medium text-stone-400">
+                                                Rights & Restrictions:
+                                            </span>
+                                            <ul className="mt-1 grid grid-cols-2 gap-1">
+                                                {cls.rights.map((right, i) => (
+                                                    <li
+                                                        key={i}
+                                                        className="flex items-center gap-1 text-xs text-muted-foreground"
+                                                    >
+                                                        <span
+                                                            className={
+                                                                right.startsWith("Cannot")
+                                                                    ? "text-red-400"
+                                                                    : "text-green-400"
+                                                            }
+                                                        >
+                                                            {right.startsWith("Cannot") ? "✗" : "✓"}
+                                                        </span>
+                                                        {right}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+
+                                        <div>
+                                            <span className="text-xs font-medium text-stone-400">
+                                                How to Advance:
+                                            </span>
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                {cls.howToAdvance}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Key Concepts */}
+                        <div className="mt-6 rounded-lg border border-purple-600/30 bg-purple-900/20 p-4">
+                            <h3 className="mb-2 flex items-center gap-2 font-semibold text-purple-400">
+                                <Star className="h-4 w-4" />
+                                Key Concepts
+                            </h3>
+                            <ul className="space-y-2 text-sm text-muted-foreground">
+                                <li className="flex gap-2">
+                                    <span className="font-medium text-green-400">Manumission:</span>
+                                    The process of freeing a serf, either by purchase or lord's
+                                    decree.
+                                </li>
+                                <li className="flex gap-2">
+                                    <span className="font-medium text-purple-400">
+                                        Ennoblement:
+                                    </span>
+                                    Being elevated to the noble class by royal decree.
+                                </li>
+                                <li className="flex gap-2">
+                                    <span className="font-medium text-blue-400">
+                                        Burgher Status:
+                                    </span>
+                                    Requires residence in a town (not a village).
+                                </li>
+                                <li className="flex gap-2">
+                                    <span className="font-medium text-amber-400">
+                                        Social Class vs Titles:
+                                    </span>
+                                    Social class is your base status; titles are honors within your
+                                    class.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="border-t border-border/50 px-6 py-4 shrink-0">
+                        <div className="flex items-center justify-end">
+                            <Button size="sm" onClick={onClose}>
+                                Got it!
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function SocialClassIndex() {
     const {
         player,
@@ -452,6 +694,7 @@ export default function SocialClassIndex() {
     const [showManumissionForm, setShowManumissionForm] = useState(false);
     const [showEnnoblementForm, setShowEnnoblementForm] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
+    const [showInfo, setShowInfo] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -540,6 +783,8 @@ export default function SocialClassIndex() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Social Class" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-y-auto p-4">
+                {showInfo && <SocialClassInfoModal onClose={() => setShowInfo(false)} />}
+
                 {/* Current Class Status */}
                 <div className={`rounded-xl border-2 p-4 ${classColors[player.social_class]}`}>
                     <div className="mb-4 flex items-center justify-between">
@@ -548,9 +793,18 @@ export default function SocialClassIndex() {
                                 <User className="h-6 w-6" />
                             </div>
                             <div>
-                                <h1 className="font-pixel text-xl">
-                                    {player.social_class_display}
-                                </h1>
+                                <div className="flex items-center gap-2">
+                                    <h1 className="font-pixel text-xl">
+                                        {player.social_class_display}
+                                    </h1>
+                                    <button
+                                        onClick={() => setShowInfo(true)}
+                                        className="rounded-full p-1 text-stone-400 hover:bg-stone-700 hover:text-stone-200 transition"
+                                        title="Social Class Guide"
+                                    >
+                                        <Info className="h-4 w-4" />
+                                    </button>
+                                </div>
                                 <p className="font-pixel text-xs text-stone-400">
                                     {player.username}
                                 </p>
