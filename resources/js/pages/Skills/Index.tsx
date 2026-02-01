@@ -7,6 +7,7 @@ import {
     Crosshair,
     Fish,
     Hammer,
+    Hand,
     Heart,
     Pickaxe,
     Scissors,
@@ -42,6 +43,7 @@ interface SkillGroups {
     combat: Skill[];
     gathering: Skill[];
     crafting: Skill[];
+    support: Skill[];
 }
 
 interface PageProps {
@@ -69,6 +71,7 @@ const skillIcons: Record<string, LucideIcon> = {
     cooking: Beef,
     smithing: Hammer,
     crafting: Scissors,
+    thieving: Hand,
 };
 
 const categoryConfig = {
@@ -86,6 +89,11 @@ const categoryConfig = {
         color: "border-blue-500/50 bg-blue-900/20",
         iconColor: "text-blue-400",
         barColor: "from-blue-600 to-blue-400",
+    },
+    support: {
+        color: "border-purple-500/50 bg-purple-900/20",
+        iconColor: "text-purple-400",
+        barColor: "from-purple-600 to-purple-400",
     },
 };
 
@@ -189,6 +197,9 @@ export default function SkillsIndex() {
                     ))}
                     {skills.crafting.map((skill) => (
                         <SkillCard key={skill.name} skill={skill} category="crafting" />
+                    ))}
+                    {skills.support.map((skill) => (
+                        <SkillCard key={skill.name} skill={skill} category="support" />
                     ))}
                 </div>
             </div>

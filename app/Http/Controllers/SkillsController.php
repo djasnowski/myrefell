@@ -29,6 +29,10 @@ class SkillsController extends Controller
             ->map(fn ($skill) => $this->formatSkill($skill))
             ->values();
 
+        $supportSkills = $skills->filter(fn ($skill) => in_array($skill->skill_name, ['thieving']))
+            ->map(fn ($skill) => $this->formatSkill($skill))
+            ->values();
+
         // Calculate totals
         $totalLevel = $skills->sum('level');
         $totalXp = $skills->sum('xp');
@@ -39,6 +43,7 @@ class SkillsController extends Controller
                 'combat' => $combatSkills,
                 'gathering' => $gatheringSkills,
                 'crafting' => $craftingSkills,
+                'support' => $supportSkills,
             ],
             'stats' => [
                 'total_level' => $totalLevel,
