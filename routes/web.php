@@ -333,24 +333,38 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('duchies/{duchy}')->name('duchies.')->middleware('at.location')->group(function () {
         Route::get('training', [TrainingController::class, 'index'])->name('training');
         Route::post('training/train', [TrainingController::class, 'train'])->name('training.train');
+        Route::get('crafting', [CraftingController::class, 'index'])->name('crafting');
+        Route::post('crafting/craft', [CraftingController::class, 'craft'])->name('crafting.craft');
+        Route::get('forge', [ForgeController::class, 'index'])->name('forge');
+        Route::post('forge/smith', [ForgeController::class, 'forge'])->name('forge.smith');
         Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
         Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
         Route::post('shrine/request/{blessingRequest}/approve', [BlessingController::class, 'approveRequest'])->name('shrine.approve');
         Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
         Route::get('stables', [StableController::class, 'index'])->name('stables');
+        Route::get('tavern', [TavernController::class, 'index'])->name('tavern');
+        Route::post('tavern/rest', [TavernController::class, 'rest'])->name('tavern.rest');
+        Route::post('tavern/cook', [TavernController::class, 'cook'])->name('tavern.cook');
     });
 
     // Location-scoped services: Kingdoms
     Route::prefix('kingdoms/{kingdom}')->name('kingdoms.')->middleware('at.location')->group(function () {
         Route::get('training', [TrainingController::class, 'index'])->name('training');
         Route::post('training/train', [TrainingController::class, 'train'])->name('training.train');
+        Route::get('crafting', [CraftingController::class, 'index'])->name('crafting');
+        Route::post('crafting/craft', [CraftingController::class, 'craft'])->name('crafting.craft');
+        Route::get('forge', [ForgeController::class, 'index'])->name('forge');
+        Route::post('forge/smith', [ForgeController::class, 'forge'])->name('forge.smith');
         Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
         Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
         Route::post('shrine/request/{blessingRequest}/approve', [BlessingController::class, 'approveRequest'])->name('shrine.approve');
         Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
         Route::get('stables', [StableController::class, 'index'])->name('stables');
+        Route::get('tavern', [TavernController::class, 'index'])->name('tavern');
+        Route::post('tavern/rest', [TavernController::class, 'rest'])->name('tavern.rest');
+        Route::post('tavern/cook', [TavernController::class, 'cook'])->name('tavern.cook');
     });
 
     // Crafting Docket

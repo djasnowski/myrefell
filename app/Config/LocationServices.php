@@ -165,21 +165,21 @@ class LocationServices
         ],
         'duchy' => [
             'training',
-            'market',
-            'bank',
+            'crafting',
+            'forge',
             'shrine',
             'jobs',
             'stables',
-            'arena',
+            'tavern',
         ],
         'kingdom' => [
             'training',
-            'market',
-            'bank',
+            'crafting',
+            'forge',
             'shrine',
             'jobs',
             'stables',
-            'arena',
+            'tavern',
         ],
     ];
 

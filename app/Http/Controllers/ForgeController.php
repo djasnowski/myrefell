@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Barony;
+use App\Models\Duchy;
+use App\Models\Kingdom;
 use App\Models\Town;
 use App\Models\Village;
 use App\Services\CraftingService;
@@ -32,10 +34,10 @@ class ForgeController extends Controller
     /**
      * Show the forge page (location-scoped).
      */
-    public function index(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null): Response
+    public function index(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null): Response
     {
         $user = $request->user();
-        $location = $village ?? $town ?? $barony;
+        $location = $village ?? $town ?? $barony ?? $duchy ?? $kingdom;
         $locationType = $this->getLocationType($location);
 
         if (! $this->craftingService->canCraft($user)) {
@@ -103,13 +105,13 @@ class ForgeController extends Controller
     /**
      * Forge an item (same as craft but for forge UI).
      */
-    public function forge(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null): JsonResponse
+    public function forge(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null): JsonResponse
     {
         $request->validate([
             'recipe' => 'required|string',
         ]);
 
-        $location = $village ?? $town ?? $barony;
+        $location = $village ?? $town ?? $barony ?? $duchy ?? $kingdom;
         $locationType = $this->getLocationType($location);
 
         $user = $request->user();
@@ -229,6 +231,8 @@ class ForgeController extends Controller
             $location instanceof Village => 'village',
             $location instanceof Town => 'town',
             $location instanceof Barony => 'barony',
+            $location instanceof Duchy => 'duchy',
+            $location instanceof Kingdom => 'kingdom',
             default => null,
         };
     }
