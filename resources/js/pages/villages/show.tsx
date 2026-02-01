@@ -456,14 +456,12 @@ export default function VillageShow({
                                 )}
                                 <div>
                                     <span className="font-pixel text-lg text-blue-300">
-                                        {village.resident_count === 0
-                                            ? "Settle Here"
-                                            : "Request to Settle"}
+                                        {village.elder ? "Request to Settle" : "Settle Here"}
                                     </span>
                                     <p className="text-xs text-stone-400">
-                                        {village.resident_count === 0
-                                            ? "Be the first resident of this village"
-                                            : "The village elder must approve your request"}
+                                        {village.elder
+                                            ? "The village elder must approve your request"
+                                            : "Make this village your new home"}
                                     </p>
                                 </div>
                             </button>

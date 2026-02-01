@@ -640,14 +640,12 @@ export default function TownShow({
                                 )}
                                 <div>
                                     <span className="font-pixel text-lg text-blue-300">
-                                        {town.visitor_count === 0
-                                            ? "Settle Here"
-                                            : "Request to Settle"}
+                                        {town.mayor ? "Request to Settle" : "Settle Here"}
                                     </span>
                                     <p className="text-xs text-stone-400">
-                                        {town.visitor_count === 0
-                                            ? "Be the first resident of this town"
-                                            : "The town mayor must approve your request"}
+                                        {town.mayor
+                                            ? "The town mayor must approve your request"
+                                            : "Make this town your new home"}
                                     </p>
                                 </div>
                             </button>
