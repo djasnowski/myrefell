@@ -22,8 +22,9 @@ import {
     Vote,
     X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { gameToast } from "@/components/ui/game-toast";
 import type { BreadcrumbItem } from "@/types";
 
 interface ManumissionRequest {
@@ -86,6 +87,10 @@ interface PageProps {
     class_history: ClassHistory[];
     manumission_cost: number;
     ennoblement_cost: number;
+    flash?: {
+        success?: string;
+        error?: string;
+    };
     [key: string]: unknown;
 }
 
@@ -405,7 +410,18 @@ export default function SocialClassIndex() {
         class_history,
         manumission_cost,
         ennoblement_cost,
+        flash,
     } = usePage<PageProps>().props;
+
+    // Handle flash messages
+    useEffect(() => {
+        if (flash?.success) {
+            gameToast.success(flash.success);
+        }
+        if (flash?.error) {
+            gameToast.error(flash.error);
+        }
+    }, [flash]);
 
     const [manumissionLoading, setManumissionLoading] = useState(false);
     const [ennoblementLoading, setEnnoblementLoading] = useState(false);
@@ -434,6 +450,7 @@ export default function SocialClassIndex() {
         setManumissionLoading(true);
         router.post("/social-class/manumission", data, {
             preserveScroll: true,
+            onSuccess: () => router.reload(),
             onFinish: () => {
                 setManumissionLoading(false);
                 setShowManumissionForm(false);
@@ -450,6 +467,7 @@ export default function SocialClassIndex() {
         setEnnoblementLoading(true);
         router.post("/social-class/ennoblement", data, {
             preserveScroll: true,
+            onSuccess: () => router.reload(),
             onFinish: () => {
                 setEnnoblementLoading(false);
                 setShowEnnoblementForm(false);
@@ -464,6 +482,7 @@ export default function SocialClassIndex() {
             {},
             {
                 preserveScroll: true,
+                onSuccess: () => router.reload(),
                 onFinish: () => setBurgherLoading(false),
             },
         );
@@ -476,6 +495,7 @@ export default function SocialClassIndex() {
             {},
             {
                 preserveScroll: true,
+                onSuccess: () => router.reload(),
                 onFinish: () => setCancelLoading(null),
             },
         );
@@ -488,6 +508,7 @@ export default function SocialClassIndex() {
             {},
             {
                 preserveScroll: true,
+                onSuccess: () => router.reload(),
                 onFinish: () => setCancelLoading(null),
             },
         );
