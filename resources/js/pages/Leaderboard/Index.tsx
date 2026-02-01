@@ -3,6 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import {
     Beef,
     BicepsFlexed,
+    Crown,
     Crosshair,
     Fish,
     Footprints,
@@ -42,6 +43,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const skillIcons: Record<string, LucideIcon> = {
+    total: Crown,
     attack: Sword,
     strength: BicepsFlexed,
     defense: Shield,
@@ -61,6 +63,7 @@ const skillIcons: Record<string, LucideIcon> = {
 };
 
 const skillColors: Record<string, string> = {
+    total: "text-amber-400",
     attack: "text-red-400",
     strength: "text-red-500",
     defense: "text-blue-400",
@@ -124,7 +127,7 @@ export default function LeaderboardIndex() {
                                     }`}
                                 >
                                     <SkillIcon className={`h-4 w-4 ${color}`} />
-                                    {skill}
+                                    {skill === "total" ? "Total" : skill}
                                 </button>
                             );
                         })}
@@ -136,13 +139,15 @@ export default function LeaderboardIndex() {
                     <div className="flex items-center gap-2 mb-4 pb-3 border-b border-stone-700/50">
                         <Icon className={`h-6 w-6 ${iconColor}`} />
                         <h2 className="font-pixel text-lg capitalize text-stone-200">
-                            {selectedSkill} Rankings
+                            {selectedSkill === "total" ? "Total Level" : selectedSkill} Rankings
                         </h2>
                     </div>
 
                     {currentLeaderboard.length === 0 ? (
                         <p className="text-center text-stone-500 py-12 font-pixel">
-                            No players with 10+ XP yet
+                            {selectedSkill === "total"
+                                ? "No players have leveled up yet"
+                                : "No players with 10+ XP yet"}
                         </p>
                     ) : (
                         <div className="space-y-2">

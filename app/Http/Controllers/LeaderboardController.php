@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PlayerSkill;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -34,9 +35,30 @@ class LeaderboardController extends Controller
             $leaderboards[$skillName] = $topPlayers;
         }
 
+        // Calculate total level leaderboard
+        $totalLeaderboard = PlayerSkill::query()
+            ->select('player_id', DB::raw('SUM(level) as total_level'), DB::raw('SUM(xp) as total_xp'))
+            ->groupBy('player_id')
+            ->having(DB::raw('SUM(xp)'), '>', 0) // Has actually gained XP
+            ->orderByDesc('total_level')
+            ->orderByDesc('total_xp')
+            ->limit(15)
+            ->with('player:id,username')
+            ->get()
+            ->map(function ($skill, $index) {
+                return [
+                    'rank' => $index + 1,
+                    'username' => $skill->player->username ?? 'Unknown',
+                    'level' => (int) $skill->total_level,
+                    'xp' => (int) $skill->total_xp,
+                ];
+            });
+
+        $leaderboards['total'] = $totalLeaderboard;
+
         return Inertia::render('Leaderboard/Index', [
             'leaderboards' => $leaderboards,
-            'skills' => PlayerSkill::SKILLS,
+            'skills' => array_merge(['total'], PlayerSkill::SKILLS),
         ]);
     }
 }
