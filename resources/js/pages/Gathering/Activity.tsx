@@ -13,10 +13,12 @@ import {
     TreeDeciduous,
     Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { gameToast } from "@/components/ui/game-toast";
 import type { BreadcrumbItem } from "@/types";
+
+const GATHER_COOLDOWN_MS = 3000;
 
 interface Resource {
     name: string;
@@ -103,6 +105,10 @@ export default function GatheringActivity() {
     const { activity, player_energy, max_energy, location } = usePage<PageProps>().props;
     const [loading, setLoading] = useState(false);
     const [currentEnergy, setCurrentEnergy] = useState(player_energy);
+    const [cooldown, setCooldown] = useState(0);
+    const [lastXp, setLastXp] = useState<number | null>(null);
+    const [lastResource, setLastResource] = useState<string | null>(null);
+    const cooldownInterval = useRef<NodeJS.Timeout | null>(null);
 
     const Icon = activityIcons[activity.id] || Pickaxe;
     const bgColor = activityBgColors[activity.id] || "from-stone-800 to-stone-900 border-stone-600";
@@ -123,12 +129,40 @@ export default function GatheringActivity() {
         },
     ];
 
-    const canGather = currentEnergy >= activity.energy_cost && !activity.inventory_full;
+    const canGather =
+        currentEnergy >= activity.energy_cost && !activity.inventory_full && cooldown <= 0;
+
+    const startCooldown = () => {
+        setCooldown(GATHER_COOLDOWN_MS);
+        if (cooldownInterval.current) {
+            clearInterval(cooldownInterval.current);
+        }
+        const startTime = Date.now();
+        cooldownInterval.current = setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            const remaining = Math.max(0, GATHER_COOLDOWN_MS - elapsed);
+            setCooldown(remaining);
+            if (remaining <= 0 && cooldownInterval.current) {
+                clearInterval(cooldownInterval.current);
+                cooldownInterval.current = null;
+            }
+        }, 50);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (cooldownInterval.current) {
+                clearInterval(cooldownInterval.current);
+            }
+        };
+    }, []);
 
     const handleGather = async () => {
-        if (!canGather || loading) return;
+        if (!canGather || loading || cooldown > 0) return;
 
         setLoading(true);
+        setLastXp(null);
+        setLastResource(null);
 
         try {
             const response = await fetch(`/${location.type}s/${location.id}/gathering/gather`, {
@@ -155,6 +189,13 @@ export default function GatheringActivity() {
                         ? { skill: activity.skill, level: (activity.skill_level || 0) + 1 }
                         : undefined,
                 });
+
+                // Update last action display
+                setLastXp(data.xp_awarded || 0);
+                setLastResource(data.resource.name);
+
+                // Start cooldown timer
+                startCooldown();
             } else if (!data.success) {
                 gameToast.error(data.message);
             }
@@ -252,28 +293,62 @@ export default function GatheringActivity() {
                         </div>
                     </div>
 
+                    {/* Last Action Result */}
+                    {lastResource && lastXp !== null && (
+                        <div className="mb-4 flex items-center justify-center gap-4 rounded-lg border border-green-600/50 bg-green-900/20 p-3">
+                            <div className="flex items-center gap-2">
+                                <Package className="h-4 w-4 text-green-400" />
+                                <span className="font-pixel text-sm text-green-300">
+                                    {lastResource}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-1 rounded bg-amber-900/50 px-2 py-1">
+                                <Sparkles className="h-3 w-3 text-amber-400" />
+                                <span className="font-pixel text-xs text-amber-300">
+                                    +{lastXp} XP
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Gather Button */}
-                    <button
-                        onClick={handleGather}
-                        disabled={!canGather || loading}
-                        className={`mb-6 flex w-full items-center justify-center gap-3 rounded-xl border-2 px-6 py-4 font-pixel text-lg transition ${
-                            canGather && !loading
-                                ? "border-amber-600 bg-amber-900/30 text-amber-300 hover:bg-amber-800/50"
-                                : "cursor-not-allowed border-stone-700 bg-stone-800/50 text-stone-500"
-                        }`}
-                    >
-                        {loading ? (
-                            <>
-                                <Loader2 className="h-6 w-6 animate-spin" />
-                                Gathering...
-                            </>
-                        ) : (
-                            <>
-                                <Icon className="h-6 w-6" />
-                                Gather
-                            </>
-                        )}
-                    </button>
+                    <div className="relative mb-6">
+                        <button
+                            onClick={handleGather}
+                            disabled={!canGather || loading || cooldown > 0}
+                            className={`relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-xl border-2 px-6 py-4 font-pixel text-lg transition ${
+                                canGather && !loading && cooldown <= 0
+                                    ? "border-amber-600 bg-amber-900/30 text-amber-300 hover:bg-amber-800/50"
+                                    : "cursor-not-allowed border-stone-700 bg-stone-800/50 text-stone-500"
+                            }`}
+                        >
+                            {/* Cooldown progress bar */}
+                            {cooldown > 0 && (
+                                <div
+                                    className="absolute inset-0 bg-amber-600/20 transition-all"
+                                    style={{ width: `${(cooldown / GATHER_COOLDOWN_MS) * 100}%` }}
+                                />
+                            )}
+                            <span className="relative z-10 flex items-center gap-3">
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="h-6 w-6 animate-spin" />
+                                        Gathering...
+                                    </>
+                                ) : cooldown > 0 ? (
+                                    <>
+                                        <Icon className="h-6 w-6" />
+                                        {(cooldown / 1000).toFixed(1)}s
+                                    </>
+                                ) : (
+                                    <>
+                                        <Icon className="h-6 w-6" />
+                                        Gather
+                                    </>
+                                )}
+                            </span>
+                        </button>
+                    </div>
 
                     {/* Available Resources */}
                     <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
