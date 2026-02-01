@@ -8,6 +8,7 @@ use App\Models\Duchy;
 use App\Models\Horse;
 use App\Models\Kingdom;
 use App\Models\Town;
+use App\Models\Village;
 use App\Services\StableService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,10 +43,10 @@ class StableController extends Controller
     /**
      * Show the stable page (location-scoped).
      */
-    public function index(Request $request, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null): Response
+    public function index(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null): Response
     {
         $user = $request->user();
-        $location = $town ?? $barony ?? $duchy ?? $kingdom;
+        $location = $village ?? $town ?? $barony ?? $duchy ?? $kingdom;
         $locationType = $this->getLocationType($location);
 
         // Check if stables are available at this location type
@@ -141,7 +142,7 @@ class StableController extends Controller
     protected function renderNotAvailable(): Response
     {
         return Inertia::render('Stable/NotAvailable', [
-            'message' => 'There are no stables at your current location. Travel to a town, barony, duchy, or kingdom to access the stables.',
+            'message' => 'There are no stables at your current location.',
         ]);
     }
 
@@ -263,6 +264,7 @@ class StableController extends Controller
     protected function getLocationType($location): ?string
     {
         return match (true) {
+            $location instanceof Village => 'village',
             $location instanceof Town => 'town',
             $location instanceof Barony => 'barony',
             $location instanceof Duchy => 'duchy',
