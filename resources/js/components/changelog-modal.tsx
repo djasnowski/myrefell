@@ -5,6 +5,7 @@ import {
     Gift,
     Hammer,
     Link2,
+    MessageCircle,
     Shield,
     Sparkles,
     Sprout,
@@ -17,8 +18,9 @@ import {
     X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { router } from "@inertiajs/react";
-import { useEffect } from "react";
+
+// Update this when adding new changelog entries
+export const CURRENT_CHANGELOG_VERSION = "0.7.1";
 
 interface ChangelogEntry {
     version: string;
@@ -30,9 +32,37 @@ interface ChangelogEntry {
         text: string;
     }[];
     icon: React.ReactNode;
+    discordLink?: string;
 }
 
 const changelog: ChangelogEntry[] = [
+    {
+        version: "0.7.1",
+        date: "February 1, 2026",
+        title: "Join us on Discord!",
+        description:
+            "We now have an official Discord server! Join the community to chat with other players, report bugs, suggest features, and stay up to date with the latest news.",
+        icon: <MessageCircle className="h-8 w-8 text-indigo-500" />,
+        changes: [
+            {
+                type: "added",
+                text: "Official Myrefell Discord server launched",
+            },
+            {
+                type: "added",
+                text: "Chat with other players and the development team",
+            },
+            {
+                type: "added",
+                text: "Report bugs and suggest new features",
+            },
+            {
+                type: "added",
+                text: "Get announcements about updates and events",
+            },
+        ],
+        discordLink: "https://discord.gg/PSYAGmFjCh",
+    },
     {
         version: "0.7.0",
         date: "February 1, 2026",
@@ -327,26 +357,9 @@ const changelog: ChangelogEntry[] = [
 
 interface Props {
     onClose: () => void;
-    hasUnread?: boolean;
 }
 
-export default function ChangelogModal({ onClose, hasUnread }: Props) {
-    // Mark changelog as read when opened
-    useEffect(() => {
-        if (hasUnread) {
-            router.post(
-                "/changelog/mark-read",
-                {},
-                {
-                    preserveScroll: true,
-                    onSuccess: () => {
-                        router.reload();
-                    },
-                },
-            );
-        }
-    }, []);
-
+export default function ChangelogModal({ onClose }: Props) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             {/* Backdrop */}
@@ -448,6 +461,21 @@ export default function ChangelogModal({ onClose, hasUnread }: Props) {
                                             ))}
                                         </ul>
                                     </div>
+
+                                    {/* Discord Link */}
+                                    {entry.discordLink && (
+                                        <div className="px-4 py-3 border-t border-border/30 bg-indigo-500/10">
+                                            <a
+                                                href={entry.discordLink}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center justify-center gap-2 w-full rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 px-4 transition-colors"
+                                            >
+                                                <MessageCircle className="h-5 w-5" />
+                                                Join the Discord Server
+                                            </a>
+                                        </div>
+                                    )}
 
                                     {/* Quick Stats for Smithing Update */}
                                     {entry.version === "0.2.0" && (

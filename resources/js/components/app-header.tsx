@@ -1,7 +1,7 @@
 import { Link, usePage } from "@inertiajs/react";
 import { BookOpen, Folder, LayoutGrid, Menu, Search, Sparkles } from "lucide-react";
-import { useState } from "react";
-import ChangelogModal from "@/components/changelog-modal";
+import { useEffect, useState } from "react";
+import ChangelogModal, { CURRENT_CHANGELOG_VERSION } from "@/components/changelog-modal";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -54,13 +54,26 @@ const rightNavItems: NavItem[] = [
 
 const activeItemStyles = "text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100";
 
+const CHANGELOG_STORAGE_KEY = "myrefell_last_seen_changelog";
+
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const page = usePage<SharedData>();
-    const { auth, changelog } = page.props;
+    const { auth } = page.props;
     const getInitials = useInitials();
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
     const [showChangelog, setShowChangelog] = useState(false);
-    const hasUnread = changelog?.has_unread ?? false;
+    const [hasUnread, setHasUnread] = useState(false);
+
+    useEffect(() => {
+        const lastSeen = localStorage.getItem(CHANGELOG_STORAGE_KEY);
+        setHasUnread(lastSeen !== CURRENT_CHANGELOG_VERSION);
+    }, []);
+
+    const handleCloseChangelog = () => {
+        localStorage.setItem(CHANGELOG_STORAGE_KEY, CURRENT_CHANGELOG_VERSION);
+        setHasUnread(false);
+        setShowChangelog(false);
+    };
 
     return (
         <>
@@ -241,9 +254,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
             )}
 
             {/* Changelog Modal */}
-            {showChangelog && (
-                <ChangelogModal onClose={() => setShowChangelog(false)} hasUnread={hasUnread} />
-            )}
+            {showChangelog && <ChangelogModal onClose={handleCloseChangelog} />}
         </>
     );
 }

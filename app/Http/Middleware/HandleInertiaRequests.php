@@ -51,9 +51,6 @@ class HandleInertiaRequests extends Middleware
             $this->onlinePlayersService->markOnline($player->id);
         }
 
-        // Current changelog version - update this when adding new entries
-        $currentChangelogVersion = '0.6.0';
-
         // Check if admin is impersonating
         $impersonating = null;
         if ($player && app('impersonate')->isImpersonating()) {
@@ -78,10 +75,6 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'sidebar' => $player ? $this->getSidebarData($player) : null,
-            'changelog' => [
-                'current_version' => $currentChangelogVersion,
-                'has_unread' => $player ? ($player->last_seen_changelog !== $currentChangelogVersion) : false,
-            ],
             'online_count' => $this->onlinePlayersService->getOnlineCount(),
             'impersonating' => $impersonating,
         ];
