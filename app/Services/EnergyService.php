@@ -8,9 +8,10 @@ use Carbon\Carbon;
 class EnergyService
 {
     /**
-     * Energy regeneration rate: 1 energy per X minutes.
+     * Energy regeneration rate: 1 energy per X seconds.
+     * Set to 5 for demo purposes (normally would be 300 = 5 minutes).
      */
-    public const REGEN_MINUTES = 5;
+    public const REGEN_SECONDS = 5;
 
     /**
      * Check if player has enough energy.
@@ -103,12 +104,12 @@ class EnergyService
      */
     public function getTimeUntilNextEnergy(): int
     {
-        // Since we regenerate every 5 minutes on the clock,
-        // calculate time until next 5-minute mark
+        // Calculate time until next regen interval
         $now = Carbon::now();
-        $nextRegen = $now->copy()->addMinutes(self::REGEN_MINUTES - ($now->minute % self::REGEN_MINUTES))->second(0);
+        $currentSecond = $now->secondsSinceMidnight();
+        $secondsUntilNext = self::REGEN_SECONDS - ($currentSecond % self::REGEN_SECONDS);
 
-        return $now->diffInSeconds($nextRegen);
+        return $secondsUntilNext;
     }
 
     /**
@@ -122,7 +123,7 @@ class EnergyService
             'current' => $player->energy,
             'max' => $player->max_energy,
             'at_max' => $atMax,
-            'regen_rate' => self::REGEN_MINUTES,
+            'regen_rate' => self::REGEN_SECONDS,
             'seconds_until_next' => $atMax ? null : $this->getTimeUntilNextEnergy(),
         ];
     }
