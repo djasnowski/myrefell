@@ -1,6 +1,8 @@
 import { Head, Link } from "@inertiajs/react";
 import {
     Anchor,
+    Anvil,
+    Beer,
     Briefcase,
     Building,
     ChevronDown,
@@ -8,6 +10,7 @@ import {
     Coins,
     Crown,
     Dumbbell,
+    Hammer,
     Home,
     MapPin,
     Mountain,
@@ -471,6 +474,28 @@ export default function KingdomShow({ kingdom, current_user_id }: Props) {
                             </div>
                         </Link>
                         <Link
+                            href={`/kingdoms/${kingdom.id}/crafting`}
+                            className="flex items-center gap-3 rounded-lg border-2 border-emerald-600/50 bg-emerald-900/20 p-4 transition hover:bg-emerald-800/30"
+                        >
+                            <Hammer className="h-8 w-8 text-emerald-400" />
+                            <div>
+                                <span className="font-pixel text-sm text-emerald-300">
+                                    Workshop
+                                </span>
+                                <p className="text-xs text-stone-500">Royal workshops</p>
+                            </div>
+                        </Link>
+                        <Link
+                            href={`/kingdoms/${kingdom.id}/forge`}
+                            className="flex items-center gap-3 rounded-lg border-2 border-rose-600/50 bg-rose-900/20 p-4 transition hover:bg-rose-800/30"
+                        >
+                            <Anvil className="h-8 w-8 text-rose-400" />
+                            <div>
+                                <span className="font-pixel text-sm text-rose-300">Forge</span>
+                                <p className="text-xs text-stone-500">Royal smithy</p>
+                            </div>
+                        </Link>
+                        <Link
                             href={`/kingdoms/${kingdom.id}/shrine`}
                             className="flex items-center gap-3 rounded-lg border-2 border-cyan-600/50 bg-cyan-900/20 p-4 transition hover:bg-cyan-800/30"
                         >
@@ -488,6 +513,16 @@ export default function KingdomShow({ kingdom, current_user_id }: Props) {
                             <div>
                                 <span className="font-pixel text-sm text-yellow-300">Stables</span>
                                 <p className="text-xs text-stone-500">Royal stables</p>
+                            </div>
+                        </Link>
+                        <Link
+                            href={`/kingdoms/${kingdom.id}/tavern`}
+                            className="flex items-center gap-3 rounded-lg border-2 border-amber-600/50 bg-amber-900/20 p-4 transition hover:bg-amber-800/30"
+                        >
+                            <Beer className="h-8 w-8 text-amber-400" />
+                            <div>
+                                <span className="font-pixel text-sm text-amber-300">Tavern</span>
+                                <p className="text-xs text-stone-500">Royal inn</p>
                             </div>
                         </Link>
                         <Link
