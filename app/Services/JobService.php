@@ -79,6 +79,14 @@ class JobService
      */
     public function applyForJob(User $user, EmploymentJob $job, string $locationType, int $locationId): array
     {
+        // Check if user is physically at this location
+        if ($user->current_location_type !== $locationType || $user->current_location_id !== $locationId) {
+            return [
+                'success' => false,
+                'message' => 'You must travel to this location to apply for a job here.',
+            ];
+        }
+
         // Check if already employed at this job at this location
         $existing = PlayerEmployment::where('user_id', $user->id)
             ->where('employment_job_id', $job->id)
