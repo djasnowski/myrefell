@@ -1,20 +1,13 @@
 import { Head, router, usePage } from "@inertiajs/react";
 import {
-    Anvil,
-    ArrowRight,
     ArrowUp,
     Backpack,
-    Check,
     ChevronDown,
     ChevronRight,
     Flame,
     Loader2,
     Lock,
     Package,
-    Shield,
-    Swords,
-    Target,
-    X,
     Zap,
 } from "lucide-react";
 import { useState } from "react";
@@ -50,12 +43,6 @@ interface MetalTier {
     unlocked: boolean;
 }
 
-interface RecipesByCategory {
-    weapons: Recipe[];
-    armor: Recipe[];
-    ammunition: Recipe[];
-}
-
 interface BarInventory {
     name: string;
     quantity: number;
@@ -65,8 +52,7 @@ interface BarInventory {
 interface ForgeInfo {
     can_forge: boolean;
     metal_tiers: Record<string, MetalTier>;
-    recipes_by_tier: Record<string, RecipesByCategory>;
-    bar_recipes: Recipe[];
+    smelting_recipes: Recipe[];
     player_energy: number;
     max_energy: number;
     free_slots: number;
@@ -76,16 +62,6 @@ interface ForgeInfo {
     smithing_xp: number;
     smithing_xp_progress: number;
     smithing_xp_to_next: number;
-}
-
-interface ForgeResult {
-    success: boolean;
-    message: string;
-    item?: { name: string; quantity: number };
-    xp_awarded?: number;
-    skill?: string;
-    leveled_up?: boolean;
-    energy_remaining?: number;
 }
 
 interface Location {
@@ -148,35 +124,28 @@ const metalColors: Record<string, { bg: string; border: string; text: string; gl
     },
 };
 
-const categoryIcons = {
-    weapons: Swords,
-    armor: Shield,
-    ammunition: Target,
-};
-
-function RecipeCard({
+function SmeltingRecipeCard({
     recipe,
-    onForge,
+    onSmelt,
     loading,
-    compact = false,
     metalColor,
 }: {
     recipe: Recipe;
-    onForge: (id: string) => void;
+    onSmelt: (id: string) => void;
     loading: string | null;
-    compact?: boolean;
-    metalColor?: { bg: string; border: string; text: string; glow: string };
+    metalColor: { bg: string; border: string; text: string; glow: string };
 }) {
     const isLoading = loading === recipe.id;
-    const itemName = recipe.name.split(" ").slice(1).join(" "); // Remove metal prefix
-    const hasEnoughBars = (recipe.materials[0]?.have ?? 0) >= (recipe.materials[0]?.required ?? 1);
-    const colors = metalColor || metalColors.Bronze;
-    const canForge = recipe.can_make && !recipe.is_locked && loading === null;
+    const colors = metalColor;
+    const canSmelt = recipe.can_make && !recipe.is_locked && loading === null;
+
+    // Check if all materials are available
+    const hasAllMaterials = recipe.materials.every((m) => m.has_enough);
 
     return (
         <button
-            onClick={() => canForge && onForge(recipe.id)}
-            disabled={!canForge}
+            onClick={() => canSmelt && onSmelt(recipe.id)}
+            disabled={!canSmelt}
             className={`group relative w-full overflow-hidden rounded-xl border-2 p-4 text-left transition-all ${
                 recipe.is_locked
                     ? "cursor-not-allowed border-stone-700/50 bg-stone-900/50 opacity-60"
@@ -193,60 +162,62 @@ function RecipeCard({
             )}
 
             {/* Item name */}
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-3 flex items-center justify-between">
                 <h4
                     className={`text-lg font-semibold ${recipe.is_locked ? "text-stone-500" : colors.text}`}
                 >
-                    {compact ? itemName : recipe.name}
+                    {recipe.name}
                 </h4>
                 {recipe.is_locked ? (
                     <div className="flex items-center gap-1.5 rounded-lg bg-stone-800 px-2 py-1">
                         <Lock className="h-4 w-4 text-stone-500" />
                         <span className="text-sm text-stone-500">Lvl {recipe.required_level}</span>
                     </div>
-                ) : canForge ? (
-                    <div className="flex items-center gap-1.5 rounded-lg bg-amber-600/20 px-3 py-1 transition-colors group-hover:bg-amber-600/40">
-                        <Anvil className="h-4 w-4 text-amber-400" />
-                        <span className="text-sm font-medium text-amber-400">Forge</span>
+                ) : canSmelt ? (
+                    <div className="flex items-center gap-1.5 rounded-lg bg-orange-600/20 px-3 py-1 transition-colors group-hover:bg-orange-600/40">
+                        <Flame className="h-4 w-4 text-orange-400" />
+                        <span className="text-sm font-medium text-orange-400">Smelt</span>
                     </div>
                 ) : null}
             </div>
 
-            {/* Stats grid */}
-            <div className="grid grid-cols-3 gap-2">
-                <div className="flex items-center gap-3 rounded-lg bg-yellow-900/30 p-3">
-                    <Zap className="h-6 w-6 text-yellow-400" />
+            {/* Materials needed */}
+            <div className="mb-3 space-y-1">
+                {recipe.materials.map((material, idx) => (
+                    <div
+                        key={idx}
+                        className={`flex items-center justify-between rounded px-2 py-1 text-sm ${
+                            material.has_enough ? "bg-green-900/30" : "bg-red-900/30"
+                        }`}
+                    >
+                        <span className={material.has_enough ? "text-green-300" : "text-red-300"}>
+                            {material.name}
+                        </span>
+                        <span className={material.has_enough ? "text-green-400" : "text-red-400"}>
+                            {material.have}/{material.required}
+                        </span>
+                    </div>
+                ))}
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-2">
+                <div className="flex items-center gap-2 rounded-lg bg-yellow-900/30 p-2">
+                    <Zap className="h-5 w-5 text-yellow-400" />
                     <div>
-                        <div className="text-lg font-bold text-yellow-300">
+                        <div className="text-base font-bold text-yellow-300">
                             {recipe.energy_cost}
                         </div>
                         <div className="text-xs text-yellow-500/80">Energy</div>
                     </div>
                 </div>
-                <div className="flex items-center gap-3 rounded-lg bg-green-900/30 p-3">
-                    <ArrowUp className="h-6 w-6 text-green-400" />
+                <div className="flex items-center gap-2 rounded-lg bg-green-900/30 p-2">
+                    <ArrowUp className="h-5 w-5 text-green-400" />
                     <div>
-                        <div className="text-lg font-bold text-green-300">+{recipe.xp_reward}</div>
+                        <div className="text-base font-bold text-green-300">
+                            +{recipe.xp_reward}
+                        </div>
                         <div className="text-xs text-green-500/80">XP</div>
-                    </div>
-                </div>
-                <div
-                    className={`flex items-center gap-3 rounded-lg p-3 ${hasEnoughBars ? "bg-blue-900/30" : "bg-red-900/30"}`}
-                >
-                    <Package
-                        className={`h-6 w-6 ${hasEnoughBars ? "text-blue-400" : "text-red-400"}`}
-                    />
-                    <div>
-                        <div
-                            className={`text-lg font-bold ${hasEnoughBars ? "text-blue-300" : "text-red-300"}`}
-                        >
-                            {recipe.materials[0]?.have ?? 0}/{recipe.materials[0]?.required ?? 0}
-                        </div>
-                        <div
-                            className={`text-xs ${hasEnoughBars ? "text-blue-500/80" : "text-red-500/80"}`}
-                        >
-                            Bars
-                        </div>
                     </div>
                 </div>
             </div>
@@ -254,197 +225,48 @@ function RecipeCard({
     );
 }
 
-function MetalTierSection({
-    metal,
-    tier,
-    recipes,
-    onForge,
-    loading,
-    defaultExpanded = false,
-}: {
-    metal: string;
-    tier: MetalTier;
-    recipes: RecipesByCategory;
-    onForge: (id: string) => void;
-    loading: string | null;
-    defaultExpanded?: boolean;
-}) {
-    const [expanded, setExpanded] = useState(defaultExpanded);
-    const colors = metalColors[metal] || metalColors.Bronze;
-
-    const totalRecipes = recipes.weapons.length + recipes.armor.length + recipes.ammunition.length;
-    const availableRecipes = [...recipes.weapons, ...recipes.armor, ...recipes.ammunition].filter(
-        (r) => r.can_make,
-    ).length;
-
-    return (
-        <div
-            className={`rounded-lg border ${colors.border} ${colors.bg} overflow-hidden transition-shadow ${tier.unlocked ? `hover:shadow-lg ${colors.glow}` : "opacity-60"}`}
-        >
-            {/* Header */}
-            <button
-                onClick={() => tier.unlocked && setExpanded(!expanded)}
-                disabled={!tier.unlocked}
-                className={`flex w-full items-center justify-between px-4 py-3 ${tier.unlocked ? "cursor-pointer" : "cursor-not-allowed"}`}
-            >
-                <div className="flex items-center gap-3">
-                    <div className={`rounded-lg ${colors.bg} p-2`}>
-                        <Anvil className={`h-5 w-5 ${colors.text}`} />
-                    </div>
-                    <div className="text-left">
-                        <h3 className={`font-pixel text-sm ${colors.text}`}>{metal}</h3>
-                        <p className="font-pixel text-[10px] text-stone-500">
-                            Level {tier.base_level}+ Required
-                        </p>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    {tier.unlocked ? (
-                        <>
-                            <div className="text-right">
-                                <span className="font-pixel text-xs text-stone-400">
-                                    {availableRecipes}/{totalRecipes}
-                                </span>
-                                <p className="font-pixel text-[10px] text-stone-500">available</p>
-                            </div>
-                            {expanded ? (
-                                <ChevronDown className={`h-4 w-4 ${colors.text}`} />
-                            ) : (
-                                <ChevronRight className={`h-4 w-4 ${colors.text}`} />
-                            )}
-                        </>
-                    ) : (
-                        <Lock className="h-4 w-4 text-stone-500" />
-                    )}
-                </div>
-            </button>
-
-            {/* Content */}
-            {expanded && tier.unlocked && (
-                <div className="border-t border-stone-700/50 px-4 py-4">
-                    {/* Weapons */}
-                    {recipes.weapons.length > 0 && (
-                        <div className="mb-6">
-                            <div className="mb-3 flex items-center gap-2">
-                                <Swords className="h-4 w-4 text-red-400" />
-                                <span className="text-sm font-medium text-stone-300">Weapons</span>
-                                <span className="text-xs text-stone-500">
-                                    ({recipes.weapons.length})
-                                </span>
-                            </div>
-                            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                                {recipes.weapons.map((recipe) => (
-                                    <RecipeCard
-                                        key={recipe.id}
-                                        recipe={recipe}
-                                        onForge={onForge}
-                                        loading={loading}
-                                        compact
-                                        metalColor={colors}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Armor */}
-                    {recipes.armor.length > 0 && (
-                        <div className="mb-6">
-                            <div className="mb-3 flex items-center gap-2">
-                                <Shield className="h-4 w-4 text-blue-400" />
-                                <span className="text-sm font-medium text-stone-300">Armor</span>
-                                <span className="text-xs text-stone-500">
-                                    ({recipes.armor.length})
-                                </span>
-                            </div>
-                            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                                {recipes.armor.map((recipe) => (
-                                    <RecipeCard
-                                        key={recipe.id}
-                                        recipe={recipe}
-                                        onForge={onForge}
-                                        loading={loading}
-                                        compact
-                                        metalColor={colors}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Ammunition */}
-                    {recipes.ammunition.length > 0 && (
-                        <div>
-                            <div className="mb-3 flex items-center gap-2">
-                                <Target className="h-4 w-4 text-green-400" />
-                                <span className="text-sm font-medium text-stone-300">
-                                    Ammunition
-                                </span>
-                                <span className="text-xs text-stone-500">
-                                    ({recipes.ammunition.length})
-                                </span>
-                            </div>
-                            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                                {recipes.ammunition.map((recipe) => (
-                                    <RecipeCard
-                                        key={recipe.id}
-                                        recipe={recipe}
-                                        onForge={onForge}
-                                        loading={loading}
-                                        compact
-                                        metalColor={colors}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-}
-
 export default function ForgeIndex() {
     const { forge_info, location } = usePage<PageProps>().props;
     const [loading, setLoading] = useState<string | null>(null);
-    const [result, setResult] = useState<ForgeResult | null>(null);
+    const [result, setResult] = useState<{
+        success: boolean;
+        message: string;
+        item?: { name: string; quantity: number };
+        xp_awarded?: number;
+        leveled_up?: boolean;
+    } | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(forge_info.player_energy);
-    const [showBars, setShowBars] = useState(true);
 
-    const forgeUrl = location ? `/${location.type}s/${location.id}/forge/smith` : "/forge/smith";
+    const smeltUrl = location ? `/${location.type}s/${location.id}/forge/smelt` : "/forge/smelt";
 
-    const handleForge = async (recipeId: string) => {
+    const handleSmelt = (recipeId: string) => {
         setLoading(recipeId);
         setResult(null);
 
-        try {
-            const response = await fetch(forgeUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN":
-                        document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute("content") || "",
+        router.post(
+            smeltUrl,
+            { recipe: recipeId },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload({ only: ["forge_info", "sidebar"] });
                 },
-                body: JSON.stringify({ recipe: recipeId }),
-            });
-
-            const data: ForgeResult = await response.json();
-            setResult(data);
-
-            if (data.success && data.energy_remaining !== undefined) {
-                setCurrentEnergy(data.energy_remaining);
-            }
-
-            router.reload({ only: ["forge_info", "sidebar"] });
-        } catch {
-            setResult({ success: false, message: "An error occurred" });
-        } finally {
-            setLoading(null);
-        }
+                onFinish: () => {
+                    setLoading(null);
+                },
+            },
+        );
     };
+
+    // Group recipes by metal tier
+    const recipesByMetal: Record<string, Recipe[]> = {};
+    for (const recipe of forge_info.smelting_recipes || []) {
+        const metal = recipe.name.replace(" Bar", "");
+        if (!recipesByMetal[metal]) {
+            recipesByMetal[metal] = [];
+        }
+        recipesByMetal[metal].push(recipe);
+    }
 
     const metalOrder = ["Bronze", "Iron", "Steel", "Mithril", "Celestial", "Oria"];
 
@@ -460,7 +282,7 @@ export default function ForgeIndex() {
                     <div>
                         <h1 className="font-pixel text-2xl text-orange-400">The Forge</h1>
                         <p className="font-pixel text-xs text-stone-400">
-                            Smith weapons and armor from metal bars
+                            Smelt ores into metal bars
                         </p>
                     </div>
                 </div>
@@ -488,10 +310,10 @@ export default function ForgeIndex() {
                         <div className="mb-1 flex items-center justify-between">
                             <div className="flex items-center gap-1 font-pixel text-xs text-amber-300">
                                 <Backpack className="h-3 w-3" />
-                                Inventory
+                                Bars in Inventory
                             </div>
                             <span className="font-pixel text-xs text-stone-400">
-                                {forge_info.free_slots} slots
+                                {forge_info.bar_count} total
                             </span>
                         </div>
                         {forge_info.bars_in_inventory.length > 0 ? (
@@ -518,14 +340,14 @@ export default function ForgeIndex() {
                             </div>
                         ) : (
                             <div className="mt-1 font-pixel text-[10px] text-stone-500">
-                                No bars
+                                No bars yet
                             </div>
                         )}
                     </div>
                     <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
                         <div className="mb-1 flex items-center justify-between">
                             <div className="flex items-center gap-1 font-pixel text-xs text-orange-400">
-                                <Anvil className="h-3 w-3" />
+                                <Flame className="h-3 w-3" />
                                 Smithing
                             </div>
                             <span className="font-pixel text-xs text-stone-300">
@@ -546,106 +368,39 @@ export default function ForgeIndex() {
                     </div>
                 </div>
 
-                {/* Result Message */}
-                {result && (
-                    <div
-                        className={`mb-4 rounded-lg border p-3 ${
-                            result.success
-                                ? "border-green-600/50 bg-green-900/20"
-                                : "border-red-600/50 bg-red-900/20"
-                        }`}
-                    >
-                        <div className="flex items-center gap-3">
-                            {result.success && result.item && (
-                                <>
-                                    <Package className="h-6 w-6 text-green-400" />
-                                    <div>
-                                        <div className="font-pixel text-sm text-green-300">
-                                            Forged {result.item.quantity}x {result.item.name}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-pixel text-[10px] text-amber-400">
-                                                +{result.xp_awarded} XP
-                                            </span>
-                                            {result.leveled_up && (
-                                                <span className="flex items-center gap-1 font-pixel text-[10px] text-yellow-300">
-                                                    <ArrowUp className="h-3 w-3" />
-                                                    Level Up!
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-                            {!result.success && (
-                                <span className="font-pixel text-sm text-red-400">
-                                    {result.message}
-                                </span>
-                            )}
-                        </div>
-                    </div>
-                )}
+                {/* Smelting Recipes Grid */}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {metalOrder.map((metal) => {
+                        const recipes = recipesByMetal[metal];
+                        if (!recipes || recipes.length === 0) return null;
 
-                {/* Bar Smelting Section */}
-                {forge_info.bar_recipes.length > 0 && (
-                    <div className="mb-6">
-                        <button
-                            onClick={() => setShowBars(!showBars)}
-                            className="mb-3 flex items-center gap-2 text-stone-300 hover:text-stone-100"
-                        >
-                            {showBars ? (
-                                <ChevronDown className="h-5 w-5" />
-                            ) : (
-                                <ChevronRight className="h-5 w-5" />
-                            )}
-                            <Flame className="h-5 w-5 text-orange-400" />
-                            <span className="text-base font-medium">Smelt Bars</span>
-                            <span className="text-sm text-stone-500">
-                                ({forge_info.bar_recipes.length})
-                            </span>
-                        </button>
-
-                        {showBars && (
-                            <div className="grid gap-3 rounded-xl border border-stone-700 bg-stone-800/30 p-4 sm:grid-cols-2 xl:grid-cols-3">
-                                {forge_info.bar_recipes.map((recipe) => {
-                                    const metal = recipe.name.replace(" Bar", "");
-                                    const color = metalColors[metal] || metalColors.Bronze;
-                                    return (
-                                        <RecipeCard
-                                            key={recipe.id}
-                                            recipe={recipe}
-                                            onForge={handleForge}
-                                            loading={loading}
-                                            metalColor={color}
-                                        />
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Metal Tiers */}
-                <div className="space-y-3">
-                    {metalOrder.map((metal, index) => {
+                        const colors = metalColors[metal] || metalColors.Bronze;
                         const tier = forge_info.metal_tiers[metal];
-                        const recipes = forge_info.recipes_by_tier[metal];
 
-                        if (!tier || !recipes) return null;
-
-                        return (
-                            <MetalTierSection
-                                key={metal}
-                                metal={metal}
-                                tier={tier}
-                                recipes={recipes}
-                                onForge={handleForge}
+                        return recipes.map((recipe) => (
+                            <SmeltingRecipeCard
+                                key={recipe.id}
+                                recipe={recipe}
+                                onSmelt={handleSmelt}
                                 loading={loading}
-                                defaultExpanded={index === 0 && tier.unlocked}
+                                metalColor={colors}
                             />
-                        );
+                        ));
                     })}
                 </div>
+
+                {/* Empty state */}
+                {(!forge_info.smelting_recipes || forge_info.smelting_recipes.length === 0) && (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <Flame className="h-16 w-16 text-stone-600" />
+                        <h3 className="mt-4 font-pixel text-lg text-stone-400">
+                            No Recipes Available
+                        </h3>
+                        <p className="mt-2 font-pixel text-sm text-stone-500">
+                            Level up your smithing skill to unlock smelting recipes
+                        </p>
+                    </div>
+                )}
             </div>
         </AppLayout>
     );

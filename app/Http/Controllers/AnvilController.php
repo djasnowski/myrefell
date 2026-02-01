@@ -13,10 +13,10 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class ForgeController extends Controller
+class AnvilController extends Controller
 {
     /**
-     * Metal tiers configuration for the forge UI.
+     * Metal tiers configuration for the anvil UI.
      */
     private const METAL_TIERS = [
         'Bronze' => ['base_level' => 1, 'color' => 'orange'],
@@ -32,7 +32,7 @@ class ForgeController extends Controller
     ) {}
 
     /**
-     * Show the forge page (location-scoped).
+     * Show the anvil page (location-scoped).
      */
     public function index(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null): Response
     {
@@ -41,8 +41,8 @@ class ForgeController extends Controller
         $locationType = $this->getLocationType($location);
 
         if (! $this->craftingService->canCraft($user)) {
-            return Inertia::render('Forge/NotAvailable', [
-                'message' => 'You cannot access the forge at your current location.',
+            return Inertia::render('Anvil/NotAvailable', [
+                'message' => 'You cannot access the anvil at your current location.',
             ]);
         }
 
@@ -50,8 +50,9 @@ class ForgeController extends Controller
         $smithingSkill = $user->skills()->where('skill_name', 'smithing')->first();
         $smithingLevel = $smithingSkill?->level ?? 1;
 
-        // Get smelting (bar) recipes only for the forge
-        $smeltingRecipes = $info['all_recipes']['smelting'] ?? [];
+        // Get smithing (weapon/armor) recipes only for the anvil
+        $smithingRecipes = $info['all_recipes']['smithing'] ?? [];
+        $organizedRecipes = $this->organizeByMetalTier($smithingRecipes);
 
         // Get bars in inventory grouped by type
         $barsInInventory = $user->inventory()
@@ -70,10 +71,10 @@ class ForgeController extends Controller
         $barCount = array_sum(array_column($barsInInventory, 'quantity'));
 
         $data = [
-            'forge_info' => [
-                'can_forge' => true,
+            'anvil_info' => [
+                'can_smith' => true,
                 'metal_tiers' => $this->getMetalTiersInfo($smithingLevel),
-                'smelting_recipes' => array_values($smeltingRecipes),
+                'recipes_by_tier' => $organizedRecipes,
                 'player_energy' => $info['player_energy'],
                 'max_energy' => $info['max_energy'],
                 'free_slots' => $info['free_slots'],
@@ -94,13 +95,13 @@ class ForgeController extends Controller
             ];
         }
 
-        return Inertia::render('Forge/Index', $data);
+        return Inertia::render('Anvil/Index', $data);
     }
 
     /**
-     * Smelt a bar at the forge.
+     * Smith an item at the anvil.
      */
-    public function forge(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null): RedirectResponse
+    public function smith(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null): RedirectResponse
     {
         $request->validate([
             'recipe' => 'required|string',
@@ -122,6 +123,82 @@ class ForgeController extends Controller
         }
 
         return back()->with('error', $result['message']);
+    }
+
+    /**
+     * Organize recipes by metal tier.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    protected function organizeByMetalTier(array $recipes): array
+    {
+        $organized = [];
+
+        foreach (self::METAL_TIERS as $metal => $tierData) {
+            $organized[$metal] = [
+                'weapons' => [],
+                'armor' => [],
+                'ammunition' => [],
+            ];
+        }
+
+        foreach ($recipes as $recipe) {
+            // Skip bar recipes (these are in smelting category anyway)
+            if (str_ends_with($recipe['name'], ' Bar')) {
+                continue;
+            }
+
+            // Determine metal tier from recipe name
+            $metal = $this->extractMetalFromName($recipe['name']);
+            if (! $metal || ! isset($organized[$metal])) {
+                continue;
+            }
+
+            // Categorize by item type
+            $category = $this->categorizeItem($recipe['name']);
+            if (isset($organized[$metal][$category])) {
+                $organized[$metal][$category][] = $recipe;
+            }
+        }
+
+        return $organized;
+    }
+
+    /**
+     * Extract metal tier from item name.
+     */
+    protected function extractMetalFromName(string $name): ?string
+    {
+        foreach (array_keys(self::METAL_TIERS) as $metal) {
+            if (str_starts_with($name, $metal.' ')) {
+                return $metal;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Categorize an item as weapon, armor, or ammunition.
+     */
+    protected function categorizeItem(string $name): string
+    {
+        $armorTypes = ['Helm', 'Shield', 'Chainbody', 'Platebody', 'Platelegs', 'Plateskirt'];
+        $ammoTypes = ['Tips', 'Arrowtips', 'Throwing Knives'];
+
+        foreach ($armorTypes as $type) {
+            if (str_contains($name, $type)) {
+                return 'armor';
+            }
+        }
+
+        foreach ($ammoTypes as $type) {
+            if (str_contains($name, $type)) {
+                return 'ammunition';
+            }
+        }
+
+        return 'weapons';
     }
 
     /**

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AnvilController;
 use App\Http\Controllers\ApothecaryController;
 use App\Http\Controllers\ArmyController;
 use App\Http\Controllers\BankController;
@@ -296,7 +297,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('crafting', [CraftingController::class, 'index'])->name('crafting');
         Route::post('crafting/craft', [CraftingController::class, 'craft'])->name('crafting.craft');
         Route::get('forge', [ForgeController::class, 'index'])->name('forge');
-        Route::post('forge/smith', [ForgeController::class, 'forge'])->name('forge.smith');
+        Route::post('forge/smelt', [ForgeController::class, 'forge'])->name('forge.smelt');
+        Route::get('anvil', [AnvilController::class, 'index'])->name('anvil');
+        Route::post('anvil/smith', [AnvilController::class, 'smith'])->name('anvil.smith');
         Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
         Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
@@ -329,7 +332,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('crafting', [CraftingController::class, 'index'])->name('crafting');
         Route::post('crafting/craft', [CraftingController::class, 'craft'])->name('crafting.craft');
         Route::get('forge', [ForgeController::class, 'index'])->name('forge');
-        Route::post('forge/smith', [ForgeController::class, 'forge'])->name('forge.smith');
+        Route::post('forge/smelt', [ForgeController::class, 'forge'])->name('forge.smelt');
+        Route::get('anvil', [AnvilController::class, 'index'])->name('anvil');
+        Route::post('anvil/smith', [AnvilController::class, 'smith'])->name('anvil.smith');
         Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
         Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
@@ -352,7 +357,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('crafting', [CraftingController::class, 'index'])->name('crafting');
         Route::post('crafting/craft', [CraftingController::class, 'craft'])->name('crafting.craft');
         Route::get('forge', [ForgeController::class, 'index'])->name('forge');
-        Route::post('forge/smith', [ForgeController::class, 'forge'])->name('forge.smith');
+        Route::post('forge/smelt', [ForgeController::class, 'forge'])->name('forge.smelt');
+        Route::get('anvil', [AnvilController::class, 'index'])->name('anvil');
+        Route::post('anvil/smith', [AnvilController::class, 'smith'])->name('anvil.smith');
         Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
         Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
@@ -375,7 +382,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('crafting', [CraftingController::class, 'index'])->name('crafting');
         Route::post('crafting/craft', [CraftingController::class, 'craft'])->name('crafting.craft');
         Route::get('forge', [ForgeController::class, 'index'])->name('forge');
-        Route::post('forge/smith', [ForgeController::class, 'forge'])->name('forge.smith');
+        Route::post('forge/smelt', [ForgeController::class, 'forge'])->name('forge.smelt');
+        Route::get('anvil', [AnvilController::class, 'index'])->name('anvil');
+        Route::post('anvil/smith', [AnvilController::class, 'smith'])->name('anvil.smith');
         Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
         Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
@@ -398,7 +407,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('crafting', [CraftingController::class, 'index'])->name('crafting');
         Route::post('crafting/craft', [CraftingController::class, 'craft'])->name('crafting.craft');
         Route::get('forge', [ForgeController::class, 'index'])->name('forge');
-        Route::post('forge/smith', [ForgeController::class, 'forge'])->name('forge.smith');
+        Route::post('forge/smelt', [ForgeController::class, 'forge'])->name('forge.smelt');
+        Route::get('anvil', [AnvilController::class, 'index'])->name('anvil');
+        Route::post('anvil/smith', [AnvilController::class, 'smith'])->name('anvil.smith');
         Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
         Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
