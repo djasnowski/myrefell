@@ -108,12 +108,28 @@ class RoleService
 
     /**
      * Check if a user resides at a location.
-     * - Village: user's home_village_id matches
-     * - Barony: user's home village belongs to this barony
-     * - Kingdom: user's home village's barony belongs to this kingdom
+     * Supports polymorphic home locations (town, village, barony, kingdom).
      */
     public function userResidesAt(User $user, string $locationType, int $locationId): bool
     {
+        // Check new polymorphic home location first
+        if ($user->home_location_type && $user->home_location_id) {
+            // Direct match - user lives directly at this location
+            if ($user->home_location_type === $locationType && $user->home_location_id === $locationId) {
+                return true;
+            }
+
+            // Check hierarchy - user lives in a location within the target
+            return match ($locationType) {
+                'town' => $user->home_location_type === 'town' && $user->home_location_id === $locationId,
+                'village' => $user->home_location_type === 'village' && $user->home_location_id === $locationId,
+                'barony' => $this->homeIsInBarony($user, $locationId),
+                'kingdom' => $this->homeIsInKingdom($user, $locationId),
+                default => false,
+            };
+        }
+
+        // Fall back to legacy home_village_id
         $homeVillage = $user->homeVillage;
 
         if (! $homeVillage) {
@@ -124,6 +140,38 @@ class RoleService
             'village' => $user->home_village_id === $locationId,
             'barony' => $homeVillage->barony_id === $locationId,
             'kingdom' => $homeVillage->barony?->kingdom_id === $locationId,
+            default => false,
+        };
+    }
+
+    /**
+     * Check if user's home location is within a barony.
+     */
+    protected function homeIsInBarony(User $user, int $baronyId): bool
+    {
+        return match ($user->home_location_type) {
+            'village' => \App\Models\Village::where('id', $user->home_location_id)
+                ->where('barony_id', $baronyId)->exists(),
+            'town' => \App\Models\Town::where('id', $user->home_location_id)
+                ->where('barony_id', $baronyId)->exists(),
+            'barony' => $user->home_location_id === $baronyId,
+            default => false,
+        };
+    }
+
+    /**
+     * Check if user's home location is within a kingdom.
+     */
+    protected function homeIsInKingdom(User $user, int $kingdomId): bool
+    {
+        return match ($user->home_location_type) {
+            'village' => \App\Models\Village::whereHas('barony', fn ($q) => $q->where('kingdom_id', $kingdomId))
+                ->where('id', $user->home_location_id)->exists(),
+            'town' => \App\Models\Town::whereHas('barony', fn ($q) => $q->where('kingdom_id', $kingdomId))
+                ->where('id', $user->home_location_id)->exists(),
+            'barony' => \App\Models\Barony::where('id', $user->home_location_id)
+                ->where('kingdom_id', $kingdomId)->exists(),
+            'kingdom' => $user->home_location_id === $kingdomId,
             default => false,
         };
     }

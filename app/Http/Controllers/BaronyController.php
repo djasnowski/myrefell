@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Config\LocationServices;
 use App\Models\Barony;
+use App\Models\MigrationRequest;
 use App\Models\PlayerRole;
 use App\Models\Role;
 use App\Models\TradeRoute;
+use App\Services\MigrationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -49,7 +51,7 @@ class BaronyController extends Controller
     /**
      * Display the specified barony.
      */
-    public function show(Request $request, Barony $barony): Response
+    public function show(Request $request, Barony $barony, MigrationService $migrationService): Response
     {
         $barony->load(['kingdom', 'villages', 'towns']);
         $user = $request->user();
@@ -77,6 +79,14 @@ class BaronyController extends Controller
 
         // Check if current user is the baron
         $isBaron = $baron && $baron['id'] === $user->id;
+
+        // Check if user is a resident of this barony (settled directly in barony)
+        $isResident = $user->home_location_type === 'barony' && $user->home_location_id === $barony->id;
+
+        // Check for pending migration request
+        $hasPendingRequest = MigrationRequest::where('user_id', $user->id)
+            ->pending()
+            ->exists();
 
         // Calculate aggregated stats
         $totalPopulation = $barony->villages->sum('population') + $barony->towns->sum('population');
@@ -170,6 +180,9 @@ class BaronyController extends Controller
             'recent_activity' => $recentActivity,
             'current_user_id' => $user->id,
             'is_baron' => $isBaron,
+            'is_resident' => $isResident,
+            'can_migrate' => $migrationService->canMigrate($user),
+            'has_pending_request' => $hasPendingRequest,
         ]);
     }
 

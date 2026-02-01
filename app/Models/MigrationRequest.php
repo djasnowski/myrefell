@@ -133,15 +133,32 @@ class MigrationRequest extends Model
     }
 
     /**
+     * Check if this is a migration to a barony.
+     */
+    public function isToBarony(): bool
+    {
+        return $this->to_location_type === 'barony';
+    }
+
+    /**
+     * Check if this is a migration to a kingdom.
+     */
+    public function isToKingdom(): bool
+    {
+        return $this->to_location_type === 'kingdom';
+    }
+
+    /**
      * Get the destination name.
      */
     public function getDestinationName(): string
     {
-        if ($this->isToTown()) {
-            return Town::find($this->to_location_id)?->name ?? 'Unknown Town';
-        }
-
-        return $this->toVillage?->name ?? 'Unknown Village';
+        return match ($this->to_location_type) {
+            'town' => Town::find($this->to_location_id)?->name ?? 'Unknown Town',
+            'barony' => Barony::find($this->to_location_id)?->name ?? 'Unknown Barony',
+            'kingdom' => Kingdom::find($this->to_location_id)?->name ?? 'Unknown Kingdom',
+            default => $this->toVillage?->name ?? 'Unknown Village',
+        };
     }
 
     /**
@@ -149,11 +166,12 @@ class MigrationRequest extends Model
      */
     public function getOriginName(): string
     {
-        if ($this->from_location_type === 'town') {
-            return Town::find($this->from_location_id)?->name ?? 'Unknown Town';
-        }
-
-        return $this->fromVillage?->name ?? 'Unknown Village';
+        return match ($this->from_location_type) {
+            'town' => Town::find($this->from_location_id)?->name ?? 'Unknown Town',
+            'barony' => Barony::find($this->from_location_id)?->name ?? 'Unknown Barony',
+            'kingdom' => Kingdom::find($this->from_location_id)?->name ?? 'Unknown Kingdom',
+            default => $this->fromVillage?->name ?? 'Unknown Village',
+        };
     }
 
     public function isPending(): bool
@@ -176,24 +194,26 @@ class MigrationRequest extends Model
      */
     public function checkAllApprovals(): bool
     {
-        // For towns: check mayor approval
-        if ($this->isToTown()) {
-            if ($this->needsMayorApproval() && $this->mayor_approved !== true) {
-                return false;
-            }
-        } else {
-            // For villages: check elder approval
+        // For villages: check elder approval
+        if ($this->isToVillage() && ! $this->isToBarony() && ! $this->isToKingdom()) {
             if ($this->needsElderApproval() && $this->elder_approved !== true) {
                 return false;
             }
         }
 
-        // Check baron approval (if destination barony has a baron)
+        // For towns: check mayor approval
+        if ($this->isToTown()) {
+            if ($this->needsMayorApproval() && $this->mayor_approved !== true) {
+                return false;
+            }
+        }
+
+        // Check baron approval (if destination barony has a baron, or settling directly in barony)
         if ($this->needsBaronApproval() && $this->baron_approved !== true) {
             return false;
         }
 
-        // Check king approval (if destination kingdom has a king)
+        // Check king approval (if destination kingdom has a king, or settling directly in kingdom)
         if ($this->needsKingApproval() && $this->king_approved !== true) {
             return false;
         }
@@ -206,8 +226,9 @@ class MigrationRequest extends Model
      */
     public function needsElderApproval(): bool
     {
-        if ($this->isToTown()) {
-            return false; // Towns don't have elders
+        // Only villages have elders
+        if (! $this->isToVillage() || $this->isToBarony() || $this->isToKingdom() || $this->isToTown()) {
+            return false;
         }
 
         $villageId = $this->to_location_id ?? $this->to_village_id;
@@ -240,6 +261,11 @@ class MigrationRequest extends Model
      */
     public function needsBaronApproval(): bool
     {
+        // Kingdom destinations don't need baron approval
+        if ($this->isToKingdom()) {
+            return false;
+        }
+
         $barony = $this->getDestinationBarony();
         if (! $barony) {
             return false;
@@ -274,6 +300,16 @@ class MigrationRequest extends Model
      */
     public function getDestinationBarony(): ?Barony
     {
+        // Direct barony destination
+        if ($this->isToBarony()) {
+            return Barony::find($this->to_location_id);
+        }
+
+        // Kingdom destination - no specific barony
+        if ($this->isToKingdom()) {
+            return null;
+        }
+
         if ($this->isToTown()) {
             return Town::find($this->to_location_id)?->barony;
         }
@@ -286,6 +322,16 @@ class MigrationRequest extends Model
      */
     public function getDestinationKingdom(): ?Kingdom
     {
+        // Direct kingdom destination
+        if ($this->isToKingdom()) {
+            return Kingdom::find($this->to_location_id);
+        }
+
+        // Direct barony destination
+        if ($this->isToBarony()) {
+            return Barony::find($this->to_location_id)?->kingdom;
+        }
+
         return $this->getDestinationBarony()?->kingdom;
     }
 

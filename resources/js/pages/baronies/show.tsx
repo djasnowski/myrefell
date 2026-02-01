@@ -1,10 +1,11 @@
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import {
     AlertTriangle,
     ArrowRight,
     Building2,
     Coins,
     Home,
+    Loader2,
     MapPin,
     Mountain,
     Palmtree,
@@ -22,6 +23,7 @@ import {
     Wheat,
     type LucideIcon,
 } from "lucide-react";
+import { useState } from "react";
 import { ActivityFeed } from "@/components/activity-feed";
 import { ServicesGrid } from "@/components/service-card";
 import { Badge } from "@/components/ui/badge";
@@ -124,6 +126,9 @@ interface Props {
     recent_activity: ActivityLogEntry[];
     current_user_id: number;
     is_baron: boolean;
+    is_resident: boolean;
+    can_migrate: boolean;
+    has_pending_request: boolean;
 }
 
 const biomeConfig: Record<string, { icon: LucideIcon; color: string; bg: string; border: string }> =
@@ -191,7 +196,27 @@ export default function BaronyShow({
     recent_activity,
     current_user_id,
     is_baron,
+    is_resident,
+    can_migrate,
+    has_pending_request,
 }: Props) {
+    const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
+    const [loading, setLoading] = useState(false);
+
+    const handleRequestMigration = () => {
+        setLoading(true);
+        router.post(
+            `/migration/request-barony/${barony.id}`,
+            {},
+            {
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
     const biome = biomeConfig[barony.biome] || biomeConfig.plains;
     const BiomeIcon = biome.icon;
 
@@ -245,6 +270,14 @@ export default function BaronyShow({
                                 <span className="text-stone-500">{barony.name}</span>
                             </div>
                         </div>
+
+                        {/* Home badge */}
+                        {is_resident && (
+                            <div className="flex items-center gap-2 rounded-lg border border-green-600/50 bg-green-900/30 px-3 py-2">
+                                <Home className="h-4 w-4 text-green-400" />
+                                <span className="font-pixel text-xs text-green-400">Your Home</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -291,6 +324,18 @@ export default function BaronyShow({
                         <div className="text-xs text-stone-500">Coordinates</div>
                     </div>
                 </div>
+
+                {/* Flash Messages */}
+                {flash?.success && (
+                    <div className="rounded-lg border border-green-600/50 bg-green-900/20 px-4 py-3">
+                        <p className="font-pixel text-sm text-green-300">{flash.success}</p>
+                    </div>
+                )}
+                {flash?.error && (
+                    <div className="rounded-lg border border-red-600/50 bg-red-900/20 px-4 py-3">
+                        <p className="font-pixel text-sm text-red-300">{flash.error}</p>
+                    </div>
+                )}
 
                 {/* Services Grid */}
                 {services && services.length > 0 && (
@@ -414,6 +459,59 @@ export default function BaronyShow({
                         emptyMessage="No recent activity in this barony"
                         maxHeight="250px"
                     />
+                )}
+
+                {/* Migration / Settlement */}
+                {!is_resident && (
+                    <div>
+                        {has_pending_request ? (
+                            <div className="rounded-xl border border-amber-600/30 bg-amber-900/10 p-4">
+                                <div className="flex items-center gap-3">
+                                    <Loader2 className="h-5 w-5 animate-spin text-amber-400" />
+                                    <div>
+                                        <p className="font-pixel text-amber-300">
+                                            Migration Request Pending
+                                        </p>
+                                        <Link
+                                            href="/migration"
+                                            className="text-xs text-stone-400 hover:underline"
+                                        >
+                                            View your request status
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : can_migrate ? (
+                            <button
+                                onClick={handleRequestMigration}
+                                disabled={loading}
+                                className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-blue-500/50 bg-blue-900/20 p-4 transition hover:bg-blue-900/40 disabled:opacity-50"
+                            >
+                                {loading ? (
+                                    <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
+                                ) : (
+                                    <Home className="h-6 w-6 text-blue-400" />
+                                )}
+                                <div>
+                                    <span className="font-pixel text-lg text-blue-300">
+                                        {barony.baron ? "Request to Settle" : "Settle Here"}
+                                    </span>
+                                    <p className="text-xs text-stone-400">
+                                        {barony.baron
+                                            ? "The baron must approve your request"
+                                            : "Make this barony your new home"}
+                                    </p>
+                                </div>
+                            </button>
+                        ) : (
+                            <div className="rounded-xl border border-stone-700 bg-stone-800/30 p-4 text-center">
+                                <p className="font-pixel text-stone-500">Migration on Cooldown</p>
+                                <p className="text-xs text-stone-600">
+                                    You must wait before you can move again
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 {/* Settlements */}

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Barony;
+use App\Models\Kingdom;
 use App\Models\MigrationRequest;
 use App\Models\Town;
 use App\Models\Village;
@@ -76,6 +78,36 @@ class MigrationController extends Controller
     {
         $user = $request->user();
         $result = $this->migrationService->requestMigrationToTown($user, $town);
+
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
+    }
+
+    /**
+     * Request migration to a barony.
+     */
+    public function requestBarony(Request $request, Barony $barony): RedirectResponse
+    {
+        $user = $request->user();
+        $result = $this->migrationService->requestMigrationTo($user, $barony, 'barony');
+
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
+    }
+
+    /**
+     * Request migration to a kingdom.
+     */
+    public function requestKingdom(Request $request, Kingdom $kingdom): RedirectResponse
+    {
+        $user = $request->user();
+        $result = $this->migrationService->requestMigrationTo($user, $kingdom, 'kingdom');
 
         if ($result['success']) {
             return back()->with('success', $result['message']);

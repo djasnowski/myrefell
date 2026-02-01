@@ -30,7 +30,16 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="username">Username</Label>
+                                <div className="flex items-center">
+                                    <Label htmlFor="username">Username</Label>
+                                    <TextLink
+                                        href="/forgot-username"
+                                        className="ml-auto text-sm"
+                                        tabIndex={6}
+                                    >
+                                        Forgot username?
+                                    </TextLink>
+                                </div>
                                 <Input
                                     id="username"
                                     type="text"

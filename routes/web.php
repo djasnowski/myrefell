@@ -7,6 +7,7 @@ use App\Http\Controllers\AgilityController;
 use App\Http\Controllers\AnvilController;
 use App\Http\Controllers\ApothecaryController;
 use App\Http\Controllers\ArmyController;
+use App\Http\Controllers\Auth\ForgotUsernameController;
 use App\Http\Controllers\BankController;
 use App\Http\Controllers\BaronyController;
 use App\Http\Controllers\BattleController;
@@ -114,6 +115,14 @@ if (app()->environment('local')) {
         return redirect()->route('home')->with('error', 'Dev user not found. Run: php artisan db:seed --class=DanAdminSeeder');
     })->name('dev.login');
 }
+
+// Forgot username routes (for guests)
+Route::get('forgot-username', [ForgotUsernameController::class, 'create'])
+    ->middleware('guest')
+    ->name('username.request');
+Route::post('forgot-username', [ForgotUsernameController::class, 'store'])
+    ->middleware('guest')
+    ->name('username.email');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', fn () => Inertia::render('dashboard', [
@@ -494,10 +503,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('roles/status', [RoleController::class, 'status'])->name('roles.status');
     Route::post('roles/claim', [RoleController::class, 'claim'])->name('roles.claim');
 
-    // Migration (moving between villages/towns)
+    // Migration (moving between locations)
     Route::get('migration', [MigrationController::class, 'index'])->name('migration.index');
     Route::post('migration/request/{village}', [MigrationController::class, 'request'])->name('migration.request');
     Route::post('migration/request-town/{town}', [MigrationController::class, 'requestTown'])->name('migration.request-town');
+    Route::post('migration/request-barony/{barony}', [MigrationController::class, 'requestBarony'])->name('migration.request-barony');
+    Route::post('migration/request-kingdom/{kingdom}', [MigrationController::class, 'requestKingdom'])->name('migration.request-kingdom');
     Route::post('migration/{migrationRequest}/cancel', [MigrationController::class, 'cancel'])->name('migration.cancel');
     Route::post('migration/{migrationRequest}/approve', [MigrationController::class, 'approve'])->name('migration.approve');
     Route::post('migration/{migrationRequest}/deny', [MigrationController::class, 'deny'])->name('migration.deny');

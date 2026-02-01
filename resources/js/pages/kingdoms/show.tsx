@@ -1,4 +1,4 @@
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import {
     Anchor,
     Anvil,
@@ -12,6 +12,7 @@ import {
     Dumbbell,
     Hammer,
     Home,
+    Loader2,
     MapPin,
     Mountain,
     Palmtree,
@@ -96,6 +97,9 @@ interface Kingdom {
 interface Props {
     kingdom: Kingdom;
     current_user_id: number;
+    is_resident: boolean;
+    can_migrate: boolean;
+    has_pending_request: boolean;
 }
 
 const biomeConfig: Record<string, { icon: LucideIcon; color: string; bg: string; border: string }> =
@@ -291,7 +295,30 @@ function HierarchyTree({ baronies }: { baronies: Barony[] }) {
     );
 }
 
-export default function KingdomShow({ kingdom, current_user_id }: Props) {
+export default function KingdomShow({
+    kingdom,
+    current_user_id,
+    is_resident,
+    can_migrate,
+    has_pending_request,
+}: Props) {
+    const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
+    const [loading, setLoading] = useState(false);
+
+    const handleRequestMigration = () => {
+        setLoading(true);
+        router.post(
+            `/migration/request-kingdom/${kingdom.id}`,
+            {},
+            {
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
     const biome = biomeConfig[kingdom.biome] || biomeConfig.plains;
     const BiomeIcon = biome.icon;
 
@@ -338,8 +365,28 @@ export default function KingdomShow({ kingdom, current_user_id }: Props) {
                                 </div>
                             )}
                         </div>
+
+                        {/* Home badge */}
+                        {is_resident && (
+                            <div className="flex items-center gap-2 rounded-lg border border-green-600/50 bg-green-900/30 px-3 py-2">
+                                <Home className="h-4 w-4 text-green-400" />
+                                <span className="font-pixel text-xs text-green-400">Your Home</span>
+                            </div>
+                        )}
                     </div>
                 </div>
+
+                {/* Flash Messages */}
+                {flash?.success && (
+                    <div className="rounded-lg border border-green-600/50 bg-green-900/20 px-4 py-3">
+                        <p className="font-pixel text-sm text-green-300">{flash.success}</p>
+                    </div>
+                )}
+                {flash?.error && (
+                    <div className="rounded-lg border border-red-600/50 bg-red-900/20 px-4 py-3">
+                        <p className="font-pixel text-sm text-red-300">{flash.error}</p>
+                    </div>
+                )}
 
                 {/* Stats Row */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
@@ -531,15 +578,70 @@ export default function KingdomShow({ kingdom, current_user_id }: Props) {
                             <Home className="h-8 w-8 text-teal-400" />
                             <div>
                                 <span className="font-pixel text-sm text-teal-300">
-                                    Settle Here
+                                    Browse Settlements
                                 </span>
                                 <p className="text-xs text-stone-500">
-                                    Find a home in this kingdom
+                                    Find a village or town in this kingdom
                                 </p>
                             </div>
                         </Link>
                     </div>
                 </div>
+
+                {/* Migration / Settlement */}
+                {!is_resident && (
+                    <div>
+                        {has_pending_request ? (
+                            <div className="rounded-xl border border-amber-600/30 bg-amber-900/10 p-4">
+                                <div className="flex items-center gap-3">
+                                    <Loader2 className="h-5 w-5 animate-spin text-amber-400" />
+                                    <div>
+                                        <p className="font-pixel text-amber-300">
+                                            Migration Request Pending
+                                        </p>
+                                        <Link
+                                            href="/migration"
+                                            className="text-xs text-stone-400 hover:underline"
+                                        >
+                                            View your request status
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : can_migrate ? (
+                            <button
+                                onClick={handleRequestMigration}
+                                disabled={loading}
+                                className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-blue-500/50 bg-blue-900/20 p-4 transition hover:bg-blue-900/40 disabled:opacity-50"
+                            >
+                                {loading ? (
+                                    <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
+                                ) : (
+                                    <Crown className="h-6 w-6 text-blue-400" />
+                                )}
+                                <div>
+                                    <span className="font-pixel text-lg text-blue-300">
+                                        {kingdom.king
+                                            ? "Request to Settle in Kingdom"
+                                            : "Settle in Kingdom"}
+                                    </span>
+                                    <p className="text-xs text-stone-400">
+                                        {kingdom.king
+                                            ? "The king must approve your request to settle directly under the crown"
+                                            : "Settle directly under the crown's domain"}
+                                    </p>
+                                </div>
+                            </button>
+                        ) : (
+                            <div className="rounded-xl border border-stone-700 bg-stone-800/30 p-4 text-center">
+                                <p className="font-pixel text-stone-500">Migration on Cooldown</p>
+                                <p className="text-xs text-stone-600">
+                                    You must wait before you can move again
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Hierarchy Tree */}
                 {kingdom.baronies.length > 0 && <HierarchyTree baronies={kingdom.baronies} />}

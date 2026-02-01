@@ -47,7 +47,7 @@ class KingdomController extends Controller
     /**
      * Display the specified kingdom.
      */
-    public function show(Request $request, Kingdom $kingdom): Response
+    public function show(Request $request, Kingdom $kingdom, MigrationService $migrationService): Response
     {
         $kingdom->load(['capitalTown', 'baronies.villages', 'baronies.towns', 'baronies.baron', 'king']);
         $user = $request->user();
@@ -139,6 +139,14 @@ class KingdomController extends Controller
         // Count players living in this kingdom
         $playerCount = \App\Models\User::whereIn('home_village_id', $villageIds)->count();
 
+        // Check if user is a resident of this kingdom (settled directly in kingdom)
+        $isResident = $user->home_location_type === 'kingdom' && $user->home_location_id === $kingdom->id;
+
+        // Check for pending migration request
+        $hasPendingRequest = MigrationRequest::where('user_id', $user->id)
+            ->pending()
+            ->exists();
+
         return Inertia::render('kingdoms/show', [
             'kingdom' => [
                 'id' => $kingdom->id,
@@ -166,6 +174,9 @@ class KingdomController extends Controller
                 'king' => $king,
             ],
             'current_user_id' => $user->id,
+            'is_resident' => $isResident,
+            'can_migrate' => $migrationService->canMigrate($user),
+            'has_pending_request' => $hasPendingRequest,
         ]);
     }
 

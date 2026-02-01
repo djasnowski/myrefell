@@ -160,8 +160,20 @@ class MigrationService
      */
     protected function autoApproveVacantLevels(MigrationRequest $request): void
     {
-        // For towns: check mayor
-        if ($request->isToTown()) {
+        // For baronies and kingdoms: auto-approve elder/mayor (they don't have these roles)
+        if ($request->isToBarony() || $request->isToKingdom()) {
+            $request->update([
+                'elder_approved' => true,
+                'elder_decided_at' => now(),
+                'mayor_approved' => true,
+                'mayor_decided_at' => now(),
+            ]);
+        } elseif ($request->isToTown()) {
+            // For towns: check mayor, auto-approve elder (towns don't have elders)
+            $request->update([
+                'elder_approved' => true,
+                'elder_decided_at' => now(),
+            ]);
             if (! $request->needsMayorApproval()) {
                 $request->update([
                     'mayor_approved' => true,
@@ -169,7 +181,11 @@ class MigrationService
                 ]);
             }
         } else {
-            // For villages: check elder
+            // For villages: check elder, auto-approve mayor (villages don't have mayors)
+            $request->update([
+                'mayor_approved' => true,
+                'mayor_decided_at' => now(),
+            ]);
             if (! $request->needsElderApproval()) {
                 $request->update([
                     'elder_approved' => true,
@@ -178,8 +194,14 @@ class MigrationService
             }
         }
 
-        // If no baron at destination barony, auto-approve baron level
-        if (! $request->needsBaronApproval()) {
+        // For kingdoms: auto-approve baron level (they only need king approval)
+        if ($request->isToKingdom()) {
+            $request->update([
+                'baron_approved' => true,
+                'baron_decided_at' => now(),
+            ]);
+        } elseif (! $request->needsBaronApproval()) {
+            // If no baron at destination barony, auto-approve baron level
             $request->update([
                 'baron_approved' => true,
                 'baron_decided_at' => now(),
@@ -487,6 +509,11 @@ class MigrationService
                                 $tq->select('id')->from('towns')->whereIn('barony_id', $baronBaronies);
                             });
                     })
+                // Baron can approve direct barony settlement requests
+                    ->orWhere(function ($sq) use ($baronBaronies) {
+                        $sq->where('to_location_type', 'barony')
+                            ->whereIn('to_location_id', $baronBaronies);
+                    })
                     ->whereNull('baron_approved');
             })
             ->orWhere(function ($q) use ($kingKingdoms) {
@@ -502,6 +529,18 @@ class MigrationService
                                     ->join('baronies', 'towns.barony_id', '=', 'baronies.id')
                                     ->whereIn('baronies.kingdom_id', $kingKingdoms);
                             });
+                    })
+                // King can approve requests to baronies in their kingdom
+                    ->orWhere(function ($sq) use ($kingKingdoms) {
+                        $sq->where('to_location_type', 'barony')
+                            ->whereIn('to_location_id', function ($bq) use ($kingKingdoms) {
+                                $bq->select('id')->from('baronies')->whereIn('kingdom_id', $kingKingdoms);
+                            });
+                    })
+                // King can approve direct kingdom settlement requests
+                    ->orWhere(function ($sq) use ($kingKingdoms) {
+                        $sq->where('to_location_type', 'kingdom')
+                            ->whereIn('to_location_id', $kingKingdoms);
                     })
                     ->whereNull('king_approved');
             })
