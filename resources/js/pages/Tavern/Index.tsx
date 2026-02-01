@@ -1,7 +1,6 @@
 import { Head, router, usePage } from "@inertiajs/react";
 import {
     ArrowRight,
-    ArrowUp,
     Beer,
     Check,
     ChefHat,
@@ -9,12 +8,12 @@ import {
     Loader2,
     Lock,
     MessageCircle,
-    Package,
     X,
     Zap,
 } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { gameToast } from "@/components/ui/game-toast";
 import type { BreadcrumbItem } from "@/types";
 
 interface Activity {
@@ -183,7 +182,6 @@ export default function TavernIndex() {
     const { location, player, rest, recent_activity, cooking } = usePage<PageProps>().props;
     const [loading, setLoading] = useState(false);
     const [cookingLoading, setCookingLoading] = useState<string | null>(null);
-    const [cookResult, setCookResult] = useState<CookResult | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(player.energy);
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -216,7 +214,6 @@ export default function TavernIndex() {
 
     const handleCook = async (recipeId: string) => {
         setCookingLoading(recipeId);
-        setCookResult(null);
 
         try {
             const response = await fetch(`${baseUrl}/cook`, {
@@ -232,7 +229,17 @@ export default function TavernIndex() {
             });
 
             const data: CookResult = await response.json();
-            setCookResult(data);
+
+            if (data.success && data.item) {
+                gameToast.success(`Cooked ${data.item.quantity}x ${data.item.name}`, {
+                    xp: data.xp_awarded,
+                    levelUp: data.leveled_up
+                        ? { skill: "Cooking", level: (cooking.cooking_level || 0) + 1 }
+                        : undefined,
+                });
+            } else if (!data.success) {
+                gameToast.error(data.message);
+            }
 
             if (data.success && data.energy_remaining !== undefined) {
                 setCurrentEnergy(data.energy_remaining);
@@ -241,7 +248,7 @@ export default function TavernIndex() {
             // Reload to update materials
             router.reload({ only: ["cooking", "player", "sidebar"] });
         } catch {
-            setCookResult({ success: false, message: "An error occurred" });
+            gameToast.error("An error occurred");
         } finally {
             setCookingLoading(null);
         }
@@ -353,44 +360,6 @@ export default function TavernIndex() {
                                 Cooking Lv. {cooking.cooking_level}
                             </span>
                         </div>
-
-                        {/* Cook Result Message */}
-                        {cookResult && (
-                            <div
-                                className={`mb-4 rounded-lg border p-3 ${
-                                    cookResult.success
-                                        ? "border-green-600/50 bg-green-900/20"
-                                        : "border-red-600/50 bg-red-900/20"
-                                }`}
-                            >
-                                {cookResult.success && cookResult.item ? (
-                                    <div className="flex items-center gap-2">
-                                        <Package className="h-5 w-5 text-green-400" />
-                                        <div>
-                                            <div className="font-pixel text-sm text-green-300">
-                                                Cooked {cookResult.item.quantity}x{" "}
-                                                {cookResult.item.name}
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-pixel text-[10px] text-amber-400">
-                                                    +{cookResult.xp_awarded} XP
-                                                </span>
-                                                {cookResult.leveled_up && (
-                                                    <span className="flex items-center gap-1 font-pixel text-[10px] text-yellow-300">
-                                                        <ArrowUp className="h-3 w-3" />
-                                                        Level Up!
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <span className="font-pixel text-sm text-red-400">
-                                        {cookResult.message}
-                                    </span>
-                                )}
-                            </div>
-                        )}
 
                         {/* Recipe Grid - 4 columns */}
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

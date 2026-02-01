@@ -1,6 +1,5 @@
 import { Head, router, usePage } from "@inertiajs/react";
 import {
-    ArrowUp,
     Axe,
     Backpack,
     Fish,
@@ -16,6 +15,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { gameToast } from "@/components/ui/game-toast";
 import type { BreadcrumbItem } from "@/types";
 
 interface Resource {
@@ -102,7 +102,6 @@ const seasonColors: Record<string, string> = {
 export default function GatheringActivity() {
     const { activity, player_energy, max_energy, location } = usePage<PageProps>().props;
     const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState<GatherResult | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(player_energy);
 
     const Icon = activityIcons[activity.id] || Pickaxe;
@@ -130,7 +129,6 @@ export default function GatheringActivity() {
         if (!canGather || loading) return;
 
         setLoading(true);
-        setResult(null);
 
         try {
             const response = await fetch(`/${location.type}s/${location.id}/gathering/gather`, {
@@ -146,7 +144,20 @@ export default function GatheringActivity() {
             });
 
             const data: GatherResult = await response.json();
-            setResult(data);
+
+            // Show toast notification
+            if (data.success && data.resource) {
+                const quantity = data.quantity && data.quantity > 1 ? `${data.quantity}x ` : "";
+                const bonus = data.seasonal_bonus ? " (Seasonal Bonus!)" : "";
+                gameToast.success(`${quantity}${data.resource.name}${bonus}`, {
+                    xp: data.xp_awarded,
+                    levelUp: data.leveled_up
+                        ? { skill: activity.skill, level: (activity.skill_level || 0) + 1 }
+                        : undefined,
+                });
+            } else if (!data.success) {
+                gameToast.error(data.message);
+            }
 
             if (data.success && data.energy_remaining !== undefined) {
                 setCurrentEnergy(data.energy_remaining);
@@ -155,7 +166,7 @@ export default function GatheringActivity() {
             // Reload sidebar data
             router.reload({ only: ["sidebar"] });
         } catch {
-            setResult({ success: false, message: "An error occurred" });
+            gameToast.error("An error occurred");
         } finally {
             setLoading(false);
         }
@@ -240,57 +251,6 @@ export default function GatheringActivity() {
                             </div>
                         </div>
                     </div>
-
-                    {/* Result Display */}
-                    {result && (
-                        <div
-                            className={`mb-6 rounded-lg border p-4 ${
-                                result.success
-                                    ? "border-green-600/50 bg-green-900/20"
-                                    : "border-red-600/50 bg-red-900/20"
-                            }`}
-                        >
-                            <div className="flex items-center gap-3">
-                                {result.success && result.resource && (
-                                    <>
-                                        <Package className="h-8 w-8 text-green-400" />
-                                        <div>
-                                            <div className="flex items-center gap-2 font-pixel text-sm text-green-300">
-                                                {result.quantity && result.quantity > 1 ? (
-                                                    <span>
-                                                        {result.quantity}x {result.resource.name}
-                                                    </span>
-                                                ) : (
-                                                    <span>{result.resource.name}</span>
-                                                )}
-                                                {result.seasonal_bonus && (
-                                                    <span className="rounded bg-orange-900/50 px-1.5 py-0.5 text-[10px] text-orange-300">
-                                                        Seasonal Bonus!
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-pixel text-[10px] text-amber-400">
-                                                    +{result.xp_awarded} XP
-                                                </span>
-                                                {result.leveled_up && (
-                                                    <span className="flex items-center gap-1 font-pixel text-[10px] text-yellow-300">
-                                                        <ArrowUp className="h-3 w-3" />
-                                                        Level Up!
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                                {!result.success && (
-                                    <div className="font-pixel text-sm text-red-400">
-                                        {result.message}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
 
                     {/* Gather Button */}
                     <button

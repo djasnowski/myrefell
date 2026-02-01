@@ -1,7 +1,8 @@
 import { Head, router, usePage } from "@inertiajs/react";
-import { ArrowUp, Crosshair, Dumbbell, Heart, Loader2, Shield, Sword, Zap } from "lucide-react";
+import { Crosshair, Dumbbell, Heart, Loader2, Shield, Sword, Zap } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { gameToast } from "@/components/ui/game-toast";
 import type { BreadcrumbItem } from "@/types";
 
 interface Exercise {
@@ -98,7 +99,6 @@ export default function TrainingIndex() {
     const { exercises, combat_stats, player_energy, max_energy, player_hp, max_hp } =
         usePage<PageProps>().props;
     const [loading, setLoading] = useState<string | null>(null);
-    const [result, setResult] = useState<TrainResult | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(player_energy);
     const [currentStats, setCurrentStats] = useState(combat_stats);
     const [currentHp, setCurrentHp] = useState(player_hp);
@@ -115,7 +115,6 @@ export default function TrainingIndex() {
         if (!exerciseData || currentEnergy < exerciseData.energy_cost) return;
 
         setLoading(exercise);
-        setResult(null);
 
         try {
             const response = await fetch("/training/train", {
@@ -131,7 +130,12 @@ export default function TrainingIndex() {
             });
 
             const data: TrainResult = await response.json();
-            setResult(data);
+
+            // Show toast notification
+            const skillName = data.skill
+                ? data.skill.charAt(0).toUpperCase() + data.skill.slice(1)
+                : "Combat";
+            gameToast.training({ ...data, skill: skillName });
 
             if (data.success) {
                 if (data.energy_remaining !== undefined) {
@@ -188,7 +192,7 @@ export default function TrainingIndex() {
                 },
             });
         } catch {
-            setResult({ success: false, message: "An error occurred" });
+            gameToast.error("An error occurred");
         } finally {
             setLoading(null);
         }
@@ -281,63 +285,6 @@ export default function TrainingIndex() {
                             </div>
                         </div>
                     </div>
-
-                    {/* Result Display */}
-                    {result && (
-                        <div
-                            className={`mb-6 rounded-lg border p-4 ${
-                                result.success
-                                    ? "border-green-600/50 bg-green-900/20"
-                                    : "border-red-600/50 bg-red-900/20"
-                            }`}
-                        >
-                            <div className="flex items-center gap-3">
-                                {result.success ? (
-                                    <>
-                                        <div
-                                            className={`rounded-lg p-2 ${
-                                                exerciseColors[result.exercise || "attack"].bg
-                                            }`}
-                                        >
-                                            {(() => {
-                                                const Icon =
-                                                    exerciseIcons[result.exercise || "attack"];
-                                                return (
-                                                    <Icon
-                                                        className={`h-6 w-6 ${
-                                                            exerciseColors[
-                                                                result.exercise || "attack"
-                                                            ].text
-                                                        }`}
-                                                    />
-                                                );
-                                            })()}
-                                        </div>
-                                        <div>
-                                            <div className="font-pixel text-sm text-green-300">
-                                                {result.message}
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-pixel text-[10px] text-amber-400">
-                                                    +{result.xp_awarded} XP
-                                                </span>
-                                                {result.leveled_up && (
-                                                    <span className="flex items-center gap-1 font-pixel text-[10px] text-yellow-300">
-                                                        <ArrowUp className="h-3 w-3" />
-                                                        Level {result.new_level}!
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="font-pixel text-sm text-red-400">
-                                        {result.message}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
 
                     {/* Training Exercises */}
                     <div className="space-y-4">

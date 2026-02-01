@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\EmploymentJob;
+use App\Models\Item;
 use App\Models\LocationStockpile;
 use App\Models\PlayerEmployment;
 use App\Models\User;
@@ -21,6 +22,11 @@ class JobService
      * Default supervisor cut percentage if not specified.
      */
     public const DEFAULT_SUPERVISOR_CUT = 10;
+
+    /**
+     * Percentage of farming level contributed as grain to granary (10% = 0.10).
+     */
+    public const FARMING_GRANARY_LEVEL_PERCENT = 0.10;
 
     public function __construct(
         protected EnergyService $energyService,
@@ -447,6 +453,29 @@ class JobService
                 }
             }
 
+            // Farming jobs contribute grain to the granary (villages and towns only)
+            // Contribution is 5% of farming level (minimum 1)
+            $granaryContribution = null;
+            if ($job->xp_skill === 'farming' && in_array($employment->location_type, ['village', 'town'])) {
+                $grainItem = Item::where('name', 'Grain')->first();
+                if ($grainItem) {
+                    // Get player's farming level
+                    $farmingSkill = $user->skills()->where('skill_name', 'farming')->first();
+                    $farmingLevel = $farmingSkill?->level ?? 1;
+
+                    // Calculate contribution: 5% of farming level, minimum 1
+                    $contribution = max(1, (int) ceil($farmingLevel * self::FARMING_GRANARY_LEVEL_PERCENT));
+
+                    $stockpile = LocationStockpile::getOrCreate(
+                        $employment->location_type,
+                        $employment->location_id,
+                        $grainItem->id
+                    );
+                    $stockpile->addQuantity($contribution);
+                    $granaryContribution = $contribution;
+                }
+            }
+
             // Update employment record
             $employment->update([
                 'last_worked_at' => now(),
@@ -462,6 +491,9 @@ class JobService
             if ($produced) {
                 $message .= " You produced {$produced['quantity']}x {$produced['item']} for the stockpile.";
             }
+            if ($granaryContribution) {
+                $message .= " You contributed {$granaryContribution} grain to the granary.";
+            }
 
             return [
                 'success' => true,
@@ -473,6 +505,7 @@ class JobService
                     'xp' => $xpAwarded,
                     'energy_used' => $job->energy_cost,
                     'produced' => $produced,
+                    'granary_contribution' => $granaryContribution,
                 ],
             ];
         });

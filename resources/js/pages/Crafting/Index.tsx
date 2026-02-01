@@ -1,18 +1,8 @@
 import { Head, router, usePage } from "@inertiajs/react";
-import {
-    ArrowRight,
-    ArrowUp,
-    Backpack,
-    Check,
-    Loader2,
-    Lock,
-    Package,
-    Scissors,
-    X,
-    Zap,
-} from "lucide-react";
+import { ArrowRight, Backpack, Check, Loader2, Lock, Scissors, X, Zap } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { gameToast } from "@/components/ui/game-toast";
 import type { BreadcrumbItem } from "@/types";
 
 interface Material {
@@ -185,7 +175,6 @@ function RecipeCard({
 export default function CraftingIndex() {
     const { crafting_info, location } = usePage<PageProps>().props;
     const [loading, setLoading] = useState<string | null>(null);
-    const [result, setResult] = useState<CraftResult | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(crafting_info.player_energy);
 
     // Build the craft URL based on location
@@ -195,7 +184,6 @@ export default function CraftingIndex() {
 
     const handleCraft = async (recipeId: string) => {
         setLoading(recipeId);
-        setResult(null);
 
         try {
             const response = await fetch(craftUrl, {
@@ -211,7 +199,20 @@ export default function CraftingIndex() {
             });
 
             const data: CraftResult = await response.json();
-            setResult(data);
+
+            if (data.success && data.item) {
+                gameToast.success(`Crafted ${data.item.quantity}x ${data.item.name}`, {
+                    xp: data.xp_awarded,
+                    levelUp: data.leveled_up
+                        ? {
+                              skill: data.skill || "Crafting",
+                              level: (crafting_info.crafting_level || 0) + 1,
+                          }
+                        : undefined,
+                });
+            } else if (!data.success) {
+                gameToast.error(data.message);
+            }
 
             if (data.success && data.energy_remaining !== undefined) {
                 setCurrentEnergy(data.energy_remaining);
@@ -220,7 +221,7 @@ export default function CraftingIndex() {
             // Reload to update materials
             router.reload({ only: ["crafting_info", "sidebar"] });
         } catch {
-            setResult({ success: false, message: "An error occurred" });
+            gameToast.error("An error occurred");
         } finally {
             setLoading(null);
         }
@@ -297,46 +298,6 @@ export default function CraftingIndex() {
                         </div>
                     </div>
                 </div>
-
-                {/* Result Message */}
-                {result && (
-                    <div
-                        className={`mb-4 rounded-lg border p-3 ${
-                            result.success
-                                ? "border-green-600/50 bg-green-900/20"
-                                : "border-red-600/50 bg-red-900/20"
-                        }`}
-                    >
-                        <div className="flex items-center gap-3">
-                            {result.success && result.item && (
-                                <>
-                                    <Package className="h-6 w-6 text-green-400" />
-                                    <div>
-                                        <div className="font-pixel text-sm text-green-300">
-                                            Crafted {result.item.quantity}x {result.item.name}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-pixel text-[10px] text-amber-400">
-                                                +{result.xp_awarded} XP
-                                            </span>
-                                            {result.leveled_up && (
-                                                <span className="flex items-center gap-1 font-pixel text-[10px] text-yellow-300">
-                                                    <ArrowUp className="h-3 w-3" />
-                                                    Level Up!
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-                            {!result.success && (
-                                <span className="font-pixel text-sm text-red-400">
-                                    {result.message}
-                                </span>
-                            )}
-                        </div>
-                    </div>
-                )}
 
                 {/* Recipe Grid */}
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

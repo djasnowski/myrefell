@@ -210,6 +210,8 @@ export function ServicesGrid({
     isPort = false,
     className,
 }: ServicesGridProps) {
+    const { sidebar } = usePage<{ sidebar: SidebarData | null }>().props;
+
     // Build location path
     const locationPaths: Record<string, string> = {
         village: "villages",
@@ -221,14 +223,24 @@ export function ServicesGrid({
 
     const basePath = locationPaths[locationType] || locationType + "s";
 
+    // Sort services: favorites first, then alphabetically
+    const sortedServices = [...services].sort((a, b) => {
+        const aIsFavorited = sidebar?.favorites?.some((f) => f.service_id === a.id) ?? false;
+        const bIsFavorited = sidebar?.favorites?.some((f) => f.service_id === b.id) ?? false;
+
+        if (aIsFavorited && !bIsFavorited) return -1;
+        if (!aIsFavorited && bIsFavorited) return 1;
+        return 0; // Keep original order within each group
+    });
+
     return (
         <div
             className={cn(
-                "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5",
+                "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6",
                 className,
             )}
         >
-            {services.map((service) => {
+            {sortedServices.map((service) => {
                 // Skip port services if location is not a port
                 if (service.id === "port" && !isPort) {
                     return null;

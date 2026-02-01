@@ -8,7 +8,6 @@ import {
     Hand,
     Loader2,
     Lock,
-    Package,
     Percent,
     Skull,
     User,
@@ -16,6 +15,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { gameToast } from "@/components/ui/game-toast";
 import type { BreadcrumbItem } from "@/types";
 
 interface Target {
@@ -244,7 +244,6 @@ function TargetCard({
 export default function ThievingIndex() {
     const { location, thieving_info } = usePage<PageProps>().props;
     const [loading, setLoading] = useState<string | null>(null);
-    const [result, setResult] = useState<ThieveResult | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(thieving_info.player_energy);
     const [currentGold, setCurrentGold] = useState(thieving_info.player_gold);
 
@@ -264,7 +263,6 @@ export default function ThievingIndex() {
 
     const handleThieve = async (targetId: string) => {
         setLoading(targetId);
-        setResult(null);
 
         try {
             const response = await fetch(`${baseUrl}/attempt`, {
@@ -280,7 +278,23 @@ export default function ThievingIndex() {
             });
 
             const data: ThieveResult = await response.json();
-            setResult(data);
+
+            if (data.success) {
+                let message = data.message;
+                if (data.loot) {
+                    message += ` (+${data.loot.quantity}x ${data.loot.name})`;
+                }
+                gameToast.success(message, {
+                    xp: data.xp_awarded,
+                    levelUp: data.leveled_up
+                        ? { skill: "Thieving", level: (thieving_info.thieving_level || 0) + 1 }
+                        : undefined,
+                });
+            } else if (data.caught) {
+                gameToast.warning(data.message);
+            } else {
+                gameToast.error(data.message);
+            }
 
             if (data.energy_remaining !== undefined) {
                 setCurrentEnergy(data.energy_remaining);
@@ -292,7 +306,7 @@ export default function ThievingIndex() {
             // Reload to update sidebar and info
             router.reload({ only: ["thieving_info", "sidebar"] });
         } catch {
-            setResult({ success: false, caught: false, message: "An error occurred" });
+            gameToast.error("An error occurred");
         } finally {
             setLoading(null);
         }
@@ -349,61 +363,6 @@ export default function ThievingIndex() {
                         </div>
                     </div>
                 </div>
-
-                {/* Result Message */}
-                {result && (
-                    <div
-                        className={`mb-6 rounded-xl border-2 p-4 ${
-                            result.success
-                                ? "border-green-500/50 bg-green-900/20"
-                                : result.caught
-                                  ? "border-red-500/50 bg-red-900/20"
-                                  : "border-stone-600/50 bg-stone-800/30"
-                        }`}
-                    >
-                        <div className="flex items-center gap-3">
-                            {result.success ? (
-                                <Coins className="h-6 w-6 text-green-400" />
-                            ) : result.caught ? (
-                                <AlertTriangle className="h-6 w-6 text-red-400" />
-                            ) : (
-                                <Hand className="h-6 w-6 text-stone-400" />
-                            )}
-                            <div>
-                                <p
-                                    className={`font-pixel text-sm ${
-                                        result.success
-                                            ? "text-green-300"
-                                            : result.caught
-                                              ? "text-red-300"
-                                              : "text-stone-300"
-                                    }`}
-                                >
-                                    {result.message}
-                                </p>
-                                <div className="mt-1 flex items-center gap-3">
-                                    {result.xp_awarded && (
-                                        <span className="font-pixel text-xs text-cyan-400">
-                                            +{result.xp_awarded} XP
-                                        </span>
-                                    )}
-                                    {result.leveled_up && (
-                                        <span className="flex items-center gap-1 font-pixel text-xs text-yellow-300">
-                                            <ArrowUp className="h-3 w-3" />
-                                            Level Up!
-                                        </span>
-                                    )}
-                                    {result.loot && (
-                                        <span className="flex items-center gap-1 font-pixel text-xs text-purple-400">
-                                            <Package className="h-3 w-3" />+{result.loot.quantity}x{" "}
-                                            {result.loot.name}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
                 {/* Targets Grid */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

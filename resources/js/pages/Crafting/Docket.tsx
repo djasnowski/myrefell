@@ -8,7 +8,6 @@ import {
     Coins,
     Hammer,
     Loader2,
-    Package,
     Scissors,
     ShoppingCart,
     User,
@@ -17,6 +16,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { gameToast } from "@/components/ui/game-toast";
 import type { BreadcrumbItem } from "@/types";
 
 interface Material {
@@ -413,13 +413,11 @@ function MyOrderCard({
 export default function DocketPage() {
     const { docket_info } = usePage<PageProps>().props;
     const [loading, setLoading] = useState<string | number | null>(null);
-    const [result, setResult] = useState<ActionResult | null>(null);
     const [activeTab, setActiveTab] = useState<"npc" | "orders" | "my-work" | "my-orders">("npc");
     const [playerGold, setPlayerGold] = useState(docket_info.player_gold);
 
     const handleNpcBuy = async (recipeId: string) => {
         setLoading(recipeId);
-        setResult(null);
 
         try {
             const response = await fetch("/docket/npc-order", {
@@ -435,7 +433,17 @@ export default function DocketPage() {
             });
 
             const data: ActionResult = await response.json();
-            setResult(data);
+
+            if (data.success) {
+                gameToast.success(data.message, {
+                    xp: data.xp_earned,
+                    levelUp: data.leveled_up
+                        ? { skill: data.skill || "Crafting", level: 0 }
+                        : undefined,
+                });
+            } else {
+                gameToast.error(data.message);
+            }
 
             if (data.success && data.gold_remaining !== undefined) {
                 setPlayerGold(data.gold_remaining);
@@ -443,7 +451,7 @@ export default function DocketPage() {
 
             router.reload({ only: ["docket_info", "sidebar"] });
         } catch {
-            setResult({ success: false, message: "An error occurred" });
+            gameToast.error("An error occurred");
         } finally {
             setLoading(null);
         }
@@ -451,7 +459,6 @@ export default function DocketPage() {
 
     const handleAcceptOrder = async (orderId: number) => {
         setLoading(orderId);
-        setResult(null);
 
         try {
             const response = await fetch(`/docket/${orderId}/accept`, {
@@ -466,10 +473,16 @@ export default function DocketPage() {
             });
 
             const data: ActionResult = await response.json();
-            setResult(data);
+
+            if (data.success) {
+                gameToast.success(data.message);
+            } else {
+                gameToast.error(data.message);
+            }
+
             router.reload({ only: ["docket_info", "sidebar"] });
         } catch {
-            setResult({ success: false, message: "An error occurred" });
+            gameToast.error("An error occurred");
         } finally {
             setLoading(null);
         }
@@ -477,7 +490,6 @@ export default function DocketPage() {
 
     const handleCompleteOrder = async (orderId: number) => {
         setLoading(orderId);
-        setResult(null);
 
         try {
             const response = await fetch(`/docket/${orderId}/complete`, {
@@ -492,7 +504,17 @@ export default function DocketPage() {
             });
 
             const data: ActionResult = await response.json();
-            setResult(data);
+
+            if (data.success) {
+                gameToast.success(data.message, {
+                    xp: data.xp_earned,
+                    levelUp: data.leveled_up
+                        ? { skill: data.skill || "Crafting", level: 0 }
+                        : undefined,
+                });
+            } else {
+                gameToast.error(data.message);
+            }
 
             if (data.success && data.gold_remaining !== undefined) {
                 setPlayerGold(data.gold_remaining);
@@ -500,7 +522,7 @@ export default function DocketPage() {
 
             router.reload({ only: ["docket_info", "sidebar"] });
         } catch {
-            setResult({ success: false, message: "An error occurred" });
+            gameToast.error("An error occurred");
         } finally {
             setLoading(null);
         }
@@ -508,7 +530,6 @@ export default function DocketPage() {
 
     const handleAbandonOrder = async (orderId: number) => {
         setLoading(orderId);
-        setResult(null);
 
         try {
             const response = await fetch(`/docket/${orderId}/abandon`, {
@@ -523,10 +544,16 @@ export default function DocketPage() {
             });
 
             const data: ActionResult = await response.json();
-            setResult(data);
+
+            if (data.success) {
+                gameToast.info(data.message);
+            } else {
+                gameToast.error(data.message);
+            }
+
             router.reload({ only: ["docket_info", "sidebar"] });
         } catch {
-            setResult({ success: false, message: "An error occurred" });
+            gameToast.error("An error occurred");
         } finally {
             setLoading(null);
         }
@@ -534,7 +561,6 @@ export default function DocketPage() {
 
     const handleCancelOrder = async (orderId: number) => {
         setLoading(orderId);
-        setResult(null);
 
         try {
             const response = await fetch(`/docket/${orderId}/cancel`, {
@@ -549,7 +575,12 @@ export default function DocketPage() {
             });
 
             const data: ActionResult = await response.json();
-            setResult(data);
+
+            if (data.success) {
+                gameToast.info(data.message);
+            } else {
+                gameToast.error(data.message);
+            }
 
             if (data.success && data.gold_remaining !== undefined) {
                 setPlayerGold(data.gold_remaining);
@@ -557,7 +588,7 @@ export default function DocketPage() {
 
             router.reload({ only: ["docket_info", "sidebar"] });
         } catch {
-            setResult({ success: false, message: "An error occurred" });
+            gameToast.error("An error occurred");
         } finally {
             setLoading(null);
         }
@@ -599,53 +630,6 @@ export default function DocketPage() {
                         <span className="font-pixel text-xs text-stone-500">gold</span>
                     </div>
                 </div>
-
-                {/* Result Message */}
-                {result && (
-                    <div
-                        className={`mb-4 rounded-lg border p-3 ${
-                            result.success
-                                ? "border-green-600/50 bg-green-900/20"
-                                : "border-red-600/50 bg-red-900/20"
-                        }`}
-                    >
-                        <div className="flex items-center gap-3">
-                            {result.success && result.item ? (
-                                <>
-                                    <Package className="h-6 w-6 text-green-400" />
-                                    <div>
-                                        <div className="font-pixel text-sm text-green-300">
-                                            {result.message}
-                                        </div>
-                                        {result.xp_earned && (
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-pixel text-[10px] text-amber-400">
-                                                    +{result.xp_earned} XP
-                                                </span>
-                                                {result.leveled_up && (
-                                                    <span className="font-pixel text-[10px] text-yellow-300">
-                                                        Level Up!
-                                                    </span>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </>
-                            ) : result.success ? (
-                                <>
-                                    <Check className="h-6 w-6 text-green-400" />
-                                    <div className="font-pixel text-sm text-green-300">
-                                        {result.message}
-                                    </div>
-                                </>
-                            ) : (
-                                <span className="font-pixel text-sm text-red-400">
-                                    {result.message}
-                                </span>
-                            )}
-                        </div>
-                    </div>
-                )}
 
                 {/* Tabs */}
                 <div className="mb-4 flex gap-2 overflow-x-auto">

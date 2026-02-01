@@ -1,7 +1,6 @@
 import { Head, router, usePage } from "@inertiajs/react";
 import {
     ArrowRight,
-    ArrowUp,
     Backpack,
     Check,
     FlaskConical,
@@ -9,7 +8,6 @@ import {
     Leaf,
     Loader2,
     Lock,
-    Package,
     Shield,
     Sparkles,
     Sword,
@@ -18,6 +16,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { gameToast } from "@/components/ui/game-toast";
 import type { BreadcrumbItem } from "@/types";
 
 interface Material {
@@ -217,7 +216,6 @@ function RecipeCard({
 export default function ApothecaryIndex() {
     const { brewing_info, location } = usePage<PageProps>().props;
     const [loading, setLoading] = useState<string | null>(null);
-    const [result, setResult] = useState<BrewResult | null>(null);
     const [activeCategory, setActiveCategory] = useState<string>("all");
     const [currentEnergy, setCurrentEnergy] = useState(brewing_info.player_energy);
 
@@ -227,7 +225,6 @@ export default function ApothecaryIndex() {
 
     const handleBrew = async (recipeId: string) => {
         setLoading(recipeId);
-        setResult(null);
 
         try {
             const response = await fetch(brewUrl, {
@@ -243,7 +240,20 @@ export default function ApothecaryIndex() {
             });
 
             const data: BrewResult = await response.json();
-            setResult(data);
+
+            if (data.success && data.item) {
+                gameToast.success(`Brewed ${data.item.quantity}x ${data.item.name}`, {
+                    xp: data.xp_awarded,
+                    levelUp: data.leveled_up
+                        ? {
+                              skill: data.skill || "Herblore",
+                              level: (brewing_info.herblore_level || 0) + 1,
+                          }
+                        : undefined,
+                });
+            } else if (!data.success) {
+                gameToast.error(data.message);
+            }
 
             if (data.success && data.energy_remaining !== undefined) {
                 setCurrentEnergy(data.energy_remaining);
@@ -251,7 +261,7 @@ export default function ApothecaryIndex() {
 
             router.reload({ only: ["brewing_info", "sidebar"] });
         } catch {
-            setResult({ success: false, message: "An error occurred" });
+            gameToast.error("An error occurred");
         } finally {
             setLoading(null);
         }
@@ -396,46 +406,6 @@ export default function ApothecaryIndex() {
                         </div>
                     </div>
                 </div>
-
-                {/* Result Message */}
-                {result && (
-                    <div
-                        className={`mb-4 rounded-lg border p-3 ${
-                            result.success
-                                ? "border-green-600/50 bg-green-900/20"
-                                : "border-red-600/50 bg-red-900/20"
-                        }`}
-                    >
-                        <div className="flex items-center gap-3">
-                            {result.success && result.item && (
-                                <>
-                                    <Package className="h-6 w-6 text-green-400" />
-                                    <div>
-                                        <div className="font-pixel text-sm text-green-300">
-                                            Brewed {result.item.quantity}x {result.item.name}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-pixel text-[10px] text-emerald-400">
-                                                +{result.xp_awarded} XP
-                                            </span>
-                                            {result.leveled_up && (
-                                                <span className="flex items-center gap-1 font-pixel text-[10px] text-yellow-300">
-                                                    <ArrowUp className="h-3 w-3" />
-                                                    Level Up!
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-                            {!result.success && (
-                                <span className="font-pixel text-sm text-red-400">
-                                    {result.message}
-                                </span>
-                            )}
-                        </div>
-                    </div>
-                )}
 
                 {/* Category Tabs */}
                 <div className="mb-4 flex gap-2 overflow-x-auto">
