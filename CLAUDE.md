@@ -1,5 +1,22 @@
 # MyRefell Development Notes
 
+## Laravel Sail / Docker
+
+This project runs in Docker via Laravel Sail. When running artisan commands, migrations, or accessing the database, use Sail:
+
+```bash
+# Run migrations
+./vendor/bin/sail artisan migrate
+
+# Run artisan commands
+./vendor/bin/sail artisan <command>
+
+# Access tinker (for database queries/debugging)
+./vendor/bin/sail artisan tinker
+```
+
+**Important:** Do NOT use `php artisan` directly - it will fail to connect to the database since PostgreSQL runs inside Docker.
+
 ## CSRF Token / 419 Page Expired Fix
 
 When using `router.post()`, `router.put()`, or `router.delete()` in Inertia.js React components, always add `router.reload()` in the `onSuccess` callback to refresh the CSRF token. Without this, subsequent requests will fail with "419 Page Expired".
