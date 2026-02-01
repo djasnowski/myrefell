@@ -99,6 +99,8 @@ class StableController extends Controller
                 'stamina' => $userHorse['stamina'],
                 'max_stamina' => $userHorse['max_stamina'],
                 'is_stabled' => $userHorse['is_stabled'],
+                'stabled_location_type' => $userHorse['stabled_location_type'],
+                'stabled_location_id' => $userHorse['stabled_location_id'],
                 'sell_value' => $userHorse['sell_price'],
             ];
         }

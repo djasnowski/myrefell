@@ -29,6 +29,8 @@ interface UserHorse {
     stamina: number;
     max_stamina: number;
     is_stabled: boolean;
+    stabled_location_type: string | null;
+    stabled_location_id: number | null;
     sell_value: number;
 }
 
@@ -308,6 +310,62 @@ export default function StableIndex() {
                         </div>
                     </div>
                 )}
+
+                {/* Horses Stabled Here */}
+                {userHorse?.is_stabled &&
+                    location &&
+                    userHorse.stabled_location_type === location.type &&
+                    userHorse.stabled_location_id === location.id && (
+                        <div className="rounded-xl border border-stone-700/50 bg-stone-800/30 p-4">
+                            <h3 className="mb-3 font-[Cinzel] font-semibold text-stone-300">
+                                Horses Stabled Here
+                            </h3>
+                            <div className="flex items-center justify-between rounded-lg border border-stone-700/30 bg-stone-900/50 p-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="rounded-lg bg-amber-900/30 p-2">
+                                        <Gauge className="size-5 text-amber-400" />
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-stone-100">
+                                            {userHorse.custom_name || userHorse.horse.name}
+                                        </p>
+                                        <div className="flex items-center gap-3 text-sm text-stone-400">
+                                            <span className="flex items-center gap-1">
+                                                <Zap className="size-3 text-blue-400" />
+                                                {userHorse.horse.speed_multiplier}x
+                                            </span>
+                                            <span className="flex items-center gap-1">
+                                                <Heart className="size-3 text-red-400" />
+                                                {userHorse.stamina}/{userHorse.max_stamina}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    {userHorse.stamina < userHorse.max_stamina && (
+                                        <Button
+                                            size="sm"
+                                            onClick={handleRest}
+                                            disabled={loading || userGold < 50}
+                                            className="bg-green-600 hover:bg-green-500"
+                                        >
+                                            <Bed className="size-4" />
+                                            Rest (50g)
+                                        </Button>
+                                    )}
+                                    <Button
+                                        size="sm"
+                                        onClick={handleRetrieve}
+                                        disabled={loading}
+                                        className="bg-blue-600 hover:bg-blue-500"
+                                    >
+                                        <Home className="size-4" />
+                                        Retrieve
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                 {/* Horses for Sale */}
                 <div>
