@@ -124,6 +124,12 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                             >
                                 Features
                             </Link>
+                            <Link
+                                href="/leaderboard"
+                                className="px-4 py-2 text-muted-foreground transition hover:text-primary"
+                            >
+                                Highscores
+                            </Link>
                             {auth.user ? (
                                 <Link
                                     href={dashboard()}
@@ -892,6 +898,14 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                             className="text-sm text-muted-foreground transition hover:text-primary"
                                         >
                                             Features
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            href="/leaderboard"
+                                            className="text-sm text-muted-foreground transition hover:text-primary"
+                                        >
+                                            Highscores
                                         </Link>
                                     </li>
                                     <li>

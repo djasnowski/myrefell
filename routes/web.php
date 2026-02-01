@@ -43,6 +43,7 @@ use App\Http\Controllers\MarriageController;
 use App\Http\Controllers\MigrationController;
 use App\Http\Controllers\NoConfidenceController;
 use App\Http\Controllers\PlayerController;
+use App\Http\Controllers\PlayerProfileController;
 use App\Http\Controllers\PortController;
 use App\Http\Controllers\QuestController;
 use App\Http\Controllers\ReferralController;
@@ -124,6 +125,12 @@ Route::post('forgot-username', [ForgotUsernameController::class, 'store'])
     ->middleware('guest')
     ->name('username.email');
 
+// Public player profiles
+Route::get('players/{username}', [PlayerProfileController::class, 'show'])->name('players.show');
+
+// Public leaderboard
+Route::get('leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', fn () => Inertia::render('dashboard', [
         'showTutorial' => auth()->user()->show_tutorial ?? false,
@@ -149,9 +156,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Service Favorites
     Route::post('services/favorites/toggle', [ServiceFavoriteController::class, 'toggle'])->name('services.favorites.toggle');
-
-    // Leaderboard
-    Route::get('leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
 
     // Inventory routes
     Route::get('inventory', [InventoryController::class, 'index'])->name('inventory');
