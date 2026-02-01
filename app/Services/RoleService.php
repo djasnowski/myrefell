@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\Barony;
+use App\Models\Kingdom;
 use App\Models\LocationNpc;
 use App\Models\PlayerRole;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\Village;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -154,6 +157,7 @@ class RoleService
             // Auto-resign from current role before claiming new one
             $existingAnyRole->resign();
             $this->activateNpcIfNeeded($existingAnyRole->role_id, $existingAnyRole->location_type, $existingAnyRole->location_id);
+            $this->clearLocationRulerIfNeeded($existingAnyRole);
         }
 
         // Check if role is for this location type
@@ -214,6 +218,9 @@ class RoleService
                 ->where('location_id', $locationId)
                 ->update(['is_active' => false]);
 
+            // Update the ruler user_id on the location model for primary ruler roles
+            $this->updateLocationRuler($role->slug, $locationType, $locationId, $user->id);
+
             return [
                 'success' => true,
                 'message' => "{$user->username} has been appointed as {$role->name}!",
@@ -239,6 +246,9 @@ class RoleService
 
             // Reactivate NPC if exists
             $this->activateNpcIfNeeded($playerRole->role_id, $playerRole->location_type, $playerRole->location_id);
+
+            // Clear the ruler user_id on the location model
+            $this->clearLocationRulerIfNeeded($playerRole);
 
             return [
                 'success' => true,
@@ -271,6 +281,9 @@ class RoleService
 
             // Reactivate NPC if exists
             $this->activateNpcIfNeeded($playerRole->role_id, $playerRole->location_type, $playerRole->location_id);
+
+            // Clear the ruler user_id on the location model
+            $this->clearLocationRulerIfNeeded($playerRole);
 
             return [
                 'success' => true,
@@ -392,6 +405,47 @@ class RoleService
                 ->where('location_id', $locationId)
                 ->update(['is_active' => true]);
         }
+    }
+
+    /**
+     * Update the ruler user_id on the location model for primary ruler roles.
+     */
+    protected function updateLocationRuler(string $roleSlug, string $locationType, int $locationId, ?int $userId): void
+    {
+        $rulerColumn = match ($roleSlug) {
+            'king' => 'king_user_id',
+            'baron' => 'baron_user_id',
+            'elder' => 'elder_user_id',
+            default => null,
+        };
+
+        if (! $rulerColumn) {
+            return;
+        }
+
+        $model = match ($locationType) {
+            'kingdom' => Kingdom::find($locationId),
+            'barony' => Barony::find($locationId),
+            'village' => Village::find($locationId),
+            default => null,
+        };
+
+        if ($model && isset($model->$rulerColumn) || $model) {
+            $model->update([$rulerColumn => $userId]);
+        }
+    }
+
+    /**
+     * Clear the ruler user_id when a player resigns from a ruler role.
+     */
+    protected function clearLocationRulerIfNeeded(PlayerRole $playerRole): void
+    {
+        $role = $playerRole->role;
+        if (! $role) {
+            return;
+        }
+
+        $this->updateLocationRuler($role->slug, $playerRole->location_type, $playerRole->location_id, null);
     }
 
     /**
