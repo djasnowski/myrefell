@@ -46,7 +46,7 @@ test('service can get village food stats', function () {
         'granary_capacity' => 500,
     ]);
 
-    $service = new FoodConsumptionService();
+    $service = new FoodConsumptionService;
     $stats = $service->getVillageFoodStats($village);
 
     expect($stats)->toHaveKeys([
@@ -83,7 +83,7 @@ test('food is consumed weekly from village stockpile', function () {
     $stockpile = LocationStockpile::getOrCreate('village', $village->id, $grainItem->id);
     $stockpile->addQuantity(100);
 
-    $service = new FoodConsumptionService();
+    $service = new FoodConsumptionService;
     $results = $service->processWeeklyConsumption();
 
     // Refresh stockpile
@@ -110,7 +110,7 @@ test('npcs become starving when food runs out', function () {
         'weeks_without_food' => 0,
     ]);
 
-    $service = new FoodConsumptionService();
+    $service = new FoodConsumptionService;
     $results = $service->processWeeklyConsumption();
 
     // NPCs should now be starving
@@ -139,7 +139,7 @@ test('npcs die after maximum weeks without food', function () {
         'birth_year' => 20,
     ]);
 
-    $service = new FoodConsumptionService();
+    $service = new FoodConsumptionService;
     $results = $service->processWeeklyConsumption();
 
     // NPC should have died from starvation
@@ -170,7 +170,7 @@ test('starvation counters reset when food is available', function () {
     $stockpile = LocationStockpile::getOrCreate('village', $village->id, $grainItem->id);
     $stockpile->addQuantity(100);
 
-    $service = new FoodConsumptionService();
+    $service = new FoodConsumptionService;
     $service->processWeeklyConsumption();
 
     // Starvation counters should be reset
@@ -197,7 +197,7 @@ test('players receive energy penalties when starving', function () {
     ]);
 
     // No food in stockpile
-    $service = new FoodConsumptionService();
+    $service = new FoodConsumptionService;
     $results = $service->processWeeklyConsumption();
 
     expect($results['players_starving'])->toBe(1);
@@ -216,10 +216,10 @@ test('service can add food to village stockpile', function () {
         'granary_capacity' => 100,
     ]);
 
-    $service = new FoodConsumptionService();
+    $service = new FoodConsumptionService;
     $result = $service->addFoodToVillage($village, 50);
 
-    expect($result)->toBeTrue();
+    expect($result)->toBe(50);
 
     $grainItem = Item::where('name', 'Grain')->first();
     $stockpile = LocationStockpile::atLocation('village', $village->id)
@@ -237,7 +237,7 @@ test('food addition respects granary capacity', function () {
         'granary_capacity' => 100,
     ]);
 
-    $service = new FoodConsumptionService();
+    $service = new FoodConsumptionService;
     $service->addFoodToVillage($village, 150); // Try to add more than capacity
 
     $grainItem = Item::where('name', 'Grain')->first();
@@ -263,7 +263,7 @@ test('service can initialize village food supplies', function () {
         'location_id' => $village->id,
     ]);
 
-    $service = new FoodConsumptionService();
+    $service = new FoodConsumptionService;
     $initialized = $service->initializeVillageFoodSupplies(12);
 
     expect($initialized)->toBe(1);
@@ -281,7 +281,7 @@ test('service can initialize village food supplies', function () {
 test('calendar service dispatches food consumption job on week advance', function () {
     \Illuminate\Support\Facades\Queue::fake();
 
-    $service = new CalendarService();
+    $service = new CalendarService;
     $service->advanceWeek();
 
     \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\ProcessFoodConsumption::class);
@@ -312,7 +312,7 @@ test('dead npcs do not consume food', function () {
     $stockpile = LocationStockpile::getOrCreate('village', $village->id, $grainItem->id);
     $stockpile->addQuantity(100);
 
-    $service = new FoodConsumptionService();
+    $service = new FoodConsumptionService;
     $results = $service->processWeeklyConsumption();
 
     $stockpile->refresh();
@@ -342,7 +342,7 @@ test('partial food shortage affects all population', function () {
     $stockpile = LocationStockpile::getOrCreate('village', $village->id, $grainItem->id);
     $stockpile->addQuantity(2);
 
-    $service = new FoodConsumptionService();
+    $service = new FoodConsumptionService;
     $results = $service->processWeeklyConsumption();
 
     $stockpile->refresh();

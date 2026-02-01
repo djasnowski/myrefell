@@ -214,7 +214,7 @@ export default function FarmingIndex() {
             onSuccess: (page) => {
                 const flash = page.props.flash as { success?: string } | undefined;
                 if (flash?.success) showMessage(flash.success);
-                router.reload({ only: ["plots", "gold", "farming_skill"] });
+                router.reload({ only: ["plots", "gold", "farming_skill", "village_food"] });
             },
             onError: (errors) => {
                 const msg = (Object.values(errors)[0] as string) || "Action failed";
@@ -223,6 +223,12 @@ export default function FarmingIndex() {
             onFinish: () => setLoading(null),
         });
     };
+
+    const handleHarvest = (plotId: number, donateToGranary: boolean) => {
+        handleAction("harvest", plotId, { donate_to_granary: donateToGranary });
+    };
+
+    const canDonateToGranary = location.type === "village" || location.type === "town";
 
     if (error) {
         return (
@@ -480,17 +486,33 @@ export default function FarmingIndex() {
                                         )}
 
                                         {plot.is_ready && !plot.has_withered && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleAction("harvest", plot.id);
-                                                }}
-                                                disabled={loading !== null}
-                                                className="flex items-center gap-1 rounded bg-yellow-600/50 px-2 py-1 font-pixel text-[10px] text-yellow-200 hover:bg-yellow-600"
-                                            >
-                                                <Check className="h-3 w-3" />
-                                                Harvest
-                                            </button>
+                                            <>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleHarvest(plot.id, false);
+                                                    }}
+                                                    disabled={loading !== null}
+                                                    className="flex items-center gap-1 rounded bg-yellow-600/50 px-2 py-1 font-pixel text-[10px] text-yellow-200 hover:bg-yellow-600"
+                                                >
+                                                    <Check className="h-3 w-3" />
+                                                    Harvest
+                                                </button>
+                                                {canDonateToGranary && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleHarvest(plot.id, true);
+                                                        }}
+                                                        disabled={loading !== null}
+                                                        className="flex items-center gap-1 rounded bg-amber-600/50 px-2 py-1 font-pixel text-[10px] text-amber-200 hover:bg-amber-600"
+                                                        title="Donate harvest to the local granary"
+                                                    >
+                                                        <Warehouse className="h-3 w-3" />
+                                                        Donate
+                                                    </button>
+                                                )}
+                                            </>
                                         )}
 
                                         {(plot.has_withered || plot.status !== "empty") && (

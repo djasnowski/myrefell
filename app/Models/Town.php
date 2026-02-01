@@ -22,6 +22,7 @@ class Town extends Model
         'tax_rate',
         'population',
         'wealth',
+        'granary_capacity',
         'mayor_user_id',
         'coordinates_x',
         'coordinates_y',
@@ -35,6 +36,7 @@ class Town extends Model
             'tax_rate' => 'decimal:2',
             'population' => 'integer',
             'wealth' => 'integer',
+            'granary_capacity' => 'integer',
             'coordinates_x' => 'integer',
             'coordinates_y' => 'integer',
         ];

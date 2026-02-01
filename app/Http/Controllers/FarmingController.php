@@ -108,9 +108,8 @@ class FarmingController extends Controller
         } elseif ($user->current_location_type === 'town') {
             $town = Town::find($user->current_location_id);
             if ($town) {
-                // Towns also have food consumption - get stats from their associated villages or use similar logic
+                $villageFoodStats = $this->foodConsumptionService->getTownFoodStats($town);
                 $locationName = $town->name;
-                // For towns, we could extend this later
             }
         }
 
@@ -335,13 +334,37 @@ class FarmingController extends Controller
             $farmingSkill->addXp($totalXp);
         }
 
-        // Add harvested items to inventory
-        if ($result['item_id']) {
-            $this->inventoryService->addItem($user, $result['item_id'], $totalYield);
+        // Check if donating to granary
+        $donateToGranary = $request->boolean('donate_to_granary', false);
+        $donatedAmount = 0;
+        $inventoryAmount = $totalYield;
+
+        if ($donateToGranary && in_array($plot->location_type, ['village', 'town'])) {
+            // Try to add to location stockpile
+            $donatedAmount = $this->foodConsumptionService->addFoodToLocation(
+                $plot->location_type,
+                $plot->location_id,
+                $totalYield
+            );
+
+            // Remainder goes to inventory
+            $inventoryAmount = $totalYield - $donatedAmount;
+        }
+
+        // Add remaining items to inventory
+        if ($result['item_id'] && $inventoryAmount > 0) {
+            $this->inventoryService->addItem($user, $result['item_id'], $inventoryAmount);
         }
 
         // Build message with bonus info
-        $message = "You harvested {$totalYield} {$result['item_name']}! (+{$totalXp} Farming XP)";
+        if ($donatedAmount > 0 && $inventoryAmount > 0) {
+            $message = "You harvested {$totalYield} {$result['item_name']}! Donated {$donatedAmount} to granary, {$inventoryAmount} to inventory. (+{$totalXp} Farming XP)";
+        } elseif ($donatedAmount > 0) {
+            $message = "You harvested and donated {$donatedAmount} {$result['item_name']} to the granary! (+{$totalXp} Farming XP)";
+        } else {
+            $message = "You harvested {$totalYield} {$result['item_name']}! (+{$totalXp} Farming XP)";
+        }
+
         if ($bonusYield > 0 || $bonusXp > 0) {
             $message .= ' [Master Farmer bonus!]';
         }
