@@ -49,13 +49,12 @@ interface MarketItem {
 }
 
 interface SellableItem {
-    inventory_id: number;
+    inventory_ids: number[];
     item_id: number;
     item_name: string;
     item_type: string;
     quantity: number;
     sell_price: number;
-    slot_number: number;
 }
 
 interface Transaction {
@@ -232,7 +231,7 @@ export default function MarketIndex() {
     };
 
     const handleSell = async () => {
-        if (!selectedItem || !("inventory_id" in selectedItem)) return;
+        if (!selectedItem || !("inventory_ids" in selectedItem)) return;
 
         const qty = parseInt(quantity, 10);
         if (isNaN(qty) || qty <= 0) {
@@ -504,12 +503,12 @@ export default function MarketIndex() {
                                     {filteredSellItems.map((item) => {
                                         const isSelected =
                                             selectedItem &&
-                                            "inventory_id" in selectedItem &&
-                                            selectedItem.inventory_id === item.inventory_id;
+                                            "inventory_ids" in selectedItem &&
+                                            selectedItem.item_id === item.item_id;
 
                                         return (
                                             <button
-                                                key={item.inventory_id}
+                                                key={item.item_id}
                                                 onClick={() => {
                                                     setSelectedItem(item);
                                                     setQuantity("1");

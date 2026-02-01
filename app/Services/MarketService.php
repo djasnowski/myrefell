@@ -171,22 +171,26 @@ class MarketService
             ->with('item')
             ->get()
             ->filter(function ($slot) {
-                // Can sell resources, consumables, tools, misc
-                return in_array($slot->item->type, ['resource', 'consumable', 'tool', 'misc']);
+                // Can sell resources, consumables, tools, misc, weapons, armor
+                return in_array($slot->item->type, ['resource', 'consumable', 'tool', 'misc', 'weapon', 'armor']);
             })
-            ->map(function ($slot) use ($locationType, $locationId, $worldState) {
-                $item = $slot->item;
+            ->groupBy('item_id')
+            ->map(function ($slots) use ($locationType, $locationId, $worldState) {
+                $firstSlot = $slots->first();
+                $item = $firstSlot->item;
                 $marketPrice = MarketPrice::getOrCreate($locationType, $locationId, $item);
                 $this->updatePrice($marketPrice, $worldState);
 
+                // Sum quantities across all slots with this item
+                $totalQuantity = $slots->sum('quantity');
+
                 return [
-                    'inventory_id' => $slot->id,
+                    'inventory_ids' => $slots->pluck('id')->toArray(),
                     'item_id' => $item->id,
                     'item_name' => $item->name,
                     'item_type' => $item->type,
-                    'quantity' => $slot->quantity,
+                    'quantity' => $totalQuantity,
                     'sell_price' => $marketPrice->sell_price,
-                    'slot_number' => $slot->slot_number,
                 ];
             })
             ->values();
