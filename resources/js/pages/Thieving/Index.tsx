@@ -13,10 +13,12 @@ import {
     User,
     Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { gameToast } from "@/components/ui/game-toast";
 import type { BreadcrumbItem } from "@/types";
+
+const THIEVE_COOLDOWN_MS = 3000;
 
 interface Target {
     id: string;
@@ -74,10 +76,12 @@ function TargetCard({
     target,
     onThieve,
     loading,
+    cooldown,
 }: {
     target: Target;
     onThieve: (id: string) => void;
     loading: string | null;
+    cooldown: number;
 }) {
     const isLoading = loading === target.id;
 
@@ -221,20 +225,30 @@ function TargetCard({
             ) : (
                 <button
                     onClick={() => onThieve(target.id)}
-                    disabled={!target.can_attempt || loading !== null}
-                    className={`flex w-full items-center justify-center gap-2 rounded-lg py-2.5 font-pixel text-sm text-stone-900 transition disabled:cursor-not-allowed disabled:opacity-50 ${style.buttonBg}`}
+                    disabled={!target.can_attempt || loading !== null || cooldown > 0}
+                    className={`relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-lg py-2.5 font-pixel text-sm text-stone-900 transition disabled:cursor-not-allowed disabled:opacity-50 ${style.buttonBg}`}
                 >
-                    {isLoading ? (
-                        <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Attempting...
-                        </>
-                    ) : (
-                        <>
-                            <Hand className="h-4 w-4" />
-                            Pickpocket
-                        </>
+                    {cooldown > 0 && (
+                        <div
+                            className="absolute inset-0 bg-black/30"
+                            style={{ width: `${(cooldown / THIEVE_COOLDOWN_MS) * 100}%` }}
+                        />
                     )}
+                    <span className="relative flex items-center gap-2">
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Attempting...
+                            </>
+                        ) : cooldown > 0 ? (
+                            `${(cooldown / 1000).toFixed(1)}s`
+                        ) : (
+                            <>
+                                <Hand className="h-4 w-4" />
+                                Pickpocket
+                            </>
+                        )}
+                    </span>
                 </button>
             )}
         </div>
@@ -246,6 +260,28 @@ export default function ThievingIndex() {
     const [loading, setLoading] = useState<string | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(thieving_info.player_energy);
     const [currentGold, setCurrentGold] = useState(thieving_info.player_gold);
+    const [cooldown, setCooldown] = useState(0);
+    const cooldownInterval = useRef<NodeJS.Timeout | null>(null);
+
+    const startCooldown = () => {
+        setCooldown(THIEVE_COOLDOWN_MS);
+        if (cooldownInterval.current) clearInterval(cooldownInterval.current);
+        const startTime = Date.now();
+        cooldownInterval.current = setInterval(() => {
+            const remaining = Math.max(0, THIEVE_COOLDOWN_MS - (Date.now() - startTime));
+            setCooldown(remaining);
+            if (remaining <= 0 && cooldownInterval.current) {
+                clearInterval(cooldownInterval.current);
+                cooldownInterval.current = null;
+            }
+        }, 50);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (cooldownInterval.current) clearInterval(cooldownInterval.current);
+        };
+    }, []);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -262,6 +298,7 @@ export default function ThievingIndex() {
         : "/villages/1/thieving";
 
     const handleThieve = async (targetId: string) => {
+        if (cooldown > 0) return;
         setLoading(targetId);
 
         try {
@@ -290,8 +327,10 @@ export default function ThievingIndex() {
                         ? { skill: "Thieving", level: (thieving_info.thieving_level || 0) + 1 }
                         : undefined,
                 });
+                startCooldown();
             } else if (data.caught) {
                 gameToast.warning(data.message);
+                startCooldown();
             } else {
                 gameToast.error(data.message);
             }
@@ -372,6 +411,7 @@ export default function ThievingIndex() {
                             target={target}
                             onThieve={handleThieve}
                             loading={loading}
+                            cooldown={cooldown}
                         />
                     ))}
                 </div>
@@ -390,6 +430,7 @@ export default function ThievingIndex() {
                                     target={target}
                                     onThieve={handleThieve}
                                     loading={loading}
+                                    cooldown={cooldown}
                                 />
                             ))}
                         </div>

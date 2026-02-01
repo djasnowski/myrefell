@@ -1,9 +1,11 @@
 import { Head, router, usePage } from "@inertiajs/react";
 import { Crosshair, Dumbbell, Heart, Loader2, Shield, Sword, Zap } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { gameToast } from "@/components/ui/game-toast";
 import type { BreadcrumbItem } from "@/types";
+
+const TRAIN_COOLDOWN_MS = 3000;
 
 interface Exercise {
     id: string;
@@ -102,6 +104,28 @@ export default function TrainingIndex() {
     const [currentEnergy, setCurrentEnergy] = useState(player_energy);
     const [currentStats, setCurrentStats] = useState(combat_stats);
     const [currentHp, setCurrentHp] = useState(player_hp);
+    const [cooldown, setCooldown] = useState(0);
+    const cooldownInterval = useRef<NodeJS.Timeout | null>(null);
+
+    const startCooldown = () => {
+        setCooldown(TRAIN_COOLDOWN_MS);
+        if (cooldownInterval.current) clearInterval(cooldownInterval.current);
+        const startTime = Date.now();
+        cooldownInterval.current = setInterval(() => {
+            const remaining = Math.max(0, TRAIN_COOLDOWN_MS - (Date.now() - startTime));
+            setCooldown(remaining);
+            if (remaining <= 0 && cooldownInterval.current) {
+                clearInterval(cooldownInterval.current);
+                cooldownInterval.current = null;
+            }
+        }, 50);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (cooldownInterval.current) clearInterval(cooldownInterval.current);
+        };
+    }, []);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -109,7 +133,7 @@ export default function TrainingIndex() {
     ];
 
     const handleTrain = async (exercise: string) => {
-        if (loading) return;
+        if (loading || cooldown > 0) return;
 
         const exerciseData = exercises.find((e) => e.id === exercise);
         if (!exerciseData || currentEnergy < exerciseData.energy_cost) return;
@@ -138,6 +162,7 @@ export default function TrainingIndex() {
             gameToast.training({ ...data, skill: skillName });
 
             if (data.success) {
+                startCooldown();
                 if (data.energy_remaining !== undefined) {
                     setCurrentEnergy(data.energy_remaining);
                 }
@@ -354,21 +379,39 @@ export default function TrainingIndex() {
                                                 </div>
                                                 <button
                                                     onClick={() => handleTrain(exercise.id)}
-                                                    disabled={!canTrain || loading !== null}
-                                                    className={`rounded-lg px-4 py-2 font-pixel text-xs transition ${
-                                                        canTrain && loading === null
+                                                    disabled={
+                                                        !canTrain ||
+                                                        loading !== null ||
+                                                        cooldown > 0
+                                                    }
+                                                    className={`relative overflow-hidden rounded-lg px-4 py-2 font-pixel text-xs transition ${
+                                                        canTrain &&
+                                                        loading === null &&
+                                                        cooldown <= 0
                                                             ? `${colors.border} bg-stone-800/80 hover:bg-stone-700/80 ${colors.text}`
                                                             : "cursor-not-allowed border-stone-700 bg-stone-800/50 text-stone-500"
                                                     } border`}
                                                 >
-                                                    {loading === exercise.id ? (
-                                                        <span className="flex items-center gap-1">
-                                                            <Loader2 className="h-3 w-3 animate-spin" />
-                                                            Training...
-                                                        </span>
-                                                    ) : (
-                                                        "Train"
+                                                    {cooldown > 0 && (
+                                                        <div
+                                                            className="absolute inset-0 bg-stone-600/30"
+                                                            style={{
+                                                                width: `${(cooldown / TRAIN_COOLDOWN_MS) * 100}%`,
+                                                            }}
+                                                        />
                                                     )}
+                                                    <span className="relative">
+                                                        {loading === exercise.id ? (
+                                                            <span className="flex items-center gap-1">
+                                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                                                Training...
+                                                            </span>
+                                                        ) : cooldown > 0 ? (
+                                                            `${(cooldown / 1000).toFixed(1)}s`
+                                                        ) : (
+                                                            "Train"
+                                                        )}
+                                                    </span>
                                                 </button>
                                             </div>
                                         </div>

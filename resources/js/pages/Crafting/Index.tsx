@@ -1,6 +1,8 @@
 import { Head, router, usePage } from "@inertiajs/react";
 import { ArrowRight, Backpack, Check, Loader2, Lock, Scissors, X, Zap } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+const CRAFT_COOLDOWN_MS = 3000;
 import AppLayout from "@/layouts/app-layout";
 import { gameToast } from "@/components/ui/game-toast";
 import type { BreadcrumbItem } from "@/types";
@@ -75,10 +77,12 @@ function RecipeCard({
     recipe,
     onCraft,
     loading,
+    cooldown,
 }: {
     recipe: Recipe;
     onCraft: (id: string) => void;
     loading: string | null;
+    cooldown: number;
 }) {
     const isLoading = loading === recipe.id;
 
@@ -143,29 +147,39 @@ function RecipeCard({
             ) : (
                 <button
                     onClick={() => onCraft(recipe.id)}
-                    disabled={!recipe.can_make || loading !== null}
-                    className={`flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 font-pixel text-xs transition ${
-                        recipe.can_make && !loading
+                    disabled={!recipe.can_make || loading !== null || cooldown > 0}
+                    className={`relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-md px-3 py-2 font-pixel text-xs transition ${
+                        recipe.can_make && !loading && cooldown <= 0
                             ? "bg-amber-600 text-stone-900 hover:bg-amber-500"
                             : "cursor-not-allowed bg-stone-700 text-stone-500"
                     }`}
                 >
-                    {isLoading ? (
-                        <>
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                            Crafting...
-                        </>
-                    ) : recipe.can_make ? (
-                        <>
-                            <Check className="h-3 w-3" />
-                            Craft
-                        </>
-                    ) : (
-                        <>
-                            <X className="h-3 w-3" />
-                            Missing Materials
-                        </>
+                    {cooldown > 0 && (
+                        <div
+                            className="absolute inset-0 bg-stone-600/30"
+                            style={{ width: `${(cooldown / CRAFT_COOLDOWN_MS) * 100}%` }}
+                        />
                     )}
+                    <span className="relative">
+                        {isLoading ? (
+                            <span className="flex items-center gap-1">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                Crafting...
+                            </span>
+                        ) : cooldown > 0 ? (
+                            `${(cooldown / 1000).toFixed(1)}s`
+                        ) : recipe.can_make ? (
+                            <span className="flex items-center gap-1">
+                                <Check className="h-3 w-3" />
+                                Craft
+                            </span>
+                        ) : (
+                            <span className="flex items-center gap-1">
+                                <X className="h-3 w-3" />
+                                Missing Materials
+                            </span>
+                        )}
+                    </span>
                 </button>
             )}
         </div>
@@ -176,6 +190,28 @@ export default function CraftingIndex() {
     const { crafting_info, location } = usePage<PageProps>().props;
     const [loading, setLoading] = useState<string | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(crafting_info.player_energy);
+    const [cooldown, setCooldown] = useState(0);
+    const cooldownInterval = useRef<NodeJS.Timeout | null>(null);
+
+    const startCooldown = () => {
+        setCooldown(CRAFT_COOLDOWN_MS);
+        if (cooldownInterval.current) clearInterval(cooldownInterval.current);
+        const startTime = Date.now();
+        cooldownInterval.current = setInterval(() => {
+            const remaining = Math.max(0, CRAFT_COOLDOWN_MS - (Date.now() - startTime));
+            setCooldown(remaining);
+            if (remaining <= 0 && cooldownInterval.current) {
+                clearInterval(cooldownInterval.current);
+                cooldownInterval.current = null;
+            }
+        }, 50);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (cooldownInterval.current) clearInterval(cooldownInterval.current);
+        };
+    }, []);
 
     // Build the craft URL based on location
     const craftUrl = location
@@ -183,6 +219,7 @@ export default function CraftingIndex() {
         : "/crafting/craft";
 
     const handleCraft = async (recipeId: string) => {
+        if (loading || cooldown > 0) return;
         setLoading(recipeId);
 
         try {
@@ -210,6 +247,7 @@ export default function CraftingIndex() {
                           }
                         : undefined,
                 });
+                startCooldown();
             } else if (!data.success) {
                 gameToast.error(data.message);
             }
@@ -307,6 +345,7 @@ export default function CraftingIndex() {
                             recipe={recipe}
                             onCraft={handleCraft}
                             loading={loading}
+                            cooldown={cooldown}
                         />
                     ))}
                 </div>
