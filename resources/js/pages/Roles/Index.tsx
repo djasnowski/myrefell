@@ -331,6 +331,7 @@ function RoleModal({
     canSelfAppoint,
     userResidesHere,
     userIsHere,
+    locationType,
     onClose,
     onResign,
     onClaim,
@@ -344,6 +345,7 @@ function RoleModal({
     canSelfAppoint: boolean;
     userResidesHere: boolean;
     userIsHere: boolean;
+    locationType: string;
     onClose: () => void;
     onResign: (playerRoleId: number) => void;
     onClaim: (roleId: number) => void;
@@ -357,9 +359,10 @@ function RoleModal({
     const canClaim =
         role.is_vacant && canSelfAppoint && userResidesHere && userIsHere && !isUserRole;
     const willReplaceRole = canClaim && currentUserRole !== undefined;
+    const locationLabel = locationType.charAt(0).toUpperCase() + locationType.slice(1);
     const consequences = roleConsequences[role.slug] || {
         duties: [],
-        ifVacant: "Village functions reduced.",
+        ifVacant: `${locationLabel} functions reduced.`,
     };
 
     return (
@@ -779,6 +782,7 @@ export default function RolesIndex() {
                     canSelfAppoint={can_self_appoint}
                     userResidesHere={user_resides_here}
                     userIsHere={user_is_here}
+                    locationType={location_type}
                     onClose={() => setSelectedRole(null)}
                     onResign={handleResign}
                     onClaim={handleClaim}
