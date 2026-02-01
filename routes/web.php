@@ -33,6 +33,7 @@ use App\Http\Controllers\HealerController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\KingdomController;
+use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\MarketController;
 use App\Http\Controllers\MarriageController;
@@ -125,6 +126,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Skills
     Route::get('skills', [SkillsController::class, 'index'])->name('skills.index');
+
+    // Leaderboard
+    Route::get('leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
 
     // Inventory routes
     Route::get('inventory', [InventoryController::class, 'index'])->name('inventory');

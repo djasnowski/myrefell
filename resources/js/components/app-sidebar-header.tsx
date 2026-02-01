@@ -1,13 +1,15 @@
-import { Sparkles } from "lucide-react";
+import { Sparkles, Trophy } from "lucide-react";
 import { useState } from "react";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import ChangelogModal from "@/components/changelog-modal";
+import LeaderboardModal from "@/components/leaderboard-modal";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import type { BreadcrumbItem as BreadcrumbItemType } from "@/types";
 
 export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: BreadcrumbItemType[] }) {
     const [showChangelog, setShowChangelog] = useState(false);
+    const [showLeaderboard, setShowLeaderboard] = useState(false);
 
     return (
         <>
@@ -21,6 +23,15 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                         variant="ghost"
                         size="sm"
                         className="group gap-2 text-muted-foreground hover:text-foreground"
+                        onClick={() => setShowLeaderboard(true)}
+                    >
+                        <Trophy className="size-4 text-amber-400" />
+                        <span className="hidden sm:inline">Leaderboard</span>
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="group gap-2 text-muted-foreground hover:text-foreground"
                         onClick={() => setShowChangelog(true)}
                     >
                         <Sparkles className="size-4 text-amber-500" />
@@ -30,6 +41,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
             </header>
 
             {showChangelog && <ChangelogModal onClose={() => setShowChangelog(false)} />}
+            {showLeaderboard && <LeaderboardModal onClose={() => setShowLeaderboard(false)} />}
         </>
     );
 }
