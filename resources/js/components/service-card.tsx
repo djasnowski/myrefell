@@ -1,6 +1,7 @@
 import { Link } from "@inertiajs/react";
 import {
     Anchor,
+    Anvil,
     Banknote,
     Beer,
     Building2,
@@ -35,6 +36,7 @@ const iconMap: Record<string, LucideIcon> = {
     swords: Dumbbell,
     pickaxe: Pickaxe,
     hammer: Hammer,
+    anvil: Anvil,
     store: Store,
     landmark: Landmark,
     "heart-pulse": HeartPulse,

@@ -23,6 +23,7 @@ class LocationActivityLog extends Model
     public const TYPE_FARMING = 'farming';
     public const TYPE_TRAVEL = 'travel';
     public const TYPE_REST = 'rest';
+    public const TYPE_ABDICATION = 'abdication';
 
     // Location types
     public const LOCATION_VILLAGE = 'village';

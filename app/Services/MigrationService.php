@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\LocationActivityLog;
+use App\Models\LocationNpc;
 use App\Models\MigrationRequest;
 use App\Models\PlayerRole;
 use App\Models\User;
@@ -46,13 +48,41 @@ class MigrationService
             ];
         }
 
-        // Check if user holds a role - must resign first
-        $userRole = PlayerRole::where('user_id', $user->id)->active()->first();
+        // Auto-resign from any role when migrating
+        $userRole = PlayerRole::where('user_id', $user->id)->active()->with('role')->first();
         if ($userRole) {
-            return [
-                'success' => false,
-                'message' => "You must resign from your role as {$userRole->role->name} before migrating.",
-            ];
+            $roleName = $userRole->role->name;
+            $locationId = $userRole->location_id;
+            $locationType = $userRole->location_type;
+            $roleId = $userRole->role_id;
+
+            // Resign from the role
+            $userRole->resign();
+
+            // Reactivate NPC if no player holds the role
+            $playerHoldsRole = PlayerRole::where('role_id', $roleId)
+                ->where('location_type', $locationType)
+                ->where('location_id', $locationId)
+                ->active()
+                ->exists();
+
+            if (! $playerHoldsRole) {
+                LocationNpc::where('role_id', $roleId)
+                    ->where('location_type', $locationType)
+                    ->where('location_id', $locationId)
+                    ->update(['is_active' => true]);
+            }
+
+            // Log the abdication
+            LocationActivityLog::log(
+                $user->id,
+                $locationType,
+                $locationId,
+                LocationActivityLog::TYPE_ABDICATION,
+                "{$user->username} has abdicated from their position as {$roleName}",
+                null,
+                ['role_name' => $roleName]
+            );
         }
 
         return DB::transaction(function () use ($user, $toVillage) {

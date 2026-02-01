@@ -27,6 +27,12 @@ class LocationServices
             'icon' => 'hammer',
             'route' => 'crafting',
         ],
+        'forge' => [
+            'name' => 'Forge',
+            'description' => 'Smith weapons and armor',
+            'icon' => 'anvil',
+            'route' => 'forge',
+        ],
         'market' => [
             'name' => 'Market',
             'description' => 'Buy and sell goods',
@@ -122,6 +128,7 @@ class LocationServices
             'training',
             'gathering',
             'crafting',
+            'forge',
             'market',
             'bank',
             'healer',
@@ -134,6 +141,7 @@ class LocationServices
             'training',
             'gathering',
             'crafting',
+            'forge',
             'market',
             'bank',
             'infirmary',
@@ -145,6 +153,8 @@ class LocationServices
             'tavern',
         ],
         'barony' => [
+            'crafting',
+            'forge',
             'market',
             'bank',
             'infirmary',
