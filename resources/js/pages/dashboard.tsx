@@ -172,7 +172,9 @@ export default function Dashboard() {
         {
             title: "Gather Resources",
             description: "Mine, fish, or chop wood",
-            href: location?.type === "village" ? `/villages/${location.id}/gathering` : "/villages",
+            href: location
+                ? `/${pluralizeLocationType(location.type)}/${location.id}/gathering`
+                : "/villages",
             icon: Pickaxe,
         },
         {
