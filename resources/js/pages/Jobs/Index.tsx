@@ -171,40 +171,33 @@ function JobCard({
                     <div className="rounded-lg bg-stone-800/50 p-2.5">
                         <Icon className="h-6 w-6 text-stone-300" />
                     </div>
-                    <div className="flex-1">
+                    <div>
                         <h3 className="font-pixel text-base text-amber-300">{job.name}</h3>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <span className="font-pixel text-xs text-stone-400">
-                                    {job.category_display}
-                                </span>
-                                {job.required_skill && SkillIcon && (
-                                    <>
-                                        <span className="text-stone-600">•</span>
-                                        <div className="flex items-center gap-1">
-                                            <SkillIcon className="h-3 w-3 text-orange-400" />
-                                            <span className="font-pixel text-xs text-orange-400">
-                                                Lv.{job.required_skill_level}
-                                            </span>
-                                        </div>
-                                    </>
-                                )}
-                                {job.required_level > 1 && (
-                                    <>
-                                        <span className="text-stone-600">•</span>
-                                        <div className="flex items-center gap-1">
-                                            <Shield className="h-3 w-3 text-orange-400" />
-                                            <span className="font-pixel text-xs text-orange-400">
-                                                Lv.{job.required_level}
-                                            </span>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                            {job.xp_reward > 0 && job.xp_skill && (
-                                <span className="font-pixel text-xs text-emerald-400">
-                                    +{job.xp_reward} {job.xp_skill} XP
-                                </span>
+                        <div className="flex items-center gap-2">
+                            <span className="font-pixel text-xs text-stone-400">
+                                {job.category_display}
+                            </span>
+                            {job.required_skill && SkillIcon && (
+                                <>
+                                    <span className="text-stone-600">•</span>
+                                    <div className="flex items-center gap-1">
+                                        <SkillIcon className="h-3 w-3 text-orange-400" />
+                                        <span className="font-pixel text-xs text-orange-400">
+                                            Lv.{job.required_skill_level}
+                                        </span>
+                                    </div>
+                                </>
+                            )}
+                            {job.required_level > 1 && (
+                                <>
+                                    <span className="text-stone-600">•</span>
+                                    <div className="flex items-center gap-1">
+                                        <Shield className="h-3 w-3 text-orange-400" />
+                                        <span className="font-pixel text-xs text-orange-400">
+                                            Lv.{job.required_level}
+                                        </span>
+                                    </div>
+                                </>
                             )}
                         </div>
                     </div>
@@ -220,7 +213,7 @@ function JobCard({
             <p className="mb-4 text-sm text-stone-300">{job.description}</p>
 
             {/* Stats Grid */}
-            <div className="mb-4 grid grid-cols-3 gap-2">
+            <div className="mb-4 grid grid-cols-4 gap-2">
                 <div className="rounded-lg bg-stone-800/50 p-2.5 text-center">
                     <div className="font-pixel text-lg text-amber-300">{job.base_wage}g</div>
                     <div className="font-pixel text-[10px] text-stone-500">Wage</div>
@@ -242,6 +235,12 @@ function JobCard({
                         </span>
                     </div>
                     <div className="font-pixel text-[10px] text-stone-500">Cooldown</div>
+                </div>
+                <div className="rounded-lg bg-stone-800/50 p-2.5 text-center">
+                    <div className="font-pixel text-lg text-emerald-300">+{job.xp_reward}</div>
+                    <div className="font-pixel text-[10px] text-stone-500">
+                        {job.xp_skill ? `${job.xp_skill} XP` : "XP"}
+                    </div>
                 </div>
             </div>
 
