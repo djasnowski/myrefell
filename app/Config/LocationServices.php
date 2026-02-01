@@ -124,6 +124,12 @@ class LocationServices
             'icon' => 'hand',
             'route' => 'thieving',
         ],
+        'apothecary' => [
+            'name' => 'Apothecary',
+            'description' => 'Brew potions and remedies',
+            'icon' => 'flask-conical',
+            'route' => 'apothecary',
+        ],
     ];
 
     /**

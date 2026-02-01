@@ -38,18 +38,21 @@ const activityIcons: Record<string, typeof Pickaxe> = {
     mining: Pickaxe,
     fishing: Fish,
     woodcutting: Axe,
+    herbalism: Leaf,
 };
 
 const activityColors: Record<string, string> = {
     mining: "border-stone-500/50 bg-stone-700/30 hover:bg-stone-700/50",
     fishing: "border-blue-500/50 bg-blue-900/30 hover:bg-blue-900/50",
     woodcutting: "border-green-600/50 bg-green-900/30 hover:bg-green-900/50",
+    herbalism: "border-emerald-500/50 bg-emerald-900/30 hover:bg-emerald-900/50",
 };
 
 const activityDescriptions: Record<string, string> = {
     mining: "Extract ores and minerals from the earth",
     fishing: "Catch fish from nearby waters",
     woodcutting: "Chop trees for wood and lumber",
+    herbalism: "Gather herbs and plants for alchemy",
 };
 
 const seasonIcons: Record<string, typeof Sun> = {
