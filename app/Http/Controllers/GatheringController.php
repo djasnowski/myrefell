@@ -113,7 +113,7 @@ class GatheringController extends Controller
     public function gather(Request $request, ?Village $village = null, ?Town $town = null): JsonResponse
     {
         $request->validate([
-            'activity' => 'required|string|in:mining,fishing,woodcutting',
+            'activity' => 'required|string|in:mining,fishing,woodcutting,herbalism',
         ]);
 
         $location = $village ?? $town;

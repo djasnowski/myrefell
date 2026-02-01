@@ -1,4 +1,15 @@
-import { Anvil, Hammer, Link2, Shield, Sparkles, Swords, Users, Wrench, X } from "lucide-react";
+import {
+    Anvil,
+    FlaskConical,
+    Hammer,
+    Link2,
+    Shield,
+    Sparkles,
+    Swords,
+    Users,
+    Wrench,
+    X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ChangelogEntry {
@@ -14,6 +25,48 @@ interface ChangelogEntry {
 }
 
 const changelog: ChangelogEntry[] = [
+    {
+        version: "0.3.0",
+        date: "January 31, 2026",
+        title: "Thieving & Herblore",
+        description:
+            "Two new skills arrive in Myrefell! Master the art of thievery or become a skilled alchemist brewing powerful potions.",
+        icon: <FlaskConical className="h-8 w-8 text-emerald-500" />,
+        changes: [
+            {
+                type: "added",
+                text: "New Thieving skill - pickpocket NPCs and steal from stalls",
+            },
+            {
+                type: "added",
+                text: "New Herblore skill - gather herbs and brew potions at the Apothecary",
+            },
+            {
+                type: "added",
+                text: "14 gatherable herbs from Herbalism across all skill levels",
+            },
+            {
+                type: "added",
+                text: "20+ potion recipes including combat, restoration, and spiritual potions",
+            },
+            {
+                type: "added",
+                text: "Monster drops for rare apothecary ingredients (Venom Sac, Phoenix Feather, etc.)",
+            },
+            {
+                type: "added",
+                text: "Apothecary shops now stock vials and basic supplies",
+            },
+            {
+                type: "added",
+                text: "Combat potions: Attack, Strength, Defense, Accuracy, and Agility buffs",
+            },
+            {
+                type: "added",
+                text: "Super potions and Overload potion for high-level alchemists",
+            },
+        ],
+    },
     {
         version: "0.2.0",
         date: "January 31, 2026",

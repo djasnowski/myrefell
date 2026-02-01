@@ -150,6 +150,7 @@ class LocationServices
             'stables',
             'tavern',
             'thieving',
+            'apothecary',
         ],
         'town' => [
             'training',
@@ -166,6 +167,7 @@ class LocationServices
             'stables',
             'tavern',
             'thieving',
+            'apothecary',
         ],
         'barony' => [
             'training',
@@ -182,6 +184,7 @@ class LocationServices
             'businesses',
             'chat',
             'taxes',
+            'apothecary',
         ],
         'duchy' => [
             'training',
@@ -192,6 +195,7 @@ class LocationServices
             'stables',
             'tavern',
             'thieving',
+            'apothecary',
         ],
         'kingdom' => [
             'training',
@@ -202,6 +206,7 @@ class LocationServices
             'stables',
             'tavern',
             'thieving',
+            'apothecary',
         ],
     ];
 

@@ -79,12 +79,24 @@ class GatheringService
             'task_type' => 'forage',
             'location_types' => ['village', 'town', 'wilderness'],
             'resources' => [
+                // Basic herbs (Level 1-10)
                 ['name' => 'Herb', 'weight' => 50, 'min_level' => 1, 'xp_bonus' => 0],
-                ['name' => 'Healing Herb', 'weight' => 40, 'min_level' => 5, 'xp_bonus' => 5],
+                ['name' => 'Healing Herb', 'weight' => 45, 'min_level' => 5, 'xp_bonus' => 5],
+                ['name' => 'Sunblossom', 'weight' => 40, 'min_level' => 8, 'xp_bonus' => 6],
+                // Intermediate herbs (Level 10-25)
+                ['name' => 'Stoneroot', 'weight' => 35, 'min_level' => 12, 'xp_bonus' => 10],
                 ['name' => 'Moonpetal', 'weight' => 30, 'min_level' => 15, 'xp_bonus' => 12],
-                ['name' => 'Bloodroot', 'weight' => 20, 'min_level' => 25, 'xp_bonus' => 20],
+                ['name' => 'Nightshade', 'weight' => 28, 'min_level' => 18, 'xp_bonus' => 14],
+                ['name' => 'Ironbark', 'weight' => 25, 'min_level' => 22, 'xp_bonus' => 16],
+                // Advanced herbs (Level 25-40)
+                ['name' => 'Bloodroot', 'weight' => 22, 'min_level' => 25, 'xp_bonus' => 20],
+                ['name' => 'Hawkeye Leaf', 'weight' => 20, 'min_level' => 28, 'xp_bonus' => 22],
+                ['name' => 'Swiftfoot Moss', 'weight' => 18, 'min_level' => 32, 'xp_bonus' => 25],
                 ['name' => 'Ghostcap Mushroom', 'weight' => 15, 'min_level' => 35, 'xp_bonus' => 28],
+                ['name' => 'Windweed', 'weight' => 14, 'min_level' => 38, 'xp_bonus' => 30],
+                // Rare herbs (Level 45+)
                 ['name' => 'Dragonvine', 'weight' => 10, 'min_level' => 50, 'xp_bonus' => 40],
+                ['name' => 'Starlight Essence', 'weight' => 5, 'min_level' => 60, 'xp_bonus' => 55],
             ],
         ],
     ];

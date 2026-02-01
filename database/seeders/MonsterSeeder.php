@@ -321,7 +321,10 @@ class MonsterSeeder extends Seeder
         ];
 
         foreach ($monsters as $monsterData) {
-            Monster::create($monsterData);
+            Monster::updateOrCreate(
+                ['name' => $monsterData['name']],
+                $monsterData
+            );
         }
 
         // Add loot tables
@@ -337,6 +340,7 @@ class MonsterSeeder extends Seeder
             // Low level monsters
             'Rat' => [
                 ['item' => 'Bones', 'chance' => 100, 'min' => 1, 'max' => 1],
+                ['item' => 'Venom Sac', 'chance' => 5, 'min' => 1, 'max' => 1],
             ],
             'Goblin' => [
                 ['item' => 'Bones', 'chance' => 100, 'min' => 1, 'max' => 1],
@@ -354,24 +358,54 @@ class MonsterSeeder extends Seeder
                 ['item' => 'Bones', 'chance' => 100, 'min' => 1, 'max' => 1],
                 ['item' => 'Iron Sword', 'chance' => 5, 'min' => 1, 'max' => 1],
                 ['item' => 'Leather Vest', 'chance' => 8, 'min' => 1, 'max' => 1],
+                ['item' => 'Venom Sac', 'chance' => 10, 'min' => 1, 'max' => 1],
             ],
 
             // Mid level monsters
             'Zombie' => [
                 ['item' => 'Bones', 'chance' => 100, 'min' => 1, 'max' => 2],
+                ['item' => 'Nightshade', 'chance' => 15, 'min' => 1, 'max' => 1],
             ],
             'Hobgoblin' => [
                 ['item' => 'Bones', 'chance' => 100, 'min' => 1, 'max' => 1],
                 ['item' => 'Iron Sword', 'chance' => 10, 'min' => 1, 'max' => 1],
-                ['item' => 'Iron Shield', 'chance' => 8, 'min' => 1, 'max' => 1],
+                ['item' => 'Iron Sq Shield', 'chance' => 8, 'min' => 1, 'max' => 1],
+                ['item' => 'Turtle Shell Powder', 'chance' => 15, 'min' => 1, 'max' => 1],
             ],
             'Bear' => [
                 ['item' => 'Big Bones', 'chance' => 100, 'min' => 1, 'max' => 1],
                 ['item' => 'Leather', 'chance' => 80, 'min' => 2, 'max' => 4],
             ],
+            'Dark Mage' => [
+                ['item' => 'Bones', 'chance' => 100, 'min' => 1, 'max' => 1],
+                ['item' => 'Void Essence', 'chance' => 10, 'min' => 1, 'max' => 1],
+                ['item' => 'Nightshade', 'chance' => 25, 'min' => 1, 'max' => 2],
+            ],
             'Troll' => [
                 ['item' => 'Big Bones', 'chance' => 100, 'min' => 1, 'max' => 2],
                 ['item' => 'Steel Sword', 'chance' => 5, 'min' => 1, 'max' => 1],
+                ['item' => 'Giant Essence', 'chance' => 25, 'min' => 1, 'max' => 1],
+            ],
+            'Ice Elemental' => [
+                ['item' => 'Starlight Essence', 'chance' => 20, 'min' => 1, 'max' => 1],
+            ],
+            'Fire Elemental' => [
+                ['item' => 'Phoenix Feather', 'chance' => 12, 'min' => 1, 'max' => 1],
+            ],
+
+            // High level monsters
+            'Ogre' => [
+                ['item' => 'Big Bones', 'chance' => 100, 'min' => 1, 'max' => 2],
+                ['item' => 'Giant Essence', 'chance' => 35, 'min' => 1, 'max' => 2],
+            ],
+            'Demon' => [
+                ['item' => 'Big Bones', 'chance' => 100, 'min' => 1, 'max' => 2],
+                ['item' => 'Void Essence', 'chance' => 20, 'min' => 1, 'max' => 1],
+            ],
+            'Wyvern' => [
+                ['item' => 'Big Bones', 'chance' => 100, 'min' => 1, 'max' => 2],
+                ['item' => 'Phoenix Feather', 'chance' => 8, 'min' => 1, 'max' => 1],
+                ['item' => 'Venom Sac', 'chance' => 30, 'min' => 1, 'max' => 2],
             ],
 
             // Boss monsters
@@ -379,37 +413,46 @@ class MonsterSeeder extends Seeder
                 ['item' => 'Big Bones', 'chance' => 100, 'min' => 2, 'max' => 3],
                 ['item' => 'Steel Sword', 'chance' => 25, 'min' => 1, 'max' => 1],
                 ['item' => 'Ring of Strength', 'chance' => 10, 'min' => 1, 'max' => 1],
+                ['item' => 'Giant Essence', 'chance' => 50, 'min' => 1, 'max' => 2],
             ],
             'Lich' => [
                 ['item' => 'Big Bones', 'chance' => 100, 'min' => 2, 'max' => 4],
                 ['item' => 'Amulet of Defense', 'chance' => 15, 'min' => 1, 'max' => 1],
+                ['item' => 'Void Essence', 'chance' => 40, 'min' => 1, 'max' => 2],
+                ['item' => 'Unicorn Tears', 'chance' => 5, 'min' => 1, 'max' => 1],
             ],
             'Elder Dragon' => [
                 ['item' => 'Dragon Bones', 'chance' => 100, 'min' => 3, 'max' => 5],
                 ['item' => 'Dragon Slayer', 'chance' => 2, 'min' => 1, 'max' => 1],
                 ['item' => 'Amulet of Power', 'chance' => 5, 'min' => 1, 'max' => 1],
+                ['item' => 'Phoenix Feather', 'chance' => 25, 'min' => 1, 'max' => 3],
+                ['item' => 'Unicorn Tears', 'chance' => 10, 'min' => 1, 'max' => 1],
             ],
         ];
 
         foreach ($lootTables as $monsterName => $drops) {
             $monster = Monster::where('name', $monsterName)->first();
-            if (!$monster) {
+            if (! $monster) {
                 continue;
             }
 
             foreach ($drops as $drop) {
                 $item = Item::where('name', $drop['item'])->first();
-                if (!$item) {
+                if (! $item) {
                     continue;
                 }
 
-                MonsterLootTable::create([
-                    'monster_id' => $monster->id,
-                    'item_id' => $item->id,
-                    'drop_chance' => $drop['chance'],
-                    'quantity_min' => $drop['min'],
-                    'quantity_max' => $drop['max'],
-                ]);
+                MonsterLootTable::updateOrCreate(
+                    [
+                        'monster_id' => $monster->id,
+                        'item_id' => $item->id,
+                    ],
+                    [
+                        'drop_chance' => $drop['chance'],
+                        'quantity_min' => $drop['min'],
+                        'quantity_max' => $drop['max'],
+                    ]
+                );
             }
         }
     }
