@@ -97,6 +97,10 @@ class GatheringService
                 // Rare herbs (Level 45+)
                 ['name' => 'Dragonvine', 'weight' => 10, 'min_level' => 50, 'xp_bonus' => 40],
                 ['name' => 'Starlight Essence', 'weight' => 5, 'min_level' => 60, 'xp_bonus' => 55],
+                // Supplies found while foraging
+                ['name' => 'Vial', 'weight' => 12, 'min_level' => 1, 'xp_bonus' => 2],
+                ['name' => 'Crystal Vial', 'weight' => 6, 'min_level' => 20, 'xp_bonus' => 8],
+                ['name' => 'Holy Water', 'weight' => 4, 'min_level' => 30, 'xp_bonus' => 15],
             ],
         ],
     ];
