@@ -226,9 +226,9 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
                                         <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500"></span>
                                     </span>
-                                    <span className="text-lg font-semibold text-green-300">
+                                    <span className="font-pixel text-lg text-green-300">
                                         {online_count} {online_count === 1 ? "player" : "players"}{" "}
-                                        online!
+                                        online
                                     </span>
                                 </div>
                             </div>
