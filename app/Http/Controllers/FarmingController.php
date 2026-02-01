@@ -366,10 +366,11 @@ class FarmingController extends Controller
 
     /**
      * Get maximum plots based on farming level.
+     * Starts at 4 plots, gains 1 every 5 levels, max 25.
      */
     protected function getMaxPlots(int $farmingLevel): int
     {
-        return min(12, 2 + floor($farmingLevel / 10));
+        return min(25, 4 + floor($farmingLevel / 5));
     }
 
     /**
