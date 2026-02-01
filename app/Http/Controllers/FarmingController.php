@@ -358,6 +358,7 @@ class FarmingController extends Controller
             'is_watered' => $plot->is_watered,
             'growth_progress' => $plot->getGrowthProgress(),
             'time_remaining' => $plot->getTimeRemaining(),
+            'ready_at' => $plot->ready_at?->toISOString(),
             'is_ready' => $plot->isReadyToHarvest(),
             'has_withered' => $plot->hasWithered(),
             'planted_at' => $plot->planted_at?->diffForHumans(),

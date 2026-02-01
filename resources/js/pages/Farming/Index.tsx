@@ -18,7 +18,7 @@ import {
     X,
     Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AppLayout from "@/layouts/app-layout";
 import type { BreadcrumbItem } from "@/types";
 
@@ -46,6 +46,7 @@ interface Plot {
     is_watered: boolean;
     growth_progress: number;
     time_remaining: string | null;
+    ready_at: string | null;
     is_ready: boolean;
     has_withered: boolean;
     planted_at: string | null;
@@ -152,6 +153,46 @@ export default function FarmingIndex() {
     const [message, setMessage] = useState<string | null>(null);
     const [showCropModal, setShowCropModal] = useState<number | null>(null); // plot id
     const [cropSearch, setCropSearch] = useState("");
+    const [now, setNow] = useState(Date.now());
+
+    // Live countdown timer - tick every second
+    useEffect(() => {
+        const interval = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Calculate live countdown from ready_at timestamp
+    const getCountdown = (readyAt: string | null): string | null => {
+        if (!readyAt) return null;
+        const readyTime = new Date(readyAt).getTime();
+        const diff = readyTime - now;
+        if (diff <= 0) return null;
+
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+
+        if (hours > 0) {
+            return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
+        } else if (minutes > 0) {
+            return `${minutes}m ${seconds % 60}s`;
+        } else {
+            return `${seconds}s`;
+        }
+    };
+
+    // Calculate live growth progress
+    const getLiveProgress = (plot: Plot): number => {
+        if (!plot.ready_at || !plot.planted_at) return plot.growth_progress;
+        if (plot.is_ready) return 100;
+
+        const readyTime = new Date(plot.ready_at).getTime();
+        const diff = readyTime - now;
+        if (diff <= 0) return 100;
+
+        // We don't have planted_at as timestamp, so use the server progress as base
+        return plot.growth_progress;
+    };
 
     const currentPlotCount = plots.length;
     const nextPlotCost = (currentPlotCount + 1) * 100;
@@ -379,11 +420,11 @@ export default function FarmingIndex() {
                                             </span>
                                         </div>
 
-                                        {/* Time Remaining */}
-                                        {plot.time_remaining && (
+                                        {/* Time Remaining - Live Countdown */}
+                                        {plot.ready_at && !plot.is_ready && (
                                             <div className="flex items-center gap-1 font-pixel text-[10px] text-stone-400">
                                                 <Clock className="h-3 w-3" />
-                                                {plot.time_remaining}
+                                                {getCountdown(plot.ready_at) || "Ready!"}
                                             </div>
                                         )}
                                     </>
