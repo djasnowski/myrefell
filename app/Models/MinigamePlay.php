@@ -118,21 +118,30 @@ class MinigamePlay extends Model
 
     /**
      * Get the user's current streak count.
-     * Returns 0 if they haven't played or streak is broken.
+     * If played today, returns today's streak. Otherwise checks yesterday.
+     * Returns 0 if streak is broken.
      */
     public static function getCurrentStreak(int $userId): int
     {
-        $yesterday = today()->subDay();
-
-        $lastPlay = self::where('user_id', $userId)
-            ->where('played_at', $yesterday)
+        // First check if played today - show today's streak
+        $todayPlay = self::where('user_id', $userId)
+            ->where('played_at', today())
             ->first();
 
-        if (! $lastPlay) {
+        if ($todayPlay) {
+            return $todayPlay->streak_count;
+        }
+
+        // Otherwise check yesterday for continuing streak
+        $yesterdayPlay = self::where('user_id', $userId)
+            ->where('played_at', today()->subDay())
+            ->first();
+
+        if (! $yesterdayPlay) {
             return 0;
         }
 
-        return min($lastPlay->streak_count, self::MAX_STREAK - 1);
+        return min($yesterdayPlay->streak_count, self::MAX_STREAK - 1);
     }
 
     /**
