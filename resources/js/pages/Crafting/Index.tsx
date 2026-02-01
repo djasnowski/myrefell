@@ -5,7 +5,6 @@ import {
     Backpack,
     Beef,
     Check,
-    Hammer,
     Loader2,
     Lock,
     Package,
@@ -80,13 +79,11 @@ const getBreadcrumbs = (location?: Location): BreadcrumbItem[] => [
 ];
 
 const categoryIcons: Record<string, typeof Hammer> = {
-    smithing: Hammer,
     cooking: Beef,
     crafting: Scissors,
 };
 
 const categoryLabels: Record<string, string> = {
-    smithing: "Smithing",
     cooking: "Cooking",
     crafting: "Crafting",
 };
