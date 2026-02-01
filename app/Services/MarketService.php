@@ -168,6 +168,7 @@ class MarketService
         $worldState = WorldState::current();
 
         return $user->inventory()
+            ->where('is_equipped', false)
             ->with('item')
             ->get()
             ->filter(function ($slot) {
@@ -382,11 +383,11 @@ class MarketService
             ];
         }
 
-        // Check player has the item
-        if (! $this->inventoryService->hasItem($user, $item, $quantity)) {
+        // Check player has the item (excluding equipped items)
+        if (! $this->inventoryService->hasItem($user, $item, $quantity, excludeEquipped: true)) {
             return [
                 'success' => false,
-                'message' => 'You don\'t have enough of this item.',
+                'message' => 'You don\'t have enough of this item (equipped items cannot be sold).',
             ];
         }
 

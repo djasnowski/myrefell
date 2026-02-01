@@ -17,7 +17,7 @@ class InventoryService
     {
         $item = $item instanceof Item ? $item : Item::find($item);
 
-        if (!$item) {
+        if (! $item) {
             return false;
         }
 
@@ -65,6 +65,7 @@ class InventoryService
 
     /**
      * Remove an item from a player's inventory.
+     * Does not remove equipped items.
      *
      * @return bool True if item was removed successfully
      */
@@ -74,6 +75,7 @@ class InventoryService
 
         $slots = $player->inventory()
             ->where('item_id', $itemId)
+            ->where('is_equipped', false)
             ->orderBy('quantity', 'asc')
             ->get();
 
@@ -99,13 +101,18 @@ class InventoryService
     /**
      * Check if player has a specific item.
      */
-    public function hasItem(User $player, Item|int $item, int $quantity = 1): bool
+    public function hasItem(User $player, Item|int $item, int $quantity = 1, bool $excludeEquipped = false): bool
     {
         $itemId = $item instanceof Item ? $item->id : $item;
 
-        $total = $player->inventory()
-            ->where('item_id', $itemId)
-            ->sum('quantity');
+        $query = $player->inventory()
+            ->where('item_id', $itemId);
+
+        if ($excludeEquipped) {
+            $query->where('is_equipped', false);
+        }
+
+        $total = $query->sum('quantity');
 
         return $total >= $quantity;
     }
@@ -134,7 +141,7 @@ class InventoryService
             ->toArray();
 
         for ($i = 0; $i < PlayerInventory::MAX_SLOTS; $i++) {
-            if (!in_array($i, $usedSlots)) {
+            if (! in_array($i, $usedSlots)) {
                 return $i;
             }
         }

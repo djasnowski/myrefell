@@ -323,7 +323,7 @@ test('player cannot sell items they do not have', function () {
     $result = $service->sellItem($user, $item->id, 5);
 
     expect($result['success'])->toBeFalse();
-    expect($result['message'])->toBe("You don't have enough of this item.");
+    expect($result['message'])->toBe("You don't have enough of this item (equipped items cannot be sold).");
 });
 
 test('buy price is higher than sell price', function () {
