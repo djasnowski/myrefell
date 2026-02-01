@@ -1,5 +1,5 @@
 import { Link } from "@inertiajs/react";
-import AppLogoIcon from "@/components/app-logo-icon";
+import { Crown } from "lucide-react";
 import { home } from "@/routes";
 import type { AuthLayoutProps } from "@/types";
 
@@ -43,7 +43,7 @@ export default function AuthSimpleLayout({ children, title, description }: AuthL
                                     className="group flex flex-col items-center gap-2 font-medium"
                                 >
                                     <div className="relative mb-1 flex h-12 w-12 items-center justify-center">
-                                        <AppLogoIcon className="size-10 fill-current text-primary transition-transform group-hover:scale-110" />
+                                        <Crown className="size-10 text-primary transition-transform group-hover:scale-110" />
                                     </div>
                                     <span className="sr-only">{title}</span>
                                 </Link>

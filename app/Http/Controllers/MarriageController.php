@@ -16,6 +16,7 @@ class MarriageController extends Controller
     public function __construct(
         protected MarriageService $marriageService
     ) {}
+
     /**
      * Display marriage proposals page.
      */
@@ -23,7 +24,7 @@ class MarriageController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->dynasty_id) {
+        if (! $user->dynasty_id) {
             return Inertia::render('Dynasty/Proposals', [
                 'has_dynasty' => false,
                 'incoming' => [],
@@ -69,7 +70,7 @@ class MarriageController extends Controller
                 $q->whereDoesntHave('marriagesAsSpouse1', fn ($q) => $q->active())
                     ->whereDoesntHave('marriagesAsSpouse2', fn ($q) => $q->active());
             })
-            ->whereRaw('TIMESTAMPDIFF(YEAR, birth_date, NOW()) >= 16')
+            ->whereRaw("DATE_PART('year', AGE(NOW(), birth_date)) >= 16")
             ->exists();
 
         return Inertia::render('Dynasty/Proposals', [
@@ -90,11 +91,11 @@ class MarriageController extends Controller
     {
         $user = $request->user();
 
-        if (!$this->canRespondToProposal($user, $proposal)) {
+        if (! $this->canRespondToProposal($user, $proposal)) {
             return back()->with('error', 'You cannot accept this proposal.');
         }
 
-        if (!$proposal->canRespond()) {
+        if (! $proposal->canRespond()) {
             return back()->with('error', 'This proposal can no longer be accepted.');
         }
 
@@ -115,16 +116,17 @@ class MarriageController extends Controller
     {
         $user = $request->user();
 
-        if (!$this->canRespondToProposal($user, $proposal)) {
+        if (! $this->canRespondToProposal($user, $proposal)) {
             return back()->with('error', 'You cannot reject this proposal.');
         }
 
-        if (!$proposal->canRespond()) {
+        if (! $proposal->canRespond()) {
             return back()->with('error', 'This proposal can no longer be rejected.');
         }
 
         try {
             $this->marriageService->rejectProposal($proposal);
+
             return redirect()->route('dynasty.proposals')->with('success', 'Marriage proposal rejected.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
@@ -138,7 +140,7 @@ class MarriageController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->dynasty_id) {
+        if (! $user->dynasty_id) {
             return Inertia::render('Dynasty/ProposeMarriage', [
                 'has_dynasty' => false,
                 'eligible_members' => [],
@@ -153,7 +155,7 @@ class MarriageController extends Controller
         // Get eligible members from our dynasty (unmarried, age >= 14, alive)
         $eligibleMembers = DynastyMember::where('dynasty_id', $dynasty->id)
             ->alive()
-            ->whereRaw('TIMESTAMPDIFF(YEAR, birth_date, NOW()) >= 14')
+            ->whereRaw("DATE_PART('year', AGE(NOW(), birth_date)) >= 14")
             ->where(function ($q) {
                 $q->whereDoesntHave('marriagesAsSpouse1', fn ($q) => $q->where('status', 'active'))
                     ->whereDoesntHave('marriagesAsSpouse2', fn ($q) => $q->where('status', 'active'));
@@ -171,7 +173,7 @@ class MarriageController extends Controller
         // Get candidate members from other dynasties (unmarried, age >= 14, alive)
         $candidates = DynastyMember::where('dynasty_id', '!=', $dynasty->id)
             ->alive()
-            ->whereRaw('TIMESTAMPDIFF(YEAR, birth_date, NOW()) >= 14')
+            ->whereRaw("DATE_PART('year', AGE(NOW(), birth_date)) >= 14")
             ->where(function ($q) {
                 $q->whereDoesntHave('marriagesAsSpouse1', fn ($q) => $q->where('status', 'active'))
                     ->whereDoesntHave('marriagesAsSpouse2', fn ($q) => $q->where('status', 'active'));
@@ -225,7 +227,7 @@ class MarriageController extends Controller
             'message' => 'nullable|string|max:500',
         ]);
 
-        if (!$user->dynasty_id) {
+        if (! $user->dynasty_id) {
             return back()->with('error', 'You must have a dynasty to propose marriage.');
         }
 
@@ -233,18 +235,18 @@ class MarriageController extends Controller
 
         // Validate proposer is from our dynasty
         $proposer = DynastyMember::find($validated['proposer_member_id']);
-        if (!$proposer || $proposer->dynasty_id !== $dynasty->id) {
+        if (! $proposer || $proposer->dynasty_id !== $dynasty->id) {
             return back()->with('error', 'Invalid proposer selected.');
         }
 
         // Validate proposer can marry
-        if (!$proposer->canMarry()) {
+        if (! $proposer->canMarry()) {
             return back()->with('error', 'This dynasty member cannot marry (already married, too young, or not alive).');
         }
 
         // Validate proposed is from different dynasty
         $proposed = DynastyMember::find($validated['proposed_member_id']);
-        if (!$proposed) {
+        if (! $proposed) {
             return back()->with('error', 'Invalid candidate selected.');
         }
 
@@ -253,7 +255,7 @@ class MarriageController extends Controller
         }
 
         // Validate proposed can marry
-        if (!$proposed->canMarry()) {
+        if (! $proposed->canMarry()) {
             return back()->with('error', 'This candidate cannot marry (already married, too young, or not alive).');
         }
 
@@ -300,11 +302,11 @@ class MarriageController extends Controller
     {
         $user = $request->user();
 
-        if (!$this->canWithdrawProposal($user, $proposal)) {
+        if (! $this->canWithdrawProposal($user, $proposal)) {
             return back()->with('error', 'You cannot withdraw this proposal.');
         }
 
-        if (!$proposal->isPending()) {
+        if (! $proposal->isPending()) {
             return back()->with('error', 'This proposal can no longer be withdrawn.');
         }
 
