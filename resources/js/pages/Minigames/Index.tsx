@@ -56,19 +56,20 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 // Wheel segment configuration - 12 segments
+// Gold ranges match backend: calculateSegmentIndex() in MinigameController
 const WHEEL_SEGMENTS = [
-    { label: "50 Gold", color: "#78350f", textColor: "#fbbf24" },
+    { label: "50-75g", color: "#78350f", textColor: "#fbbf24" },
     { label: "Rare Item", color: "#1e3a8a", textColor: "#60a5fa" },
-    { label: "100 Gold", color: "#422006", textColor: "#fcd34d" },
-    { label: "150 Gold", color: "#78350f", textColor: "#fbbf24" },
+    { label: "76-125g", color: "#422006", textColor: "#fcd34d" },
+    { label: "126-175g", color: "#78350f", textColor: "#fbbf24" },
     { label: "Epic Item", color: "#581c87", textColor: "#c084fc" },
-    { label: "200 Gold", color: "#422006", textColor: "#fcd34d" },
+    { label: "176-250g", color: "#422006", textColor: "#fcd34d" },
     { label: "Mystery Box", color: "#064e3b", textColor: "#34d399" },
-    { label: "300 Gold", color: "#78350f", textColor: "#fbbf24" },
-    { label: "500 Gold", color: "#422006", textColor: "#fcd34d" },
+    { label: "251-400g", color: "#78350f", textColor: "#fbbf24" },
+    { label: "401-600g", color: "#422006", textColor: "#fcd34d" },
     { label: "Jackpot!", color: "#7c2d12", textColor: "#fb923c" },
-    { label: "750 Gold", color: "#78350f", textColor: "#fbbf24" },
-    { label: "1000 Gold", color: "#422006", textColor: "#fcd34d" },
+    { label: "601-875g", color: "#78350f", textColor: "#fbbf24" },
+    { label: "876-1000g", color: "#422006", textColor: "#fcd34d" },
 ];
 
 const SEGMENT_COUNT = WHEEL_SEGMENTS.length;
