@@ -14,8 +14,12 @@ use Illuminate\Support\Facades\DB;
 class CombatService
 {
     public const ENERGY_COST = 5;
+
     public const FLEE_SUCCESS_CHANCE = 50;
+
     public const RESPAWN_ENERGY_PERCENT = 25;
+
+    public const XP_PER_DAMAGE = 4;
 
     public function __construct(
         protected EnergyService $energyService,
@@ -80,7 +84,7 @@ class CombatService
         }
 
         // Check if player is alive
-        if (!$player->isAlive()) {
+        if (! $player->isAlive()) {
             return ['success' => false, 'message' => 'You are dead and cannot fight.'];
         }
 
@@ -91,23 +95,23 @@ class CombatService
         }
 
         // Check energy
-        if (!$this->energyService->hasEnergy($player, self::ENERGY_COST)) {
-            return ['success' => false, 'message' => 'You need ' . self::ENERGY_COST . ' energy to start combat.'];
+        if (! $this->energyService->hasEnergy($player, self::ENERGY_COST)) {
+            return ['success' => false, 'message' => 'You need '.self::ENERGY_COST.' energy to start combat.'];
         }
 
         // Find the monster
         $monster = Monster::find($monsterId);
-        if (!$monster) {
+        if (! $monster) {
             return ['success' => false, 'message' => 'Monster not found.'];
         }
 
         // Check combat level requirement
-        if (!$monster->canBeAttackedBy($player)) {
+        if (! $monster->canBeAttackedBy($player)) {
             return ['success' => false, 'message' => "You need combat level {$monster->min_player_combat_level} to fight this monster."];
         }
 
         // Validate training style
-        if (!in_array($trainingStyle, CombatSession::TRAINING_STYLES)) {
+        if (! in_array($trainingStyle, CombatSession::TRAINING_STYLES)) {
             $trainingStyle = 'attack';
         }
 
@@ -144,7 +148,7 @@ class CombatService
     public function attack(User $player): array
     {
         $session = $this->getActiveCombat($player);
-        if (!$session) {
+        if (! $session) {
             return ['success' => false, 'message' => 'You are not in combat.'];
         }
 
@@ -156,6 +160,13 @@ class CombatService
             $playerAttack = $this->calculatePlayerAttack($player, $monster);
             $session->monster_hp = max(0, $session->monster_hp - $playerAttack['damage']);
 
+            // Award XP immediately based on damage dealt
+            $xpThisHit = $playerAttack['damage'] * self::XP_PER_DAMAGE;
+            if ($xpThisHit > 0) {
+                $session->xp_gained += $xpThisHit;
+                $this->awardCombatXp($player, $session->training_style, $xpThisHit);
+            }
+
             $logs[] = CombatLog::create([
                 'combat_session_id' => $session->id,
                 'round' => $session->round,
@@ -165,6 +176,7 @@ class CombatService
                 'damage' => $playerAttack['damage'],
                 'player_hp_after' => $session->player_hp,
                 'monster_hp_after' => $session->monster_hp,
+                'xp_gained' => $xpThisHit,
             ]);
 
             // Check if monster is dead
@@ -202,7 +214,7 @@ class CombatService
 
             return [
                 'success' => true,
-                'message' => 'Round ' . ($session->round - 1) . ' complete.',
+                'message' => 'Round '.($session->round - 1).' complete.',
                 'data' => [
                     'session' => $session->fresh(['monster', 'logs']),
                     'logs' => $logs,
@@ -218,7 +230,7 @@ class CombatService
     public function eat(User $player, int $inventorySlotId): array
     {
         $session = $this->getActiveCombat($player);
-        if (!$session) {
+        if (! $session) {
             return ['success' => false, 'message' => 'You are not in combat.'];
         }
 
@@ -228,7 +240,7 @@ class CombatService
             ->with('item')
             ->first();
 
-        if (!$slot) {
+        if (! $slot) {
             return ['success' => false, 'message' => 'Item not found in your inventory.'];
         }
 
@@ -239,7 +251,7 @@ class CombatService
             return ['success' => false, 'message' => 'This item cannot be eaten.'];
         }
 
-        return DB::transaction(function () use ($player, $session, $slot, $item) {
+        return DB::transaction(function () use ($player, $session, $item) {
             $logs = [];
             $monster = $session->monster;
 
@@ -312,7 +324,7 @@ class CombatService
     public function flee(User $player): array
     {
         $session = $this->getActiveCombat($player);
-        if (!$session) {
+        if (! $session) {
             return ['success' => false, 'message' => 'You are not in combat.'];
         }
 
@@ -413,7 +425,7 @@ class CombatService
 
         $hit = rand(1, 100) <= $hitChance;
 
-        if (!$hit) {
+        if (! $hit) {
             return ['hit' => false, 'damage' => 0];
         }
 
@@ -442,7 +454,7 @@ class CombatService
 
         $hit = rand(1, 100) <= $hitChance;
 
-        if (!$hit) {
+        if (! $hit) {
             return ['hit' => false, 'damage' => 0];
         }
 
@@ -492,7 +504,7 @@ class CombatService
             ->with('item')
             ->first();
 
-        if (!$weapon) {
+        if (! $weapon) {
             return $damage;
         }
 
@@ -522,20 +534,9 @@ class CombatService
         $session->status = CombatSession::STATUS_VICTORY;
         $session->save();
 
-        // Award XP based on training style
-        $xpGained = $monster->xp_reward;
+        // XP was already awarded per hit during combat
+        // Check if player leveled up during the fight
         $skill = $player->skills()->where('skill_name', $session->training_style)->first();
-
-        if (!$skill) {
-            $skill = PlayerSkill::create([
-                'player_id' => $player->id,
-                'skill_name' => $session->training_style,
-                'level' => 5,
-                'xp' => 0,
-            ]);
-        }
-
-        $levelsGained = $skill->addXp($xpGained);
 
         // Roll for loot
         $loot = $this->lootService->rollAndGiveLoot($player, $monster);
@@ -548,9 +549,9 @@ class CombatService
                 'logs' => $logs,
                 'status' => 'victory',
                 'rewards' => [
-                    'xp' => $xpGained,
+                    'xp' => $session->xp_gained,
                     'skill' => $session->training_style,
-                    'levels_gained' => $levelsGained,
+                    'current_level' => $skill?->level ?? 1,
                     'gold' => $loot['gold'],
                     'items' => $loot['items'],
                 ],
@@ -575,6 +576,7 @@ class CombatService
 
         $this->energyService->setEnergyOnDeath($player);
 
+        // XP was already awarded per hit during combat
         return [
             'success' => false,
             'message' => "Defeat! You were killed by {$monster->name}.",
@@ -582,8 +584,29 @@ class CombatService
                 'session' => $session,
                 'logs' => $logs,
                 'status' => 'defeat',
+                'xp_earned' => $session->xp_gained,
+                'skill' => $session->training_style,
             ],
         ];
+    }
+
+    /**
+     * Award XP to a combat skill.
+     */
+    protected function awardCombatXp(User $player, string $skillName, int $xp): void
+    {
+        $skill = $player->skills()->where('skill_name', $skillName)->first();
+
+        if (! $skill) {
+            $skill = PlayerSkill::create([
+                'player_id' => $player->id,
+                'skill_name' => $skillName,
+                'level' => 1,
+                'xp' => 0,
+            ]);
+        }
+
+        $skill->addXp($xp);
     }
 
     /**

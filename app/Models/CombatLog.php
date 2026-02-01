@@ -11,10 +11,13 @@ class CombatLog extends Model
     use HasFactory;
 
     public const ACTOR_PLAYER = 'player';
+
     public const ACTOR_MONSTER = 'monster';
 
     public const ACTION_ATTACK = 'attack';
+
     public const ACTION_EAT = 'eat';
+
     public const ACTION_FLEE = 'flee';
 
     protected $fillable = [
@@ -24,6 +27,7 @@ class CombatLog extends Model
         'action',
         'hit',
         'damage',
+        'xp_gained',
         'player_hp_after',
         'monster_hp_after',
         'item_id',
@@ -36,6 +40,7 @@ class CombatLog extends Model
             'round' => 'integer',
             'hit' => 'boolean',
             'damage' => 'integer',
+            'xp_gained' => 'integer',
             'player_hp_after' => 'integer',
             'monster_hp_after' => 'integer',
             'hp_restored' => 'integer',
@@ -84,7 +89,7 @@ class CombatLog extends Model
 
         return match ($this->action) {
             self::ACTION_ATTACK => $this->hit
-                ? "{$actorName} hit for {$this->damage} damage!"
+                ? "{$actorName} hit for {$this->damage} damage!".($this->xp_gained > 0 ? " (+{$this->xp_gained} XP)" : '')
                 : "{$actorName} missed!",
             self::ACTION_EAT => "You ate {$this->item?->name} and restored {$this->hp_restored} HP.",
             self::ACTION_FLEE => 'You fled from combat!',

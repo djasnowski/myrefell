@@ -12,8 +12,11 @@ class CombatSession extends Model
     use HasFactory;
 
     public const STATUS_ACTIVE = 'active';
+
     public const STATUS_VICTORY = 'victory';
+
     public const STATUS_DEFEAT = 'defeat';
+
     public const STATUS_FLED = 'fled';
 
     public const TRAINING_STYLES = ['attack', 'strength', 'defense'];
@@ -25,6 +28,7 @@ class CombatSession extends Model
         'monster_hp',
         'round',
         'training_style',
+        'xp_gained',
         'status',
         'location_type',
         'location_id',
@@ -36,6 +40,7 @@ class CombatSession extends Model
             'player_hp' => 'integer',
             'monster_hp' => 'integer',
             'round' => 'integer',
+            'xp_gained' => 'integer',
             'location_id' => 'integer',
         ];
     }
