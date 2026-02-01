@@ -202,10 +202,19 @@ function JobCard({
                         </div>
                     </div>
                 </div>
-                <div className="rounded-lg bg-stone-800/50 px-2 py-1">
-                    <span className="font-pixel text-xs text-stone-400">
-                        {job.current_workers}/{job.max_workers} workers
-                    </span>
+                <div className="text-right">
+                    <div className="rounded-lg bg-stone-800/50 px-2 py-1">
+                        <span className="font-pixel text-xs text-stone-400">
+                            {job.current_workers}/{job.max_workers} workers
+                        </span>
+                    </div>
+                    {job.xp_reward > 0 && job.xp_skill && (
+                        <div className="mt-1 rounded-lg bg-emerald-900/40 px-2 py-1">
+                            <span className="font-pixel text-[10px] text-emerald-300">
+                                +{job.xp_reward} {job.xp_skill} XP
+                            </span>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -237,15 +246,6 @@ function JobCard({
                     <div className="font-pixel text-[10px] text-stone-500">Cooldown</div>
                 </div>
             </div>
-
-            {/* XP Reward */}
-            {job.xp_reward > 0 && job.xp_skill && (
-                <div className="mb-3 flex items-center justify-center gap-2 rounded-lg bg-emerald-900/30 p-2">
-                    <span className="font-pixel text-sm text-emerald-300">
-                        +{job.xp_reward} {job.xp_skill} XP
-                    </span>
-                </div>
-            )}
 
             <button
                 onClick={onApply}
