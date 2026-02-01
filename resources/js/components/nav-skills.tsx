@@ -6,6 +6,7 @@ import {
     Church,
     Fish,
     Hammer,
+    Hand,
     Heart,
     Pickaxe,
     Scissors,
@@ -44,6 +45,7 @@ const skillOrder = [
     "cooking",
     "smithing",
     "crafting",
+    "thieving",
 ];
 
 const skillIcons: Record<string, LucideIcon> = {
@@ -60,6 +62,7 @@ const skillIcons: Record<string, LucideIcon> = {
     cooking: Beef,
     smithing: Hammer,
     crafting: Scissors,
+    thieving: Hand,
 };
 
 function SkillBadge({ skill }: { skill: Skill }) {
