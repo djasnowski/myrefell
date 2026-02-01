@@ -2,6 +2,7 @@ import { AppContent } from "@/components/app-content";
 import { AppShell } from "@/components/app-shell";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppSidebarHeader } from "@/components/app-sidebar-header";
+import { GameToaster } from "@/components/ui/game-toast";
 import type { AppLayoutProps } from "@/types";
 
 export default function AppSidebarLayout({ children, breadcrumbs = [] }: AppLayoutProps) {
@@ -12,6 +13,7 @@ export default function AppSidebarLayout({ children, breadcrumbs = [] }: AppLayo
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 {children}
             </AppContent>
+            <GameToaster />
         </AppShell>
     );
 }

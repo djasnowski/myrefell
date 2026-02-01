@@ -1,7 +1,8 @@
 import { Head, router, usePage } from "@inertiajs/react";
-import { ArrowUp, Footprints, Loader2, Lock, Sparkles, Zap } from "lucide-react";
+import { Footprints, Loader2, Lock, Sparkles, Zap } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { gameToast } from "@/components/ui/game-toast";
 import type { BreadcrumbItem } from "@/types";
 
 interface Obstacle {
@@ -103,7 +104,6 @@ const getObstacleColors = (minLevel: number, isLegendary: boolean) => {
 export default function AgilityIndex() {
     const { agility_info, location } = usePage<PageProps>().props;
     const [loading, setLoading] = useState<string | null>(null);
-    const [result, setResult] = useState<TrainResult | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(agility_info.player_energy);
     const [currentLevel, setCurrentLevel] = useState(agility_info.agility_level);
     const [currentXpProgress, setCurrentXpProgress] = useState(agility_info.agility_xp_progress);
@@ -122,7 +122,6 @@ export default function AgilityIndex() {
         if (!obstacleData || !obstacleData.can_attempt) return;
 
         setLoading(obstacle);
-        setResult(null);
 
         // Build the URL based on location
         const baseUrl = location
@@ -143,7 +142,12 @@ export default function AgilityIndex() {
             });
 
             const data: TrainResult = await response.json();
-            setResult(data);
+
+            // Show toast notification
+            gameToast.training({
+                ...data,
+                skill: "Agility",
+            });
 
             if (data.energy_remaining !== undefined) {
                 setCurrentEnergy(data.energy_remaining);
@@ -165,7 +169,7 @@ export default function AgilityIndex() {
                 },
             });
         } catch {
-            setResult({ success: false, message: "An error occurred" });
+            gameToast.error("An error occurred");
         } finally {
             setLoading(null);
         }
@@ -240,67 +244,6 @@ export default function AgilityIndex() {
                             />
                         </div>
                     </div>
-
-                    {/* Result Display */}
-                    {result && (
-                        <div
-                            className={`mb-6 rounded-lg border p-4 ${
-                                result.success
-                                    ? "border-green-600/50 bg-green-900/20"
-                                    : result.failed
-                                      ? "border-orange-600/50 bg-orange-900/20"
-                                      : "border-red-600/50 bg-red-900/20"
-                            }`}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div
-                                    className={`rounded-lg p-2 ${
-                                        result.success
-                                            ? "bg-green-800/50"
-                                            : result.failed
-                                              ? "bg-orange-800/50"
-                                              : "bg-red-800/50"
-                                    }`}
-                                >
-                                    <Footprints
-                                        className={`h-6 w-6 ${
-                                            result.success
-                                                ? "text-green-400"
-                                                : result.failed
-                                                  ? "text-orange-400"
-                                                  : "text-red-400"
-                                        }`}
-                                    />
-                                </div>
-                                <div>
-                                    <div
-                                        className={`font-pixel text-sm ${
-                                            result.success
-                                                ? "text-green-300"
-                                                : result.failed
-                                                  ? "text-orange-300"
-                                                  : "text-red-400"
-                                        }`}
-                                    >
-                                        {result.message}
-                                    </div>
-                                    {result.xp_awarded !== undefined && result.xp_awarded > 0 && (
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-pixel text-[10px] text-amber-400">
-                                                +{result.xp_awarded} XP
-                                            </span>
-                                            {result.leveled_up && (
-                                                <span className="flex items-center gap-1 font-pixel text-[10px] text-yellow-300">
-                                                    <ArrowUp className="h-3 w-3" />
-                                                    Level {result.new_level}!
-                                                </span>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    )}
 
                     {/* Obstacles */}
                     <div className="space-y-4">
