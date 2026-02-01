@@ -118,6 +118,9 @@ class RoleController extends Controller
         // Check if user resides at this location (required for claiming roles)
         $userResidesHere = $this->roleService->userResidesAt($user, $locationType, $locationId);
 
+        // Check if user is physically at this location
+        $userIsHere = $user->current_location_type === $locationType && $user->current_location_id === $locationId;
+
         return Inertia::render('Roles/Index', [
             'location_type' => $locationType,
             'location_id' => $locationId,
@@ -128,6 +131,7 @@ class RoleController extends Controller
             'population' => $population,
             'can_self_appoint' => $canSelfAppoint,
             'user_resides_here' => $userResidesHere,
+            'user_is_here' => $userIsHere,
             'self_appoint_threshold' => RoleService::SELF_APPOINT_THRESHOLD,
             'player' => [
                 'id' => $user->id,

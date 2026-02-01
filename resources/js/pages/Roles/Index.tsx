@@ -103,6 +103,7 @@ interface PageProps {
     population: number;
     can_self_appoint: boolean;
     user_resides_here: boolean;
+    user_is_here: boolean;
     self_appoint_threshold: number;
     player: {
         id: number;
@@ -329,6 +330,7 @@ function RoleModal({
     currentUserRole,
     canSelfAppoint,
     userResidesHere,
+    userIsHere,
     onClose,
     onResign,
     onClaim,
@@ -341,6 +343,7 @@ function RoleModal({
     currentUserRole: UserRole | undefined;
     canSelfAppoint: boolean;
     userResidesHere: boolean;
+    userIsHere: boolean;
     onClose: () => void;
     onResign: (playerRoleId: number) => void;
     onClaim: (roleId: number) => void;
@@ -350,8 +353,9 @@ function RoleModal({
     const Icon = iconMap[role.icon.toLowerCase()] || Crown;
     const isCurrentUser = role.holder?.user_id === currentUserId;
     const isUserRole = userRoleHere?.role_id === role.id;
-    // Can claim if: vacant, self-appointment allowed, user resides here (and it's not their current role)
-    const canClaim = role.is_vacant && canSelfAppoint && userResidesHere && !isUserRole;
+    // Can claim if: vacant, self-appointment allowed, user resides here, user is physically here, and it's not their current role
+    const canClaim =
+        role.is_vacant && canSelfAppoint && userResidesHere && userIsHere && !isUserRole;
     const willReplaceRole = canClaim && currentUserRole !== undefined;
     const consequences = roleConsequences[role.slug] || {
         duties: [],
@@ -542,11 +546,13 @@ function RoleModal({
                     {!canClaim && !isUserRole && role.is_vacant && (
                         <div className="flex-1 rounded-lg border border-dashed border-stone-600 bg-stone-900/30 p-2 text-center">
                             <span className="font-pixel text-[10px] text-stone-500">
-                                {!userResidesHere
-                                    ? "You must reside here to claim this role"
-                                    : canSelfAppoint
-                                      ? "Cannot claim this role"
-                                      : "Election required to fill this position"}
+                                {!userIsHere
+                                    ? "You must travel here to claim this role"
+                                    : !userResidesHere
+                                      ? "You must reside here to claim this role"
+                                      : canSelfAppoint
+                                        ? "Cannot claim this role"
+                                        : "Election required to fill this position"}
                             </span>
                         </div>
                     )}
@@ -567,6 +573,7 @@ export default function RolesIndex() {
         population,
         can_self_appoint,
         user_resides_here,
+        user_is_here,
         self_appoint_threshold,
         player,
     } = usePage<PageProps>().props;
@@ -771,6 +778,7 @@ export default function RolesIndex() {
                     currentUserRole={currentUserRole}
                     canSelfAppoint={can_self_appoint}
                     userResidesHere={user_resides_here}
+                    userIsHere={user_is_here}
                     onClose={() => setSelectedRole(null)}
                     onResign={handleResign}
                     onClaim={handleClaim}
