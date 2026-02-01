@@ -85,11 +85,11 @@ class SocialClassService
         ?string $reason = null,
         int $goldOffered = 0
     ): ManumissionRequest|string {
-        if (!$serf->isSerf()) {
+        if (! $serf->isSerf()) {
             return 'You are not a serf.';
         }
 
-        if (!$serf->bound_to_barony_id) {
+        if (! $serf->bound_to_barony_id) {
             return 'You are not bound to a barony.';
         }
 
@@ -106,14 +106,14 @@ class SocialClassService
         $barony = Barony::find($serf->bound_to_barony_id);
         $baron = $this->getBaronForBarony($barony);
 
-        if (!$baron) {
+        if (! $baron) {
             return 'No baron found for your barony.';
         }
 
         // For purchase requests, validate gold
         if ($requestType === ManumissionRequest::TYPE_PURCHASE) {
             if ($goldOffered < ManumissionRequest::PURCHASE_COST) {
-                return 'Insufficient gold offered. Freedom costs ' . number_format(ManumissionRequest::PURCHASE_COST) . ' gold.';
+                return 'Insufficient gold offered. Freedom costs '.number_format(ManumissionRequest::PURCHASE_COST).' gold.';
             }
             if ($serf->gold < $goldOffered) {
                 return 'You do not have enough gold.';
@@ -136,7 +136,7 @@ class SocialClassService
      */
     public function approveManumission(ManumissionRequest $request, User $baron, ?string $responseMessage = null): bool
     {
-        if (!$request->isPending()) {
+        if (! $request->isPending()) {
             return false;
         }
 
@@ -157,7 +157,7 @@ class SocialClassService
             }
 
             // Grant freedom
-            $this->changeClass($serf, User::CLASS_FREEMAN, 'manumission_' . $request->request_type, $baron);
+            $this->changeClass($serf, User::CLASS_FREEMAN, 'manumission_'.$request->request_type, $baron);
 
             // Update request
             $request->update([
@@ -175,7 +175,7 @@ class SocialClassService
      */
     public function denyManumission(ManumissionRequest $request, User $baron, ?string $responseMessage = null): bool
     {
-        if (!$request->isPending()) {
+        if (! $request->isPending()) {
             return false;
         }
 
@@ -223,14 +223,14 @@ class SocialClassService
         // Get the king
         $king = $this->getKingForKingdom($kingdom);
 
-        if (!$king) {
+        if (! $king) {
             return 'No king found for this kingdom.';
         }
 
         // For purchase requests, validate gold
         if ($requestType === EnnoblementRequest::TYPE_PURCHASE) {
             if ($goldOffered < EnnoblementRequest::PURCHASE_COST) {
-                return 'Insufficient gold offered. Nobility costs ' . number_format(EnnoblementRequest::PURCHASE_COST) . ' gold.';
+                return 'Insufficient gold offered. Nobility costs '.number_format(EnnoblementRequest::PURCHASE_COST).' gold.';
             }
             if ($requester->gold < $goldOffered) {
                 return 'You do not have enough gold.';
@@ -239,7 +239,7 @@ class SocialClassService
 
         // For marriage requests, validate spouse
         if ($requestType === EnnoblementRequest::TYPE_MARRIAGE) {
-            if (!$spouse || !$spouse->isNoble()) {
+            if (! $spouse || ! $spouse->isNoble()) {
                 return 'Marriage requests require a noble spouse.';
             }
         }
@@ -265,7 +265,7 @@ class SocialClassService
         string $titleGranted = 'Knight',
         ?string $responseMessage = null
     ): bool {
-        if (!$request->isPending()) {
+        if (! $request->isPending()) {
             return false;
         }
 
@@ -293,7 +293,7 @@ class SocialClassService
             }
 
             // Grant nobility
-            $this->changeClass($requester, User::CLASS_NOBLE, 'ennoblement_' . $request->request_type, $king);
+            $this->changeClass($requester, User::CLASS_NOBLE, 'ennoblement_'.$request->request_type, $king);
 
             // Update user's title
             $requester->update([
@@ -318,7 +318,7 @@ class SocialClassService
      */
     public function denyEnnoblement(EnnoblementRequest $request, User $king, ?string $responseMessage = null): bool
     {
-        if (!$request->isPending()) {
+        if (! $request->isPending()) {
             return false;
         }
 
@@ -349,9 +349,8 @@ class SocialClassService
         }
 
         // Check if user lives in a town
-        $homeVillage = $user->homeVillage;
-        if (!$homeVillage) {
-            return 'You must have a home to become a burgher.';
+        if (! $user->livesInTown()) {
+            return 'You must live in a town to become a burgher.';
         }
 
         // Check for guild membership (optional for now, can be enforced later)
@@ -383,7 +382,7 @@ class SocialClassService
             ->where('status', PlayerRole::STATUS_ACTIVE)
             ->exists();
 
-        if (!$hasPriestRole) {
+        if (! $hasPriestRole) {
             return 'You must hold a religious office to become clergy.';
         }
 
@@ -405,7 +404,7 @@ class SocialClassService
 
         foreach ($serfs as $serf) {
             // Check if obligations are complete
-            if (!$serf->hasCompletedLaborObligations()) {
+            if (! $serf->hasCompletedLaborObligations()) {
                 // Serf has not completed obligations - could apply penalties
                 // For now, just track it
                 $results['punished']++;
@@ -438,7 +437,7 @@ class SocialClassService
     {
         $baronRole = PlayerRole::where('location_type', 'barony')
             ->where('location_id', $barony->id)
-            ->whereHas('role', fn($q) => $q->where('slug', 'baron'))
+            ->whereHas('role', fn ($q) => $q->where('slug', 'baron'))
             ->where('status', PlayerRole::STATUS_ACTIVE)
             ->first();
 
@@ -452,7 +451,7 @@ class SocialClassService
     {
         $kingRole = PlayerRole::where('location_type', 'kingdom')
             ->where('location_id', $kingdom->id)
-            ->whereHas('role', fn($q) => $q->where('slug', 'king'))
+            ->whereHas('role', fn ($q) => $q->where('slug', 'king'))
             ->where('status', PlayerRole::STATUS_ACTIVE)
             ->first();
 
