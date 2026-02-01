@@ -16,6 +16,16 @@ use Inertia\Response;
 
 class TavernController extends Controller
 {
+    /**
+     * Rest configuration by location type.
+     */
+    private const REST_CONFIG = [
+        'village' => ['cost' => 10, 'energy' => 50],
+        'town' => ['cost' => 15, 'energy' => 75],
+        'duchy' => ['cost' => 20, 'energy' => 100],
+        'kingdom' => ['cost' => 25, 'energy' => 150],
+    ];
+
     public function __construct(
         protected CookingService $cookingService
     ) {}
@@ -51,9 +61,10 @@ class TavernController extends Controller
             }
         }
 
-        // Calculate rest cost and benefits
-        $restCost = 10; // gold
-        $energyRestored = min(50, $user->max_energy - $user->energy);
+        // Calculate rest cost and benefits based on location
+        $restConfig = self::REST_CONFIG[$locationType] ?? self::REST_CONFIG['village'];
+        $restCost = $restConfig['cost'];
+        $energyRestored = min($restConfig['energy'], $user->max_energy - $user->energy);
 
         // Get cooking recipes
         $cookingInfo = $this->cookingService->getCookingInfo($user);
@@ -85,8 +96,12 @@ class TavernController extends Controller
     public function rest(Request $request, ?Village $village = null, ?Town $town = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null)
     {
         $user = $request->user();
-        $restCost = 10;
-        $energyRestored = min(50, $user->max_energy - $user->energy);
+        $location = $village ?? $town ?? $duchy ?? $kingdom;
+        $locationType = $this->getLocationType($location) ?? $user->current_location_type ?? 'village';
+
+        $restConfig = self::REST_CONFIG[$locationType] ?? self::REST_CONFIG['village'];
+        $restCost = $restConfig['cost'];
+        $energyRestored = min($restConfig['energy'], $user->max_energy - $user->energy);
 
         if ($user->gold < $restCost) {
             return back()->withErrors(['error' => "You need {$restCost}g to rest at the tavern."]);
