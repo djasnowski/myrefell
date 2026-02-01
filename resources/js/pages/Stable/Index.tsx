@@ -1,5 +1,5 @@
 import { Head, router, usePage } from "@inertiajs/react";
-import { Coins, Gauge, Heart, ShoppingCart, Sparkles, Zap } from "lucide-react";
+import { Bed, Coins, Gauge, Heart, Home, ShoppingCart, Sparkles, Zap } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,6 +89,7 @@ const rarityConfig: Record<
 };
 
 const locationTypeToPlural: Record<string, string> = {
+    village: "villages",
     town: "towns",
     barony: "baronies",
     duchy: "duchies",
@@ -160,6 +161,51 @@ export default function StableIndex() {
         );
     };
 
+    const handleStable = () => {
+        setLoading(true);
+        router.post(
+            "/stable/stable",
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handleRetrieve = () => {
+        setLoading(true);
+        router.post(
+            "/stable/retrieve",
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handleRest = () => {
+        setLoading(true);
+        router.post(
+            "/stable/rest",
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={location ? `Stables - ${location.name}` : "Stables"} />
@@ -208,20 +254,56 @@ export default function StableIndex() {
                                     {userHorse.is_stabled ? "Currently stabled" : "With you"}
                                 </p>
                             </div>
-                            <div className="text-right">
-                                <p className="text-xs text-stone-500">Sell value</p>
-                                <p className="text-amber-400">
-                                    {userHorse.sell_value.toLocaleString()} gold
-                                </p>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleSell}
-                                    disabled={loading}
-                                    className="mt-2 border-red-900 text-red-400 hover:bg-red-900/20"
-                                >
-                                    Sell Horse
-                                </Button>
+                            <div className="flex flex-col items-end gap-2">
+                                {/* Stable/Retrieve buttons */}
+                                {userHorse.is_stabled ? (
+                                    <>
+                                        <Button
+                                            size="sm"
+                                            onClick={handleRetrieve}
+                                            disabled={loading}
+                                            className="bg-blue-600 hover:bg-blue-500"
+                                        >
+                                            <Home className="size-4" />
+                                            Retrieve Horse
+                                        </Button>
+                                        {userHorse.stamina < userHorse.max_stamina && (
+                                            <Button
+                                                size="sm"
+                                                onClick={handleRest}
+                                                disabled={loading || userGold < 50}
+                                                className="bg-green-600 hover:bg-green-500"
+                                            >
+                                                <Bed className="size-4" />
+                                                Rest (50g)
+                                            </Button>
+                                        )}
+                                    </>
+                                ) : (
+                                    <Button
+                                        size="sm"
+                                        onClick={handleStable}
+                                        disabled={loading}
+                                        className="bg-stone-600 hover:bg-stone-500"
+                                    >
+                                        <Home className="size-4" />
+                                        Stable Horse
+                                    </Button>
+                                )}
+                                <div className="text-right">
+                                    <p className="text-xs text-stone-500">
+                                        Sell value: {userHorse.sell_value.toLocaleString()}g
+                                    </p>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleSell}
+                                        disabled={loading}
+                                        className="mt-1 border-red-900 text-red-400 hover:bg-red-900/20"
+                                    >
+                                        Sell Horse
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </div>
