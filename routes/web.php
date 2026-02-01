@@ -127,7 +127,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('changelog/mark-read', function () {
         // Get current version from the same place as middleware
-        $currentVersion = '0.4.0';
+        $currentVersion = '0.5.0';
         auth()->user()->update(['last_seen_changelog' => $currentVersion]);
 
         return back();

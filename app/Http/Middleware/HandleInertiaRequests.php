@@ -45,7 +45,7 @@ class HandleInertiaRequests extends Middleware
         $player = $request->user();
 
         // Current changelog version - update this when adding new entries
-        $currentChangelogVersion = '0.4.0';
+        $currentChangelogVersion = '0.5.0';
 
         return [
             ...parent::share($request),

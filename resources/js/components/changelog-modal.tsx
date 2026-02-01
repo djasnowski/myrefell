@@ -6,7 +6,9 @@ import {
     Shield,
     Sparkles,
     Sprout,
+    Star,
     Swords,
+    Trophy,
     Users,
     Wheat,
     Wrench,
@@ -29,6 +31,36 @@ interface ChangelogEntry {
 }
 
 const changelog: ChangelogEntry[] = [
+    {
+        version: "0.5.0",
+        date: "February 1, 2026",
+        title: "Highscores & Favorites",
+        description:
+            "Compare your skills with other players on the new highscores leaderboard, and quickly access your favorite services from the sidebar!",
+        icon: <Trophy className="h-8 w-8 text-amber-500" />,
+        changes: [
+            {
+                type: "added",
+                text: "Highscores leaderboard - see top players for each skill",
+            },
+            {
+                type: "added",
+                text: "Filter leaderboards by skill type (combat, gathering, production)",
+            },
+            {
+                type: "added",
+                text: "Service favorites - star any service to add it to your quick-access bar",
+            },
+            {
+                type: "added",
+                text: "Favorites appear in the sidebar for one-click access",
+            },
+            {
+                type: "added",
+                text: "Active service highlighted with amber border in favorites bar",
+            },
+        ],
+    },
     {
         version: "0.4.0",
         date: "February 1, 2026",
