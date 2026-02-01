@@ -3,7 +3,6 @@ import {
     ArrowRight,
     ArrowUp,
     Backpack,
-    Beef,
     Check,
     Loader2,
     Lock,
@@ -78,16 +77,6 @@ const getBreadcrumbs = (location?: Location): BreadcrumbItem[] => [
     },
 ];
 
-const categoryIcons: Record<string, typeof Scissors> = {
-    cooking: Beef,
-    crafting: Scissors,
-};
-
-const categoryLabels: Record<string, string> = {
-    cooking: "Cooking",
-    crafting: "Crafting",
-};
-
 function RecipeCard({
     recipe,
     onCraft,
@@ -98,7 +87,6 @@ function RecipeCard({
     loading: string | null;
 }) {
     const isLoading = loading === recipe.id;
-    const CategoryIcon = categoryIcons[recipe.category] || Scissors;
 
     return (
         <div
@@ -112,7 +100,7 @@ function RecipeCard({
         >
             <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <CategoryIcon className="h-4 w-4 text-stone-400" />
+                    <Scissors className="h-4 w-4 text-stone-400" />
                     <span className="font-pixel text-sm text-amber-300">{recipe.name}</span>
                 </div>
                 {recipe.is_locked && <Lock className="h-4 w-4 text-stone-500" />}
@@ -194,7 +182,6 @@ export default function CraftingIndex() {
     const { crafting_info, location } = usePage<PageProps>().props;
     const [loading, setLoading] = useState<string | null>(null);
     const [result, setResult] = useState<CraftResult | null>(null);
-    const [activeCategory, setActiveCategory] = useState<string>("all");
     const [currentEnergy, setCurrentEnergy] = useState(crafting_info.player_energy);
 
     // Build the craft URL based on location
@@ -237,10 +224,6 @@ export default function CraftingIndex() {
 
     // Combine all recipes for display
     const allRecipes = Object.entries(crafting_info.all_recipes).flatMap(([, recipes]) => recipes);
-    const displayRecipes =
-        activeCategory === "all" ? allRecipes : crafting_info.all_recipes[activeCategory] || [];
-
-    const categories = ["all", ...Object.keys(crafting_info.all_recipes)];
 
     return (
         <AppLayout breadcrumbs={getBreadcrumbs(location)}>
@@ -329,32 +312,9 @@ export default function CraftingIndex() {
                     </div>
                 )}
 
-                {/* Category Tabs */}
-                <div className="mb-4 flex gap-2 overflow-x-auto">
-                    {categories.map((cat) => {
-                        const Icon = categoryIcons[cat];
-                        const label = cat === "all" ? "All" : categoryLabels[cat] || cat;
-
-                        return (
-                            <button
-                                key={cat}
-                                onClick={() => setActiveCategory(cat)}
-                                className={`flex items-center gap-1 whitespace-nowrap rounded-lg px-3 py-1.5 font-pixel text-xs transition ${
-                                    activeCategory === cat
-                                        ? "bg-amber-600 text-stone-900"
-                                        : "bg-stone-800 text-stone-400 hover:bg-stone-700"
-                                }`}
-                            >
-                                {Icon && <Icon className="h-3 w-3" />}
-                                {label}
-                            </button>
-                        );
-                    })}
-                </div>
-
                 {/* Recipe Grid */}
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {displayRecipes.map((recipe) => (
+                    {allRecipes.map((recipe) => (
                         <RecipeCard
                             key={recipe.id}
                             recipe={recipe}
@@ -364,7 +324,7 @@ export default function CraftingIndex() {
                     ))}
                 </div>
 
-                {displayRecipes.length === 0 && (
+                {allRecipes.length === 0 && (
                     <div className="flex flex-1 items-center justify-center">
                         <div className="text-center">
                             <Scissors className="mx-auto mb-3 h-12 w-12 text-stone-600" />
