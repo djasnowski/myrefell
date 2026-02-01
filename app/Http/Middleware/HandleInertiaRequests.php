@@ -64,6 +64,8 @@ class HandleInertiaRequests extends Middleware
      */
     protected function getSidebarData($player): array
     {
+        // Refresh to get latest values (e.g., energy updated by scheduler)
+        $player->refresh();
         $player->load(['skills', 'homeVillage.barony.kingdom']);
 
         // Get active role
