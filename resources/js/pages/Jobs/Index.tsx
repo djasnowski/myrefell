@@ -171,50 +171,48 @@ function JobCard({
                     <div className="rounded-lg bg-stone-800/50 p-2.5">
                         <Icon className="h-6 w-6 text-stone-300" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                         <h3 className="font-pixel text-base text-amber-300">{job.name}</h3>
-                        <div className="flex items-center gap-2">
-                            <span className="font-pixel text-xs text-stone-400">
-                                {job.category_display}
-                            </span>
-                            {job.required_skill && SkillIcon && (
-                                <>
-                                    <span className="text-stone-600">•</span>
-                                    <div className="flex items-center gap-1">
-                                        <SkillIcon className="h-3 w-3 text-orange-400" />
-                                        <span className="font-pixel text-xs text-orange-400">
-                                            Lv.{job.required_skill_level}
-                                        </span>
-                                    </div>
-                                </>
-                            )}
-                            {job.required_level > 1 && (
-                                <>
-                                    <span className="text-stone-600">•</span>
-                                    <div className="flex items-center gap-1">
-                                        <Shield className="h-3 w-3 text-orange-400" />
-                                        <span className="font-pixel text-xs text-orange-400">
-                                            Lv.{job.required_level}
-                                        </span>
-                                    </div>
-                                </>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <span className="font-pixel text-xs text-stone-400">
+                                    {job.category_display}
+                                </span>
+                                {job.required_skill && SkillIcon && (
+                                    <>
+                                        <span className="text-stone-600">•</span>
+                                        <div className="flex items-center gap-1">
+                                            <SkillIcon className="h-3 w-3 text-orange-400" />
+                                            <span className="font-pixel text-xs text-orange-400">
+                                                Lv.{job.required_skill_level}
+                                            </span>
+                                        </div>
+                                    </>
+                                )}
+                                {job.required_level > 1 && (
+                                    <>
+                                        <span className="text-stone-600">•</span>
+                                        <div className="flex items-center gap-1">
+                                            <Shield className="h-3 w-3 text-orange-400" />
+                                            <span className="font-pixel text-xs text-orange-400">
+                                                Lv.{job.required_level}
+                                            </span>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                            {job.xp_reward > 0 && job.xp_skill && (
+                                <span className="font-pixel text-xs text-emerald-400">
+                                    +{job.xp_reward} {job.xp_skill} XP
+                                </span>
                             )}
                         </div>
                     </div>
                 </div>
-                <div className="text-right">
-                    <div className="rounded-lg bg-stone-800/50 px-2 py-1">
-                        <span className="font-pixel text-xs text-stone-400">
-                            {job.current_workers}/{job.max_workers} workers
-                        </span>
-                    </div>
-                    {job.xp_reward > 0 && job.xp_skill && (
-                        <div className="mt-1 rounded-lg bg-emerald-900/40 px-2 py-1">
-                            <span className="font-pixel text-[10px] text-emerald-300">
-                                +{job.xp_reward} {job.xp_skill} XP
-                            </span>
-                        </div>
-                    )}
+                <div className="rounded-lg bg-stone-800/50 px-2 py-1">
+                    <span className="font-pixel text-xs text-stone-400">
+                        {job.current_workers}/{job.max_workers} workers
+                    </span>
                 </div>
             </div>
 
