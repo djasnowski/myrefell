@@ -100,23 +100,26 @@ function WheelOfFortune({
                 animationRef.current.cancel();
             }
 
-            // Calculate rotation to land on target segment
-            // Pointer is at left (180°). Segment i is at (i * 30)°
-            // Wheel has -15° base offset so pointer aligns with segment centers
-            // To land segment i under pointer: rotate so segment start reaches 180°
-            const segmentAngle = 360 / SEGMENT_COUNT;
-            const segmentStart = targetSegment * segmentAngle;
-            // Rotation needed = 180 - segmentStart (normalize to 0-360)
-            const targetAngle = (((180 - segmentStart) % 360) + 360) % 360;
+            // Pointer is at TOP (90° from right/3 o'clock position)
+            // Segment i (0-indexed) has center at i * 30° from right
+            // To land segment i under top pointer:
+            // zeroAngle = 360 - finalAngle + 90 should equal i * 30
+            // So: finalAngle = 450 - i * 30 (normalized to 0-360)
+            const targetFinalAngle = (((450 - targetSegment * 30) % 360) + 360) % 360;
 
             // Add 5-7 full rotations for spin effect
-            // Start from -15deg (base offset) and end at targetAngle - 15deg
             const extraSpins = 5 + Math.floor(Math.random() * 3);
-            const newEndDegree = extraSpins * 360 + targetAngle - 15;
+            const newEndDegree =
+                previousEndDegreeRef.current +
+                extraSpins * 360 +
+                ((targetFinalAngle - (previousEndDegreeRef.current % 360) + 360) % 360);
 
-            // Use Web Animations API - animate from base offset
+            // Use Web Animations API
             animationRef.current = wheelRef.current.animate(
-                [{ transform: `rotate(-15deg)` }, { transform: `rotate(${newEndDegree}deg)` }],
+                [
+                    { transform: `rotate(${previousEndDegreeRef.current}deg)` },
+                    { transform: `rotate(${newEndDegree}deg)` },
+                ],
                 {
                     duration: 4000,
                     direction: "normal",
@@ -126,6 +129,8 @@ function WheelOfFortune({
                 },
             );
 
+            previousEndDegreeRef.current = newEndDegree;
+
             animationRef.current.onfinish = () => {
                 onSpinComplete(targetSegment);
             };
@@ -134,24 +139,23 @@ function WheelOfFortune({
 
     return (
         <div className="relative flex flex-col items-center">
-            {/* Wheel container - using CSS from original */}
+            {/* Wheel container */}
             <fieldset
-                className="relative aspect-square w-[320px]"
+                className="relative grid aspect-square w-[320px] place-content-center"
                 style={{
                     containerType: "inline-size",
                 }}
             >
-                {/* Pointer on left side pointing right */}
+                {/* Pointer at TOP pointing down */}
                 <div
-                    className="absolute left-[-8px] top-1/2 z-10"
+                    className="absolute left-1/2 top-0 z-10 -translate-x-1/2"
                     style={{
                         width: 0,
                         height: 0,
-                        borderTop: "14px solid transparent",
-                        borderBottom: "14px solid transparent",
-                        borderLeft: "24px solid #dc2626",
-                        transform: "translateY(-50%)",
-                        filter: "drop-shadow(2px 0 3px rgba(0,0,0,0.6))",
+                        borderLeft: "14px solid transparent",
+                        borderRight: "14px solid transparent",
+                        borderTop: "24px solid #dc2626",
+                        filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.6))",
                     }}
                 />
 
@@ -163,7 +167,6 @@ function WheelOfFortune({
                         clipPath: "inset(0 0 0 0 round 50%)",
                         display: "grid",
                         placeContent: "center start",
-                        transform: "rotate(-15deg)", // Offset so pointer aligns with segment centers
                     }}
                 >
                     {WHEEL_SEGMENTS.map((segment, index) => (
