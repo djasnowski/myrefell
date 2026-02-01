@@ -106,8 +106,6 @@ export default function GatheringActivity() {
     const [loading, setLoading] = useState(false);
     const [currentEnergy, setCurrentEnergy] = useState(player_energy);
     const [cooldown, setCooldown] = useState(0);
-    const [lastXp, setLastXp] = useState<number | null>(null);
-    const [lastResource, setLastResource] = useState<string | null>(null);
     const cooldownInterval = useRef<NodeJS.Timeout | null>(null);
 
     const Icon = activityIcons[activity.id] || Pickaxe;
@@ -161,8 +159,6 @@ export default function GatheringActivity() {
         if (!canGather || loading || cooldown > 0) return;
 
         setLoading(true);
-        setLastXp(null);
-        setLastResource(null);
 
         try {
             const response = await fetch(`/${location.type}s/${location.id}/gathering/gather`, {
@@ -189,10 +185,6 @@ export default function GatheringActivity() {
                         ? { skill: activity.skill, level: (activity.skill_level || 0) + 1 }
                         : undefined,
                 });
-
-                // Update last action display
-                setLastXp(data.xp_awarded || 0);
-                setLastResource(data.resource.name);
 
                 // Start cooldown timer
                 startCooldown();
@@ -292,24 +284,6 @@ export default function GatheringActivity() {
                             </div>
                         </div>
                     </div>
-
-                    {/* Last Action Result */}
-                    {lastResource && lastXp !== null && (
-                        <div className="mb-4 flex items-center justify-center gap-4 rounded-lg border border-green-600/50 bg-green-900/20 p-3">
-                            <div className="flex items-center gap-2">
-                                <Package className="h-4 w-4 text-green-400" />
-                                <span className="font-pixel text-sm text-green-300">
-                                    {lastResource}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-1 rounded bg-amber-900/50 px-2 py-1">
-                                <Sparkles className="h-3 w-3 text-amber-400" />
-                                <span className="font-pixel text-xs text-amber-300">
-                                    +{lastXp} XP
-                                </span>
-                            </div>
-                        </div>
-                    )}
 
                     {/* Gather Button */}
                     <div className="relative mb-6">
