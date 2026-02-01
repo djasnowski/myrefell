@@ -16,6 +16,7 @@ class LeaderboardController extends Controller
 
         foreach (PlayerSkill::SKILLS as $skillName) {
             $topPlayers = PlayerSkill::where('skill_name', $skillName)
+                ->where('xp', '>=', 10)
                 ->with('player:id,username')
                 ->orderByDesc('xp')
                 ->limit(15)
