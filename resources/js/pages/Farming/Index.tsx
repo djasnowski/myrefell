@@ -9,11 +9,13 @@ import {
     Leaf,
     Plus,
     Scissors,
+    Search,
     Sparkles,
     Sprout,
     Users,
     Warehouse,
     Wheat,
+    X,
     Zap,
 } from "lucide-react";
 import { useState } from "react";
@@ -87,10 +89,13 @@ interface PageProps {
     [key: string]: unknown;
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: "Dashboard", href: "/dashboard" },
-    { title: "Farming", href: "/farming" },
-];
+const locationPaths: Record<string, string> = {
+    village: "villages",
+    town: "towns",
+    barony: "baronies",
+    duchy: "duchies",
+    kingdom: "kingdoms",
+};
 
 const statusColors: Record<string, string> = {
     empty: "border-stone-600/50 bg-stone-800/30",
@@ -120,6 +125,7 @@ export default function FarmingIndex() {
         plots,
         crop_types,
         farming_skill,
+        location,
         max_plots,
         gold,
         master_farmer_bonuses,
@@ -127,9 +133,25 @@ export default function FarmingIndex() {
         location_name,
         error,
     } = usePage<PageProps>().props;
+
+    // Dynamic breadcrumbs based on location
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: "Dashboard", href: "/dashboard" },
+        ...(location_name
+            ? [
+                  {
+                      title: location_name,
+                      href: `/${locationPaths[location.type] || location.type + "s"}/${location.id}`,
+                  },
+              ]
+            : []),
+        { title: "Farming", href: "#" },
+    ];
     const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
     const [loading, setLoading] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
+    const [showCropModal, setShowCropModal] = useState<number | null>(null); // plot id
+    const [cropSearch, setCropSearch] = useState("");
 
     const currentPlotCount = plots.length;
     const nextPlotCost = (currentPlotCount + 1) * 100;
@@ -371,27 +393,18 @@ export default function FarmingIndex() {
                                 {isSelected && (
                                     <div className="mt-3 flex flex-wrap gap-2 border-t border-stone-700 pt-3">
                                         {plot.status === "empty" && (
-                                            <select
-                                                className="w-full rounded bg-stone-700 px-2 py-1 font-pixel text-xs text-stone-200"
-                                                onChange={(e) => {
-                                                    if (e.target.value) {
-                                                        handleAction("plant", plot.id, {
-                                                            crop_type_id: parseInt(e.target.value),
-                                                        });
-                                                    }
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setShowCropModal(plot.id);
+                                                    setCropSearch("");
                                                 }}
                                                 disabled={loading !== null}
+                                                className="flex w-full items-center justify-center gap-2 rounded bg-amber-600/50 px-3 py-2 font-pixel text-xs text-amber-200 hover:bg-amber-600"
                                             >
-                                                <option value="">Select crop to plant...</option>
-                                                {crop_types
-                                                    .filter((c) => c.can_plant)
-                                                    .map((crop) => (
-                                                        <option key={crop.id} value={crop.id}>
-                                                            {crop.name} ({crop.plant_cost}g,{" "}
-                                                            {formatTime(crop.grow_time_minutes)})
-                                                        </option>
-                                                    ))}
-                                            </select>
+                                                <Sprout className="h-4 w-4" />
+                                                Choose Crop to Plant
+                                            </button>
                                         )}
 
                                         {["planted", "growing"].includes(plot.status) &&
@@ -534,6 +547,141 @@ export default function FarmingIndex() {
                     </div>
                 )}
             </div>
+
+            {/* Crop Selection Modal */}
+            {showCropModal !== null && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div
+                        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                        onClick={() => setShowCropModal(null)}
+                    />
+                    <div className="relative max-h-[85vh] w-full max-w-3xl overflow-hidden rounded-xl border border-amber-600/50 bg-stone-900 shadow-2xl">
+                        {/* Header */}
+                        <div className="flex items-center justify-between border-b border-stone-700 px-4 py-3">
+                            <div className="flex items-center gap-2">
+                                <Sprout className="h-5 w-5 text-green-400" />
+                                <h2 className="font-pixel text-lg text-amber-300">Choose a Crop</h2>
+                            </div>
+                            <button
+                                onClick={() => setShowCropModal(null)}
+                                className="rounded p-1 hover:bg-stone-700"
+                            >
+                                <X className="h-5 w-5 text-stone-400" />
+                            </button>
+                        </div>
+
+                        {/* Search */}
+                        <div className="border-b border-stone-700 px-4 py-3">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
+                                <input
+                                    type="text"
+                                    placeholder="Search crops..."
+                                    value={cropSearch}
+                                    onChange={(e) => setCropSearch(e.target.value)}
+                                    className="w-full rounded-lg border border-stone-600 bg-stone-800 py-2 pl-10 pr-4 font-pixel text-sm text-stone-200 placeholder-stone-500 focus:border-amber-500 focus:outline-none"
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="mt-2 flex items-center gap-2 font-pixel text-xs text-stone-500">
+                                <Coins className="h-3 w-3 text-yellow-400" />
+                                <span>You have {gold.toLocaleString()} gold</span>
+                            </div>
+                        </div>
+
+                        {/* Crop Grid */}
+                        <div className="max-h-[55vh] overflow-y-auto p-4">
+                            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                {crop_types
+                                    .filter((c) => c.can_plant)
+                                    .filter(
+                                        (c) =>
+                                            !cropSearch ||
+                                            c.name.toLowerCase().includes(cropSearch.toLowerCase()),
+                                    )
+                                    .sort(
+                                        (a, b) =>
+                                            a.farming_level_required - b.farming_level_required,
+                                    )
+                                    .map((crop) => {
+                                        const canAfford = gold >= crop.plant_cost;
+                                        return (
+                                            <button
+                                                key={crop.id}
+                                                onClick={() => {
+                                                    if (canAfford) {
+                                                        handleAction("plant", showCropModal, {
+                                                            crop_type_id: crop.id,
+                                                        });
+                                                        setShowCropModal(null);
+                                                    }
+                                                }}
+                                                disabled={!canAfford || loading !== null}
+                                                className={`flex flex-col rounded-lg border p-3 text-left transition ${
+                                                    canAfford
+                                                        ? "border-stone-600 bg-stone-800 hover:border-amber-500 hover:bg-stone-700"
+                                                        : "cursor-not-allowed border-stone-700 bg-stone-800/50 opacity-50"
+                                                }`}
+                                            >
+                                                <div className="mb-1 flex items-center justify-between">
+                                                    <span className="font-pixel text-sm text-amber-300">
+                                                        {crop.name}
+                                                    </span>
+                                                    <span className="font-pixel text-[10px] text-stone-500">
+                                                        Lv.{crop.farming_level_required}
+                                                    </span>
+                                                </div>
+                                                <p className="mb-2 font-pixel text-[10px] text-stone-500 line-clamp-2">
+                                                    {crop.description}
+                                                </p>
+                                                <div className="mt-auto flex flex-wrap gap-2 font-pixel text-[10px]">
+                                                    <span className="flex items-center gap-1 text-yellow-400">
+                                                        <Coins className="h-3 w-3" />
+                                                        {crop.plant_cost}g
+                                                    </span>
+                                                    <span className="flex items-center gap-1 text-blue-400">
+                                                        <Clock className="h-3 w-3" />
+                                                        {formatTime(crop.grow_time_minutes)}
+                                                    </span>
+                                                    <span className="flex items-center gap-1 text-green-400">
+                                                        <Wheat className="h-3 w-3" />
+                                                        {crop.yield_min}-{crop.yield_max}
+                                                    </span>
+                                                    <span className="flex items-center gap-1 text-purple-400">
+                                                        <Sparkles className="h-3 w-3" />
+                                                        {crop.farming_xp} XP
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                            </div>
+                            {crop_types
+                                .filter((c) => c.can_plant)
+                                .filter(
+                                    (c) =>
+                                        !cropSearch ||
+                                        c.name.toLowerCase().includes(cropSearch.toLowerCase()),
+                                ).length === 0 && (
+                                <div className="py-8 text-center">
+                                    <Wheat className="mx-auto mb-2 h-8 w-8 text-stone-600" />
+                                    <p className="font-pixel text-sm text-stone-500">
+                                        No crops match your search
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="border-t border-stone-700 px-4 py-3">
+                            <p className="font-pixel text-[10px] text-stone-500">
+                                Tip: Higher level crops take longer to grow but yield more XP and
+                                produce.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }
