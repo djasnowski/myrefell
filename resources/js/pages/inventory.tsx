@@ -1,5 +1,5 @@
 import { Head, router, usePage } from "@inertiajs/react";
-import { Apple, Droplets, Package, ShieldOff, Sword, Trash2 } from "lucide-react";
+import { Apple, Droplets, Gift, Package, ShieldOff, Sword, Trash2 } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { getItemIcon, GoldIcon, HelpCircle } from "@/lib/item-icons";
@@ -34,6 +34,7 @@ interface PageProps {
     slots: (InventorySlot | null)[];
     max_slots: number;
     gold: number;
+    can_donate: boolean;
     [key: string]: unknown;
 }
 
@@ -196,7 +197,7 @@ function InventorySlotComponent({
 }
 
 export default function Inventory() {
-    const { slots, max_slots, gold } = usePage<PageProps>().props;
+    const { slots, max_slots, gold, can_donate } = usePage<PageProps>().props;
     const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
 
     const selectedItem = selectedSlot !== null ? slots[selectedSlot] : null;
@@ -292,6 +293,25 @@ export default function Inventory() {
 
     const isConsumable = (item: Item): boolean => {
         return item.type === "consumable" && (item.hp_bonus > 0 || item.energy_bonus > 0);
+    };
+
+    const isDonatable = (item: Item): boolean => {
+        return ["food", "crop", "grain"].includes(item.subtype || "");
+    };
+
+    const handleDonate = () => {
+        if (selectedSlot === null || !slots[selectedSlot]) return;
+
+        router.post(
+            "/inventory/donate",
+            { slot: selectedSlot },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+            },
+        );
     };
 
     const usedSlots = slots.filter(Boolean).length;
@@ -448,6 +468,14 @@ export default function Inventory() {
                                                 </button>
                                             );
                                         })()}
+                                    {can_donate && isDonatable(selectedItem.item) && (
+                                        <button
+                                            onClick={handleDonate}
+                                            className="flex w-full items-center justify-center gap-1 rounded border-2 border-blue-600 bg-blue-900/30 px-3 py-1.5 font-pixel text-[8px] text-blue-300 transition hover:bg-blue-800/50"
+                                        >
+                                            <Gift className="h-3 w-3" /> Donate to Granary
+                                        </button>
+                                    )}
                                     <button
                                         onClick={handleDrop}
                                         className="flex w-full items-center justify-center gap-1 rounded border-2 border-red-600 bg-red-900/30 px-3 py-1.5 font-pixel text-[8px] text-red-300 transition hover:bg-red-800/50"

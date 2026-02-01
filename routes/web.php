@@ -122,6 +122,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return back();
     })->name('tutorial.dismiss');
+
+    Route::post('changelog/mark-read', function () {
+        // Get current version from the same place as middleware
+        $currentVersion = '0.4.0';
+        auth()->user()->update(['last_seen_changelog' => $currentVersion]);
+
+        return back();
+    })->name('changelog.mark-read');
     Route::get('api/player/stats', [PlayerController::class, 'stats'])->name('player.stats');
 
     // Skills

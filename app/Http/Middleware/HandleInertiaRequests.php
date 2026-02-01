@@ -44,6 +44,9 @@ class HandleInertiaRequests extends Middleware
     {
         $player = $request->user();
 
+        // Current changelog version - update this when adding new entries
+        $currentChangelogVersion = '0.4.0';
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -56,6 +59,10 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'sidebar' => $player ? $this->getSidebarData($player) : null,
+            'changelog' => [
+                'current_version' => $currentChangelogVersion,
+                'has_unread' => $player ? ($player->last_seen_changelog !== $currentChangelogVersion) : false,
+            ],
         ];
     }
 

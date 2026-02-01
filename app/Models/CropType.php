@@ -68,6 +68,7 @@ class CropType extends Model
         }
 
         $season = $season ?? $this->getCurrentSeason();
+
         return in_array($season, $this->seasons);
     }
 
@@ -76,14 +77,7 @@ class CropType extends Model
      */
     protected function getCurrentSeason(): string
     {
-        // Simple season calculation - can be enhanced with game calendar
-        $month = now()->month;
-        return match (true) {
-            $month >= 3 && $month <= 5 => 'spring',
-            $month >= 6 && $month <= 8 => 'summer',
-            $month >= 9 && $month <= 11 => 'autumn',
-            default => 'winter',
-        };
+        return WorldState::current()->current_season;
     }
 
     /**
@@ -93,6 +87,7 @@ class CropType extends Model
     {
         $base = rand($this->yield_min, $this->yield_max);
         $bonus = (int) floor($base * ($qualityBonus / 100));
+
         return $base + $bonus;
     }
 }

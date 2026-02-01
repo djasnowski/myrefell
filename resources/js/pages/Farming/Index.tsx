@@ -11,6 +11,8 @@ import {
     Scissors,
     Sparkles,
     Sprout,
+    Users,
+    Warehouse,
     Wheat,
     Zap,
 } from "lucide-react";
@@ -59,6 +61,18 @@ interface MasterFarmerBonuses {
     xp_bonus: number;
 }
 
+interface VillageFoodStats {
+    food_available: number;
+    food_needed_per_week: number;
+    weeks_of_food: number;
+    granary_capacity: number;
+    population: number;
+    npc_count: number;
+    player_count: number;
+    starving_npcs: number;
+    starving_players: number;
+}
+
 interface PageProps {
     plots: Plot[];
     crop_types: CropType[];
@@ -67,6 +81,8 @@ interface PageProps {
     max_plots: number;
     gold: number;
     master_farmer_bonuses: MasterFarmerBonuses | null;
+    village_food: VillageFoodStats | null;
+    location_name: string | null;
     error?: string;
     [key: string]: unknown;
 }
@@ -100,8 +116,17 @@ function formatTime(minutes: number): string {
 }
 
 export default function FarmingIndex() {
-    const { plots, crop_types, farming_skill, max_plots, gold, master_farmer_bonuses, error } =
-        usePage<PageProps>().props;
+    const {
+        plots,
+        crop_types,
+        farming_skill,
+        max_plots,
+        gold,
+        master_farmer_bonuses,
+        village_food,
+        location_name,
+        error,
+    } = usePage<PageProps>().props;
     const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
     const [loading, setLoading] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
@@ -211,6 +236,72 @@ export default function FarmingIndex() {
                     </div>
                 </div>
 
+                {/* Village Granary Status */}
+                {village_food && (
+                    <div
+                        className={`rounded-lg border p-3 ${
+                            village_food.weeks_of_food < 4
+                                ? "border-red-600/50 bg-red-900/20"
+                                : village_food.weeks_of_food < 8
+                                  ? "border-yellow-600/50 bg-yellow-900/20"
+                                  : "border-stone-600/50 bg-stone-800/30"
+                        }`}
+                    >
+                        <div className="mb-2 flex items-center gap-2">
+                            <Warehouse className="h-4 w-4 text-amber-400" />
+                            <span className="font-pixel text-xs text-amber-300">
+                                {location_name} Granary
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 font-pixel text-[10px] sm:grid-cols-4">
+                            <div>
+                                <span className="text-stone-500">Food Available</span>
+                                <div className="text-stone-200">
+                                    {village_food.food_available.toLocaleString()} /{" "}
+                                    {village_food.granary_capacity.toLocaleString()}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="text-stone-500">Weekly Consumption</span>
+                                <div className="text-stone-200">
+                                    {village_food.food_needed_per_week.toLocaleString()}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="text-stone-500">Weeks Remaining</span>
+                                <div
+                                    className={
+                                        village_food.weeks_of_food < 4
+                                            ? "text-red-400"
+                                            : village_food.weeks_of_food < 8
+                                              ? "text-yellow-400"
+                                              : "text-green-400"
+                                    }
+                                >
+                                    {village_food.weeks_of_food} weeks
+                                </div>
+                            </div>
+                            <div>
+                                <span className="text-stone-500">Population</span>
+                                <div className="flex items-center gap-1 text-stone-200">
+                                    <Users className="h-2 w-2" />
+                                    {village_food.population}
+                                </div>
+                            </div>
+                        </div>
+                        {(village_food.starving_npcs > 0 || village_food.starving_players > 0) && (
+                            <div className="mt-2 flex items-center gap-1 font-pixel text-[10px] text-red-400">
+                                <AlertTriangle className="h-3 w-3" />
+                                {village_food.starving_npcs + village_food.starving_players} people
+                                are starving!
+                            </div>
+                        )}
+                        <p className="mt-2 font-pixel text-[10px] text-stone-500">
+                            Donate crops from your inventory to help feed the village.
+                        </p>
+                    </div>
+                )}
+
                 {/* Plots Grid */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {plots.map((plot) => {
@@ -233,10 +324,9 @@ export default function FarmingIndex() {
                                         </span>
                                     </div>
                                     {plot.is_watered && (
-                                        <Droplets
-                                            className="h-4 w-4 text-blue-400"
-                                            title="Watered"
-                                        />
+                                        <span title="Watered">
+                                            <Droplets className="h-4 w-4 text-blue-400" />
+                                        </span>
                                     )}
                                 </div>
 

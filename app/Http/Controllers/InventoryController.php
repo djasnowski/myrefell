@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LocationStockpile;
 use App\Models\PlayerInventory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -46,10 +47,14 @@ class InventoryController extends Controller
             }
         }
 
+        // Check if player is at a village or town (for donate feature)
+        $canDonate = in_array($player->current_location_type, ['village', 'town']);
+
         return Inertia::render('inventory', [
             'slots' => $slots,
             'max_slots' => PlayerInventory::MAX_SLOTS,
             'gold' => $player->gold,
+            'can_donate' => $canDonate,
         ]);
     }
 
@@ -74,7 +79,7 @@ class InventoryController extends Controller
         $fromItem = $player->inventory()->where('slot_number', $fromSlot)->first();
         $toItem = $player->inventory()->where('slot_number', $toSlot)->first();
 
-        if (!$fromItem) {
+        if (! $fromItem) {
             return back()->withErrors(['error' => 'No item in source slot.']);
         }
 
@@ -100,7 +105,7 @@ class InventoryController extends Controller
         $player = $request->user();
         $slot = $player->inventory()->where('slot_number', $request->slot)->first();
 
-        if (!$slot) {
+        if (! $slot) {
             return back()->withErrors(['error' => 'No item in that slot.']);
         }
 
@@ -127,7 +132,7 @@ class InventoryController extends Controller
         $player = $request->user();
         $slot = $player->inventory()->with('item')->where('slot_number', $request->slot)->first();
 
-        if (!$slot || !$slot->item->equipment_slot) {
+        if (! $slot || ! $slot->item->equipment_slot) {
             return back()->withErrors(['error' => 'Cannot equip this item.']);
         }
 
@@ -155,7 +160,7 @@ class InventoryController extends Controller
         $player = $request->user();
         $slot = $player->inventory()->where('slot_number', $request->slot)->first();
 
-        if (!$slot || !$slot->is_equipped) {
+        if (! $slot || ! $slot->is_equipped) {
             return back()->withErrors(['error' => 'Item is not equipped.']);
         }
 
@@ -176,13 +181,13 @@ class InventoryController extends Controller
         $player = $request->user();
         $slot = $player->inventory()->with('item')->where('slot_number', $request->slot)->first();
 
-        if (!$slot) {
+        if (! $slot) {
             return back()->withErrors(['error' => 'No item in that slot.']);
         }
 
         $item = $slot->item;
 
-        if (!$item->isConsumable()) {
+        if (! $item->isConsumable()) {
             return back()->withErrors(['error' => 'This item cannot be consumed.']);
         }
 
@@ -203,7 +208,7 @@ class InventoryController extends Controller
                 $player->hp = $newHp;
                 $messages[] = "Restored {$healed} HP";
             } else {
-                $messages[] = "HP already full";
+                $messages[] = 'HP already full';
             }
         }
 
@@ -217,7 +222,7 @@ class InventoryController extends Controller
                 $player->energy = $newEnergy;
                 $messages[] = "Restored {$restored} energy";
             } else {
-                $messages[] = "Energy already full";
+                $messages[] = 'Energy already full';
             }
         }
 
@@ -230,8 +235,59 @@ class InventoryController extends Controller
             $slot->delete();
         }
 
-        $message = "Used {$item->name}. " . implode(', ', $messages) . ".";
+        $message = "Used {$item->name}. ".implode(', ', $messages).'.';
 
         return back()->with('success', $message);
+    }
+
+    /**
+     * Donate food items to the village/town granary.
+     */
+    public function donate(Request $request)
+    {
+        $request->validate([
+            'slot' => 'required|integer|min:0|max:27',
+            'quantity' => 'nullable|integer|min:1',
+        ]);
+
+        $player = $request->user();
+
+        // Check if player is at a village or town
+        if (! $player->current_location_type || ! in_array($player->current_location_type, ['village', 'town'])) {
+            return back()->withErrors(['error' => 'You must be at a village or town to donate food.']);
+        }
+
+        $slot = $player->inventory()->with('item')->where('slot_number', $request->slot)->first();
+
+        if (! $slot) {
+            return back()->withErrors(['error' => 'No item in that slot.']);
+        }
+
+        $item = $slot->item;
+
+        // Check if item can be donated (food or crop types)
+        $donateableSubtypes = ['food', 'crop', 'grain'];
+        if (! in_array($item->subtype, $donateableSubtypes)) {
+            return back()->withErrors(['error' => 'Only food and crop items can be donated to the granary.']);
+        }
+
+        $quantity = min($request->quantity ?? $slot->quantity, $slot->quantity);
+
+        // Add to location stockpile
+        $stockpile = LocationStockpile::getOrCreate(
+            $player->current_location_type,
+            $player->current_location_id,
+            $item->id
+        );
+        $stockpile->addQuantity($quantity);
+
+        // Remove from player inventory
+        if ($quantity >= $slot->quantity) {
+            $slot->delete();
+        } else {
+            $slot->decrement('quantity', $quantity);
+        }
+
+        return back()->with('success', "Donated {$quantity} {$item->name} to the village granary!");
     }
 }

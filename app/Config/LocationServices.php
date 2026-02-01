@@ -130,6 +130,12 @@ class LocationServices
             'icon' => 'flask-conical',
             'route' => 'apothecary',
         ],
+        'farming' => [
+            'name' => 'Farming',
+            'description' => 'Grow crops and harvest your yield',
+            'icon' => 'wheat',
+            'route' => 'farming',
+        ],
     ];
 
     /**
@@ -151,6 +157,7 @@ class LocationServices
             'tavern',
             'thieving',
             'apothecary',
+            'farming',
         ],
         'town' => [
             'training',
@@ -168,6 +175,7 @@ class LocationServices
             'tavern',
             'thieving',
             'apothecary',
+            'farming',
         ],
         'barony' => [
             'training',

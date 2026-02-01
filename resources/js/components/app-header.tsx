@@ -56,10 +56,11 @@ const activeItemStyles = "text-neutral-900 dark:bg-neutral-800 dark:text-neutral
 
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const page = usePage<SharedData>();
-    const { auth } = page.props;
+    const { auth, changelog } = page.props;
     const getInitials = useInitials();
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
     const [showChangelog, setShowChangelog] = useState(false);
+    const hasUnread = changelog?.has_unread ?? false;
 
     return (
         <>
@@ -161,14 +162,20 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="group h-9 w-9 cursor-pointer"
+                                            className="group h-9 w-9 cursor-pointer relative"
                                             onClick={() => setShowChangelog(true)}
                                         >
                                             <Sparkles className="!size-5 opacity-80 group-hover:opacity-100 text-amber-500" />
+                                            {hasUnread && (
+                                                <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                                                </span>
+                                            )}
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                        <p>What's New</p>
+                                        <p>What's New {hasUnread && "(New!)"}</p>
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
@@ -234,7 +241,9 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
             )}
 
             {/* Changelog Modal */}
-            {showChangelog && <ChangelogModal onClose={() => setShowChangelog(false)} />}
+            {showChangelog && (
+                <ChangelogModal onClose={() => setShowChangelog(false)} hasUnread={hasUnread} />
+            )}
         </>
     );
 }

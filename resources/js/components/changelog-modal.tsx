@@ -5,12 +5,16 @@ import {
     Link2,
     Shield,
     Sparkles,
+    Sprout,
     Swords,
     Users,
+    Wheat,
     Wrench,
     X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { router } from "@inertiajs/react";
+import { useEffect } from "react";
 
 interface ChangelogEntry {
     version: string;
@@ -25,6 +29,52 @@ interface ChangelogEntry {
 }
 
 const changelog: ChangelogEntry[] = [
+    {
+        version: "0.4.0",
+        date: "February 1, 2026",
+        title: "Farming Expansion",
+        description:
+            "The farming system has been massively expanded! Grow 69 different crops from basic wheat to legendary Celestial Carrots, and donate your harvest to feed your village.",
+        icon: <Wheat className="h-8 w-8 text-amber-500" />,
+        changes: [
+            {
+                type: "added",
+                text: "69 crops to grow across all farming levels (1-99)",
+            },
+            {
+                type: "added",
+                text: "Beginner crops: Wheat, Potatoes, Lettuce, Turnips, Radishes, and more",
+            },
+            {
+                type: "added",
+                text: "Intermediate crops: Tomatoes, Peppers, Beans, Broccoli, and more",
+            },
+            {
+                type: "added",
+                text: "Advanced crops: Grapes, Hops, Artichoke, and orchard fruits",
+            },
+            {
+                type: "added",
+                text: "Exotic crops (65+): Dragon Fruit, Starfruit, Moonberry, Coffee, Cocoa",
+            },
+            {
+                type: "added",
+                text: "Legendary crops (85+): Golden Wheat, Crystal Grapes, Void Pepper, Celestial Carrot",
+            },
+            {
+                type: "added",
+                text: "Donate crops to your village granary to feed the population",
+            },
+            {
+                type: "added",
+                text: "View village food statistics on the farming page",
+            },
+            {
+                type: "added",
+                text: "Harvested crops are now actual inventory items you can eat or sell",
+            },
+        ],
+    },
     {
         version: "0.3.0",
         date: "January 31, 2026",
@@ -167,9 +217,26 @@ const changelog: ChangelogEntry[] = [
 
 interface Props {
     onClose: () => void;
+    hasUnread?: boolean;
 }
 
-export default function ChangelogModal({ onClose }: Props) {
+export default function ChangelogModal({ onClose, hasUnread }: Props) {
+    // Mark changelog as read when opened
+    useEffect(() => {
+        if (hasUnread) {
+            router.post(
+                "/changelog/mark-read",
+                {},
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        router.reload();
+                    },
+                },
+            );
+        }
+    }, []);
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             {/* Backdrop */}

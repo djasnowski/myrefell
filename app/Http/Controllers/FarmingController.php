@@ -7,8 +7,11 @@ use App\Models\FarmPlot;
 use App\Models\PlayerRole;
 use App\Models\PlayerSkill;
 use App\Models\Role;
+use App\Models\Town;
+use App\Models\Village;
+use App\Services\FoodConsumptionService;
 use App\Services\InventoryService;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,7 +19,8 @@ use Inertia\Response;
 class FarmingController extends Controller
 {
     public function __construct(
-        protected InventoryService $inventoryService
+        protected InventoryService $inventoryService,
+        protected FoodConsumptionService $foodConsumptionService
     ) {}
 
     /**
@@ -26,7 +30,7 @@ class FarmingController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->current_location_type || !$user->current_location_id) {
+        if (! $user->current_location_type || ! $user->current_location_id) {
             return Inertia::render('Farming/Index', [
                 'error' => 'You must be at a location to farm.',
                 'plots' => [],
@@ -75,6 +79,24 @@ class FarmingController extends Controller
             $user->current_location_id
         );
 
+        // Get village/town food stats
+        $villageFoodStats = null;
+        $locationName = null;
+        if ($user->current_location_type === 'village') {
+            $village = Village::find($user->current_location_id);
+            if ($village) {
+                $villageFoodStats = $this->foodConsumptionService->getVillageFoodStats($village);
+                $locationName = $village->name;
+            }
+        } elseif ($user->current_location_type === 'town') {
+            $town = Town::find($user->current_location_id);
+            if ($town) {
+                // Towns also have food consumption - get stats from their associated villages or use similar logic
+                $locationName = $town->name;
+                // For towns, we could extend this later
+            }
+        }
+
         return Inertia::render('Farming/Index', [
             'plots' => $plots,
             'crop_types' => $cropTypes,
@@ -90,22 +112,24 @@ class FarmingController extends Controller
             ],
             'max_plots' => $this->getMaxPlots($farmingLevel),
             'gold' => $user->gold,
-            'master_farmer_bonuses' => !empty($masterFarmerBonuses) ? [
+            'master_farmer_bonuses' => ! empty($masterFarmerBonuses) ? [
                 'yield_bonus' => $masterFarmerBonuses['crop_yield_bonus'] ?? 0,
                 'xp_bonus' => $masterFarmerBonuses['farming_xp_bonus'] ?? 0,
             ] : null,
+            'village_food' => $villageFoodStats,
+            'location_name' => $locationName,
         ]);
     }
 
     /**
      * Purchase a new farm plot.
      */
-    public function buyPlot(Request $request): JsonResponse
+    public function buyPlot(Request $request): RedirectResponse
     {
         $user = $request->user();
 
-        if (!$user->current_location_type || !$user->current_location_id) {
-            return response()->json(['error' => 'You must be at a location to buy a plot.'], 422);
+        if (! $user->current_location_type || ! $user->current_location_id) {
+            return back()->with('error', 'You must be at a location to buy a plot.');
         }
 
         $farmingSkill = PlayerSkill::where('player_id', $user->id)
@@ -120,45 +144,40 @@ class FarmingController extends Controller
             ->count();
 
         if ($currentPlots >= $maxPlots) {
-            return response()->json(['error' => 'You have reached the maximum number of plots at this location.'], 422);
+            return back()->with('error', 'You have reached the maximum number of plots at this location.');
         }
 
         $plotCost = $this->getPlotCost($currentPlots + 1);
 
         if ($user->gold < $plotCost) {
-            return response()->json(['error' => "You need {$plotCost} gold to buy a plot."], 422);
+            return back()->with('error', "You need {$plotCost} gold to buy a plot.");
         }
 
         $user->decrement('gold', $plotCost);
 
-        $plot = FarmPlot::create([
+        FarmPlot::create([
             'user_id' => $user->id,
             'location_type' => $user->current_location_type,
             'location_id' => $user->current_location_id,
             'status' => 'empty',
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'You purchased a new farm plot!',
-            'plot' => $this->formatPlot($plot),
-            'gold' => $user->gold,
-        ]);
+        return back()->with('success', 'You purchased a new farm plot!');
     }
 
     /**
      * Plant a crop in a plot.
      */
-    public function plant(Request $request, FarmPlot $plot): JsonResponse
+    public function plant(Request $request, FarmPlot $plot): RedirectResponse
     {
         $user = $request->user();
 
         if ($plot->user_id !== $user->id) {
-            return response()->json(['error' => 'This is not your plot.'], 403);
+            return back()->with('error', 'This is not your plot.');
         }
 
         if ($plot->status !== 'empty') {
-            return response()->json(['error' => 'This plot is not empty.'], 422);
+            return back()->with('error', 'This plot is not empty.');
         }
 
         $validated = $request->validate([
@@ -174,108 +193,89 @@ class FarmingController extends Controller
         $farmingLevel = $farmingSkill?->level ?? 1;
 
         if ($cropType->farming_level_required > $farmingLevel) {
-            return response()->json(['error' => "You need farming level {$cropType->farming_level_required} to plant {$cropType->name}."], 422);
+            return back()->with('error', "You need farming level {$cropType->farming_level_required} to plant {$cropType->name}.");
         }
 
         // Check season
-        if (!$cropType->canPlantInSeason()) {
-            return response()->json(['error' => "{$cropType->name} cannot be planted in this season."], 422);
+        if (! $cropType->canPlantInSeason()) {
+            return back()->with('error', "{$cropType->name} cannot be planted in this season.");
         }
 
         // Check gold cost
         if ($user->gold < $cropType->plant_cost) {
-            return response()->json(['error' => "You need {$cropType->plant_cost} gold for seeds."], 422);
+            return back()->with('error', "You need {$cropType->plant_cost} gold for seeds.");
         }
 
         $user->decrement('gold', $cropType->plant_cost);
         $plot->plant($cropType);
 
-        return response()->json([
-            'success' => true,
-            'message' => "You planted {$cropType->name}!",
-            'plot' => $this->formatPlot($plot->fresh('cropType')),
-            'gold' => $user->gold,
-        ]);
+        return back()->with('success', "You planted {$cropType->name}!");
     }
 
     /**
      * Water a plot.
      */
-    public function water(Request $request, FarmPlot $plot): JsonResponse
+    public function water(Request $request, FarmPlot $plot): RedirectResponse
     {
         $user = $request->user();
 
         if ($plot->user_id !== $user->id) {
-            return response()->json(['error' => 'This is not your plot.'], 403);
+            return back()->with('error', 'This is not your plot.');
         }
 
-        if (!$plot->water()) {
+        if (! $plot->water()) {
             $message = $plot->is_watered ? 'This plot has already been watered today.' : 'This plot cannot be watered.';
-            return response()->json(['error' => $message], 422);
+
+            return back()->with('error', $message);
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'You watered the plot! Quality improved.',
-            'plot' => $this->formatPlot($plot->fresh('cropType')),
-        ]);
+        return back()->with('success', 'You watered the plot! Quality improved.');
     }
 
     /**
      * Tend a plot (costs energy).
      */
-    public function tend(Request $request, FarmPlot $plot): JsonResponse
+    public function tend(Request $request, FarmPlot $plot): RedirectResponse
     {
         $user = $request->user();
 
         if ($plot->user_id !== $user->id) {
-            return response()->json(['error' => 'This is not your plot.'], 403);
+            return back()->with('error', 'This is not your plot.');
         }
 
         $energyCost = 5;
         if ($user->energy < $energyCost) {
-            return response()->json(['error' => "You need {$energyCost} energy to tend crops."], 422);
+            return back()->with('error', "You need {$energyCost} energy to tend crops.");
         }
 
-        if (!$plot->tend()) {
-            return response()->json(['error' => 'This plot cannot be tended.'], 422);
+        if (! $plot->tend()) {
+            return back()->with('error', 'This plot cannot be tended.');
         }
 
         $user->decrement('energy', $energyCost);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'You tended the crops! Quality improved significantly.',
-            'plot' => $this->formatPlot($plot->fresh('cropType')),
-            'energy' => $user->energy,
-        ]);
+        return back()->with('success', 'You tended the crops! Quality improved significantly.');
     }
 
     /**
      * Harvest a crop.
      */
-    public function harvest(Request $request, FarmPlot $plot): JsonResponse
+    public function harvest(Request $request, FarmPlot $plot): RedirectResponse
     {
         $user = $request->user();
 
         if ($plot->user_id !== $user->id) {
-            return response()->json(['error' => 'This is not your plot.'], 403);
+            return back()->with('error', 'This is not your plot.');
         }
 
-        $cropType = $plot->cropType;
         $result = $plot->harvest();
 
         if ($result === null) {
-            return response()->json(['error' => 'This crop is not ready for harvest.'], 422);
+            return back()->with('error', 'This crop is not ready for harvest.');
         }
 
         if ($result['withered']) {
-            return response()->json([
-                'success' => true,
-                'message' => 'The crop has withered. The plot has been cleared.',
-                'plot' => $this->formatPlot($plot->fresh('cropType')),
-                'withered' => true,
-            ]);
+            return back()->with('success', 'The crop has withered. The plot has been cleared.');
         }
 
         // Check for Master Farmer role bonuses at this location
@@ -314,49 +314,30 @@ class FarmingController extends Controller
         // Build message with bonus info
         $message = "You harvested {$totalYield} {$result['item_name']}! (+{$totalXp} Farming XP)";
         if ($bonusYield > 0 || $bonusXp > 0) {
-            $message .= " [Master Farmer bonus!]";
+            $message .= ' [Master Farmer bonus!]';
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => $message,
-            'plot' => $this->formatPlot($plot->fresh('cropType')),
-            'yield' => $totalYield,
-            'base_yield' => $result['yield'],
-            'bonus_yield' => $bonusYield,
-            'xp_gained' => $totalXp,
-            'bonus_xp' => $bonusXp,
-            'farming_skill' => $farmingSkill ? [
-                'level' => $farmingSkill->level,
-                'xp' => $farmingSkill->xp,
-                'xp_to_next' => $farmingSkill->xpToNextLevel(),
-                'xp_progress' => $farmingSkill->getXpProgress(),
-            ] : null,
-        ]);
+        return back()->with('success', $message);
     }
 
     /**
      * Clear a withered or unwanted plot.
      */
-    public function clear(Request $request, FarmPlot $plot): JsonResponse
+    public function clear(Request $request, FarmPlot $plot): RedirectResponse
     {
         $user = $request->user();
 
         if ($plot->user_id !== $user->id) {
-            return response()->json(['error' => 'This is not your plot.'], 403);
+            return back()->with('error', 'This is not your plot.');
         }
 
         if ($plot->status === 'empty') {
-            return response()->json(['error' => 'This plot is already empty.'], 422);
+            return back()->with('error', 'This plot is already empty.');
         }
 
         $plot->clear();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Plot cleared and ready for planting.',
-            'plot' => $this->formatPlot($plot),
-        ]);
+        return back()->with('success', 'Plot cleared and ready for planting.');
     }
 
     /**
@@ -406,7 +387,7 @@ class FarmingController extends Controller
     {
         try {
             $masterFarmerRole = Role::where('slug', 'master_farmer')->first();
-            if (!$masterFarmerRole) {
+            if (! $masterFarmerRole) {
                 return [];
             }
 
