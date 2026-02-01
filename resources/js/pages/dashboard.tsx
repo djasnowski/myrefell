@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from "@inertiajs/react";
 import {
     Anchor,
+    Anvil,
     ArrowRight,
     Backpack,
     BarChart3,
@@ -235,6 +236,13 @@ export default function Dashboard() {
                         ? `/${pluralizeLocationType(location.type)}/${location.id}/crafting`
                         : "/villages",
                     icon: Hammer,
+                },
+                features?.crafting && {
+                    name: "Forge",
+                    href: location
+                        ? `/${pluralizeLocationType(location.type)}/${location.id}/forge`
+                        : "/villages",
+                    icon: Anvil,
                 },
                 { name: "Caravans", href: "/trade/caravans", icon: Truck },
                 features?.jobs && {
