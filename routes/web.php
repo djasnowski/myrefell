@@ -47,6 +47,7 @@ use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\ReligionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RoleStockingController;
+use App\Http\Controllers\ServiceFavoriteController;
 use App\Http\Controllers\SiegeController;
 use App\Http\Controllers\SkillsController;
 use App\Http\Controllers\SocialClassController;
@@ -135,6 +136,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Skills
     Route::get('skills', [SkillsController::class, 'index'])->name('skills.index');
+
+    // Service Favorites
+    Route::post('services/favorites/toggle', [ServiceFavoriteController::class, 'toggle'])->name('services.favorites.toggle');
 
     // Leaderboard
     Route::get('leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');

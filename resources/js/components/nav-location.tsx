@@ -25,6 +25,7 @@ import {
     useSidebar,
 } from "@/components/ui/sidebar";
 import { useCurrentUrl } from "@/hooks/use-current-url";
+import { NavFavorites } from "@/components/nav-favorites";
 
 interface LocationData {
     type: string;
@@ -340,6 +341,9 @@ export function NavLocation() {
                     ))}
                 </SidebarMenu>
             </SidebarGroup>
+
+            {/* Favorite Services */}
+            <NavFavorites />
 
             {/* Travel Destinations */}
             {travelDestinations.length > 0 && (

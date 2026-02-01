@@ -144,6 +144,7 @@ class HandleInertiaRequests extends Middleware
             'context' => $this->getPlayerContext($player),
             'health' => $this->getHealthData($player),
             'farm' => $this->getFarmData($player),
+            'favorites' => $this->getServiceFavorites($player),
         ];
     }
 
@@ -507,5 +508,43 @@ class HandleInertiaRequests extends Middleware
         }
 
         return $count;
+    }
+
+    /**
+     * Get service favorites for the player.
+     *
+     * @return array<int, array{service_id: string, name: string, icon: string, route: string}>
+     */
+    protected function getServiceFavorites($player): array
+    {
+        try {
+            $favorites = \App\Models\UserServiceFavorite::where('user_id', $player->id)
+                ->orderBy('sort_order')
+                ->pluck('service_id')
+                ->toArray();
+
+            if (empty($favorites)) {
+                return [];
+            }
+
+            $services = \App\Config\LocationServices::SERVICES;
+            $result = [];
+
+            foreach ($favorites as $serviceId) {
+                if (isset($services[$serviceId])) {
+                    $result[] = [
+                        'service_id' => $serviceId,
+                        'name' => $services[$serviceId]['name'],
+                        'icon' => $services[$serviceId]['icon'],
+                        'route' => $services[$serviceId]['route'],
+                    ];
+                }
+            }
+
+            return $result;
+        } catch (\Throwable $e) {
+            // Table may not exist yet
+            return [];
+        }
     }
 }

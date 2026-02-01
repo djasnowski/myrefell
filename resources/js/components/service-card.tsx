@@ -1,13 +1,15 @@
-import { Link } from "@inertiajs/react";
+import { Link, router, usePage } from "@inertiajs/react";
 import {
     Anchor,
     Anvil,
     Banknote,
     Beer,
     Building2,
+    Briefcase,
     Church,
     Dumbbell,
     Flame,
+    FlaskConical,
     Hammer,
     Hand,
     HeartPulse,
@@ -17,13 +19,25 @@ import {
     Receipt,
     Shield,
     Sparkles,
+    Star,
     Store,
     Warehouse,
     Wheat,
-    Briefcase,
     type LucideIcon,
 } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
+
+interface Favorite {
+    service_id: string;
+    name: string;
+    icon: string;
+    route: string;
+}
+
+interface SidebarData {
+    favorites: Favorite[];
+}
 
 interface ServiceCardProps {
     serviceId: string;
@@ -58,6 +72,7 @@ const iconMap: Record<string, LucideIcon> = {
     flame: Flame,
     wheat: Wheat,
     warehouse: Warehouse,
+    "flask-conical": FlaskConical,
 };
 
 export function ServiceCard({
@@ -69,7 +84,35 @@ export function ServiceCard({
     disabled = false,
     badge,
 }: ServiceCardProps) {
+    const { sidebar } = usePage<{ sidebar: SidebarData | null }>().props;
+    const [isToggling, setIsToggling] = useState(false);
+
     const Icon = icon ? iconMap[icon] || Store : Store;
+
+    // Check if this service is favorited
+    const isFavorited = sidebar?.favorites?.some((f) => f.service_id === serviceId) ?? false;
+
+    const handleToggleFavorite = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (isToggling) return;
+
+        setIsToggling(true);
+        router.post(
+            "/services/favorites/toggle",
+            { service_id: serviceId },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => {
+                    setIsToggling(false);
+                },
+            },
+        );
+    };
 
     const content = (
         <div
@@ -81,6 +124,29 @@ export function ServiceCard({
                     : "border-border bg-card hover:border-primary/50 hover:bg-accent hover:shadow-md",
             )}
         >
+            {/* Favorite star button */}
+            {!disabled && (
+                <button
+                    type="button"
+                    onClick={handleToggleFavorite}
+                    disabled={isToggling}
+                    className={cn(
+                        "absolute top-1.5 right-1.5 z-10 rounded-full p-1 transition-all",
+                        "hover:bg-amber-100 dark:hover:bg-amber-900/30",
+                        isToggling && "opacity-50",
+                    )}
+                    title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+                >
+                    <Star
+                        className={cn(
+                            "h-4 w-4 transition-colors",
+                            isFavorited
+                                ? "fill-amber-400 text-amber-400"
+                                : "text-muted-foreground/40 hover:text-amber-400",
+                        )}
+                    />
+                </button>
+            )}
             {badge && (
                 <span className="absolute -top-2 -right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
                     {badge}

@@ -548,6 +548,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the user's service favorites.
+     */
+    public function serviceFavorites(): HasMany
+    {
+        return $this->hasMany(UserServiceFavorite::class)->orderBy('sort_order');
+    }
+
+    /**
      * Get the referral that brought this user (if any).
      */
     public function referredBy(): HasOne
