@@ -156,7 +156,7 @@ function InventorySlotComponent({
                 slot
                     ? `${rarityColors[slot.item.rarity]} hover:brightness-110`
                     : "border-stone-700 bg-stone-800/30 hover:border-stone-600"
-            } ${isSelected ? "ring-2 ring-amber-400" : ""} ${slot?.is_equipped ? "ring-2 ring-green-500" : ""}`}
+            } ${isSelected ? "ring-2 ring-amber-400" : ""} ${slot?.is_equipped ? "ring-2 ring-green-500" : ""} ${showTooltip ? "z-50" : ""}`}
             onClick={onSelect}
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
