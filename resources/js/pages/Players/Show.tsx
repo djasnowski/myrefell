@@ -121,6 +121,7 @@ export default function PlayerShow() {
         const Icon = skillIcons[skill.name] || Sword;
         const iconColor = skillColors[skill.name] || "text-amber-400";
         const bgColor = skillBgColors[skill.name] || "bg-amber-400";
+        const isRanked = skill.rank !== null && skill.rank < 16;
 
         return (
             <div
@@ -140,16 +141,15 @@ export default function PlayerShow() {
                         </div>
                     </div>
                     <div className="text-right">
-                        <p className="text-lg text-primary">Lv. {skill.level}</p>
-                        {skill.rank !== null ? (
+                        {isRanked ? (
                             <Link
                                 href="/leaderboard"
-                                className="text-xs text-primary/80 hover:text-primary hover:underline"
+                                className="text-2xl font-bold text-primary hover:text-primary/80 hover:underline"
                             >
                                 #{skill.rank}
                             </Link>
                         ) : (
-                            <p className="text-xs text-muted-foreground/60">Unranked</p>
+                            <p className="text-lg text-muted-foreground/60">Unranked</p>
                         )}
                     </div>
                 </div>
@@ -160,9 +160,10 @@ export default function PlayerShow() {
                             style={{ width: `${skill.xp_progress}%` }}
                         />
                     </div>
-                    <p className="mt-1 text-right text-xs text-muted-foreground">
-                        {skill.xp_progress.toFixed(1)}%
-                    </p>
+                    <div className="mt-1 flex items-center justify-between text-xs">
+                        <p className="text-primary">Lv. {skill.level}</p>
+                        <p className="text-muted-foreground">{skill.xp_progress.toFixed(1)}%</p>
+                    </div>
                 </div>
             </div>
         );

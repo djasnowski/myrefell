@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\EnnoblementRequest;
 use App\Models\Kingdom;
 use App\Models\ManumissionRequest;
+use App\Models\PlayerRole;
 use App\Models\User;
 use App\Services\SocialClassService;
 use Illuminate\Http\RedirectResponse;
@@ -96,11 +97,32 @@ class SocialClassController extends Controller
                 ]),
             'manumission_cost' => ManumissionRequest::PURCHASE_COST,
             'ennoblement_cost' => EnnoblementRequest::PURCHASE_COST,
-            'player_kingdom' => $user->getHomeKingdom() ? [
-                'id' => $user->getHomeKingdom()->id,
-                'name' => $user->getHomeKingdom()->name,
-            ] : null,
+            'player_kingdom' => $this->getPlayerKingdomData($user),
         ]);
+    }
+
+    /**
+     * Get the player's kingdom data including king status.
+     */
+    protected function getPlayerKingdomData(User $user): ?array
+    {
+        $kingdom = $user->getHomeKingdom();
+
+        if (! $kingdom) {
+            return null;
+        }
+
+        $hasKing = PlayerRole::where('location_type', 'kingdom')
+            ->where('location_id', $kingdom->id)
+            ->whereHas('role', fn ($q) => $q->where('slug', 'king'))
+            ->where('status', PlayerRole::STATUS_ACTIVE)
+            ->exists();
+
+        return [
+            'id' => $kingdom->id,
+            'name' => $kingdom->name,
+            'has_king' => $hasKing,
+        ];
     }
 
     /**

@@ -87,7 +87,7 @@ interface PageProps {
     class_history: ClassHistory[];
     manumission_cost: number;
     ennoblement_cost: number;
-    player_kingdom: { id: number; name: string } | null;
+    player_kingdom: { id: number; name: string; has_king: boolean } | null;
     flash?: {
         success?: string;
         error?: string;
@@ -304,7 +304,7 @@ function EnnoblementForm({
 }: {
     gold: number;
     cost: number;
-    kingdom: { id: number; name: string } | null;
+    kingdom: { id: number; name: string; has_king: boolean } | null;
     onSubmit: (data: {
         kingdom_id: number;
         request_type: string;
@@ -319,7 +319,7 @@ function EnnoblementForm({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!kingdom) return;
+        if (!kingdom || !kingdom.has_king) return;
         onSubmit({
             kingdom_id: kingdom.id,
             request_type: requestType,
@@ -334,6 +334,17 @@ function EnnoblementForm({
                 <p className="font-pixel text-xs text-red-300">
                     You must have a home to request ennoblement. Your home determines which kingdom
                     you belong to.
+                </p>
+            </div>
+        );
+    }
+
+    if (!kingdom.has_king) {
+        return (
+            <div className="rounded-lg border border-yellow-600/50 bg-yellow-900/20 p-3">
+                <p className="font-pixel text-xs text-yellow-300">
+                    There is no king in {kingdom.name}. Ennoblement requests cannot be submitted
+                    until a king is appointed.
                 </p>
             </div>
         );
