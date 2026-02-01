@@ -87,6 +87,7 @@ interface PageProps {
     class_history: ClassHistory[];
     manumission_cost: number;
     ennoblement_cost: number;
+    player_kingdom: { id: number; name: string } | null;
     flash?: {
         success?: string;
         error?: string;
@@ -297,11 +298,13 @@ function ManumissionForm({
 function EnnoblementForm({
     gold,
     cost,
+    kingdom,
     onSubmit,
     loading,
 }: {
     gold: number;
     cost: number;
+    kingdom: { id: number; name: string } | null;
     onSubmit: (data: {
         kingdom_id: number;
         request_type: string;
@@ -313,29 +316,36 @@ function EnnoblementForm({
     const [requestType, setRequestType] = useState("royal_decree");
     const [reason, setReason] = useState("");
     const [goldOffered, setGoldOffered] = useState(cost);
-    const [kingdomId, setKingdomId] = useState(1); // Default to first kingdom
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (!kingdom) return;
         onSubmit({
-            kingdom_id: kingdomId,
+            kingdom_id: kingdom.id,
             request_type: requestType,
             reason: reason || undefined,
             gold_offered: requestType === "purchase" ? goldOffered : undefined,
         });
     };
 
+    if (!kingdom) {
+        return (
+            <div className="rounded-lg border border-red-600/50 bg-red-900/20 p-3">
+                <p className="font-pixel text-xs text-red-300">
+                    You must have a home to request ennoblement. Your home determines which kingdom
+                    you belong to.
+                </p>
+            </div>
+        );
+    }
+
     return (
         <form onSubmit={handleSubmit} className="space-y-3">
             <div>
                 <label className="mb-1 block font-pixel text-xs text-stone-400">Kingdom</label>
-                <input
-                    type="number"
-                    value={kingdomId}
-                    onChange={(e) => setKingdomId(Number(e.target.value))}
-                    min={1}
-                    className="w-full rounded border border-stone-600 bg-stone-800 p-2 font-pixel text-xs text-stone-200"
-                />
+                <div className="w-full rounded border border-stone-600 bg-stone-700/50 p-2 font-pixel text-xs text-stone-200">
+                    {kingdom.name}
+                </div>
             </div>
 
             <div>
@@ -410,6 +420,7 @@ export default function SocialClassIndex() {
         class_history,
         manumission_cost,
         ennoblement_cost,
+        player_kingdom,
         flash,
     } = usePage<PageProps>().props;
 
@@ -742,6 +753,7 @@ export default function SocialClassIndex() {
                                             <EnnoblementForm
                                                 gold={player.gold}
                                                 cost={ennoblement_cost}
+                                                kingdom={player_kingdom}
                                                 onSubmit={handleEnnoblement}
                                                 loading={ennoblementLoading}
                                             />

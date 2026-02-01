@@ -194,6 +194,27 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the kingdom the player's home belongs to.
+     */
+    public function getHomeKingdom(): ?Kingdom
+    {
+        if ($this->home_location_type === 'town') {
+            return Town::find($this->home_location_id)?->kingdom();
+        }
+
+        if ($this->home_location_type === 'village') {
+            return Village::find($this->home_location_id)?->kingdom();
+        }
+
+        // Legacy: check home_village_id
+        if ($this->home_village_id) {
+            return $this->homeVillage?->kingdom();
+        }
+
+        return null;
+    }
+
+    /**
      * Get the player's skills.
      */
     public function skills(): HasMany

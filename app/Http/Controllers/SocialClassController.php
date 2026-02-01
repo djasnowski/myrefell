@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Barony;
 use App\Models\EnnoblementRequest;
 use App\Models\Kingdom;
 use App\Models\ManumissionRequest;
@@ -55,7 +54,7 @@ class SocialClassController extends Controller
                 ->orderByDesc('created_at')
                 ->limit(10)
                 ->get()
-                ->map(fn($r) => [
+                ->map(fn ($r) => [
                     'id' => $r->id,
                     'type' => $r->request_type,
                     'type_display' => $r->type_display,
@@ -71,7 +70,7 @@ class SocialClassController extends Controller
                 ->orderByDesc('created_at')
                 ->limit(10)
                 ->get()
-                ->map(fn($r) => [
+                ->map(fn ($r) => [
                     'id' => $r->id,
                     'type' => $r->request_type,
                     'type_display' => $r->type_display,
@@ -88,7 +87,7 @@ class SocialClassController extends Controller
                 ->orderByDesc('created_at')
                 ->limit(10)
                 ->get()
-                ->map(fn($h) => [
+                ->map(fn ($h) => [
                     'old_class' => $h->old_class_display,
                     'new_class' => $h->new_class_display,
                     'reason' => $h->reason,
@@ -97,6 +96,10 @@ class SocialClassController extends Controller
                 ]),
             'manumission_cost' => ManumissionRequest::PURCHASE_COST,
             'ennoblement_cost' => EnnoblementRequest::PURCHASE_COST,
+            'player_kingdom' => $user->getHomeKingdom() ? [
+                'id' => $user->getHomeKingdom()->id,
+                'name' => $user->getHomeKingdom()->name,
+            ] : null,
         ]);
     }
 
@@ -138,7 +141,7 @@ class SocialClassController extends Controller
             return back()->with('error', 'This is not your request.');
         }
 
-        if (!$manumissionRequest->isPending()) {
+        if (! $manumissionRequest->isPending()) {
             return back()->with('error', 'This request is no longer pending.');
         }
 
@@ -192,7 +195,7 @@ class SocialClassController extends Controller
             return back()->with('error', 'This is not your request.');
         }
 
-        if (!$ennoblementRequest->isPending()) {
+        if (! $ennoblementRequest->isPending()) {
             return back()->with('error', 'This request is no longer pending.');
         }
 
@@ -254,7 +257,7 @@ class SocialClassController extends Controller
             $validated['response_message'] ?? null
         );
 
-        if (!$result) {
+        if (! $result) {
             return back()->with('error', 'Failed to approve request.');
         }
 
@@ -278,7 +281,7 @@ class SocialClassController extends Controller
             $validated['response_message'] ?? null
         );
 
-        if (!$result) {
+        if (! $result) {
             return back()->with('error', 'Failed to deny request.');
         }
 
@@ -322,7 +325,7 @@ class SocialClassController extends Controller
             $validated['response_message'] ?? null
         );
 
-        if (!$result) {
+        if (! $result) {
             return back()->with('error', 'Failed to approve request.');
         }
 
@@ -346,7 +349,7 @@ class SocialClassController extends Controller
             $validated['response_message'] ?? null
         );
 
-        if (!$result) {
+        if (! $result) {
             return back()->with('error', 'Failed to deny request.');
         }
 
