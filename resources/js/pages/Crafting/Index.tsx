@@ -78,7 +78,7 @@ const getBreadcrumbs = (location?: Location): BreadcrumbItem[] => [
     },
 ];
 
-const categoryIcons: Record<string, typeof Hammer> = {
+const categoryIcons: Record<string, typeof Scissors> = {
     cooking: Beef,
     crafting: Scissors,
 };
@@ -98,7 +98,7 @@ function RecipeCard({
     loading: string | null;
 }) {
     const isLoading = loading === recipe.id;
-    const CategoryIcon = categoryIcons[recipe.category] || Hammer;
+    const CategoryIcon = categoryIcons[recipe.category] || Scissors;
 
     return (
         <div
@@ -249,7 +249,7 @@ export default function CraftingIndex() {
                 {/* Header */}
                 <div className="mb-4 flex items-center gap-3">
                     <div className="rounded-lg bg-amber-900/30 p-3">
-                        <Hammer className="h-8 w-8 text-amber-400" />
+                        <Scissors className="h-8 w-8 text-amber-400" />
                     </div>
                     <div>
                         <h1 className="font-pixel text-2xl text-amber-400">Crafting</h1>
@@ -367,7 +367,7 @@ export default function CraftingIndex() {
                 {displayRecipes.length === 0 && (
                     <div className="flex flex-1 items-center justify-center">
                         <div className="text-center">
-                            <Hammer className="mx-auto mb-3 h-12 w-12 text-stone-600" />
+                            <Scissors className="mx-auto mb-3 h-12 w-12 text-stone-600" />
                             <p className="font-pixel text-sm text-stone-500">
                                 No recipes available
                             </p>
