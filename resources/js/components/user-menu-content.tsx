@@ -1,5 +1,5 @@
 import { Link, router } from "@inertiajs/react";
-import { Crown, Gift, LogOut, Settings } from "lucide-react";
+import { Award, Crown, Gift, LogOut, Settings } from "lucide-react";
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -42,6 +42,17 @@ export function UserMenuContent({ user }: Props) {
                     >
                         <Crown className="mr-2" />
                         Social Class
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link
+                        className="block w-full cursor-pointer"
+                        href="/titles"
+                        prefetch
+                        onClick={cleanup}
+                    >
+                        <Award className="mr-2" />
+                        Title Class
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
