@@ -1,4 +1,4 @@
-import { usePage } from "@inertiajs/react";
+import { router, usePage } from "@inertiajs/react";
 import * as LucideIcons from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -78,8 +78,9 @@ function EnergyTimer({ secondsUntilNext }: { secondsUntilNext: number | null }) 
         const interval = setInterval(() => {
             setSeconds((prev) => {
                 if (prev <= 1) {
-                    window.location.reload();
-                    return 0;
+                    // Use Inertia's partial reload instead of full page reload
+                    router.reload({ only: ["sidebar"] });
+                    return secondsUntilNext ?? 5;
                 }
                 return prev - 1;
             });
