@@ -15,9 +15,9 @@ class ApothecaryStockpileSeeder extends Seeder
      */
     private const SHOP_ITEMS = [
         // Basic supplies - available everywhere
-        'Vial' => ['village' => 50, 'town' => 100],
-        'Crystal Vial' => ['village' => 20, 'town' => 50],
-        'Holy Water' => ['village' => 15, 'town' => 30],
+        'Vial' => ['village' => 20, 'town' => 50],
+        'Crystal Vial' => ['village' => 10, 'town' => 25],
+        'Holy Water' => ['village' => 10, 'town' => 15],
 
         // Basic healing supplies
         'Bandage' => ['village' => 30, 'town' => 60],
