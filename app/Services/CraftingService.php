@@ -333,7 +333,7 @@ class CraftingService
     /**
      * Location types that allow crafting.
      */
-    public const VALID_LOCATIONS = ['village', 'barony', 'town'];
+    public const VALID_LOCATIONS = ['village', 'barony', 'town', 'duchy', 'kingdom'];
 
     public function __construct(
         protected InventoryService $inventoryService,
