@@ -6,6 +6,7 @@ use App\Models\EmploymentJob;
 use App\Models\LocationStockpile;
 use App\Models\PlayerEmployment;
 use App\Models\User;
+use App\Models\Village;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -25,6 +26,23 @@ class JobService
         protected EnergyService $energyService,
         protected InventoryService $inventoryService
     ) {}
+
+    /**
+     * Check if a user is settled at a location (can apply for jobs there).
+     */
+    public function isSettledAt(User $user, string $locationType, int $locationId): bool
+    {
+        if (! $user->home_village_id) {
+            return false;
+        }
+
+        return match ($locationType) {
+            'village', 'town' => $user->home_village_id === $locationId
+                || $user->homeVillage?->parent_village_id === $locationId,
+            'barony' => $user->homeVillage?->barony_id === $locationId,
+            default => false,
+        };
+    }
 
     /**
      * Get available jobs at a location.
@@ -84,6 +102,14 @@ class JobService
             return [
                 'success' => false,
                 'message' => 'You must travel to this location to apply for a job here.',
+            ];
+        }
+
+        // Check if user is settled at this location
+        if (! $this->isSettledAt($user, $locationType, $locationId)) {
+            return [
+                'success' => false,
+                'message' => 'You can only apply for jobs in a location where you have settled.',
             ];
         }
 

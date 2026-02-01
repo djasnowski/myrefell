@@ -85,6 +85,7 @@ interface PageProps {
     current_employment: Employment[];
     all_employment: Employment[];
     max_jobs: number;
+    is_settled: boolean;
     player: {
         energy: number;
         max_energy: number;
@@ -366,6 +367,7 @@ export default function JobsIndex() {
         current_employment,
         all_employment,
         max_jobs,
+        is_settled,
         player,
     } = usePage<PageProps>().props;
 
@@ -410,7 +412,7 @@ export default function JobsIndex() {
         { title: "Jobs", href: "#" },
     ];
 
-    const canApplyForMore = all_employment.length < max_jobs;
+    const canApplyForMore = all_employment.length < max_jobs && is_settled;
 
     const handleApply = (jobId: number) => {
         setApplyLoading(jobId);
@@ -603,7 +605,15 @@ export default function JobsIndex() {
                         </div>
                     </div>
 
-                    {!canApplyForMore && (
+                    {!is_settled && (
+                        <div className="mb-4 rounded-lg border-2 border-red-600/50 bg-red-900/20 p-3">
+                            <p className="font-pixel text-xs text-red-300">
+                                You must be settled here to apply for jobs. This is not your home
+                                location.
+                            </p>
+                        </div>
+                    )}
+                    {is_settled && all_employment.length >= max_jobs && (
                         <div className="mb-4 rounded-lg border-2 border-amber-600/50 bg-amber-900/20 p-3">
                             <p className="font-pixel text-xs text-amber-300">
                                 You have the maximum number of jobs ({max_jobs}). Quit one to apply

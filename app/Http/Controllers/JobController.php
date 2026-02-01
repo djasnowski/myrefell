@@ -115,6 +115,7 @@ class JobController extends Controller
         $availableJobs = $this->jobService->getAvailableJobs($user, $locationType, $locationId);
         $currentEmployment = $this->jobService->getEmploymentAtLocation($user, $locationType, $locationId);
         $allEmployment = $this->jobService->getCurrentEmployment($user);
+        $isSettled = $this->jobService->isSettledAt($user, $locationType, $locationId);
 
         return Inertia::render('Jobs/Index', [
             'location_type' => $locationType,
@@ -124,6 +125,7 @@ class JobController extends Controller
             'current_employment' => $currentEmployment,
             'all_employment' => $allEmployment,
             'max_jobs' => JobService::MAX_CONCURRENT_JOBS,
+            'is_settled' => $isSettled,
             'player' => [
                 'energy' => $user->energy,
                 'max_energy' => $user->max_energy,
