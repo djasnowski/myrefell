@@ -83,6 +83,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'travel_destination_type',
         'travel_destination_id',
         'referral_code',
+        'last_seen_changelog',
     ];
 
     /**
