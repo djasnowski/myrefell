@@ -9,6 +9,9 @@ import {
     Coins,
     Crown,
     Eye,
+    Flame,
+    FlaskConical,
+    Footprints,
     Hammer,
     Heart,
     HeartPulse,
@@ -21,6 +24,7 @@ import {
     Shield,
     Ship,
     Skull,
+    Sparkles,
     Sun,
     Swords,
     Target,
@@ -200,7 +204,7 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                         <div className="mt-16 grid grid-cols-2 gap-4 md:grid-cols-4">
                             {[
                                 { value: "4", label: "Kingdoms" },
-                                { value: "12", label: "Skills to Master" },
+                                { value: "16", label: "Skills to Master" },
                                 { value: "5", label: "Social Classes" },
                                 { value: "∞", label: "Possibilities" },
                             ].map((stat) => (
@@ -566,7 +570,7 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                     <div className="mx-auto max-w-7xl px-6">
                         <div className="mb-16 text-center">
                             <h2 className="mb-4 font-[Cinzel] text-3xl font-bold text-foreground md:text-4xl">
-                                Master <span className="text-primary">12 Skills</span>
+                                Master <span className="text-primary">16 Skills</span>
                             </h2>
                             <p className="mx-auto max-w-2xl text-muted-foreground">
                                 Every skill opens new opportunities. Train combat, mine ore, forge
@@ -574,20 +578,24 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4 md:grid-cols-4 lg:grid-cols-6">
+                        <div className="grid grid-cols-4 gap-4 md:grid-cols-4 lg:grid-cols-8">
                             {[
                                 { icon: Swords, name: "Attack" },
                                 { icon: Shield, name: "Strength" },
                                 { icon: Heart, name: "Defense" },
                                 { icon: HeartPulse, name: "Hitpoints" },
                                 { icon: Target, name: "Range" },
+                                { icon: Sparkles, name: "Prayer" },
                                 { icon: Wheat, name: "Farming" },
                                 { icon: Pickaxe, name: "Mining" },
                                 { icon: Anchor, name: "Fishing" },
                                 { icon: Trees, name: "Woodcutting" },
-                                { icon: Wheat, name: "Cooking" },
+                                { icon: Flame, name: "Cooking" },
                                 { icon: Hammer, name: "Smithing" },
                                 { icon: Hammer, name: "Crafting" },
+                                { icon: FlaskConical, name: "Herblore" },
+                                { icon: Eye, name: "Thieving" },
+                                { icon: Footprints, name: "Agility" },
                             ].map((skill) => (
                                 <div
                                     key={skill.name}
