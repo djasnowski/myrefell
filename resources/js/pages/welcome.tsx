@@ -545,7 +545,7 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                 <ul className="space-y-3">
                                     <li className="flex items-center gap-3 text-foreground/80">
                                         <Sun className="h-5 w-5 text-muted-foreground" />
-                                        <span>4 seasons affect travel, farming, combat</span>
+                                        <span>Seasons affect travel, farming, combat</span>
                                     </li>
                                     <li className="flex items-center gap-3 text-foreground/80">
                                         <CloudRain className="h-5 w-5 text-muted-foreground" />
