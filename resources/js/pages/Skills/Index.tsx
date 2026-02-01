@@ -11,7 +11,7 @@ import {
     Heart,
     Leaf,
     Pickaxe,
-    Rabbit,
+    Footprints,
     Scissors,
     Shield,
     Sparkles,
@@ -65,7 +65,7 @@ const skillIcons: Record<string, LucideIcon> = {
     defense: Shield,
     hitpoints: Heart,
     range: Crosshair,
-    prayer: Church,
+    prayer: Sparkles,
     farming: Wheat,
     mining: Pickaxe,
     fishing: Fish,
@@ -75,7 +75,7 @@ const skillIcons: Record<string, LucideIcon> = {
     crafting: Scissors,
     thieving: Hand,
     herblore: Leaf,
-    agility: Rabbit,
+    agility: Footprints,
 };
 
 const categoryConfig = {

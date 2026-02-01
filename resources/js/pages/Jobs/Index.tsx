@@ -145,7 +145,7 @@ const skillIcons: Record<string, typeof Briefcase> = {
     crafting: Hammer,
     defense: Shield,
     attack: Swords,
-    prayer: Church,
+    prayer: Sparkles,
 };
 
 function JobCard({

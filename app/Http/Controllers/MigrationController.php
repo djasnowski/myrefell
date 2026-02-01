@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MigrationRequest;
+use App\Models\Town;
 use App\Models\Village;
 use App\Services\MigrationService;
 use Illuminate\Http\RedirectResponse;
@@ -69,6 +70,21 @@ class MigrationController extends Controller
     }
 
     /**
+     * Request migration to a town.
+     */
+    public function requestTown(Request $request, Town $town): RedirectResponse
+    {
+        $user = $request->user();
+        $result = $this->migrationService->requestMigrationToTown($user, $town);
+
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
+    }
+
+    /**
      * Cancel a migration request.
      */
     public function cancel(Request $request, MigrationRequest $migrationRequest): RedirectResponse
@@ -89,7 +105,7 @@ class MigrationController extends Controller
     public function approve(Request $request, MigrationRequest $migrationRequest): RedirectResponse
     {
         $request->validate([
-            'level' => 'required|in:elder,baron,king',
+            'level' => 'required|in:elder,mayor,baron,king',
         ]);
 
         $user = $request->user();
@@ -108,7 +124,7 @@ class MigrationController extends Controller
     public function deny(Request $request, MigrationRequest $migrationRequest): RedirectResponse
     {
         $request->validate([
-            'level' => 'required|in:elder,baron,king',
+            'level' => 'required|in:elder,mayor,baron,king',
             'reason' => 'nullable|string|max:255',
         ]);
 
@@ -127,27 +143,46 @@ class MigrationController extends Controller
      */
     protected function formatRequest(MigrationRequest $request): array
     {
+        $barony = $request->getDestinationBarony();
+        $kingdom = $request->getDestinationKingdom();
+
         return [
             'id' => $request->id,
             'user' => [
                 'id' => $request->user->id,
                 'username' => $request->user->username,
             ],
-            'from_village' => [
+            'from_location' => [
+                'type' => $request->from_location_type ?? 'village',
+                'id' => $request->from_location_id ?? $request->from_village_id,
+                'name' => $request->getOriginName(),
+            ],
+            'to_location' => [
+                'type' => $request->to_location_type ?? 'village',
+                'id' => $request->to_location_id ?? $request->to_village_id,
+                'name' => $request->getDestinationName(),
+                'barony' => $barony?->name,
+                'kingdom' => $kingdom?->name,
+            ],
+            // Legacy fields for backwards compatibility
+            'from_village' => $request->fromVillage ? [
                 'id' => $request->fromVillage->id,
                 'name' => $request->fromVillage->name,
-            ],
-            'to_village' => [
+            ] : null,
+            'to_village' => $request->toVillage ? [
                 'id' => $request->toVillage->id,
                 'name' => $request->toVillage->name,
                 'barony' => $request->toVillage->barony?->name,
                 'kingdom' => $request->toVillage->barony?->kingdom?->name,
-            ],
+            ] : null,
+            'is_to_town' => $request->isToTown(),
             'status' => $request->status,
             'elder_approved' => $request->elder_approved,
+            'mayor_approved' => $request->mayor_approved,
             'baron_approved' => $request->baron_approved,
             'king_approved' => $request->king_approved,
             'needs_elder' => $request->needsElderApproval(),
+            'needs_mayor' => $request->needsMayorApproval(),
             'needs_baron' => $request->needsBaronApproval(),
             'needs_king' => $request->needsKingApproval(),
             'denial_reason' => $request->denial_reason,

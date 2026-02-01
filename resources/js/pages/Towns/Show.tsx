@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from "@inertiajs/react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import {
     Anchor,
     Banknote,
@@ -8,6 +8,8 @@ import {
     Coins,
     Crown,
     Gavel,
+    Home,
+    Loader2,
     MapPin,
     MessageCircle,
     Mountain,
@@ -25,6 +27,7 @@ import {
     Wheat,
     type LucideIcon,
 } from "lucide-react";
+import { useState } from "react";
 import { ActivityFeed } from "@/components/activity-feed";
 import { ServicesGrid } from "@/components/service-card";
 import DisasterWidget from "@/components/widgets/disaster-widget";
@@ -117,7 +120,10 @@ interface Props {
     roles: Role[];
     visitors: Visitor[];
     is_visitor: boolean;
+    is_resident: boolean;
     is_mayor: boolean;
+    can_migrate: boolean;
+    has_pending_request: boolean;
     current_user_id: number;
     disasters?: Disaster[];
 }
@@ -187,11 +193,29 @@ export default function TownShow({
     roles,
     visitors,
     is_visitor,
+    is_resident,
     is_mayor,
+    can_migrate,
+    has_pending_request,
     current_user_id,
     disasters = [],
 }: Props) {
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
+    const [loading, setLoading] = useState(false);
+
+    const handleRequestMigration = () => {
+        setLoading(true);
+        router.post(
+            `/migration/request-town/${town.id}`,
+            {},
+            {
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
 
     const biome = biomeConfig[town.biome] || biomeConfig.plains;
     const BiomeIcon = biome.icon;
@@ -279,15 +303,20 @@ export default function TownShow({
                             </div>
                         </div>
 
-                        {/* Visitor badge */}
-                        {is_visitor && (
+                        {/* Home/Visitor badge */}
+                        {is_resident ? (
+                            <div className="flex items-center gap-2 rounded-lg border border-green-600/50 bg-green-900/30 px-3 py-2">
+                                <Home className="h-4 w-4 text-green-400" />
+                                <span className="font-pixel text-xs text-green-400">Your Home</span>
+                            </div>
+                        ) : is_visitor ? (
                             <div className="flex items-center gap-2 rounded-lg border border-blue-600/50 bg-blue-900/30 px-3 py-2">
                                 <MapPin className="h-4 w-4 text-blue-400" />
                                 <span className="font-pixel text-xs text-blue-400">
                                     You Are Here
                                 </span>
                             </div>
-                        )}
+                        ) : null}
                     </div>
                 </div>
 
@@ -574,6 +603,61 @@ export default function TownShow({
                             <p className="mt-2 text-center text-xs text-stone-500">
                                 +{town.visitor_count - 12} more visitors
                             </p>
+                        )}
+                    </div>
+                )}
+
+                {/* Migration / Settlement */}
+                {!is_resident && (
+                    <div>
+                        {has_pending_request ? (
+                            <div className="rounded-xl border border-amber-600/30 bg-amber-900/10 p-4">
+                                <div className="flex items-center gap-3">
+                                    <Loader2 className="h-5 w-5 animate-spin text-amber-400" />
+                                    <div>
+                                        <p className="font-pixel text-amber-300">
+                                            Migration Request Pending
+                                        </p>
+                                        <Link
+                                            href="/migration"
+                                            className="text-xs text-stone-400 hover:underline"
+                                        >
+                                            View your request status
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : can_migrate ? (
+                            <button
+                                onClick={handleRequestMigration}
+                                disabled={loading}
+                                className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-blue-500/50 bg-blue-900/20 p-4 transition hover:bg-blue-900/40 disabled:opacity-50"
+                            >
+                                {loading ? (
+                                    <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
+                                ) : (
+                                    <Home className="h-6 w-6 text-blue-400" />
+                                )}
+                                <div>
+                                    <span className="font-pixel text-lg text-blue-300">
+                                        {town.visitor_count === 0
+                                            ? "Settle Here"
+                                            : "Request to Settle"}
+                                    </span>
+                                    <p className="text-xs text-stone-400">
+                                        {town.visitor_count === 0
+                                            ? "Be the first resident of this town"
+                                            : "The town mayor must approve your request"}
+                                    </p>
+                                </div>
+                            </button>
+                        ) : (
+                            <div className="rounded-xl border border-stone-700 bg-stone-800/30 p-4 text-center">
+                                <p className="font-pixel text-stone-500">Migration on Cooldown</p>
+                                <p className="text-xs text-stone-600">
+                                    You must wait before you can move again
+                                </p>
+                            </div>
                         )}
                     </div>
                 )}

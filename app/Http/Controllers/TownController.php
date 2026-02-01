@@ -4,15 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Config\LocationServices;
 use App\Models\LocationActivityLog;
+use App\Models\MigrationRequest;
 use App\Models\PlayerRole;
 use App\Models\Role;
 use App\Models\Town;
+use App\Services\MigrationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class TownController extends Controller
 {
+    public function __construct(
+        protected MigrationService $migrationService
+    ) {}
+
     /**
      * Display the towns index page.
      */
@@ -62,6 +68,17 @@ class TownController extends Controller
 
         // Check if user is currently in this town
         $isVisitor = $user->current_location_type === 'town' && $user->current_location_id === $town->id;
+
+        // Check if user is a resident (home is this town)
+        $isResident = $user->home_location_type === 'town' && $user->home_location_id === $town->id;
+
+        // Check if user can migrate (not on cooldown)
+        $canMigrate = $this->migrationService->canMigrate($user);
+
+        // Check for pending migration request
+        $hasPendingRequest = MigrationRequest::where('user_id', $user->id)
+            ->pending()
+            ->exists();
 
         // Get active disasters
         $disasters = $town->disasters()
@@ -121,7 +138,10 @@ class TownController extends Controller
             'roles' => $roles,
             'visitors' => $visitors,
             'is_visitor' => $isVisitor,
+            'is_resident' => $isResident,
             'is_mayor' => $town->mayor_user_id === $user->id,
+            'can_migrate' => $canMigrate,
+            'has_pending_request' => $hasPendingRequest,
             'current_user_id' => $user->id,
             'disasters' => $disasters,
         ]);

@@ -494,9 +494,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('roles/status', [RoleController::class, 'status'])->name('roles.status');
     Route::post('roles/claim', [RoleController::class, 'claim'])->name('roles.claim');
 
-    // Migration (moving between villages)
+    // Migration (moving between villages/towns)
     Route::get('migration', [MigrationController::class, 'index'])->name('migration.index');
     Route::post('migration/request/{village}', [MigrationController::class, 'request'])->name('migration.request');
+    Route::post('migration/request-town/{town}', [MigrationController::class, 'requestTown'])->name('migration.request-town');
     Route::post('migration/{migrationRequest}/cancel', [MigrationController::class, 'cancel'])->name('migration.cancel');
     Route::post('migration/{migrationRequest}/approve', [MigrationController::class, 'approve'])->name('migration.approve');
     Route::post('migration/{migrationRequest}/deny', [MigrationController::class, 'deny'])->name('migration.deny');

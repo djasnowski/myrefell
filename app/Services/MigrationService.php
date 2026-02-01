@@ -6,8 +6,10 @@ use App\Models\LocationActivityLog;
 use App\Models\LocationNpc;
 use App\Models\MigrationRequest;
 use App\Models\PlayerRole;
+use App\Models\Town;
 use App\Models\User;
 use App\Models\Village;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -18,19 +20,43 @@ class MigrationService
      */
     public function requestMigration(User $user, Village $toVillage): array
     {
-        // Can't migrate to current village
-        if ($user->home_village_id === $toVillage->id) {
+        return $this->requestMigrationTo($user, $toVillage, 'village');
+    }
+
+    /**
+     * Request to migrate to a new town.
+     */
+    public function requestMigrationToTown(User $user, Town $toTown): array
+    {
+        return $this->requestMigrationTo($user, $toTown, 'town');
+    }
+
+    /**
+     * Request to migrate to a new location (village or town).
+     */
+    public function requestMigrationTo(User $user, Model $toLocation, string $locationType): array
+    {
+        // Can't migrate to current home
+        if ($user->home_location_type === $locationType && $user->home_location_id === $toLocation->id) {
+            return [
+                'success' => false,
+                'message' => "You already live in this {$locationType}.",
+            ];
+        }
+
+        // Fallback for old village-only check
+        if ($locationType === 'village' && $user->home_village_id === $toLocation->id) {
             return [
                 'success' => false,
                 'message' => 'You already live in this village.',
             ];
         }
 
-        // Must be physically at the village to settle there
-        if ($user->current_location_type !== 'village' || $user->current_location_id !== $toVillage->id) {
+        // Must be physically at the location to settle there
+        if ($user->current_location_type !== $locationType || $user->current_location_id !== $toLocation->id) {
             return [
                 'success' => false,
-                'message' => 'You must travel to this village before you can settle here.',
+                'message' => "You must travel to this {$locationType} before you can settle here.",
             ];
         }
 
@@ -61,7 +87,7 @@ class MigrationService
         if ($userRole) {
             $roleName = $userRole->role->name;
             $locationId = $userRole->location_id;
-            $locationType = $userRole->location_type;
+            $roleLocationType = $userRole->location_type;
             $roleId = $userRole->role_id;
 
             // Resign from the role
@@ -69,14 +95,14 @@ class MigrationService
 
             // Reactivate NPC if no player holds the role
             $playerHoldsRole = PlayerRole::where('role_id', $roleId)
-                ->where('location_type', $locationType)
+                ->where('location_type', $roleLocationType)
                 ->where('location_id', $locationId)
                 ->active()
                 ->exists();
 
             if (! $playerHoldsRole) {
                 LocationNpc::where('role_id', $roleId)
-                    ->where('location_type', $locationType)
+                    ->where('location_type', $roleLocationType)
                     ->where('location_id', $locationId)
                     ->update(['is_active' => true]);
             }
@@ -84,7 +110,7 @@ class MigrationService
             // Log the abdication
             LocationActivityLog::log(
                 $user->id,
-                $locationType,
+                $roleLocationType,
                 $locationId,
                 LocationActivityLog::TYPE_ABDICATION,
                 "{$user->username} has abdicated from their position as {$roleName}",
@@ -93,13 +119,25 @@ class MigrationService
             );
         }
 
-        return DB::transaction(function () use ($user, $toVillage) {
-            $request = MigrationRequest::create([
+        return DB::transaction(function () use ($user, $toLocation, $locationType) {
+            $requestData = [
                 'user_id' => $user->id,
-                'from_village_id' => $user->home_village_id,
-                'to_village_id' => $toVillage->id,
+                'from_location_type' => $user->home_location_type ?? 'village',
+                'from_location_id' => $user->home_location_id ?? $user->home_village_id,
+                'to_location_type' => $locationType,
+                'to_location_id' => $toLocation->id,
                 'status' => MigrationRequest::STATUS_PENDING,
-            ]);
+            ];
+
+            // Also set legacy village fields for backwards compatibility
+            if ($locationType === 'village') {
+                $requestData['to_village_id'] = $toLocation->id;
+            }
+            if ($user->home_location_type === 'village' || $user->home_village_id) {
+                $requestData['from_village_id'] = $user->home_location_id ?? $user->home_village_id;
+            }
+
+            $request = MigrationRequest::create($requestData);
 
             // Auto-approve levels that don't have role holders
             $this->autoApproveVacantLevels($request);
@@ -122,12 +160,22 @@ class MigrationService
      */
     protected function autoApproveVacantLevels(MigrationRequest $request): void
     {
-        // If no elder at destination, auto-approve elder level
-        if (! $request->needsElderApproval()) {
-            $request->update([
-                'elder_approved' => true,
-                'elder_decided_at' => now(),
-            ]);
+        // For towns: check mayor
+        if ($request->isToTown()) {
+            if (! $request->needsMayorApproval()) {
+                $request->update([
+                    'mayor_approved' => true,
+                    'mayor_decided_at' => now(),
+                ]);
+            }
+        } else {
+            // For villages: check elder
+            if (! $request->needsElderApproval()) {
+                $request->update([
+                    'elder_approved' => true,
+                    'elder_decided_at' => now(),
+                ]);
+            }
         }
 
         // If no baron at destination barony, auto-approve baron level
@@ -256,13 +304,26 @@ class MigrationService
     protected function completeMigration(MigrationRequest $request): array
     {
         $user = $request->user;
-        $toVillage = $request->toVillage;
 
-        // Move the user
-        $user->update([
-            'home_village_id' => $toVillage->id,
+        // Determine destination name
+        $destinationName = $request->getDestinationName();
+
+        // Move the user - update both new polymorphic fields and legacy field
+        $updateData = [
+            'home_location_type' => $request->to_location_type,
+            'home_location_id' => $request->to_location_id,
             'last_migration_at' => now(),
-        ]);
+        ];
+
+        // Also update legacy home_village_id for backwards compatibility
+        if ($request->isToVillage()) {
+            $updateData['home_village_id'] = $request->to_location_id ?? $request->to_village_id;
+        } else {
+            // Clear the legacy field when moving to a non-village
+            $updateData['home_village_id'] = null;
+        }
+
+        $user->update($updateData);
 
         // Mark request as completed
         $request->update([
@@ -272,7 +333,7 @@ class MigrationService
 
         return [
             'success' => true,
-            'message' => "Welcome to {$toVillage->name}! You are now a resident.",
+            'message' => "Welcome to {$destinationName}! You are now a resident.",
             'request' => $request,
         ];
     }
@@ -296,12 +357,14 @@ class MigrationService
      */
     public function canApproveAt(User $user, MigrationRequest $request, string $level): bool
     {
-        $toVillage = $request->toVillage;
+        $barony = $request->getDestinationBarony();
+        $kingdom = $request->getDestinationKingdom();
 
         return match ($level) {
-            'elder' => $this->isElderOf($user, $toVillage->id),
-            'baron' => $toVillage->barony && $this->isBaronOf($user, $toVillage->barony->id),
-            'king' => $toVillage->barony?->kingdom && $this->isKingOf($user, $toVillage->barony->kingdom->id),
+            'elder' => ! $request->isToTown() && $this->isElderOf($user, $request->to_location_id ?? $request->to_village_id),
+            'mayor' => $request->isToTown() && $this->isMayorOf($user, $request->to_location_id),
+            'baron' => $barony && $this->isBaronOf($user, $barony->id),
+            'king' => $kingdom && $this->isKingOf($user, $kingdom->id),
             default => false,
         };
     }
@@ -315,6 +378,19 @@ class MigrationService
             ->where('location_type', 'village')
             ->where('location_id', $villageId)
             ->whereHas('role', fn ($q) => $q->where('slug', 'elder'))
+            ->active()
+            ->exists();
+    }
+
+    /**
+     * Check if user is mayor of a town.
+     */
+    protected function isMayorOf(User $user, int $townId): bool
+    {
+        return PlayerRole::where('user_id', $user->id)
+            ->where('location_type', 'town')
+            ->where('location_id', $townId)
+            ->whereHas('role', fn ($q) => $q->where('slug', 'mayor'))
             ->active()
             ->exists();
     }
@@ -357,6 +433,13 @@ class MigrationService
             ->active()
             ->pluck('location_id');
 
+        // Get towns where user is mayor
+        $mayorTowns = PlayerRole::where('user_id', $user->id)
+            ->where('location_type', 'town')
+            ->whereHas('role', fn ($q) => $q->where('slug', 'mayor'))
+            ->active()
+            ->pluck('location_id');
+
         // Get baronies where user is baron
         $baronBaronies = PlayerRole::where('user_id', $user->id)
             ->where('location_type', 'barony')
@@ -373,19 +456,53 @@ class MigrationService
 
         return MigrationRequest::pending()
             ->with(['user', 'fromVillage', 'toVillage.barony.kingdom'])
-            ->where(function ($q) use ($elderVillages) {
+            ->where(function ($q) use ($elderVillages, $mayorTowns) {
                 // Elder can approve requests to their village
-                $q->whereIn('to_village_id', $elderVillages)
-                    ->whereNull('elder_approved');
+                $q->where(function ($sq) use ($elderVillages) {
+                    $sq->where('to_location_type', 'village')
+                        ->whereIn('to_location_id', $elderVillages)
+                        ->whereNull('elder_approved');
+                })
+                // Also check legacy village field
+                    ->orWhere(function ($sq) use ($elderVillages) {
+                        $sq->whereNull('to_location_type')
+                            ->whereIn('to_village_id', $elderVillages)
+                            ->whereNull('elder_approved');
+                    })
+                // Mayor can approve requests to their town
+                    ->orWhere(function ($sq) use ($mayorTowns) {
+                        $sq->where('to_location_type', 'town')
+                            ->whereIn('to_location_id', $mayorTowns)
+                            ->whereNull('mayor_approved');
+                    });
             })
             ->orWhere(function ($q) use ($baronBaronies) {
-                // Baron can approve requests to villages in their barony
-                $q->whereHas('toVillage', fn ($vq) => $vq->whereIn('barony_id', $baronBaronies))
+                // Baron can approve requests to villages/towns in their barony
+                $q->where(function ($sq) use ($baronBaronies) {
+                    $sq->whereHas('toVillage', fn ($vq) => $vq->whereIn('barony_id', $baronBaronies));
+                })
+                    ->orWhere(function ($sq) use ($baronBaronies) {
+                        $sq->where('to_location_type', 'town')
+                            ->whereIn('to_location_id', function ($tq) use ($baronBaronies) {
+                                $tq->select('id')->from('towns')->whereIn('barony_id', $baronBaronies);
+                            });
+                    })
                     ->whereNull('baron_approved');
             })
             ->orWhere(function ($q) use ($kingKingdoms) {
-                // King can approve requests to villages in their kingdom
-                $q->whereHas('toVillage.barony', fn ($bq) => $bq->whereIn('kingdom_id', $kingKingdoms))
+                // King can approve requests to villages/towns in their kingdom
+                $q->where(function ($sq) use ($kingKingdoms) {
+                    $sq->whereHas('toVillage.barony', fn ($bq) => $bq->whereIn('kingdom_id', $kingKingdoms));
+                })
+                    ->orWhere(function ($sq) use ($kingKingdoms) {
+                        $sq->where('to_location_type', 'town')
+                            ->whereIn('to_location_id', function ($tq) use ($kingKingdoms) {
+                                $tq->select('towns.id')
+                                    ->from('towns')
+                                    ->join('baronies', 'towns.barony_id', '=', 'baronies.id')
+                                    ->whereIn('baronies.kingdom_id', $kingKingdoms);
+                            });
+                    })
                     ->whereNull('king_approved');
             })
             ->get();

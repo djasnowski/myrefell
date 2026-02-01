@@ -64,6 +64,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'labor_days_completed',
         'last_obligation_check',
         'home_village_id',
+        'home_location_type',
+        'home_location_id',
         'current_location_type',
         'current_location_id',
         'hp',
@@ -130,11 +132,63 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get the player's home village.
+     * Get the player's home village (legacy - use homeLocation for polymorphic).
      */
     public function homeVillage(): BelongsTo
     {
         return $this->belongsTo(Village::class, 'home_village_id');
+    }
+
+    /**
+     * Get the player's home location (polymorphic - village or town).
+     */
+    public function homeLocation(): \Illuminate\Database\Eloquent\Relations\MorphTo
+    {
+        return $this->morphTo('home_location', 'home_location_type', 'home_location_id');
+    }
+
+    /**
+     * Get the player's home town (if home is a town).
+     */
+    public function homeTown(): ?Town
+    {
+        if ($this->home_location_type === 'town') {
+            return Town::find($this->home_location_id);
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the home location name.
+     */
+    public function getHomeLocationName(): ?string
+    {
+        if ($this->home_location_type === 'village') {
+            return $this->homeVillage?->name ?? Village::find($this->home_location_id)?->name;
+        }
+
+        if ($this->home_location_type === 'town') {
+            return Town::find($this->home_location_id)?->name;
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if the user's home is in a town.
+     */
+    public function livesInTown(): bool
+    {
+        return $this->home_location_type === 'town';
+    }
+
+    /**
+     * Check if the user's home is in a village.
+     */
+    public function livesInVillage(): bool
+    {
+        return $this->home_location_type === 'village' || $this->home_village_id !== null;
     }
 
     /**

@@ -8,8 +8,8 @@ import {
     CloudRain,
     Coins,
     Crown,
-    Eye,
     Flame,
+    Hand,
     FlaskConical,
     Footprints,
     Hammer,
@@ -594,7 +594,7 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                 { icon: Hammer, name: "Smithing" },
                                 { icon: Hammer, name: "Crafting" },
                                 { icon: FlaskConical, name: "Herblore" },
-                                { icon: Eye, name: "Thieving" },
+                                { icon: Hand, name: "Thieving" },
                                 { icon: Footprints, name: "Agility" },
                             ].map((skill) => (
                                 <div
