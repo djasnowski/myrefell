@@ -7,6 +7,7 @@ use App\Models\BusinessType;
 use App\Models\Item;
 use App\Models\LocationNpc;
 use App\Models\PlayerBusiness;
+use App\Models\PlayerInventory;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -500,7 +501,7 @@ class BusinessService
     protected function findFreeSlot(User $user): int
     {
         $usedSlots = $user->inventory()->pluck('slot_number')->toArray();
-        for ($i = 0; $i < 28; $i++) {
+        for ($i = 0; $i < PlayerInventory::MAX_SLOTS; $i++) {
             if (! in_array($i, $usedSlots)) {
                 return $i;
             }

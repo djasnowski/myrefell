@@ -17,6 +17,10 @@ This project runs in Docker via Laravel Sail. When running artisan commands, mig
 
 **Important:** Do NOT use `php artisan` directly - it will fail to connect to the database since PostgreSQL runs inside Docker.
 
+## Frontend Development
+
+**Do NOT run `npm run build` during development.** The Vite dev server is already running and handles hot module replacement (HMR) automatically. Changes to frontend files are reflected immediately without needing to rebuild.
+
 ## CSRF Token / 419 Page Expired Fix
 
 When using `router.post()`, `router.put()`, or `router.delete()` in Inertia.js React components, always add `router.reload()` in the `onSuccess` callback to refresh the CSRF token. Without this, subsequent requests will fail with "419 Page Expired".
@@ -80,8 +84,6 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - react (REACT) - v19
 - tailwindcss (TAILWINDCSS) - v4
 - @laravel/vite-plugin-wayfinder (WAYFINDER) - v0
-- eslint (ESLINT) - v9
-- prettier (PRETTIER) - v3
 
 ## Conventions
 - You must follow all existing code conventions used in this application. When creating or editing a file, check sibling files for the correct structure, approach, and naming.
@@ -96,7 +98,7 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - Do not change the application's dependencies without approval.
 
 ## Frontend Bundling
-- If the user doesn't see a frontend change reflected in the UI, it could mean they need to run `npm run build`, `npm run dev`, or `composer run dev`. Ask them.
+- If the user doesn't see a frontend change reflected in the UI, it could mean they need to run `pnpm run build`, `pnpm run dev`, or `composer run dev`. Ask them.
 
 ## Replies
 - Be concise in your explanations - focus on what's important rather than explaining obvious details.
@@ -259,7 +261,7 @@ Route::get('/users', function () {
 - When creating tests, make use of `php artisan make:test [options] {name}` to create a feature test, and pass `--unit` to create a unit test. Most tests should be feature tests.
 
 ### Vite Error
-- If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `npm run build` or ask the user to run `npm run dev` or `composer run dev`.
+- If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `pnpm run build` or ask the user to run `pnpm run dev` or `composer run dev`.
 
 === laravel/v12 rules ===
 

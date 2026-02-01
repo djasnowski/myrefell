@@ -7,6 +7,7 @@ import {
     ClipboardList,
     Clock,
     Crown,
+    Dices,
     Home,
     Loader2,
     Map,
@@ -78,6 +79,7 @@ interface SidebarData {
     nearby_destinations: TravelDestination[];
     context: PlayerContext;
     farm: FarmData | null;
+    can_play_minigame?: boolean;
 }
 
 interface NavItem {
@@ -85,6 +87,7 @@ interface NavItem {
     href: string;
     icon: LucideIcon;
     description?: string;
+    showDot?: boolean;
 }
 
 interface TravelDestination {
@@ -116,7 +119,7 @@ const locationPaths: Record<string, string> = {
 };
 
 // Get player actions (always visible regardless of location)
-function getPlayerActions(): NavItem[] {
+function getPlayerActions(canPlayMinigame?: boolean): NavItem[] {
     return [
         {
             title: "World Map",
@@ -147,6 +150,13 @@ function getPlayerActions(): NavItem[] {
             href: "/daily-tasks",
             icon: ClipboardList,
             description: "Earn daily rewards",
+        },
+        {
+            title: "Minigames",
+            href: "/minigames",
+            icon: Dices,
+            description: "Daily wheel and games",
+            showDot: canPlayMinigame,
         },
     ];
 }
@@ -225,8 +235,8 @@ export function NavLocation() {
 
     if (!sidebar) return null;
 
-    const { location, travel, nearby_destinations } = sidebar;
-    const playerActions = getPlayerActions();
+    const { location, travel, nearby_destinations, can_play_minigame } = sidebar;
+    const playerActions = getPlayerActions(can_play_minigame);
     const travelDestinations = nearby_destinations || [];
 
     const LocationIcon = location ? locationIcons[location.type] || MapPin : MapPin;
@@ -334,7 +344,10 @@ export function NavLocation() {
                             >
                                 <Link href={item.href} prefetch>
                                     <item.icon className="h-4 w-4" />
-                                    <span>{item.title}</span>
+                                    <span className="flex-1">{item.title}</span>
+                                    {item.showDot && (
+                                        <span className="h-2 w-2 rounded-full bg-lime-500" />
+                                    )}
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

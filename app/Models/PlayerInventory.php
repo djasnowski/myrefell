@@ -10,7 +10,7 @@ class PlayerInventory extends Model
 {
     use HasFactory;
 
-    public const MAX_SLOTS = 28;
+    public const MAX_SLOTS = 50;
 
     protected $table = 'player_inventory';
 

@@ -18,7 +18,7 @@ class InventoryController extends Controller
         $player = $request->user();
         $inventory = $player->inventory()->with('item')->get();
 
-        // Create a 28-slot array with nulls for empty slots
+        // Create array with nulls for empty slots
         $slots = array_fill(0, PlayerInventory::MAX_SLOTS, null);
 
         foreach ($inventory as $slot) {
