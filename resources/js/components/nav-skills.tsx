@@ -8,7 +8,9 @@ import {
     Hammer,
     Hand,
     Heart,
+    Leaf,
     Pickaxe,
+    Rabbit,
     Scissors,
     Shield,
     Sword,
@@ -38,14 +40,16 @@ const skillOrder = [
     "hitpoints",
     "range",
     "prayer",
+    "agility",
+    "thieving",
     "farming",
+    "herbalism",
     "mining",
     "fishing",
     "woodcutting",
     "cooking",
     "smithing",
     "crafting",
-    "thieving",
 ];
 
 const skillIcons: Record<string, LucideIcon> = {
@@ -55,14 +59,16 @@ const skillIcons: Record<string, LucideIcon> = {
     defense: Shield,
     range: Target,
     prayer: Church,
+    agility: Rabbit,
+    thieving: Hand,
     farming: Wheat,
+    herbalism: Leaf,
     mining: Pickaxe,
     fishing: Fish,
     woodcutting: TreeDeciduous,
     cooking: Beef,
     smithing: Hammer,
     crafting: Scissors,
-    thieving: Hand,
 };
 
 function SkillBadge({ skill }: { skill: Skill }) {
