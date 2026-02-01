@@ -56,11 +56,20 @@ class RoleService
     /**
      * Self-appoint to a vacant leadership role.
      * Only allowed if:
+     * - You are physically at this location
      * - You reside at this location (home village, or village belongs to barony/kingdom)
      * - Location has < 5 residents/members
      */
     public function selfAppoint(User $user, Role $role, string $locationType, int $locationId): array
     {
+        // Check if user is physically at this location
+        if ($user->current_location_type !== $locationType || $user->current_location_id !== $locationId) {
+            return [
+                'success' => false,
+                'message' => 'You must travel to this location to claim a role here.',
+            ];
+        }
+
         // Check if user resides at this location
         if (! $this->userResidesAt($user, $locationType, $locationId)) {
             return [
