@@ -7,6 +7,7 @@ use App\Models\Barony;
 use App\Models\Duchy;
 use App\Models\Horse;
 use App\Models\Kingdom;
+use App\Models\PlayerHorse;
 use App\Models\Town;
 use App\Models\Village;
 use App\Services\StableService;
@@ -82,10 +83,8 @@ class StableController extends Controller
             ->values()
             ->all();
 
-        // Get user's current horse if any
+        // Get user's active horse (for backwards compatibility with current UI)
         $userHorse = $this->stableService->getUserHorse($user);
-
-        // Transform user horse data for frontend
         $userHorseData = null;
         if ($userHorse) {
             $userHorseData = [
@@ -98,6 +97,7 @@ class StableController extends Controller
                 ],
                 'stamina' => $userHorse['stamina'],
                 'max_stamina' => $userHorse['max_stamina'],
+                'is_active' => $userHorse['is_active'],
                 'is_stabled' => $userHorse['is_stabled'],
                 'stabled_location_type' => $userHorse['stabled_location_type'],
                 'stabled_location_id' => $userHorse['stabled_location_id'],
@@ -105,9 +105,27 @@ class StableController extends Controller
             ];
         }
 
+        // Get all of user's horses
+        $userHorses = $this->stableService->getUserHorses($user)->toArray();
+
+        // Get all horses stabled at this location (with owners)
+        $stabledHorses = $location
+            ? $this->stableService->getHorsesStabledAt($locationType, $location->id)->toArray()
+            : [];
+
+        // Check if user is stablemaster at this location
+        $isStablemaster = $location
+            ? $this->stableService->isStablemaster($user, $locationType, $location->id)
+            : false;
+
         $data = [
             'stock' => $stock,
             'userHorse' => $userHorseData,
+            'userHorses' => $userHorses,
+            'stabledHorses' => $stabledHorses,
+            'isStablemaster' => $isStablemaster,
+            'maxHorses' => PlayerHorse::MAX_HORSES_PER_USER,
+            'horseCount' => $user->horseCount(),
             'locationType' => $locationType,
             'userGold' => $user->gold,
         ];
@@ -151,7 +169,7 @@ class StableController extends Controller
     /**
      * Purchase a horse.
      */
-    public function buy(Request $request)
+    public function buy(Request $request): RedirectResponse
     {
         $request->validate([
             'horse_id' => 'required|exists:horses,id',
@@ -177,33 +195,17 @@ class StableController extends Controller
     }
 
     /**
-     * Sell the user's horse.
+     * Sell a horse.
      */
-    public function sell(Request $request)
-    {
-        $user = $request->user();
-
-        $result = $this->stableService->sellHorse($user);
-
-        if (! $result['success']) {
-            return back()->withErrors(['error' => $result['message']]);
-        }
-
-        return back()->with('success', $result['message']);
-    }
-
-    /**
-     * Rename the user's horse.
-     */
-    public function rename(Request $request)
+    public function sell(Request $request): RedirectResponse
     {
         $request->validate([
-            'name' => 'required|string|max:50',
+            'player_horse_id' => 'nullable|integer|exists:player_horses,id',
         ]);
 
         $user = $request->user();
 
-        $result = $this->stableService->renameHorse($user, $request->name);
+        $result = $this->stableService->sellHorse($user, $request->player_horse_id);
 
         if (! $result['success']) {
             return back()->withErrors(['error' => $result['message']]);
@@ -213,13 +215,38 @@ class StableController extends Controller
     }
 
     /**
-     * Stable the horse at current location.
+     * Rename a horse.
      */
-    public function stable(Request $request)
+    public function rename(Request $request): RedirectResponse
     {
+        $request->validate([
+            'name' => 'required|string|max:50',
+            'player_horse_id' => 'nullable|integer|exists:player_horses,id',
+        ]);
+
         $user = $request->user();
 
-        $result = $this->stableService->stableHorse($user);
+        $result = $this->stableService->renameHorse($user, $request->name, $request->player_horse_id);
+
+        if (! $result['success']) {
+            return back()->withErrors(['error' => $result['message']]);
+        }
+
+        return back()->with('success', $result['message']);
+    }
+
+    /**
+     * Stable a horse at current location.
+     */
+    public function stable(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'player_horse_id' => 'nullable|integer|exists:player_horses,id',
+        ]);
+
+        $user = $request->user();
+
+        $result = $this->stableService->stableHorse($user, $request->player_horse_id);
 
         if (! $result['success']) {
             return back()->withErrors(['error' => $result['message']]);
@@ -231,11 +258,35 @@ class StableController extends Controller
     /**
      * Retrieve horse from stable.
      */
-    public function retrieve(Request $request)
+    public function retrieve(Request $request): RedirectResponse
     {
+        $request->validate([
+            'player_horse_id' => 'nullable|integer|exists:player_horses,id',
+        ]);
+
         $user = $request->user();
 
-        $result = $this->stableService->retrieveHorse($user);
+        $result = $this->stableService->retrieveHorse($user, $request->player_horse_id);
+
+        if (! $result['success']) {
+            return back()->withErrors(['error' => $result['message']]);
+        }
+
+        return back()->with('success', $result['message']);
+    }
+
+    /**
+     * Switch active horse.
+     */
+    public function switchActive(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'player_horse_id' => 'required|integer|exists:player_horses,id',
+        ]);
+
+        $user = $request->user();
+
+        $result = $this->stableService->switchActiveHorse($user, $request->player_horse_id);
 
         if (! $result['success']) {
             return back()->withErrors(['error' => $result['message']]);
@@ -247,11 +298,39 @@ class StableController extends Controller
     /**
      * Rest horse at stable (pay to restore stamina).
      */
-    public function rest(Request $request)
+    public function rest(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'player_horse_id' => 'nullable|integer|exists:player_horses,id',
+        ]);
+
+        $user = $request->user();
+
+        $result = $this->stableService->restHorse($user, $request->player_horse_id);
+
+        if (! $result['success']) {
+            return back()->withErrors(['error' => $result['message']]);
+        }
+
+        return back()->with('success', $result['message']);
+    }
+
+    /**
+     * Stablemaster feeds all horses at the stable.
+     */
+    public function feedHorses(Request $request): RedirectResponse
     {
         $user = $request->user();
 
-        $result = $this->stableService->restHorse($user);
+        if (! $user->current_location_type || ! $user->current_location_id) {
+            return back()->withErrors(['error' => 'You must be at a location to feed horses.']);
+        }
+
+        $result = $this->stableService->stablemasterFeedHorses(
+            $user,
+            $user->current_location_type,
+            $user->current_location_id
+        );
 
         if (! $result['success']) {
             return back()->withErrors(['error' => $result['message']]);

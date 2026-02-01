@@ -10,9 +10,13 @@ class PlayerHorse extends Model
 {
     use HasFactory;
 
+    public const MAX_HORSES_PER_USER = 15;
+
     protected $fillable = [
         'user_id',
         'horse_id',
+        'is_active',
+        'sort_order',
         'custom_name',
         'purchase_price',
         'stamina',
@@ -27,10 +31,60 @@ class PlayerHorse extends Model
         'purchase_price' => 'integer',
         'stamina' => 'integer',
         'max_stamina' => 'integer',
+        'is_active' => 'boolean',
+        'sort_order' => 'integer',
         'is_stabled' => 'boolean',
         'stabled_location_id' => 'integer',
         'purchased_at' => 'datetime',
     ];
+
+    /**
+     * Scope to get only active horses.
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope to get horses stabled at a specific location.
+     */
+    public function scopeStabledAt($query, string $locationType, int $locationId)
+    {
+        return $query->where('is_stabled', true)
+            ->where('stabled_location_type', $locationType)
+            ->where('stabled_location_id', $locationId);
+    }
+
+    /**
+     * Make this horse the active one (deactivates others).
+     */
+    public function makeActive(): void
+    {
+        // Deactivate all other horses for this user
+        self::where('user_id', $this->user_id)
+            ->where('id', '!=', $this->id)
+            ->update(['is_active' => false]);
+
+        $this->is_active = true;
+        $this->save();
+    }
+
+    /**
+     * Count how many horses a user has.
+     */
+    public static function countForUser(int $userId): int
+    {
+        return self::where('user_id', $userId)->count();
+    }
+
+    /**
+     * Check if user can add more horses.
+     */
+    public static function canUserAddHorse(int $userId): bool
+    {
+        return self::countForUser($userId) < self::MAX_HORSES_PER_USER;
+    }
 
     public function user(): BelongsTo
     {
@@ -79,11 +133,12 @@ class PlayerHorse extends Model
      */
     public function consumeStamina(int $amount): bool
     {
-        if (!$this->hasStamina($amount)) {
+        if (! $this->hasStamina($amount)) {
             return false;
         }
 
         $this->decrement('stamina', $amount);
+
         return true;
     }
 
@@ -110,7 +165,7 @@ class PlayerHorse extends Model
      */
     public function isAvailableForTravel(): bool
     {
-        return !$this->is_stabled && $this->hasStamina($this->horse->stamina_cost_per_travel);
+        return ! $this->is_stabled && $this->hasStamina($this->horse->stamina_cost_per_travel);
     }
 
     /**
@@ -137,7 +192,7 @@ class PlayerHorse extends Model
      */
     public function retrieve(): bool
     {
-        if (!$this->is_stabled) {
+        if (! $this->is_stabled) {
             return false;
         }
 

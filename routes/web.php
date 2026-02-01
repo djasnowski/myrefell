@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AgilityController;
 use App\Http\Controllers\AnvilController;
 use App\Http\Controllers\ApothecaryController;
 use App\Http\Controllers\ArmyController;
@@ -225,6 +226,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('stable/stable', [StableController::class, 'stable'])->name('stable.stable');
     Route::post('stable/retrieve', [StableController::class, 'retrieve'])->name('stable.retrieve');
     Route::post('stable/rest', [StableController::class, 'rest'])->name('stable.rest');
+    Route::post('stable/switch-active', [StableController::class, 'switchActive'])->name('stable.switchActive');
+    Route::post('stable/feed', [StableController::class, 'feedHorses'])->name('stable.feed');
 
     // Bank
     Route::get('villages/{village}/bank', [BankController::class, 'villageBank'])->name('villages.bank');
@@ -324,6 +327,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('farming/{plot}/tend', [FarmingController::class, 'tend'])->name('farming.tend');
         Route::post('farming/{plot}/harvest', [FarmingController::class, 'harvest'])->name('farming.harvest');
         Route::post('farming/{plot}/clear', [FarmingController::class, 'clear'])->name('farming.clear');
+        Route::get('agility', [AgilityController::class, 'index'])->name('agility');
+        Route::post('agility/train', [AgilityController::class, 'train'])->name('agility.train');
     });
 
     // Location-scoped services: Towns
@@ -352,6 +357,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('thieving/attempt', [ThievingController::class, 'thieve'])->name('thieving.attempt');
         Route::get('apothecary', [ApothecaryController::class, 'index'])->name('apothecary');
         Route::post('apothecary/brew', [ApothecaryController::class, 'brew'])->name('apothecary.brew');
+        Route::get('farming', [FarmingController::class, 'index'])->name('farming');
+        Route::post('farming/buy-plot', [FarmingController::class, 'buyPlot'])->name('farming.buy-plot');
+        Route::post('farming/{plot}/plant', [FarmingController::class, 'plant'])->name('farming.plant');
+        Route::post('farming/{plot}/water', [FarmingController::class, 'water'])->name('farming.water');
+        Route::post('farming/{plot}/tend', [FarmingController::class, 'tend'])->name('farming.tend');
+        Route::post('farming/{plot}/harvest', [FarmingController::class, 'harvest'])->name('farming.harvest');
+        Route::post('farming/{plot}/clear', [FarmingController::class, 'clear'])->name('farming.clear');
+        Route::get('agility', [AgilityController::class, 'index'])->name('agility');
+        Route::post('agility/train', [AgilityController::class, 'train'])->name('agility.train');
     });
 
     // Location-scoped services: Baronies
@@ -377,6 +391,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('thieving/attempt', [ThievingController::class, 'thieve'])->name('thieving.attempt');
         Route::get('apothecary', [ApothecaryController::class, 'index'])->name('apothecary');
         Route::post('apothecary/brew', [ApothecaryController::class, 'brew'])->name('apothecary.brew');
+        Route::get('agility', [AgilityController::class, 'index'])->name('agility');
+        Route::post('agility/train', [AgilityController::class, 'train'])->name('agility.train');
     });
 
     // Location-scoped services: Duchies
@@ -402,6 +418,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('thieving/attempt', [ThievingController::class, 'thieve'])->name('thieving.attempt');
         Route::get('apothecary', [ApothecaryController::class, 'index'])->name('apothecary');
         Route::post('apothecary/brew', [ApothecaryController::class, 'brew'])->name('apothecary.brew');
+        Route::get('agility', [AgilityController::class, 'index'])->name('agility');
+        Route::post('agility/train', [AgilityController::class, 'train'])->name('agility.train');
     });
 
     // Location-scoped services: Kingdoms

@@ -142,6 +142,12 @@ class LocationServices
             'icon' => 'wheat',
             'route' => 'farming',
         ],
+        'agility' => [
+            'name' => 'Agility Course',
+            'description' => 'Train your agility on obstacle courses',
+            'icon' => 'footprints',
+            'route' => 'agility',
+        ],
     ];
 
     /**
@@ -165,6 +171,7 @@ class LocationServices
             'thieving',
             'apothecary',
             'farming',
+            'agility',
         ],
         'town' => [
             'training',
@@ -184,6 +191,7 @@ class LocationServices
             'thieving',
             'apothecary',
             'farming',
+            'agility',
         ],
         'barony' => [
             'training',
@@ -202,6 +210,7 @@ class LocationServices
             'chat',
             'taxes',
             'apothecary',
+            'agility',
         ],
         'duchy' => [
             'training',
@@ -214,6 +223,7 @@ class LocationServices
             'tavern',
             'thieving',
             'apothecary',
+            'agility',
         ],
         'kingdom' => [
             'training',

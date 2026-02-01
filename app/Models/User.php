@@ -422,24 +422,48 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get the player's horse.
+     * Get all of the player's horses.
      */
-    public function horse(): HasOne
+    public function horses(): HasMany
     {
-        return $this->hasOne(PlayerHorse::class);
+        return $this->hasMany(PlayerHorse::class)->orderBy('sort_order');
     }
 
     /**
-     * Check if player has a horse.
+     * Get the player's active horse (the one "with them").
+     */
+    public function activeHorse(): HasOne
+    {
+        return $this->hasOne(PlayerHorse::class)->where('is_active', true);
+    }
+
+    /**
+     * Alias for backwards compatibility.
+     */
+    public function horse(): HasOne
+    {
+        return $this->activeHorse();
+    }
+
+    /**
+     * Check if player has any horses.
      */
     public function hasHorse(): bool
     {
-        return $this->horse()->exists();
+        return $this->horses()->exists();
+    }
+
+    /**
+     * Check if player has an active horse.
+     */
+    public function hasActiveHorse(): bool
+    {
+        return $this->activeHorse()->exists();
     }
 
     /**
      * Get the player's travel speed multiplier.
-     * Only applies if horse is with the player (not stabled).
+     * Only applies if active horse is with the player (not stabled).
      */
     public function getTravelSpeedMultiplier(): float
     {
@@ -447,31 +471,31 @@ class User extends Authenticatable implements MustVerifyEmail
             return 1.0;
         }
 
-        return $this->horse->speed_multiplier;
+        return $this->activeHorse->speed_multiplier;
     }
 
     /**
-     * Check if player has a horse with them (not stabled).
+     * Check if player has their active horse with them (not stabled).
      */
     public function hasHorseWithMe(): bool
     {
-        $horse = $this->horse;
+        $horse = $this->activeHorse;
 
         return $horse && ! $horse->is_stabled;
     }
 
     /**
-     * Check if player's horse is stabled somewhere.
+     * Check if player's active horse is stabled somewhere.
      */
     public function hasStabledHorse(): bool
     {
-        $horse = $this->horse;
+        $horse = $this->activeHorse;
 
         return $horse && $horse->is_stabled;
     }
 
     /**
-     * Check if horse can be used for travel (has stamina).
+     * Check if active horse can be used for travel (has stamina).
      */
     public function canUseHorseForTravel(): bool
     {
@@ -479,7 +503,23 @@ class User extends Authenticatable implements MustVerifyEmail
             return false;
         }
 
-        return $this->horse->isAvailableForTravel();
+        return $this->activeHorse->isAvailableForTravel();
+    }
+
+    /**
+     * Get count of player's horses.
+     */
+    public function horseCount(): int
+    {
+        return $this->horses()->count();
+    }
+
+    /**
+     * Check if player can buy more horses.
+     */
+    public function canBuyMoreHorses(): bool
+    {
+        return PlayerHorse::canUserAddHorse($this->id);
     }
 
     // ==================== SOCIAL CLASS METHODS ====================
