@@ -20,9 +20,10 @@ class FoodConsumptionService
     public const FOOD_ITEM_NAME = 'Grain';
 
     /**
-     * Food consumed per person per week.
+     * Number of people fed by 1 food item per week.
+     * E.g., 1 Grain feeds 4 people for a week.
      */
-    public const FOOD_PER_PERSON_PER_WEEK = 1;
+    public const PEOPLE_FED_PER_FOOD = 4;
 
     /**
      * Maximum weeks without food before death.
@@ -142,7 +143,7 @@ class FoodConsumptionService
             $playerCount = User::where('home_village_id', $village->id)->count();
 
             $totalPopulation = $npcCount + $playerCount;
-            $foodNeeded = $totalPopulation * self::FOOD_PER_PERSON_PER_WEEK;
+            $foodNeeded = (int) ceil($totalPopulation / self::PEOPLE_FED_PER_FOOD);
 
             // Calculate how much food can be consumed
             $foodAvailable = $stockpile->quantity;
@@ -206,7 +207,7 @@ class FoodConsumptionService
                 ->count();
 
             $totalPopulation = $npcCount + $playerCount;
-            $foodNeeded = $totalPopulation * self::FOOD_PER_PERSON_PER_WEEK;
+            $foodNeeded = (int) ceil($totalPopulation / self::PEOPLE_FED_PER_FOOD);
 
             // Calculate how much food can be consumed
             $foodAvailable = $stockpile->quantity;
@@ -344,7 +345,7 @@ class FoodConsumptionService
                 }
 
                 $npcCount = LocationNpc::alive()->atLocation('village', $village->id)->count();
-                $foodNeeded = max(1, $npcCount) * self::FOOD_PER_PERSON_PER_WEEK;
+                $foodNeeded = (int) ceil(max(1, $npcCount) / self::PEOPLE_FED_PER_FOOD);
                 $weeksOfFood = $stockpile->quantity / $foodNeeded;
 
                 return $weeksOfFood >= 10;
@@ -375,7 +376,7 @@ class FoodConsumptionService
                 }
 
                 $npcCount = LocationNpc::alive()->atLocation('town', $town->id)->count();
-                $foodNeeded = max(1, $npcCount) * self::FOOD_PER_PERSON_PER_WEEK;
+                $foodNeeded = (int) ceil(max(1, $npcCount) / self::PEOPLE_FED_PER_FOOD);
                 $weeksOfFood = $stockpile->quantity / $foodNeeded;
 
                 return $weeksOfFood >= 10;
@@ -405,7 +406,7 @@ class FoodConsumptionService
                 }
 
                 $npcCount = LocationNpc::alive()->atLocation('village', $village->id)->count();
-                $foodNeeded = max(1, $npcCount) * self::FOOD_PER_PERSON_PER_WEEK;
+                $foodNeeded = (int) ceil(max(1, $npcCount) / self::PEOPLE_FED_PER_FOOD);
                 $weeksOfFood = $stockpile->quantity / $foodNeeded;
 
                 return $weeksOfFood >= 10;
@@ -583,7 +584,7 @@ class FoodConsumptionService
         $playerCount = User::where('home_village_id', $village->id)->count();
 
         $totalPopulation = $npcCount + $playerCount;
-        $foodPerWeek = $totalPopulation * self::FOOD_PER_PERSON_PER_WEEK;
+        $foodPerWeek = (int) ceil($totalPopulation / self::PEOPLE_FED_PER_FOOD);
         $foodAvailable = $stockpile?->quantity ?? 0;
 
         $starvingNpcs = LocationNpc::alive()
@@ -636,13 +637,18 @@ class FoodConsumptionService
             ->atLocation('town', $town->id)
             ->count();
 
+        // Fall back to town population field if no actual NPCs exist
+        if ($npcCount === 0 && $town->population > 0) {
+            $npcCount = $town->population;
+        }
+
         $playerCount = User::where('current_location_type', 'town')
             ->where('current_location_id', $town->id)
             ->where('home_village_id', null)
             ->count();
 
         $totalPopulation = $npcCount + $playerCount;
-        $foodPerWeek = $totalPopulation * self::FOOD_PER_PERSON_PER_WEEK;
+        $foodPerWeek = (int) ceil($totalPopulation / self::PEOPLE_FED_PER_FOOD);
         $foodAvailable = $stockpile?->quantity ?? 0;
 
         $starvingNpcs = LocationNpc::alive()
@@ -765,7 +771,7 @@ class FoodConsumptionService
             $totalPopulation = max(1, $npcCount + $playerCount);
 
             // Give enough food for the specified weeks
-            $foodAmount = $totalPopulation * self::FOOD_PER_PERSON_PER_WEEK * $weeksOfFood;
+            $foodAmount = (int) ceil($totalPopulation / self::PEOPLE_FED_PER_FOOD) * $weeksOfFood;
 
             $stockpile = LocationStockpile::getOrCreate('village', $village->id, $grainItem->id);
 
