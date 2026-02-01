@@ -1,5 +1,15 @@
 import { Head, router, usePage } from "@inertiajs/react";
-import { Clock, Flame, Gift, History, Loader2, Sparkles, Star, Trophy } from "lucide-react";
+import {
+    Clock,
+    Flame,
+    Gift,
+    History,
+    Loader2,
+    Package,
+    Sparkles,
+    Star,
+    Trophy,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { gameToast } from "@/components/ui/game-toast";
@@ -22,7 +32,7 @@ interface SpinResult {
         name: string;
         rarity: string;
     };
-    rarity: "common" | "uncommon" | "rare" | "epic";
+    rarity: "common" | "uncommon" | "rare" | "epic" | "mystery";
     message: string;
     new_streak: number;
     segment_index: number;
@@ -291,6 +301,7 @@ function RecentPlaysHistory({ plays }: { plays: RecentPlay[] }) {
         uncommon: "text-green-400 border-green-500/50 bg-green-900/20",
         rare: "text-blue-400 border-blue-500/50 bg-blue-900/20",
         epic: "text-purple-400 border-purple-500/50 bg-purple-900/20",
+        mystery: "text-emerald-400 border-emerald-500/50 bg-emerald-900/20",
     };
 
     if (plays.length === 0) {
@@ -324,6 +335,286 @@ function RecentPlaysHistory({ plays }: { plays: RecentPlay[] }) {
                     </span>
                 </div>
             ))}
+        </div>
+    );
+}
+
+// Mystery Box explosion reveal animation
+function MysteryBoxReveal({
+    item,
+    goldAmount,
+    onComplete,
+}: {
+    item: { name: string; rarity: string } | null;
+    goldAmount: number;
+    onComplete: () => void;
+}) {
+    const [phase, setPhase] = useState<"shake" | "explode" | "reveal">("shake");
+
+    useEffect(() => {
+        // Shake for 1.5s, then explode for 0.5s, then reveal
+        const shakeTimer = setTimeout(() => setPhase("explode"), 1500);
+        const explodeTimer = setTimeout(() => setPhase("reveal"), 2000);
+
+        return () => {
+            clearTimeout(shakeTimer);
+            clearTimeout(explodeTimer);
+        };
+    }, []);
+
+    const getRarityColor = (rarity: string) => {
+        switch (rarity) {
+            case "legendary":
+                return "text-orange-400 border-orange-500 bg-orange-900/30";
+            case "epic":
+                return "text-purple-400 border-purple-500 bg-purple-900/30";
+            case "rare":
+                return "text-blue-400 border-blue-500 bg-blue-900/30";
+            default:
+                return "text-green-400 border-green-500 bg-green-900/30";
+        }
+    };
+
+    const getRarityGlow = (rarity: string) => {
+        switch (rarity) {
+            case "legendary":
+                return "shadow-[0_0_40px_rgba(251,146,60,0.6)]";
+            case "epic":
+                return "shadow-[0_0_40px_rgba(192,132,252,0.6)]";
+            case "rare":
+                return "shadow-[0_0_40px_rgba(96,165,250,0.6)]";
+            default:
+                return "shadow-[0_0_30px_rgba(74,222,128,0.5)]";
+        }
+    };
+
+    return (
+        <div className="flex flex-col items-center py-4">
+            {phase === "shake" && (
+                <div className="animate-[shake_0.1s_ease-in-out_infinite] rounded-xl border-2 border-emerald-500 bg-emerald-900/50 p-8">
+                    <Package className="h-20 w-20 text-emerald-400" />
+                </div>
+            )}
+
+            {phase === "explode" && (
+                <div className="relative">
+                    {/* Explosion particles */}
+                    {[...Array(12)].map((_, i) => (
+                        <div
+                            key={i}
+                            className="absolute left-1/2 top-1/2 h-3 w-3 rounded-full bg-amber-400"
+                            style={{
+                                animation: `explode-particle 0.5s ease-out forwards`,
+                                transform: `rotate(${i * 30}deg) translateY(-20px)`,
+                                animationDelay: `${i * 0.02}s`,
+                            }}
+                        />
+                    ))}
+                    <div className="scale-150 rounded-xl border-2 border-amber-500 bg-amber-900/50 p-8 opacity-0 transition-all duration-300">
+                        <Package className="h-20 w-20 text-amber-400" />
+                    </div>
+                </div>
+            )}
+
+            {phase === "reveal" && item && (
+                <div
+                    className={`animate-[pop-in_0.3s_ease-out_forwards] rounded-xl border-2 p-6 ${getRarityColor(item.rarity)} ${getRarityGlow(item.rarity)}`}
+                >
+                    <div className="text-center">
+                        <Sparkles className="mx-auto mb-2 h-8 w-8 animate-pulse" />
+                        <p className="font-pixel text-lg">{item.name}</p>
+                        <p className="mt-1 font-pixel text-xs capitalize">{item.rarity} Item</p>
+                        {goldAmount > 0 && (
+                            <p className="mt-2 font-pixel text-sm text-amber-400">
+                                + {goldAmount} Gold
+                            </p>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {phase === "reveal" && (
+                <Button
+                    onClick={onComplete}
+                    className="mt-6 w-full border-2 border-amber-500 bg-amber-900/50 font-pixel text-amber-200 hover:bg-amber-800/50"
+                >
+                    Huzzah!
+                </Button>
+            )}
+
+            <style>{`
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0) rotate(0deg); }
+                    25% { transform: translateX(-5px) rotate(-2deg); }
+                    75% { transform: translateX(5px) rotate(2deg); }
+                }
+                @keyframes explode-particle {
+                    0% { opacity: 1; transform: rotate(var(--rotation)) translateY(-20px) scale(1); }
+                    100% { opacity: 0; transform: rotate(var(--rotation)) translateY(-80px) scale(0); }
+                }
+                @keyframes pop-in {
+                    0% { opacity: 0; transform: scale(0.5); }
+                    50% { transform: scale(1.1); }
+                    100% { opacity: 1; transform: scale(1); }
+                }
+            `}</style>
+        </div>
+    );
+}
+
+// Item reveal animation for Rare/Epic items (descending with sparkles)
+function ItemReveal({
+    item,
+    goldAmount,
+    onComplete,
+}: {
+    item: { name: string; rarity: string };
+    goldAmount: number;
+    onComplete: () => void;
+}) {
+    const [phase, setPhase] = useState<"sparkle" | "descend" | "reveal">("sparkle");
+
+    useEffect(() => {
+        // Sparkles for 1s, then item descends for 1s, then reveal
+        const sparkleTimer = setTimeout(() => setPhase("descend"), 1000);
+        const descendTimer = setTimeout(() => setPhase("reveal"), 2000);
+
+        return () => {
+            clearTimeout(sparkleTimer);
+            clearTimeout(descendTimer);
+        };
+    }, []);
+
+    const getRarityColor = (rarity: string) => {
+        switch (rarity) {
+            case "legendary":
+                return "text-orange-400 border-orange-500 bg-orange-900/30";
+            case "epic":
+                return "text-purple-400 border-purple-500 bg-purple-900/30";
+            case "rare":
+                return "text-blue-400 border-blue-500 bg-blue-900/30";
+            default:
+                return "text-amber-400 border-amber-500 bg-amber-900/30";
+        }
+    };
+
+    const getRarityGlow = (rarity: string) => {
+        switch (rarity) {
+            case "legendary":
+                return "shadow-[0_0_50px_rgba(251,146,60,0.7)]";
+            case "epic":
+                return "shadow-[0_0_50px_rgba(192,132,252,0.7)]";
+            case "rare":
+                return "shadow-[0_0_40px_rgba(96,165,250,0.6)]";
+            default:
+                return "shadow-[0_0_30px_rgba(251,191,36,0.5)]";
+        }
+    };
+
+    const getSparkleColor = (rarity: string) => {
+        switch (rarity) {
+            case "legendary":
+                return "bg-orange-400";
+            case "epic":
+                return "bg-purple-400";
+            case "rare":
+                return "bg-blue-400";
+            default:
+                return "bg-amber-400";
+        }
+    };
+
+    return (
+        <div className="flex flex-col items-center py-4">
+            {phase === "sparkle" && (
+                <div className="relative h-32 w-32">
+                    {/* Swirling sparkles */}
+                    {[...Array(8)].map((_, i) => (
+                        <div
+                            key={i}
+                            className={`absolute left-1/2 top-1/2 h-2 w-2 rounded-full ${getSparkleColor(item.rarity)}`}
+                            style={{
+                                animation: `swirl 1s ease-in-out infinite`,
+                                animationDelay: `${i * 0.125}s`,
+                                transformOrigin: "center",
+                            }}
+                        />
+                    ))}
+                    <Sparkles className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 animate-pulse text-amber-400" />
+                </div>
+            )}
+
+            {phase === "descend" && (
+                <div className="relative h-32 w-full">
+                    {/* Falling sparkles trail */}
+                    {[...Array(6)].map((_, i) => (
+                        <div
+                            key={i}
+                            className={`absolute left-1/2 h-1.5 w-1.5 rounded-full ${getSparkleColor(item.rarity)}`}
+                            style={{
+                                animation: `fall-sparkle 1s ease-out forwards`,
+                                animationDelay: `${i * 0.1}s`,
+                                marginLeft: `${(i % 2 === 0 ? -1 : 1) * (10 + i * 5)}px`,
+                            }}
+                        />
+                    ))}
+                    {/* Descending item */}
+                    <div
+                        className={`absolute left-1/2 -translate-x-1/2 rounded-xl border-2 p-4 ${getRarityColor(item.rarity)} ${getRarityGlow(item.rarity)}`}
+                        style={{
+                            animation: `descend-item 1s ease-out forwards`,
+                        }}
+                    >
+                        <Gift className="h-10 w-10" />
+                    </div>
+                </div>
+            )}
+
+            {phase === "reveal" && (
+                <div
+                    className={`animate-[pulse-glow_1.5s_ease-in-out_infinite] rounded-xl border-2 p-6 ${getRarityColor(item.rarity)} ${getRarityGlow(item.rarity)}`}
+                >
+                    <div className="text-center">
+                        <Gift className="mx-auto mb-2 h-10 w-10" />
+                        <p className="font-pixel text-lg">{item.name}</p>
+                        <p className="mt-1 font-pixel text-xs capitalize">{item.rarity} Item</p>
+                        {goldAmount > 0 && (
+                            <p className="mt-2 font-pixel text-sm text-amber-400">
+                                + {goldAmount} Gold
+                            </p>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {phase === "reveal" && (
+                <Button
+                    onClick={onComplete}
+                    className="mt-6 w-full border-2 border-amber-500 bg-amber-900/50 font-pixel text-amber-200 hover:bg-amber-800/50"
+                >
+                    Huzzah!
+                </Button>
+            )}
+
+            <style>{`
+                @keyframes swirl {
+                    0% { transform: translate(-50%, -50%) rotate(0deg) translateX(30px); opacity: 0; }
+                    50% { opacity: 1; }
+                    100% { transform: translate(-50%, -50%) rotate(360deg) translateX(30px); opacity: 0; }
+                }
+                @keyframes fall-sparkle {
+                    0% { top: 0; opacity: 1; }
+                    100% { top: 100%; opacity: 0; }
+                }
+                @keyframes descend-item {
+                    0% { top: -20px; opacity: 0; }
+                    100% { top: 50%; opacity: 1; transform: translate(-50%, -50%); }
+                }
+                @keyframes pulse-glow {
+                    0%, 100% { transform: scale(1); }
+                    50% { transform: scale(1.02); }
+                }
+            `}</style>
         </div>
     );
 }
@@ -505,48 +796,101 @@ export default function MinigamesIndex() {
             {/* Result Modal */}
             <Dialog open={showResultModal} onOpenChange={setShowResultModal}>
                 <DialogContent className="border-2 border-amber-600/50 bg-gradient-to-br from-stone-900 to-stone-950 sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2 font-pixel text-xl text-amber-400">
-                            <Gift className="h-6 w-6" />
-                            Congratulations!
-                        </DialogTitle>
-                        <DialogDescription className="font-pixel text-sm text-stone-400">
-                            You won a reward from the Wheel of Fortune!
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    {spinResult && (
-                        <div className="flex flex-col items-center py-6">
-                            <div
-                                className={`mb-4 rounded-lg border-2 px-6 py-4 ${getRarityStyle(spinResult.rarity)}`}
-                            >
-                                <p className="font-pixel text-lg">
-                                    {spinResult.reward_type === "gold"
-                                        ? `${spinResult.reward_amount} Gold`
-                                        : spinResult.reward_item?.name || "Mystery Item"}
-                                </p>
-                                <p className="mt-1 text-center font-pixel text-xs capitalize">
-                                    {spinResult.rarity} Reward
-                                </p>
-                            </div>
-
-                            <div className="flex items-center gap-2">
+                    {spinResult?.rarity === "mystery" ? (
+                        // Mystery Box reveal animation
+                        <>
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2 font-pixel text-xl text-emerald-400">
+                                    <Package className="h-6 w-6" />
+                                    Mystery Box!
+                                </DialogTitle>
+                                <DialogDescription className="font-pixel text-sm text-stone-400">
+                                    What could be inside...?
+                                </DialogDescription>
+                            </DialogHeader>
+                            <MysteryBoxReveal
+                                item={spinResult.reward_item ?? null}
+                                goldAmount={spinResult.reward_amount ?? 0}
+                                onComplete={closeResultModal}
+                            />
+                            <div className="flex items-center justify-center gap-2 pb-2">
                                 <span className="font-pixel text-xs text-stone-400">
                                     New Streak:
                                 </span>
                                 <StreakDisplay streak={spinResult.new_streak} />
                             </div>
-                        </div>
-                    )}
+                        </>
+                    ) : spinResult?.reward_item ? (
+                        // Rare/Epic item reveal animation
+                        <>
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2 font-pixel text-xl text-amber-400">
+                                    <Sparkles className="h-6 w-6" />
+                                    {spinResult.rarity === "epic"
+                                        ? "Epic Find!"
+                                        : "Rare Discovery!"}
+                                </DialogTitle>
+                                <DialogDescription className="font-pixel text-sm text-stone-400">
+                                    You found something special...
+                                </DialogDescription>
+                            </DialogHeader>
+                            <ItemReveal
+                                item={spinResult.reward_item}
+                                goldAmount={spinResult.reward_amount ?? 0}
+                                onComplete={closeResultModal}
+                            />
+                            <div className="flex items-center justify-center gap-2 pb-2">
+                                <span className="font-pixel text-xs text-stone-400">
+                                    New Streak:
+                                </span>
+                                <StreakDisplay streak={spinResult.new_streak} />
+                            </div>
+                        </>
+                    ) : (
+                        // Gold-only reward display
+                        <>
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2 font-pixel text-xl text-amber-400">
+                                    <Gift className="h-6 w-6" />
+                                    Congratulations!
+                                </DialogTitle>
+                                <DialogDescription className="font-pixel text-sm text-stone-400">
+                                    You won a reward from the Wheel of Fortune!
+                                </DialogDescription>
+                            </DialogHeader>
 
-                    <DialogFooter>
-                        <Button
-                            onClick={closeResultModal}
-                            className="w-full border-2 border-amber-500 bg-amber-900/50 font-pixel text-amber-200 hover:bg-amber-800/50"
-                        >
-                            Huzzah!
-                        </Button>
-                    </DialogFooter>
+                            {spinResult && (
+                                <div className="flex flex-col items-center py-6">
+                                    <div
+                                        className={`mb-4 rounded-lg border-2 px-6 py-4 ${getRarityStyle(spinResult.rarity)}`}
+                                    >
+                                        <p className="font-pixel text-lg">
+                                            {spinResult.reward_amount} Gold
+                                        </p>
+                                        <p className="mt-1 text-center font-pixel text-xs capitalize">
+                                            {spinResult.rarity} Reward
+                                        </p>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-pixel text-xs text-stone-400">
+                                            New Streak:
+                                        </span>
+                                        <StreakDisplay streak={spinResult.new_streak} />
+                                    </div>
+                                </div>
+                            )}
+
+                            <DialogFooter>
+                                <Button
+                                    onClick={closeResultModal}
+                                    className="w-full border-2 border-amber-500 bg-amber-900/50 font-pixel text-amber-200 hover:bg-amber-800/50"
+                                >
+                                    Huzzah!
+                                </Button>
+                            </DialogFooter>
+                        </>
+                    )}
                 </DialogContent>
             </Dialog>
         </AppLayout>

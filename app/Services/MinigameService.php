@@ -121,6 +121,23 @@ class MinigameService
                         ->inRandomOrder()
                         ->first();
                     break;
+
+                case MinigamePlay::REWARD_MYSTERY:
+                    // Mystery Box: Random rare/epic/legendary item with weighted chances
+                    // 50% rare, 35% epic, 15% legendary
+                    $roll = random_int(1, 100);
+                    $itemRarity = match (true) {
+                        $roll <= 50 => 'rare',
+                        $roll <= 85 => 'epic',
+                        default => 'legendary',
+                    };
+                    $rewardItem = Item::where('rarity', $itemRarity)
+                        ->where('is_tradeable', true)
+                        ->inRandomOrder()
+                        ->first();
+                    // Small gold bonus too
+                    $rewardValue = random_int(100, 300);
+                    break;
             }
 
             // Give gold reward

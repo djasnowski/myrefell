@@ -86,9 +86,16 @@ class MinigameController extends Controller
      */
     protected function calculateSegmentIndex(array $result): int
     {
-        // Map rewards to approximate segment indexes
+        // Map rewards to segment indexes
         // Segments: 0=50g, 1=rare item, 2=100g, 3=150g, 4=epic item, 5=200g,
         //           6=mystery, 7=300g, 8=500g, 9=jackpot, 10=750g, 11=1000g
+
+        // Mystery Box always lands on segment 6
+        if ($result['reward_type'] === 'mystery') {
+            return 6;
+        }
+
+        // Items land on their rarity segment
         if ($result['reward_item']) {
             return $result['reward_type'] === 'epic' ? 4 : 1;
         }

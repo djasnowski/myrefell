@@ -21,6 +21,8 @@ class MinigamePlay extends Model
 
     public const REWARD_EPIC = 'epic';
 
+    public const REWARD_MYSTERY = 'mystery';
+
     /**
      * Maximum streak days for bonus rewards.
      */
@@ -28,17 +30,17 @@ class MinigamePlay extends Model
 
     /**
      * Reward chances based on streak day (percentages).
-     * Day 1: Common 60%, Uncommon 25%, Rare 10%, Epic 5%
-     * Day 5: Common 30%, Uncommon 25%, Rare 20%, Epic 25%
+     * Day 1: Common 57%, Uncommon 25%, Rare 10%, Epic 5%, Mystery 3%
+     * Day 5: Common 25%, Uncommon 25%, Rare 18%, Epic 22%, Mystery 10%
      *
      * @var array<int, array<string, int>>
      */
     public const STREAK_REWARD_CHANCES = [
-        1 => [self::REWARD_COMMON => 60, self::REWARD_UNCOMMON => 25, self::REWARD_RARE => 10, self::REWARD_EPIC => 5],
-        2 => [self::REWARD_COMMON => 52, self::REWARD_UNCOMMON => 25, self::REWARD_RARE => 13, self::REWARD_EPIC => 10],
-        3 => [self::REWARD_COMMON => 45, self::REWARD_UNCOMMON => 25, self::REWARD_RARE => 15, self::REWARD_EPIC => 15],
-        4 => [self::REWARD_COMMON => 37, self::REWARD_UNCOMMON => 25, self::REWARD_RARE => 18, self::REWARD_EPIC => 20],
-        5 => [self::REWARD_COMMON => 30, self::REWARD_UNCOMMON => 25, self::REWARD_RARE => 20, self::REWARD_EPIC => 25],
+        1 => [self::REWARD_COMMON => 57, self::REWARD_UNCOMMON => 25, self::REWARD_RARE => 10, self::REWARD_EPIC => 5, self::REWARD_MYSTERY => 3],
+        2 => [self::REWARD_COMMON => 49, self::REWARD_UNCOMMON => 25, self::REWARD_RARE => 12, self::REWARD_EPIC => 9, self::REWARD_MYSTERY => 5],
+        3 => [self::REWARD_COMMON => 40, self::REWARD_UNCOMMON => 25, self::REWARD_RARE => 14, self::REWARD_EPIC => 14, self::REWARD_MYSTERY => 7],
+        4 => [self::REWARD_COMMON => 32, self::REWARD_UNCOMMON => 25, self::REWARD_RARE => 16, self::REWARD_EPIC => 18, self::REWARD_MYSTERY => 9],
+        5 => [self::REWARD_COMMON => 25, self::REWARD_UNCOMMON => 25, self::REWARD_RARE => 18, self::REWARD_EPIC => 22, self::REWARD_MYSTERY => 10],
     ];
 
     protected $fillable = [
@@ -200,5 +202,13 @@ class MinigamePlay extends Model
     public function isEpic(): bool
     {
         return $this->reward_type === self::REWARD_EPIC;
+    }
+
+    /**
+     * Check if this reward is mystery box.
+     */
+    public function isMystery(): bool
+    {
+        return $this->reward_type === self::REWARD_MYSTERY;
     }
 }
