@@ -73,10 +73,9 @@ class MinigameController extends Controller
                 'segment_index' => $this->calculateSegmentIndex($result),
             ];
 
-            return back()->with([
-                'success' => $this->formatRewardMessage($result),
-                'result' => $spinResult,
-            ]);
+            // Only send result data - don't send success flash to avoid
+            // revealing reward before wheel animation completes
+            return back()->with('result', $spinResult);
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
