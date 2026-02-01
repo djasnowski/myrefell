@@ -267,6 +267,9 @@ export default function ForgeIndex() {
     };
 
     useEffect(() => {
+        // Reload fresh data on mount to avoid stale cache from Inertia navigation
+        router.reload({ only: ["forge_info"] });
+
         return () => {
             if (cooldownInterval.current) clearInterval(cooldownInterval.current);
         };

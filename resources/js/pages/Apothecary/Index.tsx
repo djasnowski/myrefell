@@ -250,6 +250,9 @@ export default function ApothecaryIndex() {
     };
 
     useEffect(() => {
+        // Reload fresh data on mount to avoid stale cache from Inertia navigation
+        router.reload({ only: ["brewing_info"] });
+
         return () => {
             if (cooldownInterval.current) clearInterval(cooldownInterval.current);
         };
