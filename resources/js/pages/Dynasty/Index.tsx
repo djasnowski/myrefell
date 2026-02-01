@@ -361,7 +361,7 @@ export default function DynastyIndex({
                     </div>
                 </div>
 
-                <div className="mx-auto w-full max-w-4xl">
+                <div className="mx-auto w-full max-w-6xl">
                     <div className="grid gap-4 lg:grid-cols-3">
                         {/* Dynasty Stats */}
                         <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
