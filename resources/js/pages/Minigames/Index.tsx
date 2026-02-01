@@ -337,6 +337,8 @@ export default function MinigamesIndex() {
     const [spinResult, setSpinResult] = useState<SpinResult | null>(null);
     const [canPlayState, setCanPlayState] = useState(can_play);
     const [pendingResult, setPendingResult] = useState<SpinResult | null>(null);
+    // Store recent plays locally to prevent revealing reward before animation completes
+    const [recentPlaysState] = useState<RecentPlay[]>(recent_plays);
 
     // Only show error flashes, not results (results shown after animation)
     useEffect(() => {
@@ -476,7 +478,7 @@ export default function MinigamesIndex() {
                                         Recent Rewards
                                     </h3>
                                 </div>
-                                <RecentPlaysHistory plays={recent_plays} />
+                                <RecentPlaysHistory plays={recentPlaysState} />
                             </div>
                         </div>
                     </div>
