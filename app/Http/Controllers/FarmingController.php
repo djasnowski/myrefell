@@ -54,23 +54,40 @@ class FarmingController extends Controller
 
         $farmingLevel = $farmingSkill?->level ?? 1;
 
+        // Get player's seed inventory for checking availability
+        $playerSeeds = $user->inventory()
+            ->whereHas('item', fn ($q) => $q->where('subtype', 'seed'))
+            ->with('item')
+            ->get()
+            ->keyBy('item_id');
+
         $cropTypes = CropType::where('farming_level_required', '<=', $farmingLevel)
+            ->with('seedItem')
             ->orderBy('farming_level_required')
             ->get()
-            ->map(fn ($crop) => [
-                'id' => $crop->id,
-                'name' => $crop->name,
-                'slug' => $crop->slug,
-                'icon' => $crop->icon,
-                'description' => $crop->description,
-                'grow_time_minutes' => $crop->grow_time_minutes,
-                'farming_level_required' => $crop->farming_level_required,
-                'farming_xp' => $crop->farming_xp,
-                'yield_min' => $crop->yield_min,
-                'yield_max' => $crop->yield_max,
-                'plant_cost' => $crop->plant_cost,
-                'can_plant' => $crop->canPlantInSeason(),
-            ]);
+            ->map(function ($crop) use ($playerSeeds) {
+                $seedCount = 0;
+                if ($crop->seed_item_id && isset($playerSeeds[$crop->seed_item_id])) {
+                    $seedCount = $playerSeeds[$crop->seed_item_id]->quantity;
+                }
+
+                return [
+                    'id' => $crop->id,
+                    'name' => $crop->name,
+                    'slug' => $crop->slug,
+                    'icon' => $crop->icon,
+                    'description' => $crop->description,
+                    'grow_time_minutes' => $crop->grow_time_minutes,
+                    'farming_level_required' => $crop->farming_level_required,
+                    'farming_xp' => $crop->farming_xp,
+                    'yield_min' => $crop->yield_min,
+                    'yield_max' => $crop->yield_max,
+                    'seed_item_id' => $crop->seed_item_id,
+                    'seed_name' => $crop->seedItem?->name,
+                    'seeds_owned' => $seedCount,
+                    'can_plant' => $crop->canPlantInSeason() && $seedCount > 0,
+                ];
+            });
 
         // Check for Master Farmer role bonuses
         $masterFarmerBonuses = $this->getMasterFarmerBonuses(
@@ -201,12 +218,24 @@ class FarmingController extends Controller
             return back()->with('error', "{$cropType->name} cannot be planted in this season.");
         }
 
-        // Check gold cost
-        if ($user->gold < $cropType->plant_cost) {
-            return back()->with('error', "You need {$cropType->plant_cost} gold for seeds.");
+        // Check for seeds in inventory
+        if (! $cropType->seed_item_id) {
+            return back()->with('error', "No seeds configured for {$cropType->name}.");
         }
 
-        $user->decrement('gold', $cropType->plant_cost);
+        $seedItem = $cropType->seedItem;
+        if (! $seedItem) {
+            return back()->with('error', "Seed item not found for {$cropType->name}.");
+        }
+
+        // Check if player has at least 1 seed
+        $seedSlot = $user->inventory()->where('item_id', $seedItem->id)->first();
+        if (! $seedSlot || $seedSlot->quantity < 1) {
+            return back()->with('error', "You need {$seedItem->name} to plant {$cropType->name}.");
+        }
+
+        // Remove 1 seed from inventory
+        $this->inventoryService->removeItem($user, $seedItem->id, 1);
         $plot->plant($cropType);
 
         return back()->with('success', "You planted {$cropType->name}!");

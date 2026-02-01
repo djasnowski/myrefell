@@ -33,7 +33,9 @@ interface CropType {
     farming_xp: number;
     yield_min: number;
     yield_max: number;
-    plant_cost: number;
+    seed_item_id: number | null;
+    seed_name: string | null;
+    seeds_owned: number;
     can_plant: boolean;
 }
 
@@ -569,8 +571,15 @@ export default function FarmingIndex() {
                                             <Clock className="inline h-2 w-2" />{" "}
                                             {formatTime(crop.grow_time_minutes)}
                                         </span>
-                                        <span>
-                                            <Coins className="inline h-2 w-2" /> {crop.plant_cost}g
+                                        <span
+                                            className={
+                                                crop.seeds_owned > 0
+                                                    ? "text-green-400"
+                                                    : "text-red-400"
+                                            }
+                                        >
+                                            <Sprout className="inline h-2 w-2" /> {crop.seeds_owned}{" "}
+                                            seeds
                                         </span>
                                         <span>
                                             <Wheat className="inline h-2 w-2" /> {crop.yield_min}-
@@ -625,8 +634,8 @@ export default function FarmingIndex() {
                                 />
                             </div>
                             <div className="mt-2 flex items-center gap-2 font-pixel text-xs text-stone-500">
-                                <Coins className="h-3 w-3 text-yellow-400" />
-                                <span>You have {gold.toLocaleString()} gold</span>
+                                <Sprout className="h-3 w-3 text-green-400" />
+                                <span>Select a crop you have seeds for</span>
                             </div>
                         </div>
 
@@ -645,21 +654,21 @@ export default function FarmingIndex() {
                                             a.farming_level_required - b.farming_level_required,
                                     )
                                     .map((crop) => {
-                                        const canAfford = gold >= crop.plant_cost;
+                                        const hasSeeds = crop.seeds_owned > 0;
                                         return (
                                             <button
                                                 key={crop.id}
                                                 onClick={() => {
-                                                    if (canAfford) {
+                                                    if (hasSeeds) {
                                                         handleAction("plant", showCropModal, {
                                                             crop_type_id: crop.id,
                                                         });
                                                         setShowCropModal(null);
                                                     }
                                                 }}
-                                                disabled={!canAfford || loading !== null}
+                                                disabled={!hasSeeds || loading !== null}
                                                 className={`flex flex-col rounded-lg border p-3 text-left transition ${
-                                                    canAfford
+                                                    hasSeeds
                                                         ? "border-stone-600 bg-stone-800 hover:border-amber-500 hover:bg-stone-700"
                                                         : "cursor-not-allowed border-stone-700 bg-stone-800/50 opacity-50"
                                                 }`}
@@ -676,15 +685,17 @@ export default function FarmingIndex() {
                                                     {crop.description}
                                                 </p>
                                                 <div className="mt-auto flex flex-wrap gap-2 font-pixel text-[10px]">
-                                                    <span className="flex items-center gap-1 text-yellow-400">
-                                                        <Coins className="h-3 w-3" />
-                                                        {crop.plant_cost}g
+                                                    <span
+                                                        className={`flex items-center gap-1 ${hasSeeds ? "text-green-400" : "text-red-400"}`}
+                                                    >
+                                                        <Sprout className="h-3 w-3" />
+                                                        {crop.seeds_owned} seeds
                                                     </span>
                                                     <span className="flex items-center gap-1 text-blue-400">
                                                         <Clock className="h-3 w-3" />
                                                         {formatTime(crop.grow_time_minutes)}
                                                     </span>
-                                                    <span className="flex items-center gap-1 text-green-400">
+                                                    <span className="flex items-center gap-1 text-amber-400">
                                                         <Wheat className="h-3 w-3" />
                                                         {crop.yield_min}-{crop.yield_max}
                                                     </span>

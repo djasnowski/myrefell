@@ -1000,14 +1000,47 @@ class CropTypeSeeder extends Seeder
             ],
         ];
 
+        // Map crop slugs to their seed item names
+        $seedItemMap = [
+            'wheat' => 'Wheat Seeds',
+            'potatoes' => 'Potato Seeds',
+            'carrots' => 'Carrot Seeds',
+            'cabbage' => 'Cabbage Seeds',
+            'onions' => 'Onion Seeds',
+            'corn' => 'Corn Seeds',
+            'tomatoes' => 'Tomato Seeds',
+            'pumpkins' => 'Pumpkin Seeds',
+            'grapes' => 'Grape Seeds',
+            'hops' => 'Hop Seeds',
+            'herbs' => 'Herb Seeds',
+            'flax' => 'Flax Seeds',
+            'strawberries' => 'Strawberry Seeds',
+            'blueberries' => 'Blueberry Seeds',
+            'raspberries' => 'Raspberry Seeds',
+            'lettuce' => 'Lettuce Seeds',
+            'cucumber' => 'Cucumber Seeds',
+            'peppers' => 'Pepper Seeds',
+            'beans' => 'Bean Seeds',
+            'melon' => 'Melon Seeds',
+            'watermelon' => 'Watermelon Seeds',
+            'squash' => 'Squash Seeds',
+        ];
+
         foreach ($crops as $crop) {
             // Look up the harvest item by name
             $harvestItemName = $harvestItemMap[$crop['slug']] ?? null;
             $harvestItem = $harvestItemName ? Item::where('name', $harvestItemName)->first() : null;
 
+            // Look up the seed item by name
+            $seedItemName = $seedItemMap[$crop['slug']] ?? null;
+            $seedItem = $seedItemName ? Item::where('name', $seedItemName)->first() : null;
+
             $cropData = $crop;
             if ($harvestItem) {
                 $cropData['harvest_item_id'] = $harvestItem->id;
+            }
+            if ($seedItem) {
+                $cropData['seed_item_id'] = $seedItem->id;
             }
 
             CropType::updateOrCreate(
