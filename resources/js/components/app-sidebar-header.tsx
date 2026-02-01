@@ -1,5 +1,5 @@
 import { Link, usePage } from "@inertiajs/react";
-import { Sparkles, Trophy } from "lucide-react";
+import { Sparkles, Trophy, Users } from "lucide-react";
 import { useState } from "react";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import ChangelogModal from "@/components/changelog-modal";
@@ -9,7 +9,7 @@ import type { BreadcrumbItem as BreadcrumbItemType, SharedData } from "@/types";
 
 export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: BreadcrumbItemType[] }) {
     const [showChangelog, setShowChangelog] = useState(false);
-    const { changelog } = usePage<SharedData>().props;
+    const { changelog, online_count } = usePage<SharedData>().props;
     const hasUnread = changelog?.has_unread ?? false;
 
     return (
@@ -20,6 +20,16 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                     <Breadcrumbs breadcrumbs={breadcrumbs} />
                 </div>
                 <div className="ml-auto flex items-center gap-2">
+                    {online_count !== undefined && online_count > 0 && (
+                        <div className="flex items-center gap-1.5 rounded-md bg-green-900/30 px-2 py-1 text-xs">
+                            <span className="relative flex h-2 w-2">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                            </span>
+                            <Users className="size-3 text-green-400" />
+                            <span className="font-pixel text-green-300">{online_count}</span>
+                        </div>
+                    )}
                     <Button
                         variant="ghost"
                         size="sm"

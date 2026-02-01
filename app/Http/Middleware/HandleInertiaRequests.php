@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Services\EnergyService;
+use App\Services\OnlinePlayersService;
 use App\Services\TravelService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -20,7 +21,8 @@ class HandleInertiaRequests extends Middleware
 
     public function __construct(
         protected EnergyService $energyService,
-        protected TravelService $travelService
+        protected TravelService $travelService,
+        protected OnlinePlayersService $onlinePlayersService
     ) {}
 
     /**
@@ -44,6 +46,11 @@ class HandleInertiaRequests extends Middleware
     {
         $player = $request->user();
 
+        // Track online status
+        if ($player) {
+            $this->onlinePlayersService->markOnline($player->id);
+        }
+
         // Current changelog version - update this when adding new entries
         $currentChangelogVersion = '0.6.0';
 
@@ -63,6 +70,7 @@ class HandleInertiaRequests extends Middleware
                 'current_version' => $currentChangelogVersion,
                 'has_unread' => $player ? ($player->last_seen_changelog !== $currentChangelogVersion) : false,
             ],
+            'online_count' => $this->onlinePlayersService->getOnlineCount(),
         ];
     }
 

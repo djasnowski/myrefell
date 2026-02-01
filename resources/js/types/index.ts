@@ -12,5 +12,6 @@ export type SharedData = {
         current_version: string;
         has_unread: boolean;
     };
+    online_count?: number;
     [key: string]: unknown;
 };
