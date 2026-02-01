@@ -3,14 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\PlayerSkill;
-use Illuminate\Http\JsonResponse;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class LeaderboardController extends Controller
 {
     /**
-     * Get leaderboard data for all skills.
+     * Display the leaderboard page.
      */
-    public function index(): JsonResponse
+    public function index(): Response
     {
         $leaderboards = [];
 
@@ -33,7 +34,7 @@ class LeaderboardController extends Controller
             $leaderboards[$skillName] = $topPlayers;
         }
 
-        return response()->json([
+        return Inertia::render('Leaderboard/Index', [
             'leaderboards' => $leaderboards,
             'skills' => PlayerSkill::SKILLS,
         ]);
