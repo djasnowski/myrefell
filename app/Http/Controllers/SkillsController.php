@@ -25,11 +25,11 @@ class SkillsController extends Controller
             ->map(fn ($skill) => $this->formatSkill($skill))
             ->values();
 
-        $craftingSkills = $skills->filter(fn ($skill) => in_array($skill->skill_name, ['cooking', 'smithing', 'crafting']))
+        $craftingSkills = $skills->filter(fn ($skill) => in_array($skill->skill_name, ['cooking', 'smithing', 'crafting', 'herblore']))
             ->map(fn ($skill) => $this->formatSkill($skill))
             ->values();
 
-        $supportSkills = $skills->filter(fn ($skill) => in_array($skill->skill_name, ['thieving']))
+        $supportSkills = $skills->filter(fn ($skill) => in_array($skill->skill_name, ['thieving', 'agility']))
             ->map(fn ($skill) => $this->formatSkill($skill))
             ->values();
 

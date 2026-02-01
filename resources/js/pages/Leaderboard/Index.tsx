@@ -6,12 +6,12 @@ import {
     Church,
     Crosshair,
     Fish,
-    FlaskConical,
     Hammer,
     Hand,
     Heart,
     Leaf,
     Pickaxe,
+    Rabbit,
     Scissors,
     Shield,
     Sword,
@@ -57,6 +57,7 @@ const skillIcons: Record<string, LucideIcon> = {
     crafting: Scissors,
     thieving: Hand,
     herblore: Leaf,
+    agility: Rabbit,
 };
 
 const skillColors: Record<string, string> = {
@@ -75,6 +76,7 @@ const skillColors: Record<string, string> = {
     crafting: "text-violet-400",
     thieving: "text-purple-400",
     herblore: "text-emerald-400",
+    agility: "text-sky-400",
 };
 
 export default function LeaderboardIndex() {

@@ -9,7 +9,9 @@ import {
     Hammer,
     Hand,
     Heart,
+    Leaf,
     Pickaxe,
+    Rabbit,
     Scissors,
     Shield,
     Sparkles,
@@ -72,6 +74,8 @@ const skillIcons: Record<string, LucideIcon> = {
     smithing: Hammer,
     crafting: Scissors,
     thieving: Hand,
+    herblore: Leaf,
+    agility: Rabbit,
 };
 
 const categoryConfig = {
