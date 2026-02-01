@@ -8,6 +8,7 @@ import {
     CloudRain,
     Coins,
     Crown,
+    Eye,
     Flame,
     Hand,
     FlaskConical,
