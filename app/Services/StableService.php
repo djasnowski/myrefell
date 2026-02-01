@@ -31,18 +31,28 @@ class StableService
 
     /**
      * Get a random selection of horses available at a location (simulating stock).
+     * Stock is deterministic per day/location so it doesn't change on page reload.
      */
     public function getStableStock(string $locationType, int $maxItems = 3): array
     {
         $availableHorses = $this->getAvailableHorses($locationType);
         $stock = [];
 
+        // Create a deterministic seed based on date and location
+        // Stock refreshes daily but stays consistent within the same day
+        $seed = crc32(date('Y-m-d').$locationType);
+        mt_srand($seed);
+
         foreach ($availableHorses as $horse) {
-            // Use rarity to determine if horse is in stock
-            if (random_int(1, 100) <= $horse->rarity) {
+            // Use rarity to determine if horse is in stock (deterministic per day)
+            $roll = mt_rand(1, 100);
+            if ($roll <= $horse->rarity) {
+                // Price variance is also deterministic
+                $varianceRoll = mt_rand(-15, 15);
+                $price = (int) ($horse->base_price * (1 + $varianceRoll / 100));
                 $stock[] = [
                     'horse' => $horse,
-                    'price' => $horse->getPriceWithVariance(15),
+                    'price' => $price,
                     'in_stock' => true,
                 ];
             } else {
@@ -53,6 +63,9 @@ class StableService
                 ];
             }
         }
+
+        // Reset the random seed to avoid affecting other random operations
+        mt_srand();
 
         return $stock;
     }
