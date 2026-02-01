@@ -13,5 +13,9 @@ export type SharedData = {
         has_unread: boolean;
     };
     online_count?: number;
+    impersonating?: {
+        impersonator_username: string;
+        leave_url: string;
+    } | null;
     [key: string]: unknown;
 };

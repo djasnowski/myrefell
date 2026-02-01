@@ -12,12 +12,13 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Lab404\Impersonate\Models\Impersonate;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
+    use HasFactory, Impersonate, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
 
     /**
      * Social class constants.
@@ -830,5 +831,25 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sendPasswordResetNotification($token): void
     {
         $this->notify(new ResetPasswordNotification($token));
+    }
+
+    // ==================== IMPERSONATION METHODS ====================
+
+    /**
+     * Determine if this user can impersonate other users.
+     * Only admins can impersonate.
+     */
+    public function canImpersonate(): bool
+    {
+        return $this->is_admin === true;
+    }
+
+    /**
+     * Determine if this user can be impersonated.
+     * Admins cannot be impersonated.
+     */
+    public function canBeImpersonated(): bool
+    {
+        return $this->is_admin !== true;
     }
 }

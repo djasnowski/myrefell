@@ -16,6 +16,7 @@ import {
     Globe,
     Heart,
     History,
+    LogIn,
     Mail,
     MailCheck,
     MapPin,
@@ -375,6 +376,17 @@ export default function Show({
                                 Edit
                             </Button>
                         </Link>
+                        {!user.is_admin && (
+                            <a href={`/impersonate/take/${user.id}`}>
+                                <Button
+                                    variant="outline"
+                                    className="border-amber-900 text-amber-400 hover:bg-amber-900/20"
+                                >
+                                    <LogIn className="size-4" />
+                                    Impersonate
+                                </Button>
+                            </a>
+                        )}
                     </div>
                 </div>
 

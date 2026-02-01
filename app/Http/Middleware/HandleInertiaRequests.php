@@ -54,6 +54,17 @@ class HandleInertiaRequests extends Middleware
         // Current changelog version - update this when adding new entries
         $currentChangelogVersion = '0.6.0';
 
+        // Check if admin is impersonating
+        $impersonating = null;
+        if ($player && app('impersonate')->isImpersonating()) {
+            $impersonatorId = app('impersonate')->getImpersonatorId();
+            $impersonator = \App\Models\User::find($impersonatorId);
+            $impersonating = [
+                'impersonator_username' => $impersonator?->username,
+                'leave_url' => route('impersonate.leave'),
+            ];
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -63,6 +74,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
+                'result' => fn () => $request->session()->get('result'),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'sidebar' => $player ? $this->getSidebarData($player) : null,
@@ -71,6 +83,7 @@ class HandleInertiaRequests extends Middleware
                 'has_unread' => $player ? ($player->last_seen_changelog !== $currentChangelogVersion) : false,
             ],
             'online_count' => $this->onlinePlayersService->getOnlineCount(),
+            'impersonating' => $impersonating,
         ];
     }
 
@@ -153,6 +166,7 @@ class HandleInertiaRequests extends Middleware
             'health' => $this->getHealthData($player),
             'farm' => $this->getFarmData($player),
             'favorites' => $this->getServiceFavorites($player),
+            'can_play_minigame' => \App\Models\MinigamePlay::canPlayToday($player->id),
         ];
     }
 

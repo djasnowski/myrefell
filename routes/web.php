@@ -41,6 +41,7 @@ use App\Http\Controllers\MapController;
 use App\Http\Controllers\MarketController;
 use App\Http\Controllers\MarriageController;
 use App\Http\Controllers\MigrationController;
+use App\Http\Controllers\MinigameController;
 use App\Http\Controllers\NoConfidenceController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\PlayerProfileController;
@@ -132,6 +133,9 @@ Route::get('players/{username}', [PlayerProfileController::class, 'show'])->name
 Route::get('leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Impersonation routes
+    Route::impersonate();
+
     Route::get('dashboard', fn () => Inertia::render('dashboard', [
         'showTutorial' => auth()->user()->show_tutorial ?? false,
     ]))->name('dashboard');
@@ -221,6 +225,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('daily-tasks/status', [DailyTaskController::class, 'status'])->name('daily-tasks.status');
     Route::post('daily-tasks/{task}/claim', [DailyTaskController::class, 'claim'])->name('daily-tasks.claim');
     Route::post('daily-tasks/{task}/progress', [DailyTaskController::class, 'progress'])->name('daily-tasks.progress');
+
+    // Minigames
+    Route::get('minigames', [MinigameController::class, 'index'])->name('minigames.index');
+    Route::post('minigames/spin', [MinigameController::class, 'spin'])->name('minigames.spin');
 
     // Travel
     Route::get('travel', [MapController::class, 'index'])->name('travel.index');

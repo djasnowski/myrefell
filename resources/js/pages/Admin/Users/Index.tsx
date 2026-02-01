@@ -1,5 +1,5 @@
 import { Head, Link, router } from "@inertiajs/react";
-import { ChevronLeft, ChevronRight, Eye, Search, Shield, UserX, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, LogIn, Search, Shield, UserX, Users } from "lucide-react";
 import { useState } from "react";
 import { show as showUser } from "@/actions/App/Http/Controllers/Admin/UserController";
 import { Badge } from "@/components/ui/badge";
@@ -237,16 +237,30 @@ export default function Index({ users, filters }: Props) {
                                                 {formatDate(user.created_at)}
                                             </td>
                                             <td className="px-4 py-3">
-                                                <Link href={showUser.url(user.id)}>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="text-stone-400 hover:text-stone-100"
-                                                    >
-                                                        <Eye className="size-4" />
-                                                        View
-                                                    </Button>
-                                                </Link>
+                                                <div className="flex items-center gap-1">
+                                                    <Link href={showUser.url(user.id)}>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-stone-400 hover:text-stone-100"
+                                                        >
+                                                            <Eye className="size-4" />
+                                                            View
+                                                        </Button>
+                                                    </Link>
+                                                    {!user.is_admin && (
+                                                        <a href={`/impersonate/take/${user.id}`}>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="text-amber-400 hover:text-amber-300 hover:bg-amber-900/20"
+                                                            >
+                                                                <LogIn className="size-4" />
+                                                                Impersonate
+                                                            </Button>
+                                                        </a>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
