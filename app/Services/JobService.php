@@ -36,10 +36,17 @@ class JobService
             return false;
         }
 
+        $homeVillage = $user->homeVillage;
+        if (! $homeVillage) {
+            return false;
+        }
+
         return match ($locationType) {
             'village', 'town' => $user->home_village_id === $locationId
-                || $user->homeVillage?->parent_village_id === $locationId,
-            'barony' => $user->homeVillage?->barony_id === $locationId,
+                || $homeVillage->parent_village_id === $locationId,
+            'barony' => $homeVillage->barony_id === $locationId,
+            'duchy' => $homeVillage->barony?->duchy_id === $locationId,
+            'kingdom' => $homeVillage->barony?->kingdom_id === $locationId,
             default => false,
         };
     }
