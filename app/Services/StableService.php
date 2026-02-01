@@ -67,7 +67,7 @@ class StableService
         }
 
         // Check if horse is available at user's location
-        if (!$horse->isAvailableAt($user->current_location_type)) {
+        if (! $horse->isAvailableAt($user->current_location_type)) {
             return [
                 'success' => false,
                 'message' => 'This horse is not available at your current location.',
@@ -105,7 +105,7 @@ class StableService
     {
         $playerHorse = $user->horse;
 
-        if (!$playerHorse) {
+        if (! $playerHorse) {
             return [
                 'success' => false,
                 'message' => "You don't own a horse.",
@@ -137,7 +137,7 @@ class StableService
     {
         $playerHorse = $user->horse;
 
-        if (!$playerHorse) {
+        if (! $playerHorse) {
             return [
                 'success' => false,
                 'message' => "You don't own a horse.",
@@ -159,7 +159,7 @@ class StableService
     {
         $playerHorse = $user->horse()->with('horse')->first();
 
-        if (!$playerHorse) {
+        if (! $playerHorse) {
             return null;
         }
 
@@ -186,7 +186,7 @@ class StableService
     {
         $playerHorse = $user->horse;
 
-        if (!$playerHorse) {
+        if (! $playerHorse) {
             return [
                 'success' => false,
                 'message' => "You don't own a horse.",
@@ -196,7 +196,7 @@ class StableService
         if ($playerHorse->is_stabled) {
             return [
                 'success' => false,
-                'message' => "Your horse is already stabled.",
+                'message' => 'Your horse is already stabled.',
             ];
         }
 
@@ -204,7 +204,7 @@ class StableService
 
         return [
             'success' => true,
-            'message' => "Your horse has been stabled here. It will rest and recover stamina.",
+            'message' => 'Your horse has been stabled here. It will rest and recover stamina.',
         ];
     }
 
@@ -215,17 +215,17 @@ class StableService
     {
         $playerHorse = $user->horse;
 
-        if (!$playerHorse) {
+        if (! $playerHorse) {
             return [
                 'success' => false,
                 'message' => "You don't own a horse.",
             ];
         }
 
-        if (!$playerHorse->is_stabled) {
+        if (! $playerHorse->is_stabled) {
             return [
                 'success' => false,
-                'message' => "Your horse is already with you.",
+                'message' => 'Your horse is already with you.',
             ];
         }
 
@@ -234,7 +234,7 @@ class StableService
             $playerHorse->stabled_location_id !== $user->current_location_id) {
             return [
                 'success' => false,
-                'message' => "Your horse is stabled elsewhere. Travel there to retrieve it.",
+                'message' => 'Your horse is stabled elsewhere. Travel there to retrieve it.',
             ];
         }
 
@@ -242,7 +242,7 @@ class StableService
 
         return [
             'success' => true,
-            'message' => "You retrieved your horse from the stable.",
+            'message' => 'You retrieved your horse from the stable.',
         ];
     }
 
@@ -253,24 +253,30 @@ class StableService
     {
         $playerHorse = $user->horse;
 
-        if (!$playerHorse) {
+        if (! $playerHorse) {
             return [
                 'success' => false,
                 'message' => "You don't own a horse.",
             ];
         }
 
-        if (!$playerHorse->is_stabled) {
+        // Horse can rest if stabled OR if user is at a location with stables
+        $canRest = $playerHorse->is_stabled;
+        if (! $canRest && $user->current_location_type) {
+            $canRest = \App\Config\LocationServices::isServiceAvailable($user->current_location_type, 'stables');
+        }
+
+        if (! $canRest) {
             return [
                 'success' => false,
-                'message' => "Your horse must be stabled to rest.",
+                'message' => 'You must be at a stable to rest your horse.',
             ];
         }
 
         if ($playerHorse->stamina >= $playerHorse->max_stamina) {
             return [
                 'success' => false,
-                'message' => "Your horse is already fully rested.",
+                'message' => 'Your horse is already fully rested.',
             ];
         }
 
@@ -287,7 +293,7 @@ class StableService
 
             return [
                 'success' => true,
-                'message' => "Your horse has been fed and rested. Stamina fully restored!",
+                'message' => 'Your horse has been fed and rested. Stamina fully restored!',
             ];
         });
     }

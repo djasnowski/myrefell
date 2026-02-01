@@ -238,49 +238,89 @@ export default function StableIndex() {
                         <h3 className="font-[Cinzel] font-semibold text-amber-400">Your Horse</h3>
                         <div className="mt-3 flex items-center justify-between">
                             <div>
-                                <p className="text-lg font-semibold text-stone-100">
+                                <p className="text-xl font-semibold text-stone-100">
                                     {userHorse.custom_name || userHorse.horse.name}
                                 </p>
                                 <p className="text-sm text-stone-400">{userHorse.horse.breed}</p>
-                                <div className="mt-2 flex items-center gap-4 text-sm">
-                                    <span className="flex items-center gap-1 text-stone-400">
-                                        <Gauge className="size-4 text-blue-400" />
-                                        Speed: {userHorse.horse.speed_multiplier}x
-                                    </span>
-                                    <span className="flex items-center gap-1 text-stone-400">
-                                        <Heart className="size-4 text-red-400" />
-                                        Stamina: {userHorse.stamina}/{userHorse.max_stamina}
-                                    </span>
+
+                                {/* Stats - Bigger and with color coding */}
+                                <div className="mt-3 flex items-center gap-6">
+                                    <div className="flex items-center gap-2">
+                                        <Zap className="size-6 text-blue-400" />
+                                        <div>
+                                            <div className="text-xs text-stone-500">Speed</div>
+                                            <div className="font-[Cinzel] text-2xl font-bold text-blue-400">
+                                                {userHorse.horse.speed_multiplier}x
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Heart
+                                            className={`size-6 ${
+                                                userHorse.stamina / userHorse.max_stamina <= 0.1
+                                                    ? "text-red-500 animate-pulse"
+                                                    : userHorse.stamina / userHorse.max_stamina <=
+                                                        0.25
+                                                      ? "text-red-400"
+                                                      : userHorse.stamina / userHorse.max_stamina <=
+                                                          0.5
+                                                        ? "text-yellow-400"
+                                                        : "text-green-400"
+                                            }`}
+                                        />
+                                        <div>
+                                            <div className="text-xs text-stone-500">Stamina</div>
+                                            <div
+                                                className={`font-[Cinzel] text-2xl font-bold ${
+                                                    userHorse.stamina / userHorse.max_stamina <= 0.1
+                                                        ? "text-red-500"
+                                                        : userHorse.stamina /
+                                                                userHorse.max_stamina <=
+                                                            0.25
+                                                          ? "text-red-400"
+                                                          : userHorse.stamina /
+                                                                  userHorse.max_stamina <=
+                                                              0.5
+                                                            ? "text-yellow-400"
+                                                            : "text-green-400"
+                                                }`}
+                                            >
+                                                {userHorse.stamina}/{userHorse.max_stamina}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <p className="mt-1 text-xs text-stone-500">
+
+                                {/* Low stamina warning */}
+                                {userHorse.stamina / userHorse.max_stamina <= 0.1 && (
+                                    <div className="mt-3 rounded-lg border border-red-600/50 bg-red-900/30 px-3 py-2 text-sm text-red-300">
+                                        <strong>Warning:</strong> Your horse is exhausted and cannot
+                                        travel! Rest at a stable to restore stamina.
+                                    </div>
+                                )}
+                                {userHorse.stamina / userHorse.max_stamina > 0.1 &&
+                                    userHorse.stamina / userHorse.max_stamina <= 0.25 && (
+                                        <div className="mt-3 rounded-lg border border-yellow-600/50 bg-yellow-900/30 px-3 py-2 text-sm text-yellow-300">
+                                            Your horse is tired. Consider resting soon.
+                                        </div>
+                                    )}
+
+                                <p className="mt-2 text-xs text-stone-500">
                                     {userHorse.is_stabled ? "Currently stabled" : "With you"}
                                 </p>
                             </div>
                             <div className="flex flex-col items-end gap-2">
                                 {/* Stable/Retrieve buttons */}
                                 {userHorse.is_stabled ? (
-                                    <>
-                                        <Button
-                                            size="sm"
-                                            onClick={handleRetrieve}
-                                            disabled={loading}
-                                            className="bg-blue-600 hover:bg-blue-500"
-                                        >
-                                            <Home className="size-4" />
-                                            Retrieve Horse
-                                        </Button>
-                                        {userHorse.stamina < userHorse.max_stamina && (
-                                            <Button
-                                                size="sm"
-                                                onClick={handleRest}
-                                                disabled={loading || userGold < 50}
-                                                className="bg-green-600 hover:bg-green-500"
-                                            >
-                                                <Bed className="size-4" />
-                                                Rest (50g)
-                                            </Button>
-                                        )}
-                                    </>
+                                    <Button
+                                        size="sm"
+                                        onClick={handleRetrieve}
+                                        disabled={loading}
+                                        className="bg-blue-600 hover:bg-blue-500"
+                                    >
+                                        <Home className="size-4" />
+                                        Retrieve Horse
+                                    </Button>
                                 ) : (
                                     <Button
                                         size="sm"
@@ -292,6 +332,20 @@ export default function StableIndex() {
                                         Stable Horse
                                     </Button>
                                 )}
+
+                                {/* Rest button - available at any stable */}
+                                {userHorse.stamina < userHorse.max_stamina && (
+                                    <Button
+                                        size="sm"
+                                        onClick={handleRest}
+                                        disabled={loading || userGold < 50}
+                                        className="bg-green-600 hover:bg-green-500"
+                                    >
+                                        <Bed className="size-4" />
+                                        Rest Horse (50g)
+                                    </Button>
+                                )}
+
                                 <div className="text-right">
                                     <p className="text-xs text-stone-500">
                                         Sell value: {userHorse.sell_value.toLocaleString()}g
@@ -320,23 +374,57 @@ export default function StableIndex() {
                             <h3 className="mb-3 font-[Cinzel] font-semibold text-stone-300">
                                 Horses Stabled Here
                             </h3>
-                            <div className="flex items-center justify-between rounded-lg border border-stone-700/30 bg-stone-900/50 p-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="rounded-lg bg-amber-900/30 p-2">
-                                        <Gauge className="size-5 text-amber-400" />
+                            <div className="flex items-center justify-between rounded-lg border border-stone-700/30 bg-stone-900/50 p-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="rounded-lg bg-amber-900/30 p-3">
+                                        <Gauge className="size-6 text-amber-400" />
                                     </div>
                                     <div>
-                                        <p className="font-semibold text-stone-100">
+                                        <p className="text-lg font-semibold text-stone-100">
                                             {userHorse.custom_name || userHorse.horse.name}
                                         </p>
-                                        <div className="flex items-center gap-3 text-sm text-stone-400">
-                                            <span className="flex items-center gap-1">
-                                                <Zap className="size-3 text-blue-400" />
-                                                {userHorse.horse.speed_multiplier}x
+                                        <div className="mt-1 flex items-center gap-4">
+                                            <span className="flex items-center gap-1.5">
+                                                <Zap className="size-5 text-blue-400" />
+                                                <span className="font-[Cinzel] text-lg font-bold text-blue-400">
+                                                    {userHorse.horse.speed_multiplier}x
+                                                </span>
                                             </span>
-                                            <span className="flex items-center gap-1">
-                                                <Heart className="size-3 text-red-400" />
-                                                {userHorse.stamina}/{userHorse.max_stamina}
+                                            <span className="flex items-center gap-1.5">
+                                                <Heart
+                                                    className={`size-5 ${
+                                                        userHorse.stamina / userHorse.max_stamina <=
+                                                        0.1
+                                                            ? "text-red-500 animate-pulse"
+                                                            : userHorse.stamina /
+                                                                    userHorse.max_stamina <=
+                                                                0.25
+                                                              ? "text-red-400"
+                                                              : userHorse.stamina /
+                                                                      userHorse.max_stamina <=
+                                                                  0.5
+                                                                ? "text-yellow-400"
+                                                                : "text-green-400"
+                                                    }`}
+                                                />
+                                                <span
+                                                    className={`font-[Cinzel] text-lg font-bold ${
+                                                        userHorse.stamina / userHorse.max_stamina <=
+                                                        0.1
+                                                            ? "text-red-500"
+                                                            : userHorse.stamina /
+                                                                    userHorse.max_stamina <=
+                                                                0.25
+                                                              ? "text-red-400"
+                                                              : userHorse.stamina /
+                                                                      userHorse.max_stamina <=
+                                                                  0.5
+                                                                ? "text-yellow-400"
+                                                                : "text-green-400"
+                                                    }`}
+                                                >
+                                                    {userHorse.stamina}/{userHorse.max_stamina}
+                                                </span>
                                             </span>
                                         </div>
                                     </div>
