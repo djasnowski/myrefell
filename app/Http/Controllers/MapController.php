@@ -33,7 +33,7 @@ class MapController extends Controller
             'map_data' => $this->getMapData($user),
             'health_data' => $this->getHealthData($user),
             'travel_status' => $this->travelService->getTravelStatus($user),
-            'is_dev' => app()->environment('local'),
+            'is_dev' => app()->environment('local') || $user->username === 'dan',
         ]);
     }
 

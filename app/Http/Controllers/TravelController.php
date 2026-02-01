@@ -29,7 +29,7 @@ class TravelController extends Controller
             'destinations' => $this->travelService->getAvailableDestinations($user),
             'energy_cost' => TravelService::ENERGY_COST,
             'just_arrived' => $arrival,
-            'is_dev' => app()->environment('local'),
+            'is_dev' => app()->environment('local') || $user->username === 'dan',
         ]);
     }
 
