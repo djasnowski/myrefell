@@ -44,6 +44,10 @@ interface CraftingInfo {
     player_energy: number;
     max_energy: number;
     free_slots: number;
+    crafting_level: number;
+    crafting_xp: number;
+    crafting_xp_progress: number;
+    crafting_xp_to_next: number;
 }
 
 interface CraftResult {
@@ -243,7 +247,7 @@ export default function CraftingIndex() {
                 </div>
 
                 {/* Status Bar */}
-                <div className="mb-4 grid grid-cols-2 gap-4">
+                <div className="mb-4 grid grid-cols-3 gap-4">
                     <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
                         <div className="mb-1 flex items-center gap-1 font-pixel text-xs text-yellow-400">
                             <Zap className="h-3 w-3" />
@@ -268,6 +272,28 @@ export default function CraftingIndex() {
                         </div>
                         <div className="font-pixel text-lg text-stone-300">
                             {crafting_info.free_slots} slots
+                        </div>
+                    </div>
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
+                        <div className="mb-1 flex items-center justify-between">
+                            <div className="flex items-center gap-1 font-pixel text-xs text-amber-400">
+                                <Scissors className="h-3 w-3" />
+                                Crafting
+                            </div>
+                            <span className="font-pixel text-xs text-stone-300">
+                                {crafting_info.crafting_level}/99
+                            </span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
+                            <div
+                                className="h-full bg-gradient-to-r from-amber-600 to-amber-400 transition-all"
+                                style={{
+                                    width: `${crafting_info.crafting_xp_progress}%`,
+                                }}
+                            />
+                        </div>
+                        <div className="mt-1 font-pixel text-[10px] text-stone-400">
+                            {crafting_info.crafting_xp_to_next.toLocaleString()} XP to next level
                         </div>
                     </div>
                 </div>

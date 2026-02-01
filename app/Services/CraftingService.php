@@ -447,6 +447,13 @@ class CraftingService
         // Get role bonuses for all crafting categories
         $bonuses = $this->townBonusService->getBonusInfo($user);
 
+        // Get crafting skill info for XP progress
+        $craftingSkill = $user->skills()->where('skill_name', 'crafting')->first();
+        $craftingLevel = $craftingSkill?->level ?? 1;
+        $craftingXp = $craftingSkill?->xp ?? 0;
+        $craftingXpProgress = $craftingSkill?->getXpProgress() ?? 0;
+        $craftingXpToNext = $craftingSkill?->xpToNextLevel() ?? 60;
+
         return [
             'can_craft' => true,
             'recipes' => $this->getAvailableRecipes($user),
@@ -454,6 +461,10 @@ class CraftingService
             'player_energy' => $user->energy,
             'max_energy' => $user->max_energy,
             'free_slots' => $this->inventoryService->freeSlots($user),
+            'crafting_level' => $craftingLevel,
+            'crafting_xp' => $craftingXp,
+            'crafting_xp_progress' => $craftingXpProgress,
+            'crafting_xp_to_next' => $craftingXpToNext,
             'role_bonuses' => $bonuses,
         ];
     }
