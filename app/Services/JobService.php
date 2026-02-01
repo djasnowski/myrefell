@@ -125,13 +125,24 @@ class JobService
             ->where('employment_job_id', $job->id)
             ->where('location_type', $locationType)
             ->where('location_id', $locationId)
-            ->where('status', PlayerEmployment::STATUS_EMPLOYED)
-            ->exists();
+            ->first();
 
         if ($existing) {
+            if ($existing->status === PlayerEmployment::STATUS_EMPLOYED) {
+                return [
+                    'success' => false,
+                    'message' => 'You already have this job at this location.',
+                ];
+            }
+            // Reactivate a previously quit/fired job
+            $existing->update([
+                'status' => PlayerEmployment::STATUS_EMPLOYED,
+                'hired_at' => now(),
+            ]);
+
             return [
-                'success' => false,
-                'message' => 'You already have this job at this location.',
+                'success' => true,
+                'message' => "You have been rehired as a {$job->name}.",
             ];
         }
 
