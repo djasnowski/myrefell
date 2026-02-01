@@ -13,7 +13,9 @@ import {
     Target,
     Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+const SMITH_COOLDOWN_MS = 3000;
 import AppLayout from "@/layouts/app-layout";
 import type { BreadcrumbItem } from "@/types";
 
@@ -139,18 +141,20 @@ function RecipeCard({
     loading,
     compact = false,
     metalColor,
+    cooldown,
 }: {
     recipe: Recipe;
     onSmith: (id: string) => void;
     loading: string | null;
     compact?: boolean;
     metalColor?: { bg: string; border: string; text: string; glow: string };
+    cooldown: number;
 }) {
     const isLoading = loading === recipe.id;
     const itemName = recipe.name.split(" ").slice(1).join(" "); // Remove metal prefix
     const hasEnoughBars = (recipe.materials[0]?.have ?? 0) >= (recipe.materials[0]?.required ?? 1);
     const colors = metalColor || metalColors.Bronze;
-    const canSmith = recipe.can_make && !recipe.is_locked && loading === null;
+    const canSmith = recipe.can_make && !recipe.is_locked && loading === null && cooldown <= 0;
 
     return (
         <button
@@ -168,6 +172,15 @@ function RecipeCard({
             {isLoading && (
                 <div className="absolute inset-0 z-10 flex items-center justify-center bg-stone-900/80">
                     <Loader2 className="h-8 w-8 animate-spin text-amber-400" />
+                </div>
+            )}
+
+            {/* Cooldown overlay */}
+            {cooldown > 0 && !isLoading && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-stone-900/60">
+                    <span className="font-pixel text-lg text-stone-300">
+                        {(cooldown / 1000).toFixed(1)}s
+                    </span>
                 </div>
             )}
 
@@ -240,6 +253,7 @@ function MetalTierSection({
     onSmith,
     loading,
     defaultExpanded = false,
+    cooldown,
 }: {
     metal: string;
     tier: MetalTier;
@@ -247,6 +261,7 @@ function MetalTierSection({
     onSmith: (id: string) => void;
     loading: string | null;
     defaultExpanded?: boolean;
+    cooldown: number;
 }) {
     const [expanded, setExpanded] = useState(defaultExpanded);
     const colors = metalColors[metal] || metalColors.Bronze;
@@ -321,6 +336,7 @@ function MetalTierSection({
                                         loading={loading}
                                         compact
                                         metalColor={colors}
+                                        cooldown={cooldown}
                                     />
                                 ))}
                             </div>
@@ -346,6 +362,7 @@ function MetalTierSection({
                                         loading={loading}
                                         compact
                                         metalColor={colors}
+                                        cooldown={cooldown}
                                     />
                                 ))}
                             </div>
@@ -373,6 +390,7 @@ function MetalTierSection({
                                         loading={loading}
                                         compact
                                         metalColor={colors}
+                                        cooldown={cooldown}
                                     />
                                 ))}
                             </div>
@@ -388,10 +406,33 @@ export default function AnvilIndex() {
     const { anvil_info, location } = usePage<PageProps>().props;
     const [loading, setLoading] = useState<string | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(anvil_info.player_energy);
+    const [cooldown, setCooldown] = useState(0);
+    const cooldownInterval = useRef<NodeJS.Timeout | null>(null);
+
+    const startCooldown = () => {
+        setCooldown(SMITH_COOLDOWN_MS);
+        if (cooldownInterval.current) clearInterval(cooldownInterval.current);
+        const startTime = Date.now();
+        cooldownInterval.current = setInterval(() => {
+            const remaining = Math.max(0, SMITH_COOLDOWN_MS - (Date.now() - startTime));
+            setCooldown(remaining);
+            if (remaining <= 0 && cooldownInterval.current) {
+                clearInterval(cooldownInterval.current);
+                cooldownInterval.current = null;
+            }
+        }, 50);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (cooldownInterval.current) clearInterval(cooldownInterval.current);
+        };
+    }, []);
 
     const smithUrl = location ? `/${location.type}s/${location.id}/anvil/smith` : "/anvil/smith";
 
     const handleSmith = (recipeId: string) => {
+        if (loading || cooldown > 0) return;
         setLoading(recipeId);
 
         router.post(
@@ -400,6 +441,7 @@ export default function AnvilIndex() {
             {
                 preserveScroll: true,
                 onSuccess: () => {
+                    startCooldown();
                     router.reload({ only: ["anvil_info", "sidebar"] });
                 },
                 onFinish: () => {
@@ -526,6 +568,7 @@ export default function AnvilIndex() {
                                 onSmith={handleSmith}
                                 loading={loading}
                                 defaultExpanded={index === 0 && tier.unlocked}
+                                cooldown={cooldown}
                             />
                         );
                     })}
