@@ -11,6 +11,7 @@ import {
     Dumbbell,
     Flame,
     FlaskConical,
+    Footprints,
     Hammer,
     Hand,
     HeartPulse,
@@ -70,6 +71,7 @@ const iconMap: Record<string, LucideIcon> = {
     wheat: Wheat,
     warehouse: Warehouse,
     "flask-conical": FlaskConical,
+    footprints: Footprints,
 };
 
 // Location type to URL path mapping
@@ -100,6 +102,7 @@ const locationServices: Record<string, string[]> = {
         "thieving",
         "apothecary",
         "farming",
+        "agility",
     ],
     town: [
         "training",
@@ -119,6 +122,7 @@ const locationServices: Record<string, string[]> = {
         "thieving",
         "apothecary",
         "farming",
+        "agility",
     ],
     barony: [
         "training",
@@ -137,6 +141,7 @@ const locationServices: Record<string, string[]> = {
         "chat",
         "taxes",
         "apothecary",
+        "agility",
     ],
     duchy: [
         "training",
@@ -149,6 +154,7 @@ const locationServices: Record<string, string[]> = {
         "tavern",
         "thieving",
         "apothecary",
+        "agility",
     ],
     kingdom: [
         "training",

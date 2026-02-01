@@ -1,6 +1,7 @@
 import {
     Anvil,
     FlaskConical,
+    Footprints,
     Hammer,
     Link2,
     Shield,
@@ -31,6 +32,40 @@ interface ChangelogEntry {
 }
 
 const changelog: ChangelogEntry[] = [
+    {
+        version: "0.6.0",
+        date: "February 1, 2026",
+        title: "Agility Training",
+        description:
+            "A brand new skill arrives! Train your agility on obstacle courses at villages, towns, baronies, and duchies. Higher level obstacles unlock more challenging courses with better XP!",
+        icon: <Footprints className="h-8 w-8 text-emerald-500" />,
+        changes: [
+            {
+                type: "added",
+                text: "New Agility skill with 35 unique obstacles to master",
+            },
+            {
+                type: "added",
+                text: "Obstacles unlock as your agility level increases (levels 1-90)",
+            },
+            {
+                type: "added",
+                text: "Success-based training - higher levels improve your success rate",
+            },
+            {
+                type: "added",
+                text: "Failed attempts still award 25% XP to keep progressing",
+            },
+            {
+                type: "added",
+                text: "Advanced obstacles (40+) only available at baronies and duchies",
+            },
+            {
+                type: "added",
+                text: "Legendary course at level 90 - exclusive to duchies",
+            },
+        ],
+    },
     {
         version: "0.5.0",
         date: "February 1, 2026",

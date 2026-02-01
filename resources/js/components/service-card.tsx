@@ -10,6 +10,7 @@ import {
     Dumbbell,
     Flame,
     FlaskConical,
+    Footprints,
     Hammer,
     Hand,
     HeartPulse,
@@ -73,6 +74,7 @@ const iconMap: Record<string, LucideIcon> = {
     wheat: Wheat,
     warehouse: Warehouse,
     "flask-conical": FlaskConical,
+    footprints: Footprints,
 };
 
 export function ServiceCard({
