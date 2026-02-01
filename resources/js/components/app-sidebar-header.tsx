@@ -1,6 +1,6 @@
-import { Link, usePage } from "@inertiajs/react";
+import { Link, router, usePage } from "@inertiajs/react";
 import { Sparkles, Trophy, Users } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import ChangelogModal from "@/components/changelog-modal";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,15 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
     const [showChangelog, setShowChangelog] = useState(false);
     const { changelog, online_count } = usePage<SharedData>().props;
     const hasUnread = changelog?.has_unread ?? false;
+
+    // Poll for online count every 5 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            router.reload({ only: ["online_count"] });
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <>
