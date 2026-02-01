@@ -7,6 +7,7 @@ import {
     Building2,
     Church,
     Dumbbell,
+    Flame,
     Hammer,
     Hand,
     HeartPulse,
@@ -17,6 +18,8 @@ import {
     Shield,
     Sparkles,
     Store,
+    Warehouse,
+    Wheat,
     Briefcase,
     type LucideIcon,
 } from "lucide-react";
@@ -52,6 +55,9 @@ const iconMap: Record<string, LucideIcon> = {
     "message-square": MessageSquare,
     receipt: Receipt,
     hand: Hand,
+    flame: Flame,
+    wheat: Wheat,
+    warehouse: Warehouse,
 };
 
 export function ServiceCard({

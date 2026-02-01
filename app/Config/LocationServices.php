@@ -85,7 +85,7 @@ class LocationServices
         'stables' => [
             'name' => 'Stables',
             'description' => 'Buy and manage horses',
-            'icon' => 'horse',
+            'icon' => 'warehouse',
             'route' => 'stables',
         ],
         'arena' => [
