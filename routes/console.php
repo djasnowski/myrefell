@@ -16,8 +16,8 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Energy regeneration - every 5 seconds (demo mode)
-Schedule::job(new RegenerateEnergy)->everyFiveSeconds();
+// Energy regeneration - +10 every 5 minutes
+Schedule::job(new RegenerateEnergy)->everyFiveMinutes();
 
 // Election finalization - every minute
 Schedule::job(new FinalizeElections)->everyMinute();

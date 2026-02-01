@@ -8,10 +8,14 @@ use Carbon\Carbon;
 class EnergyService
 {
     /**
-     * Energy regeneration rate: 1 energy per X seconds.
-     * Set to 5 for demo purposes (normally would be 300 = 5 minutes).
+     * Energy regeneration rate in minutes.
      */
-    public const REGEN_SECONDS = 5;
+    public const REGEN_MINUTES = 5;
+
+    /**
+     * Energy amount regenerated per tick.
+     */
+    public const REGEN_AMOUNT = 10;
 
     /**
      * Check if player has enough energy.
@@ -80,7 +84,7 @@ class EnergyService
             return 0;
         }
 
-        return $this->addEnergy($player, 1);
+        return $this->addEnergy($player, self::REGEN_AMOUNT);
     }
 
     /**
@@ -90,9 +94,9 @@ class EnergyService
     public function regenerateAllPlayers(): int
     {
         $affected = User::where('energy', '<', \DB::raw('max_energy'))
-            ->increment('energy', 1);
+            ->increment('energy', self::REGEN_AMOUNT);
 
-        // Clamp any that went over max (shouldn't happen, but safety)
+        // Clamp any that went over max
         User::whereRaw('energy > max_energy')
             ->update(['energy' => \DB::raw('max_energy')]);
 
@@ -100,16 +104,15 @@ class EnergyService
     }
 
     /**
-     * Get the time until next energy point.
+     * Get the time until next energy regen.
      */
     public function getTimeUntilNextEnergy(): int
     {
-        // Calculate time until next regen interval
+        // Calculate time until next 5-minute mark
         $now = Carbon::now();
-        $currentSecond = $now->secondsSinceMidnight();
-        $secondsUntilNext = self::REGEN_SECONDS - ($currentSecond % self::REGEN_SECONDS);
+        $nextRegen = $now->copy()->addMinutes(self::REGEN_MINUTES - ($now->minute % self::REGEN_MINUTES))->second(0);
 
-        return $secondsUntilNext;
+        return $now->diffInSeconds($nextRegen);
     }
 
     /**
@@ -123,7 +126,8 @@ class EnergyService
             'current' => $player->energy,
             'max' => $player->max_energy,
             'at_max' => $atMax,
-            'regen_rate' => self::REGEN_SECONDS,
+            'regen_rate' => self::REGEN_MINUTES,
+            'regen_amount' => self::REGEN_AMOUNT,
             'seconds_until_next' => $atMax ? null : $this->getTimeUntilNextEnergy(),
         ];
     }

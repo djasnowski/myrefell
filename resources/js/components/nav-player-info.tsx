@@ -94,7 +94,7 @@ function EnergyTimer({ secondsUntilNext }: { secondsUntilNext: number | null }) 
 
     return (
         <span className="font-pixel text-[8px] text-stone-400">
-            +1 in {minutes}:{secs.toString().padStart(2, "0")}
+            +10 in {minutes}:{secs.toString().padStart(2, "0")}
         </span>
     );
 }
