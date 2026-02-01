@@ -141,6 +141,7 @@ class LocationServices
             'shrine',
             'jobs',
             'port',      // Only if is_port = true
+            'stables',
             'tavern',
             'thieving',
         ],

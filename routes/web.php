@@ -287,6 +287,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
         Route::post('shrine/request/{blessingRequest}/approve', [BlessingController::class, 'approveRequest'])->name('shrine.approve');
         Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
+        Route::get('stables', [StableController::class, 'index'])->name('stables');
         Route::get('tavern', [TavernController::class, 'index'])->name('tavern');
         Route::post('tavern/rest', [TavernController::class, 'rest'])->name('tavern.rest');
         Route::post('tavern/cook', [TavernController::class, 'cook'])->name('tavern.cook');
