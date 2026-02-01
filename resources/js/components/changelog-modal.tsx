@@ -2,6 +2,7 @@ import {
     Anvil,
     FlaskConical,
     Footprints,
+    Gift,
     Hammer,
     Link2,
     Shield,
@@ -32,6 +33,48 @@ interface ChangelogEntry {
 }
 
 const changelog: ChangelogEntry[] = [
+    {
+        version: "0.7.0",
+        date: "February 1, 2026",
+        title: "Daily Wheel",
+        description:
+            "Spin the daily wheel once per day for a chance to win gold and rare items! Build up your streak for better rewards.",
+        icon: <Gift className="h-8 w-8 text-purple-500" />,
+        changes: [
+            {
+                type: "added",
+                text: "New Daily Wheel minigame - spin once per day for free rewards",
+            },
+            {
+                type: "added",
+                text: "Streak system - consecutive daily spins increase your reward chances",
+            },
+            {
+                type: "added",
+                text: "4 reward tiers: Common, Uncommon, Rare, and Epic",
+            },
+            {
+                type: "added",
+                text: "Common rewards: 50-150 gold",
+            },
+            {
+                type: "added",
+                text: "Uncommon rewards: 150-300 gold",
+            },
+            {
+                type: "added",
+                text: "Rare rewards: 300-500 gold or a rare tradeable item",
+            },
+            {
+                type: "added",
+                text: "Epic rewards: 500-1000 gold AND an epic tradeable item",
+            },
+            {
+                type: "added",
+                text: "Rewards history to track your past spins",
+            },
+        ],
+    },
     {
         version: "0.6.0",
         date: "February 1, 2026",
