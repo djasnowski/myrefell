@@ -127,18 +127,19 @@ class TravelController extends Controller
     }
 
     /**
-     * Skip travel (dev only) - instantly arrive at destination.
+     * Skip travel (dev only, or user 'dan' on production) - instantly arrive at destination.
      */
     public function skip(Request $request)
     {
-        \Log::info('Skip called', ['env' => app()->environment()]);
+        $user = $request->user();
+        $isAllowed = app()->environment('local') || $user->username === 'dan';
 
-        if (! app()->environment('local')) {
-            \Log::warning('Skip rejected - not local environment');
+        \Log::info('Skip called', ['env' => app()->environment(), 'user' => $user->username, 'allowed' => $isAllowed]);
+
+        if (! $isAllowed) {
+            \Log::warning('Skip rejected - not allowed');
             abort(403, 'This action is only available in development.');
         }
-
-        $user = $request->user();
         \Log::info('Skip user state', [
             'user_id' => $user->id,
             'is_traveling' => $user->is_traveling,
