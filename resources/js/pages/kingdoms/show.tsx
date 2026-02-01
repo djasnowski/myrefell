@@ -30,7 +30,6 @@ import {
     type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RulerDisplay } from "@/components/ui/legitimacy-badge";
 import AppLayout from "@/layouts/app-layout";
@@ -302,16 +301,6 @@ export default function KingdomShow({ kingdom, current_user_id }: Props) {
         { title: kingdom.name, href: `/kingdoms/${kingdom.id}` },
     ];
 
-    // Prepare chart data
-    const baronyPopulationData = kingdom.baronies
-        .map((b) => ({
-            name: b.name.length > 12 ? b.name.slice(0, 10) + "..." : b.name,
-            population: b.population,
-            villages: b.village_count,
-            towns: b.town_count,
-        }))
-        .sort((a, b) => b.population - a.population);
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={kingdom.name} />
@@ -537,56 +526,6 @@ export default function KingdomShow({ kingdom, current_user_id }: Props) {
                         </Link>
                     </div>
                 </div>
-
-                {/* Population Chart */}
-                {kingdom.baronies.length > 0 && (
-                    <Card className="border-stone-700 bg-stone-900/50">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-stone-100">
-                                <Users className="h-5 w-5 text-blue-400" />
-                                Population by Barony
-                            </CardTitle>
-                            <CardDescription className="text-stone-400">
-                                NPC population distribution across baronies
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="h-[250px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={baronyPopulationData} layout="vertical">
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#44403c" />
-                                        <XAxis type="number" stroke="#a8a29e" fontSize={12} />
-                                        <YAxis
-                                            type="category"
-                                            dataKey="name"
-                                            stroke="#a8a29e"
-                                            fontSize={11}
-                                            width={80}
-                                        />
-                                        <Tooltip
-                                            contentStyle={{
-                                                backgroundColor: "#1c1917",
-                                                border: "1px solid #44403c",
-                                                borderRadius: "8px",
-                                            }}
-                                            labelStyle={{ color: "#e7e5e4" }}
-                                            itemStyle={{ color: "#60a5fa" }}
-                                            formatter={(value: number) => [
-                                                value.toLocaleString(),
-                                                "Population",
-                                            ]}
-                                        />
-                                        <Bar
-                                            dataKey="population"
-                                            fill="#60a5fa"
-                                            radius={[0, 4, 4, 0]}
-                                        />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
 
                 {/* Hierarchy Tree */}
                 {kingdom.baronies.length > 0 && <HierarchyTree baronies={kingdom.baronies} />}
