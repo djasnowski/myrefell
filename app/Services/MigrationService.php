@@ -8,7 +8,6 @@ use App\Models\MigrationRequest;
 use App\Models\PlayerRole;
 use App\Models\User;
 use App\Models\Village;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -27,9 +26,18 @@ class MigrationService
             ];
         }
 
+        // Must be physically at the village to settle there
+        if ($user->current_location_type !== 'village' || $user->current_location_id !== $toVillage->id) {
+            return [
+                'success' => false,
+                'message' => 'You must travel to this village before you can settle here.',
+            ];
+        }
+
         // Check cooldown
-        if (!$this->canMigrate($user)) {
+        if (! $this->canMigrate($user)) {
             $nextMigration = $user->last_migration_at->addDays(MigrationRequest::MIGRATION_COOLDOWN_DAYS);
+
             return [
                 'success' => false,
                 'message' => "You must wait until {$nextMigration->format('M j, Y')} before migrating again.",
@@ -115,7 +123,7 @@ class MigrationService
     protected function autoApproveVacantLevels(MigrationRequest $request): void
     {
         // If no elder at destination, auto-approve elder level
-        if (!$request->needsElderApproval()) {
+        if (! $request->needsElderApproval()) {
             $request->update([
                 'elder_approved' => true,
                 'elder_decided_at' => now(),
@@ -123,7 +131,7 @@ class MigrationService
         }
 
         // If no baron at destination barony, auto-approve baron level
-        if (!$request->needsBaronApproval()) {
+        if (! $request->needsBaronApproval()) {
             $request->update([
                 'baron_approved' => true,
                 'baron_decided_at' => now(),
@@ -131,7 +139,7 @@ class MigrationService
         }
 
         // If no king at destination kingdom, auto-approve king level
-        if (!$request->needsKingApproval()) {
+        if (! $request->needsKingApproval()) {
             $request->update([
                 'king_approved' => true,
                 'king_decided_at' => now(),
@@ -144,7 +152,7 @@ class MigrationService
      */
     public function approve(MigrationRequest $request, User $approver, string $level): array
     {
-        if (!$request->isPending()) {
+        if (! $request->isPending()) {
             return [
                 'success' => false,
                 'message' => 'This request is no longer pending.',
@@ -152,7 +160,7 @@ class MigrationService
         }
 
         // Verify approver has authority
-        if (!$this->canApproveAt($approver, $request, $level)) {
+        if (! $this->canApproveAt($approver, $request, $level)) {
             return [
                 'success' => false,
                 'message' => 'You do not have authority to approve this request.',
@@ -185,7 +193,7 @@ class MigrationService
      */
     public function deny(MigrationRequest $request, User $denier, string $level, ?string $reason = null): array
     {
-        if (!$request->isPending()) {
+        if (! $request->isPending()) {
             return [
                 'success' => false,
                 'message' => 'This request is no longer pending.',
@@ -193,7 +201,7 @@ class MigrationService
         }
 
         // Verify denier has authority
-        if (!$this->canApproveAt($denier, $request, $level)) {
+        if (! $this->canApproveAt($denier, $request, $level)) {
             return [
                 'success' => false,
                 'message' => 'You do not have authority to deny this request.',
@@ -227,7 +235,7 @@ class MigrationService
             ];
         }
 
-        if (!$request->isPending()) {
+        if (! $request->isPending()) {
             return [
                 'success' => false,
                 'message' => 'This request is no longer pending.',
@@ -274,11 +282,12 @@ class MigrationService
      */
     public function canMigrate(User $user): bool
     {
-        if (!$user->last_migration_at) {
+        if (! $user->last_migration_at) {
             return true;
         }
 
         $cooldownEnd = $user->last_migration_at->addDays(MigrationRequest::MIGRATION_COOLDOWN_DAYS);
+
         return now()->gte($cooldownEnd);
     }
 
@@ -364,7 +373,7 @@ class MigrationService
 
         return MigrationRequest::pending()
             ->with(['user', 'fromVillage', 'toVillage.barony.kingdom'])
-            ->where(function ($q) use ($elderVillages, $baronBaronies, $kingKingdoms) {
+            ->where(function ($q) use ($elderVillages) {
                 // Elder can approve requests to their village
                 $q->whereIn('to_village_id', $elderVillages)
                     ->whereNull('elder_approved');

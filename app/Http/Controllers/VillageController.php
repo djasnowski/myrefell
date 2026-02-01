@@ -11,7 +11,6 @@ use App\Models\Role;
 use App\Models\Village;
 use App\Services\MigrationService;
 use Illuminate\Http\Request;
-use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -117,7 +116,9 @@ class VillageController extends Controller
             'services' => array_values(array_map(fn ($service, $id) => array_merge($service, ['id' => $id]), $services, array_keys($services))),
             'recent_activity' => $recentActivity,
             'is_resident' => $isResident,
-            'can_migrate' => $migrationService->canMigrate($user),
+            'can_migrate' => $migrationService->canMigrate($user)
+                && $user->current_location_type === 'village'
+                && $user->current_location_id === $village->id,
             'has_pending_request' => $hasPendingRequest,
             'current_user_id' => $user->id,
             'disasters' => $this->getActiveDisasters($village),
