@@ -205,7 +205,8 @@ export default function LeaderboardIndex() {
                                                     : "text-stone-300"
                                             }`}
                                         >
-                                            Lv. {entry.level}
+                                            {selectedSkill === "total" ? "Total Lv." : "Lv."}{" "}
+                                            {entry.level}
                                         </p>
                                         <p className="font-pixel text-xs text-stone-500">
                                             {entry.xp.toLocaleString()} XP
