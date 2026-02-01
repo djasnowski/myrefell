@@ -104,8 +104,8 @@ export default function LeaderboardIndex() {
                 </div>
 
                 {/* Skill Tabs */}
-                <div className="mb-6 overflow-x-auto">
-                    <div className="flex gap-2 min-w-max pb-2">
+                <div className="mb-6">
+                    <div className="flex flex-wrap gap-2">
                         {skills.map((skill) => {
                             const SkillIcon = skillIcons[skill] || Sword;
                             const color = skillColors[skill] || "text-amber-400";
