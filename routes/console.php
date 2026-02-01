@@ -5,8 +5,8 @@ use App\Jobs\CollectDailyTaxes;
 use App\Jobs\DistributeSalaries;
 use App\Jobs\ExpireMarriageProposals;
 use App\Jobs\FinalizeElections;
-use App\Jobs\ProcessDiseases;
 use App\Jobs\ProcessDisasters;
+use App\Jobs\ProcessDiseases;
 use App\Jobs\RegenerateEnergy;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -39,3 +39,6 @@ Schedule::job(new ProcessDiseases)->dailyAt('06:30');
 
 // Marriage proposal expiration - daily at 00:30
 Schedule::job(new ExpireMarriageProposals)->dailyAt('00:30');
+
+// Seed restocking - twice daily (farmer supply runs)
+Schedule::command('market:restock-seeds')->twiceDaily(8, 20);
