@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class CombatService
 {
-    public const ENERGY_COST = 5;
+    public const ENERGY_COST = 1;
 
     public const FLEE_SUCCESS_CHANCE = 50;
 
