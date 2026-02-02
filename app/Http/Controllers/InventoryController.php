@@ -54,11 +54,54 @@ class InventoryController extends Controller
         // Check if player is at a village or town (for donate feature)
         $canDonate = in_array($player->current_location_type, ['village', 'town']);
 
+        // Get equipped items organized by slot type
+        $equippedItems = $inventory->where('is_equipped', true);
+        $equipment = [];
+        $equipmentSlots = ['head', 'amulet', 'chest', 'legs', 'weapon', 'shield', 'ring'];
+
+        foreach ($equipmentSlots as $slotType) {
+            $equipped = $equippedItems->first(fn ($inv) => $inv->item->equipment_slot === $slotType);
+            $equipment[$slotType] = $equipped ? [
+                'slot_number' => $equipped->slot_number,
+                'item' => [
+                    'id' => $equipped->item->id,
+                    'name' => $equipped->item->name,
+                    'type' => $equipped->item->type,
+                    'subtype' => $equipped->item->subtype,
+                    'rarity' => $equipped->item->rarity,
+                    'atk_bonus' => $equipped->item->atk_bonus,
+                    'str_bonus' => $equipped->item->str_bonus,
+                    'def_bonus' => $equipped->item->def_bonus,
+                    'hp_bonus' => $equipped->item->hp_bonus,
+                    'energy_bonus' => $equipped->item->energy_bonus,
+                ],
+            ] : null;
+        }
+
+        // Calculate combat stats
+        $totalAtkBonus = $equippedItems->sum(fn ($inv) => $inv->item->atk_bonus);
+        $totalStrBonus = $equippedItems->sum(fn ($inv) => $inv->item->str_bonus);
+        $totalDefBonus = $equippedItems->sum(fn ($inv) => $inv->item->def_bonus);
+        $totalHpBonus = $equippedItems->sum(fn ($inv) => $inv->item->hp_bonus);
+
+        $combatStats = [
+            'attack_level' => $player->getSkillLevel('attack'),
+            'strength_level' => $player->getSkillLevel('strength'),
+            'defense_level' => $player->getSkillLevel('defense'),
+            'hitpoints_level' => $player->getSkillLevel('hitpoints'),
+            'atk_bonus' => $totalAtkBonus,
+            'str_bonus' => $totalStrBonus,
+            'def_bonus' => $totalDefBonus,
+            'hp_bonus' => $totalHpBonus,
+        ];
+
         return Inertia::render('inventory', [
             'slots' => $slots,
             'max_slots' => PlayerInventory::MAX_SLOTS,
             'gold' => $player->gold,
             'can_donate' => $canDonate,
+            'equipment' => $equipment,
+            'combat_stats' => $combatStats,
         ]);
     }
 
@@ -68,8 +111,8 @@ class InventoryController extends Controller
     public function move(Request $request)
     {
         $request->validate([
-            'from_slot' => 'required|integer|min:0|max:27',
-            'to_slot' => 'required|integer|min:0|max:27',
+            'from_slot' => 'required|integer|min:0|max:'.(PlayerInventory::MAX_SLOTS - 1),
+            'to_slot' => 'required|integer|min:0|max:'.(PlayerInventory::MAX_SLOTS - 1),
         ]);
 
         $player = $request->user();
@@ -111,7 +154,7 @@ class InventoryController extends Controller
     public function drop(Request $request)
     {
         $request->validate([
-            'slot' => 'required|integer|min:0|max:27',
+            'slot' => 'required|integer|min:0|max:'.(PlayerInventory::MAX_SLOTS - 1),
             'quantity' => 'nullable|integer|min:1',
         ]);
 
@@ -139,7 +182,7 @@ class InventoryController extends Controller
     public function equip(Request $request)
     {
         $request->validate([
-            'slot' => 'required|integer|min:0|max:27',
+            'slot' => 'required|integer|min:0|max:'.(PlayerInventory::MAX_SLOTS - 1),
         ]);
 
         $player = $request->user();
@@ -167,7 +210,7 @@ class InventoryController extends Controller
     public function unequip(Request $request)
     {
         $request->validate([
-            'slot' => 'required|integer|min:0|max:27',
+            'slot' => 'required|integer|min:0|max:'.(PlayerInventory::MAX_SLOTS - 1),
         ]);
 
         $player = $request->user();
@@ -188,7 +231,7 @@ class InventoryController extends Controller
     public function consume(Request $request)
     {
         $request->validate([
-            'slot' => 'required|integer|min:0|max:27',
+            'slot' => 'required|integer|min:0|max:'.(PlayerInventory::MAX_SLOTS - 1),
         ]);
 
         $player = $request->user();
@@ -259,7 +302,7 @@ class InventoryController extends Controller
     public function donate(Request $request)
     {
         $request->validate([
-            'slot' => 'required|integer|min:0|max:27',
+            'slot' => 'required|integer|min:0|max:'.(PlayerInventory::MAX_SLOTS - 1),
             'quantity' => 'nullable|integer|min:1',
         ]);
 

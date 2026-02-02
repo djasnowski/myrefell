@@ -1,5 +1,17 @@
 import { Head, router, usePage } from "@inertiajs/react";
-import { Apple, Droplets, Gift, Package, ShieldOff, Sword, Trash2 } from "lucide-react";
+import {
+    Apple,
+    Droplets,
+    Gift,
+    Heart,
+    Package,
+    Shield,
+    ShieldOff,
+    Sword,
+    Swords,
+    Trash2,
+    User,
+} from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { getItemIcon, GoldIcon, HelpCircle } from "@/lib/item-icons";
@@ -33,11 +45,50 @@ interface InventorySlot {
     is_equipped: boolean;
 }
 
+interface EquippedItem {
+    slot_number: number;
+    item: {
+        id: number;
+        name: string;
+        type: string;
+        subtype: string | null;
+        rarity: string;
+        atk_bonus: number;
+        str_bonus: number;
+        def_bonus: number;
+        hp_bonus: number;
+        energy_bonus: number;
+    };
+}
+
+interface Equipment {
+    head: EquippedItem | null;
+    amulet: EquippedItem | null;
+    chest: EquippedItem | null;
+    legs: EquippedItem | null;
+    weapon: EquippedItem | null;
+    shield: EquippedItem | null;
+    ring: EquippedItem | null;
+}
+
+interface CombatStats {
+    attack_level: number;
+    strength_level: number;
+    defense_level: number;
+    hitpoints_level: number;
+    atk_bonus: number;
+    str_bonus: number;
+    def_bonus: number;
+    hp_bonus: number;
+}
+
 interface PageProps {
     slots: (InventorySlot | null)[];
     max_slots: number;
     gold: number;
     can_donate: boolean;
+    equipment: Equipment;
+    combat_stats: CombatStats;
     [key: string]: unknown;
 }
 
@@ -90,24 +141,28 @@ function ItemTooltip({
             {!!hasStats && (
                 <div className="mb-2 space-y-1 border-t border-stone-700 pt-2">
                     {item.atk_bonus > 0 && (
-                        <div className="font-pixel text-xs text-red-400">+{item.atk_bonus} ATK</div>
+                        <div className="font-pixel text-xs text-red-400">
+                            +{item.atk_bonus} ATK{item.equipment_slot ? " BONUS" : ""}
+                        </div>
                     )}
                     {item.str_bonus > 0 && (
                         <div className="font-pixel text-xs text-orange-400">
-                            +{item.str_bonus} STR
+                            +{item.str_bonus} STR{item.equipment_slot ? " BONUS" : ""}
                         </div>
                     )}
                     {item.def_bonus > 0 && (
                         <div className="font-pixel text-xs text-blue-400">
-                            +{item.def_bonus} DEF
+                            +{item.def_bonus} DEF{item.equipment_slot ? " BONUS" : ""}
                         </div>
                     )}
                     {item.hp_bonus > 0 && (
-                        <div className="font-pixel text-xs text-green-400">+{item.hp_bonus} HP</div>
+                        <div className="font-pixel text-xs text-green-400">
+                            +{item.hp_bonus} HP{item.equipment_slot ? " BONUS" : ""}
+                        </div>
                     )}
                     {item.energy_bonus > 0 && (
                         <div className="font-pixel text-xs text-yellow-400">
-                            +{item.energy_bonus} EN
+                            +{item.energy_bonus} EN{item.equipment_slot ? " BONUS" : ""}
                         </div>
                     )}
                 </div>
@@ -214,8 +269,108 @@ function InventorySlotComponent({
     );
 }
 
+const equipmentSlotIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+    head: ({ className }) => (
+        <svg
+            className={className}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
+            <circle cx="12" cy="8" r="5" />
+            <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
+        </svg>
+    ),
+    chest: ({ className }) => (
+        <svg
+            className={className}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
+            <path d="M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6l-8-4z" />
+        </svg>
+    ),
+    legs: ({ className }) => (
+        <svg
+            className={className}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
+            <path d="M6 4h4v8l-2 10h-2l2-10V4zM14 4h4v8l2 10h-2l-2-10V4z" />
+        </svg>
+    ),
+    weapon: Sword,
+    shield: Shield,
+    ring: ({ className }) => (
+        <svg
+            className={className}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
+            <circle cx="12" cy="12" r="8" />
+            <circle cx="12" cy="12" r="4" />
+        </svg>
+    ),
+    amulet: ({ className }) => (
+        <svg
+            className={className}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
+            <path d="M12 2v4M8 6l4 4 4-4" />
+            <path d="M12 22a8 8 0 1 0 0-16 8 8 0 0 0 0 16z" />
+            <circle cx="12" cy="14" r="3" />
+        </svg>
+    ),
+};
+
+function EquipmentSlotDisplay({
+    label,
+    equipped,
+    slotType,
+}: {
+    label: string;
+    equipped: EquippedItem | null;
+    slotType: string;
+}) {
+    const SlotIcon = equipmentSlotIcons[slotType] || Package;
+
+    return (
+        <div className="flex flex-col items-center">
+            <div
+                className={`flex h-12 w-12 items-center justify-center rounded border-2 ${
+                    equipped
+                        ? `${rarityColors[equipped.item.rarity]} ring-1 ring-green-500`
+                        : "border-stone-700 bg-stone-900/50"
+                }`}
+                title={equipped ? equipped.item.name : `${label} (empty)`}
+            >
+                {equipped ? (
+                    (() => {
+                        const Icon = getItemIcon(equipped.item.type, equipped.item.subtype);
+                        return <Icon className="h-6 w-6 text-stone-300" />;
+                    })()
+                ) : (
+                    <SlotIcon className="h-5 w-5 text-stone-600" />
+                )}
+            </div>
+            <span className="mt-1 font-pixel text-[8px] text-stone-500">{label}</span>
+        </div>
+    );
+}
+
 export default function Inventory() {
-    const { slots, max_slots, gold, can_donate } = usePage<PageProps>().props;
+    const { slots, max_slots, gold, can_donate, equipment, combat_stats } =
+        usePage<PageProps>().props;
     const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
 
     const selectedItem = selectedSlot !== null ? slots[selectedSlot] : null;
@@ -371,6 +526,154 @@ export default function Inventory() {
                         </div>
                     </div>
 
+                    {/* Equipment Panel */}
+                    <div className="w-full rounded-lg border-2 border-stone-600 bg-stone-800/80 p-3 lg:w-64">
+                        <h2 className="mb-3 flex items-center gap-1 font-pixel text-xs text-amber-400">
+                            <User className="h-3 w-3" /> Equipment
+                        </h2>
+
+                        {/* Equipment Slots Grid */}
+                        <div className="mb-4 grid grid-cols-3 gap-2">
+                            {/* Top row: empty - head - empty */}
+                            <div></div>
+                            <EquipmentSlotDisplay
+                                label="Head"
+                                equipped={equipment.head}
+                                slotType="head"
+                            />
+                            <div></div>
+
+                            {/* Middle row: weapon - chest - shield */}
+                            <EquipmentSlotDisplay
+                                label="Weapon"
+                                equipped={equipment.weapon}
+                                slotType="weapon"
+                            />
+                            <EquipmentSlotDisplay
+                                label="Chest"
+                                equipped={equipment.chest}
+                                slotType="chest"
+                            />
+                            <EquipmentSlotDisplay
+                                label="Shield"
+                                equipped={equipment.shield}
+                                slotType="shield"
+                            />
+
+                            {/* Bottom row: ring - legs - amulet */}
+                            <EquipmentSlotDisplay
+                                label="Ring"
+                                equipped={equipment.ring}
+                                slotType="ring"
+                            />
+                            <EquipmentSlotDisplay
+                                label="Legs"
+                                equipped={equipment.legs}
+                                slotType="legs"
+                            />
+                            <EquipmentSlotDisplay
+                                label="Amulet"
+                                equipped={equipment.amulet}
+                                slotType="amulet"
+                            />
+                        </div>
+
+                        {/* Equipped Items List */}
+                        <div className="border-t border-stone-700 pt-3">
+                            <h3 className="mb-2 font-pixel text-[10px] text-stone-400">Equipped</h3>
+                            <div className="space-y-1">
+                                {(
+                                    [
+                                        "head",
+                                        "amulet",
+                                        "chest",
+                                        "legs",
+                                        "weapon",
+                                        "shield",
+                                        "ring",
+                                    ] as const
+                                ).map((slot) => {
+                                    const item = equipment[slot];
+                                    if (!item) return null;
+                                    return (
+                                        <div key={slot} className="flex items-center gap-1.5">
+                                            <span className="font-pixel text-[8px] text-stone-500 w-12">
+                                                {slot}
+                                            </span>
+                                            <span
+                                                className={`font-pixel text-[9px] ${rarityTextColors[item.item.rarity]}`}
+                                            >
+                                                {item.item.name}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                                {!Object.values(equipment).some(Boolean) && (
+                                    <p className="font-pixel text-[8px] text-stone-600 italic">
+                                        Nothing equipped
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Combat Stats */}
+                        <div className="border-t border-stone-700 pt-3 mt-3">
+                            <h3 className="mb-2 flex items-center gap-1 font-pixel text-[10px] text-stone-400">
+                                <Swords className="h-3 w-3" /> Combat Stats
+                            </h3>
+                            <div className="space-y-1.5">
+                                <div className="flex justify-between font-pixel text-[10px]">
+                                    <span className="text-red-400">Attack</span>
+                                    <span className="text-stone-300">
+                                        {combat_stats.attack_level}
+                                        {combat_stats.atk_bonus > 0 && (
+                                            <span className="text-green-400">
+                                                {" "}
+                                                (+{combat_stats.atk_bonus})
+                                            </span>
+                                        )}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between font-pixel text-[10px]">
+                                    <span className="text-orange-400">Strength</span>
+                                    <span className="text-stone-300">
+                                        {combat_stats.strength_level}
+                                        {combat_stats.str_bonus > 0 && (
+                                            <span className="text-green-400">
+                                                {" "}
+                                                (+{combat_stats.str_bonus})
+                                            </span>
+                                        )}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between font-pixel text-[10px]">
+                                    <span className="text-blue-400">Defense</span>
+                                    <span className="text-stone-300">
+                                        {combat_stats.defense_level}
+                                        {combat_stats.def_bonus > 0 && (
+                                            <span className="text-green-400">
+                                                {" "}
+                                                (+{combat_stats.def_bonus})
+                                            </span>
+                                        )}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between font-pixel text-[10px]">
+                                    <span className="text-green-400">Hitpoints</span>
+                                    <span className="text-stone-300">
+                                        {combat_stats.hitpoints_level}
+                                        {combat_stats.hp_bonus > 0 && (
+                                            <span className="text-green-400">
+                                                {" "}
+                                                (+{combat_stats.hp_bonus})
+                                            </span>
+                                        )}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Item Details Panel */}
                     <div className="w-full rounded-lg border-2 border-stone-600 bg-stone-800/80 p-3 lg:w-56">
                         <h2 className="mb-4 flex items-center gap-1 font-pixel text-xs text-amber-400">
@@ -419,26 +722,31 @@ export default function Inventory() {
                                         {selectedItem.item.atk_bonus > 0 && (
                                             <div className="font-pixel text-[8px] text-red-400">
                                                 +{selectedItem.item.atk_bonus} ATK
+                                                {selectedItem.item.equipment_slot ? " BONUS" : ""}
                                             </div>
                                         )}
                                         {selectedItem.item.str_bonus > 0 && (
                                             <div className="font-pixel text-[8px] text-orange-400">
                                                 +{selectedItem.item.str_bonus} STR
+                                                {selectedItem.item.equipment_slot ? " BONUS" : ""}
                                             </div>
                                         )}
                                         {selectedItem.item.def_bonus > 0 && (
                                             <div className="font-pixel text-[8px] text-blue-400">
                                                 +{selectedItem.item.def_bonus} DEF
+                                                {selectedItem.item.equipment_slot ? " BONUS" : ""}
                                             </div>
                                         )}
                                         {selectedItem.item.hp_bonus > 0 && (
                                             <div className="font-pixel text-[8px] text-green-400">
                                                 +{selectedItem.item.hp_bonus} HP
+                                                {selectedItem.item.equipment_slot ? " BONUS" : ""}
                                             </div>
                                         )}
                                         {selectedItem.item.energy_bonus > 0 && (
                                             <div className="font-pixel text-[8px] text-yellow-400">
                                                 +{selectedItem.item.energy_bonus} EN
+                                                {selectedItem.item.equipment_slot ? " BONUS" : ""}
                                             </div>
                                         )}
                                     </div>
