@@ -18,6 +18,7 @@ import {
     MessageSquare,
     Pickaxe,
     Receipt,
+    Search,
     Shield,
     Sparkles,
     Star,
@@ -203,6 +204,7 @@ interface ServicesGridProps {
     locationId: number;
     isPort?: boolean;
     className?: string;
+    title?: string;
 }
 
 export function ServicesGrid({
@@ -211,8 +213,10 @@ export function ServicesGrid({
     locationId,
     isPort = false,
     className,
+    title = "Services",
 }: ServicesGridProps) {
     const { sidebar } = usePage<{ sidebar: SidebarData | null }>().props;
+    const [searchQuery, setSearchQuery] = useState("");
 
     // Build location path
     const locationPaths: Record<string, string> = {
@@ -225,8 +229,26 @@ export function ServicesGrid({
 
     const basePath = locationPaths[locationType] || locationType + "s";
 
+    // Filter services by search query
+    const filteredServices = services.filter((service) => {
+        // Skip port services if location is not a port
+        if (service.id === "port" && !isPort) {
+            return false;
+        }
+
+        if (!searchQuery.trim()) {
+            return true;
+        }
+
+        const query = searchQuery.toLowerCase();
+        return (
+            service.name.toLowerCase().includes(query) ||
+            service.description.toLowerCase().includes(query)
+        );
+    });
+
     // Sort services: favorites first, then alphabetically
-    const sortedServices = [...services].sort((a, b) => {
+    const sortedServices = [...filteredServices].sort((a, b) => {
         const aIsFavorited = sidebar?.favorites?.some((f) => f.service_id === a.id) ?? false;
         const bIsFavorited = sidebar?.favorites?.some((f) => f.service_id === b.id) ?? false;
 
@@ -236,29 +258,43 @@ export function ServicesGrid({
     });
 
     return (
-        <div
-            className={cn(
-                "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6",
-                className,
-            )}
-        >
-            {sortedServices.map((service) => {
-                // Skip port services if location is not a port
-                if (service.id === "port" && !isPort) {
-                    return null;
-                }
-
-                return (
-                    <ServiceCard
-                        key={service.id}
-                        serviceId={service.id}
-                        name={service.name}
-                        description={service.description}
-                        href={`/${basePath}/${locationId}/${service.route}`}
-                        icon={service.icon}
+        <div className={className}>
+            {/* Header with title and search */}
+            <div className="mb-3 flex items-center justify-between gap-4">
+                <h2 className="font-pixel text-sm text-stone-400">{title}</h2>
+                <div className="relative w-48">
+                    <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                        type="text"
+                        placeholder="Search..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full rounded-md border border-border bg-card py-1.5 pl-8 pr-3 text-xs placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
                     />
-                );
-            })}
+                </div>
+            </div>
+
+            {/* Services grid */}
+            {sortedServices.length > 0 ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                    {sortedServices.map((service) => (
+                        <ServiceCard
+                            key={service.id}
+                            serviceId={service.id}
+                            name={service.name}
+                            description={service.description}
+                            href={`/${basePath}/${locationId}/${service.route}`}
+                            icon={service.icon}
+                        />
+                    ))}
+                </div>
+            ) : (
+                <div className="rounded-lg border border-border bg-card/50 p-6 text-center">
+                    <p className="text-sm text-muted-foreground">
+                        No services found matching "{searchQuery}"
+                    </p>
+                </div>
+            )}
         </div>
     );
 }

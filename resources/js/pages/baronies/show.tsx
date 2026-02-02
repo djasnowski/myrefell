@@ -339,14 +339,11 @@ export default function BaronyShow({
 
                 {/* Services Grid */}
                 {services && services.length > 0 && (
-                    <div>
-                        <h2 className="mb-3 font-pixel text-sm text-stone-400">Services</h2>
-                        <ServicesGrid
-                            services={services}
-                            locationType="barony"
-                            locationId={barony.id}
-                        />
-                    </div>
+                    <ServicesGrid
+                        services={services}
+                        locationType="barony"
+                        locationId={barony.id}
+                    />
                 )}
 
                 {/* Baron / Ruler */}
