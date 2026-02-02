@@ -204,52 +204,6 @@ export default function StableIndex() {
         );
     };
 
-    const handleSell = () => {
-        if (!confirm("Are you sure you want to sell your horse?")) return;
-        setLoading(true);
-        router.post(
-            "/stable/sell",
-            {},
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    router.reload();
-                },
-                onFinish: () => setLoading(false),
-            },
-        );
-    };
-
-    const handleStable = () => {
-        setLoading(true);
-        router.post(
-            "/stable/stable",
-            {},
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    router.reload();
-                },
-                onFinish: () => setLoading(false),
-            },
-        );
-    };
-
-    const handleRetrieve = () => {
-        setLoading(true);
-        router.post(
-            "/stable/retrieve",
-            {},
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    router.reload();
-                },
-                onFinish: () => setLoading(false),
-            },
-        );
-    };
-
     const handleRest = (playerHorseId?: number) => {
         setLoading(true);
         router.post(
@@ -282,6 +236,67 @@ export default function StableIndex() {
         );
     };
 
+    const handleSwitchHorse = (playerHorseId: number) => {
+        setLoading(true);
+        router.post(
+            "/stable/switch",
+            { player_horse_id: playerHorseId },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handleSellHorse = (playerHorseId: number) => {
+        if (!confirm("Are you sure you want to sell this horse?")) return;
+        setLoading(true);
+        router.post(
+            "/stable/sell",
+            { player_horse_id: playerHorseId },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handleRetrieveHorse = (playerHorseId: number) => {
+        setLoading(true);
+        router.post(
+            "/stable/retrieve",
+            { player_horse_id: playerHorseId },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handleStableHorse = (playerHorseId: number) => {
+        setLoading(true);
+        router.post(
+            "/stable/stable",
+            { player_horse_id: playerHorseId },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={location ? `Stables - ${location.name}` : "Stables"} />
@@ -306,136 +321,166 @@ export default function StableIndex() {
                     </div>
                 </div>
 
-                {/* Your Horse */}
-                {userHorse && (
+                {/* Your Horses */}
+                {userHorses.length > 0 && (
                     <div className="rounded-xl border border-amber-900/50 bg-amber-900/20 p-4">
-                        <h3 className="font-[Cinzel] font-semibold text-amber-400">Your Horse</h3>
-                        <div className="mt-3 flex items-center justify-between">
-                            <div>
-                                <p className="text-xl font-semibold text-stone-100">
-                                    {userHorse.custom_name || userHorse.horse.name}
-                                </p>
-                                <p className="text-sm text-stone-400">{userHorse.horse.breed}</p>
+                        <h3 className="font-[Cinzel] font-semibold text-amber-400">
+                            Your Horses ({userHorses.length}/{maxHorses})
+                        </h3>
+                        <div className="mt-3 space-y-3">
+                            {userHorses.map((horse) => {
+                                const staminaRatio = horse.stamina / horse.max_stamina;
+                                const staminaColor =
+                                    staminaRatio <= 0.1
+                                        ? "text-red-500"
+                                        : staminaRatio <= 0.25
+                                          ? "text-red-400"
+                                          : staminaRatio <= 0.5
+                                            ? "text-yellow-400"
+                                            : "text-green-400";
+                                const isAtThisLocation =
+                                    horse.is_stabled &&
+                                    horse.stabled_location_type === location?.type &&
+                                    horse.stabled_location_id === location?.id;
 
-                                {/* Stats - Bigger and with color coding */}
-                                <div className="mt-3 flex items-center gap-6">
-                                    <div className="flex items-center gap-2">
-                                        <Zap className="size-6 text-blue-400" />
-                                        <div>
-                                            <div className="text-xs text-stone-500">Speed</div>
-                                            <div className="font-[Cinzel] text-2xl font-bold text-blue-400">
-                                                {userHorse.horse.speed_multiplier}x
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Heart
-                                            className={`size-6 ${
-                                                userHorse.stamina / userHorse.max_stamina <= 0.1
-                                                    ? "text-red-500 animate-pulse"
-                                                    : userHorse.stamina / userHorse.max_stamina <=
-                                                        0.25
-                                                      ? "text-red-400"
-                                                      : userHorse.stamina / userHorse.max_stamina <=
-                                                          0.5
-                                                        ? "text-yellow-400"
-                                                        : "text-green-400"
-                                            }`}
-                                        />
-                                        <div>
-                                            <div className="text-xs text-stone-500">Stamina</div>
+                                return (
+                                    <div
+                                        key={horse.id}
+                                        className={`flex items-center justify-between rounded-lg border p-3 ${
+                                            horse.is_active
+                                                ? "border-amber-500/50 bg-amber-950/40"
+                                                : "border-stone-700/50 bg-stone-900/50"
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-4">
                                             <div
-                                                className={`font-[Cinzel] text-2xl font-bold ${
-                                                    userHorse.stamina / userHorse.max_stamina <= 0.1
-                                                        ? "text-red-500"
-                                                        : userHorse.stamina /
-                                                                userHorse.max_stamina <=
-                                                            0.25
-                                                          ? "text-red-400"
-                                                          : userHorse.stamina /
-                                                                  userHorse.max_stamina <=
-                                                              0.5
-                                                            ? "text-yellow-400"
-                                                            : "text-green-400"
-                                                }`}
+                                                className={`rounded-lg p-2 ${horse.is_active ? "bg-amber-900/50" : "bg-stone-800/50"}`}
                                             >
-                                                {userHorse.stamina}/{userHorse.max_stamina}
+                                                <Gauge
+                                                    className={`size-6 ${horse.is_active ? "text-amber-400" : "text-stone-500"}`}
+                                                />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-semibold text-stone-100">
+                                                        {horse.name}
+                                                    </p>
+                                                    {horse.is_active && (
+                                                        <span className="rounded-full bg-amber-600/30 px-2 py-0.5 text-xs text-amber-300">
+                                                            Riding
+                                                        </span>
+                                                    )}
+                                                    {horse.is_stabled && (
+                                                        <span className="rounded-full bg-stone-600/30 px-2 py-0.5 text-xs text-stone-400">
+                                                            Stabled
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-sm text-stone-500">
+                                                    {horse.type}
+                                                </p>
+                                                <div className="mt-1 flex items-center gap-4 text-sm">
+                                                    <span className="flex items-center gap-1">
+                                                        <Zap className="size-3 text-blue-400" />
+                                                        <span className="text-blue-400">
+                                                            {horse.speed_multiplier}x
+                                                        </span>
+                                                    </span>
+                                                    <span className="flex items-center gap-1">
+                                                        <Heart
+                                                            className={`size-3 ${staminaColor} ${staminaRatio <= 0.1 ? "animate-pulse" : ""}`}
+                                                        />
+                                                        <span className={staminaColor}>
+                                                            {horse.stamina}/{horse.max_stamina}
+                                                        </span>
+                                                    </span>
+                                                    <span className="text-stone-600">
+                                                        Sell: {horse.sell_price.toLocaleString()}g
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
+                                        <div className="flex items-center gap-2">
+                                            {/* Rest button */}
+                                            {horse.stamina < horse.max_stamina && (
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => handleRest(horse.id)}
+                                                    disabled={loading || userGold < 50}
+                                                    className="border-green-700 text-green-400 hover:bg-green-900/20"
+                                                >
+                                                    <Bed className="size-4" />
+                                                    Rest (50g)
+                                                </Button>
+                                            )}
 
-                                {/* Low stamina warning */}
-                                {userHorse.stamina / userHorse.max_stamina <= 0.1 && (
-                                    <div className="mt-3 rounded-lg border border-red-600/50 bg-red-900/30 px-3 py-2 text-sm text-red-300">
-                                        <strong>Warning:</strong> Your horse is exhausted and cannot
-                                        travel! Rest at a stable to restore stamina.
-                                    </div>
-                                )}
-                                {userHorse.stamina / userHorse.max_stamina > 0.1 &&
-                                    userHorse.stamina / userHorse.max_stamina <= 0.25 && (
-                                        <div className="mt-3 rounded-lg border border-yellow-600/50 bg-yellow-900/30 px-3 py-2 text-sm text-yellow-300">
-                                            Your horse is tired. Consider resting soon.
+                                            {/* Stable/Retrieve buttons */}
+                                            {horse.is_stabled ? (
+                                                isAtThisLocation && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                            handleRetrieveHorse(horse.id)
+                                                        }
+                                                        disabled={loading}
+                                                        className="border-blue-700 text-blue-400 hover:bg-blue-900/20"
+                                                    >
+                                                        <Home className="size-4" />
+                                                        Retrieve
+                                                    </Button>
+                                                )
+                                            ) : (
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => handleStableHorse(horse.id)}
+                                                    disabled={loading}
+                                                    className="border-stone-600 text-stone-400 hover:bg-stone-800/50"
+                                                >
+                                                    <Home className="size-4" />
+                                                    Stable
+                                                </Button>
+                                            )}
+
+                                            {/* Ride button - only if not active and not stabled */}
+                                            {!horse.is_active && !horse.is_stabled && (
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => handleSwitchHorse(horse.id)}
+                                                    disabled={loading}
+                                                    className="bg-amber-600 hover:bg-amber-500"
+                                                >
+                                                    Ride
+                                                </Button>
+                                            )}
+
+                                            {/* Sell button */}
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => handleSellHorse(horse.id)}
+                                                disabled={loading}
+                                                className="border-red-900 text-red-400 hover:bg-red-900/20"
+                                            >
+                                                Sell
+                                            </Button>
                                         </div>
-                                    )}
-
-                                <p className="mt-2 text-xs text-stone-500">
-                                    {userHorse.is_stabled ? "Currently stabled" : "With you"}
-                                </p>
-                            </div>
-                            <div className="flex flex-col items-end gap-2">
-                                {/* Stable/Retrieve buttons */}
-                                {userHorse.is_stabled ? (
-                                    <Button
-                                        size="sm"
-                                        onClick={handleRetrieve}
-                                        disabled={loading}
-                                        className="bg-blue-600 hover:bg-blue-500"
-                                    >
-                                        <Home className="size-4" />
-                                        Retrieve Horse
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        size="sm"
-                                        onClick={handleStable}
-                                        disabled={loading}
-                                        className="bg-stone-600 hover:bg-stone-500"
-                                    >
-                                        <Home className="size-4" />
-                                        Stable Horse
-                                    </Button>
-                                )}
-
-                                {/* Rest button - available at any stable */}
-                                {userHorse.stamina < userHorse.max_stamina && (
-                                    <Button
-                                        size="sm"
-                                        onClick={() => handleRest(userHorse.id)}
-                                        disabled={loading || userGold < 50}
-                                        className="bg-green-600 hover:bg-green-500"
-                                    >
-                                        <Bed className="size-4" />
-                                        Rest Horse (50g)
-                                    </Button>
-                                )}
-
-                                <div className="text-right">
-                                    <p className="text-xs text-stone-500">
-                                        Sell value: {userHorse.sell_value.toLocaleString()}g
-                                    </p>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handleSell}
-                                        disabled={loading}
-                                        className="mt-1 border-red-900 text-red-400 hover:bg-red-900/20"
-                                    >
-                                        Sell Horse
-                                    </Button>
-                                </div>
-                            </div>
+                                    </div>
+                                );
+                            })}
                         </div>
+
+                        {/* Low stamina warning for active horse */}
+                        {userHorses.some(
+                            (h) => h.is_active && h.stamina / h.max_stamina <= 0.1,
+                        ) && (
+                            <div className="mt-3 rounded-lg border border-red-600/50 bg-red-900/30 px-3 py-2 text-sm text-red-300">
+                                <strong>Warning:</strong> Your active horse is exhausted and cannot
+                                travel! Rest at a stable to restore stamina.
+                            </div>
+                        )}
                     </div>
                 )}
 
