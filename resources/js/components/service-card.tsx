@@ -22,6 +22,7 @@ import {
     Sparkles,
     Star,
     Store,
+    Target,
     Warehouse,
     Wheat,
     type LucideIcon,
@@ -75,6 +76,7 @@ const iconMap: Record<string, LucideIcon> = {
     warehouse: Warehouse,
     "flask-conical": FlaskConical,
     footprints: Footprints,
+    target: Target,
 };
 
 export function ServiceCard({

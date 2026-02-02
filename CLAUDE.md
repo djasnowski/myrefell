@@ -57,6 +57,10 @@ return back()->with('success', 'Action completed!');
 return response()->json(['success' => true]);
 ```
 
+## Git Workflow
+
+When creating new features or making changes, **do NOT automatically `git push`**. Only commit the changes and let the user test first. Push only when explicitly asked.
+
 ===
 
 <laravel-boost-guidelines>
