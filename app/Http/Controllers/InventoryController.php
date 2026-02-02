@@ -192,6 +192,24 @@ class InventoryController extends Controller
             return back()->withErrors(['error' => 'Cannot equip this item.']);
         }
 
+        // Check level requirements
+        $item = $slot->item;
+        if ($item->required_level) {
+            // Determine which skill to check
+            $skillToCheck = $item->required_skill;
+            if (! $skillToCheck) {
+                // Default: weapons require attack, everything else requires defense
+                $skillToCheck = $item->equipment_slot === 'weapon' ? 'attack' : 'defense';
+            }
+
+            $playerLevel = $player->getSkillLevel($skillToCheck);
+            if ($playerLevel < $item->required_level) {
+                return back()->withErrors([
+                    'error' => "You need {$item->required_level} ".ucfirst($skillToCheck).' to equip this item.',
+                ]);
+            }
+        }
+
         // Unequip any item in the same equipment slot
         $player->inventory()
             ->whereHas('item', fn ($q) => $q->where('equipment_slot', $slot->item->equipment_slot))

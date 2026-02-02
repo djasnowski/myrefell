@@ -1,4 +1,5 @@
 import { Head, router, usePage } from "@inertiajs/react";
+import { gameToast } from "@/components/ui/game-toast";
 import {
     Apple,
     Droplets,
@@ -433,6 +434,13 @@ export default function Inventory() {
                     preserveScroll: true,
                     onSuccess: () => {
                         router.reload();
+                    },
+                    onError: (errors) => {
+                        const message =
+                            errors.error ||
+                            Object.values(errors).flat().join(", ") ||
+                            "Cannot equip this item";
+                        gameToast.error(message);
                     },
                 },
             );
