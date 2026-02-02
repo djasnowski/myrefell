@@ -6,6 +6,7 @@ use App\Models\EmploymentJob;
 use App\Models\Item;
 use App\Models\LocationStockpile;
 use App\Models\PlayerEmployment;
+use App\Models\Town;
 use App\Models\User;
 use App\Models\Village;
 use Illuminate\Support\Collection;
@@ -38,23 +39,57 @@ class JobService
      */
     public function isSettledAt(User $user, string $locationType, int $locationId): bool
     {
-        if (! $user->home_village_id) {
+        // Direct match - user lives directly at this location
+        if ($user->home_location_type === $locationType && $user->home_location_id === $locationId) {
+            return true;
+        }
+
+        // For towns: only direct match counts
+        if ($locationType === 'town') {
             return false;
         }
 
-        $homeVillage = $user->homeVillage;
-        if (! $homeVillage) {
+        // For villages: check if user lives in a hamlet of this village
+        if ($locationType === 'village') {
+            if ($user->home_location_type === 'village') {
+                $homeVillage = $user->homeVillage ?? Village::find($user->home_location_id);
+
+                return $homeVillage?->parent_village_id === $locationId;
+            }
+
             return false;
         }
 
-        return match ($locationType) {
-            'village', 'town' => $user->home_village_id === $locationId
-                || $homeVillage->parent_village_id === $locationId,
-            'barony' => $homeVillage->barony_id === $locationId,
-            'duchy' => $homeVillage->barony?->duchy_id === $locationId,
-            'kingdom' => $homeVillage->barony?->kingdom_id === $locationId,
-            default => false,
-        };
+        // For baronies, duchies, kingdoms: check if user's home is within that area
+        if ($user->home_location_type === 'village') {
+            $homeVillage = $user->homeVillage ?? Village::find($user->home_location_id);
+            if (! $homeVillage) {
+                return false;
+            }
+
+            return match ($locationType) {
+                'barony' => $homeVillage->barony_id === $locationId,
+                'duchy' => $homeVillage->barony?->duchy_id === $locationId,
+                'kingdom' => $homeVillage->barony?->kingdom_id === $locationId,
+                default => false,
+            };
+        }
+
+        if ($user->home_location_type === 'town') {
+            $homeTown = Town::find($user->home_location_id);
+            if (! $homeTown) {
+                return false;
+            }
+
+            return match ($locationType) {
+                'barony' => $homeTown->barony_id === $locationId,
+                'duchy' => $homeTown->barony?->duchy_id === $locationId,
+                'kingdom' => $homeTown->barony?->kingdom_id === $locationId,
+                default => false,
+            };
+        }
+
+        return false;
     }
 
     /**
@@ -108,7 +143,7 @@ class JobService
     /**
      * Apply for a job.
      */
-    public function applyForJob(User $user, EmploymentJob $job, string $locationType, int $locationId): array
+    public function applyForJob(User $user, EmploymentJob $job, string $locationType, int $locationId, bool $confirmQuitExisting = false): array
     {
         // Check if user is physically at this location
         if ($user->current_location_type !== $locationType || $user->current_location_id !== $locationId) {
@@ -153,15 +188,44 @@ class JobService
         }
 
         // Check concurrent job limit
-        $currentJobCount = PlayerEmployment::where('user_id', $user->id)
+        $currentJobs = PlayerEmployment::where('user_id', $user->id)
             ->where('status', PlayerEmployment::STATUS_EMPLOYED)
-            ->count();
+            ->get();
 
-        if ($currentJobCount >= self::MAX_CONCURRENT_JOBS) {
-            return [
-                'success' => false,
-                'message' => 'You already have the maximum number of jobs. Quit one first.',
-            ];
+        if ($currentJobs->count() >= self::MAX_CONCURRENT_JOBS) {
+            // Check if all current jobs are at a different settlement
+            $jobsAtOtherLocations = $currentJobs->filter(function ($employment) use ($user) {
+                return ! $this->isSettledAt($user, $employment->location_type, $employment->location_id);
+            });
+
+            if ($jobsAtOtherLocations->count() === $currentJobs->count()) {
+                // All jobs are at old settlement - allow applying if confirmed
+                if (! $confirmQuitExisting) {
+                    $jobNames = $currentJobs->map(fn ($e) => $e->job->name)->join(', ');
+
+                    return [
+                        'success' => false,
+                        'requires_confirmation' => true,
+                        'message' => "You have jobs at your previous settlement ({$jobNames}). Applying here will quit those jobs.",
+                        'existing_jobs' => $currentJobs->map(fn ($e) => [
+                            'id' => $e->id,
+                            'name' => $e->job->name,
+                            'location_type' => $e->location_type,
+                            'location_id' => $e->location_id,
+                        ])->values(),
+                    ];
+                }
+
+                // User confirmed - quit all old jobs
+                foreach ($currentJobs as $employment) {
+                    $employment->update(['status' => PlayerEmployment::STATUS_QUIT]);
+                }
+            } else {
+                return [
+                    'success' => false,
+                    'message' => 'You already have the maximum number of jobs. Quit one first.',
+                ];
+            }
         }
 
         // Check requirements

@@ -1,5 +1,6 @@
 import { Head, router, usePage } from "@inertiajs/react";
 import {
+    AlertTriangle,
     Anchor,
     Axe,
     Beef,
@@ -376,6 +377,11 @@ export default function JobsIndex() {
     const [quitLoading, setQuitLoading] = useState<number | null>(null);
     const [categoryFilter, setCategoryFilter] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState("");
+    const [confirmDialog, setConfirmDialog] = useState<{
+        jobId: number;
+        message: string;
+        existingJobs: Array<{ id: number; name: string }>;
+    } | null>(null);
 
     const filteredJobs = useMemo(() => {
         return available_jobs.filter((job) => {
@@ -412,25 +418,57 @@ export default function JobsIndex() {
         { title: "Jobs", href: "#" },
     ];
 
-    const canApplyForMore = all_employment.length < max_jobs && is_settled;
+    // Allow applying if settled - backend will handle max jobs check and confirmation
+    const canApplyForMore = is_settled;
 
-    const handleApply = (jobId: number) => {
+    const handleApply = async (jobId: number, confirmQuit = false) => {
         setApplyLoading(jobId);
-        router.post(
-            "/jobs/apply",
-            {
-                job_id: jobId,
-                location_type: location_type,
-                location_id: location_id,
-            },
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    router.reload();
+
+        try {
+            const response = await fetch("/jobs/apply", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
+                    Accept: "application/json",
                 },
-                onFinish: () => setApplyLoading(null),
-            },
-        );
+                body: JSON.stringify({
+                    job_id: jobId,
+                    location_type: location_type,
+                    location_id: location_id,
+                    confirm_quit_existing: confirmQuit,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.requires_confirmation) {
+                setConfirmDialog({
+                    jobId,
+                    message: data.message,
+                    existingJobs: data.existing_jobs || [],
+                });
+                setApplyLoading(null);
+                return;
+            }
+
+            // Success or regular error - reload page
+            router.reload();
+        } catch {
+            router.reload();
+        } finally {
+            setApplyLoading(null);
+        }
+    };
+
+    const handleConfirmQuitAndApply = () => {
+        if (confirmDialog) {
+            setConfirmDialog(null);
+            handleApply(confirmDialog.jobId, true);
+        }
     };
 
     const handleWork = (employmentId: number) => {
@@ -616,8 +654,8 @@ export default function JobsIndex() {
                     {is_settled && all_employment.length >= max_jobs && (
                         <div className="mb-4 rounded-lg border-2 border-amber-600/50 bg-amber-900/20 p-3">
                             <p className="font-pixel text-xs text-amber-300">
-                                You have the maximum number of jobs ({max_jobs}). Quit one to apply
-                                for another.
+                                You have the maximum number of jobs ({max_jobs}). You can still
+                                apply here, but you'll need to quit your existing jobs first.
                             </p>
                         </div>
                     )}
@@ -665,6 +703,63 @@ export default function JobsIndex() {
                         </div>
                     )}
                 </div>
+
+                {/* Confirmation Dialog */}
+                {confirmDialog && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+                        <div className="w-full max-w-md rounded-xl border-2 border-amber-600/50 bg-stone-900 p-6">
+                            <div className="mb-4 flex items-center gap-3">
+                                <div className="rounded-full bg-amber-900/50 p-2">
+                                    <AlertTriangle className="h-6 w-6 text-amber-400" />
+                                </div>
+                                <h3 className="font-pixel text-lg text-amber-300">
+                                    Quit Existing Jobs?
+                                </h3>
+                            </div>
+
+                            <p className="mb-4 text-sm text-stone-300">{confirmDialog.message}</p>
+
+                            {confirmDialog.existingJobs.length > 0 && (
+                                <div className="mb-4 rounded-lg bg-stone-800/50 p-3">
+                                    <p className="mb-2 font-pixel text-xs text-stone-400">
+                                        Jobs that will be quit:
+                                    </p>
+                                    <ul className="space-y-1">
+                                        {confirmDialog.existingJobs.map((job) => (
+                                            <li
+                                                key={job.id}
+                                                className="flex items-center gap-2 text-sm text-red-300"
+                                            >
+                                                <span className="text-red-500">•</span>
+                                                {job.name}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setConfirmDialog(null)}
+                                    className="flex-1 rounded-lg border-2 border-stone-600 bg-stone-800 px-4 py-2 font-pixel text-sm text-stone-300 transition hover:bg-stone-700"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleConfirmQuitAndApply}
+                                    disabled={applyLoading !== null}
+                                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border-2 border-amber-600 bg-amber-900/50 px-4 py-2 font-pixel text-sm text-amber-300 transition hover:bg-amber-800/50 disabled:opacity-50"
+                                >
+                                    {applyLoading !== null ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                        "Quit & Apply"
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </AppLayout>
     );

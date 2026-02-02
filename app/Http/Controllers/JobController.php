@@ -137,12 +137,13 @@ class JobController extends Controller
     /**
      * Apply for a job.
      */
-    public function apply(Request $request): RedirectResponse
+    public function apply(Request $request): RedirectResponse|JsonResponse
     {
         $request->validate([
             'job_id' => 'required|exists:employment_jobs,id',
             'location_type' => 'required|in:village,town,barony,duchy,kingdom',
             'location_id' => 'required|integer',
+            'confirm_quit_existing' => 'nullable|boolean',
         ]);
 
         $user = $request->user();
@@ -152,8 +153,18 @@ class JobController extends Controller
             $user,
             $job,
             $request->location_type,
-            $request->location_id
+            $request->location_id,
+            $request->boolean('confirm_quit_existing')
         );
+
+        // If requires confirmation, return as JSON so frontend can show dialog
+        if (! empty($result['requires_confirmation'])) {
+            return response()->json($result, 422);
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json($result, $result['success'] ? 200 : 422);
+        }
 
         if ($result['success']) {
             return back()->with('success', $result['message']);
