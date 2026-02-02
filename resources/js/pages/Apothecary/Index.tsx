@@ -332,7 +332,8 @@ export default function ApothecaryIndex() {
                 </div>
 
                 {/* Status Bar */}
-                <div className="mb-4 grid grid-cols-3 gap-4">
+                <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+                    {/* Energy */}
                     <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
                         <div className="mb-1 flex items-center gap-1 font-pixel text-xs text-yellow-400">
                             <Zap className="h-3 w-3" />
@@ -350,6 +351,32 @@ export default function ApothecaryIndex() {
                             {currentEnergy} / {brewing_info.max_energy}
                         </div>
                     </div>
+
+                    {/* Herblore Skill */}
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
+                        <div className="mb-1 flex items-center justify-between">
+                            <div className="flex items-center gap-1 font-pixel text-xs text-emerald-400">
+                                <Leaf className="h-3 w-3" />
+                                Herblore
+                            </div>
+                            <span className="font-pixel text-xs text-stone-300">
+                                {brewing_info.herblore_level}/99
+                            </span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
+                            <div
+                                className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all"
+                                style={{
+                                    width: `${brewing_info.herblore_xp_progress}%`,
+                                }}
+                            />
+                        </div>
+                        <div className="mt-1 font-pixel text-[10px] text-stone-400">
+                            {brewing_info.herblore_xp_to_next.toLocaleString()} XP to next level
+                        </div>
+                    </div>
+
+                    {/* Inventory */}
                     <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
                         <div className="mb-1 flex items-center justify-between">
                             <div className="flex items-center gap-1 font-pixel text-xs text-amber-300">
@@ -423,28 +450,6 @@ export default function ApothecaryIndex() {
                                 No ingredients
                             </div>
                         )}
-                    </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
-                        <div className="mb-1 flex items-center justify-between">
-                            <div className="flex items-center gap-1 font-pixel text-xs text-emerald-400">
-                                <Leaf className="h-3 w-3" />
-                                Herblore
-                            </div>
-                            <span className="font-pixel text-xs text-stone-300">
-                                {brewing_info.herblore_level}/99
-                            </span>
-                        </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
-                            <div
-                                className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all"
-                                style={{
-                                    width: `${brewing_info.herblore_xp_progress}%`,
-                                }}
-                            />
-                        </div>
-                        <div className="mt-1 font-pixel text-[10px] text-stone-400">
-                            {brewing_info.herblore_xp_to_next.toLocaleString()} XP to next level
-                        </div>
                     </div>
                 </div>
 

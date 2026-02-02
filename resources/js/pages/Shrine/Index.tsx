@@ -204,39 +204,42 @@ function BlessingCard({
         <button
             onClick={onSelect}
             disabled={disabled}
-            className={`flex items-center gap-3 rounded-lg border p-3 text-left transition ${categoryColors[blessing.category]} ${
+            className={`flex items-center gap-2 rounded-lg border p-2 text-left transition sm:gap-3 sm:p-3 ${categoryColors[blessing.category]} ${
                 selected ? "ring-2 ring-amber-400" : ""
             } ${disabled ? "cursor-not-allowed opacity-50" : "hover:brightness-110"}`}
         >
-            {/* Large Icon */}
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-stone-800/50">
+            {/* Large Icon - hidden on mobile */}
+            <div className="hidden h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-stone-800/50 sm:flex">
                 <Icon className="h-7 w-7 text-amber-300" />
             </div>
 
             {/* Content */}
             <div className="min-w-0 flex-1">
-                <div className="font-pixel text-sm text-amber-300">{blessing.name}</div>
-                <div className="flex flex-wrap gap-1 mt-1">
+                <div className="flex items-center gap-1.5 font-pixel text-xs text-amber-300 sm:text-sm">
+                    <Icon className="h-4 w-4 sm:hidden" />
+                    {blessing.name}
+                </div>
+                <div className="mt-1 flex flex-wrap gap-1">
                     {Object.entries(blessing.effects).map(([key, value]) => (
                         <span
                             key={key}
-                            className="rounded bg-stone-800 px-1.5 py-0.5 font-pixel text-[10px] text-green-400"
+                            className="rounded bg-stone-800 px-1 py-0.5 font-pixel text-[9px] text-green-400 sm:px-1.5 sm:text-[10px]"
                         >
                             {formatEffect(key, value)}
                         </span>
                     ))}
                 </div>
-                <div className="mt-1.5 flex items-center gap-3 font-pixel text-[10px] text-stone-400">
+                <div className="mt-1.5 flex items-center gap-2 font-pixel text-[9px] text-stone-400 sm:gap-3 sm:text-[10px]">
                     <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
+                        <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                         {blessing.duration}
                     </span>
                     <span className="flex items-center gap-1">
-                        <Coins className="h-3 w-3 text-amber-400" />
+                        <Coins className="h-2.5 w-2.5 text-amber-400 sm:h-3 sm:w-3" />
                         {blessing.gold_cost}g
                     </span>
                     <span className="flex items-center gap-1">
-                        <Zap className="h-3 w-3 text-blue-400" />
+                        <Zap className="h-2.5 w-2.5 text-blue-400 sm:h-3 sm:w-3" />
                         {blessing.energy_cost}
                     </span>
                 </div>
@@ -252,20 +255,24 @@ function ActiveBlessingCard({ blessing }: { blessing: ActiveBlessing }) {
     const timeDisplay = blessing.time_remaining.replace(/ from now$/, "");
 
     return (
-        <div className={`relative rounded-lg border p-4 ${categoryColors[blessing.category]}`}>
-            <div className="absolute bottom-3 right-3 flex items-center gap-1 font-pixel text-xs text-stone-400">
-                <Clock className="h-3 w-3" />
-                {timeDisplay}
+        <div className={`rounded-lg border p-3 sm:p-4 ${categoryColors[blessing.category]}`}>
+            <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                    <Icon className="h-5 w-5 text-amber-300 sm:h-6 sm:w-6" />
+                    <span className="font-pixel text-xs text-amber-300 sm:text-sm">
+                        {blessing.name}
+                    </span>
+                </div>
+                <div className="flex shrink-0 items-center gap-1 font-pixel text-[10px] text-stone-400 sm:text-xs">
+                    <Clock className="h-3 w-3" />
+                    {timeDisplay}
+                </div>
             </div>
-            <div className="mb-2 flex items-center gap-2">
-                <Icon className="h-6 w-6 text-amber-300" />
-                <span className="font-pixel text-sm text-amber-300">{blessing.name}</span>
-            </div>
-            <div className="mb-3 flex flex-wrap gap-1.5">
+            <div className="mb-3 flex flex-wrap gap-1">
                 {Object.entries(blessing.effects).map(([key, value]) => (
                     <span
                         key={key}
-                        className="rounded bg-stone-800 px-2 py-1 font-pixel text-xs text-green-400"
+                        className="rounded bg-stone-800 px-1.5 py-0.5 font-pixel text-[10px] text-green-400 sm:px-2 sm:py-1 sm:text-xs"
                     >
                         {formatEffect(key, value)}
                     </span>
@@ -277,7 +284,9 @@ function ActiveBlessingCard({ blessing }: { blessing: ActiveBlessing }) {
                     style={{ width: `${progress}%` }}
                 />
             </div>
-            <div className="mt-2 text-xs text-stone-500">From: {blessing.granted_by}</div>
+            <div className="mt-2 text-[10px] text-stone-500 sm:text-xs">
+                From: {blessing.granted_by}
+            </div>
         </div>
     );
 }
@@ -369,18 +378,16 @@ export default function ShrineIndex() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Shrine" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-hidden p-4">
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-hidden p-3 sm:p-4">
                 {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <Church className="h-8 w-8 text-amber-400" />
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <Church className="hidden h-8 w-8 text-amber-400 sm:block" />
                         <div>
-                            <h1 className="font-pixel text-xl text-amber-400">
-                                {location.name
-                                    ? `${location.name} Shrine`
-                                    : `${location.type.charAt(0).toUpperCase() + location.type.slice(1)} Shrine`}
+                            <h1 className="font-pixel text-base text-amber-400 sm:text-xl">
+                                {location.name ? `${location.name} Shrine` : "Shrine"}
                             </h1>
-                            <p className="font-pixel text-xs text-stone-400">
+                            <p className="font-pixel text-[10px] text-stone-400 sm:text-xs">
                                 {is_priest
                                     ? "Bestow blessings upon the faithful"
                                     : "Pray for divine favor"}
@@ -388,32 +395,32 @@ export default function ShrineIndex() {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1 font-pixel text-sm text-amber-400">
-                            <Coins className="h-4 w-4" />
-                            {gold}
+                        <div className="flex items-center gap-1 font-pixel text-xs text-amber-400 sm:text-sm">
+                            <Coins className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                            {gold.toLocaleString()}
                         </div>
-                        <div className="flex items-center gap-1 font-pixel text-sm text-blue-400">
-                            <Zap className="h-4 w-4" />
+                        <div className="flex items-center gap-1 font-pixel text-xs text-blue-400 sm:text-sm">
+                            <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             {energy}
                         </div>
                     </div>
                 </div>
 
-                <div className="flex flex-1 gap-4 overflow-hidden">
+                <div className="flex flex-1 flex-col gap-4 overflow-hidden sm:flex-row">
                     {/* Left: Active Blessings */}
-                    <div className="w-96 flex-shrink-0 overflow-y-auto rounded-lg border border-stone-700 bg-stone-900/50 p-4">
-                        <h2 className="mb-3 flex items-center gap-2 font-pixel text-sm text-amber-300">
+                    <div className="shrink-0 overflow-y-auto rounded-lg border border-stone-700 bg-stone-900/50 p-3 sm:w-96 sm:p-4">
+                        <h2 className="mb-3 flex items-center gap-2 font-pixel text-xs text-amber-300 sm:text-sm">
                             <Sparkles className="h-4 w-4" />
                             Active Blessings
                         </h2>
 
                         {active_blessings.length === 0 ? (
-                            <div className="rounded-lg border border-dashed border-stone-700 p-4 text-center">
-                                <Sparkles className="mx-auto mb-2 h-8 w-8 text-stone-600" />
-                                <p className="font-pixel text-xs text-stone-500">
+                            <div className="rounded-lg border border-dashed border-stone-700 p-3 text-center sm:p-4">
+                                <Sparkles className="mx-auto mb-2 h-6 w-6 text-stone-600 sm:h-8 sm:w-8" />
+                                <p className="font-pixel text-[10px] text-stone-500 sm:text-xs">
                                     No active blessings
                                 </p>
-                                <p className="font-pixel text-[10px] text-stone-600">
+                                <p className="hidden font-pixel text-[10px] text-stone-600 sm:block">
                                     {is_priest
                                         ? "Bless yourself or others"
                                         : "Pray at the shrine for blessings"}
@@ -427,9 +434,9 @@ export default function ShrineIndex() {
                             </div>
                         )}
 
-                        {/* Recent Blessings at this Shrine */}
+                        {/* Recent Blessings at this Shrine - hidden on mobile */}
                         {recent_blessings && recent_blessings.length > 0 && (
-                            <div className="mt-4">
+                            <div className="mt-4 hidden sm:block">
                                 <h2 className="mb-3 flex items-center gap-2 font-pixel text-sm text-amber-300">
                                     <Church className="h-4 w-4" />
                                     Recent Blessings
@@ -470,21 +477,21 @@ export default function ShrineIndex() {
                     <div className="-mx-1 flex-1 overflow-y-auto px-1">
                         {is_priest && priest_data ? (
                             // Priest view
-                            <div className="space-y-4">
+                            <div className="space-y-3 sm:space-y-4">
                                 {/* Priest Stats */}
-                                <div className="rounded-lg border border-purple-600/50 bg-purple-900/20 p-4">
+                                <div className="rounded-lg border border-purple-600/50 bg-purple-900/20 p-3 sm:p-4">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <Church className="h-5 w-5 text-purple-400" />
-                                            <span className="font-pixel text-sm text-purple-300">
+                                            <Church className="h-4 w-4 text-purple-400 sm:h-5 sm:w-5" />
+                                            <span className="font-pixel text-xs text-purple-300 sm:text-sm">
                                                 Priest Powers
                                             </span>
                                         </div>
-                                        <span className="font-pixel text-xs text-stone-400">
-                                            Blessings today: {priest_data.blessings_given_today}
+                                        <span className="font-pixel text-[10px] text-stone-400 sm:text-xs">
+                                            Today: {priest_data.blessings_given_today}
                                         </span>
                                     </div>
-                                    <div className="mt-2 flex items-center gap-4 text-xs text-stone-400">
+                                    <div className="mt-2 flex items-center gap-4 text-[10px] text-stone-400 sm:text-xs">
                                         <span>
                                             XP: {priest_data.prayer_xp} /{" "}
                                             {priest_data.prayer_xp_to_next}
@@ -574,12 +581,12 @@ export default function ShrineIndex() {
                                     )}
 
                                 {/* Category Filter */}
-                                <div className="flex gap-2">
+                                <div className="flex flex-wrap gap-1.5 sm:gap-2">
                                     {["all", "combat", "skill", "general"].map((cat) => (
                                         <button
                                             key={cat}
                                             onClick={() => setActiveCategory(cat)}
-                                            className={`rounded px-3 py-1 font-pixel text-xs transition ${
+                                            className={`rounded px-2 py-1 font-pixel text-[10px] transition sm:px-3 sm:text-xs ${
                                                 activeCategory === cat
                                                     ? "bg-amber-600 text-white"
                                                     : "bg-stone-800 text-stone-400 hover:bg-stone-700"
@@ -591,14 +598,14 @@ export default function ShrineIndex() {
                                 </div>
 
                                 {/* Blessings Grid */}
-                                <div className="space-y-4">
+                                <div className="space-y-3 sm:space-y-4">
                                     {Object.entries(groupedBlessings).map(
                                         ([category, blessings]) => (
                                             <div key={category}>
-                                                <h3 className="mb-2 font-pixel text-xs text-stone-400">
+                                                <h3 className="mb-2 font-pixel text-[10px] text-stone-400 sm:text-xs">
                                                     {categoryLabels[category]} Blessings
                                                 </h3>
-                                                <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
+                                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                                     {blessings.map((blessing) => (
                                                         <BlessingCard
                                                             key={blessing.id}
@@ -620,14 +627,14 @@ export default function ShrineIndex() {
 
                                 {/* Target Selection */}
                                 {selectedBlessing && (
-                                    <div className="rounded-lg border border-amber-600/50 bg-amber-900/20 p-4">
-                                        <h3 className="mb-2 font-pixel text-sm text-amber-300">
+                                    <div className="rounded-lg border border-amber-600/50 bg-amber-900/20 p-3 sm:p-4">
+                                        <h3 className="mb-2 font-pixel text-xs text-amber-300 sm:text-sm">
                                             Bestow {selectedBlessing.name} upon:
                                         </h3>
-                                        <div className="mb-3 flex flex-wrap gap-2">
+                                        <div className="mb-3 flex flex-wrap gap-1.5 sm:gap-2">
                                             <button
                                                 onClick={() => setSelectedPlayer(-1)}
-                                                className={`flex items-center gap-1 rounded px-3 py-1.5 font-pixel text-xs transition ${
+                                                className={`flex items-center gap-1 rounded px-2 py-1 font-pixel text-[10px] transition sm:px-3 sm:py-1.5 sm:text-xs ${
                                                     selectedPlayer === -1
                                                         ? "bg-amber-600 text-white"
                                                         : "bg-stone-800 text-stone-300 hover:bg-stone-700"
@@ -642,7 +649,7 @@ export default function ShrineIndex() {
                                                     <button
                                                         key={player.id}
                                                         onClick={() => setSelectedPlayer(player.id)}
-                                                        className={`flex items-center gap-1 rounded px-3 py-1.5 font-pixel text-xs transition ${
+                                                        className={`flex items-center gap-1 rounded px-2 py-1 font-pixel text-[10px] transition sm:px-3 sm:py-1.5 sm:text-xs ${
                                                             selectedPlayer === player.id
                                                                 ? "bg-amber-600 text-white"
                                                                 : "bg-stone-800 text-stone-300 hover:bg-stone-700"
@@ -656,7 +663,7 @@ export default function ShrineIndex() {
                                         <button
                                             onClick={handleBless}
                                             disabled={!selectedPlayer || loading}
-                                            className="flex w-full items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-2 font-pixel text-sm text-white transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                            className="flex w-full items-center justify-center gap-2 rounded-lg bg-amber-600 px-3 py-1.5 font-pixel text-xs text-white transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:py-2 sm:text-sm"
                                         >
                                             {loading ? (
                                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -673,18 +680,17 @@ export default function ShrineIndex() {
                         ) : (
                             // Non-priest view - self prayer
                             <div className="space-y-4">
-                                <div className="rounded-lg border border-stone-700 bg-stone-900/50 p-4">
-                                    <h2 className="mb-2 font-pixel text-sm text-amber-300">
+                                <div className="rounded-lg border border-stone-700 bg-stone-900/50 p-3 sm:p-4">
+                                    <h2 className="mb-1 font-pixel text-xs text-amber-300 sm:mb-2 sm:text-sm">
                                         Prayer at the Shrine
                                     </h2>
-                                    <p className="font-pixel text-xs text-stone-400">
-                                        Without a Priest, you may pray directly at the shrine.
-                                        Blessings cost 50% more gold and last 25% shorter, but are
-                                        still effective.
+                                    <p className="font-pixel text-[10px] text-stone-400 sm:text-xs">
+                                        Without a Priest, you may pray directly. Costs 50% more gold
+                                        and lasts 25% shorter.
                                     </p>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
                                     {shrine_blessings.map((blessing) => {
                                         const isLocked =
                                             prayer_level < blessing.prayer_level_required;
@@ -695,7 +701,7 @@ export default function ShrineIndex() {
                                         return (
                                             <div
                                                 key={blessing.slug}
-                                                className={`relative rounded-lg border p-4 ${isLocked ? "border-stone-700 bg-stone-900/50 opacity-75" : isActive ? "border-green-600/50 bg-green-900/20" : categoryColors[blessing.category]}`}
+                                                className={`relative rounded-lg border p-3 sm:p-4 ${isLocked ? "border-stone-700 bg-stone-900/50 opacity-75" : isActive ? "border-green-600/50 bg-green-900/20" : categoryColors[blessing.category]}`}
                                             >
                                                 {isLocked && (
                                                     <div className="absolute right-2 top-2">
@@ -709,49 +715,48 @@ export default function ShrineIndex() {
                                                 )}
                                                 <div className="mb-2 flex items-center gap-2">
                                                     <Icon
-                                                        className={`h-6 w-6 ${isLocked ? "text-stone-500" : isActive ? "text-green-400" : "text-amber-300"}`}
+                                                        className={`h-5 w-5 sm:h-6 sm:w-6 ${isLocked ? "text-stone-500" : isActive ? "text-green-400" : "text-amber-300"}`}
                                                     />
                                                     <span
-                                                        className={`font-pixel text-sm ${isLocked ? "text-stone-500" : isActive ? "text-green-400" : "text-amber-300"}`}
+                                                        className={`font-pixel text-xs sm:text-sm ${isLocked ? "text-stone-500" : isActive ? "text-green-400" : "text-amber-300"}`}
                                                     >
                                                         {blessing.name}
                                                     </span>
                                                 </div>
-                                                <p className="mb-2 font-pixel text-xs text-stone-400">
+                                                <p className="mb-2 hidden font-pixel text-xs text-stone-400 sm:block">
                                                     {blessing.description}
                                                 </p>
-                                                <div className="mb-3 flex flex-wrap gap-1.5">
+                                                <div className="mb-2 flex flex-wrap gap-1 sm:mb-3 sm:gap-1.5">
                                                     {Object.entries(blessing.effects).map(
                                                         ([key, value]) => (
                                                             <span
                                                                 key={key}
-                                                                className={`rounded bg-stone-800 px-2 py-1 font-pixel text-xs ${isLocked ? "text-stone-500" : "text-green-400"}`}
+                                                                className={`rounded bg-stone-800 px-1.5 py-0.5 font-pixel text-[10px] sm:px-2 sm:py-1 sm:text-xs ${isLocked ? "text-stone-500" : "text-green-400"}`}
                                                             >
                                                                 {formatEffect(key, value)}
                                                             </span>
                                                         ),
                                                     )}
                                                 </div>
-                                                <div className="mb-3 flex items-center justify-between font-pixel text-xs text-stone-500">
+                                                <div className="mb-2 flex items-center justify-between font-pixel text-[10px] text-stone-500 sm:mb-3 sm:text-xs">
                                                     <span className="flex items-center gap-1">
-                                                        <Clock className="h-4 w-4" />
+                                                        <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
                                                         {blessing.duration}
                                                     </span>
                                                     <span className="flex items-center gap-1">
                                                         <Coins
-                                                            className={`h-4 w-4 ${isLocked ? "text-stone-500" : "text-amber-400"}`}
+                                                            className={`h-3 w-3 sm:h-4 sm:w-4 ${isLocked ? "text-stone-500" : "text-amber-400"}`}
                                                         />
                                                         {blessing.gold_cost}g
                                                     </span>
                                                 </div>
                                                 {isLocked ? (
-                                                    <div className="flex w-full items-center justify-center gap-2 rounded bg-stone-700 px-3 py-2 font-pixel text-xs text-stone-400">
+                                                    <div className="flex w-full items-center justify-center gap-2 rounded bg-stone-700 px-2 py-1.5 font-pixel text-[10px] text-stone-400 sm:px-3 sm:py-2 sm:text-xs">
                                                         <Lock className="h-3 w-3" />
-                                                        Requires Prayer{" "}
-                                                        {blessing.prayer_level_required}
+                                                        Req. Prayer {blessing.prayer_level_required}
                                                     </div>
                                                 ) : isActive ? (
-                                                    <div className="flex w-full items-center justify-center gap-2 rounded bg-green-700 px-3 py-2 font-pixel text-sm text-green-200">
+                                                    <div className="flex w-full items-center justify-center gap-2 rounded bg-green-700 px-2 py-1.5 font-pixel text-xs text-green-200 sm:px-3 sm:py-2 sm:text-sm">
                                                         <Check className="h-4 w-4" />
                                                         Active
                                                     </div>
@@ -761,7 +766,7 @@ export default function ShrineIndex() {
                                                         disabled={
                                                             gold < blessing.gold_cost || prayLoading
                                                         }
-                                                        className="flex w-full items-center justify-center gap-2 rounded bg-amber-600 px-3 py-2 font-pixel text-sm text-white hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        className="flex w-full items-center justify-center gap-2 rounded bg-amber-600 px-2 py-1.5 font-pixel text-xs text-white hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm"
                                                     >
                                                         {prayLoading ? (
                                                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -775,12 +780,12 @@ export default function ShrineIndex() {
                                     })}
                                 </div>
 
-                                <div className="rounded-lg border border-dashed border-stone-600 p-4 text-center">
-                                    <Church className="mx-auto mb-2 h-8 w-8 text-stone-600" />
-                                    <p className="font-pixel text-xs text-stone-500">
+                                <div className="rounded-lg border border-dashed border-stone-600 p-3 text-center sm:p-4">
+                                    <Church className="mx-auto mb-2 h-6 w-6 text-stone-600 sm:h-8 sm:w-8" />
+                                    <p className="font-pixel text-[10px] text-stone-500 sm:text-xs">
                                         A Priest can bless you at full duration and normal cost.
                                     </p>
-                                    <p className="font-pixel text-xs text-stone-600 mt-1">
+                                    <p className="mt-1 font-pixel text-[10px] text-stone-600 sm:text-xs">
                                         Self-prayer costs 50% more and lasts 25% shorter.
                                     </p>
                                 </div>
