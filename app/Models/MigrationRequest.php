@@ -266,6 +266,12 @@ class MigrationRequest extends Model
             return false;
         }
 
+        // Town destinations only need mayor approval, not baron
+        // Baron oversees the barony, not individual town migrations
+        if ($this->isToTown()) {
+            return false;
+        }
+
         $barony = $this->getDestinationBarony();
         if (! $barony) {
             return false;
