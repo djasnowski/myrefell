@@ -59,7 +59,7 @@ const changelog: ChangelogEntry[] = [
             },
             {
                 type: "added",
-                text: "Doubles: Roll matching dice to win big (1.8x payout)",
+                text: "Doubles: Roll matching dice to win big (2.7x payout)",
             },
             {
                 type: "added",

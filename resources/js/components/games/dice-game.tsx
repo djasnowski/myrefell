@@ -91,7 +91,7 @@ const GAME_INFO: Record<
         name: "Doubles",
         description: ["Roll matching dice to win!", "Low odds but decent payout."],
         odds: "17%",
-        payout: "1.8x",
+        payout: "2.7x",
     },
 };
 

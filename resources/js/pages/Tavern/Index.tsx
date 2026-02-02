@@ -230,7 +230,7 @@ const GAME_INFO: Record<
         name: "Doubles",
         description: "Roll doubles to win!",
         odds: "17%",
-        payout: "1.8x",
+        payout: "2.7x",
     },
 };
 
