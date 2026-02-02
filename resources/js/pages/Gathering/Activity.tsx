@@ -1,5 +1,6 @@
 import { Head, router, usePage } from "@inertiajs/react";
 import {
+    AlertTriangle,
     Axe,
     Backpack,
     Fish,
@@ -257,6 +258,24 @@ export default function GatheringActivity() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Inventory Full Warning */}
+                    {activity.inventory_full && (
+                        <div className="mb-4 rounded-lg border-2 border-red-600 bg-red-900/30 p-4">
+                            <div className="flex items-center gap-3">
+                                <AlertTriangle className="h-6 w-6 text-red-400" />
+                                <div>
+                                    <p className="font-pixel text-sm text-red-300">
+                                        Inventory Full
+                                    </p>
+                                    <p className="font-pixel text-xs text-red-400/80">
+                                        You need to sell or drop items before you can gather more
+                                        resources.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Energy and Inventory Status */}
                     <div className="mb-6 grid grid-cols-2 gap-4">
