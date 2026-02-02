@@ -10,7 +10,7 @@ class PlayerHorse extends Model
 {
     use HasFactory;
 
-    public const MAX_HORSES_PER_USER = 15;
+    public const MAX_HORSES_PER_USER = 5;
 
     protected $fillable = [
         'user_id',
