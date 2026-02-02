@@ -238,6 +238,14 @@ class MarketService
 
         $supply = $stockpile?->quantity ?? 0;
 
+        return $this->calculateSupplyModifierForQuantity($supply);
+    }
+
+    /**
+     * Calculate supply modifier for a given supply quantity.
+     */
+    protected function calculateSupplyModifierForQuantity(int $supply): float
+    {
         // Low supply = higher prices, high supply = lower prices
         if ($supply <= self::SUPPLY_LOW) {
             return 1.3; // 30% price increase
@@ -248,6 +256,36 @@ class MarketService
         } else {
             return 0.7; // 30% price decrease for abundant supply
         }
+    }
+
+    /**
+     * Calculate sell price accounting for the supply increase from the sale.
+     * This prevents arbitrage by pricing items as if they're already in the market.
+     */
+    protected function calculateSellPriceWithSupplyIncrease(MarketPrice $marketPrice, int $quantity): int
+    {
+        $stockpile = LocationStockpile::atLocation(
+            $marketPrice->location_type,
+            $marketPrice->location_id
+        )->forItem($marketPrice->item_id)->first();
+
+        $currentSupply = $stockpile?->quantity ?? 0;
+        $projectedSupply = $currentSupply + $quantity;
+
+        // Calculate what the price would be AFTER adding the items
+        $worldState = WorldState::current();
+        $item = $marketPrice->item;
+        $itemType = $item->type ?? 'misc';
+        $season = $worldState->current_season;
+
+        $seasonalModifier = self::SEASON_PRICE_MODIFIERS[$season][$itemType] ?? 1.0;
+        $projectedSupplyModifier = $this->calculateSupplyModifierForQuantity($projectedSupply);
+
+        $projectedPrice = (int) round($marketPrice->base_price * $seasonalModifier * $projectedSupplyModifier);
+        $projectedPrice = max(1, $projectedPrice);
+
+        // Sell price is 80% of the projected price (same as getSellPriceAttribute)
+        return max(1, (int) floor($projectedPrice * 0.8));
     }
 
     /**
@@ -407,9 +445,11 @@ class MarketService
         $marketPrice = MarketPrice::getOrCreate($locationType, $locationId, $item);
         $this->updatePrice($marketPrice);
 
-        $totalGold = $marketPrice->sell_price * $quantity;
+        // Calculate sell price based on post-sale supply level (prevents arbitrage)
+        $sellPrice = $this->calculateSellPriceWithSupplyIncrease($marketPrice, $quantity);
+        $totalGold = $sellPrice * $quantity;
 
-        return DB::transaction(function () use ($user, $item, $quantity, $marketPrice, $totalGold, $locationType, $locationId) {
+        return DB::transaction(function () use ($user, $item, $quantity, $marketPrice, $sellPrice, $totalGold, $locationType, $locationId) {
             // Remove from inventory
             $this->inventoryService->removeItem($user, $item, $quantity);
 
@@ -428,7 +468,7 @@ class MarketService
                 'item_id' => $item->id,
                 'type' => MarketTransaction::TYPE_SELL,
                 'quantity' => $quantity,
-                'price_per_unit' => $marketPrice->sell_price,
+                'price_per_unit' => $sellPrice,
                 'total_gold' => $totalGold,
             ]);
 
