@@ -303,16 +303,18 @@ export default function StableIndex() {
 
             <div className="space-y-6 p-6">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
                         <div className="rounded-lg bg-amber-900/30 p-2">
                             <Gauge className="size-6 text-amber-400" />
                         </div>
                         <div>
-                            <h1 className="font-[Cinzel] text-2xl font-bold text-stone-100">
+                            <h1 className="font-[Cinzel] text-xl font-bold text-stone-100 sm:text-2xl">
                                 {location ? `${location.name} Stables` : "Stables"}
                             </h1>
-                            <p className="text-sm text-stone-400">Buy and manage your horse</p>
+                            <p className="text-xs text-stone-400 sm:text-sm">
+                                Buy and manage your horse
+                            </p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 text-amber-400">
@@ -346,22 +348,22 @@ export default function StableIndex() {
                                 return (
                                     <div
                                         key={horse.id}
-                                        className={`flex items-center justify-between rounded-lg border p-3 ${
+                                        className={`flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between ${
                                             horse.is_active
                                                 ? "border-amber-500/50 bg-amber-950/40"
                                                 : "border-stone-700/50 bg-stone-900/50"
                                         }`}
                                     >
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-3 sm:gap-4">
                                             <div
-                                                className={`rounded-lg p-2 ${horse.is_active ? "bg-amber-900/50" : "bg-stone-800/50"}`}
+                                                className={`hidden rounded-lg p-2 sm:block ${horse.is_active ? "bg-amber-900/50" : "bg-stone-800/50"}`}
                                             >
                                                 <Gauge
                                                     className={`size-6 ${horse.is_active ? "text-amber-400" : "text-stone-500"}`}
                                                 />
                                             </div>
-                                            <div>
-                                                <div className="flex items-center gap-2">
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex flex-wrap items-center gap-2">
                                                     <p className="font-semibold text-stone-100">
                                                         {horse.name}
                                                     </p>
@@ -376,10 +378,10 @@ export default function StableIndex() {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <p className="text-sm text-stone-500">
+                                                <p className="text-xs text-stone-500 sm:text-sm">
                                                     {horse.type}
                                                 </p>
-                                                <div className="mt-1 flex items-center gap-4 text-sm">
+                                                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs sm:gap-4 sm:text-sm">
                                                     <span className="flex items-center gap-1">
                                                         <Zap className="size-3 text-blue-400" />
                                                         <span className="text-blue-400">
@@ -394,13 +396,13 @@ export default function StableIndex() {
                                                             {horse.stamina}/{horse.max_stamina}
                                                         </span>
                                                     </span>
-                                                    <span className="text-stone-600">
+                                                    <span className="hidden text-stone-600 sm:inline">
                                                         Sell: {horse.sell_price.toLocaleString()}g
                                                     </span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex flex-wrap items-center gap-2">
                                             {/* Rest button */}
                                             {horse.stamina < horse.max_stamina && (
                                                 <Button
@@ -518,36 +520,34 @@ export default function StableIndex() {
                                 return (
                                     <div
                                         key={horse.id}
-                                        className="flex items-center justify-between rounded-lg border border-stone-700/30 bg-stone-900/50 p-3"
+                                        className="flex items-center gap-3 rounded-lg border border-stone-700/30 bg-stone-900/50 p-3"
                                     >
-                                        <div className="flex items-center gap-3">
-                                            <div className="rounded-lg bg-amber-900/30 p-2">
-                                                <Gauge className="size-5 text-amber-400" />
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold text-stone-100">
-                                                    {horse.name}
-                                                </p>
-                                                <div className="flex items-center gap-3 text-sm">
-                                                    <span className="flex items-center gap-1 text-stone-400">
-                                                        <User className="size-3" />
-                                                        {horse.owner_name}
+                                        <div className="hidden rounded-lg bg-amber-900/30 p-2 sm:block">
+                                            <Gauge className="size-5 text-amber-400" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="font-semibold text-stone-100">
+                                                {horse.name}
+                                            </p>
+                                            <div className="flex flex-wrap items-center gap-2 text-xs sm:gap-3 sm:text-sm">
+                                                <span className="flex items-center gap-1 text-stone-400">
+                                                    <User className="size-3" />
+                                                    {horse.owner_name}
+                                                </span>
+                                                <span className="flex items-center gap-1">
+                                                    <Zap className="size-3 text-blue-400" />
+                                                    <span className="text-blue-400">
+                                                        {horse.speed_multiplier}x
                                                     </span>
-                                                    <span className="flex items-center gap-1">
-                                                        <Zap className="size-3 text-blue-400" />
-                                                        <span className="text-blue-400">
-                                                            {horse.speed_multiplier}x
-                                                        </span>
+                                                </span>
+                                                <span className="flex items-center gap-1">
+                                                    <Heart
+                                                        className={`size-3 ${staminaColor} ${staminaRatio <= 0.1 ? "animate-pulse" : ""}`}
+                                                    />
+                                                    <span className={staminaColor}>
+                                                        {horse.stamina}/{horse.max_stamina}
                                                     </span>
-                                                    <span className="flex items-center gap-1">
-                                                        <Heart
-                                                            className={`size-3 ${staminaColor} ${staminaRatio <= 0.1 ? "animate-pulse" : ""}`}
-                                                        />
-                                                        <span className={staminaColor}>
-                                                            {horse.stamina}/{horse.max_stamina}
-                                                        </span>
-                                                    </span>
-                                                </div>
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -559,7 +559,7 @@ export default function StableIndex() {
 
                 {/* Horses for Sale */}
                 <div>
-                    <h2 className="mb-4 font-[Cinzel] text-lg font-semibold text-stone-100">
+                    <h2 className="mb-3 font-[Cinzel] text-base font-semibold text-stone-100 sm:mb-4 sm:text-lg">
                         Horses for Sale
                     </h2>
 
