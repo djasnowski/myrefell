@@ -168,6 +168,7 @@ class LocationServices
             'port',      // Only if is_port = true
             'stables',
             'tavern',
+            'arena',
             'thieving',
             'apothecary',
             'farming',
