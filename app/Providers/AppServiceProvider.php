@@ -14,7 +14,9 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Opcodes\LogViewer\Facades\LogViewer;
 use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
@@ -35,6 +37,14 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         $this->configureMorphMap();
         $this->configureEventListeners();
+        $this->configureLogViewer();
+    }
+
+    protected function configureLogViewer(): void
+    {
+        LogViewer::auth(function ($request) {
+            return $request->user()?->is_admin === true;
+        });
     }
 
     protected function configureEventListeners(): void
