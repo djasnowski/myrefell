@@ -66,9 +66,8 @@ class StableController extends Controller
         // Get available horses at this location
         $rawStock = $this->stableService->getStableStock($locationType);
 
-        // Transform stock data for frontend
+        // Transform stock data for frontend (show all horses, not just in-stock)
         $stock = collect($rawStock)
-            ->filter(fn ($item) => $item['in_stock'])
             ->map(fn ($item) => [
                 'id' => $item['horse']->id,
                 'name' => $item['horse']->name,
@@ -79,6 +78,10 @@ class StableController extends Controller
                 'max_stamina' => $item['horse']->base_stamina,
                 'price' => $item['price'],
                 'rarity' => $this->getRarityName($item['horse']->rarity),
+                'in_stock' => $item['in_stock'],
+                'quantity' => $item['quantity'],
+                'max_quantity' => $item['max_quantity'],
+                'restocks_at' => $item['restocks_at']->toIso8601String(),
             ])
             ->values()
             ->all();

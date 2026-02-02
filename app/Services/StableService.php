@@ -9,6 +9,7 @@ use App\Models\LocationStockpile;
 use App\Models\PlayerHorse;
 use App\Models\PlayerRole;
 use App\Models\Role;
+use App\Models\StableStock;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -30,42 +31,42 @@ class StableService
     }
 
     /**
-     * Get a random selection of horses available at a location (simulating stock).
-     * Stock is deterministic per day/location so it doesn't change on page reload.
+     * Get horses available at a location with stock quantities.
+     * Stock restocks every few hours based on StableStock::RESTOCK_HOURS.
      */
-    public function getStableStock(string $locationType, int $maxItems = 3): array
+    public function getStableStock(string $locationType, int $maxItems = 10): array
     {
         $availableHorses = $this->getAvailableHorses($locationType);
         $stock = [];
 
-        // Create a deterministic seed based on date and location
-        // Stock refreshes daily but stays consistent within the same day
-        $seed = crc32(date('Y-m-d').$locationType);
-        mt_srand($seed);
-
         foreach ($availableHorses as $horse) {
-            // Use rarity to determine if horse is in stock (deterministic per day)
-            $roll = mt_rand(1, 100);
-            if ($roll <= $horse->rarity) {
-                // Price variance is also deterministic
-                $varianceRoll = mt_rand(-15, 15);
-                $price = (int) ($horse->base_price * (1 + $varianceRoll / 100));
-                $stock[] = [
-                    'horse' => $horse,
-                    'price' => $price,
-                    'in_stock' => true,
-                ];
-            } else {
-                $stock[] = [
-                    'horse' => $horse,
-                    'price' => $horse->base_price,
-                    'in_stock' => false,
-                ];
-            }
-        }
+            // Get or create stock record for this location/horse
+            $stableStock = StableStock::firstOrCreate(
+                [
+                    'location_type' => $locationType,
+                    'horse_id' => $horse->id,
+                ],
+                [
+                    'quantity' => StableStock::getMaxQuantityForRarity($horse->rarity),
+                    'max_quantity' => StableStock::getMaxQuantityForRarity($horse->rarity),
+                    'last_restocked_at' => now(),
+                ]
+            );
 
-        // Reset the random seed to avoid affecting other random operations
-        mt_srand();
+            // Check if restock is needed
+            if ($stableStock->needsRestock()) {
+                $stableStock->restock();
+            }
+
+            $stock[] = [
+                'horse' => $horse,
+                'price' => $horse->base_price,
+                'in_stock' => $stableStock->inStock(),
+                'quantity' => $stableStock->quantity,
+                'max_quantity' => $stableStock->max_quantity,
+                'restocks_at' => $stableStock->last_restocked_at->addHours(StableStock::RESTOCK_HOURS),
+            ];
+        }
 
         return $stock;
     }
@@ -99,9 +100,24 @@ class StableService
             ];
         }
 
-        return DB::transaction(function () use ($user, $horse, $price, $customName) {
+        // Check if horse is in stock
+        $stableStock = StableStock::where('location_type', $user->current_location_type)
+            ->where('horse_id', $horse->id)
+            ->first();
+
+        if (! $stableStock || ! $stableStock->inStock()) {
+            return [
+                'success' => false,
+                'message' => 'This horse is currently out of stock. Check back later!',
+            ];
+        }
+
+        return DB::transaction(function () use ($user, $horse, $price, $customName, $stableStock) {
             // Deduct gold
             $user->decrement('gold', $price);
+
+            // Decrement stock
+            $stableStock->decrementStock();
 
             // Check if this is the user's first horse
             $isFirstHorse = ! $user->hasHorse();

@@ -27,6 +27,10 @@ interface HorseStock {
     max_stamina: number;
     price: number;
     rarity: string;
+    in_stock: boolean;
+    quantity: number;
+    max_quantity: number;
+    restocks_at: string;
 }
 
 interface UserHorse {
@@ -526,15 +530,21 @@ export default function StableIndex() {
                             {stock.map((horse) => {
                                 const rarity = rarityConfig[horse.rarity] || rarityConfig.common;
                                 const canAfford = userGold >= horse.price;
-                                const canBuy = canAfford && canBuyMore;
+                                const canBuy = canAfford && canBuyMore && horse.in_stock;
+                                const restocksAt = new Date(horse.restocks_at);
+                                const now = new Date();
+                                const restockMinutes = Math.max(
+                                    0,
+                                    Math.ceil((restocksAt.getTime() - now.getTime()) / 60000),
+                                );
 
                                 return (
                                     <div
                                         key={horse.id}
-                                        className={`group relative overflow-hidden rounded-xl border-2 ${rarity.border} ${rarity.bg} ${rarity.glow} transition-all duration-300 hover:scale-[1.02]`}
+                                        className={`group relative overflow-hidden rounded-xl border-2 ${rarity.border} ${rarity.bg} ${rarity.glow} transition-all duration-300 hover:scale-[1.02] ${!horse.in_stock ? "opacity-60" : ""}`}
                                     >
                                         {/* Rarity Badge */}
-                                        <div className="absolute right-3 top-3">
+                                        <div className="absolute right-3 top-3 flex flex-col items-end gap-1">
                                             <span
                                                 className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium capitalize ${rarity.badge}`}
                                             >
@@ -542,6 +552,9 @@ export default function StableIndex() {
                                                     <Sparkles className="size-3" />
                                                 )}
                                                 {horse.rarity}
+                                            </span>
+                                            <span className="rounded-full bg-stone-900/80 px-2 py-0.5 text-xs text-stone-400">
+                                                {horse.quantity}/{horse.max_quantity} in stock
                                             </span>
                                         </div>
 
@@ -638,17 +651,27 @@ export default function StableIndex() {
                                                             <Coins className="size-5" />
                                                             {horse.price.toLocaleString()}
                                                         </div>
-                                                        {!canAfford && (
+                                                        {!horse.in_stock && (
+                                                            <p className="mt-0.5 text-xs text-stone-500">
+                                                                Restocks in{" "}
+                                                                {restockMinutes < 60
+                                                                    ? `${restockMinutes}m`
+                                                                    : `${Math.floor(restockMinutes / 60)}h ${restockMinutes % 60}m`}
+                                                            </p>
+                                                        )}
+                                                        {horse.in_stock && !canAfford && (
                                                             <p className="mt-0.5 text-xs text-red-400">
                                                                 Not enough gold
                                                             </p>
                                                         )}
-                                                        {!canBuyMore && canAfford && (
-                                                            <p className="mt-0.5 text-xs text-stone-500">
-                                                                Stable full ({horseCount}/
-                                                                {maxHorses})
-                                                            </p>
-                                                        )}
+                                                        {horse.in_stock &&
+                                                            !canBuyMore &&
+                                                            canAfford && (
+                                                                <p className="mt-0.5 text-xs text-stone-500">
+                                                                    Stable full ({horseCount}/
+                                                                    {maxHorses})
+                                                                </p>
+                                                            )}
                                                     </div>
                                                     <Button
                                                         onClick={() => setBuyingId(horse.id)}
@@ -660,7 +683,7 @@ export default function StableIndex() {
                                                         }
                                                     >
                                                         <ShoppingCart className="size-4" />
-                                                        Buy
+                                                        {horse.in_stock ? "Buy" : "Out of Stock"}
                                                     </Button>
                                                 </div>
                                             )}
