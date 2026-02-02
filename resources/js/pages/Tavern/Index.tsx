@@ -5,6 +5,7 @@ import {
     Check,
     ChefHat,
     Coins,
+    Dices,
     Loader2,
     Lock,
     MessageCircle,
@@ -14,6 +15,7 @@ import {
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { gameToast } from "@/components/ui/game-toast";
+import { DiceGame } from "@/components/games/dice-game";
 import type { BreadcrumbItem } from "@/types";
 
 interface Activity {
@@ -59,6 +61,33 @@ interface CookResult {
     energy_remaining?: number;
 }
 
+interface TavernStats {
+    wins: number;
+    losses: number;
+    total_profit: number;
+}
+
+interface RecentGame {
+    id: number;
+    game_type: string;
+    wager: number;
+    won: boolean;
+    payout: number;
+    energy_awarded: number;
+    played_at: string;
+}
+
+interface DiceInfo {
+    can_play: boolean;
+    cooldown_ends: string | null;
+    reason: string | null;
+    min_wager: number;
+    max_wager: number;
+    games: string[];
+    recent_games: RecentGame[];
+    tavern_stats: TavernStats;
+}
+
 interface PageProps {
     location: {
         type: string;
@@ -77,6 +106,7 @@ interface PageProps {
     };
     recent_activity: Activity[];
     cooking: CookingInfo;
+    dice: DiceInfo;
     [key: string]: unknown;
 }
 
@@ -178,11 +208,38 @@ function RecipeCard({
     );
 }
 
+type GameType = "high_roll" | "hazard" | "doubles";
+
+const GAME_INFO: Record<
+    GameType,
+    { name: string; description: string; odds: string; payout: string }
+> = {
+    high_roll: {
+        name: "High Roll",
+        description: "Both roll 2d6. Highest wins.",
+        odds: "~47%",
+        payout: "1.35x",
+    },
+    hazard: {
+        name: "Hazard",
+        description: "7/11 wins, 2/3/12 loses.",
+        odds: "~49%",
+        payout: "1.6x",
+    },
+    doubles: {
+        name: "Doubles",
+        description: "Roll doubles to win!",
+        odds: "17%",
+        payout: "1.8x",
+    },
+};
+
 export default function TavernIndex() {
-    const { location, player, rest, recent_activity, cooking } = usePage<PageProps>().props;
+    const { location, player, rest, recent_activity, cooking, dice } = usePage<PageProps>().props;
     const [loading, setLoading] = useState(false);
     const [cookingLoading, setCookingLoading] = useState<string | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(player.energy);
+    const [selectedDiceGame, setSelectedDiceGame] = useState<GameType | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -287,69 +344,155 @@ export default function TavernIndex() {
                     </div>
                 </div>
 
-                {/* Row 1: Rest & Kitchen */}
+                {/* Main Grid: Left column (Rest + Dice) | Right 3 columns (Kitchen) */}
                 <div className="mb-6 grid gap-6 lg:grid-cols-4">
-                    {/* Rest Section */}
-                    <div className="rounded-xl border-2 border-amber-600/50 bg-amber-900/20 p-6">
-                        <h2 className="mb-4 font-pixel text-lg text-amber-300">
-                            Rest & Recuperate
-                        </h2>
-                        <p className="mb-4 text-sm text-stone-300">
-                            Sit by the fire and recover your energy.
-                        </p>
+                    {/* Left Column: Rest & Dice Games stacked */}
+                    <div className="flex flex-col gap-6">
+                        {/* Rest Section */}
+                        <div className="rounded-xl border-2 border-amber-600/50 bg-amber-900/20 p-6">
+                            <h2 className="mb-4 font-pixel text-lg text-amber-300">
+                                Rest & Recuperate
+                            </h2>
+                            <p className="mb-4 text-sm text-stone-300">
+                                Sit by the fire and recover your energy.
+                            </p>
 
-                        <div className="mb-4 grid grid-cols-2 gap-3">
-                            <div className="rounded-lg bg-stone-800/50 p-3 text-center">
-                                <div className="flex items-center justify-center gap-1">
-                                    <Coins className="h-4 w-4 text-amber-400" />
-                                    <span className="font-pixel text-lg text-amber-300">
-                                        {rest.cost}g
+                            <div className="mb-4 grid grid-cols-2 gap-3">
+                                <div className="rounded-lg bg-stone-800/50 p-3 text-center">
+                                    <div className="flex items-center justify-center gap-1">
+                                        <Coins className="h-4 w-4 text-amber-400" />
+                                        <span className="font-pixel text-lg text-amber-300">
+                                            {rest.cost}g
+                                        </span>
+                                    </div>
+                                    <div className="font-pixel text-[10px] text-stone-500">
+                                        Cost
+                                    </div>
+                                </div>
+                                <div className="rounded-lg bg-stone-800/50 p-3 text-center">
+                                    <div className="flex items-center justify-center gap-1">
+                                        <Zap className="h-4 w-4 text-yellow-400" />
+                                        <span className="font-pixel text-lg text-yellow-300">
+                                            +{rest.energy_restored}
+                                        </span>
+                                    </div>
+                                    <div className="font-pixel text-[10px] text-stone-500">
+                                        Energy
+                                    </div>
+                                </div>
+                            </div>
+
+                            {currentEnergy >= player.max_energy ? (
+                                <div className="rounded-lg bg-green-900/30 p-3 text-center">
+                                    <span className="font-pixel text-sm text-green-300">
+                                        Fully rested!
                                     </span>
                                 </div>
-                                <div className="font-pixel text-[10px] text-stone-500">Cost</div>
-                            </div>
-                            <div className="rounded-lg bg-stone-800/50 p-3 text-center">
-                                <div className="flex items-center justify-center gap-1">
-                                    <Zap className="h-4 w-4 text-yellow-400" />
-                                    <span className="font-pixel text-lg text-yellow-300">
-                                        +{rest.energy_restored}
+                            ) : player.gold < rest.cost ? (
+                                <div className="rounded-lg bg-red-900/30 p-3 text-center">
+                                    <span className="font-pixel text-sm text-red-300">
+                                        Need {rest.cost}g
                                     </span>
                                 </div>
-                                <div className="font-pixel text-[10px] text-stone-500">Energy</div>
-                            </div>
+                            ) : (
+                                <button
+                                    onClick={handleRest}
+                                    disabled={loading || !rest.can_rest}
+                                    className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-amber-500 bg-amber-900/30 px-4 py-3 font-pixel text-sm text-amber-300 transition hover:bg-amber-800/50 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {loading ? (
+                                        <Loader2 className="h-5 w-5 animate-spin" />
+                                    ) : (
+                                        <>
+                                            <Beer className="h-5 w-5" />
+                                            Rest
+                                        </>
+                                    )}
+                                </button>
+                            )}
                         </div>
 
-                        {currentEnergy >= player.max_energy ? (
-                            <div className="rounded-lg bg-green-900/30 p-3 text-center">
-                                <span className="font-pixel text-sm text-green-300">
-                                    Fully rested!
-                                </span>
+                        {/* Dice Games Section */}
+                        <div className="flex-1 rounded-xl border-2 border-purple-600/50 bg-purple-900/20 p-6">
+                            <div className="mb-4 flex items-center gap-2">
+                                <Dices className="h-5 w-5 text-purple-400" />
+                                <h2 className="font-pixel text-lg text-purple-300">Dice Games</h2>
                             </div>
-                        ) : player.gold < rest.cost ? (
-                            <div className="rounded-lg bg-red-900/30 p-3 text-center">
-                                <span className="font-pixel text-sm text-red-300">
-                                    Need {rest.cost}g
-                                </span>
+
+                            {/* Game Selection */}
+                            <div className="space-y-2">
+                                {(Object.keys(GAME_INFO) as GameType[]).map((gameType) => {
+                                    const info = GAME_INFO[gameType];
+                                    return (
+                                        <button
+                                            key={gameType}
+                                            onClick={() => setSelectedDiceGame(gameType)}
+                                            className="flex w-full items-center justify-between rounded-lg border border-purple-600/30 bg-purple-900/30 p-3 text-left transition hover:border-purple-500/50 hover:bg-purple-800/40"
+                                        >
+                                            <div>
+                                                <p className="font-pixel text-sm text-purple-300">
+                                                    {info.name}
+                                                </p>
+                                                <p className="font-pixel text-[10px] text-stone-400">
+                                                    {info.description}
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-pixel text-[10px] text-green-400">
+                                                    {info.odds}
+                                                </p>
+                                                <p className="font-pixel text-[10px] text-amber-400">
+                                                    {info.payout}
+                                                </p>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
                             </div>
-                        ) : (
-                            <button
-                                onClick={handleRest}
-                                disabled={loading || !rest.can_rest}
-                                className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-amber-500 bg-amber-900/30 px-4 py-3 font-pixel text-sm text-amber-300 transition hover:bg-amber-800/50 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                {loading ? (
-                                    <Loader2 className="h-5 w-5 animate-spin" />
-                                ) : (
-                                    <>
-                                        <Beer className="h-5 w-5" />
-                                        Rest
-                                    </>
-                                )}
-                            </button>
-                        )}
+
+                            {/* Stats */}
+                            <div className="mt-4 rounded-lg border border-stone-600/30 bg-stone-800/30 p-3">
+                                <p className="mb-2 font-pixel text-[10px] text-stone-500">
+                                    Your Stats
+                                </p>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div className="text-center">
+                                        <p className="font-pixel text-sm text-green-400">
+                                            {dice.tavern_stats.wins}
+                                        </p>
+                                        <p className="font-pixel text-[10px] text-stone-500">
+                                            Wins
+                                        </p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="font-pixel text-sm text-red-400">
+                                            {dice.tavern_stats.losses}
+                                        </p>
+                                        <p className="font-pixel text-[10px] text-stone-500">
+                                            Losses
+                                        </p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p
+                                            className={`font-pixel text-sm ${
+                                                dice.tavern_stats.total_profit >= 0
+                                                    ? "text-green-400"
+                                                    : "text-red-400"
+                                            }`}
+                                        >
+                                            {dice.tavern_stats.total_profit >= 0 ? "+" : ""}
+                                            {dice.tavern_stats.total_profit}g
+                                        </p>
+                                        <p className="font-pixel text-[10px] text-stone-500">
+                                            Profit
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Kitchen Section - Takes 3 columns */}
+                    {/* Kitchen Section - Takes 3 columns, full height */}
                     <div className="rounded-xl border-2 border-orange-600/50 bg-orange-900/20 p-6 lg:col-span-3">
                         <div className="mb-4 flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -375,7 +518,45 @@ export default function TavernIndex() {
                     </div>
                 </div>
 
-                {/* Row 2: Local Rumors - Full Width */}
+                {/* Dice Game Modal */}
+                {selectedDiceGame && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+                        <div className="w-full max-w-2xl rounded-xl border-2 border-purple-600/50 bg-stone-900 p-6">
+                            <div className="mb-4 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Dices className="h-5 w-5 text-purple-400" />
+                                    <h2 className="font-pixel text-lg text-purple-300">
+                                        {GAME_INFO[selectedDiceGame].name}
+                                    </h2>
+                                </div>
+                                <button
+                                    onClick={() => setSelectedDiceGame(null)}
+                                    className="rounded-lg p-2 text-stone-400 transition hover:bg-stone-800 hover:text-stone-200"
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+                            <DiceGame
+                                locationUrl={baseUrl}
+                                canPlay={dice.can_play}
+                                cooldownEnds={dice.cooldown_ends}
+                                reason={dice.reason}
+                                minWager={dice.min_wager}
+                                maxWager={dice.max_wager}
+                                playerGold={player.gold}
+                                tavernStats={dice.tavern_stats}
+                                recentGames={dice.recent_games}
+                                initialGame={selectedDiceGame}
+                                onGameComplete={() => {
+                                    router.reload();
+                                }}
+                                onClose={() => setSelectedDiceGame(null)}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* Row 3: Local Rumors - Full Width */}
                 <div className="rounded-xl border-2 border-stone-600/50 bg-stone-800/30 p-6">
                     <div className="mb-4 flex items-center gap-2">
                         <MessageCircle className="h-5 w-5 text-stone-400" />

@@ -23,6 +23,7 @@ use App\Http\Controllers\CombatController;
 use App\Http\Controllers\CraftingController;
 use App\Http\Controllers\CrimeController;
 use App\Http\Controllers\DailyTaskController;
+use App\Http\Controllers\DiceGameController;
 use App\Http\Controllers\DocketController;
 use App\Http\Controllers\DuchyController;
 use App\Http\Controllers\DungeonController;
@@ -342,6 +343,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('tavern', [TavernController::class, 'index'])->name('tavern');
         Route::post('tavern/rest', [TavernController::class, 'rest'])->name('tavern.rest');
         Route::post('tavern/cook', [TavernController::class, 'cook'])->name('tavern.cook');
+        Route::post('tavern/dice', [DiceGameController::class, 'play'])->name('tavern.dice');
         Route::get('arena', [ArenaController::class, 'index'])->name('arena');
         Route::get('thieving', [ThievingController::class, 'index'])->name('thieving');
         Route::post('thieving/attempt', [ThievingController::class, 'thieve'])->name('thieving.attempt');
@@ -380,6 +382,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('tavern', [TavernController::class, 'index'])->name('tavern');
         Route::post('tavern/rest', [TavernController::class, 'rest'])->name('tavern.rest');
         Route::post('tavern/cook', [TavernController::class, 'cook'])->name('tavern.cook');
+        Route::post('tavern/dice', [DiceGameController::class, 'play'])->name('tavern.dice');
         Route::get('arena', [ArenaController::class, 'index'])->name('arena');
         Route::get('thieving', [ThievingController::class, 'index'])->name('thieving');
         Route::post('thieving/attempt', [ThievingController::class, 'thieve'])->name('thieving.attempt');
@@ -415,6 +418,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('tavern', [TavernController::class, 'index'])->name('tavern');
         Route::post('tavern/rest', [TavernController::class, 'rest'])->name('tavern.rest');
         Route::post('tavern/cook', [TavernController::class, 'cook'])->name('tavern.cook');
+        Route::post('tavern/dice', [DiceGameController::class, 'play'])->name('tavern.dice');
         Route::get('arena', [ArenaController::class, 'index'])->name('arena');
         Route::get('thieving', [ThievingController::class, 'index'])->name('thieving');
         Route::post('thieving/attempt', [ThievingController::class, 'thieve'])->name('thieving.attempt');
@@ -443,6 +447,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('tavern', [TavernController::class, 'index'])->name('tavern');
         Route::post('tavern/rest', [TavernController::class, 'rest'])->name('tavern.rest');
         Route::post('tavern/cook', [TavernController::class, 'cook'])->name('tavern.cook');
+        Route::post('tavern/dice', [DiceGameController::class, 'play'])->name('tavern.dice');
         Route::get('arena', [ArenaController::class, 'index'])->name('arena');
         Route::get('thieving', [ThievingController::class, 'index'])->name('thieving');
         Route::post('thieving/attempt', [ThievingController::class, 'thieve'])->name('thieving.attempt');
@@ -471,6 +476,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('tavern', [TavernController::class, 'index'])->name('tavern');
         Route::post('tavern/rest', [TavernController::class, 'rest'])->name('tavern.rest');
         Route::post('tavern/cook', [TavernController::class, 'cook'])->name('tavern.cook');
+        Route::post('tavern/dice', [DiceGameController::class, 'play'])->name('tavern.dice');
         Route::get('thieving', [ThievingController::class, 'index'])->name('thieving');
         Route::post('thieving/attempt', [ThievingController::class, 'thieve'])->name('thieving.attempt');
         Route::get('apothecary', [ApothecaryController::class, 'index'])->name('apothecary');

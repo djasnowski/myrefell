@@ -9,6 +9,7 @@ use App\Models\LocationActivityLog;
 use App\Models\Town;
 use App\Models\Village;
 use App\Services\CookingService;
+use App\Services\DiceGameService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -28,7 +29,8 @@ class TavernController extends Controller
     ];
 
     public function __construct(
-        protected CookingService $cookingService
+        protected CookingService $cookingService,
+        protected DiceGameService $diceGameService
     ) {}
 
     /**
@@ -70,6 +72,13 @@ class TavernController extends Controller
         // Get cooking recipes
         $cookingInfo = $this->cookingService->getCookingInfo($user);
 
+        // Get dice game info
+        $canPlayDice = $this->diceGameService->canPlay($user);
+        $tavernStats = $location && $locationType
+            ? $this->diceGameService->getTavernStats($user, $locationType, $location->id)
+            : ['wins' => 0, 'losses' => 0, 'total_profit' => 0];
+        $recentGames = $this->diceGameService->getGameHistory($user, 5);
+
         return Inertia::render('Tavern/Index', [
             'location' => $location ? [
                 'type' => $locationType,
@@ -88,6 +97,16 @@ class TavernController extends Controller
             ],
             'recent_activity' => $recentActivity,
             'cooking' => $cookingInfo,
+            'dice' => [
+                'can_play' => $canPlayDice['can_play'],
+                'cooldown_ends' => $canPlayDice['cooldown_ends'],
+                'reason' => $canPlayDice['reason'],
+                'min_wager' => DiceGameService::MIN_WAGER,
+                'max_wager' => DiceGameService::MAX_WAGER,
+                'games' => ['high_roll', 'hazard', 'doubles'],
+                'recent_games' => $recentGames,
+                'tavern_stats' => $tavernStats,
+            ],
         ]);
     }
 
