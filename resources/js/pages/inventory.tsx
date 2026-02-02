@@ -104,7 +104,7 @@ function ItemTooltip({
             )}
             <div className="flex items-center justify-between border-t border-stone-700 pt-2">
                 <span className="flex items-center gap-1 font-pixel text-xs text-amber-300">
-                    <GoldIcon className="h-4 w-4" /> {item.base_value}
+                    <GoldIcon className="h-4 w-4" /> {item.base_value.toLocaleString()}
                 </span>
                 {quantity > 1 && (
                     <span className="font-pixel text-xs text-stone-400">x{quantity}</span>
@@ -427,7 +427,7 @@ export default function Inventory() {
                                 <div className="flex items-center justify-between border-t border-stone-700 pt-2">
                                     <span className="flex items-center gap-1 font-pixel text-[8px] text-amber-300">
                                         <GoldIcon className="h-3 w-3" />{" "}
-                                        {selectedItem.item.base_value}
+                                        {selectedItem.item.base_value.toLocaleString()}
                                     </span>
                                     {selectedItem.quantity > 1 && (
                                         <span className="font-pixel text-[8px] text-stone-400">
