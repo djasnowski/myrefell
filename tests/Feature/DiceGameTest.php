@@ -287,7 +287,7 @@ test('tavern stats are tracked per location', function () {
     expect($stats2['total_profit'])->toBe(-100);
 });
 
-test('doubles win pays 1.8x wager (2x with 10% rake)', function () {
+test('doubles win pays 2.7x wager (3x with 10% rake)', function () {
     $service = app(DiceGameService::class);
 
     // Mock a winning doubles game by testing the service directly
@@ -315,8 +315,8 @@ test('doubles win pays 1.8x wager (2x with 10% rake)', function () {
 
         if ($result['won']) {
             $foundDoublesWin = true;
-            // 2x multiplier = 20g, minus 10% rake (2g) = 18g
-            expect($result['payout'])->toBe(18);
+            // 3x multiplier = 30g, minus 10% rake (3g) = 27g
+            expect($result['payout'])->toBe(27);
             break;
         }
     }

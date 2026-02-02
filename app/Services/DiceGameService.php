@@ -50,9 +50,9 @@ class DiceGameService
     public const HAZARD_MULTIPLIER = 1.75;
 
     /**
-     * Payout multiplier for doubles game (2x bet on win).
+     * Payout multiplier for doubles game (3x bet on win).
      */
-    public const DOUBLES_MULTIPLIER = 2;
+    public const DOUBLES_MULTIPLIER = 3;
 
     /**
      * House rake percentage (10% cut from winnings).
@@ -330,7 +330,7 @@ class DiceGameService
     }
 
     /**
-     * Play Doubles: roll 2d6, doubles wins at 2x (with house rake).
+     * Play Doubles: roll 2d6, doubles wins at 3x (with house rake).
      *
      * @return array{won: bool, rolls: array, payout: int, energy: int, message: string}
      */
