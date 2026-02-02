@@ -222,7 +222,7 @@ const GAME_INFO: Record<
     },
     hazard: {
         name: "Hazard",
-        description: "7/11 wins, 2/3/12 loses.",
+        description: "7/11 wins, set a point, avoid 7!",
         odds: "~49%",
         payout: "1.6x",
     },

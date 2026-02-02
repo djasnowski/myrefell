@@ -70,24 +70,26 @@ interface DiceResult {
 
 const GAME_INFO: Record<
     GameType,
-    { name: string; description: string; odds: string; payout: string }
+    { name: string; description: string[]; odds: string; payout: string }
 > = {
     high_roll: {
         name: "High Roll",
-        description: "Both roll 2d6. Highest total wins. Ties go to the house.",
+        description: ["Both roll 2d6. Highest total wins.", "Ties go to the house."],
         odds: "~47%",
         payout: "1.35x",
     },
     hazard: {
         name: "Hazard",
-        description:
-            "7 or 11 wins, 2/3/12 loses. Others establish a point - hit it before rolling 7.",
+        description: [
+            "First roll: 7 or 11 wins instantly, 2/3/12 loses.",
+            "Other numbers set your point. Roll it again to win, but 7 now loses!",
+        ],
         odds: "~49%",
         payout: "1.6x",
     },
     doubles: {
         name: "Doubles",
-        description: "Roll doubles to win! Low odds but decent payout.",
+        description: ["Roll matching dice to win!", "Low odds but decent payout."],
         odds: "17%",
         payout: "1.8x",
     },
@@ -208,7 +210,11 @@ function GameCard({
 
             {/* Description */}
             <div className="mb-2 rounded bg-stone-900/50 px-2 py-1">
-                <p className="font-pixel text-[10px] text-stone-400">{info.description}</p>
+                {info.description.map((line, idx) => (
+                    <p key={idx} className="font-pixel text-[10px] text-stone-400">
+                        {line}
+                    </p>
+                ))}
             </div>
 
             {/* Stats Row */}
@@ -399,7 +405,11 @@ export function DiceGame({
             <div className="space-y-4">
                 {/* Game Description */}
                 <div className="rounded-lg bg-stone-800/50 p-3">
-                    <p className="text-sm text-stone-300">{gameInfo.description}</p>
+                    {gameInfo.description.map((line, idx) => (
+                        <p key={idx} className="text-sm text-stone-300">
+                            {line}
+                        </p>
+                    ))}
                     <div className="mt-2 flex gap-4">
                         <span className="font-pixel text-xs text-green-400">
                             Win: {gameInfo.odds}

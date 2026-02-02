@@ -1,5 +1,6 @@
 import {
     Anvil,
+    Dices,
     FlaskConical,
     Footprints,
     Gift,
@@ -20,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 // Update this when adding new changelog entries
-export const CURRENT_CHANGELOG_VERSION = "0.7.1";
+export const CURRENT_CHANGELOG_VERSION = "0.8.0";
 
 interface ChangelogEntry {
     version: string;
@@ -36,6 +37,60 @@ interface ChangelogEntry {
 }
 
 const changelog: ChangelogEntry[] = [
+    {
+        version: "0.8.0",
+        date: "February 2, 2026",
+        title: "Tavern Games & Archery",
+        description:
+            "Test your luck at the tavern with three new dice games, or prove your aim at the archery range! Win gold, earn energy, and compete for the best scores.",
+        icon: <Dices className="h-8 w-8 text-purple-500" />,
+        changes: [
+            {
+                type: "added",
+                text: "Tavern Dice Games - three games to wager gold: High Roll, Hazard, and Doubles",
+            },
+            {
+                type: "added",
+                text: "High Roll: Both you and the house roll 2d6, highest sum wins (1.35x payout)",
+            },
+            {
+                type: "added",
+                text: "Hazard: Classic dice game - roll 7/11 to win instantly, avoid craps! (1.6x payout)",
+            },
+            {
+                type: "added",
+                text: "Doubles: Roll matching dice to win big (1.8x payout)",
+            },
+            {
+                type: "added",
+                text: "Wager 10g to 2500g per game with a 5-minute cooldown",
+            },
+            {
+                type: "added",
+                text: "Earn energy from playing: +10 for wins, +3 for losses",
+            },
+            {
+                type: "added",
+                text: "Track your win/loss record at each tavern",
+            },
+            {
+                type: "added",
+                text: "Archery Competition - test your ranged skill at the archery range",
+            },
+            {
+                type: "added",
+                text: "Score points based on accuracy: Bullseye (10), Inner (7), Middle (4), Outer (1)",
+            },
+            {
+                type: "added",
+                text: "Skill-based shooting - higher ranged level improves accuracy",
+            },
+            {
+                type: "added",
+                text: "Earn ranged XP and gold rewards based on your final score",
+            },
+        ],
+    },
     {
         version: "0.7.1",
         date: "February 1, 2026",
