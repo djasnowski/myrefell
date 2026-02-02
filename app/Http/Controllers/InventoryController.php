@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\LocationStockpile;
 use App\Models\PlayerInventory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -86,11 +87,20 @@ class InventoryController extends Controller
             return back()->withErrors(['error' => 'No item in source slot.']);
         }
 
-        // Swap slots
-        if ($toItem) {
-            $toItem->update(['slot_number' => $fromSlot]);
-        }
-        $fromItem->update(['slot_number' => $toSlot]);
+        // Swap slots - use temporary slot to avoid unique constraint violation
+        DB::transaction(function () use ($fromItem, $toItem, $fromSlot, $toSlot) {
+            if ($toItem) {
+                // Move toItem to temp slot first
+                $toItem->update(['slot_number' => -1]);
+                // Move fromItem to target slot
+                $fromItem->update(['slot_number' => $toSlot]);
+                // Move toItem to fromSlot
+                $toItem->update(['slot_number' => $fromSlot]);
+            } else {
+                // No swap needed, just move
+                $fromItem->update(['slot_number' => $toSlot]);
+            }
+        });
 
         return back();
     }
