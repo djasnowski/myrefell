@@ -502,12 +502,11 @@ export default function ShrineIndex() {
                                 {/* Pending Blessing Requests */}
                                 {priest_data.pending_requests &&
                                     priest_data.pending_requests.length > 0 && (
-                                        <div className="rounded-lg border border-amber-600/50 bg-amber-900/20 p-4">
-                                            <div className="mb-3 flex items-center gap-2">
-                                                <Bell className="h-5 w-5 text-amber-400" />
-                                                <span className="font-pixel text-sm text-amber-300">
-                                                    Blessing Requests (
-                                                    {priest_data.pending_requests.length})
+                                        <div className="rounded-lg border border-amber-600/50 bg-amber-900/20 p-3 sm:p-4">
+                                            <div className="mb-2 flex items-center gap-2 sm:mb-3">
+                                                <Bell className="h-4 w-4 text-amber-400 sm:h-5 sm:w-5" />
+                                                <span className="font-pixel text-xs text-amber-300 sm:text-sm">
+                                                    Requests ({priest_data.pending_requests.length})
                                                 </span>
                                             </div>
                                             <div className="space-y-2">
@@ -517,31 +516,30 @@ export default function ShrineIndex() {
                                                     return (
                                                         <div
                                                             key={req.id}
-                                                            className="flex items-center justify-between rounded border border-stone-700 bg-stone-800/50 p-3"
+                                                            className="flex flex-col gap-2 rounded border border-stone-700 bg-stone-800/50 p-2 sm:flex-row sm:items-center sm:justify-between sm:p-3"
                                                         >
-                                                            <div className="flex items-center gap-3">
-                                                                <Icon className="h-5 w-5 text-amber-300" />
-                                                                <div>
-                                                                    <div className="font-pixel text-xs text-stone-200">
+                                                            <div className="flex items-center gap-2 sm:gap-3">
+                                                                <Icon className="h-4 w-4 shrink-0 text-amber-300 sm:h-5 sm:w-5" />
+                                                                <div className="min-w-0 flex-1">
+                                                                    <div className="truncate font-pixel text-[10px] text-stone-200 sm:text-xs">
                                                                         <span className="text-amber-300">
                                                                             {req.username}
                                                                         </span>{" "}
-                                                                        requests{" "}
+                                                                        <span className="hidden sm:inline">
+                                                                            requests{" "}
+                                                                        </span>
                                                                         <span className="text-amber-300">
                                                                             {req.blessing_name}
                                                                         </span>
                                                                     </div>
                                                                     {req.message && (
-                                                                        <div className="font-pixel text-[10px] text-stone-400 italic">
+                                                                        <div className="truncate font-pixel text-[9px] italic text-stone-400 sm:text-[10px]">
                                                                             "{req.message}"
                                                                         </div>
                                                                     )}
-                                                                    <div className="font-pixel text-[9px] text-stone-500">
-                                                                        {req.created_at}
-                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex gap-2">
+                                                            <div className="flex shrink-0 gap-2">
                                                                 <button
                                                                     onClick={() => {
                                                                         router.post(
@@ -552,10 +550,12 @@ export default function ShrineIndex() {
                                                                             },
                                                                         );
                                                                     }}
-                                                                    className="flex items-center gap-1 rounded bg-green-600 px-2 py-1 font-pixel text-[10px] text-white hover:bg-green-500"
+                                                                    className="flex flex-1 items-center justify-center gap-1 rounded bg-green-600 px-2 py-1 font-pixel text-[10px] text-white hover:bg-green-500 sm:flex-initial"
                                                                 >
                                                                     <Check className="h-3 w-3" />
-                                                                    Approve
+                                                                    <span className="hidden sm:inline">
+                                                                        Approve
+                                                                    </span>
                                                                 </button>
                                                                 <button
                                                                     onClick={() => {
@@ -567,10 +567,12 @@ export default function ShrineIndex() {
                                                                             },
                                                                         );
                                                                     }}
-                                                                    className="flex items-center gap-1 rounded bg-red-600 px-2 py-1 font-pixel text-[10px] text-white hover:bg-red-500"
+                                                                    className="flex flex-1 items-center justify-center gap-1 rounded bg-red-600 px-2 py-1 font-pixel text-[10px] text-white hover:bg-red-500 sm:flex-initial"
                                                                 >
                                                                     <X className="h-3 w-3" />
-                                                                    Deny
+                                                                    <span className="hidden sm:inline">
+                                                                        Deny
+                                                                    </span>
                                                                 </button>
                                                             </div>
                                                         </div>

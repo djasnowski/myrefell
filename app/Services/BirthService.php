@@ -60,6 +60,8 @@ class BirthService
 
         if ($village) {
             $user->home_village_id = $village->id;
+            $user->home_location_type = 'village';
+            $user->home_location_id = $village->id;
             $user->current_location_type = 'village';
             $user->current_location_id = $village->id;
         }
