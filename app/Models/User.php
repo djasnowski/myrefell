@@ -130,6 +130,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'labor_days_owed' => 'integer',
             'labor_days_completed' => 'integer',
             'last_obligation_check' => 'date',
+            'last_migration_at' => 'datetime',
         ];
     }
 
