@@ -53,10 +53,15 @@ class ArmyController extends Controller
             ->map(fn ($company) => $this->mapMercenary($company));
 
         // Get player's current location for raising armies
+        $locationName = match ($user->current_location_type) {
+            'village' => Village::find($user->current_location_id)?->name,
+            'town' => Town::find($user->current_location_id)?->name,
+            default => null,
+        };
         $currentLocation = [
-            'type' => $user->location_type,
-            'id' => $user->location_id,
-            'name' => $user->location?->name ?? 'Unknown',
+            'type' => $user->current_location_type,
+            'id' => $user->current_location_id,
+            'name' => $locationName ?? 'Unknown',
         ];
 
         // Get unit type info for recruiting
@@ -243,6 +248,7 @@ class ArmyController extends Controller
         $data['supplies_days_remaining'] = $army->daily_supply_cost > 0
             ? (int) floor($army->supplies / $army->daily_supply_cost)
             : $army->supplies;
+
         return $data;
     }
 
@@ -299,6 +305,7 @@ class ArmyController extends Controller
                 ->get()
                 ->map(function ($village) use ($currentX, $currentY) {
                     $distance = sqrt(pow($village->coordinates_x - $currentX, 2) + pow($village->coordinates_y - $currentY, 2));
+
                     return [
                         'type' => 'village',
                         'id' => $village->id,
@@ -322,6 +329,7 @@ class ArmyController extends Controller
                 ->get()
                 ->map(function ($town) use ($currentX, $currentY) {
                     $distance = sqrt(pow($town->coordinates_x - $currentX, 2) + pow($town->coordinates_y - $currentY, 2));
+
                     return [
                         'type' => 'town',
                         'id' => $town->id,
@@ -375,7 +383,7 @@ class ArmyController extends Controller
         if ($user->gold < self::ARMY_CREATION_COST) {
             return response()->json([
                 'success' => false,
-                'message' => 'Not enough gold. You need ' . self::ARMY_CREATION_COST . 'g to raise an army.',
+                'message' => 'Not enough gold. You need '.self::ARMY_CREATION_COST.'g to raise an army.',
             ], 400);
         }
 
@@ -386,8 +394,8 @@ class ArmyController extends Controller
             name: $validated['name'],
             ownerType: 'player',
             ownerId: $user->id,
-            locationType: $user->location_type,
-            locationId: $user->location_id,
+            locationType: $user->current_location_type,
+            locationId: $user->current_location_id,
             commanderId: $user->id
         );
 
@@ -443,7 +451,7 @@ class ArmyController extends Controller
         $contractDays = $validated['contract_days'] ?? 30;
 
         // Check availability
-        if (!$company->is_available) {
+        if (! $company->is_available) {
             return response()->json([
                 'success' => false,
                 'message' => 'This mercenary company is not available for hire.',
@@ -490,7 +498,7 @@ class ArmyController extends Controller
         }
 
         // Must be at a settlement to recruit
-        if (!in_array($army->location_type, ['village', 'town'])) {
+        if (! in_array($army->location_type, ['village', 'town'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Army must be at a settlement to recruit soldiers.',
@@ -506,7 +514,7 @@ class ArmyController extends Controller
         }
 
         $validated = $request->validate([
-            'unit_type' => 'required|string|in:' . implode(',', [
+            'unit_type' => 'required|string|in:'.implode(',', [
                 ArmyUnit::TYPE_LEVY,
                 ArmyUnit::TYPE_MILITIA,
                 ArmyUnit::TYPE_MEN_AT_ARMS,
@@ -582,7 +590,7 @@ class ArmyController extends Controller
             default => null,
         };
 
-        if (!$destination) {
+        if (! $destination) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid destination.',
