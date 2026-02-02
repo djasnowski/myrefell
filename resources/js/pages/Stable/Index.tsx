@@ -239,7 +239,7 @@ export default function StableIndex() {
     const handleSwitchHorse = (playerHorseId: number) => {
         setLoading(true);
         router.post(
-            "/stable/switch",
+            "/stable/switch-active",
             { player_horse_id: playerHorseId },
             {
                 preserveScroll: true,
