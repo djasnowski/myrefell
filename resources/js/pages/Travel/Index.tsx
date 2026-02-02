@@ -322,33 +322,31 @@ export default function TravelIndex() {
         );
     }
 
-    // Show travel progress
-    if (travel_status?.is_traveling) {
-        return (
-            <AppLayout breadcrumbs={breadcrumbs}>
-                <Head title="Traveling..." />
-                <div className="flex h-full flex-1 items-center justify-center p-4">
-                    <TravelProgress
-                        status={travel_status}
-                        onCancel={handleCancel}
-                        onArrive={handleArrive}
-                        onSkip={handleSkip}
-                        isDev={is_dev}
-                    />
-                </div>
-            </AppLayout>
-        );
-    }
-
-    // Show destinations
+    // Show destinations (with travel progress if traveling)
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Travel" />
+            <Head title={travel_status?.is_traveling ? "Traveling..." : "Travel"} />
             <div className="flex h-full flex-1 flex-col p-4">
-                <div className="mb-6">
-                    <h1 className="font-pixel text-2xl text-amber-400">Travel</h1>
-                    <p className="font-pixel text-sm text-stone-400">Choose your destination</p>
-                </div>
+                {/* Travel Progress - shown at top when traveling */}
+                {travel_status?.is_traveling && (
+                    <div className="mb-6">
+                        <TravelProgress
+                            status={travel_status}
+                            onCancel={handleCancel}
+                            onArrive={handleArrive}
+                            onSkip={handleSkip}
+                            isDev={is_dev}
+                        />
+                    </div>
+                )}
+
+                {/* Header - only show when not traveling */}
+                {!travel_status?.is_traveling && (
+                    <div className="mb-6">
+                        <h1 className="font-pixel text-2xl text-amber-400">Travel</h1>
+                        <p className="font-pixel text-sm text-stone-400">Choose your destination</p>
+                    </div>
+                )}
 
                 {travelError && (
                     <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-600/50 bg-red-900/30 px-4 py-3">
@@ -363,29 +361,36 @@ export default function TravelIndex() {
                     </div>
                 )}
 
-                {destinations.length > 0 ? (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {destinations.map((dest) => (
-                            <DestinationCard
-                                key={`${dest.type}-${dest.id}`}
-                                destination={dest}
-                                energyCost={energy_cost}
-                                onTravel={() => handleTravel(dest)}
-                                traveling={traveling}
-                            />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="flex flex-1 items-center justify-center">
-                        <div className="text-center">
-                            <div className="mb-3 text-6xl">🗺️</div>
-                            <p className="font-pixel text-base text-stone-500">Nowhere to go</p>
-                            <p className="font-pixel text-xs text-stone-600">
-                                You seem to be stuck...
-                            </p>
+                {/* Destinations - blurred when traveling */}
+                <div
+                    className={
+                        travel_status?.is_traveling ? "pointer-events-none opacity-30 blur-sm" : ""
+                    }
+                >
+                    {destinations.length > 0 ? (
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {destinations.map((dest) => (
+                                <DestinationCard
+                                    key={`${dest.type}-${dest.id}`}
+                                    destination={dest}
+                                    energyCost={energy_cost}
+                                    onTravel={() => handleTravel(dest)}
+                                    traveling={traveling}
+                                />
+                            ))}
                         </div>
-                    </div>
-                )}
+                    ) : (
+                        <div className="flex flex-1 items-center justify-center py-12">
+                            <div className="text-center">
+                                <div className="mb-3 text-6xl">🗺️</div>
+                                <p className="font-pixel text-base text-stone-500">Nowhere to go</p>
+                                <p className="font-pixel text-xs text-stone-600">
+                                    You seem to be stuck...
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </AppLayout>
     );
