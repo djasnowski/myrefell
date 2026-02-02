@@ -288,6 +288,11 @@ export function DiceGame({
     const [displayDice, setDisplayDice] = useState<{ player: number[]; house?: number[] } | null>(
         null,
     );
+    const [hazardRolls, setHazardRolls] = useState<Array<{
+        dice: number[];
+        total: number;
+        type: string;
+    }> | null>(null);
 
     // If initialGame is provided, we're in modal mode - simplified layout
     const isModalMode = !!initialGame;
@@ -323,6 +328,7 @@ export function DiceGame({
         setRolling(true);
         setLastResult(null);
         setDisplayDice(null);
+        setHazardRolls(null);
 
         const rollInterval = setInterval(() => {
             setDisplayDice({
@@ -356,6 +362,8 @@ export function DiceGame({
 
                         if (result.rolls) {
                             if (Array.isArray(result.rolls)) {
+                                // Hazard game - store all rolls
+                                setHazardRolls(result.rolls);
                                 const lastRoll = result.rolls[result.rolls.length - 1];
                                 setDisplayDice({ player: lastRoll.dice });
                             } else {
@@ -422,23 +430,72 @@ export function DiceGame({
 
                 {/* Dice Display */}
                 {(rolling || displayDice) && (
-                    <div className="grid h-[140px] place-content-center rounded-lg bg-stone-800/50 px-6">
+                    <div className="grid min-h-[140px] place-content-center rounded-lg bg-stone-800/50 px-6 py-4">
                         <div className="flex items-center justify-center gap-6">
-                            <div className="text-center">
-                                <p className="mb-2 font-pixel text-xs text-stone-400">You</p>
-                                <div className="flex gap-2">
-                                    {(displayDice?.player || [1, 1]).map((val, idx) => (
-                                        <DiceFace
-                                            key={idx}
-                                            value={val}
-                                            size="lg"
-                                            rolling={rolling}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
+                            {/* Hazard: Show come-out roll and final roll */}
+                            {selectedGame === "hazard" && hazardRolls && !rolling ? (
+                                <div className="flex items-center gap-4">
+                                    {/* Come-out roll */}
+                                    <div className="text-center">
+                                        <p className="mb-1 font-pixel text-[10px] text-stone-500">
+                                            Come-out
+                                        </p>
+                                        <div className="flex gap-1">
+                                            {hazardRolls[0].dice.map((val, idx) => (
+                                                <DiceFace key={idx} value={val} size="md" />
+                                            ))}
+                                        </div>
+                                        <p className="mt-1 font-pixel text-xs text-amber-300">
+                                            = {hazardRolls[0].total}
+                                        </p>
+                                    </div>
 
-                            {selectedGame === "high_roll" && displayDice?.house && (
+                                    {/* Show arrow and final roll if there's more than one roll */}
+                                    {hazardRolls.length > 1 && (
+                                        <>
+                                            <div className="font-pixel text-lg text-stone-500">
+                                                →
+                                            </div>
+                                            <div className="text-center">
+                                                <p className="mb-1 font-pixel text-[10px] text-stone-500">
+                                                    Final
+                                                </p>
+                                                <div className="flex gap-1">
+                                                    {hazardRolls[hazardRolls.length - 1].dice.map(
+                                                        (val, idx) => (
+                                                            <DiceFace
+                                                                key={idx}
+                                                                value={val}
+                                                                size="md"
+                                                            />
+                                                        ),
+                                                    )}
+                                                </div>
+                                                <p className="mt-1 font-pixel text-xs text-amber-300">
+                                                    = {hazardRolls[hazardRolls.length - 1].total}
+                                                </p>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            ) : (
+                                /* Regular dice display for High Roll / Doubles */
+                                <div className="text-center">
+                                    <p className="mb-2 font-pixel text-xs text-stone-400">You</p>
+                                    <div className="flex gap-2">
+                                        {(displayDice?.player || [1, 1]).map((val, idx) => (
+                                            <DiceFace
+                                                key={idx}
+                                                value={val}
+                                                size="lg"
+                                                rolling={rolling}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {selectedGame === "high_roll" && displayDice?.house && !rolling && (
                                 <>
                                     <div className="font-pixel text-xl text-stone-500">vs</div>
                                     <div className="text-center">
@@ -735,16 +792,60 @@ export function DiceGame({
                 {/* Dice Display (shows when rolling or has result) */}
                 {(rolling || displayDice) && (
                     <div className="mb-4 flex items-center justify-center gap-6 rounded-lg bg-stone-800/50 p-4">
-                        <div className="text-center">
-                            <p className="mb-2 font-pixel text-xs text-stone-400">You</p>
-                            <div className="flex gap-2">
-                                {(displayDice?.player || [1, 1]).map((val, idx) => (
-                                    <DiceFace key={idx} value={val} size="lg" rolling={rolling} />
-                                ))}
+                        {/* Hazard: Show come-out roll and final roll */}
+                        {selectedGame === "hazard" && hazardRolls && !rolling ? (
+                            <div className="flex items-center gap-4">
+                                <div className="text-center">
+                                    <p className="mb-1 font-pixel text-[10px] text-stone-500">
+                                        Come-out
+                                    </p>
+                                    <div className="flex gap-1">
+                                        {hazardRolls[0].dice.map((val, idx) => (
+                                            <DiceFace key={idx} value={val} size="md" />
+                                        ))}
+                                    </div>
+                                    <p className="mt-1 font-pixel text-xs text-amber-300">
+                                        = {hazardRolls[0].total}
+                                    </p>
+                                </div>
+                                {hazardRolls.length > 1 && (
+                                    <>
+                                        <div className="font-pixel text-lg text-stone-500">→</div>
+                                        <div className="text-center">
+                                            <p className="mb-1 font-pixel text-[10px] text-stone-500">
+                                                Final
+                                            </p>
+                                            <div className="flex gap-1">
+                                                {hazardRolls[hazardRolls.length - 1].dice.map(
+                                                    (val, idx) => (
+                                                        <DiceFace key={idx} value={val} size="md" />
+                                                    ),
+                                                )}
+                                            </div>
+                                            <p className="mt-1 font-pixel text-xs text-amber-300">
+                                                = {hazardRolls[hazardRolls.length - 1].total}
+                                            </p>
+                                        </div>
+                                    </>
+                                )}
                             </div>
-                        </div>
+                        ) : (
+                            <div className="text-center">
+                                <p className="mb-2 font-pixel text-xs text-stone-400">You</p>
+                                <div className="flex gap-2">
+                                    {(displayDice?.player || [1, 1]).map((val, idx) => (
+                                        <DiceFace
+                                            key={idx}
+                                            value={val}
+                                            size="lg"
+                                            rolling={rolling}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
-                        {selectedGame === "high_roll" && displayDice?.house && (
+                        {selectedGame === "high_roll" && displayDice?.house && !rolling && (
                             <>
                                 <div className="font-pixel text-xl text-stone-500">vs</div>
                                 <div className="text-center">
