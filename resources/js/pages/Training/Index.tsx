@@ -334,31 +334,39 @@ export default function TrainingIndex() {
                             return (
                                 <div
                                     key={exercise.id}
-                                    className={`rounded-xl border-2 bg-gradient-to-br ${colors.bg} ${colors.border} px-4 py-6`}
+                                    className={`rounded-xl border-2 bg-gradient-to-br ${colors.bg} ${colors.border} px-3 py-4 sm:px-4 sm:py-6`}
                                 >
-                                    <div className="flex items-start gap-4">
-                                        <div className="rounded-lg bg-stone-800/50 p-3">
+                                    <div className="flex items-start gap-3 sm:gap-4">
+                                        <div className="hidden rounded-lg bg-stone-800/50 p-3 sm:block">
                                             <Icon className={`h-8 w-8 ${colors.text}`} />
                                         </div>
-                                        <div className="flex-1">
-                                            <div className="flex items-start justify-between gap-4">
-                                                <div className="flex-1">
-                                                    <h3
-                                                        className={`font-pixel text-lg ${colors.text}`}
-                                                    >
-                                                        {exercise.name}
-                                                    </h3>
-                                                    <p className="max-w-md py-1 font-pixel text-[10px] text-stone-400">
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-start justify-between gap-2 sm:gap-4">
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <Icon
+                                                            className={`h-5 w-5 shrink-0 sm:hidden ${colors.text}`}
+                                                        />
+                                                        <h3
+                                                            className={`font-pixel text-sm sm:text-lg ${colors.text}`}
+                                                        >
+                                                            {exercise.name}
+                                                        </h3>
+                                                        <span className="whitespace-nowrap font-pixel text-xs text-stone-400 sm:hidden">
+                                                            Lv.{stat.level}
+                                                        </span>
+                                                    </div>
+                                                    <p className="hidden py-1 font-pixel text-[10px] text-stone-400 sm:block sm:max-w-md">
                                                         {exercise.description}
                                                     </p>
                                                 </div>
-                                                <div className="whitespace-nowrap font-pixel text-lg text-stone-300">
+                                                <div className="hidden whitespace-nowrap font-pixel text-lg text-stone-300 sm:block">
                                                     Level {stat.level}
                                                 </div>
                                             </div>
 
                                             {/* Progress bar with XP info */}
-                                            <div className="relative mt-2 h-4 w-full overflow-hidden rounded-full bg-stone-700">
+                                            <div className="relative mt-2 h-3 w-full overflow-hidden rounded-full bg-stone-700 sm:h-4">
                                                 <div
                                                     className={`h-full transition-all ${
                                                         exercise.id === "attack"
@@ -375,11 +383,11 @@ export default function TrainingIndex() {
                                                 </div>
                                             </div>
 
-                                            <div className="mt-3 flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
+                                            <div className="mt-2 flex items-center justify-between sm:mt-3">
+                                                <div className="flex items-center gap-2 sm:gap-3">
                                                     <span className="font-pixel text-[10px] text-stone-400">
-                                                        <Zap className="mr-1 inline h-3 w-3 text-yellow-400" />
-                                                        {exercise.energy_cost} energy
+                                                        <Zap className="mr-0.5 inline h-3 w-3 text-yellow-400 sm:mr-1" />
+                                                        {exercise.energy_cost}
                                                     </span>
                                                     <span className="font-pixel text-[10px] text-amber-400">
                                                         +{exercise.base_xp} XP
@@ -392,7 +400,7 @@ export default function TrainingIndex() {
                                                         loading !== null ||
                                                         cooldown > 0
                                                     }
-                                                    className={`relative overflow-hidden rounded-lg px-4 py-2 font-pixel text-xs transition ${
+                                                    className={`relative overflow-hidden rounded-lg px-3 py-1.5 font-pixel text-xs transition sm:px-4 sm:py-2 ${
                                                         canTrain &&
                                                         loading === null &&
                                                         cooldown <= 0
