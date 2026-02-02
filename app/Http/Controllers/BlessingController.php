@@ -124,10 +124,38 @@ class BlessingController extends Controller
                 'time_ago' => $blessing->created_at->diffForHumans(),
             ]);
 
+        // Get user's prayer level for shrine
+        $userPrayerSkill = PlayerSkill::where('player_id', $user->id)
+            ->where('skill_name', 'prayer')
+            ->first();
+        $userPrayerLevel = $userPrayerSkill?->level ?? 1;
+
+        // Get shrine blessings for non-priest self-prayer (with 50% gold penalty, 25% duration reduction)
+        // Sorted by prayer level required (lowest to highest)
+        $shrineBlessings = BlessingType::active()
+            ->orderBy('prayer_level_required')
+            ->get()
+            ->map(fn ($type) => [
+                'id' => $type->id,
+                'name' => $type->name,
+                'slug' => $type->slug,
+                'icon' => $type->icon,
+                'description' => $type->description,
+                'category' => $type->category,
+                'effects' => $type->effects,
+                'duration' => $this->formatDuration((int) ($type->duration_minutes * 0.75)),
+                'duration_minutes' => (int) ($type->duration_minutes * 0.75),
+                'gold_cost' => (int) ($type->gold_cost * 1.5),
+                'energy_cost' => $type->energy_cost,
+                'prayer_level_required' => $type->prayer_level_required,
+            ]);
+
         $data = [
             'active_blessings' => $activeBlessings,
             'is_priest' => $isPriest,
             'priest_data' => $priestData,
+            'shrine_blessings' => $shrineBlessings,
+            'prayer_level' => $userPrayerLevel,
             'recent_blessings' => $recentBlessings,
             'energy' => $user->energy,
             'gold' => $user->gold,
@@ -523,5 +551,20 @@ class BlessingController extends Controller
             $location instanceof Kingdom => 'kingdom',
             default => null,
         };
+    }
+
+    /**
+     * Format duration in minutes to human readable string.
+     */
+    protected function formatDuration(int $minutes): string
+    {
+        if ($minutes >= 60) {
+            $hours = floor($minutes / 60);
+            $mins = $minutes % 60;
+
+            return $mins > 0 ? "{$hours}h {$mins}m" : "{$hours}h";
+        }
+
+        return "{$minutes}m";
     }
 }

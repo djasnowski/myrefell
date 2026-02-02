@@ -10,6 +10,7 @@ import {
     Heart,
     HeartPulse,
     Loader2,
+    Lock,
     Pickaxe,
     Shield,
     Sparkles,
@@ -101,6 +102,8 @@ interface PageProps {
     active_blessings: ActiveBlessing[];
     is_priest: boolean;
     priest_data: PriestData | null;
+    shrine_blessings: BlessingType[];
+    prayer_level: number;
     recent_blessings: RecentBlessing[];
     energy: number;
     gold: number;
@@ -166,7 +169,14 @@ function formatEffect(key: string, value: number): string {
         mining_yield_bonus: "Mining Yield",
         smithing_xp_bonus: "Smithing XP",
         crafting_xp_bonus: "Crafting XP",
+        action_cooldown_seconds: "Cooldown",
     };
+
+    // Special formatting for cooldown (show as seconds, not percentage)
+    if (key === "action_cooldown_seconds") {
+        return `${value}s Cooldown`;
+    }
+
     // If no label found, convert snake_case to Title Case
     const label =
         labels[key] ||
@@ -238,15 +248,18 @@ function BlessingCard({
 function ActiveBlessingCard({ blessing }: { blessing: ActiveBlessing }) {
     const Icon = iconMap[blessing.icon] || Sparkles;
     const progress = Math.max(0, Math.min(100, (blessing.minutes_remaining / 60) * 100));
+    // Remove "from now" from time remaining
+    const timeDisplay = blessing.time_remaining.replace(/ from now$/, "");
 
     return (
-        <div className={`rounded-lg border p-4 ${categoryColors[blessing.category]}`}>
-            <div className="mb-2 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Icon className="h-6 w-6 text-amber-300" />
-                    <span className="font-pixel text-sm text-amber-300">{blessing.name}</span>
-                </div>
-                <span className="font-pixel text-xs text-stone-400">{blessing.time_remaining}</span>
+        <div className={`relative rounded-lg border p-4 ${categoryColors[blessing.category]}`}>
+            <div className="absolute bottom-3 right-3 flex items-center gap-1 font-pixel text-xs text-stone-400">
+                <Clock className="h-3 w-3" />
+                {timeDisplay}
+            </div>
+            <div className="mb-2 flex items-center gap-2">
+                <Icon className="h-6 w-6 text-amber-300" />
+                <span className="font-pixel text-sm text-amber-300">{blessing.name}</span>
             </div>
             <div className="mb-3 flex flex-wrap gap-1.5">
                 {Object.entries(blessing.effects).map(([key, value]) => (
@@ -274,6 +287,8 @@ export default function ShrineIndex() {
         active_blessings,
         is_priest,
         priest_data,
+        shrine_blessings,
+        prayer_level,
         recent_blessings,
         energy,
         gold,
@@ -360,7 +375,11 @@ export default function ShrineIndex() {
                     <div className="flex items-center gap-3">
                         <Church className="h-8 w-8 text-amber-400" />
                         <div>
-                            <h1 className="font-pixel text-xl text-amber-400">Village Shrine</h1>
+                            <h1 className="font-pixel text-xl text-amber-400">
+                                {location.name
+                                    ? `${location.name} Shrine`
+                                    : `${location.type.charAt(0).toUpperCase() + location.type.slice(1)} Shrine`}
+                            </h1>
                             <p className="font-pixel text-xs text-stone-400">
                                 {is_priest
                                     ? "Bestow blessings upon the faithful"
@@ -382,7 +401,7 @@ export default function ShrineIndex() {
 
                 <div className="flex flex-1 gap-4 overflow-hidden">
                     {/* Left: Active Blessings */}
-                    <div className="w-80 flex-shrink-0 overflow-y-auto rounded-lg border border-stone-700 bg-stone-900/50 p-4">
+                    <div className="w-96 flex-shrink-0 overflow-y-auto rounded-lg border border-stone-700 bg-stone-900/50 p-4">
                         <h2 className="mb-3 flex items-center gap-2 font-pixel text-sm text-amber-300">
                             <Sparkles className="h-4 w-4" />
                             Active Blessings
@@ -666,104 +685,94 @@ export default function ShrineIndex() {
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-                                    {/* Show a few basic blessings for self-prayer */}
-                                    {[
-                                        {
-                                            id: 1,
-                                            name: "Blessing of Strength",
-                                            slug: "strength",
-                                            icon: "swords",
-                                            description: "Increases your attack power.",
-                                            category: "combat",
-                                            effects: { attack_bonus: 10 },
-                                            duration: "45m",
-                                            duration_minutes: 45,
-                                            gold_cost: 38,
-                                            energy_cost: 0,
-                                            prayer_level_required: 1,
-                                        },
-                                        {
-                                            id: 2,
-                                            name: "Blessing of Protection",
-                                            slug: "protection",
-                                            icon: "shield",
-                                            description: "Increases your defense.",
-                                            category: "combat",
-                                            effects: { defense_bonus: 10 },
-                                            duration: "45m",
-                                            duration_minutes: 45,
-                                            gold_cost: 38,
-                                            energy_cost: 0,
-                                            prayer_level_required: 1,
-                                        },
-                                        {
-                                            id: 10,
-                                            name: "Blessing of Fortune",
-                                            slug: "fortune",
-                                            icon: "coins",
-                                            description: "Increases gold found.",
-                                            category: "general",
-                                            effects: { gold_find_bonus: 10 },
-                                            duration: "45m",
-                                            duration_minutes: 45,
-                                            gold_cost: 75,
-                                            energy_cost: 0,
-                                            prayer_level_required: 1,
-                                        },
-                                    ].map((blessing) => (
-                                        <div
-                                            key={blessing.slug}
-                                            className={`rounded-lg border p-3 ${categoryColors[blessing.category]}`}
-                                        >
-                                            <div className="mb-2 flex items-center gap-2">
-                                                {(() => {
-                                                    const Icon = iconMap[blessing.icon] || Sparkles;
-                                                    return (
-                                                        <Icon className="h-5 w-5 text-amber-300" />
-                                                    );
-                                                })()}
-                                                <span className="font-pixel text-xs text-amber-300">
-                                                    {blessing.name}
-                                                </span>
-                                            </div>
-                                            <p className="mb-2 text-[10px] text-stone-400">
-                                                {blessing.description}
-                                            </p>
-                                            <div className="mb-2 flex flex-wrap gap-1">
-                                                {Object.entries(blessing.effects).map(
-                                                    ([key, value]) => (
-                                                        <span
-                                                            key={key}
-                                                            className="rounded bg-stone-800 px-1.5 py-0.5 font-pixel text-[9px] text-green-400"
-                                                        >
-                                                            {formatEffect(key, value)}
-                                                        </span>
-                                                    ),
-                                                )}
-                                            </div>
-                                            <div className="mb-2 flex items-center justify-between text-[9px] text-stone-500">
-                                                <span className="flex items-center gap-1">
-                                                    <Clock className="h-3 w-3" />
-                                                    {blessing.duration}
-                                                </span>
-                                                <span className="flex items-center gap-1">
-                                                    <Coins className="h-3 w-3 text-amber-400" />
-                                                    {blessing.gold_cost}g
-                                                </span>
-                                            </div>
-                                            <button
-                                                onClick={() => handlePray(blessing)}
-                                                disabled={gold < blessing.gold_cost || prayLoading}
-                                                className="flex w-full items-center justify-center gap-1 rounded bg-amber-600/80 px-2 py-1 font-pixel text-[10px] text-white hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                    {shrine_blessings.map((blessing) => {
+                                        const isLocked =
+                                            prayer_level < blessing.prayer_level_required;
+                                        const isActive = active_blessings.some(
+                                            (ab) => ab.slug === blessing.slug,
+                                        );
+                                        const Icon = iconMap[blessing.icon] || Sparkles;
+                                        return (
+                                            <div
+                                                key={blessing.slug}
+                                                className={`relative rounded-lg border p-4 ${isLocked ? "border-stone-700 bg-stone-900/50 opacity-75" : isActive ? "border-green-600/50 bg-green-900/20" : categoryColors[blessing.category]}`}
                                             >
-                                                {prayLoading ? (
-                                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                                ) : (
-                                                    "Pray"
+                                                {isLocked && (
+                                                    <div className="absolute right-2 top-2">
+                                                        <Lock className="h-4 w-4 text-stone-500" />
+                                                    </div>
                                                 )}
-                                            </button>
-                                        </div>
-                                    ))}
+                                                {isActive && (
+                                                    <div className="absolute right-2 top-2">
+                                                        <Check className="h-4 w-4 text-green-400" />
+                                                    </div>
+                                                )}
+                                                <div className="mb-2 flex items-center gap-2">
+                                                    <Icon
+                                                        className={`h-6 w-6 ${isLocked ? "text-stone-500" : isActive ? "text-green-400" : "text-amber-300"}`}
+                                                    />
+                                                    <span
+                                                        className={`font-pixel text-sm ${isLocked ? "text-stone-500" : isActive ? "text-green-400" : "text-amber-300"}`}
+                                                    >
+                                                        {blessing.name}
+                                                    </span>
+                                                </div>
+                                                <p className="mb-2 font-pixel text-xs text-stone-400">
+                                                    {blessing.description}
+                                                </p>
+                                                <div className="mb-3 flex flex-wrap gap-1.5">
+                                                    {Object.entries(blessing.effects).map(
+                                                        ([key, value]) => (
+                                                            <span
+                                                                key={key}
+                                                                className={`rounded bg-stone-800 px-2 py-1 font-pixel text-xs ${isLocked ? "text-stone-500" : "text-green-400"}`}
+                                                            >
+                                                                {formatEffect(key, value)}
+                                                            </span>
+                                                        ),
+                                                    )}
+                                                </div>
+                                                <div className="mb-3 flex items-center justify-between font-pixel text-xs text-stone-500">
+                                                    <span className="flex items-center gap-1">
+                                                        <Clock className="h-4 w-4" />
+                                                        {blessing.duration}
+                                                    </span>
+                                                    <span className="flex items-center gap-1">
+                                                        <Coins
+                                                            className={`h-4 w-4 ${isLocked ? "text-stone-500" : "text-amber-400"}`}
+                                                        />
+                                                        {blessing.gold_cost}g
+                                                    </span>
+                                                </div>
+                                                {isLocked ? (
+                                                    <div className="flex w-full items-center justify-center gap-2 rounded bg-stone-700 px-3 py-2 font-pixel text-xs text-stone-400">
+                                                        <Lock className="h-3 w-3" />
+                                                        Requires Prayer{" "}
+                                                        {blessing.prayer_level_required}
+                                                    </div>
+                                                ) : isActive ? (
+                                                    <div className="flex w-full items-center justify-center gap-2 rounded bg-green-700 px-3 py-2 font-pixel text-sm text-green-200">
+                                                        <Check className="h-4 w-4" />
+                                                        Active
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => handlePray(blessing)}
+                                                        disabled={
+                                                            gold < blessing.gold_cost || prayLoading
+                                                        }
+                                                        className="flex w-full items-center justify-center gap-2 rounded bg-amber-600 px-3 py-2 font-pixel text-sm text-white hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    >
+                                                        {prayLoading ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            "Pray"
+                                                        )}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
 
                                 <div className="rounded-lg border border-dashed border-stone-600 p-4 text-center">
