@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { formatBonusLabel } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
 interface FestivalType {
@@ -534,8 +535,8 @@ export default function FestivalShow() {
                                     key={key}
                                     className="flex items-center justify-between rounded-lg bg-stone-900/50 p-2"
                                 >
-                                    <span className="font-pixel text-xs capitalize text-stone-300">
-                                        {key.replace("_", " ")}
+                                    <span className="font-pixel text-xs text-stone-300">
+                                        {formatBonusLabel(key)}
                                     </span>
                                     <span
                                         className={`font-pixel text-xs ${Number(value) >= 0 ? "text-green-400" : "text-red-400"}`}

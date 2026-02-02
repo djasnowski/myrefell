@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { formatBonus } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
 interface RoleHolder {
@@ -286,41 +287,6 @@ function formatDate(dateString: string): string {
         month: "short",
         day: "numeric",
     });
-}
-
-function formatBonus(key: string, value: number): string {
-    const labels: Record<string, string> = {
-        xp_bonus: "XP",
-        reputation_bonus: "Reputation",
-        smithing_xp_bonus: "Smithing XP",
-        crafting_discount: "Craft Discount",
-        trade_bonus: "Trade",
-        gold_find_bonus: "Gold Find",
-        combat_xp_bonus: "Combat XP",
-        defense_bonus: "Defense",
-        healing_bonus: "Healing",
-        hp_regen_bonus: "HP Regen",
-        farming_xp_bonus: "Farming XP",
-        crop_yield_bonus: "Crop Yield",
-        rest_bonus: "Rest",
-        energy_regen_bonus: "Energy Regen",
-        woodcutting_xp_bonus: "Woodcut XP",
-        wood_yield_bonus: "Wood Yield",
-        fishing_xp_bonus: "Fishing XP",
-        fish_yield_bonus: "Fish Yield",
-        prayer_bonus: "Prayer",
-        morale_bonus: "Morale",
-        cooking_xp_bonus: "Cooking XP",
-        bread_yield_bonus: "Bread Yield",
-        meat_yield_bonus: "Meat Yield",
-        hunting_xp_bonus: "Hunting XP",
-        hunt_yield_bonus: "Hunt Yield",
-        mining_xp_bonus: "Mining XP",
-        ore_yield_bonus: "Ore Yield",
-        brewing_xp_bonus: "Brewing XP",
-        ale_yield_bonus: "Ale Yield",
-    };
-    return `+${value}% ${labels[key] || key}`;
 }
 
 function RoleModal({

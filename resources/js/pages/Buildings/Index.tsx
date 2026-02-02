@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { formatBonusLabel } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
 interface BuildingType {
@@ -208,7 +209,7 @@ function ExistingBuildingCard({
                     <div className="mt-1 flex flex-wrap gap-2">
                         {Object.entries(building.type.bonuses).map(([key, value]) => (
                             <span key={key} className="font-pixel text-xs text-emerald-300">
-                                +{value} {key}
+                                +{value}% {formatBonusLabel(key)}
                             </span>
                         ))}
                     </div>
@@ -409,7 +410,7 @@ function BuildingTypeCard({
                     <div className="mt-1 flex flex-wrap gap-2">
                         {Object.entries(type.bonuses).map(([key, value]) => (
                             <span key={key} className="font-pixel text-xs text-emerald-300">
-                                +{value} {key}
+                                +{value}% {formatBonusLabel(key)}
                             </span>
                         ))}
                     </div>
