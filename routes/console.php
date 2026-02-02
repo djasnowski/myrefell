@@ -19,8 +19,8 @@ Artisan::command('inspire', function () {
 // Energy regeneration - +10 every 5 minutes
 Schedule::job(new RegenerateEnergy)->everyFiveMinutes();
 
-// Election finalization - every minute
-Schedule::job(new FinalizeElections)->everyMinute();
+// Election finalization - every 5 minutes
+Schedule::job(new FinalizeElections)->everyFiveMinutes();
 
 // Tax collection - daily at midnight
 Schedule::job(new CollectDailyTaxes)->dailyAt('00:00');
