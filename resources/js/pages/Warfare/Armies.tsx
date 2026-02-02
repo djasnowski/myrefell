@@ -1,6 +1,9 @@
 import { Head, router, usePage } from "@inertiajs/react";
 import {
+    ArrowDownToLine,
+    ArrowUpFromLine,
     Coins,
+    Edit3,
     MapPin,
     Package,
     Plus,
@@ -8,6 +11,7 @@ import {
     Sword,
     Swords,
     Users,
+    Vault,
     XCircle,
     Flag,
     Heart,
@@ -47,6 +51,7 @@ interface Army {
     supplies: number;
     daily_supply_cost: number;
     gold_upkeep: number;
+    treasury: number;
     total_troops: number;
     total_attack: number;
     total_defense: number;
@@ -55,6 +60,8 @@ interface Army {
     units: ArmyUnit[];
     composition: Record<string, number>;
     mustered_at: string | null;
+    can_rename: boolean;
+    next_rename_at: string | null;
 }
 
 interface MercenaryCompany {
@@ -86,6 +93,8 @@ interface PageProps {
     mercenary_companies: MercenaryCompany[];
     current_location: Location;
     army_creation_cost: number;
+    army_rename_cost: number;
+    max_armies: number;
     unit_types: Record<string, UnitTypeInfo>;
     recruitment_costs: Record<string, number>;
     [key: string]: unknown;
@@ -132,17 +141,30 @@ export default function Armies() {
         mercenary_companies,
         current_location,
         army_creation_cost,
+        army_rename_cost,
+        max_armies,
     } = usePage<PageProps>().props;
 
     const [showCreateForm, setShowCreateForm] = useState(false);
-    const [formData, setFormData] = useState({
-        name: "",
-    });
+    const [formData, setFormData] = useState({ name: "" });
     const [isCreating, setIsCreating] = useState(false);
     const [isDisbanding, setIsDisbanding] = useState<number | null>(null);
     const [isHiring, setIsHiring] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+
+    // Rename state
+    const [renamingArmy, setRenamingArmy] = useState<number | null>(null);
+    const [renameValue, setRenameValue] = useState("");
+    const [isRenaming, setIsRenaming] = useState(false);
+
+    // Treasury state
+    const [treasuryArmy, setTreasuryArmy] = useState<number | null>(null);
+    const [treasuryAmount, setTreasuryAmount] = useState("");
+    const [isDepositing, setIsDepositing] = useState(false);
+    const [isWithdrawing, setIsWithdrawing] = useState(false);
+
+    const canCreateArmy = active_armies.length < max_armies;
 
     const createArmy = async () => {
         if (!formData.name.trim()) {
@@ -240,6 +262,117 @@ export default function Armies() {
         }
     };
 
+    const renameArmy = async (armyId: number) => {
+        if (!renameValue.trim()) {
+            setError("Please enter a new name.");
+            return;
+        }
+
+        setIsRenaming(true);
+        setError(null);
+
+        try {
+            const response = await fetch(`/warfare/armies/${armyId}/rename`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
+                },
+                body: JSON.stringify({ name: renameValue }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setSuccess(data.message);
+                setRenamingArmy(null);
+                setRenameValue("");
+                router.reload();
+            } else {
+                setError(data.message);
+            }
+        } catch {
+            setError("Failed to rename army");
+        } finally {
+            setIsRenaming(false);
+        }
+    };
+
+    const depositToTreasury = async (armyId: number) => {
+        const amount = parseInt(treasuryAmount);
+        if (!amount || amount <= 0) {
+            setError("Please enter a valid amount.");
+            return;
+        }
+
+        setIsDepositing(true);
+        setError(null);
+
+        try {
+            const response = await fetch(`/warfare/armies/${armyId}/deposit`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
+                },
+                body: JSON.stringify({ amount }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setSuccess(data.message);
+                setTreasuryAmount("");
+                router.reload();
+            } else {
+                setError(data.message);
+            }
+        } catch {
+            setError("Failed to deposit gold");
+        } finally {
+            setIsDepositing(false);
+        }
+    };
+
+    const withdrawFromTreasury = async (armyId: number) => {
+        const amount = parseInt(treasuryAmount);
+        if (!amount || amount <= 0) {
+            setError("Please enter a valid amount.");
+            return;
+        }
+
+        setIsWithdrawing(true);
+        setError(null);
+
+        try {
+            const response = await fetch(`/warfare/armies/${armyId}/withdraw`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
+                },
+                body: JSON.stringify({ amount }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setSuccess(data.message);
+                setTreasuryAmount("");
+                router.reload();
+            } else {
+                setError(data.message);
+            }
+        } catch {
+            setError("Failed to withdraw gold");
+        } finally {
+            setIsWithdrawing(false);
+        }
+    };
+
     const renderArmyCard = (army: Army, showActions: boolean = true) => {
         const status = statusColors[army.status] || statusColors.encamped;
         const isActive = army.status !== "disbanded";
@@ -254,7 +387,30 @@ export default function Armies() {
                 <div className="mb-3 flex items-start justify-between">
                     <div className="flex items-center gap-2">
                         <Swords className="h-5 w-5 text-red-400" />
-                        <h3 className="font-pixel text-base text-white">{army.name}</h3>
+                        {renamingArmy === army.id ? (
+                            <input
+                                type="text"
+                                value={renameValue}
+                                onChange={(e) => setRenameValue(e.target.value)}
+                                className="w-32 rounded border border-stone-600 bg-stone-800 px-2 py-0.5 font-pixel text-sm text-white focus:border-amber-500 focus:outline-none"
+                                placeholder="New name"
+                                autoFocus
+                            />
+                        ) : (
+                            <h3 className="font-pixel text-base text-white">{army.name}</h3>
+                        )}
+                        {showActions && isActive && army.can_rename && renamingArmy !== army.id && (
+                            <button
+                                onClick={() => {
+                                    setRenamingArmy(army.id);
+                                    setRenameValue(army.name);
+                                }}
+                                className="text-stone-500 transition hover:text-amber-400"
+                                title={`Rename (${army_rename_cost.toLocaleString()}g)`}
+                            >
+                                <Edit3 className="h-3 w-3" />
+                            </button>
+                        )}
                     </div>
                     <span
                         className={`rounded px-2 py-1 font-pixel text-[10px] ${status.bg} ${status.text}`}
@@ -262,6 +418,28 @@ export default function Armies() {
                         {status.label}
                     </span>
                 </div>
+
+                {/* Rename Form */}
+                {renamingArmy === army.id && (
+                    <div className="mb-3 flex gap-2">
+                        <button
+                            onClick={() => renameArmy(army.id)}
+                            disabled={isRenaming || !renameValue.trim()}
+                            className="rounded bg-amber-600 px-2 py-1 font-pixel text-[10px] text-white transition hover:bg-amber-500 disabled:opacity-50"
+                        >
+                            {isRenaming ? "..." : `Rename (${army_rename_cost.toLocaleString()}g)`}
+                        </button>
+                        <button
+                            onClick={() => {
+                                setRenamingArmy(null);
+                                setRenameValue("");
+                            }}
+                            className="rounded bg-stone-600 px-2 py-1 font-pixel text-[10px] text-white transition hover:bg-stone-500"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                )}
 
                 {/* Commander & Location */}
                 <div className="mb-3 rounded-lg bg-stone-900/50 p-2">
@@ -357,6 +535,69 @@ export default function Armies() {
                         <div className="font-pixel text-sm text-blue-300">{army.total_defense}</div>
                     </div>
                 </div>
+
+                {/* Treasury */}
+                {showActions && isActive && (
+                    <div className="mb-3 rounded-lg border border-amber-600/30 bg-amber-900/10 p-2">
+                        <div className="mb-2 flex items-center justify-between">
+                            <div className="flex items-center gap-1 font-pixel text-xs text-amber-300">
+                                <Vault className="h-3 w-3" />
+                                Treasury
+                            </div>
+                            <span className="font-pixel text-sm text-amber-400">
+                                {army.treasury.toLocaleString()}g
+                            </span>
+                        </div>
+                        {treasuryArmy === army.id ? (
+                            <div className="space-y-2">
+                                <input
+                                    type="number"
+                                    value={treasuryAmount}
+                                    onChange={(e) => setTreasuryAmount(e.target.value)}
+                                    className="w-full rounded border border-stone-600 bg-stone-800 px-2 py-1 font-pixel text-xs text-white focus:border-amber-500 focus:outline-none"
+                                    placeholder="Amount"
+                                    min="1"
+                                />
+                                <div className="flex gap-1">
+                                    <button
+                                        onClick={() => depositToTreasury(army.id)}
+                                        disabled={isDepositing || !treasuryAmount}
+                                        className="flex flex-1 items-center justify-center gap-1 rounded bg-green-600 px-2 py-1 font-pixel text-[10px] text-white transition hover:bg-green-500 disabled:opacity-50"
+                                    >
+                                        <ArrowDownToLine className="h-3 w-3" />
+                                        {isDepositing ? "..." : "Deposit"}
+                                    </button>
+                                    <button
+                                        onClick={() => withdrawFromTreasury(army.id)}
+                                        disabled={
+                                            isWithdrawing || !treasuryAmount || army.treasury === 0
+                                        }
+                                        className="flex flex-1 items-center justify-center gap-1 rounded bg-amber-600 px-2 py-1 font-pixel text-[10px] text-white transition hover:bg-amber-500 disabled:opacity-50"
+                                    >
+                                        <ArrowUpFromLine className="h-3 w-3" />
+                                        {isWithdrawing ? "..." : "Withdraw"}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setTreasuryArmy(null);
+                                            setTreasuryAmount("");
+                                        }}
+                                        className="rounded bg-stone-600 px-2 py-1 font-pixel text-[10px] text-white transition hover:bg-stone-500"
+                                    >
+                                        X
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => setTreasuryArmy(army.id)}
+                                className="w-full rounded border border-amber-600/50 bg-amber-900/20 px-2 py-1 font-pixel text-[10px] text-amber-300 transition hover:bg-amber-900/40"
+                            >
+                                Manage Treasury
+                            </button>
+                        )}
+                    </div>
+                )}
 
                 {/* Actions */}
                 {showActions && canDisband && (
@@ -456,15 +697,20 @@ export default function Armies() {
                     <div>
                         <h1 className="font-pixel text-2xl text-red-400">Military Forces</h1>
                         <p className="font-pixel text-sm text-stone-400">
-                            Manage your armies and hire mercenaries
+                            Armies: {active_armies.length}/{max_armies}
                         </p>
                     </div>
                     <button
                         onClick={() => setShowCreateForm(!showCreateForm)}
-                        className="flex items-center gap-2 rounded border-2 border-red-600/50 bg-red-900/20 px-4 py-2 font-pixel text-xs text-red-300 transition hover:bg-red-900/40"
+                        disabled={!canCreateArmy && !showCreateForm}
+                        className="flex items-center gap-2 rounded border-2 border-red-600/50 bg-red-900/20 px-4 py-2 font-pixel text-xs text-red-300 transition hover:bg-red-900/40 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         <Plus className="h-4 w-4" />
-                        {showCreateForm ? "Cancel" : "Raise Army"}
+                        {showCreateForm
+                            ? "Cancel"
+                            : canCreateArmy
+                              ? "Raise Army"
+                              : "Army Limit Reached"}
                     </button>
                 </div>
 
@@ -524,10 +770,14 @@ export default function Armies() {
 
                         <button
                             onClick={createArmy}
-                            disabled={!formData.name.trim() || isCreating}
+                            disabled={!formData.name.trim() || isCreating || !canCreateArmy}
                             className="w-full rounded bg-red-600 py-2 font-pixel text-sm text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                            {isCreating ? "Raising..." : `Raise Army (${army_creation_cost}g)`}
+                            {isCreating
+                                ? "Raising..."
+                                : !canCreateArmy
+                                  ? "Army Limit Reached"
+                                  : `Raise Army (${army_creation_cost}g)`}
                         </button>
                     </div>
                 )}
@@ -535,7 +785,9 @@ export default function Armies() {
                 {/* Active Armies */}
                 {active_armies.length > 0 && (
                     <div>
-                        <h2 className="mb-3 font-pixel text-lg text-red-300">Your Armies</h2>
+                        <h2 className="mb-3 font-pixel text-lg text-red-300">
+                            Your Armies ({active_armies.length}/{max_armies})
+                        </h2>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {active_armies.map((army) => renderArmyCard(army))}
                         </div>
