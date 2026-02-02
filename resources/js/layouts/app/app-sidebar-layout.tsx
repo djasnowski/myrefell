@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppSidebarHeader } from "@/components/app-sidebar-header";
 import { ImpersonationBanner } from "@/components/impersonation-banner";
+import { NotificationTest } from "@/components/notification-test";
 import { GameToaster } from "@/components/ui/game-toast";
 import type { AppLayoutProps } from "@/types";
 
@@ -16,6 +17,7 @@ export default function AppSidebarLayout({ children, breadcrumbs = [] }: AppLayo
                 {children}
             </AppContent>
             <GameToaster />
+            {import.meta.env.DEV && <NotificationTest />}
         </AppShell>
     );
 }

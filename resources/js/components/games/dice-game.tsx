@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { gameToast } from "@/components/ui/game-toast";
+import { useNotifications } from "@/hooks/use-notifications";
 
 interface TavernStats {
     wins: number;
@@ -121,6 +122,7 @@ function DiceFace({
 
 function CooldownTimer({ cooldownEnds }: { cooldownEnds: string }) {
     const [timeLeft, setTimeLeft] = useState<number>(0);
+    const { sendNotification } = useNotifications();
 
     useEffect(() => {
         const calculateTimeLeft = () => {
@@ -136,12 +138,16 @@ function CooldownTimer({ cooldownEnds }: { cooldownEnds: string }) {
             setTimeLeft(remaining);
             if (remaining <= 0) {
                 clearInterval(interval);
+                sendNotification("Dice Game Ready", {
+                    body: "You can play dice again!",
+                    tag: "dice-cooldown",
+                });
                 router.reload({ only: ["dice"] });
             }
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [cooldownEnds]);
+    }, [cooldownEnds, sendNotification]);
 
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;

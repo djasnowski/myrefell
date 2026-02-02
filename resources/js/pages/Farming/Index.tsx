@@ -18,8 +18,9 @@ import {
     X,
     Zap,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { useNotifications } from "@/hooks/use-notifications";
 import type { BreadcrumbItem } from "@/types";
 
 interface CropType {
@@ -156,12 +157,31 @@ export default function FarmingIndex() {
     const [showCropModal, setShowCropModal] = useState<number | null>(null); // plot id
     const [cropSearch, setCropSearch] = useState("");
     const [now, setNow] = useState(Date.now());
+    const { sendNotification } = useNotifications();
+    const notifiedPlotsRef = useRef<Set<number>>(new Set());
 
-    // Live countdown timer - tick every second
+    // Live countdown timer - tick every second and check for ready crops
     useEffect(() => {
-        const interval = setInterval(() => setNow(Date.now()), 1000);
+        const interval = setInterval(() => {
+            const currentTime = Date.now();
+            setNow(currentTime);
+
+            // Check for newly ready crops
+            plots.forEach((plot) => {
+                if (plot.ready_at && !plot.is_ready && !notifiedPlotsRef.current.has(plot.id)) {
+                    const readyTime = new Date(plot.ready_at).getTime();
+                    if (currentTime >= readyTime) {
+                        notifiedPlotsRef.current.add(plot.id);
+                        sendNotification("Crop Ready!", {
+                            body: `Your ${plot.crop?.name || "crop"} is ready to harvest`,
+                            tag: `crop-ready-${plot.id}`,
+                        });
+                    }
+                }
+            });
+        }, 1000);
         return () => clearInterval(interval);
-    }, []);
+    }, [plots, sendNotification]);
 
     // Calculate live countdown from ready_at timestamp
     const getCountdown = (readyAt: string | null): string | null => {

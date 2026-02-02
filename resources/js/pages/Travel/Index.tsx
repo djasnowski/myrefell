@@ -2,6 +2,7 @@ import { Head, router, usePage } from "@inertiajs/react";
 import { Castle, Church, Clock, Home, Loader2, MapPin, Trees, X, Zap } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { useNotifications } from "@/hooks/use-notifications";
 import type { BreadcrumbItem } from "@/types";
 
 interface Destination {
@@ -82,10 +83,15 @@ function TravelProgress({
     const [remaining, setRemaining] = useState(status.remaining_seconds);
     const [progress, setProgress] = useState(status.progress_percent);
     const arrivedRef = useRef(false);
+    const { sendNotification } = useNotifications();
 
     useEffect(() => {
         if (status.has_arrived && !arrivedRef.current) {
             arrivedRef.current = true;
+            sendNotification("Journey Complete", {
+                body: `You have arrived at ${status.destination.name}`,
+                tag: "travel-complete",
+            });
             onArrive();
             return;
         }
@@ -96,6 +102,10 @@ function TravelProgress({
                 if (newVal <= 0 && !arrivedRef.current) {
                     arrivedRef.current = true;
                     clearInterval(interval);
+                    sendNotification("Journey Complete", {
+                        body: `You have arrived at ${status.destination.name}`,
+                        tag: "travel-complete",
+                    });
                     onArrive();
                 }
                 return newVal;
@@ -104,7 +114,13 @@ function TravelProgress({
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [status.has_arrived, status.total_seconds, onArrive]);
+    }, [
+        status.has_arrived,
+        status.total_seconds,
+        status.destination.name,
+        onArrive,
+        sendNotification,
+    ]);
 
     const Icon = locationIcons[status.destination.type] || MapPin;
 
