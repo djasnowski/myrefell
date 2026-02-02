@@ -4,6 +4,7 @@ import {
     Banknote,
     Briefcase,
     Building2,
+    Check,
     Church,
     Coins,
     Crown,
@@ -22,9 +23,11 @@ import {
     Swords,
     TreePine,
     Trees,
+    UserPlus,
     Users,
     Waves,
     Wheat,
+    X,
     type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -113,6 +116,16 @@ interface ActivityLogEntry {
     time_ago: string;
 }
 
+interface PendingMigration {
+    id: number;
+    user: {
+        id: number;
+        username: string;
+    };
+    from_location: string;
+    created_at: string;
+}
+
 interface Props {
     town: Town;
     services: ServiceInfo[];
@@ -126,6 +139,7 @@ interface Props {
     has_pending_request: boolean;
     current_user_id: number;
     disasters?: Disaster[];
+    pending_migrations?: PendingMigration[];
 }
 
 const biomeConfig: Record<string, { icon: LucideIcon; color: string; bg: string; border: string }> =
@@ -199,9 +213,11 @@ export default function TownShow({
     has_pending_request,
     current_user_id,
     disasters = [],
+    pending_migrations = [],
 }: Props) {
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
     const [loading, setLoading] = useState(false);
+    const [processingMigration, setProcessingMigration] = useState<number | null>(null);
 
     const handleRequestMigration = () => {
         setLoading(true);
@@ -213,6 +229,34 @@ export default function TownShow({
                     router.reload();
                 },
                 onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handleApproveMigration = (requestId: number) => {
+        setProcessingMigration(requestId);
+        router.post(
+            `/migration/${requestId}/approve`,
+            { level: "mayor" },
+            {
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => setProcessingMigration(null),
+            },
+        );
+    };
+
+    const handleDenyMigration = (requestId: number) => {
+        setProcessingMigration(requestId);
+        router.post(
+            `/migration/${requestId}/deny`,
+            { level: "mayor" },
+            {
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => setProcessingMigration(null),
             },
         );
     };
@@ -326,8 +370,8 @@ export default function TownShow({
 
                 {/* Mayor Actions */}
                 {is_mayor && (
-                    <div className="flex items-center gap-3 rounded-lg border border-amber-600/30 bg-amber-900/10 px-4 py-3">
-                        <Gavel className="h-5 w-5 text-amber-400" />
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center rounded-lg border border-amber-600/30 bg-amber-900/10 px-4 py-3">
+                        <Gavel className="hidden h-5 w-5 text-amber-400 sm:block" />
                         <div className="flex-1">
                             <div className="font-pixel text-sm text-amber-300">
                                 You are the Mayor
@@ -351,6 +395,63 @@ export default function TownShow({
                                 <Banknote className="h-3 w-3" />
                                 Treasury
                             </Link>
+                        </div>
+                    </div>
+                )}
+
+                {/* Pending Migration Requests (Mayor only) */}
+                {is_mayor && pending_migrations.length > 0 && (
+                    <div className="rounded-lg border border-blue-600/30 bg-blue-900/10 p-4">
+                        <div className="mb-3 flex items-center gap-2">
+                            <UserPlus className="h-5 w-5 text-blue-400" />
+                            <span className="font-pixel text-sm text-blue-300">
+                                Settlement Requests ({pending_migrations.length})
+                            </span>
+                        </div>
+                        <div className="space-y-2">
+                            {pending_migrations.map((request) => (
+                                <div
+                                    key={request.id}
+                                    className="flex flex-col gap-2 rounded border border-stone-700 bg-stone-800/50 p-3 sm:flex-row sm:items-center sm:justify-between"
+                                >
+                                    <div>
+                                        <div className="font-pixel text-xs text-stone-200">
+                                            <Link
+                                                href={`/profile/${request.user.id}`}
+                                                className="text-blue-400 hover:underline"
+                                            >
+                                                {request.user.username}
+                                            </Link>{" "}
+                                            wants to settle here
+                                        </div>
+                                        <div className="text-[10px] text-stone-500">
+                                            From {request.from_location} · {request.created_at}
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleApproveMigration(request.id)}
+                                            disabled={processingMigration === request.id}
+                                            className="flex items-center gap-1 rounded bg-green-600 px-3 py-1.5 font-pixel text-xs text-white transition hover:bg-green-500 disabled:opacity-50"
+                                        >
+                                            {processingMigration === request.id ? (
+                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                            ) : (
+                                                <Check className="h-3 w-3" />
+                                            )}
+                                            Approve
+                                        </button>
+                                        <button
+                                            onClick={() => handleDenyMigration(request.id)}
+                                            disabled={processingMigration === request.id}
+                                            className="flex items-center gap-1 rounded bg-red-600 px-3 py-1.5 font-pixel text-xs text-white transition hover:bg-red-500 disabled:opacity-50"
+                                        >
+                                            <X className="h-3 w-3" />
+                                            Deny
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}

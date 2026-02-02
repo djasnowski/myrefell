@@ -35,24 +35,33 @@ class TownController extends Controller
         $user = $request->user();
         $town->load(['barony.duchy.kingdom', 'barony.kingdom', 'mayor', 'visitors']);
 
-        // Get mayor with legitimacy
+        // Get mayor with legitimacy - check PlayerRole first, then fall back to town->mayor
         $mayor = null;
-        if ($town->mayor) {
-            $mayorRole = Role::where('slug', 'mayor')->first();
-            $mayorAssignment = null;
-            if ($mayorRole) {
-                $mayorAssignment = PlayerRole::active()
-                    ->where('role_id', $mayorRole->id)
-                    ->where('location_type', 'town')
-                    ->where('location_id', $town->id)
-                    ->first();
-            }
+        $mayorRole = Role::where('slug', 'mayor')->first();
+        $mayorAssignment = null;
+        if ($mayorRole) {
+            $mayorAssignment = PlayerRole::active()
+                ->where('role_id', $mayorRole->id)
+                ->where('location_type', 'town')
+                ->where('location_id', $town->id)
+                ->with('user')
+                ->first();
+        }
 
+        if ($mayorAssignment?->user) {
+            $mayor = [
+                'id' => $mayorAssignment->user->id,
+                'username' => $mayorAssignment->user->username,
+                'primary_title' => $mayorAssignment->user->primary_title,
+                'legitimacy' => $mayorAssignment->legitimacy ?? 50,
+            ];
+        } elseif ($town->mayor) {
+            // Fallback to town->mayor_user_id relationship
             $mayor = [
                 'id' => $town->mayor->id,
                 'username' => $town->mayor->username,
                 'primary_title' => $town->mayor->primary_title,
-                'legitimacy' => $mayorAssignment?->legitimacy ?? 50,
+                'legitimacy' => 50,
             ];
         }
 
@@ -102,6 +111,28 @@ class TownController extends Controller
         // Get recent activity at this location
         $recentActivity = $this->getRecentActivity($town);
 
+        // Get pending migration requests for mayors
+        $isMayor = $mayorAssignment?->user_id === $user->id || $town->mayor_user_id === $user->id;
+        $pendingMigrations = [];
+        if ($isMayor) {
+            $pendingMigrations = MigrationRequest::pending()
+                ->where('to_location_type', 'town')
+                ->where('to_location_id', $town->id)
+                ->whereNull('mayor_approved')
+                ->with('user')
+                ->get()
+                ->map(fn ($request) => [
+                    'id' => $request->id,
+                    'user' => [
+                        'id' => $request->user->id,
+                        'username' => $request->user->username,
+                    ],
+                    'from_location' => $request->getOriginName(),
+                    'created_at' => $request->created_at->diffForHumans(),
+                ])
+                ->toArray();
+        }
+
         return Inertia::render('Towns/Show', [
             'town' => [
                 'id' => $town->id,
@@ -139,11 +170,12 @@ class TownController extends Controller
             'visitors' => $visitors,
             'is_visitor' => $isVisitor,
             'is_resident' => $isResident,
-            'is_mayor' => $town->mayor_user_id === $user->id,
+            'is_mayor' => $isMayor,
             'can_migrate' => $canMigrate,
             'has_pending_request' => $hasPendingRequest,
             'current_user_id' => $user->id,
             'disasters' => $disasters,
+            'pending_migrations' => $pendingMigrations,
         ]);
     }
 
@@ -220,6 +252,32 @@ class TownController extends Controller
             $query->latest()->limit(5);
         }]);
 
+        // Get mayor from PlayerRole first, fall back to town->mayor
+        $mayorRole = Role::where('slug', 'mayor')->first();
+        $mayorAssignment = $mayorRole ? PlayerRole::active()
+            ->where('role_id', $mayorRole->id)
+            ->where('location_type', 'town')
+            ->where('location_id', $town->id)
+            ->with('user')
+            ->first() : null;
+
+        $mayorData = null;
+        if ($mayorAssignment?->user) {
+            $mayorData = [
+                'id' => $mayorAssignment->user->id,
+                'username' => $mayorAssignment->user->username,
+                'primary_title' => $mayorAssignment->user->primary_title,
+            ];
+        } elseif ($town->mayor) {
+            $mayorData = [
+                'id' => $town->mayor->id,
+                'username' => $town->mayor->username,
+                'primary_title' => $town->mayor->primary_title,
+            ];
+        }
+
+        $isMayor = $mayorAssignment?->user_id === $user->id || $town->mayor_user_id === $user->id;
+
         // Get active election if any
         $activeElection = $town->elections()
             ->where('status', 'open')
@@ -256,11 +314,7 @@ class TownController extends Controller
                     'id' => $town->barony->kingdom->id,
                     'name' => $town->barony->kingdom->name,
                 ] : null,
-                'mayor' => $town->mayor ? [
-                    'id' => $town->mayor->id,
-                    'username' => $town->mayor->username,
-                    'primary_title' => $town->mayor->primary_title,
-                ] : null,
+                'mayor' => $mayorData,
             ],
             'active_election' => $activeElection ? [
                 'id' => $activeElection->id,
@@ -270,8 +324,8 @@ class TownController extends Controller
                 'candidate_count' => $activeElection->candidates()->count(),
             ] : null,
             'recent_elections' => $recentElections,
-            'can_start_election' => ! $activeElection && $town->mayor_user_id !== $user->id,
-            'is_mayor' => $town->mayor_user_id === $user->id,
+            'can_start_election' => ! $activeElection && ! $isMayor,
+            'is_mayor' => $isMayor,
         ]);
     }
 }

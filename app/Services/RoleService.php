@@ -7,6 +7,7 @@ use App\Models\Kingdom;
 use App\Models\LocationNpc;
 use App\Models\PlayerRole;
 use App\Models\Role;
+use App\Models\Town;
 use App\Models\User;
 use App\Models\Village;
 use Illuminate\Support\Collection;
@@ -473,6 +474,7 @@ class RoleService
             'king' => 'king_user_id',
             'baron' => 'baron_user_id',
             'elder' => 'elder_user_id',
+            'mayor' => 'mayor_user_id',
             default => null,
         };
 
@@ -484,6 +486,7 @@ class RoleService
             'kingdom' => Kingdom::find($locationId),
             'barony' => Barony::find($locationId),
             'village' => Village::find($locationId),
+            'town' => Town::find($locationId),
             default => null,
         };
 
