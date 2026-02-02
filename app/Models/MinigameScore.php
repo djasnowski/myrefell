@@ -189,7 +189,7 @@ class MinigameScore extends Model
             ->daily()
             ->selectRaw('user_id, MAX(score) as best_score')
             ->groupBy('user_id')
-            ->having('best_score', '>', $userBestScore)
+            ->havingRaw('MAX(score) > ?', [$userBestScore])
             ->count() + 1;
     }
 
@@ -234,7 +234,7 @@ class MinigameScore extends Model
             ->weekly()
             ->selectRaw('user_id, MAX(score) as best_score')
             ->groupBy('user_id')
-            ->having('best_score', '>', $userBestScore)
+            ->havingRaw('MAX(score) > ?', [$userBestScore])
             ->count() + 1;
     }
 
@@ -260,7 +260,7 @@ class MinigameScore extends Model
             ->monthly()
             ->selectRaw('user_id, MAX(score) as best_score')
             ->groupBy('user_id')
-            ->having('best_score', '>', $userBestScore)
+            ->havingRaw('MAX(score) > ?', [$userBestScore])
             ->count() + 1;
     }
 
@@ -308,7 +308,7 @@ class MinigameScore extends Model
             ->forMinigame($minigame)
             ->selectRaw('user_id, MAX(score) as best_score')
             ->groupBy('user_id')
-            ->having('best_score', '>', $userBestScore);
+            ->havingRaw('MAX(score) > ?', [$userBestScore]);
 
         return match ($period) {
             'daily' => $rankQuery->daily()->count() + 1,

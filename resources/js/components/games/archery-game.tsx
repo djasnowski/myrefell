@@ -37,20 +37,68 @@ export function ArcheryGame({
     const [lastShot, setLastShot] = useState<"bullseye" | "hit" | "miss" | null>(null);
     const [lastShotScore, setLastShotScore] = useState(0);
     const [gameEnded, setGameEnded] = useState(false);
+    const [gameStarted, setGameStarted] = useState(false);
+    const [timeRemaining, setTimeRemaining] = useState(60); // 1 minute timer
 
     const randomAngleRef = useRef(0);
     const isDrawingRef = useRef(false);
     const targetOffsetRef = useRef(0); // Track target's Y offset for hit detection
     const gameEndedRef = useRef(false); // Prevent double-calling onGameEnd
     const scoreRef = useRef(0); // Track score for endGame callback
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
 
     // End game handler
     const endGame = useCallback(() => {
         if (gameEndedRef.current) return;
         gameEndedRef.current = true;
         setGameEnded(true);
+        if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+        }
         onGameEnd?.(scoreRef.current);
     }, [onGameEnd]);
+
+    // Start game handler
+    const startGame = useCallback(() => {
+        if (disabled || gameStarted) return;
+        setGameStarted(true);
+        setTimeRemaining(60);
+
+        // Start countdown timer
+        timerRef.current = setInterval(() => {
+            setTimeRemaining((prev) => {
+                if (prev <= 1) {
+                    // Time's up - end game
+                    if (timerRef.current) {
+                        clearInterval(timerRef.current);
+                        timerRef.current = null;
+                    }
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    }, [disabled, gameStarted]);
+
+    // End game when timer hits 0
+    useEffect(() => {
+        if (gameStarted && timeRemaining === 0 && !gameEndedRef.current) {
+            const timeout = setTimeout(() => {
+                endGame();
+            }, 500);
+            return () => clearTimeout(timeout);
+        }
+    }, [gameStarted, timeRemaining, endGame]);
+
+    // Cleanup timer on unmount
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) {
+                clearInterval(timerRef.current);
+            }
+        };
+    }, []);
 
     // Update scoreRef when score changes
     useEffect(() => {
@@ -405,6 +453,9 @@ export function ArcheryGame({
 
     const draw = useCallback(
         (e: MouseEvent | React.MouseEvent) => {
+            // Don't allow drawing if disabled, game not started, or game ended
+            if (disabled || !gameStarted || gameEnded) return;
+
             // Only allow drawing if clicking near the bow string area
             const point = getMouseSVG(e);
             const bowStringX = 88;
@@ -429,7 +480,7 @@ export function ArcheryGame({
 
             aim(e);
         },
-        [aim, getMouseSVG],
+        [aim, getMouseSVG, disabled, gameStarted, gameEnded],
     );
 
     useEffect(() => {
@@ -494,8 +545,29 @@ export function ArcheryGame({
                 </div>
                 <div className="rounded-lg border border-stone-600/50 bg-stone-900/90 px-4 py-2">
                     <span className="font-pixel text-xs text-stone-400">Arrows</span>
-                    <p className="font-pixel text-2xl text-stone-300">{arrowCount}</p>
+                    <p className="font-pixel text-2xl text-stone-300">
+                        {arrowCount}/{maxArrows}
+                    </p>
                 </div>
+                {gameStarted && !gameEnded && (
+                    <div
+                        className={`rounded-lg border px-4 py-2 ${
+                            timeRemaining <= 10
+                                ? "border-red-500/50 bg-red-900/50"
+                                : "border-stone-600/50 bg-stone-900/90"
+                        }`}
+                    >
+                        <span className="font-pixel text-xs text-stone-400">Time</span>
+                        <p
+                            className={`font-pixel text-2xl ${
+                                timeRemaining <= 10 ? "text-red-400" : "text-stone-300"
+                            }`}
+                        >
+                            {Math.floor(timeRemaining / 60)}:
+                            {String(timeRemaining % 60).padStart(2, "0")}
+                        </p>
+                    </div>
+                )}
                 {lastShot && (
                     <div
                         className={`rounded-lg border px-4 py-2 ${
@@ -539,12 +611,104 @@ export function ArcheryGame({
                 )}
             </div>
 
-            {/* Instructions */}
-            <div className="absolute bottom-4 left-4 z-10">
+            {/* Instructions and End Game button */}
+            <div className="absolute bottom-4 left-4 right-4 z-10 flex items-center justify-between">
                 <p className="font-pixel text-xs text-stone-500">
-                    Click and drag to draw back the bow, release to shoot!
+                    {gameEnded
+                        ? "Game Over! Final score recorded."
+                        : disabled
+                          ? "Game unavailable"
+                          : !gameStarted
+                            ? "Click Start Game to begin!"
+                            : "Click and drag the bow string to shoot!"}
                 </p>
+                {!disabled && gameStarted && !gameEnded && arrowCount > 0 && (
+                    <button
+                        onClick={endGame}
+                        className="rounded-lg border border-amber-500/50 bg-amber-900/50 px-4 py-2 font-pixel text-xs text-amber-300 transition hover:bg-amber-800/50"
+                    >
+                        End Game
+                    </button>
+                )}
             </div>
+
+            {/* How to Play / Start Game overlay */}
+            {!disabled && !gameStarted && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-stone-900/80">
+                    <div className="rounded-xl border-2 border-amber-600/50 bg-stone-900/95 p-8 text-center max-w-md">
+                        <h2 className="font-pixel text-2xl text-amber-300 mb-4">How to Play</h2>
+                        <div className="space-y-3 text-left mb-6">
+                            <div className="flex items-start gap-3">
+                                <span className="font-pixel text-amber-500">1.</span>
+                                <p className="text-sm text-stone-300">
+                                    Click and hold on the bow string (left side)
+                                </p>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <span className="font-pixel text-amber-500">2.</span>
+                                <p className="text-sm text-stone-300">
+                                    Drag down and left to aim - the further you pull, the more power
+                                </p>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <span className="font-pixel text-amber-500">3.</span>
+                                <p className="text-sm text-stone-300">
+                                    Release to shoot! Hit the moving target for points
+                                </p>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <span className="font-pixel text-amber-500">4.</span>
+                                <p className="text-sm text-stone-300">
+                                    You have <span className="text-amber-400">1 minute</span> and{" "}
+                                    <span className="text-amber-400">{maxArrows} arrows</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div className="space-y-2 mb-6 text-xs">
+                            <p className="text-stone-400">Scoring:</p>
+                            <div className="flex justify-center gap-4">
+                                <span className="text-red-400">Bullseye ~100</span>
+                                <span className="text-amber-400">Hit ~50</span>
+                                <span className="text-stone-500">Miss 0</span>
+                            </div>
+                        </div>
+                        <button
+                            onClick={startGame}
+                            className="rounded-lg border-2 border-amber-500 bg-amber-600 px-8 py-3 font-pixel text-lg text-white transition hover:bg-amber-500 hover:scale-105"
+                        >
+                            Start Game
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Disabled overlay */}
+            {disabled && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-stone-900/70">
+                    <div className="rounded-xl border-2 border-amber-600/50 bg-stone-900/90 p-6 text-center">
+                        <p className="font-pixel text-xl text-amber-300">Archery Unavailable</p>
+                        <p className="mt-2 font-pixel text-sm text-stone-400">
+                            Come back tomorrow to play again!
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* Game Over overlay */}
+            {gameEnded && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-stone-900/70">
+                    <div className="rounded-xl border-2 border-amber-600/50 bg-stone-900/90 p-6 text-center">
+                        <p className="font-pixel text-xl text-amber-300">Game Over!</p>
+                        <p className="mt-2 font-pixel text-2xl text-amber-400">
+                            Final Score: {score}
+                        </p>
+                        <p className="mt-2 font-pixel text-sm text-stone-400">
+                            You fired {arrowCount} arrow{arrowCount !== 1 ? "s" : ""} in{" "}
+                            {60 - timeRemaining} seconds
+                        </p>
+                    </div>
+                </div>
+            )}
 
             <svg
                 ref={svgRef}

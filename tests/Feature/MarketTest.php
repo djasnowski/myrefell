@@ -69,16 +69,20 @@ test('seasonal modifiers affect prices', function () {
         'type' => 'consumable',
         'stackable' => true,
         'max_stack' => 50,
-        'base_value' => 5,
+        'base_value' => 100, // Higher base value to avoid rounding issues
     ]);
 
     $service = app(MarketService::class);
+
+    // Add item to stockpile so it appears in market prices
+    $stockpile = LocationStockpile::getOrCreate('village', $village->id, $item->id);
+    $stockpile->addQuantity(50);
 
     // Summer - food is cheaper (0.9 modifier)
     $prices = $service->getMarketPrices('village', $village->id);
     $breadPrice = $prices->firstWhere('item_id', $item->id);
 
-    expect($breadPrice['seasonal_modifier'])->toBe(0.9);
+    expect((float) $breadPrice['seasonal_modifier'])->toBe(0.9);
     expect($breadPrice['current_price'])->toBeLessThan($breadPrice['base_price']);
 
     // Change to winter - food is more expensive
@@ -90,7 +94,7 @@ test('seasonal modifiers affect prices', function () {
     $winterPrices = $service->getMarketPrices('village', $village->id);
     $winterBreadPrice = $winterPrices->firstWhere('item_id', $item->id);
 
-    expect($winterBreadPrice['seasonal_modifier'])->toBe(1.3);
+    expect((float) $winterBreadPrice['seasonal_modifier'])->toBe(1.3);
     expect($winterBreadPrice['current_price'])->toBeGreaterThan($winterBreadPrice['base_price']);
 });
 
@@ -113,14 +117,16 @@ test('supply affects prices', function () {
 
     $service = app(MarketService::class);
 
-    // Low supply (price should be higher)
+    // Add low supply to stockpile (price should be higher)
+    $stockpile = LocationStockpile::getOrCreate('village', $village->id, $item->id);
+    $stockpile->addQuantity(5); // Low supply
+
     $lowSupplyPrices = $service->getMarketPrices('village', $village->id);
     $lowPrice = $lowSupplyPrices->firstWhere('item_id', $item->id);
 
     expect($lowPrice['supply_modifier'])->toBeGreaterThanOrEqual(1.0);
 
     // Add high supply
-    $stockpile = LocationStockpile::getOrCreate('village', $village->id, $item->id);
     $stockpile->addQuantity(150);
 
     // Update price
@@ -359,9 +365,10 @@ test('market access denied while traveling', function () {
     $user = User::factory()->create([
         'current_location_type' => 'village',
         'current_location_id' => $village->id,
-        'traveling_to_type' => 'village',
-        'traveling_to_id' => 2,
-        'travel_arrival_at' => now()->addHour(),
+        'is_traveling' => true,
+        'travel_destination_type' => 'village',
+        'travel_destination_id' => 2,
+        'travel_arrives_at' => now()->addHour(),
     ]);
 
     $service = app(MarketService::class);

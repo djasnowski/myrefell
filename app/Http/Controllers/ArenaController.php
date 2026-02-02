@@ -31,14 +31,31 @@ class ArenaController extends Controller
         $location = $village ?? $town ?? $barony ?? $duchy ?? $kingdom;
         $locationType = $this->getLocationType($location);
 
-        // Check if user has played archery today
-        $hasPlayedToday = MinigameScore::hasPlayedToday($user->id, 'archery');
+        // Check if user has played archery today and get where they played
+        $todaysPlay = MinigameScore::where('user_id', $user->id)
+            ->where('minigame', 'archery')
+            ->whereDate('played_at', today())
+            ->first();
 
-        // Get leaderboards for archery at this location
-        $leaderboards = $this->getLeaderboards('archery', $locationType, $location?->id);
+        $hasPlayedToday = $todaysPlay !== null;
+        $playedAtDifferentLocation = false;
+        $playedAtLocation = null;
 
-        // Get user's ranks in each leaderboard
-        $userRanks = $this->getUserRanks($user->id, 'archery', $locationType, $location?->id);
+        if ($todaysPlay) {
+            // Check if they played at a different location
+            $playedAtDifferentLocation = $todaysPlay->location_type !== $locationType
+                || $todaysPlay->location_id !== $location?->id;
+
+            if ($playedAtDifferentLocation) {
+                $playedAtLocation = $this->getLocationName($todaysPlay->location_type, $todaysPlay->location_id);
+            }
+        }
+
+        // Get GLOBAL leaderboards for archery
+        $leaderboards = $this->getGlobalLeaderboards('archery');
+
+        // Get user's GLOBAL ranks in each leaderboard
+        $userRanks = $this->getGlobalUserRanks($user->id, 'archery');
 
         // Get pending rewards at this location
         $pendingRewards = $this->getPendingRewardsAtLocation($user->id, $locationType, $location?->id);
@@ -57,6 +74,8 @@ class ArenaController extends Controller
                 'max_energy' => $user->max_energy,
             ],
             'has_played_today' => $hasPlayedToday,
+            'played_at_different_location' => $playedAtDifferentLocation,
+            'played_at_location' => $playedAtLocation,
             'leaderboards' => $leaderboards,
             'user_ranks' => $userRanks,
             'pending_rewards' => $pendingRewards,
@@ -64,20 +83,12 @@ class ArenaController extends Controller
     }
 
     /**
-     * Get leaderboards for a minigame at a location.
+     * Get GLOBAL leaderboards for a minigame (across all locations).
      *
      * @return array<string, array<int, array<string, mixed>>>
      */
-    protected function getLeaderboards(string $minigame, ?string $locationType, ?int $locationId): array
+    protected function getGlobalLeaderboards(string $minigame): array
     {
-        if (! $locationType || ! $locationId) {
-            return [
-                'daily' => [],
-                'weekly' => [],
-                'monthly' => [],
-            ];
-        }
-
         $formatLeaderboard = function ($leaderboard) {
             return $leaderboard->map(function ($entry, $index) {
                 $user = User::find($entry->user_id);
@@ -92,32 +103,45 @@ class ArenaController extends Controller
         };
 
         return [
-            'daily' => $formatLeaderboard(MinigameScore::getDailyLeaderboard($minigame, $locationType, $locationId)),
-            'weekly' => $formatLeaderboard(MinigameScore::getWeeklyLeaderboard($minigame, $locationType, $locationId)),
-            'monthly' => $formatLeaderboard(MinigameScore::getMonthlyLeaderboard($minigame, $locationType, $locationId)),
+            'daily' => $formatLeaderboard(MinigameScore::getGlobalLeaderboard($minigame, 'daily')),
+            'weekly' => $formatLeaderboard(MinigameScore::getGlobalLeaderboard($minigame, 'weekly')),
+            'monthly' => $formatLeaderboard(MinigameScore::getGlobalLeaderboard($minigame, 'monthly')),
         ];
     }
 
     /**
-     * Get user's ranks in each leaderboard period.
+     * Get user's GLOBAL ranks in each leaderboard period.
      *
      * @return array<string, int|null>
      */
-    protected function getUserRanks(int $userId, string $minigame, ?string $locationType, ?int $locationId): array
+    protected function getGlobalUserRanks(int $userId, string $minigame): array
     {
-        if (! $locationType || ! $locationId) {
-            return [
-                'daily' => null,
-                'weekly' => null,
-                'monthly' => null,
-            ];
+        return [
+            'daily' => MinigameScore::getUserGlobalRank($userId, $minigame, 'daily'),
+            'weekly' => MinigameScore::getUserGlobalRank($userId, $minigame, 'weekly'),
+            'monthly' => MinigameScore::getUserGlobalRank($userId, $minigame, 'monthly'),
+        ];
+    }
+
+    /**
+     * Get location name from type and ID.
+     */
+    protected function getLocationName(string $locationType, int $locationId): ?string
+    {
+        $model = match ($locationType) {
+            'village' => Village::class,
+            'town' => Town::class,
+            'barony' => Barony::class,
+            'duchy' => Duchy::class,
+            'kingdom' => Kingdom::class,
+            default => null,
+        };
+
+        if (! $model) {
+            return null;
         }
 
-        return [
-            'daily' => MinigameScore::getUserDailyRank($userId, $minigame, $locationType, $locationId),
-            'weekly' => MinigameScore::getUserWeeklyRank($userId, $minigame, $locationType, $locationId),
-            'monthly' => MinigameScore::getUserMonthlyRank($userId, $minigame, $locationType, $locationId),
-        ];
+        return $model::find($locationId)?->name;
     }
 
     /**

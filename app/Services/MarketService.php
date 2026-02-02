@@ -135,7 +135,7 @@ class MarketService
             ->get();
 
         return $stockpiles
-            ->filter(fn ($stockpile) => $stockpile->item && in_array($stockpile->item->type, ['resource', 'consumable', 'tool', 'misc']))
+            ->filter(fn ($stockpile) => $stockpile->item && in_array($stockpile->item->type, ['resource', 'consumable', 'tool', 'misc', 'weapon', 'armor']))
             ->map(function ($stockpile) use ($locationType, $locationId, $worldState) {
                 $item = $stockpile->item;
                 $marketPrice = MarketPrice::getOrCreate($locationType, $locationId, $item);
