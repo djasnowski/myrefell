@@ -61,6 +61,14 @@ return response()->json(['success' => true]);
 
 When creating new features or making changes, **do NOT automatically `git push`**. Only commit the changes and let the user test first. Push only when explicitly asked.
 
+## Package Manager
+
+Use **pnpm** instead of npm where possible (e.g., `pnpm install`, `pnpm run dev`, `pnpm run build`).
+
+## Database Updates
+
+When asked to update something in the database, **always use local** (via Sail) unless explicitly told to do it on production.
+
 ===
 
 <laravel-boost-guidelines>
