@@ -179,12 +179,12 @@ export default function BankIndex() {
             <Head title={`Bank - ${bank_info.location_name}`} />
             <div className="flex h-full flex-1 flex-col p-4">
                 {/* Header */}
-                <div className="mb-6 flex items-center gap-3">
+                <div className="mb-4 flex items-center gap-3 sm:mb-6">
                     <div className="rounded-lg bg-amber-900/30 p-3">
                         <Banknote className="h-8 w-8 text-amber-400" />
                     </div>
                     <div>
-                        <h1 className="font-pixel text-2xl text-amber-400">Bank</h1>
+                        <h1 className="font-pixel text-xl text-amber-400 sm:text-2xl">Bank</h1>
                         <div className="flex items-center gap-1 text-stone-400">
                             <LocationIcon className="h-3 w-3" />
                             <span className="font-pixel text-xs">{bank_info.location_name}</span>

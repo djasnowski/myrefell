@@ -306,13 +306,15 @@ export default function MarketIndex() {
             <Head title={`Market - ${market_info.location_name}`} />
             <div className="flex h-full flex-1 flex-col p-4">
                 {/* Header */}
-                <div className="mb-6 flex items-center justify-between">
+                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
                         <div className="rounded-lg bg-emerald-900/30 p-3">
                             <Store className="h-8 w-8 text-emerald-400" />
                         </div>
                         <div>
-                            <h1 className="font-pixel text-2xl text-emerald-400">Market</h1>
+                            <h1 className="font-pixel text-xl text-emerald-400 sm:text-2xl">
+                                Market
+                            </h1>
                             <div className="flex items-center gap-1 text-stone-400">
                                 <LocationIcon className="h-3 w-3" />
                                 <span className="font-pixel text-xs">
@@ -321,7 +323,7 @@ export default function MarketIndex() {
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 rounded-lg border border-stone-600 bg-stone-800 px-4 py-2">
+                    <div className="flex items-center gap-2 rounded-lg border border-stone-600 bg-stone-800 px-3 py-2">
                         <Coins className="h-4 w-4 text-yellow-400" />
                         <span className="font-pixel text-sm text-yellow-400">
                             {formatGold(market_info.gold_on_hand)}

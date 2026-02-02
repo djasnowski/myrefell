@@ -350,40 +350,40 @@ export default function Dashboard() {
                         </div>
 
                         {/* Current Status */}
-                        <div className="mt-3 grid grid-cols-4 gap-2">
+                        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                             <div className="rounded-lg border border-stone-800 bg-stone-900/30 p-2 text-center">
-                                <div className="flex items-center justify-center gap-1 text-xs text-stone-500">
+                                <div className="flex items-center justify-center gap-1 text-[10px] text-stone-500 sm:text-xs">
                                     <Heart className="h-3 w-3 text-red-400" />
                                     HP
                                 </div>
-                                <div className="text-sm font-semibold text-stone-100">
+                                <div className="text-xs font-semibold text-stone-100 sm:text-sm">
                                     {player?.hp ?? 0}/{player?.max_hp ?? 10}
                                 </div>
                             </div>
                             <div className="rounded-lg border border-stone-800 bg-stone-900/30 p-2 text-center">
-                                <div className="flex items-center justify-center gap-1 text-xs text-stone-500">
+                                <div className="flex items-center justify-center gap-1 text-[10px] text-stone-500 sm:text-xs">
                                     <Compass className="h-3 w-3 text-blue-400" />
                                     Energy
                                 </div>
-                                <div className="text-sm font-semibold text-stone-100">
+                                <div className="text-xs font-semibold text-stone-100 sm:text-sm">
                                     {player?.energy ?? 0}/{player?.max_energy ?? 100}
                                 </div>
                             </div>
                             <div className="rounded-lg border border-stone-800 bg-stone-900/30 p-2 text-center">
-                                <div className="flex items-center justify-center gap-1 text-xs text-stone-500">
+                                <div className="flex items-center justify-center gap-1 text-[10px] text-stone-500 sm:text-xs">
                                     <Coins className="h-3 w-3 text-amber-400" />
                                     Gold
                                 </div>
-                                <div className="text-sm font-semibold text-stone-100">
+                                <div className="text-xs font-semibold text-stone-100 sm:text-sm">
                                     {(player?.gold ?? 0).toLocaleString()}
                                 </div>
                             </div>
                             <div className="rounded-lg border border-stone-800 bg-stone-900/30 p-2 text-center">
-                                <div className="flex items-center justify-center gap-1 text-xs text-stone-500">
+                                <div className="flex items-center justify-center gap-1 text-[10px] text-stone-500 sm:text-xs">
                                     <Shield className="h-3 w-3 text-purple-400" />
                                     Combat
                                 </div>
-                                <div className="text-sm font-semibold text-stone-100">
+                                <div className="text-xs font-semibold text-stone-100 sm:text-sm">
                                     Lv. {player?.combat_level ?? 1}
                                 </div>
                             </div>

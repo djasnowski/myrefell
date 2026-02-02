@@ -320,15 +320,17 @@ export default function ForgeIndex() {
                         <Flame className="h-8 w-8 text-orange-400" />
                     </div>
                     <div>
-                        <h1 className="font-pixel text-2xl text-orange-400">The Forge</h1>
-                        <p className="font-pixel text-xs text-stone-400">
+                        <h1 className="font-pixel text-xl text-orange-400 sm:text-2xl">
+                            The Forge
+                        </h1>
+                        <p className="font-pixel text-[10px] text-stone-400 sm:text-xs">
                             Smelt ores into metal bars
                         </p>
                     </div>
                 </div>
 
                 {/* Status Bar */}
-                <div className="mb-4 grid grid-cols-3 gap-4">
+                <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
                     <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
                         <div className="mb-1 flex items-center gap-1 font-pixel text-xs text-yellow-400">
                             <Zap className="h-3 w-3" />

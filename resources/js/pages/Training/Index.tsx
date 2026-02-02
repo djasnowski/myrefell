@@ -229,16 +229,16 @@ export default function TrainingIndex() {
             <div className="flex h-full flex-1 flex-col p-4">
                 <div className="mx-auto w-full max-w-3xl">
                     {/* Header */}
-                    <div className="mb-6 rounded-xl border-2 border-amber-600/50 bg-gradient-to-br from-amber-900/30 to-stone-900 p-6">
-                        <div className="flex items-center gap-4">
-                            <div className="rounded-lg bg-stone-800/50 p-4">
-                                <Sword className="h-12 w-12 text-amber-400" />
+                    <div className="mb-6 rounded-xl border-2 border-amber-600/50 bg-gradient-to-br from-amber-900/30 to-stone-900 p-4 sm:p-6">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="rounded-lg bg-stone-800/50 p-3 sm:p-4">
+                                <Sword className="h-8 w-8 text-amber-400 sm:h-12 sm:w-12" />
                             </div>
                             <div>
-                                <h1 className="font-pixel text-2xl text-amber-400">
+                                <h1 className="font-pixel text-xl text-amber-400 sm:text-2xl">
                                     Training Grounds
                                 </h1>
-                                <p className="font-pixel text-xs text-stone-400">
+                                <p className="font-pixel text-[10px] text-stone-400 sm:text-xs">
                                     Train your combat skills to become stronger
                                 </p>
                             </div>
@@ -246,28 +246,36 @@ export default function TrainingIndex() {
                     </div>
 
                     {/* Combat Stats Overview */}
-                    <div className="mb-6 grid grid-cols-4 gap-3">
-                        <div className="rounded-lg border border-stone-600 bg-stone-800/50 p-3 text-center">
-                            <div className="font-pixel text-xs text-stone-400">Combat Level</div>
-                            <div className="font-pixel text-2xl text-amber-400">
+                    <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+                        <div className="rounded-lg border border-stone-600 bg-stone-800/50 p-2 text-center sm:p-3">
+                            <div className="font-pixel text-[10px] text-stone-400 sm:text-xs">
+                                Combat Level
+                            </div>
+                            <div className="font-pixel text-lg text-amber-400 sm:text-2xl">
                                 {currentStats.combat_level}
                             </div>
                         </div>
-                        <div className="rounded-lg border border-red-600/30 bg-stone-800/50 p-3 text-center">
-                            <div className="font-pixel text-xs text-red-400">Attack</div>
-                            <div className="font-pixel text-xl text-red-300">
+                        <div className="rounded-lg border border-red-600/30 bg-stone-800/50 p-2 text-center sm:p-3">
+                            <div className="font-pixel text-[10px] text-red-400 sm:text-xs">
+                                Attack
+                            </div>
+                            <div className="font-pixel text-lg text-red-300 sm:text-xl">
                                 {currentStats.attack.level}
                             </div>
                         </div>
-                        <div className="rounded-lg border border-orange-600/30 bg-stone-800/50 p-3 text-center">
-                            <div className="font-pixel text-xs text-orange-400">Strength</div>
-                            <div className="font-pixel text-xl text-orange-300">
+                        <div className="rounded-lg border border-orange-600/30 bg-stone-800/50 p-2 text-center sm:p-3">
+                            <div className="font-pixel text-[10px] text-orange-400 sm:text-xs">
+                                Strength
+                            </div>
+                            <div className="font-pixel text-lg text-orange-300 sm:text-xl">
                                 {currentStats.strength.level}
                             </div>
                         </div>
-                        <div className="rounded-lg border border-blue-600/30 bg-stone-800/50 p-3 text-center">
-                            <div className="font-pixel text-xs text-blue-400">Defense</div>
-                            <div className="font-pixel text-xl text-blue-300">
+                        <div className="rounded-lg border border-blue-600/30 bg-stone-800/50 p-2 text-center sm:p-3">
+                            <div className="font-pixel text-[10px] text-blue-400 sm:text-xs">
+                                Defense
+                            </div>
+                            <div className="font-pixel text-lg text-blue-300 sm:text-xl">
                                 {currentStats.defense.level}
                             </div>
                         </div>

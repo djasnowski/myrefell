@@ -231,14 +231,16 @@ export default function BaronyShow({
             <Head title={barony.name} />
             <div className="flex flex-col gap-6 p-6">
                 {/* Hero Header */}
-                <div className={`rounded-xl border-2 ${biome.border} ${biome.bg} p-6`}>
-                    <div className="flex items-start gap-4">
-                        <div className={`rounded-xl ${biome.bg} border ${biome.border} p-4`}>
-                            <BiomeIcon className={`h-12 w-12 ${biome.color}`} />
+                <div className={`rounded-xl border-2 ${biome.border} ${biome.bg} p-4 sm:p-6`}>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+                        <div
+                            className={`hidden rounded-xl ${biome.bg} border ${biome.border} p-3 sm:block sm:p-4`}
+                        >
+                            <BiomeIcon className={`h-10 w-10 sm:h-12 sm:w-12 ${biome.color}`} />
                         </div>
                         <div className="flex-1">
-                            <div className="flex items-center gap-3">
-                                <h1 className="font-[Cinzel] text-3xl font-bold text-stone-100">
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                                <h1 className="font-[Cinzel] text-2xl font-bold text-stone-100 sm:text-3xl">
                                     {barony.name}
                                 </h1>
                                 {barony.is_capital && (
@@ -252,7 +254,9 @@ export default function BaronyShow({
                                     {barony.biome}
                                 </Badge>
                             </div>
-                            <p className="mt-2 text-stone-400">{barony.description}</p>
+                            <p className="mt-2 text-sm text-stone-400 sm:text-base">
+                                {barony.description}
+                            </p>
 
                             {/* Hierarchy */}
                             <div className="mt-3 flex items-center gap-2 text-sm">
@@ -273,7 +277,7 @@ export default function BaronyShow({
 
                         {/* Home badge */}
                         {is_resident && (
-                            <div className="flex items-center gap-2 rounded-lg border border-green-600/50 bg-green-900/30 px-3 py-2">
+                            <div className="mt-3 flex items-center gap-2 rounded-lg border border-green-600/50 bg-green-900/30 px-3 py-2 sm:mt-0">
                                 <Home className="h-4 w-4 text-green-400" />
                                 <span className="font-pixel text-xs text-green-400">Your Home</span>
                             </div>
@@ -282,46 +286,48 @@ export default function BaronyShow({
                 </div>
 
                 {/* Stats Row */}
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
-                        <Users className="mx-auto mb-2 h-6 w-6 text-blue-400" />
-                        <div className="font-pixel text-2xl text-stone-100">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6">
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center sm:p-4">
+                        <Users className="mx-auto mb-1 h-5 w-5 text-blue-400 sm:mb-2 sm:h-6 sm:w-6" />
+                        <div className="font-pixel text-base text-stone-100 sm:text-2xl">
                             {barony.total_population.toLocaleString()}
                         </div>
-                        <div className="text-xs text-stone-500">Population</div>
+                        <div className="text-[10px] text-stone-500 sm:text-xs">Population</div>
                     </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
-                        <Coins className="mx-auto mb-2 h-6 w-6 text-amber-400" />
-                        <div className="font-pixel text-2xl text-amber-300">
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center sm:p-4">
+                        <Coins className="mx-auto mb-1 h-5 w-5 text-amber-400 sm:mb-2 sm:h-6 sm:w-6" />
+                        <div className="font-pixel text-base text-amber-300 sm:text-2xl">
                             {barony.total_wealth.toLocaleString()}
                         </div>
-                        <div className="text-xs text-stone-500">Total Wealth</div>
+                        <div className="text-[10px] text-stone-500 sm:text-xs">Wealth</div>
                     </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
-                        <Home className="mx-auto mb-2 h-6 w-6 text-green-400" />
-                        <div className="font-pixel text-2xl text-stone-100">
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center sm:p-4">
+                        <Home className="mx-auto mb-1 h-5 w-5 text-green-400 sm:mb-2 sm:h-6 sm:w-6" />
+                        <div className="font-pixel text-lg text-stone-100 sm:text-2xl">
                             {barony.village_count}
                         </div>
-                        <div className="text-xs text-stone-500">Villages</div>
+                        <div className="text-[10px] text-stone-500 sm:text-xs">Villages</div>
                     </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
-                        <Building2 className="mx-auto mb-2 h-6 w-6 text-purple-400" />
-                        <div className="font-pixel text-2xl text-stone-100">
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center sm:p-4">
+                        <Building2 className="mx-auto mb-1 h-5 w-5 text-purple-400 sm:mb-2 sm:h-6 sm:w-6" />
+                        <div className="font-pixel text-lg text-stone-100 sm:text-2xl">
                             {barony.town_count}
                         </div>
-                        <div className="text-xs text-stone-500">Towns</div>
+                        <div className="text-[10px] text-stone-500 sm:text-xs">Towns</div>
                     </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
-                        <Coins className="mx-auto mb-2 h-6 w-6 text-stone-400" />
-                        <div className="font-pixel text-2xl text-stone-100">{barony.tax_rate}%</div>
-                        <div className="text-xs text-stone-500">Tax Rate</div>
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center sm:p-4">
+                        <Coins className="mx-auto mb-1 h-5 w-5 text-stone-400 sm:mb-2 sm:h-6 sm:w-6" />
+                        <div className="font-pixel text-lg text-stone-100 sm:text-2xl">
+                            {barony.tax_rate}%
+                        </div>
+                        <div className="text-[10px] text-stone-500 sm:text-xs">Tax Rate</div>
                     </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
-                        <MapPin className="mx-auto mb-2 h-6 w-6 text-stone-400" />
-                        <div className="font-pixel text-lg text-stone-300">
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center sm:p-4">
+                        <MapPin className="mx-auto mb-1 h-5 w-5 text-stone-400 sm:mb-2 sm:h-6 sm:w-6" />
+                        <div className="font-pixel text-sm text-stone-300 sm:text-lg">
                             {barony.coordinates.x}, {barony.coordinates.y}
                         </div>
-                        <div className="text-xs text-stone-500">Coordinates</div>
+                        <div className="text-[10px] text-stone-500 sm:text-xs">Coordinates</div>
                     </div>
                 </div>
 

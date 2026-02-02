@@ -316,28 +316,30 @@ export default function TavernIndex() {
             <Head title={`Tavern - ${location?.name || "Unknown"}`} />
             <div className="flex h-full flex-1 flex-col overflow-hidden p-4">
                 {/* Header */}
-                <div className="mb-6 flex items-center justify-between">
+                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
                         <div className="rounded-lg bg-amber-900/30 p-3">
                             <Beer className="h-8 w-8 text-amber-400" />
                         </div>
                         <div>
-                            <h1 className="font-pixel text-2xl text-amber-400">Tavern</h1>
-                            <p className="font-pixel text-sm text-stone-400">
+                            <h1 className="font-pixel text-xl text-amber-400 sm:text-2xl">
+                                Tavern
+                            </h1>
+                            <p className="font-pixel text-xs text-stone-400 sm:text-sm">
                                 Rest, cook, and hear rumors at {location?.name}
                             </p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2">
+                    <div className="flex items-center gap-2 sm:gap-4">
+                        <div className="flex items-center gap-2 rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-3 py-1.5 sm:px-4 sm:py-2">
                             <Zap className="h-4 w-4 text-yellow-400" />
-                            <span className="font-pixel text-sm text-stone-300">
+                            <span className="font-pixel text-xs text-stone-300 sm:text-sm">
                                 {currentEnergy}/{player.max_energy}
                             </span>
                         </div>
-                        <div className="flex items-center gap-2 rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-4 py-2">
+                        <div className="flex items-center gap-2 rounded-lg border-2 border-stone-600/50 bg-stone-800/50 px-3 py-1.5 sm:px-4 sm:py-2">
                             <Coins className="h-4 w-4 text-amber-400" />
-                            <span className="font-pixel text-sm text-amber-300">
+                            <span className="font-pixel text-xs text-amber-300 sm:text-sm">
                                 {player.gold}g
                             </span>
                         </div>

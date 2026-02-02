@@ -1,29 +1,16 @@
 import { Link, router, usePage } from "@inertiajs/react";
 import { Sparkles, Trophy, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import ChangelogModal, { CURRENT_CHANGELOG_VERSION } from "@/components/changelog-modal";
+import ChangelogModal from "@/components/changelog-modal";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useChangelog } from "@/contexts/changelog-context";
 import type { BreadcrumbItem as BreadcrumbItemType, SharedData } from "@/types";
 
-const CHANGELOG_STORAGE_KEY = "myrefell_last_seen_changelog";
-
 export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: BreadcrumbItemType[] }) {
-    const [showChangelog, setShowChangelog] = useState(false);
-    const [hasUnread, setHasUnread] = useState(false);
     const { online_count } = usePage<SharedData>().props;
-
-    useEffect(() => {
-        const lastSeen = localStorage.getItem(CHANGELOG_STORAGE_KEY);
-        setHasUnread(lastSeen !== CURRENT_CHANGELOG_VERSION);
-    }, []);
-
-    const handleCloseChangelog = () => {
-        localStorage.setItem(CHANGELOG_STORAGE_KEY, CURRENT_CHANGELOG_VERSION);
-        setHasUnread(false);
-        setShowChangelog(false);
-    };
+    const { hasUnread, showChangelog, openChangelog, closeChangelog } = useChangelog();
 
     // Poll for online count every 5 seconds
     useEffect(() => {
@@ -38,7 +25,16 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
         <>
             <header className="flex h-16 shrink-0 items-center gap-2 border-b border-sidebar-border/50 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4">
                 <div className="flex items-center gap-2">
-                    <SidebarTrigger className="-ml-1" />
+                    <div className="relative -ml-1">
+                        <SidebarTrigger />
+                        {/* Notification dot on menu icon for mobile */}
+                        {hasUnread && (
+                            <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 sm:hidden">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                            </span>
+                        )}
+                    </div>
                     <Breadcrumbs breadcrumbs={breadcrumbs} />
                 </div>
                 <div className="ml-auto flex items-center gap-2">
@@ -63,11 +59,12 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                             <span className="hidden sm:inline">Leaderboard</span>
                         </Link>
                     </Button>
+                    {/* Changelog button - hidden on mobile, shown in sidebar instead */}
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="group gap-2 text-muted-foreground hover:text-foreground relative"
-                        onClick={() => setShowChangelog(true)}
+                        className="group hidden gap-2 text-muted-foreground hover:text-foreground sm:flex relative"
+                        onClick={openChangelog}
                     >
                         <span className="relative">
                             <Sparkles className="size-4 text-amber-500" />
@@ -83,7 +80,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                 </div>
             </header>
 
-            {showChangelog && <ChangelogModal onClose={handleCloseChangelog} />}
+            {showChangelog && <ChangelogModal onClose={closeChangelog} />}
         </>
     );
 }

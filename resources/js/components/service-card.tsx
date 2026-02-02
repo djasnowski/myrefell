@@ -123,7 +123,7 @@ export function ServiceCard({
         <div
             data-service-id={serviceId}
             className={cn(
-                "group relative flex flex-col items-center gap-2 rounded-lg border p-4 text-center transition-all",
+                "group relative flex h-full flex-col items-center gap-2 rounded-lg border p-3 text-center transition-all sm:p-4",
                 disabled
                     ? "cursor-not-allowed border-muted bg-muted/20 opacity-50"
                     : "border-border bg-card hover:border-primary/50 hover:bg-accent hover:shadow-md",
@@ -159,24 +159,27 @@ export function ServiceCard({
             )}
             <div
                 className={cn(
-                    "flex h-12 w-12 items-center justify-center rounded-full transition-colors",
+                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors sm:h-12 sm:w-12",
                     disabled ? "bg-muted/50" : "bg-primary/10 group-hover:bg-primary/20",
                 )}
             >
                 <Icon
-                    className={cn("h-6 w-6", disabled ? "text-muted-foreground" : "text-primary")}
+                    className={cn(
+                        "h-5 w-5 sm:h-6 sm:w-6",
+                        disabled ? "text-muted-foreground" : "text-primary",
+                    )}
                 />
             </div>
-            <div>
+            <div className="flex flex-1 flex-col justify-center">
                 <h3
                     className={cn(
-                        "font-pixel text-sm font-medium",
+                        "font-pixel text-xs font-medium sm:text-sm",
                         disabled ? "text-muted-foreground" : "",
                     )}
                 >
                     {name}
                 </h3>
-                <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground sm:text-xs">{description}</p>
             </div>
         </div>
     );
@@ -186,7 +189,7 @@ export function ServiceCard({
     }
 
     return (
-        <Link href={href} prefetch>
+        <Link href={href} prefetch className="h-full">
             {content}
         </Link>
     );

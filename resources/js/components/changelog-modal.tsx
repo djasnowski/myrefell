@@ -461,12 +461,17 @@ export default function ChangelogModal({ onClose }: Props) {
                                 >
                                     {/* Entry Header */}
                                     <div className="relative bg-muted/30 px-4 py-3 border-b border-border/30">
-                                        {/* Date in top right */}
-                                        <span className="absolute top-2 right-3 text-xs text-muted-foreground">
+                                        {/* Date in top right - desktop only */}
+                                        <span className="absolute top-2 right-3 hidden text-xs text-muted-foreground sm:block">
                                             {entry.date.replace(/(\w+)\s+(\d+),\s+\d+/, "$1 $2")}
                                         </span>
-                                        <div className="flex items-start gap-3 pr-16">
-                                            <div className="rounded-lg bg-primary/10 p-2 shrink-0">
+                                        {/* Icon in top right - mobile only */}
+                                        <div className="absolute top-2 right-3 rounded-lg bg-primary/10 p-1.5 sm:hidden">
+                                            {entry.icon}
+                                        </div>
+                                        <div className="flex items-start gap-3 pr-12 sm:pr-16">
+                                            {/* Icon on left - desktop only */}
+                                            <div className="hidden rounded-lg bg-primary/10 p-2 shrink-0 sm:block">
                                                 {entry.icon}
                                             </div>
                                             <div className="flex-1 min-w-0">
@@ -476,6 +481,14 @@ export default function ChangelogModal({ onClose }: Props) {
                                                     </h3>
                                                     <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/20 text-primary">
                                                         v{entry.version}
+                                                    </span>
+                                                    {/* Date inline - mobile only */}
+                                                    <span className="text-xs text-muted-foreground sm:hidden">
+                                                        ·{" "}
+                                                        {entry.date.replace(
+                                                            /(\w+)\s+(\d+),\s+\d+/,
+                                                            "$1 $2",
+                                                        )}
                                                     </span>
                                                 </div>
                                                 <p className="text-sm text-muted-foreground mt-2">

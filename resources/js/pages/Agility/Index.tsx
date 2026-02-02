@@ -207,21 +207,23 @@ export default function AgilityIndex() {
             <div className="flex h-full flex-1 flex-col p-4">
                 <div className="mx-auto w-full max-w-3xl">
                     {/* Header */}
-                    <div className="mb-6 rounded-xl border-2 border-emerald-600/50 bg-gradient-to-br from-emerald-900/30 to-stone-900 p-6">
-                        <div className="flex items-center gap-4">
-                            <div className="rounded-lg bg-stone-800/50 p-4">
-                                <Footprints className="h-12 w-12 text-emerald-400" />
+                    <div className="mb-6 rounded-xl border-2 border-emerald-600/50 bg-gradient-to-br from-emerald-900/30 to-stone-900 p-4 sm:p-6">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                            <div className="flex items-center gap-3 sm:gap-4">
+                                <div className="rounded-lg bg-stone-800/50 p-3 sm:p-4">
+                                    <Footprints className="h-8 w-8 text-emerald-400 sm:h-12 sm:w-12" />
+                                </div>
+                                <div className="flex-1">
+                                    <h1 className="font-pixel text-xl text-emerald-400 sm:text-2xl">
+                                        Agility Course
+                                    </h1>
+                                    <p className="font-pixel text-[10px] text-stone-400 sm:text-xs">
+                                        Navigate obstacles to train your agility
+                                    </p>
+                                </div>
                             </div>
-                            <div className="flex-1">
-                                <h1 className="font-pixel text-2xl text-emerald-400">
-                                    Agility Course
-                                </h1>
-                                <p className="font-pixel text-xs text-stone-400">
-                                    Navigate obstacles to train your agility
-                                </p>
-                            </div>
-                            <div className="text-right">
-                                <div className="font-pixel text-lg text-emerald-400">
+                            <div className="flex items-center justify-between rounded-lg border border-stone-700 bg-stone-800/30 px-3 py-2 sm:flex-col sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:text-right">
+                                <div className="font-pixel text-sm text-emerald-400 sm:text-lg">
                                     Level {currentLevel}
                                 </div>
                                 <div className="font-pixel text-[10px] text-stone-400">
@@ -231,8 +233,8 @@ export default function AgilityIndex() {
                         </div>
                     </div>
 
-                    {/* XP Progress Bar */}
-                    <div className="mb-6 rounded-lg border border-stone-700 bg-stone-800/50 p-3">
+                    {/* XP Progress Bar - hidden on mobile since header shows level/XP */}
+                    <div className="mb-6 hidden rounded-lg border border-stone-700 bg-stone-800/50 p-3 sm:block">
                         <div className="mb-1 flex items-center justify-between">
                             <div className="flex items-center gap-1 font-pixel text-xs text-emerald-400">
                                 <Footprints className="h-3 w-3" />
@@ -288,8 +290,8 @@ export default function AgilityIndex() {
                                         !obstacle.is_unlocked ? "opacity-60" : ""
                                     }`}
                                 >
-                                    <div className="flex items-start gap-4">
-                                        <div className="rounded-lg bg-stone-800/50 p-3">
+                                    <div className="flex items-start gap-3 sm:gap-4">
+                                        <div className="hidden rounded-lg bg-stone-800/50 p-3 sm:block">
                                             {obstacle.is_legendary ? (
                                                 <Sparkles className={`h-8 w-8 ${colors.text}`} />
                                             ) : obstacle.is_unlocked ? (
@@ -298,7 +300,7 @@ export default function AgilityIndex() {
                                                 <Lock className="h-8 w-8 text-stone-500" />
                                             )}
                                         </div>
-                                        <div className="flex-1">
+                                        <div className="min-w-0 flex-1">
                                             <div className="flex items-start justify-between gap-4">
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2">
@@ -322,18 +324,18 @@ export default function AgilityIndex() {
                                                 </div>
                                             </div>
 
-                                            <div className="mt-3 flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
+                                            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                                                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                                                     <span className="font-pixel text-[10px] text-stone-400">
                                                         <Zap className="mr-1 inline h-3 w-3 text-yellow-400" />
-                                                        {obstacle.energy_cost} energy
+                                                        {obstacle.energy_cost}
                                                     </span>
                                                     <span className="font-pixel text-[10px] text-amber-400">
                                                         +{obstacle.base_xp} XP
                                                     </span>
                                                     {obstacle.is_unlocked && (
                                                         <span className="font-pixel text-[10px] text-stone-500">
-                                                            {obstacle.success_rate}% success
+                                                            {obstacle.success_rate}%
                                                         </span>
                                                     )}
                                                 </div>
@@ -345,7 +347,7 @@ export default function AgilityIndex() {
                                                             loading !== null ||
                                                             cooldown > 0
                                                         }
-                                                        className={`relative overflow-hidden rounded-lg px-4 py-2 font-pixel text-xs transition ${
+                                                        className={`relative shrink-0 overflow-hidden rounded-lg px-3 py-1.5 font-pixel text-xs transition sm:px-4 sm:py-2 ${
                                                             canTrain &&
                                                             loading === null &&
                                                             cooldown <= 0

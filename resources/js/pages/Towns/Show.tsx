@@ -234,14 +234,16 @@ export default function TownShow({
             <Head title={town.name} />
             <div className="flex flex-col gap-6 p-6">
                 {/* Hero Header */}
-                <div className={`rounded-xl border-2 ${biome.border} ${biome.bg} p-6`}>
-                    <div className="flex items-start gap-4">
-                        <div className={`rounded-xl ${biome.bg} border ${biome.border} p-4`}>
-                            <BiomeIcon className={`h-12 w-12 ${biome.color}`} />
+                <div className={`rounded-xl border-2 ${biome.border} ${biome.bg} p-4 sm:p-6`}>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+                        <div
+                            className={`hidden rounded-xl ${biome.bg} border ${biome.border} p-3 sm:block sm:p-4`}
+                        >
+                            <BiomeIcon className={`h-10 w-10 sm:h-12 sm:w-12 ${biome.color}`} />
                         </div>
                         <div className="flex-1">
-                            <div className="flex items-center gap-3">
-                                <h1 className="font-[Cinzel] text-3xl font-bold text-stone-100">
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                                <h1 className="font-[Cinzel] text-2xl font-bold text-stone-100 sm:text-3xl">
                                     {town.name}
                                 </h1>
                                 {town.is_capital && (
@@ -257,12 +259,14 @@ export default function TownShow({
                                     </span>
                                 )}
                                 <span
-                                    className={`rounded-full ${biome.bg} border ${biome.border} px-3 py-0.5 text-xs capitalize ${biome.color}`}
+                                    className={`rounded-full ${biome.bg} border ${biome.border} px-2 py-0.5 text-xs capitalize sm:px-3 ${biome.color}`}
                                 >
                                     {town.biome}
                                 </span>
                             </div>
-                            <p className="mt-2 text-stone-400">{town.description}</p>
+                            <p className="mt-2 text-sm text-stone-400 sm:text-base">
+                                {town.description}
+                            </p>
 
                             {/* Hierarchy */}
                             <div className="mt-3 flex items-center gap-2 text-sm">
@@ -305,12 +309,12 @@ export default function TownShow({
 
                         {/* Home/Visitor badge */}
                         {is_resident ? (
-                            <div className="flex items-center gap-2 rounded-lg border border-green-600/50 bg-green-900/30 px-3 py-2">
+                            <div className="mt-3 flex items-center gap-2 rounded-lg border border-green-600/50 bg-green-900/30 px-3 py-2 sm:mt-0">
                                 <Home className="h-4 w-4 text-green-400" />
                                 <span className="font-pixel text-xs text-green-400">Your Home</span>
                             </div>
                         ) : is_visitor ? (
-                            <div className="flex items-center gap-2 rounded-lg border border-blue-600/50 bg-blue-900/30 px-3 py-2">
+                            <div className="mt-3 flex items-center gap-2 rounded-lg border border-blue-600/50 bg-blue-900/30 px-3 py-2 sm:mt-0">
                                 <MapPin className="h-4 w-4 text-blue-400" />
                                 <span className="font-pixel text-xs text-blue-400">
                                     You Are Here
@@ -407,34 +411,34 @@ export default function TownShow({
                 {disasters.length > 0 && <DisasterWidget disasters={disasters} />}
 
                 {/* Stats Row */}
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
-                        <Users className="mx-auto mb-2 h-6 w-6 text-blue-400" />
-                        <div className="font-pixel text-2xl text-stone-100">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center sm:p-4">
+                        <Users className="mx-auto mb-1 h-5 w-5 text-blue-400 sm:mb-2 sm:h-6 sm:w-6" />
+                        <div className="font-pixel text-lg text-stone-100 sm:text-2xl">
                             {town.visitor_count}
                         </div>
-                        <div className="text-xs text-stone-500">Visitors</div>
+                        <div className="text-[10px] text-stone-500 sm:text-xs">Visitors</div>
                     </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
-                        <Users className="mx-auto mb-2 h-6 w-6 text-stone-400" />
-                        <div className="font-pixel text-2xl text-stone-100">
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center sm:p-4">
+                        <Users className="mx-auto mb-1 h-5 w-5 text-stone-400 sm:mb-2 sm:h-6 sm:w-6" />
+                        <div className="font-pixel text-lg text-stone-100 sm:text-2xl">
                             {town.population.toLocaleString()}
                         </div>
-                        <div className="text-xs text-stone-500">NPCs</div>
+                        <div className="text-[10px] text-stone-500 sm:text-xs">NPCs</div>
                     </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
-                        <Coins className="mx-auto mb-2 h-6 w-6 text-amber-400" />
-                        <div className="font-pixel text-2xl text-amber-300">
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center sm:p-4">
+                        <Coins className="mx-auto mb-1 h-5 w-5 text-amber-400 sm:mb-2 sm:h-6 sm:w-6" />
+                        <div className="font-pixel text-lg text-amber-300 sm:text-2xl">
                             {town.wealth.toLocaleString()}
                         </div>
-                        <div className="text-xs text-stone-500">Treasury</div>
+                        <div className="text-[10px] text-stone-500 sm:text-xs">Treasury</div>
                     </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
-                        <MapPin className="mx-auto mb-2 h-6 w-6 text-stone-400" />
-                        <div className="font-pixel text-lg text-stone-300">
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center sm:p-4">
+                        <MapPin className="mx-auto mb-1 h-5 w-5 text-stone-400 sm:mb-2 sm:h-6 sm:w-6" />
+                        <div className="font-pixel text-sm text-stone-300 sm:text-lg">
                             {town.coordinates.x}, {town.coordinates.y}
                         </div>
-                        <div className="text-xs text-stone-500">Coordinates</div>
+                        <div className="text-[10px] text-stone-500 sm:text-xs">Coordinates</div>
                     </div>
                 </div>
 
