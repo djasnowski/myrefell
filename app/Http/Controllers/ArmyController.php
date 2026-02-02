@@ -18,6 +18,10 @@ class ArmyController extends Controller
 {
     const ARMY_CREATION_COST = 500;
 
+    const ARMY_RENAME_COST = 25000;
+
+    const MAX_ARMIES_PER_PLAYER = 3;
+
     public function __construct(
         protected ArmyService $armyService
     ) {}
@@ -73,6 +77,8 @@ class ArmyController extends Controller
             'mercenary_companies' => $mercenaryCompanies->toArray(),
             'current_location' => $currentLocation,
             'army_creation_cost' => self::ARMY_CREATION_COST,
+            'army_rename_cost' => self::ARMY_RENAME_COST,
+            'max_armies' => self::MAX_ARMIES_PER_PLAYER,
             'unit_types' => $unitTypes,
             'recruitment_costs' => ArmyService::RECRUITMENT_COSTS,
         ]);
@@ -104,6 +110,9 @@ class ArmyController extends Controller
                 'name' => $army->location?->name ?? ($army->location_type === 'field' ? 'In the field' : 'Unknown'),
             ],
             'mustered_at' => $army->mustered_at?->toISOString(),
+            'treasury' => $army->treasury,
+            'can_rename' => $army->canRename(),
+            'next_rename_at' => $army->nextRenameAt()?->toISOString(),
         ];
 
         if ($includeUnits) {
@@ -379,6 +388,19 @@ class ArmyController extends Controller
             'name' => 'required|string|max:100',
         ]);
 
+        // Check army limit
+        $activeArmyCount = Army::where('owner_type', 'player')
+            ->where('owner_id', $user->id)
+            ->where('status', '!=', Army::STATUS_DISBANDED)
+            ->count();
+
+        if ($activeArmyCount >= self::MAX_ARMIES_PER_PLAYER) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You can only have '.self::MAX_ARMIES_PER_PLAYER.' armies at a time.',
+            ], 400);
+        }
+
         // Check if player has enough gold
         if ($user->gold < self::ARMY_CREATION_COST) {
             return response()->json([
@@ -434,6 +456,138 @@ class ArmyController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Army '{$army->name}' has been disbanded.",
+        ]);
+    }
+
+    /**
+     * Rename an army.
+     */
+    public function rename(Request $request, Army $army): JsonResponse
+    {
+        $user = $request->user();
+
+        // Check ownership
+        if ($army->owner_type !== 'player' || $army->owner_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not own this army.',
+            ], 403);
+        }
+
+        // Check cooldown
+        if (! $army->canRename()) {
+            $nextRename = $army->nextRenameAt();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'You can only rename an army once every 3 months. Next rename available: '.$nextRename->diffForHumans(),
+            ], 400);
+        }
+
+        // Check gold
+        if ($user->gold < self::ARMY_RENAME_COST) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Not enough gold. Renaming costs '.number_format(self::ARMY_RENAME_COST).'g.',
+            ], 400);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+        ]);
+
+        // Deduct gold
+        $user->decrement('gold', self::ARMY_RENAME_COST);
+
+        $oldName = $army->name;
+        $army->update([
+            'name' => $validated['name'],
+            'last_renamed_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Army renamed from '{$oldName}' to '{$army->name}' for ".number_format(self::ARMY_RENAME_COST).'g.',
+        ]);
+    }
+
+    /**
+     * Deposit gold into army treasury.
+     */
+    public function deposit(Request $request, Army $army): JsonResponse
+    {
+        $user = $request->user();
+
+        // Check ownership
+        if ($army->owner_type !== 'player' || $army->owner_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not own this army.',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'amount' => 'required|integer|min:1',
+        ]);
+
+        $amount = $validated['amount'];
+
+        // Check player has enough gold
+        if ($user->gold < $amount) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Not enough gold.',
+            ], 400);
+        }
+
+        // Transfer gold
+        $user->decrement('gold', $amount);
+        $army->increment('treasury', $amount);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Deposited '.number_format($amount).'g into army treasury.',
+            'treasury' => $army->fresh()->treasury,
+        ]);
+    }
+
+    /**
+     * Withdraw gold from army treasury.
+     */
+    public function withdraw(Request $request, Army $army): JsonResponse
+    {
+        $user = $request->user();
+
+        // Check ownership
+        if ($army->owner_type !== 'player' || $army->owner_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not own this army.',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'amount' => 'required|integer|min:1',
+        ]);
+
+        $amount = $validated['amount'];
+
+        // Check treasury has enough gold
+        if ($army->treasury < $amount) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Not enough gold in treasury.',
+            ], 400);
+        }
+
+        // Transfer gold
+        $army->decrement('treasury', $amount);
+        $user->increment('gold', $amount);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Withdrew '.number_format($amount).'g from army treasury.',
+            'treasury' => $army->fresh()->treasury,
         ]);
     }
 

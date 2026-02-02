@@ -12,16 +12,24 @@ class Army extends Model
     use HasFactory;
 
     const STATUS_MUSTERING = 'mustering';
+
     const STATUS_MARCHING = 'marching';
+
     const STATUS_ENCAMPED = 'encamped';
+
     const STATUS_BESIEGING = 'besieging';
+
     const STATUS_IN_BATTLE = 'in_battle';
+
     const STATUS_DISBANDED = 'disbanded';
+
+    const RENAME_COOLDOWN_DAYS = 90; // 3 months
 
     protected $fillable = [
         'name', 'commander_id', 'npc_commander_id', 'owner_type', 'owner_id',
         'location_type', 'location_id', 'status', 'morale', 'supplies',
-        'daily_supply_cost', 'gold_upkeep', 'composition', 'mustered_at',
+        'daily_supply_cost', 'gold_upkeep', 'treasury', 'composition', 'mustered_at',
+        'last_renamed_at',
     ];
 
     protected function casts(): array
@@ -29,7 +37,26 @@ class Army extends Model
         return [
             'composition' => 'array',
             'mustered_at' => 'datetime',
+            'last_renamed_at' => 'datetime',
         ];
+    }
+
+    public function canRename(): bool
+    {
+        if (! $this->last_renamed_at) {
+            return true;
+        }
+
+        return $this->last_renamed_at->addDays(self::RENAME_COOLDOWN_DAYS)->isPast();
+    }
+
+    public function nextRenameAt(): ?\Carbon\Carbon
+    {
+        if (! $this->last_renamed_at) {
+            return null;
+        }
+
+        return $this->last_renamed_at->addDays(self::RENAME_COOLDOWN_DAYS);
     }
 
     public function commander(): BelongsTo
@@ -96,7 +123,7 @@ class Army extends Model
 
     public function isOperational(): bool
     {
-        return !in_array($this->status, [self::STATUS_DISBANDED]);
+        return ! in_array($this->status, [self::STATUS_DISBANDED]);
     }
 
     public function hasSupplies(): bool

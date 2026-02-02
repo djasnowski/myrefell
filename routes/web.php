@@ -721,6 +721,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('warfare/armies/{army}', [ArmyController::class, 'show'])->name('warfare.armies.show');
     Route::post('warfare/armies', [ArmyController::class, 'store'])->name('warfare.armies.store');
     Route::post('warfare/armies/{army}/disband', [ArmyController::class, 'disband'])->name('warfare.armies.disband');
+    Route::post('warfare/armies/{army}/rename', [ArmyController::class, 'rename'])->name('warfare.armies.rename');
+    Route::post('warfare/armies/{army}/deposit', [ArmyController::class, 'deposit'])->name('warfare.armies.deposit');
+    Route::post('warfare/armies/{army}/withdraw', [ArmyController::class, 'withdraw'])->name('warfare.armies.withdraw');
     Route::post('warfare/armies/{army}/recruit', [ArmyController::class, 'recruit'])->name('warfare.armies.recruit');
     Route::post('warfare/armies/{army}/move', [ArmyController::class, 'move'])->name('warfare.armies.move');
     Route::post('warfare/mercenaries/{company}/hire', [ArmyController::class, 'hireMercenary'])->name('warfare.mercenaries.hire');
