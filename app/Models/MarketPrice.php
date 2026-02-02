@@ -113,10 +113,10 @@ class MarketPrice extends Model
 
     /**
      * Get the sell price (what player receives when selling).
-     * Selling is at a discount from current price.
+     * Selling is at a discount from current price, minimum 1 gold.
      */
     public function getSellPriceAttribute(): int
     {
-        return (int) floor($this->current_price * 0.8); // 20% discount
+        return max(1, (int) floor($this->current_price * 0.8)); // 20% discount, min 1
     }
 }
