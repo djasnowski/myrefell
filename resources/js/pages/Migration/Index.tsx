@@ -1,7 +1,29 @@
 import { Head, router, usePage } from "@inertiajs/react";
-import { ArrowRight, Check, Clock, Crown, Home, Loader2, MapPin, Shield, X } from "lucide-react";
+import {
+    ArrowRight,
+    Building2,
+    Castle,
+    Check,
+    Clock,
+    Crown,
+    HelpCircle,
+    Home,
+    Loader2,
+    MapPin,
+    Shield,
+    TreePine,
+    X,
+} from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 import type { BreadcrumbItem } from "@/types";
 
 interface Village {
@@ -21,9 +43,11 @@ interface MigrationRequestData {
     to_village: Village;
     status: string;
     elder_approved: boolean | null;
+    mayor_approved: boolean | null;
     baron_approved: boolean | null;
     king_approved: boolean | null;
     needs_elder: boolean;
+    needs_mayor: boolean;
     needs_baron: boolean;
     needs_king: boolean;
     denial_reason: string | null;
@@ -79,7 +103,7 @@ function RequestCard({
     isOwn,
 }: {
     request: MigrationRequestData;
-    showApproveButtons?: "elder" | "baron" | "king";
+    showApproveButtons?: "elder" | "mayor" | "baron" | "king";
     onApprove?: (id: number, level: string) => void;
     onDeny?: (id: number, level: string) => void;
     onCancel?: (id: number) => void;
@@ -124,10 +148,14 @@ function RequestCard({
             )}
 
             {/* Approval Status */}
-            <div className="mb-3 grid grid-cols-3 gap-2 rounded-lg bg-stone-800/50 p-2">
+            <div className="mb-3 grid grid-cols-4 gap-2 rounded-lg bg-stone-800/50 p-2">
                 <div className="text-center">
                     <p className="font-pixel text-[10px] text-stone-500">Elder</p>
                     <ApprovalBadge approved={request.elder_approved} needed={request.needs_elder} />
+                </div>
+                <div className="text-center">
+                    <p className="font-pixel text-[10px] text-stone-500">Mayor</p>
+                    <ApprovalBadge approved={request.mayor_approved} needed={request.needs_mayor} />
                 </div>
                 <div className="text-center">
                     <p className="font-pixel text-[10px] text-stone-500">Baron</p>
@@ -250,8 +278,9 @@ export default function MigrationIndex() {
     // Determine which level the current user can approve
     const getApprovalLevel = (
         request: MigrationRequestData,
-    ): "elder" | "baron" | "king" | undefined => {
+    ): "elder" | "mayor" | "baron" | "king" | undefined => {
         if (request.needs_elder && request.elder_approved === null) return "elder";
+        if (request.needs_mayor && request.mayor_approved === null) return "mayor";
         if (request.needs_baron && request.baron_approved === null) return "baron";
         if (request.needs_king && request.king_approved === null) return "king";
         return undefined;
@@ -262,11 +291,112 @@ export default function MigrationIndex() {
             <Head title="Migration" />
             <div className="flex h-full flex-1 flex-col gap-6 overflow-y-auto p-4">
                 {/* Header */}
-                <div>
-                    <h1 className="font-pixel text-2xl text-amber-400">Migration</h1>
-                    <p className="font-pixel text-sm text-stone-400">
-                        Request to move to a new village
-                    </p>
+                <div className="flex items-start justify-between">
+                    <div>
+                        <h1 className="font-pixel text-2xl text-amber-400">Migration</h1>
+                        <p className="font-pixel text-sm text-stone-400">
+                            Request to move to a new home
+                        </p>
+                    </div>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <button className="flex items-center gap-1.5 rounded-lg border border-stone-600/50 bg-stone-800/50 px-3 py-2 font-pixel text-xs text-stone-300 transition hover:bg-stone-700/50">
+                                <HelpCircle className="h-4 w-4" />
+                                How It Works
+                            </button>
+                        </DialogTrigger>
+                        <DialogContent className="border-stone-600 bg-stone-900 text-stone-200">
+                            <DialogHeader>
+                                <DialogTitle className="font-pixel text-lg text-amber-400">
+                                    Migration Approval System
+                                </DialogTitle>
+                                <DialogDescription className="text-stone-400">
+                                    Who needs to approve your move depends on where you're going.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                                {/* Village */}
+                                <div className="rounded-lg border border-green-600/30 bg-green-900/10 p-3">
+                                    <div className="mb-2 flex items-center gap-2">
+                                        <TreePine className="h-4 w-4 text-green-400" />
+                                        <span className="font-pixel text-sm text-green-300">
+                                            Village
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-stone-400">
+                                        <span className="rounded bg-stone-800 px-2 py-1">
+                                            Elder
+                                        </span>
+                                        <ArrowRight className="h-3 w-3" />
+                                        <span className="rounded bg-stone-800 px-2 py-1">
+                                            Baron
+                                        </span>
+                                        <ArrowRight className="h-3 w-3" />
+                                        <span className="rounded bg-stone-800 px-2 py-1">King</span>
+                                    </div>
+                                </div>
+
+                                {/* Town */}
+                                <div className="rounded-lg border border-blue-600/30 bg-blue-900/10 p-3">
+                                    <div className="mb-2 flex items-center gap-2">
+                                        <Building2 className="h-4 w-4 text-blue-400" />
+                                        <span className="font-pixel text-sm text-blue-300">
+                                            Town
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-stone-400">
+                                        <span className="rounded bg-stone-800 px-2 py-1">
+                                            Mayor
+                                        </span>
+                                        <span className="text-stone-500">(only)</span>
+                                    </div>
+                                </div>
+
+                                {/* Barony */}
+                                <div className="rounded-lg border border-purple-600/30 bg-purple-900/10 p-3">
+                                    <div className="mb-2 flex items-center gap-2">
+                                        <Shield className="h-4 w-4 text-purple-400" />
+                                        <span className="font-pixel text-sm text-purple-300">
+                                            Barony
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-stone-400">
+                                        <span className="rounded bg-stone-800 px-2 py-1">
+                                            Baron
+                                        </span>
+                                        <ArrowRight className="h-3 w-3" />
+                                        <span className="rounded bg-stone-800 px-2 py-1">King</span>
+                                    </div>
+                                </div>
+
+                                {/* Kingdom */}
+                                <div className="rounded-lg border border-amber-600/30 bg-amber-900/10 p-3">
+                                    <div className="mb-2 flex items-center gap-2">
+                                        <Castle className="h-4 w-4 text-amber-400" />
+                                        <span className="font-pixel text-sm text-amber-300">
+                                            Kingdom
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-stone-400">
+                                        <span className="rounded bg-stone-800 px-2 py-1">King</span>
+                                        <span className="text-stone-500">(only)</span>
+                                    </div>
+                                </div>
+
+                                {/* Auto-approve note */}
+                                <div className="rounded-lg border border-stone-600/30 bg-stone-800/30 p-3">
+                                    <p className="text-xs text-stone-400">
+                                        <Check className="mr-1 inline h-3 w-3 text-green-400" />
+                                        <strong className="text-stone-300">
+                                            Auto-approved:
+                                        </strong>{" "}
+                                        If a position is vacant (no Elder, Mayor, Baron, or King),
+                                        that approval step is automatically granted.
+                                    </p>
+                                </div>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </div>
 
                 {/* Current Village */}
@@ -341,9 +471,9 @@ export default function MigrationIndex() {
                             How to Request Migration
                         </h3>
                         <p className="mt-2 text-xs text-stone-400">
-                            Visit any village and click "Request to Move Here" to start a migration
-                            request. You'll need approval from the local Elder, Baron, and King (if
-                            they exist).
+                            Visit any location and click "Request to Move Here" to start a migration
+                            request. Click "How It Works" above to see who needs to approve your
+                            request based on your destination.
                         </p>
                     </div>
                 )}
