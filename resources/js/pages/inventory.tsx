@@ -21,6 +21,9 @@ interface Item {
     hp_bonus: number;
     energy_bonus: number;
     base_value: number;
+    required_level: number | null;
+    required_skill: string | null;
+    required_skill_level: number | null;
 }
 
 interface InventorySlot {
@@ -53,6 +56,14 @@ const rarityColors: Record<string, string> = {
     legendary: "border-amber-500 bg-amber-900/30",
 };
 
+const rarityTextColors: Record<string, string> = {
+    common: "text-stone-300",
+    uncommon: "text-green-400",
+    rare: "text-blue-400",
+    epic: "text-purple-400",
+    legendary: "text-amber-400",
+};
+
 function ItemTooltip({
     item,
     quantity,
@@ -67,29 +78,28 @@ function ItemTooltip({
 
     return (
         <div className="absolute top-full left-1/2 z-[100] mt-2 w-56 -translate-x-1/2 rounded border-2 border-stone-600 bg-stone-900 p-3 shadow-lg">
-            <div className="mb-1 font-pixel text-sm capitalize text-amber-400">{item.name}</div>
-            <div className="mb-1 font-pixel text-xs capitalize text-stone-400">
-                {item.rarity} {item.type}
-                {item.subtype && ` - ${item.subtype}`}
+            <div
+                className={`mb-1 font-pixel text-sm capitalize ${rarityTextColors[item.rarity] || "text-stone-300"}`}
+            >
+                {item.name}
             </div>
+            <div className="mb-1 font-pixel text-xs capitalize text-stone-500">{item.type}</div>
             {item.description && (
                 <div className="mb-2 text-sm text-stone-300">{item.description}</div>
             )}
             {!!hasStats && (
                 <div className="mb-2 space-y-1 border-t border-stone-700 pt-2">
                     {item.atk_bonus > 0 && (
-                        <div className="font-pixel text-xs text-red-400">
-                            +{item.atk_bonus} Attack
-                        </div>
+                        <div className="font-pixel text-xs text-red-400">+{item.atk_bonus} ATK</div>
                     )}
                     {item.str_bonus > 0 && (
                         <div className="font-pixel text-xs text-orange-400">
-                            +{item.str_bonus} Strength
+                            +{item.str_bonus} STR
                         </div>
                     )}
                     {item.def_bonus > 0 && (
                         <div className="font-pixel text-xs text-blue-400">
-                            +{item.def_bonus} Defense
+                            +{item.def_bonus} DEF
                         </div>
                     )}
                     {item.hp_bonus > 0 && (
@@ -97,9 +107,17 @@ function ItemTooltip({
                     )}
                     {item.energy_bonus > 0 && (
                         <div className="font-pixel text-xs text-yellow-400">
-                            +{item.energy_bonus} Energy
+                            +{item.energy_bonus} EN
                         </div>
                     )}
+                </div>
+            )}
+            {item.required_level != null && item.equipment_slot && (
+                <div className="mb-2 border-t border-stone-700 pt-2">
+                    <div className="font-pixel text-xs text-purple-400">
+                        Requires: {item.required_level}{" "}
+                        {item.required_skill || (item.equipment_slot === "weapon" ? "ATK" : "DEF")}
+                    </div>
                 </div>
             )}
             <div className="flex items-center justify-between border-t border-stone-700 pt-2">
@@ -375,11 +393,13 @@ export default function Inventory() {
                                         })()}
                                     </div>
                                     <div>
-                                        <div className="font-pixel text-[10px] text-amber-300">
+                                        <div
+                                            className={`font-pixel text-[10px] capitalize ${rarityTextColors[selectedItem.item.rarity] || "text-stone-300"}`}
+                                        >
                                             {selectedItem.item.name}
                                         </div>
-                                        <div className="font-pixel text-[8px] capitalize text-stone-400">
-                                            {selectedItem.item.rarity} {selectedItem.item.type}
+                                        <div className="font-pixel text-[8px] capitalize text-stone-500">
+                                            {selectedItem.item.type}
                                         </div>
                                     </div>
                                 </div>
@@ -398,17 +418,17 @@ export default function Inventory() {
                                     <div className="space-y-1 border-t border-stone-700 pt-2">
                                         {selectedItem.item.atk_bonus > 0 && (
                                             <div className="font-pixel text-[8px] text-red-400">
-                                                +{selectedItem.item.atk_bonus} Attack
+                                                +{selectedItem.item.atk_bonus} ATK
                                             </div>
                                         )}
                                         {selectedItem.item.str_bonus > 0 && (
                                             <div className="font-pixel text-[8px] text-orange-400">
-                                                +{selectedItem.item.str_bonus} Strength
+                                                +{selectedItem.item.str_bonus} STR
                                             </div>
                                         )}
                                         {selectedItem.item.def_bonus > 0 && (
                                             <div className="font-pixel text-[8px] text-blue-400">
-                                                +{selectedItem.item.def_bonus} Defense
+                                                +{selectedItem.item.def_bonus} DEF
                                             </div>
                                         )}
                                         {selectedItem.item.hp_bonus > 0 && (
@@ -418,11 +438,24 @@ export default function Inventory() {
                                         )}
                                         {selectedItem.item.energy_bonus > 0 && (
                                             <div className="font-pixel text-[8px] text-yellow-400">
-                                                +{selectedItem.item.energy_bonus} Energy
+                                                +{selectedItem.item.energy_bonus} EN
                                             </div>
                                         )}
                                     </div>
                                 )}
+
+                                {selectedItem.item.required_level != null &&
+                                    selectedItem.item.equipment_slot && (
+                                        <div className="border-t border-stone-700 pt-2">
+                                            <div className="font-pixel text-[8px] text-purple-400">
+                                                Requires: {selectedItem.item.required_level}{" "}
+                                                {selectedItem.item.required_skill ||
+                                                    (selectedItem.item.equipment_slot === "weapon"
+                                                        ? "ATK"
+                                                        : "DEF")}
+                                            </div>
+                                        </div>
+                                    )}
 
                                 <div className="flex items-center justify-between border-t border-stone-700 pt-2">
                                     <span className="flex items-center gap-1 font-pixel text-[8px] text-amber-300">
