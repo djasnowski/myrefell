@@ -51,6 +51,9 @@ class VillageController extends Controller
             ->pending()
             ->exists();
 
+        // Count pending migration requests the user can approve
+        $pendingMigrationRequests = $migrationService->getPendingRequestsForApprover($user)->count();
+
         // Get the village elder (primary ruler) with legitimacy
         $elderRole = Role::where('slug', 'elder')->first();
         $elder = null;
@@ -122,6 +125,7 @@ class VillageController extends Controller
             'has_pending_request' => $hasPendingRequest,
             'current_user_id' => $user->id,
             'disasters' => $this->getActiveDisasters($village),
+            'pending_migration_requests' => $pendingMigrationRequests,
         ]);
     }
 

@@ -14,6 +14,7 @@ import {
     Swords,
     TreePine,
     Trees,
+    UserPlus,
     Users,
     Waves,
     Wheat,
@@ -112,6 +113,7 @@ interface Props {
     has_pending_request: boolean;
     current_user_id: number;
     disasters?: Disaster[];
+    pending_migration_requests?: number;
     flash?: {
         success?: string;
         error?: string;
@@ -185,6 +187,7 @@ export default function VillageShow({
     has_pending_request,
     current_user_id,
     disasters = [],
+    pending_migration_requests = 0,
 }: Props) {
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
     const [loading, setLoading] = useState(false);
@@ -303,6 +306,26 @@ export default function VillageShow({
                     <div className="rounded-lg border border-red-600/50 bg-red-900/20 px-4 py-3">
                         <p className="font-pixel text-sm text-red-300">{flash.error}</p>
                     </div>
+                )}
+
+                {/* Pending Migration Requests */}
+                {pending_migration_requests > 0 && (
+                    <Link
+                        href="/migration"
+                        className="flex items-center gap-3 rounded-lg border border-amber-600/50 bg-amber-900/20 px-4 py-3 transition hover:bg-amber-900/30"
+                    >
+                        <UserPlus className="h-5 w-5 text-amber-400" />
+                        <div className="flex-1">
+                            <p className="font-pixel text-sm text-amber-300">
+                                {pending_migration_requests} new migration{" "}
+                                {pending_migration_requests === 1 ? "request" : "requests"}!
+                            </p>
+                            <p className="text-xs text-stone-400">
+                                People want to settle in your lands
+                            </p>
+                        </div>
+                        <span className="font-pixel text-xs text-amber-400">Review →</span>
+                    </Link>
                 )}
 
                 {/* Disaster Alert */}

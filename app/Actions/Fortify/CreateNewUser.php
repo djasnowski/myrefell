@@ -67,13 +67,18 @@ class CreateNewUser implements CreatesNewUsers
 
     /**
      * Create initial skills for a new player.
-     * Combat skills start at level 5, others at level 1.
+     * Hitpoints starts at level 10, other combat skills at 5, others at level 1.
      */
     protected function createInitialSkills(User $user): void
     {
         foreach (PlayerSkill::SKILLS as $skill) {
-            $isCombatSkill = in_array($skill, PlayerSkill::COMBAT_SKILLS);
-            $startingLevel = $isCombatSkill ? 5 : 1;
+            if ($skill === 'hitpoints') {
+                $startingLevel = 10;
+            } elseif (in_array($skill, PlayerSkill::COMBAT_SKILLS)) {
+                $startingLevel = 5;
+            } else {
+                $startingLevel = 1;
+            }
             $startingXp = PlayerSkill::xpForLevel($startingLevel);
 
             PlayerSkill::create([
