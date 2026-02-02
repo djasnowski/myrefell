@@ -361,8 +361,12 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $skill = $this->skills()->where('skill_name', $skillName)->first();
 
-        // Combat skills start at 5, others at 1
-        $default = in_array($skillName, PlayerSkill::COMBAT_SKILLS) ? 5 : 1;
+        // Hitpoints starts at 10 (for 10 HP), other combat skills at 5, others at 1
+        if ($skillName === 'hitpoints') {
+            $default = 10;
+        } else {
+            $default = in_array($skillName, PlayerSkill::COMBAT_SKILLS) ? 5 : 1;
+        }
 
         return $skill?->level ?? $default;
     }
