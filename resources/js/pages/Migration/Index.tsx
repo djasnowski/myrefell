@@ -26,7 +26,8 @@ import {
 } from "@/components/ui/dialog";
 import type { BreadcrumbItem } from "@/types";
 
-interface Village {
+interface Location {
+    type: string;
     id: number;
     name: string;
     barony?: string;
@@ -39,8 +40,8 @@ interface MigrationRequestData {
         id: number;
         username: string;
     };
-    from_village: Village;
-    to_village: Village;
+    from_location: Location;
+    to_location: Location;
     status: string;
     elder_approved: boolean | null;
     mayor_approved: boolean | null;
@@ -56,7 +57,13 @@ interface MigrationRequestData {
 }
 
 interface PageProps {
-    current_village: Village | null;
+    current_home: {
+        type: string;
+        id: number;
+        name: string;
+        barony?: string;
+        kingdom?: string;
+    } | null;
     pending_request: MigrationRequestData | null;
     requests_to_approve: MigrationRequestData[];
     request_history: MigrationRequestData[];
@@ -135,15 +142,15 @@ function RequestCard({
             </div>
 
             <div className="mb-3 flex items-center gap-2 text-sm">
-                <span className="text-stone-400">{request.from_village.name}</span>
+                <span className="text-stone-400">{request.from_location.name}</span>
                 <ArrowRight className="h-4 w-4 text-stone-600" />
-                <span className="text-amber-300">{request.to_village.name}</span>
+                <span className="text-amber-300">{request.to_location.name}</span>
             </div>
 
-            {request.to_village.barony && (
+            {request.to_location.barony && (
                 <p className="mb-2 font-pixel text-[10px] text-stone-500">
-                    Barony: {request.to_village.barony}
-                    {request.to_village.kingdom && ` | Kingdom: ${request.to_village.kingdom}`}
+                    Barony: {request.to_location.barony}
+                    {request.to_location.kingdom && ` | Kingdom: ${request.to_location.kingdom}`}
                 </p>
             )}
 
@@ -223,13 +230,28 @@ function RequestCard({
 
 export default function MigrationIndex() {
     const {
-        current_village,
+        current_home,
         pending_request,
         requests_to_approve,
         request_history,
         can_migrate,
         cooldown_ends,
     } = usePage<PageProps>().props;
+
+    const getLocationIcon = (type: string) => {
+        switch (type) {
+            case "village":
+                return <TreePine className="h-5 w-5 text-green-400" />;
+            case "town":
+                return <Building2 className="h-5 w-5 text-blue-400" />;
+            case "barony":
+                return <Shield className="h-5 w-5 text-purple-400" />;
+            case "kingdom":
+                return <Castle className="h-5 w-5 text-amber-400" />;
+            default:
+                return <Home className="h-5 w-5 text-green-400" />;
+        }
+    };
 
     const [loading, setLoading] = useState<number | null>(null);
 
@@ -399,23 +421,32 @@ export default function MigrationIndex() {
                     </Dialog>
                 </div>
 
-                {/* Current Village */}
+                {/* Current Home */}
                 <div className="rounded-xl border-2 border-stone-600/50 bg-stone-800/50 p-4">
                     <div className="flex items-center gap-2">
-                        <Home className="h-5 w-5 text-green-400" />
+                        {current_home ? (
+                            getLocationIcon(current_home.type)
+                        ) : (
+                            <Home className="h-5 w-5 text-stone-400" />
+                        )}
                         <span className="font-pixel text-sm text-stone-400">Current Home:</span>
                         <span className="font-pixel text-lg text-green-300">
-                            {current_village?.name || "None"}
+                            {current_home?.name || "None (Unsettled)"}
                         </span>
+                        {current_home && (
+                            <span className="rounded bg-stone-700 px-2 py-0.5 font-pixel text-[10px] uppercase text-stone-400">
+                                {current_home.type}
+                            </span>
+                        )}
                     </div>
-                    {current_village?.barony && (
+                    {current_home?.barony && (
                         <p className="mt-1 font-pixel text-xs text-stone-500">
                             <Shield className="mr-1 inline h-3 w-3" />
-                            {current_village.barony}
-                            {current_village.kingdom && (
+                            {current_home.barony}
+                            {current_home.kingdom && (
                                 <>
                                     <Crown className="mx-1 inline h-3 w-3" />
-                                    {current_village.kingdom}
+                                    {current_home.kingdom}
                                 </>
                             )}
                         </p>

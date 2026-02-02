@@ -25,12 +25,13 @@ class MigrationController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $currentVillage = $user->homeVillage;
+
+        // Get current home location (polymorphic)
+        $currentHome = $this->getCurrentHome($user);
 
         // Get user's pending request if any
         $pendingRequest = MigrationRequest::where('user_id', $user->id)
             ->pending()
-            ->with(['toVillage.barony.kingdom'])
             ->first();
 
         // Get requests user can approve (if they hold authority)
@@ -40,12 +41,9 @@ class MigrationController extends Controller
         $requestHistory = $this->migrationService->getUserRequests($user)->take(10);
 
         return Inertia::render('Migration/Index', [
-            'current_village' => $currentVillage ? [
-                'id' => $currentVillage->id,
-                'name' => $currentVillage->name,
-                'barony' => $currentVillage->barony?->name,
-                'kingdom' => $currentVillage->barony?->kingdom?->name,
-            ] : null,
+            'current_home' => $currentHome,
+            // Legacy field for backwards compatibility
+            'current_village' => $currentHome,
             'pending_request' => $pendingRequest ? $this->formatRequest($pendingRequest) : null,
             'requests_to_approve' => $requestsToApprove->map(fn ($r) => $this->formatRequest($r)),
             'request_history' => $requestHistory->map(fn ($r) => $this->formatRequest($r)),
@@ -54,6 +52,69 @@ class MigrationController extends Controller
                 ? $user->last_migration_at->addDays(MigrationRequest::MIGRATION_COOLDOWN_DAYS)->toISOString()
                 : null,
         ]);
+    }
+
+    /**
+     * Get the user's current home location.
+     */
+    protected function getCurrentHome($user): ?array
+    {
+        $type = $user->home_location_type;
+        $id = $user->home_location_id;
+
+        if (! $type || ! $id) {
+            // Fall back to legacy home_village_id
+            if ($user->home_village_id) {
+                $village = Village::find($user->home_village_id);
+                if ($village) {
+                    return [
+                        'type' => 'village',
+                        'id' => $village->id,
+                        'name' => $village->name,
+                        'barony' => $village->barony?->name,
+                        'kingdom' => $village->barony?->kingdom?->name,
+                    ];
+                }
+            }
+
+            return null;
+        }
+
+        $location = match ($type) {
+            'village' => Village::find($id),
+            'town' => Town::find($id),
+            'barony' => Barony::find($id),
+            'kingdom' => Kingdom::find($id),
+            default => null,
+        };
+
+        if (! $location) {
+            return null;
+        }
+
+        $barony = match ($type) {
+            'village' => $location->barony,
+            'town' => $location->barony,
+            'barony' => $location,
+            'kingdom' => null,
+            default => null,
+        };
+
+        $kingdom = match ($type) {
+            'village' => $location->barony?->kingdom,
+            'town' => $location->barony?->kingdom,
+            'barony' => $location->kingdom,
+            'kingdom' => $location,
+            default => null,
+        };
+
+        return [
+            'type' => $type,
+            'id' => $location->id,
+            'name' => $location->name,
+            'barony' => $barony?->name,
+            'kingdom' => $kingdom?->name,
+        ];
     }
 
     /**
