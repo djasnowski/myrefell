@@ -664,17 +664,9 @@ export function ArcheryGame({
                                 </p>
                             </div>
                         </div>
-                        <div className="space-y-2 mb-6 text-xs">
-                            <p className="text-stone-400">Scoring:</p>
-                            <div className="flex justify-center gap-4">
-                                <span className="text-red-400">Bullseye ~100</span>
-                                <span className="text-amber-400">Hit ~50</span>
-                                <span className="text-stone-500">Miss 0</span>
-                            </div>
-                        </div>
                         <button
                             onClick={startGame}
-                            className="rounded-lg border-2 border-amber-500 bg-amber-600 px-8 py-3 font-pixel text-lg text-white transition hover:bg-amber-500 hover:scale-105"
+                            className="mt-6 rounded-lg border-2 border-amber-500 bg-amber-600 px-8 py-3 font-pixel text-lg text-white transition hover:bg-amber-500 hover:scale-105"
                         >
                             Start Game
                         </button>
