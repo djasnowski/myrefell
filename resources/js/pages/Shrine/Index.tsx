@@ -778,7 +778,10 @@ export default function ShrineIndex() {
                                 <div className="rounded-lg border border-dashed border-stone-600 p-4 text-center">
                                     <Church className="mx-auto mb-2 h-8 w-8 text-stone-600" />
                                     <p className="font-pixel text-xs text-stone-500">
-                                        A village Priest can offer more blessings at better prices!
+                                        A Priest can bless you at full duration and normal cost.
+                                    </p>
+                                    <p className="font-pixel text-xs text-stone-600 mt-1">
+                                        Self-prayer costs 50% more and lasts 25% shorter.
                                     </p>
                                 </div>
                             </div>
