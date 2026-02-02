@@ -114,6 +114,7 @@ class GatheringController extends Controller
     {
         $request->validate([
             'activity' => 'required|string|in:mining,fishing,woodcutting,herblore',
+            'resource' => 'nullable|string|max:100',
         ]);
 
         $location = $village ?? $town;
@@ -124,7 +125,8 @@ class GatheringController extends Controller
             $user,
             $request->input('activity'),
             $locationType ?? $user->current_location_type,
-            $location?->id ?? $user->current_location_id
+            $location?->id ?? $user->current_location_id,
+            $request->input('resource')
         );
 
         return response()->json($result, $result['success'] ? 200 : 422);

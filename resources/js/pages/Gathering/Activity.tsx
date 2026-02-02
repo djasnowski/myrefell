@@ -106,6 +106,7 @@ export default function GatheringActivity() {
     const [loading, setLoading] = useState(false);
     const [currentEnergy, setCurrentEnergy] = useState(player_energy);
     const [cooldown, setCooldown] = useState(0);
+    const [selectedResource, setSelectedResource] = useState<string | null>(null);
     const cooldownInterval = useRef<NodeJS.Timeout | null>(null);
 
     const Icon = activityIcons[activity.id] || Pickaxe;
@@ -170,7 +171,10 @@ export default function GatheringActivity() {
                             .querySelector('meta[name="csrf-token"]')
                             ?.getAttribute("content") || "",
                 },
-                body: JSON.stringify({ activity: activity.id }),
+                body: JSON.stringify({
+                    activity: activity.id,
+                    resource: selectedResource,
+                }),
             });
 
             const data: GatherResult = await response.json();
@@ -317,7 +321,9 @@ export default function GatheringActivity() {
                                 ) : (
                                     <>
                                         <Icon className="h-6 w-6" />
-                                        Gather
+                                        {selectedResource
+                                            ? `Gather ${selectedResource}`
+                                            : "Gather (Random)"}
                                     </>
                                 )}
                             </span>
@@ -326,25 +332,42 @@ export default function GatheringActivity() {
 
                     {/* Available Resources */}
                     <div className="rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
-                        <h2 className="mb-4 font-pixel text-sm text-stone-300">
-                            Available Resources
-                        </h2>
+                        <div className="mb-4 flex items-center justify-between">
+                            <h2 className="font-pixel text-sm text-stone-300">Select Resource</h2>
+                            {selectedResource && (
+                                <button
+                                    onClick={() => setSelectedResource(null)}
+                                    className="font-pixel text-[10px] text-stone-500 hover:text-stone-300"
+                                >
+                                    Clear (Random)
+                                </button>
+                            )}
+                        </div>
                         <div className="grid gap-2">
                             {activity.resources.map((resource) => (
-                                <div
+                                <button
                                     key={resource.name}
-                                    className="flex items-center justify-between rounded-lg bg-stone-900/50 px-3 py-2"
+                                    onClick={() => setSelectedResource(resource.name)}
+                                    className={`flex items-center justify-between rounded-lg px-3 py-2 transition ${
+                                        selectedResource === resource.name
+                                            ? "border-2 border-amber-500 bg-amber-900/30"
+                                            : "border border-transparent bg-stone-900/50 hover:bg-stone-800/50"
+                                    }`}
                                 >
                                     <div className="flex items-center gap-2">
-                                        <Package className="h-4 w-4 text-stone-400" />
-                                        <span className="font-pixel text-xs text-stone-300">
+                                        <Package
+                                            className={`h-4 w-4 ${selectedResource === resource.name ? "text-amber-400" : "text-stone-400"}`}
+                                        />
+                                        <span
+                                            className={`font-pixel text-xs ${selectedResource === resource.name ? "text-amber-300" : "text-stone-300"}`}
+                                        >
                                             {resource.name}
                                         </span>
                                     </div>
                                     <span className="font-pixel text-[10px] text-amber-400">
                                         +{activity.base_xp + resource.xp_bonus} XP
                                     </span>
-                                </div>
+                                </button>
                             ))}
                         </div>
 

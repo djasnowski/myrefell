@@ -174,7 +174,7 @@ class GatheringService
     /**
      * Perform a gathering action.
      */
-    public function gather(User $user, string $activity, ?string $locationType = null, ?int $locationId = null): array
+    public function gather(User $user, string $activity, ?string $locationType = null, ?int $locationId = null, ?string $resourceName = null): array
     {
         $config = self::ACTIVITIES[$activity] ?? null;
 
@@ -216,8 +216,19 @@ class GatheringService
             ];
         }
 
-        // Select a resource using weighted random
-        $resource = $this->selectWeightedResource($availableResources);
+        // If a specific resource is requested, find it; otherwise use weighted random
+        if ($resourceName) {
+            $resource = $this->findResourceByName($activity, $resourceName, $skillLevel);
+            if (! $resource) {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid resource or level too low.',
+                ];
+            }
+        } else {
+            $resource = $this->selectWeightedResource($availableResources);
+        }
+
         $item = Item::where('name', $resource['name'])->first();
 
         if (! $item) {
@@ -382,6 +393,25 @@ class GatheringService
         }
 
         return $resources[0];
+    }
+
+    /**
+     * Find a specific resource by name if player meets level requirement.
+     */
+    protected function findResourceByName(string $activity, string $resourceName, int $skillLevel): ?array
+    {
+        $config = self::ACTIVITIES[$activity] ?? null;
+        if (! $config) {
+            return null;
+        }
+
+        foreach ($config['resources'] as $resource) {
+            if ($resource['name'] === $resourceName && $skillLevel >= $resource['min_level']) {
+                return $resource;
+            }
+        }
+
+        return null;
     }
 
     /**
