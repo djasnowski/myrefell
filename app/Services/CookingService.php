@@ -43,6 +43,16 @@ class CookingService
             ],
             'output' => ['name' => 'Cooked Shrimp', 'quantity' => 1],
         ],
+        'cooked_sardine' => [
+            'name' => 'Cooked Sardine',
+            'required_level' => 5,
+            'xp_reward' => 12,
+            'energy_cost' => 2,
+            'materials' => [
+                ['name' => 'Raw Sardine', 'quantity' => 1],
+            ],
+            'output' => ['name' => 'Cooked Sardine', 'quantity' => 1],
+        ],
         'cooked_trout' => [
             'name' => 'Cooked Trout',
             'required_level' => 10,
@@ -72,6 +82,16 @@ class CookingService
                 ['name' => 'Raw Lobster', 'quantity' => 1],
             ],
             'output' => ['name' => 'Cooked Lobster', 'quantity' => 1],
+        ],
+        'cooked_swordfish' => [
+            'name' => 'Cooked Swordfish',
+            'required_level' => 40,
+            'xp_reward' => 60,
+            'energy_cost' => 4,
+            'materials' => [
+                ['name' => 'Raw Swordfish', 'quantity' => 1],
+            ],
+            'output' => ['name' => 'Cooked Swordfish', 'quantity' => 1],
         ],
         'cooked_meat' => [
             'name' => 'Cooked Meat',

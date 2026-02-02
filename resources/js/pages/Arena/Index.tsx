@@ -179,7 +179,7 @@ export default function ArenaIndex() {
                                     </li>
                                     <li className="flex items-start gap-2">
                                         <Trophy className="mt-0.5 h-3 w-3 shrink-0 text-amber-500" />
-                                        Bullseye: 100 pts, Hit: 50 pts
+                                        Score based on accuracy (10-100 pts)
                                     </li>
                                 </ul>
                             </div>
@@ -190,11 +190,15 @@ export default function ArenaIndex() {
                                 <div className="space-y-1 text-xs">
                                     <div className="flex justify-between">
                                         <span className="text-red-400">Bullseye</span>
-                                        <span className="text-stone-300">100 pts</span>
+                                        <span className="text-stone-300">~100 pts</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-amber-400">Hit</span>
-                                        <span className="text-stone-300">50 pts</span>
+                                        <span className="text-amber-400">Inner Ring</span>
+                                        <span className="text-stone-300">~80 pts</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-amber-400/70">Outer Ring</span>
+                                        <span className="text-stone-300">~40 pts</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-stone-500">Miss</span>

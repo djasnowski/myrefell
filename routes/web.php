@@ -230,6 +230,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Minigames
     Route::get('minigames', [MinigameController::class, 'index'])->name('minigames.index');
     Route::post('minigames/spin', [MinigameController::class, 'spin'])->name('minigames.spin');
+    Route::post('minigames/submit-score', [MinigameController::class, 'submitScore'])->name('minigames.submit-score');
+    Route::get('minigames/{minigame}/leaderboards', [MinigameController::class, 'getLeaderboards'])->name('minigames.leaderboards');
+    Route::post('minigames/collect-rewards', [MinigameController::class, 'collectRewards'])->name('minigames.collect-rewards');
+    Route::get('minigames/pending-rewards', [MinigameController::class, 'getPendingRewards'])->name('minigames.pending-rewards');
 
     // Travel
     Route::get('travel', [MapController::class, 'index'])->name('travel.index');

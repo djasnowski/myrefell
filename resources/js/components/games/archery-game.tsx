@@ -1,11 +1,25 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import gsap from "gsap";
+import { MotionPathPlugin } from "gsap/MotionPathPlugin";
+
+// Register GSAP plugins at module load time
+gsap.registerPlugin(MotionPathPlugin);
 
 interface ArcheryGameProps {
     onScore?: (score: number, type: "bullseye" | "hit" | "miss") => void;
+    onGameEnd?: (finalScore: number) => void;
+    disabled?: boolean;
+    maxArrows?: number;
 }
 
-export function ArcheryGame({ onScore }: ArcheryGameProps) {
+const DEFAULT_MAX_ARROWS = 10;
+
+export function ArcheryGame({
+    onScore,
+    onGameEnd,
+    disabled = false,
+    maxArrows = DEFAULT_MAX_ARROWS,
+}: ArcheryGameProps) {
     const svgRef = useRef<SVGSVGElement>(null);
     const arrowsRef = useRef<SVGGElement>(null);
     const arcRef = useRef<SVGPathElement>(null);
@@ -16,17 +30,47 @@ export function ArcheryGame({ onScore }: ArcheryGameProps) {
     const missRef = useRef<SVGGElement>(null);
     const hitRef = useRef<SVGGElement>(null);
     const bullseyeRef = useRef<SVGGElement>(null);
+    const targetRef = useRef<SVGGElement>(null);
 
     const [arrowCount, setArrowCount] = useState(0);
     const [score, setScore] = useState(0);
     const [lastShot, setLastShot] = useState<"bullseye" | "hit" | "miss" | null>(null);
+    const [lastShotScore, setLastShotScore] = useState(0);
+    const [gameEnded, setGameEnded] = useState(false);
 
     const randomAngleRef = useRef(0);
     const isDrawingRef = useRef(false);
+    const targetOffsetRef = useRef(0); // Track target's Y offset for hit detection
+    const gameEndedRef = useRef(false); // Prevent double-calling onGameEnd
+    const scoreRef = useRef(0); // Track score for endGame callback
+
+    // End game handler
+    const endGame = useCallback(() => {
+        if (gameEndedRef.current) return;
+        gameEndedRef.current = true;
+        setGameEnded(true);
+        onGameEnd?.(scoreRef.current);
+    }, [onGameEnd]);
+
+    // Update scoreRef when score changes
+    useEffect(() => {
+        scoreRef.current = score;
+    }, [score]);
+
+    // Check for max arrows reached
+    useEffect(() => {
+        if (arrowCount >= maxArrows && !gameEndedRef.current) {
+            // Small delay to let the final shot animation complete
+            const timeout = setTimeout(() => {
+                endGame();
+            }, 1000);
+            return () => clearTimeout(timeout);
+        }
+    }, [arrowCount, maxArrows, endGame]);
 
     // Constants
-    const target = { x: 900, y: 249.5 };
-    const lineSegment = { x1: 875, y1: 280, x2: 925, y2: 220 };
+    const baseTarget = { x: 900, y: 249.5 };
+    const baseLineSegment = { x1: 875, y1: 280, x2: 925, y2: 220 };
     const pivot = { x: 100, y: 250 };
 
     const getMouseSVG = useCallback((e: MouseEvent | React.MouseEvent) => {
@@ -132,12 +176,12 @@ export function ArcheryGame({ onScore }: ArcheryGameProps) {
                 duration: 0.3,
             });
 
-            const radius = distance * 9;
+            const radius = distance * 7.5;
             const offset = {
                 x: Math.cos(bowAngle) * radius,
                 y: Math.sin(bowAngle) * radius,
             };
-            const arcWidth = offset.x * 3;
+            const arcWidth = offset.x * 2.8;
 
             gsap.to(arcRef.current, {
                 attr: {
@@ -181,78 +225,201 @@ export function ArcheryGame({ onScore }: ArcheryGameProps) {
         arrowsRef.current.appendChild(newArrow);
         setArrowCount((prev) => prev + 1);
 
-        // Get arc path data for bezier animation
-        const arcD = arcRef.current.getAttribute("d") || "";
-        const pathData = parsePathToBezier(arcD);
+        // Get path length for position calculation
+        const arcPath = arcRef.current;
+        const pathLength = arcPath.getTotalLength();
+        let hasHit = false;
+        const duration = 0.5;
+        const startTime = Date.now();
 
-        if (pathData.length > 0) {
-            const tl = gsap.timeline({
-                onComplete: () => {
-                    setLastShot("miss");
-                    showMessage(missRef);
-                    onScore?.(0, "miss");
-                },
+        // Set initial position
+        const startPoint = arcPath.getPointAtLength(0);
+        const nextPoint = arcPath.getPointAtLength(1);
+        const startAngle = Math.atan2(nextPoint.y - startPoint.y, nextPoint.x - startPoint.x);
+
+        gsap.set(newArrow, {
+            x: startPoint.x,
+            y: startPoint.y,
+            rotation: (startAngle * 180) / Math.PI,
+        });
+
+        // Custom animation that manually updates position along path
+        const animate = () => {
+            if (hasHit) return;
+
+            const elapsed = (Date.now() - startTime) / 1000;
+            const progress = Math.min(elapsed / duration, 1);
+
+            // Get position on path
+            const currentLength = progress * pathLength;
+            const point = arcPath.getPointAtLength(currentLength);
+
+            // Get rotation from path tangent
+            const nextLength = Math.min(currentLength + 1, pathLength);
+            const tangentPoint = arcPath.getPointAtLength(nextLength);
+            const angle = Math.atan2(tangentPoint.y - point.y, tangentPoint.x - point.x);
+            const rotationDeg = (angle * 180) / Math.PI;
+
+            // Update arrow position and rotation
+            gsap.set(newArrow, {
+                x: point.x,
+                y: point.y,
+                rotation: rotationDeg,
             });
 
-            // Animate along the path manually
-            tl.to(newArrow, {
-                duration: 0.5,
-                ease: "none",
-                motionPath: {
-                    path: arcRef.current,
-                    align: arcRef.current,
-                    autoRotate: true,
-                    alignOrigin: [0, 0.5],
-                },
-                onUpdate: function () {
-                    // Hit test during animation
-                    const transform = (newArrow as any)._gsap;
-                    if (transform) {
-                        const bbox = newArrow.getBoundingClientRect();
-                        const svgPoint = getMouseSVG({
-                            clientX: bbox.x + bbox.width / 2,
-                            clientY: bbox.y + bbox.height / 2,
-                        } as MouseEvent);
+            // Hit test - account for moving target
+            const currentTargetOffset = targetOffsetRef.current;
+            const currentLineSegment = {
+                x1: baseLineSegment.x1,
+                y1: baseLineSegment.y1 + currentTargetOffset,
+                x2: baseLineSegment.x2,
+                y2: baseLineSegment.y2 + currentTargetOffset,
+            };
+            const currentTarget = {
+                x: baseTarget.x,
+                y: baseTarget.y + currentTargetOffset,
+            };
 
-                        const rotation = transform.rotation || 0;
-                        const radians = (rotation * Math.PI) / 180;
-                        const arrowSegment = {
-                            x1: svgPoint.x,
-                            y1: svgPoint.y,
-                            x2: Math.cos(radians) * 60 + svgPoint.x,
-                            y2: Math.sin(radians) * 60 + svgPoint.y,
-                        };
+            const arrowSegment = {
+                x1: point.x,
+                y1: point.y,
+                x2: Math.cos(angle) * 60 + point.x,
+                y2: Math.sin(angle) * 60 + point.y,
+            };
 
-                        const intersection = getIntersection(arrowSegment, lineSegment);
-                        if (intersection && intersection.segment1 && intersection.segment2) {
-                            tl.pause();
-                            const dx = intersection.x - target.x;
-                            const dy = intersection.y - target.y;
-                            const distance = Math.sqrt(dx * dx + dy * dy);
+            const intersection = getIntersection(arrowSegment, currentLineSegment);
+            if (intersection && intersection.segment1 && intersection.segment2) {
+                hasHit = true;
 
-                            if (distance < 7) {
-                                setLastShot("bullseye");
-                                setScore((prev) => prev + 100);
-                                showMessage(bullseyeRef);
-                                onScore?.(100, "bullseye");
-                            } else {
-                                setLastShot("hit");
-                                setScore((prev) => prev + 50);
-                                showMessage(hitRef);
-                                onScore?.(50, "hit");
-                            }
-                        }
-                    }
-                },
-            });
-        }
+                const dx = intersection.x - currentTarget.x;
+                const dy = intersection.y - currentTarget.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                // Attach arrow to target so it moves with it
+                // Adjust position to be relative to target (subtract offset)
+                if (targetRef.current) {
+                    gsap.set(newArrow, {
+                        x: point.x,
+                        y: point.y - currentTargetOffset, // Position relative to target
+                    });
+                    targetRef.current.appendChild(newArrow);
+                }
+
+                // Calculate score based on distance from center (max ~35 pixels)
+                const hitScore = Math.max(10, Math.round(100 - distance * 2.5));
+
+                // Create floating score text
+                if (svgRef.current) {
+                    const scoreText = document.createElementNS(
+                        "http://www.w3.org/2000/svg",
+                        "text",
+                    );
+                    scoreText.textContent = `+${hitScore}`;
+                    scoreText.setAttribute("x", String(baseTarget.x));
+                    scoreText.setAttribute("y", String(baseTarget.y + currentTargetOffset - 50));
+                    scoreText.setAttribute("text-anchor", "middle");
+                    scoreText.setAttribute("font-family", "monospace");
+                    scoreText.setAttribute("font-size", "24");
+                    scoreText.setAttribute("font-weight", "bold");
+
+                    // Color: green (high score) to yellow (low score)
+                    // Score ranges from ~10 to 100, normalize to 0-1
+                    const scoreRatio = (hitScore - 10) / 90;
+                    // Interpolate: yellow (rgb 234, 179, 8) to green (rgb 34, 197, 94)
+                    const r = Math.round(234 - scoreRatio * (234 - 34));
+                    const g = Math.round(179 + scoreRatio * (197 - 179));
+                    const b = Math.round(8 + scoreRatio * (94 - 8));
+                    scoreText.setAttribute("fill", `rgb(${r}, ${g}, ${b})`);
+
+                    svgRef.current.appendChild(scoreText);
+
+                    // Animate floating up and fading out
+                    gsap.fromTo(
+                        scoreText,
+                        { opacity: 0, y: baseTarget.y + currentTargetOffset - 50 },
+                        {
+                            opacity: 1,
+                            y: baseTarget.y + currentTargetOffset - 100,
+                            duration: 0.3,
+                            ease: "power2.out",
+                            onComplete: () => {
+                                gsap.to(scoreText, {
+                                    opacity: 0,
+                                    y: baseTarget.y + currentTargetOffset - 150,
+                                    duration: 0.5,
+                                    delay: 0.3,
+                                    ease: "power2.in",
+                                    onComplete: () => {
+                                        scoreText.remove();
+                                    },
+                                });
+                            },
+                        },
+                    );
+                }
+
+                if (distance < 7) {
+                    setLastShot("bullseye");
+                    setLastShotScore(hitScore);
+                    setScore((prev) => prev + hitScore);
+                    showMessage(bullseyeRef);
+                    onScore?.(hitScore, "bullseye");
+                } else {
+                    setLastShot("hit");
+                    setLastShotScore(hitScore);
+                    setScore((prev) => prev + hitScore);
+                    showMessage(hitRef);
+                    onScore?.(hitScore, "hit");
+                }
+                return;
+            }
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                // Animation complete - miss, arrow falls to ground
+                const groundY = 340;
+                const finalX = point.x;
+                const finalY = point.y;
+
+                // Animate arrow falling to ground
+                gsap.to(newArrow, {
+                    y: groundY,
+                    rotation: 45 + Math.random() * 30, // Random angle pointing into ground
+                    duration: 0.4,
+                    ease: "power2.in",
+                });
+
+                setLastShot("miss");
+                setLastShotScore(0);
+                showMessage(missRef);
+                onScore?.(0, "miss");
+            }
+        };
+
+        requestAnimationFrame(animate);
 
         gsap.to(arcRef.current, { opacity: 0, duration: 0.3 });
         gsap.set(arrowUseRef.current, { opacity: 0 });
-    }, [getIntersection, getMouseSVG, onScore, showMessage]);
+    }, [getIntersection, onScore, showMessage]);
 
     const draw = useCallback(
         (e: MouseEvent | React.MouseEvent) => {
+            // Only allow drawing if clicking near the bow string area
+            const point = getMouseSVG(e);
+            const bowStringX = 88;
+            const bowStringYMin = 190;
+            const bowStringYMax = 310;
+            const clickRadius = 40; // How close to the string you need to click
+
+            const nearString =
+                point.x >= bowStringX - clickRadius &&
+                point.x <= bowStringX + clickRadius &&
+                point.y >= bowStringYMin &&
+                point.y <= bowStringYMax;
+
+            if (!nearString) return;
+
             randomAngleRef.current = Math.random() * Math.PI * 0.03 - 0.015;
             isDrawingRef.current = true;
 
@@ -262,14 +429,8 @@ export function ArcheryGame({ onScore }: ArcheryGameProps) {
 
             aim(e);
         },
-        [aim],
+        [aim, getMouseSVG],
     );
-
-    // Simple path parser for bezier (simplified version)
-    const parsePathToBezier = (d: string) => {
-        // This is a simplified parser - the actual animation uses motionPath
-        return d ? [{ x: 100, y: 250 }] : [];
-    };
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
@@ -296,10 +457,31 @@ export function ArcheryGame({ onScore }: ArcheryGameProps) {
         };
     }, [aim, loose]);
 
-    // Register GSAP plugins
+    // Animate target moving up and down
     useEffect(() => {
-        // MotionPathPlugin is part of GSAP core now
-        gsap.registerPlugin();
+        if (!targetRef.current) return;
+
+        const tl = gsap.timeline({ repeat: -1, yoyo: true });
+        tl.to(targetRef.current, {
+            y: -60,
+            duration: 1.5,
+            ease: "sine.inOut",
+            onUpdate: function () {
+                targetOffsetRef.current = gsap.getProperty(targetRef.current, "y") as number;
+            },
+        });
+        tl.to(targetRef.current, {
+            y: 60,
+            duration: 1.5,
+            ease: "sine.inOut",
+            onUpdate: function () {
+                targetOffsetRef.current = gsap.getProperty(targetRef.current, "y") as number;
+            },
+        });
+
+        return () => {
+            tl.kill();
+        };
     }, []);
 
     return (
@@ -325,21 +507,34 @@ export function ArcheryGame({ onScore }: ArcheryGameProps) {
                         }`}
                     >
                         <span className="font-pixel text-xs text-stone-400">Last Shot</span>
-                        <p
-                            className={`font-pixel text-lg ${
-                                lastShot === "bullseye"
-                                    ? "text-red-400"
+                        <div className="flex items-baseline gap-2">
+                            <p
+                                className={`font-pixel text-lg ${
+                                    lastShot === "bullseye"
+                                        ? "text-red-400"
+                                        : lastShot === "hit"
+                                          ? "text-amber-400"
+                                          : "text-stone-400"
+                                }`}
+                            >
+                                {lastShot === "bullseye"
+                                    ? "BULLSEYE!"
                                     : lastShot === "hit"
-                                      ? "text-amber-400"
-                                      : "text-stone-400"
-                            }`}
-                        >
-                            {lastShot === "bullseye"
-                                ? "BULLSEYE!"
-                                : lastShot === "hit"
-                                  ? "HIT!"
-                                  : "MISS"}
-                        </p>
+                                      ? "HIT!"
+                                      : "MISS"}
+                            </p>
+                            <span
+                                className={`font-pixel text-sm ${
+                                    lastShot === "bullseye"
+                                        ? "text-red-300"
+                                        : lastShot === "hit"
+                                          ? "text-amber-300"
+                                          : "text-stone-500"
+                                }`}
+                            >
+                                +{lastShotScore}
+                            </span>
+                        </div>
                     </div>
                 )}
             </div>
@@ -390,7 +585,7 @@ export function ArcheryGame({ onScore }: ArcheryGameProps) {
                 </defs>
 
                 {/* Target */}
-                <g id="target">
+                <g ref={targetRef} id="target">
                     <path
                         fill="#FFF"
                         d="M924.2,274.2c-21.5,21.5-45.9,19.9-52,3.2c-4.4-12.1,2.4-29.2,14.2-41c11.8-11.8,29-18.6,41-14.2 C944.1,228.3,945.7,252.8,924.2,274.2z"
