@@ -226,7 +226,7 @@ function TravelProgressOverlay({ status, isDev }: { status: TravelStatus; isDev:
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-stone-950/70 backdrop-blur-sm">
+        <div className="absolute inset-0 z-[100] flex items-center justify-center bg-stone-950/70 backdrop-blur-sm">
             <div className="rounded-xl border-2 border-amber-600/50 bg-stone-900/95 p-6 shadow-2xl">
                 <div className="flex flex-col items-center gap-4">
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-900/30">
