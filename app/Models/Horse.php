@@ -36,8 +36,9 @@ class Horse extends Model
     public const LOCATION_HIERARCHY = [
         'village' => 1,
         'town' => 2,
-        'castle' => 3,
-        'kingdom' => 4,
+        'barony' => 3,
+        'duchy' => 4,
+        'kingdom' => 5,
     ];
 
     public function playerHorses(): HasMany
