@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Barony;
+use App\Models\Duchy;
 use App\Models\Election;
 use App\Models\ElectionCandidate;
 use App\Models\ElectionVote;
@@ -347,7 +349,7 @@ class ElectionService
         $title = $this->getTitleForElection($election);
         $tier = $this->getTierForElection($election);
 
-        // Revoke any existing title of this type for this domain
+        // Revoke any existing title of this type for this domain (previous holder)
         PlayerTitle::where('domain_type', $election->domain_type)
             ->where('domain_id', $election->domain_id)
             ->where('title', $title)
@@ -356,6 +358,20 @@ class ElectionService
                 'is_active' => false,
                 'revoked_at' => now(),
             ]);
+
+        // Revoke ALL existing titles held by this user (one title at a time rule)
+        $existingTitles = PlayerTitle::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->get();
+
+        foreach ($existingTitles as $existingTitle) {
+            // Clear domain leadership for the old title
+            $this->clearDomainLeadershipForTitle($existingTitle);
+
+            $existingTitle->is_active = false;
+            $existingTitle->revoked_at = now();
+            $existingTitle->save();
+        }
 
         // Create the new title
         $playerTitle = PlayerTitle::create([
@@ -375,12 +391,10 @@ class ElectionService
             $this->legitimacyService->handleElectionResult($playerTitle, $election);
         }
 
-        // Update user's primary title if this is higher tier
-        if ($tier > ($user->title_tier ?? 0)) {
-            $user->primary_title = $title;
-            $user->title_tier = $tier;
-            $user->save();
-        }
+        // Always set as primary title (it's the only one)
+        $user->primary_title = $title;
+        $user->title_tier = $tier;
+        $user->save();
 
         // Update domain's leadership reference if applicable
         $this->updateDomainLeadership($election, $user);
@@ -510,6 +524,44 @@ class ElectionService
         if ($election->election_type === 'king' && $domain instanceof Kingdom) {
             $domain->king_user_id = $winner->id;
             $domain->save();
+        }
+    }
+
+    /**
+     * Clear domain leadership reference when a title is revoked.
+     */
+    protected function clearDomainLeadershipForTitle(PlayerTitle $playerTitle): void
+    {
+        if ($playerTitle->title === 'mayor' && $playerTitle->domain_type === 'town') {
+            $town = Town::find($playerTitle->domain_id);
+            if ($town && $town->mayor_user_id === $playerTitle->user_id) {
+                $town->mayor_user_id = null;
+                $town->save();
+            }
+        }
+
+        if ($playerTitle->title === 'baron' && $playerTitle->domain_type === 'barony') {
+            $barony = Barony::find($playerTitle->domain_id);
+            if ($barony && $barony->baron_user_id === $playerTitle->user_id) {
+                $barony->baron_user_id = null;
+                $barony->save();
+            }
+        }
+
+        if ($playerTitle->title === 'duke' && $playerTitle->domain_type === 'duchy') {
+            $duchy = Duchy::find($playerTitle->domain_id);
+            if ($duchy && $duchy->duke_user_id === $playerTitle->user_id) {
+                $duchy->duke_user_id = null;
+                $duchy->save();
+            }
+        }
+
+        if ($playerTitle->title === 'king' && $playerTitle->domain_type === 'kingdom') {
+            $kingdom = Kingdom::find($playerTitle->domain_id);
+            if ($kingdom && $kingdom->king_user_id === $playerTitle->user_id) {
+                $kingdom->king_user_id = null;
+                $kingdom->save();
+            }
         }
     }
 
