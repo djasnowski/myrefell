@@ -300,9 +300,37 @@ export function NavLocation() {
     // Show traveling status
     if (travel?.is_traveling) {
         return (
-            <div className="px-2">
-                <TravelingIndicator key={travel.remaining_seconds} travel={travel} />
-            </div>
+            <>
+                <div className="px-2">
+                    <TravelingIndicator key={travel.remaining_seconds} travel={travel} />
+                </div>
+
+                {/* Player Actions - Still visible during travel */}
+                <SidebarGroup className="px-2 py-0">
+                    <SidebarMenu>
+                        {playerActions.map((item) => (
+                            <SidebarMenuItem key={item.title}>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={isCurrentUrl(item.href)}
+                                    tooltip={{ children: item.description || item.title }}
+                                >
+                                    <Link href={item.href} prefetch>
+                                        <item.icon className="h-4 w-4" />
+                                        <span className="flex-1">{item.title}</span>
+                                        {item.showDot && (
+                                            <span className="h-2 w-2 rounded-full bg-lime-500" />
+                                        )}
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        ))}
+                    </SidebarMenu>
+                </SidebarGroup>
+
+                {/* Favorite Services - Still visible during travel */}
+                <NavFavorites />
+            </>
         );
     }
 
