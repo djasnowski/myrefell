@@ -336,84 +336,104 @@ export default function MigrationIndex() {
                                     Who needs to approve your move depends on where you're going.
                                 </DialogDescription>
                             </DialogHeader>
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 {/* Village */}
                                 <div className="rounded-lg border border-green-600/30 bg-green-900/10 p-3">
-                                    <div className="mb-2 flex items-center gap-2">
+                                    <div className="mb-1 flex items-center gap-2">
                                         <TreePine className="h-4 w-4 text-green-400" />
                                         <span className="font-pixel text-sm text-green-300">
-                                            Village
+                                            Moving to a Village
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-2 text-xs text-stone-400">
+                                    <p className="mb-2 text-xs text-stone-400">
+                                        The village Elder approves first. If there's a Baron, they
+                                        approve next. If there's a King, they approve last. Missing
+                                        roles are skipped.
+                                    </p>
+                                    <div className="flex items-center gap-2 text-xs text-stone-500">
                                         <span className="rounded bg-stone-800 px-2 py-1">
                                             Elder
                                         </span>
-                                        <ArrowRight className="h-3 w-3" />
-                                        <span className="rounded bg-stone-800 px-2 py-1">
-                                            Baron
+                                        <ArrowRight className="h-3 w-3 text-stone-600" />
+                                        <span className="rounded bg-stone-800 px-2 py-1 opacity-60">
+                                            Baron?
                                         </span>
-                                        <ArrowRight className="h-3 w-3" />
-                                        <span className="rounded bg-stone-800 px-2 py-1">King</span>
+                                        <ArrowRight className="h-3 w-3 text-stone-600" />
+                                        <span className="rounded bg-stone-800 px-2 py-1 opacity-60">
+                                            King?
+                                        </span>
                                     </div>
                                 </div>
 
                                 {/* Town */}
                                 <div className="rounded-lg border border-blue-600/30 bg-blue-900/10 p-3">
-                                    <div className="mb-2 flex items-center gap-2">
+                                    <div className="mb-1 flex items-center gap-2">
                                         <Building2 className="h-4 w-4 text-blue-400" />
                                         <span className="font-pixel text-sm text-blue-300">
-                                            Town
+                                            Moving to a Town
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-2 text-xs text-stone-400">
+                                    <p className="mb-2 text-xs text-stone-400">
+                                        Only requires the Mayor's approval. If there's no Mayor,
+                                        you're automatically approved.
+                                    </p>
+                                    <div className="flex items-center gap-2 text-xs text-stone-500">
                                         <span className="rounded bg-stone-800 px-2 py-1">
                                             Mayor
                                         </span>
-                                        <span className="text-stone-500">(only)</span>
                                     </div>
                                 </div>
 
                                 {/* Barony */}
                                 <div className="rounded-lg border border-purple-600/30 bg-purple-900/10 p-3">
-                                    <div className="mb-2 flex items-center gap-2">
+                                    <div className="mb-1 flex items-center gap-2">
                                         <Shield className="h-4 w-4 text-purple-400" />
                                         <span className="font-pixel text-sm text-purple-300">
-                                            Barony
+                                            Moving to a Barony
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-2 text-xs text-stone-400">
+                                    <p className="mb-2 text-xs text-stone-400">
+                                        The Baron approves first. If there's a King, they approve
+                                        last. Missing roles are skipped.
+                                    </p>
+                                    <div className="flex items-center gap-2 text-xs text-stone-500">
                                         <span className="rounded bg-stone-800 px-2 py-1">
                                             Baron
                                         </span>
-                                        <ArrowRight className="h-3 w-3" />
-                                        <span className="rounded bg-stone-800 px-2 py-1">King</span>
+                                        <ArrowRight className="h-3 w-3 text-stone-600" />
+                                        <span className="rounded bg-stone-800 px-2 py-1 opacity-60">
+                                            King?
+                                        </span>
                                     </div>
                                 </div>
 
                                 {/* Kingdom */}
                                 <div className="rounded-lg border border-amber-600/30 bg-amber-900/10 p-3">
-                                    <div className="mb-2 flex items-center gap-2">
+                                    <div className="mb-1 flex items-center gap-2">
                                         <Castle className="h-4 w-4 text-amber-400" />
                                         <span className="font-pixel text-sm text-amber-300">
-                                            Kingdom
+                                            Moving to a Kingdom
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-2 text-xs text-stone-400">
+                                    <p className="mb-2 text-xs text-stone-400">
+                                        Only requires the King's approval. Settling at kingdom level
+                                        means you're not tied to any specific location.
+                                    </p>
+                                    <div className="flex items-center gap-2 text-xs text-stone-500">
                                         <span className="rounded bg-stone-800 px-2 py-1">King</span>
-                                        <span className="text-stone-500">(only)</span>
                                     </div>
                                 </div>
 
                                 {/* Auto-approve note */}
-                                <div className="rounded-lg border border-stone-600/30 bg-stone-800/30 p-3">
-                                    <p className="text-xs text-stone-400">
+                                <div className="rounded-lg border border-green-600/30 bg-green-900/10 p-3">
+                                    <p className="text-xs text-stone-300">
                                         <Check className="mr-1 inline h-3 w-3 text-green-400" />
-                                        <strong className="text-stone-300">
-                                            Auto-approved:
-                                        </strong>{" "}
-                                        If a position is vacant (no Elder, Mayor, Baron, or King),
-                                        that approval step is automatically granted.
+                                        <strong>Vacant positions = instant approval!</strong>
+                                    </p>
+                                    <p className="mt-1 text-xs text-stone-400">
+                                        If there's no Elder, Mayor, Baron, or King at your
+                                        destination, that step is skipped and automatically
+                                        approved. You only wait for positions that are filled.
                                     </p>
                                 </div>
                             </div>
