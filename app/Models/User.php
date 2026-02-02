@@ -337,6 +337,24 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get max HP from hitpoints skill level.
+     */
+    public function getMaxHpAttribute(): int
+    {
+        return $this->getSkillLevel('hitpoints');
+    }
+
+    /**
+     * Get HP capped at max HP.
+     */
+    public function getHpAttribute(): int
+    {
+        $rawHp = $this->attributes['hp'] ?? $this->getSkillLevel('hitpoints');
+
+        return min($rawHp, $this->max_hp);
+    }
+
+    /**
      * Get a specific skill level.
      */
     public function getSkillLevel(string $skillName): int
