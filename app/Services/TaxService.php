@@ -524,8 +524,8 @@ class TaxService
 
         // Check for appropriate role permission
         $requiredPermission = match ($locationType) {
-            'barony' => 'configure_taxes',
-            'kingdom' => 'configure_taxes',
+            'barony' => 'set_taxes',
+            'kingdom' => 'set_kingdom_taxes',
             default => null,
         };
 
