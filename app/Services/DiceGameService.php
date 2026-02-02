@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\DB;
 
 class DiceGameService
 {
+    public function __construct(
+        private BlessingEffectService $blessingEffects
+    ) {}
     /**
      * Cooldown in minutes between games (production).
      */
@@ -72,9 +75,18 @@ class DiceGameService
             ->first();
 
         if ($lastGame) {
-            $cooldownEnds = app()->environment('local')
-                ? $lastGame->created_at->addSeconds(self::COOLDOWN_SECONDS_DEV)
-                : $lastGame->created_at->addMinutes(self::COOLDOWN_MINUTES);
+            // Check for Blessing of Haste effect
+            $hasteCooldown = $this->blessingEffects->getActionCooldownSeconds($user);
+
+            if ($hasteCooldown !== null) {
+                // Use blessing cooldown (in seconds)
+                $cooldownEnds = $lastGame->created_at->addSeconds($hasteCooldown);
+            } elseif (app()->environment('local')) {
+                $cooldownEnds = $lastGame->created_at->addSeconds(self::COOLDOWN_SECONDS_DEV);
+            } else {
+                $cooldownEnds = $lastGame->created_at->addMinutes(self::COOLDOWN_MINUTES);
+            }
+
             if ($cooldownEnds->isFuture()) {
                 return [
                     'can_play' => false,
@@ -99,6 +111,7 @@ class DiceGameService
             'cooldown_ends' => null,
         ];
     }
+
 
     /**
      * Play a dice game.

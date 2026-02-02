@@ -11,8 +11,6 @@ use App\Models\ReligionMember;
 use App\Models\ReligiousAction;
 use App\Models\ReligiousStructure;
 use App\Models\User;
-use Carbon\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class ReligionService
@@ -20,7 +18,8 @@ class ReligionService
     public function __construct(
         protected EnergyService $energyService,
         protected BankService $bankService,
-        protected DailyTaskService $dailyTaskService
+        protected DailyTaskService $dailyTaskService,
+        protected BlessingEffectService $blessingEffects
     ) {}
 
     /**
@@ -54,7 +53,7 @@ class ReligionService
                 }
 
                 // Check member limit for cults
-                if ($religion->isCult() && !$religion->canAcceptMembers()) {
+                if ($religion->isCult() && ! $religion->canAcceptMembers()) {
                     return false;
                 }
 
@@ -146,7 +145,7 @@ class ReligionService
 
         // Validate belief count
         if (count($beliefIds) > Religion::CULT_BELIEF_LIMIT) {
-            return ['success' => false, 'message' => 'Cults can only have ' . Religion::CULT_BELIEF_LIMIT . ' beliefs.'];
+            return ['success' => false, 'message' => 'Cults can only have '.Religion::CULT_BELIEF_LIMIT.' beliefs.'];
         }
 
         // Validate beliefs exist
@@ -193,7 +192,7 @@ class ReligionService
     public function joinReligion(User $player, int $religionId): array
     {
         $religion = Religion::find($religionId);
-        if (!$religion) {
+        if (! $religion) {
             return ['success' => false, 'message' => 'Religion not found.'];
         }
 
@@ -203,7 +202,7 @@ class ReligionService
         }
 
         // Check member limit
-        if (!$religion->canAcceptMembers()) {
+        if (! $religion->canAcceptMembers()) {
             return ['success' => false, 'message' => 'This cult has reached its member limit.'];
         }
 
@@ -243,7 +242,7 @@ class ReligionService
             ->where('religion_id', $religionId)
             ->first();
 
-        if (!$membership) {
+        if (! $membership) {
             return ['success' => false, 'message' => 'You are not a member of this religion.'];
         }
 
@@ -269,7 +268,7 @@ class ReligionService
     public function performAction(User $player, int $religionId, string $actionType, ?int $structureId = null, int $donationAmount = 0): array
     {
         // Validate action type
-        if (!in_array($actionType, ReligiousAction::ACTIONS)) {
+        if (! in_array($actionType, ReligiousAction::ACTIONS)) {
             return ['success' => false, 'message' => 'Invalid action type.'];
         }
 
@@ -278,17 +277,17 @@ class ReligionService
             ->where('religion_id', $religionId)
             ->first();
 
-        if (!$membership) {
+        if (! $membership) {
             return ['success' => false, 'message' => 'You are not a member of this religion.'];
         }
 
         // Check energy
         $energyCost = ReligiousAction::getEnergyCost($actionType);
-        if ($energyCost > 0 && !$this->energyService->hasEnergy($player, $energyCost)) {
+        if ($energyCost > 0 && ! $this->energyService->hasEnergy($player, $energyCost)) {
             return ['success' => false, 'message' => "You need {$energyCost} energy to perform this action."];
         }
 
-        // Check cooldown
+        // Check cooldown (considering Blessing of Haste)
         $cooldown = ReligiousAction::getCooldown($actionType);
         if ($cooldown > 0) {
             $lastAction = ReligiousAction::where('user_id', $player->id)
@@ -297,9 +296,21 @@ class ReligionService
                 ->latest()
                 ->first();
 
-            if ($lastAction && $lastAction->created_at->addMinutes($cooldown)->isFuture()) {
-                $remaining = $lastAction->created_at->addMinutes($cooldown)->diffForHumans();
-                return ['success' => false, 'message' => "You can perform this action again {$remaining}."];
+            if ($lastAction) {
+                // Check for Blessing of Haste
+                $hasteCooldown = $this->blessingEffects->getActionCooldownSeconds($player);
+
+                if ($hasteCooldown !== null) {
+                    $availableAt = $lastAction->created_at->addSeconds($hasteCooldown);
+                } else {
+                    $availableAt = $lastAction->created_at->addMinutes($cooldown);
+                }
+
+                if ($availableAt->isFuture()) {
+                    $remaining = $availableAt->diffForHumans();
+
+                    return ['success' => false, 'message' => "You can perform this action again {$remaining}."];
+                }
             }
         }
 
@@ -425,7 +436,7 @@ class ReligionService
     public function promoteToPriest(User $player, int $memberId): array
     {
         $targetMember = ReligionMember::with('religion')->find($memberId);
-        if (!$targetMember) {
+        if (! $targetMember) {
             return ['success' => false, 'message' => 'Member not found.'];
         }
 
@@ -434,16 +445,17 @@ class ReligionService
             ->where('religion_id', $targetMember->religion_id)
             ->first();
 
-        if (!$playerMembership || !$playerMembership->isProphet()) {
+        if (! $playerMembership || ! $playerMembership->isProphet()) {
             return ['success' => false, 'message' => 'Only the prophet can promote members.'];
         }
 
         // Check if target can be promoted
-        if (!$targetMember->canBePromoted()) {
-            if (!$targetMember->isFollower()) {
+        if (! $targetMember->canBePromoted()) {
+            if (! $targetMember->isFollower()) {
                 return ['success' => false, 'message' => 'This member cannot be promoted further.'];
             }
-            return ['success' => false, 'message' => 'This member needs ' . ReligionMember::PRIEST_DEVOTION_REQUIREMENT . ' devotion to be promoted.'];
+
+            return ['success' => false, 'message' => 'This member needs '.ReligionMember::PRIEST_DEVOTION_REQUIREMENT.' devotion to be promoted.'];
         }
 
         return DB::transaction(function () use ($targetMember) {
@@ -462,7 +474,7 @@ class ReligionService
     public function demoteToFollower(User $player, int $memberId): array
     {
         $targetMember = ReligionMember::with(['religion', 'user'])->find($memberId);
-        if (!$targetMember) {
+        if (! $targetMember) {
             return ['success' => false, 'message' => 'Member not found.'];
         }
 
@@ -471,11 +483,11 @@ class ReligionService
             ->where('religion_id', $targetMember->religion_id)
             ->first();
 
-        if (!$playerMembership || !$playerMembership->isProphet()) {
+        if (! $playerMembership || ! $playerMembership->isProphet()) {
             return ['success' => false, 'message' => 'Only the prophet can demote members.'];
         }
 
-        if (!$targetMember->isPriest()) {
+        if (! $targetMember->isPriest()) {
             return ['success' => false, 'message' => 'This member is not a priest.'];
         }
 
@@ -495,7 +507,7 @@ class ReligionService
     public function convertToReligion(User $player, int $religionId): array
     {
         $religion = Religion::with('members')->find($religionId);
-        if (!$religion) {
+        if (! $religion) {
             return ['success' => false, 'message' => 'Religion not found.'];
         }
 
@@ -504,7 +516,7 @@ class ReligionService
             ->where('religion_id', $religionId)
             ->first();
 
-        if (!$membership || !$membership->isProphet()) {
+        if (! $membership || ! $membership->isProphet()) {
             return ['success' => false, 'message' => 'Only the prophet can convert the cult to a religion.'];
         }
 
@@ -512,13 +524,13 @@ class ReligionService
             return ['success' => false, 'message' => 'This is already a full religion.'];
         }
 
-        if (!$religion->canConvertToReligion()) {
-            return ['success' => false, 'message' => 'You need at least ' . Religion::RELIGION_MIN_MEMBERS . ' members to become a religion.'];
+        if (! $religion->canConvertToReligion()) {
+            return ['success' => false, 'message' => 'You need at least '.Religion::RELIGION_MIN_MEMBERS.' members to become a religion.'];
         }
 
         // Check gold
         if ($player->gold < Religion::RELIGION_FOUNDING_COST) {
-            return ['success' => false, 'message' => 'You need ' . number_format(Religion::RELIGION_FOUNDING_COST) . ' gold to convert to a religion.'];
+            return ['success' => false, 'message' => 'You need '.number_format(Religion::RELIGION_FOUNDING_COST).' gold to convert to a religion.'];
         }
 
         return DB::transaction(function () use ($player, $religion) {
@@ -545,7 +557,7 @@ class ReligionService
     public function buildStructure(User $player, int $religionId, string $structureType, string $locationType, int $locationId): array
     {
         $religion = Religion::find($religionId);
-        if (!$religion) {
+        if (! $religion) {
             return ['success' => false, 'message' => 'Religion not found.'];
         }
 
@@ -554,23 +566,23 @@ class ReligionService
             ->where('religion_id', $religionId)
             ->first();
 
-        if (!$membership || $membership->isFollower()) {
+        if (! $membership || $membership->isFollower()) {
             return ['success' => false, 'message' => 'Only priests and prophets can build structures.'];
         }
 
         // Validate structure type
-        if (!in_array($structureType, ReligiousStructure::TYPES)) {
+        if (! in_array($structureType, ReligiousStructure::TYPES)) {
             return ['success' => false, 'message' => 'Invalid structure type.'];
         }
 
         // Get build cost
         $cost = ReligiousStructure::getBuildCost($structureType);
         if ($player->gold < $cost) {
-            return ['success' => false, 'message' => "You need " . number_format($cost) . " gold to build a " . $structureType . "."];
+            return ['success' => false, 'message' => 'You need '.number_format($cost).' gold to build a '.$structureType.'.'];
         }
 
         // Validate location
-        if (!in_array($locationType, ['village', 'barony', 'kingdom'])) {
+        if (! in_array($locationType, ['village', 'barony', 'kingdom'])) {
             return ['success' => false, 'message' => 'Invalid location type.'];
         }
 
@@ -595,7 +607,7 @@ class ReligionService
                 'location_type' => $locationType,
                 'location_id' => $locationId,
                 'structure_type' => $structureType,
-                'name' => "{$religion->name} " . ucfirst($structureType),
+                'name' => "{$religion->name} ".ucfirst($structureType),
                 'build_cost' => $cost,
                 'built_by_id' => $player->id,
             ]);
@@ -614,13 +626,13 @@ class ReligionService
     public function setKingdomReligionStatus(User $player, int $kingdomId, int $religionId, string $status): array
     {
         // Validate status
-        if (!in_array($status, KingdomReligion::STATUSES)) {
+        if (! in_array($status, KingdomReligion::STATUSES)) {
             return ['success' => false, 'message' => 'Invalid status.'];
         }
 
         // Check if player is the king
         $kingdom = Kingdom::find($kingdomId);
-        if (!$kingdom) {
+        if (! $kingdom) {
             return ['success' => false, 'message' => 'Kingdom not found.'];
         }
 
@@ -628,7 +640,7 @@ class ReligionService
         // For now, we'll check if they have the king role through the role system
 
         $religion = Religion::find($religionId);
-        if (!$religion) {
+        if (! $religion) {
             return ['success' => false, 'message' => 'Religion not found.'];
         }
 
@@ -720,7 +732,7 @@ class ReligionService
     public function makePublic(User $player, int $religionId): array
     {
         $religion = Religion::find($religionId);
-        if (!$religion) {
+        if (! $religion) {
             return ['success' => false, 'message' => 'Religion not found.'];
         }
 
@@ -728,7 +740,7 @@ class ReligionService
             ->where('religion_id', $religionId)
             ->first();
 
-        if (!$membership || !$membership->isProphet()) {
+        if (! $membership || ! $membership->isProphet()) {
             return ['success' => false, 'message' => 'Only the prophet can change visibility.'];
         }
 

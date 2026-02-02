@@ -31,8 +31,62 @@ class JobService
 
     public function __construct(
         protected EnergyService $energyService,
-        protected InventoryService $inventoryService
+        protected InventoryService $inventoryService,
+        protected BlessingEffectService $blessingEffects
     ) {}
+
+    /**
+     * Check if player can work, considering Blessing of Haste.
+     */
+    public function canWorkWithBlessing(User $user, PlayerEmployment $employment): bool
+    {
+        if (! $employment->isEmployed()) {
+            return false;
+        }
+
+        if (! $employment->last_worked_at) {
+            return true;
+        }
+
+        $cooldownSeconds = $this->getCooldownSeconds($user, $employment);
+        $availableAt = $employment->last_worked_at->addSeconds($cooldownSeconds);
+
+        return $availableAt->isPast();
+    }
+
+    /**
+     * Get the effective cooldown in seconds, considering Blessing of Haste.
+     */
+    protected function getCooldownSeconds(User $user, PlayerEmployment $employment): float
+    {
+        $hasteCooldown = $this->blessingEffects->getActionCooldownSeconds($user);
+
+        if ($hasteCooldown !== null) {
+            return $hasteCooldown;
+        }
+
+        // Normal cooldown in seconds
+        return $employment->job->cooldown_minutes * 60;
+    }
+
+    /**
+     * Get seconds until next work available, considering Blessing of Haste.
+     */
+    public function getSecondsUntilWork(User $user, PlayerEmployment $employment): int
+    {
+        if (! $employment->last_worked_at) {
+            return 0;
+        }
+
+        $cooldownSeconds = $this->getCooldownSeconds($user, $employment);
+        $availableAt = $employment->last_worked_at->addSeconds($cooldownSeconds);
+
+        if ($availableAt->isPast()) {
+            return 0;
+        }
+
+        return (int) now()->diffInSeconds($availableAt, false);
+    }
 
     /**
      * Check if a user is settled at a location (can apply for jobs there).
@@ -123,7 +177,7 @@ class JobService
             ->where('status', PlayerEmployment::STATUS_EMPLOYED)
             ->with('job')
             ->get()
-            ->map(fn ($pe) => $this->formatEmployment($pe));
+            ->map(fn ($pe) => $this->formatEmployment($pe, $user));
     }
 
     /**
@@ -137,7 +191,7 @@ class JobService
             ->where('status', PlayerEmployment::STATUS_EMPLOYED)
             ->with('job')
             ->get()
-            ->map(fn ($pe) => $this->formatEmployment($pe));
+            ->map(fn ($pe) => $this->formatEmployment($pe, $user));
     }
 
     /**
@@ -428,13 +482,16 @@ class JobService
             ];
         }
 
-        // Check cooldown
-        if (! $employment->canWork()) {
-            $minutes = $employment->minutes_until_work;
+        // Check cooldown (considering Blessing of Haste)
+        if (! $this->canWorkWithBlessing($user, $employment)) {
+            $seconds = $this->getSecondsUntilWork($user, $employment);
+            $timeText = $seconds < 60
+                ? "{$seconds} seconds"
+                : ((int) ceil($seconds / 60)).' minutes';
 
             return [
                 'success' => false,
-                'message' => "You need to rest. You can work again in {$minutes} minutes.",
+                'message' => "You need to rest. You can work again in {$timeText}.",
             ];
         }
 
@@ -604,9 +661,10 @@ class JobService
     /**
      * Format an employment record for display.
      */
-    protected function formatEmployment(PlayerEmployment $employment): array
+    protected function formatEmployment(PlayerEmployment $employment, User $user): array
     {
         $job = $employment->job;
+        $secondsUntilWork = $this->getSecondsUntilWork($user, $employment);
 
         return [
             'id' => $employment->id,
@@ -628,8 +686,9 @@ class JobService
             'last_worked_at' => $employment->last_worked_at?->toISOString(),
             'times_worked' => $employment->times_worked,
             'total_earnings' => $employment->total_earnings,
-            'can_work' => $employment->canWork(),
-            'minutes_until_work' => $employment->minutes_until_work,
+            'can_work' => $this->canWorkWithBlessing($user, $employment),
+            'seconds_until_work' => $secondsUntilWork,
+            'minutes_until_work' => (int) ceil($secondsUntilWork / 60),
         ];
     }
 
