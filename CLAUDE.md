@@ -69,6 +69,12 @@ Use **pnpm** instead of npm where possible (e.g., `pnpm install`, `pnpm run dev`
 
 When asked to update something in the database, **always use local** (via Sail) unless explicitly told to do it on production.
 
+## Production Deployments
+
+**NEVER SSH into production to run `git pull`.** This project uses Laravel Forge which handles deployments automatically when code is pushed to the repository. Just `git push` and Forge will deploy.
+
+The only time to SSH into production is for specific tasks like running tinker commands or migrations when explicitly requested.
+
 ===
 
 <laravel-boost-guidelines>
