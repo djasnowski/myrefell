@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Barony;
+use App\Models\Kingdom;
 use App\Models\LocationActivityLog;
 use App\Models\LocationNpc;
 use App\Models\MigrationRequest;
@@ -92,6 +94,9 @@ class MigrationService
 
             // Resign from the role
             $userRole->resign();
+
+            // Clear the ruler user_id on the location model
+            $this->clearLocationRulerIfNeeded($userRole);
 
             // Reactivate NPC if no player holds the role
             $playerHoldsRole = PlayerRole::where('role_id', $roleId)
@@ -560,5 +565,38 @@ class MigrationService
             ->with(['fromVillage', 'toVillage'])
             ->orderBy('created_at', 'desc')
             ->get();
+    }
+
+    /**
+     * Clear the ruler user_id on the location model when a ruler resigns due to migration.
+     */
+    protected function clearLocationRulerIfNeeded(PlayerRole $playerRole): void
+    {
+        $role = $playerRole->role;
+        if (! $role) {
+            return;
+        }
+
+        $rulerColumn = match ($role->slug) {
+            'king' => 'king_user_id',
+            'baron' => 'baron_user_id',
+            'mayor' => 'mayor_user_id',
+            default => null,
+        };
+
+        if (! $rulerColumn) {
+            return;
+        }
+
+        $model = match ($playerRole->location_type) {
+            'kingdom' => Kingdom::find($playerRole->location_id),
+            'barony' => Barony::find($playerRole->location_id),
+            'town' => Town::find($playerRole->location_id),
+            default => null,
+        };
+
+        if ($model) {
+            $model->update([$rulerColumn => null]);
+        }
     }
 }
