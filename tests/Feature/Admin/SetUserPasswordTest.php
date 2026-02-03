@@ -63,5 +63,5 @@ test('unauthenticated user cannot set password', function () {
         'password' => 'newpassword123',
         'password_confirmation' => 'newpassword123',
     ])
-        ->assertRedirect('/sign-in');
+        ->assertRedirect(route('login'));
 });

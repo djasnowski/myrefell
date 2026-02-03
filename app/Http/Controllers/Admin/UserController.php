@@ -28,9 +28,12 @@ class UserController extends Controller
             ->withCount('bans')
             ->with('latestBan');
 
-        // Search by username (case-insensitive)
+        // Search by username or email (case-insensitive)
         if ($search = $request->input('search')) {
-            $query->where('username', 'ilike', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('username', 'ilike', "%{$search}%")
+                    ->orWhere('email', 'ilike', "%{$search}%");
+            });
         }
 
         // Filter by banned status
