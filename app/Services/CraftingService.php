@@ -255,8 +255,10 @@ class CraftingService
 
     /**
      * Get available recipes grouped by category.
+     *
+     * @param  array|null  $allowedCategories  If set, only include these categories
      */
-    public function getAvailableRecipes(User $user): array
+    public function getAvailableRecipes(User $user, ?array $allowedCategories = null): array
     {
         if (! $this->canCraft($user)) {
             return [];
@@ -265,6 +267,13 @@ class CraftingService
         $categories = [];
 
         foreach (self::getAllRecipeDefinitions() as $id => $recipe) {
+            $category = $recipe['category'];
+
+            // Filter by allowed categories if specified
+            if ($allowedCategories !== null && ! in_array($category, $allowedCategories)) {
+                continue;
+            }
+
             $skillLevel = $user->getSkillLevel($recipe['skill']);
 
             // Check if player meets level requirement
@@ -272,7 +281,6 @@ class CraftingService
                 continue;
             }
 
-            $category = $recipe['category'];
             if (! isset($categories[$category])) {
                 $categories[$category] = [];
             }
@@ -285,13 +293,21 @@ class CraftingService
 
     /**
      * Get all recipes regardless of level (for discovery view).
+     *
+     * @param  array|null  $allowedCategories  If set, only include these categories
      */
-    public function getAllRecipes(User $user): array
+    public function getAllRecipes(User $user, ?array $allowedCategories = null): array
     {
         $categories = [];
 
         foreach (self::getAllRecipeDefinitions() as $id => $recipe) {
             $category = $recipe['category'];
+
+            // Filter by allowed categories if specified
+            if ($allowedCategories !== null && ! in_array($category, $allowedCategories)) {
+                continue;
+            }
+
             if (! isset($categories[$category])) {
                 $categories[$category] = [];
             }
@@ -578,10 +594,13 @@ class CraftingService
         $craftingXpProgress = $craftingSkill?->getXpProgress() ?? 0;
         $craftingXpToNext = $craftingSkill?->xpToNextLevel() ?? 60;
 
+        // Workshop only shows crafting category (not smithing/smelting)
+        $craftingOnly = ['crafting'];
+
         return [
             'can_craft' => true,
-            'recipes' => $this->getAvailableRecipes($user),
-            'all_recipes' => $this->getAllRecipes($user),
+            'recipes' => $this->getAvailableRecipes($user, $craftingOnly),
+            'all_recipes' => $this->getAllRecipes($user, $craftingOnly),
             'player_energy' => $user->energy,
             'max_energy' => $user->max_energy,
             'free_slots' => $this->inventoryService->freeSlots($user),
