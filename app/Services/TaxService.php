@@ -6,8 +6,10 @@ use App\Models\Barony;
 use App\Models\Kingdom;
 use App\Models\LocationTreasury;
 use App\Models\PlayerRole;
+use App\Models\Role;
 use App\Models\SalaryPayment;
 use App\Models\TaxCollection;
+use App\Models\Town;
 use App\Models\TreasuryTransaction;
 use App\Models\User;
 use App\Models\Village;
@@ -68,7 +70,7 @@ class TaxService
     {
         $location = $this->resolveLocation($locationType, $locationId);
 
-        if (!$location) {
+        if (! $location) {
             return self::DEFAULT_TAX_RATE;
         }
 
@@ -85,7 +87,7 @@ class TaxService
      */
     public function setTaxRate(string $locationType, int $locationId, float $rate, User $setBy): array
     {
-        if (!in_array($locationType, ['barony', 'kingdom'])) {
+        if (! in_array($locationType, ['barony', 'kingdom'])) {
             return [
                 'success' => false,
                 'message' => 'Tax rates can only be set for baronies and kingdoms.',
@@ -95,13 +97,13 @@ class TaxService
         if ($rate < self::MIN_TAX_RATE || $rate > self::MAX_TAX_RATE) {
             return [
                 'success' => false,
-                'message' => 'Tax rate must be between ' . self::MIN_TAX_RATE . '% and ' . self::MAX_TAX_RATE . '%.',
+                'message' => 'Tax rate must be between '.self::MIN_TAX_RATE.'% and '.self::MAX_TAX_RATE.'%.',
             ];
         }
 
         $location = $this->resolveLocation($locationType, $locationId);
 
-        if (!$location) {
+        if (! $location) {
             return [
                 'success' => false,
                 'message' => 'Location not found.',
@@ -110,7 +112,7 @@ class TaxService
 
         $location->update(['tax_rate' => $rate]);
 
-        Log::info("Tax rate updated", [
+        Log::info('Tax rate updated', [
             'location_type' => $locationType,
             'location_id' => $locationId,
             'new_rate' => $rate,
@@ -167,7 +169,7 @@ class TaxService
             ->chunk(100, function ($users) use ($taxPeriod, &$playersTaxed, &$totalCollected) {
                 foreach ($users as $user) {
                     $village = $user->homeVillage;
-                    if (!$village) {
+                    if (! $village) {
                         continue;
                     }
 
@@ -198,7 +200,7 @@ class TaxService
                         'receiver_location_id' => $village->id,
                         'amount' => $taxAmount,
                         'tax_type' => TaxCollection::TYPE_INCOME,
-                        'description' => "Daily income tax",
+                        'description' => 'Daily income tax',
                         'tax_period' => $taxPeriod,
                     ]);
 
@@ -227,7 +229,7 @@ class TaxService
                 ->chunk(100, function ($villages) use ($taxPeriod, &$totalCollected) {
                     foreach ($villages as $village) {
                         $barony = $village->barony;
-                        if (!$barony) {
+                        if (! $barony) {
                             continue;
                         }
 
@@ -238,15 +240,20 @@ class TaxService
 
                         // Use barony's tax rate
                         $taxRate = $this->getTaxRate('barony', $barony->id);
-                        $taxAmount = (int) floor($villageTreasury->balance * ($taxRate / 100));
+                        $baseTaxAmount = (int) floor($villageTreasury->balance * ($taxRate / 100));
 
-                        if ($taxAmount <= 0) {
+                        if ($baseTaxAmount <= 0) {
                             continue;
                         }
 
+                        // Apply Town Clerk efficiency bonus (if any)
+                        $efficiencyMultiplier = $this->getTownClerkEfficiencyBonus($barony->id);
+                        $taxAmount = (int) floor($baseTaxAmount * $efficiencyMultiplier);
+                        $bonusAmount = $taxAmount - $baseTaxAmount;
+
                         // Withdraw from village
                         $villageTreasury->withdraw(
-                            $taxAmount,
+                            $baseTaxAmount,
                             TreasuryTransaction::TYPE_UPSTREAM_TAX,
                             "Upstream tax to {$barony->name}",
                             null,
@@ -254,12 +261,15 @@ class TaxService
                             $barony->id
                         );
 
-                        // Deposit to barony
+                        // Deposit to barony (includes efficiency bonus)
                         $baronyTreasury = $this->getTreasury('barony', $barony->id);
+                        $description = $bonusAmount > 0
+                            ? "Tax from {$village->name} (+{$bonusAmount}g clerk bonus)"
+                            : "Tax from {$village->name}";
                         $baronyTreasury->deposit(
                             $taxAmount,
                             TreasuryTransaction::TYPE_TAX_INCOME,
-                            "Tax from {$village->name}",
+                            $description,
                             null,
                             'village',
                             $village->id
@@ -273,7 +283,7 @@ class TaxService
                             'receiver_location_id' => $barony->id,
                             'amount' => $taxAmount,
                             'tax_type' => TaxCollection::TYPE_UPSTREAM,
-                            'description' => "Village upstream tax",
+                            'description' => $bonusAmount > 0 ? "Village upstream tax (+{$bonusAmount}g efficiency bonus)" : 'Village upstream tax',
                             'tax_period' => $taxPeriod,
                         ]);
 
@@ -287,7 +297,7 @@ class TaxService
                 ->chunk(100, function ($baronies) use ($taxPeriod, &$totalCollected) {
                     foreach ($baronies as $barony) {
                         $kingdom = $barony->kingdom;
-                        if (!$kingdom) {
+                        if (! $kingdom) {
                             continue;
                         }
 
@@ -333,7 +343,7 @@ class TaxService
                             'receiver_location_id' => $kingdom->id,
                             'amount' => $taxAmount,
                             'tax_type' => TaxCollection::TYPE_UPSTREAM,
-                            'description' => "Barony upstream tax",
+                            'description' => 'Barony upstream tax',
                             'tax_period' => $taxPeriod,
                         ]);
 
@@ -381,13 +391,14 @@ class TaxService
 
                         // Check if treasury has enough funds
                         if ($treasury->balance < $salary) {
-                            Log::warning("Insufficient treasury funds for salary", [
+                            Log::warning('Insufficient treasury funds for salary', [
                                 'player_role_id' => $playerRole->id,
                                 'user_id' => $playerRole->user_id,
                                 'salary' => $salary,
                                 'treasury_balance' => $treasury->balance,
                             ]);
                             $results['failed']++;
+
                             continue;
                         }
 
@@ -505,7 +516,7 @@ class TaxService
             default => null,
         };
 
-        if (!$modelClass) {
+        if (! $modelClass) {
             return null;
         }
 
@@ -529,7 +540,7 @@ class TaxService
             default => null,
         };
 
-        if (!$requiredPermission) {
+        if (! $requiredPermission) {
             return false;
         }
 
@@ -542,5 +553,44 @@ class TaxService
                 $q->whereJsonContains('permissions', $requiredPermission);
             })
             ->exists();
+    }
+
+    /**
+     * Get the total Town Clerk efficiency bonus for a barony.
+     * This bonus increases tax collection from villages.
+     *
+     * @return float The multiplier (e.g., 1.10 for 10% bonus)
+     */
+    protected function getTownClerkEfficiencyBonus(int $baronyId): float
+    {
+        // Get the town_clerk role
+        $townClerkRole = Role::where('slug', 'town_clerk')->first();
+        if (! $townClerkRole) {
+            return 1.0;
+        }
+
+        // Find all towns in this barony with an active town clerk
+        $towns = Town::where('barony_id', $baronyId)->pluck('id');
+        if ($towns->isEmpty()) {
+            return 1.0;
+        }
+
+        // Get active town clerks in these towns
+        $activeClerk = PlayerRole::active()
+            ->where('role_id', $townClerkRole->id)
+            ->where('location_type', 'town')
+            ->whereIn('location_id', $towns)
+            ->with('role')
+            ->first();
+
+        if (! $activeClerk) {
+            return 1.0;
+        }
+
+        // Get the efficiency bonus from the role
+        $efficiencyBonus = $activeClerk->role->getBonus('efficiency_bonus', 0);
+
+        // Convert percentage to multiplier (e.g., 10 -> 1.10)
+        return 1.0 + ($efficiencyBonus / 100);
     }
 }
