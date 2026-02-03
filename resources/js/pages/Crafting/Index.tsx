@@ -49,6 +49,7 @@ interface CraftResult {
     xp_awarded?: number;
     skill?: string;
     leveled_up?: boolean;
+    new_level?: number;
     energy_remaining?: number;
 }
 
@@ -243,12 +244,13 @@ export default function CraftingIndex() {
             if (data.success && data.item) {
                 gameToast.success(`Crafted ${data.item.quantity}x ${data.item.name}`, {
                     xp: data.xp_awarded,
-                    levelUp: data.leveled_up
-                        ? {
-                              skill: data.skill || "Crafting",
-                              level: (crafting_info.crafting_level || 0) + 1,
-                          }
-                        : undefined,
+                    levelUp:
+                        data.leveled_up && data.new_level
+                            ? {
+                                  skill: data.skill || "Crafting",
+                                  level: data.new_level,
+                              }
+                            : undefined,
                 });
                 startCooldown();
             } else if (!data.success) {

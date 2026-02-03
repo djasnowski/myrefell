@@ -695,7 +695,8 @@ class ThievingService
         $skill = $user->skills()->where('skill_name', 'thieving')->first();
         $oldLevel = $skill->level;
         $skill->addXp($xpAwarded);
-        $leveledUp = $skill->fresh()->level > $oldLevel;
+        $newLevel = $skill->fresh()->level;
+        $leveledUp = $newLevel > $oldLevel;
 
         // Chance to get loot item (40% base chance)
         $lootItem = null;
@@ -752,6 +753,7 @@ class ThievingService
             'gold_stolen' => $goldStolen,
             'xp_awarded' => $xpAwarded,
             'leveled_up' => $leveledUp,
+            'new_level' => $leveledUp ? $newLevel : null,
             'loot' => $lootItem,
             'energy_remaining' => $user->fresh()->energy,
             'gold_remaining' => $user->fresh()->gold,

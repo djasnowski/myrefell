@@ -12,7 +12,7 @@ import {
     X,
     Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { gameToast } from "@/components/ui/game-toast";
 import { DiceGame } from "@/components/games/dice-game";
@@ -58,6 +58,7 @@ interface CookResult {
     item?: { name: string; quantity: number };
     xp_awarded?: number;
     leveled_up?: boolean;
+    new_level?: number;
     energy_remaining?: number;
 }
 
@@ -241,6 +242,11 @@ export default function TavernIndex() {
     const [currentEnergy, setCurrentEnergy] = useState(player.energy);
     const [selectedDiceGame, setSelectedDiceGame] = useState<GameType | null>(null);
 
+    // Sync energy when props change (after router.reload)
+    useEffect(() => {
+        setCurrentEnergy(player.energy);
+    }, [player.energy]);
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
         ...(location
@@ -290,9 +296,10 @@ export default function TavernIndex() {
             if (data.success && data.item) {
                 gameToast.success(`Cooked ${data.item.quantity}x ${data.item.name}`, {
                     xp: data.xp_awarded,
-                    levelUp: data.leveled_up
-                        ? { skill: "Cooking", level: (cooking.cooking_level || 0) + 1 }
-                        : undefined,
+                    levelUp:
+                        data.leveled_up && data.new_level
+                            ? { skill: "Cooking", level: data.new_level }
+                            : undefined,
                 });
             } else if (!data.success) {
                 gameToast.error(data.message);

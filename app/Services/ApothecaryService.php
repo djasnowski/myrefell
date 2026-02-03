@@ -543,7 +543,8 @@ class ApothecaryService
 
             $oldLevel = $skill->level;
             $skill->addXp($xpAwarded);
-            $leveledUp = $skill->fresh()->level > $oldLevel;
+            $newLevel = $skill->fresh()->level;
+            $leveledUp = $newLevel > $oldLevel;
 
             if (isset($recipe['task_type'])) {
                 $this->dailyTaskService->recordProgress(
@@ -593,6 +594,7 @@ class ApothecaryService
                 'xp_awarded' => $xpAwarded,
                 'skill' => $recipe['skill'],
                 'leveled_up' => $leveledUp,
+                'new_level' => $leveledUp ? $newLevel : null,
                 'energy_remaining' => $user->fresh()->energy,
                 'role_bonus' => $bonusQuantity > 0,
                 'stockpile_contribution' => $contribution,

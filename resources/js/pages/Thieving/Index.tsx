@@ -57,6 +57,7 @@ interface ThieveResult {
     gold_lost?: number;
     xp_awarded?: number;
     leveled_up?: boolean;
+    new_level?: number;
     loot?: { name: string; quantity: number };
     energy_remaining?: number;
     gold_remaining?: number;
@@ -323,9 +324,10 @@ export default function ThievingIndex() {
                 }
                 gameToast.success(message, {
                     xp: data.xp_awarded,
-                    levelUp: data.leveled_up
-                        ? { skill: "Thieving", level: (thieving_info.thieving_level || 0) + 1 }
-                        : undefined,
+                    levelUp:
+                        data.leveled_up && data.new_level
+                            ? { skill: "Thieving", level: data.new_level }
+                            : undefined,
                 });
                 startCooldown();
             } else if (data.caught) {

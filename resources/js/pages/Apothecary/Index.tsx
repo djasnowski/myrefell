@@ -70,6 +70,7 @@ interface BrewResult {
     xp_awarded?: number;
     skill?: string;
     leveled_up?: boolean;
+    new_level?: number;
     energy_remaining?: number;
 }
 
@@ -284,12 +285,13 @@ export default function ApothecaryIndex() {
             if (data.success && data.item) {
                 gameToast.success(`Brewed ${data.item.quantity}x ${data.item.name}`, {
                     xp: data.xp_awarded,
-                    levelUp: data.leveled_up
-                        ? {
-                              skill: data.skill || "Herblore",
-                              level: (brewing_info.herblore_level || 0) + 1,
-                          }
-                        : undefined,
+                    levelUp:
+                        data.leveled_up && data.new_level
+                            ? {
+                                  skill: data.skill || "Herblore",
+                                  level: data.new_level,
+                              }
+                            : undefined,
                 });
                 startCooldown();
             } else if (!data.success) {
