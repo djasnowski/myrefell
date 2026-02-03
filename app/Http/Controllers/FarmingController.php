@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CropType;
 use App\Models\FarmPlot;
+use App\Models\PlayerBlessing;
 use App\Models\PlayerRole;
 use App\Models\PlayerSkill;
 use App\Models\Role;
@@ -311,6 +312,26 @@ class FarmingController extends Controller
         $bonuses = $this->getMasterFarmerBonuses($user, $plot->location_type, $plot->location_id);
         $yieldBonus = $bonuses['crop_yield_bonus'] ?? 0;
         $xpBonus = $bonuses['farming_xp_bonus'] ?? 0;
+        $hasMasterFarmerBonus = $yieldBonus > 0 || $xpBonus > 0;
+
+        // Check for active blessings with farming_xp_bonus
+        $blessingXpBonus = 0;
+        $hasBlessingBonus = false;
+        $activeBlessings = PlayerBlessing::where('user_id', $user->id)
+            ->where('expires_at', '>', now())
+            ->with('blessingType')
+            ->get();
+
+        foreach ($activeBlessings as $blessing) {
+            $effects = $blessing->blessingType->effects ?? [];
+            if (isset($effects['farming_xp_bonus'])) {
+                $blessingXpBonus += $effects['farming_xp_bonus'];
+                $hasBlessingBonus = true;
+            }
+        }
+
+        // Combine XP bonuses
+        $xpBonus += $blessingXpBonus;
 
         // Apply yield bonus
         $bonusYield = 0;
@@ -366,8 +387,11 @@ class FarmingController extends Controller
             $message = "You harvested {$totalYield} {$result['item_name']}! (+{$totalXp} Farming XP)";
         }
 
-        if ($bonusYield > 0 || $bonusXp > 0) {
+        if ($hasMasterFarmerBonus) {
             $message .= ' [Master Farmer bonus!]';
+        }
+        if ($hasBlessingBonus) {
+            $message .= ' [Blessing bonus!]';
         }
 
         return back()->with('success', $message);

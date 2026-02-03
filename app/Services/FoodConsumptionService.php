@@ -612,6 +612,14 @@ class FoodConsumptionService
             ->where('weeks_without_food', '>', 0)
             ->count();
 
+        // Build detailed breakdown of food items
+        $foodBreakdown = $foodStockpiles->map(fn ($stockpile) => [
+            'name' => $stockpile->item->name,
+            'quantity' => $stockpile->quantity,
+            'food_value' => $stockpile->item->food_value,
+            'total_points' => $stockpile->quantity * $stockpile->item->food_value,
+        ])->sortByDesc('total_points')->values()->all();
+
         return [
             'food_available' => $totalFoodUnits,
             'food_points' => $totalFoodPoints,
@@ -623,6 +631,7 @@ class FoodConsumptionService
             'player_count' => $playerCount,
             'starving_npcs' => $starvingNpcs,
             'starving_players' => $starvingPlayers,
+            'food_breakdown' => $foodBreakdown,
         ];
     }
 
@@ -674,6 +683,14 @@ class FoodConsumptionService
             ->where('weeks_without_food', '>', 0)
             ->count();
 
+        // Build detailed breakdown of food items
+        $foodBreakdown = $foodStockpiles->map(fn ($stockpile) => [
+            'name' => $stockpile->item->name,
+            'quantity' => $stockpile->quantity,
+            'food_value' => $stockpile->item->food_value,
+            'total_points' => $stockpile->quantity * $stockpile->item->food_value,
+        ])->sortByDesc('total_points')->values()->all();
+
         return [
             'food_available' => $totalFoodUnits,
             'food_points' => $totalFoodPoints,
@@ -685,6 +702,7 @@ class FoodConsumptionService
             'player_count' => $playerCount,
             'starving_npcs' => $starvingNpcs,
             'starving_players' => $starvingPlayers,
+            'food_breakdown' => $foodBreakdown,
         ];
     }
 

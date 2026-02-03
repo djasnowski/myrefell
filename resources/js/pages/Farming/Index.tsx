@@ -69,8 +69,16 @@ interface MasterFarmerBonuses {
     xp_bonus: number;
 }
 
+interface FoodBreakdownItem {
+    name: string;
+    quantity: number;
+    food_value: number;
+    total_points: number;
+}
+
 interface VillageFoodStats {
     food_available: number;
+    food_points: number;
     food_needed_per_week: number;
     weeks_of_food: number;
     granary_capacity: number;
@@ -79,6 +87,7 @@ interface VillageFoodStats {
     player_count: number;
     starving_npcs: number;
     starving_players: number;
+    food_breakdown: FoodBreakdownItem[];
 }
 
 interface PageProps {
@@ -160,6 +169,7 @@ export default function FarmingIndex() {
     const [cropSearch, setCropSearch] = useState("");
     const [now, setNow] = useState(Date.now());
     const [showFoodHelp, setShowFoodHelp] = useState(false);
+    const [showFoodBreakdown, setShowFoodBreakdown] = useState(false);
     const { sendNotification } = useNotifications();
     const notifiedPlotsRef = useRef<Set<number>>(new Set());
 
@@ -353,7 +363,8 @@ export default function FarmingIndex() {
                 {/* Village Granary Status */}
                 {village_food && (
                     <div
-                        className={`rounded-lg border p-3 ${
+                        onClick={() => setShowFoodBreakdown(true)}
+                        className={`cursor-pointer rounded-lg border p-3 transition hover:brightness-110 ${
                             village_food.weeks_of_food < 4
                                 ? "border-red-600/50 bg-red-900/20"
                                 : village_food.weeks_of_food < 8
@@ -367,31 +378,42 @@ export default function FarmingIndex() {
                                 <span className="font-pixel text-xs text-amber-300">
                                     {location_name} Granary
                                 </span>
+                                <span className="font-pixel text-[10px] text-stone-500">
+                                    (click for details)
+                                </span>
                             </div>
                             <button
-                                onClick={() => setShowFoodHelp(true)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowFoodHelp(true);
+                                }}
                                 className="flex items-center gap-1 rounded px-2 py-1 font-pixel text-[10px] text-stone-400 hover:bg-stone-700 hover:text-stone-200"
                             >
                                 <HelpCircle className="h-3 w-3" />
                                 How Food Works
                             </button>
                         </div>
-                        <div className="grid grid-cols-2 gap-3 font-pixel text-[10px] sm:grid-cols-4">
+                        <div className="grid grid-cols-2 gap-3 font-pixel text-[10px] sm:grid-cols-5">
                             <div>
-                                <span className="text-stone-500">Food Available</span>
+                                <span className="text-stone-500">Food Items</span>
                                 <div className="text-stone-200">
-                                    {village_food.food_available.toLocaleString()} /{" "}
-                                    {village_food.granary_capacity.toLocaleString()}
+                                    {village_food.food_available.toLocaleString()}
                                 </div>
                             </div>
                             <div>
-                                <span className="text-stone-500">Weekly Consumption</span>
+                                <span className="text-stone-500">Food Points</span>
+                                <div className="text-amber-400">
+                                    {village_food.food_points.toLocaleString()}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="text-stone-500">Weekly Need</span>
                                 <div className="text-stone-200">
                                     {village_food.food_needed_per_week.toLocaleString()}
                                 </div>
                             </div>
                             <div>
-                                <span className="text-stone-500">Weeks Remaining</span>
+                                <span className="text-stone-500">Weeks Left</span>
                                 <div
                                     className={
                                         village_food.weeks_of_food < 4
@@ -419,9 +441,6 @@ export default function FarmingIndex() {
                                 are starving!
                             </div>
                         )}
-                        <p className="mt-2 font-pixel text-[10px] text-stone-500">
-                            Donate crops from your inventory to help feed the village.
-                        </p>
                     </div>
                 )}
 
@@ -925,6 +944,150 @@ export default function FarmingIndex() {
                                 <p className="font-pixel text-xs text-amber-300">
                                     Tip: Donating food helps the community thrive! A well-fed
                                     population means more workers, traders, and opportunities.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Food Breakdown Modal */}
+            {showFoodBreakdown && village_food && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div
+                        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                        onClick={() => setShowFoodBreakdown(false)}
+                    />
+                    <div className="relative max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-amber-600/50 bg-stone-900 shadow-2xl">
+                        {/* Header */}
+                        <div className="flex items-center justify-between border-b border-stone-700 px-4 py-3">
+                            <div className="flex items-center gap-2">
+                                <Warehouse className="h-5 w-5 text-amber-400" />
+                                <h2 className="font-pixel text-lg text-amber-300">
+                                    {location_name} Granary Contents
+                                </h2>
+                            </div>
+                            <button
+                                onClick={() => setShowFoodBreakdown(false)}
+                                className="rounded p-1 hover:bg-stone-700"
+                            >
+                                <X className="h-5 w-5 text-stone-400" />
+                            </button>
+                        </div>
+
+                        {/* Summary */}
+                        <div className="border-b border-stone-700 px-4 py-3">
+                            <div className="grid grid-cols-2 gap-4 font-pixel text-xs sm:grid-cols-4">
+                                <div>
+                                    <span className="text-stone-500">Total Items</span>
+                                    <div className="text-lg text-stone-200">
+                                        {village_food.food_available.toLocaleString()}
+                                    </div>
+                                </div>
+                                <div>
+                                    <span className="text-stone-500">Total Food Points</span>
+                                    <div className="text-lg text-amber-400">
+                                        {village_food.food_points.toLocaleString()}
+                                    </div>
+                                </div>
+                                <div>
+                                    <span className="text-stone-500">Population</span>
+                                    <div className="text-lg text-stone-200">
+                                        {village_food.population}
+                                    </div>
+                                </div>
+                                <div>
+                                    <span className="text-stone-500">Weeks of Food</span>
+                                    <div
+                                        className={`text-lg ${
+                                            village_food.weeks_of_food < 4
+                                                ? "text-red-400"
+                                                : village_food.weeks_of_food < 8
+                                                  ? "text-yellow-400"
+                                                  : "text-green-400"
+                                        }`}
+                                    >
+                                        {village_food.weeks_of_food}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Food Items Table */}
+                        <div className="p-4">
+                            <h3 className="mb-3 font-pixel text-sm text-amber-300">
+                                Food Breakdown
+                            </h3>
+                            {village_food.food_breakdown.length > 0 ? (
+                                <div className="overflow-hidden rounded-lg border border-stone-700">
+                                    <table className="w-full">
+                                        <thead className="bg-stone-800">
+                                            <tr className="font-pixel text-[10px] text-stone-400">
+                                                <th className="px-3 py-2 text-left">Item</th>
+                                                <th className="px-3 py-2 text-right">Quantity</th>
+                                                <th className="px-3 py-2 text-right">
+                                                    Feeds Per Item
+                                                </th>
+                                                <th className="px-3 py-2 text-right">
+                                                    Total Points
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-stone-700">
+                                            {village_food.food_breakdown.map((item, index) => (
+                                                <tr
+                                                    key={index}
+                                                    className="font-pixel text-xs hover:bg-stone-800/50"
+                                                >
+                                                    <td className="px-3 py-2 text-stone-200">
+                                                        {item.name}
+                                                    </td>
+                                                    <td className="px-3 py-2 text-right text-stone-300">
+                                                        {item.quantity.toLocaleString()}
+                                                    </td>
+                                                    <td className="px-3 py-2 text-right text-stone-400">
+                                                        {item.food_value}
+                                                    </td>
+                                                    <td className="px-3 py-2 text-right text-amber-400">
+                                                        {item.total_points.toLocaleString()}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                        <tfoot className="border-t border-stone-600 bg-stone-800">
+                                            <tr className="font-pixel text-xs font-bold">
+                                                <td className="px-3 py-2 text-stone-200">Total</td>
+                                                <td className="px-3 py-2 text-right text-stone-200">
+                                                    {village_food.food_available.toLocaleString()}
+                                                </td>
+                                                <td className="px-3 py-2 text-right text-stone-400">
+                                                    —
+                                                </td>
+                                                <td className="px-3 py-2 text-right text-amber-400">
+                                                    {village_food.food_points.toLocaleString()}
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="rounded-lg border border-stone-700 bg-stone-800/50 py-8 text-center">
+                                    <Warehouse className="mx-auto mb-2 h-8 w-8 text-stone-600" />
+                                    <p className="font-pixel text-sm text-stone-500">
+                                        The granary is empty
+                                    </p>
+                                    <p className="font-pixel text-xs text-stone-600">
+                                        Donate food from your inventory or farming harvests
+                                    </p>
+                                </div>
+                            )}
+
+                            <div className="mt-4 rounded-lg border border-stone-700 bg-stone-800/50 p-3">
+                                <p className="font-pixel text-[10px] text-stone-400">
+                                    <span className="text-amber-400">Food Points</span> = Quantity ×
+                                    Feeds Per Item. Each week, the village consumes food points
+                                    equal to its population. Higher quality food feeds more people
+                                    per item.
                                 </p>
                             </div>
                         </div>
