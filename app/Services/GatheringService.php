@@ -297,7 +297,8 @@ class GatheringService
 
             $oldLevel = $skill->level;
             $skill->addXp($xpAwarded);
-            $leveledUp = $skill->fresh()->level > $oldLevel;
+            $newLevel = $skill->fresh()->level;
+            $leveledUp = $newLevel > $oldLevel;
 
             // Record daily task progress
             $this->dailyTaskService->recordProgress($user, $config['task_type'], $item->name, $totalQuantity);
@@ -346,6 +347,7 @@ class GatheringService
                 'xp_awarded' => $xpAwarded,
                 'skill' => $config['skill'],
                 'leveled_up' => $leveledUp,
+                'new_level' => $leveledUp ? $newLevel : null,
                 'energy_remaining' => $user->fresh()->energy,
                 'seasonal_bonus' => $quantity > 1,
                 'role_bonus' => $bonusQuantity > 0,
@@ -437,7 +439,11 @@ class GatheringService
             return null;
         }
 
-        $skillLevel = $user->getSkillLevel($config['skill']);
+        $skill = $user->skills()->where('skill_name', $config['skill'])->first();
+        $skillLevel = $skill?->level ?? 1;
+        $skillXp = $skill?->xp ?? 0;
+        $skillXpProgress = $skill?->getXpProgress() ?? 0;
+        $skillXpToNext = $skill?->xpToNextLevel() ?? 60;
         $availableResources = $this->getAvailableResources($activity, $skillLevel);
 
         // Find next unlock
@@ -463,6 +469,9 @@ class GatheringService
             'name' => $config['name'],
             'skill' => $config['skill'],
             'skill_level' => $skillLevel,
+            'skill_xp' => $skillXp,
+            'skill_xp_progress' => $skillXpProgress,
+            'skill_xp_to_next' => $skillXpToNext,
             'energy_cost' => $config['energy_cost'],
             'base_xp' => $config['base_xp'],
             'player_energy' => $user->energy,

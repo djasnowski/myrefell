@@ -33,6 +33,9 @@ interface Activity {
     name: string;
     skill: string;
     skill_level: number;
+    skill_xp: number;
+    skill_xp_progress: number;
+    skill_xp_to_next: number;
     energy_cost: number;
     base_xp: number;
     player_energy: number;
@@ -56,6 +59,7 @@ interface GatherResult {
     xp_awarded?: number;
     skill?: string;
     leveled_up?: boolean;
+    new_level?: number;
     energy_remaining?: number;
     seasonal_bonus?: boolean;
 }
@@ -186,9 +190,10 @@ export default function GatheringActivity() {
                 const bonus = data.seasonal_bonus ? " (Seasonal Bonus!)" : "";
                 gameToast.success(`${quantity}${data.resource.name}${bonus}`, {
                     xp: data.xp_awarded,
-                    levelUp: data.leveled_up
-                        ? { skill: activity.skill, level: (activity.skill_level || 0) + 1 }
-                        : undefined,
+                    levelUp:
+                        data.leveled_up && data.new_level
+                            ? { skill: activity.skill, level: data.new_level }
+                            : undefined,
                 });
 
                 // Start cooldown timer
@@ -201,8 +206,8 @@ export default function GatheringActivity() {
                 setCurrentEnergy(data.energy_remaining);
             }
 
-            // Reload sidebar data
-            router.reload({ only: ["sidebar"] });
+            // Reload sidebar and activity data
+            router.reload({ only: ["sidebar", "activity"] });
         } catch {
             gameToast.error("An error occurred");
         } finally {
@@ -277,8 +282,8 @@ export default function GatheringActivity() {
                         </div>
                     )}
 
-                    {/* Energy and Inventory Status */}
-                    <div className="mb-6 grid grid-cols-2 gap-4">
+                    {/* Energy, Skill, and Inventory Status */}
+                    <div className="mb-6 grid grid-cols-3 gap-4">
                         <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
                             <div className="mb-1 flex items-center gap-1 font-pixel text-xs text-yellow-400">
                                 <Zap className="h-3 w-3" />
@@ -292,6 +297,26 @@ export default function GatheringActivity() {
                             </div>
                             <div className="mt-1 font-pixel text-[10px] text-stone-400">
                                 {currentEnergy} / {max_energy} ({activity.energy_cost} per action)
+                            </div>
+                        </div>
+                        <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
+                            <div className="mb-1 flex items-center justify-between">
+                                <div className="flex items-center gap-1 font-pixel text-xs capitalize text-amber-400">
+                                    <Icon className="h-3 w-3" />
+                                    {activity.skill}
+                                </div>
+                                <span className="font-pixel text-xs text-stone-300">
+                                    {activity.skill_level}/99
+                                </span>
+                            </div>
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
+                                <div
+                                    className="h-full bg-gradient-to-r from-amber-600 to-amber-400 transition-all"
+                                    style={{ width: `${activity.skill_xp_progress}%` }}
+                                />
+                            </div>
+                            <div className="mt-1 font-pixel text-[10px] text-stone-400">
+                                {activity.skill_xp_to_next.toLocaleString()} XP to next level
                             </div>
                         </div>
                         <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
