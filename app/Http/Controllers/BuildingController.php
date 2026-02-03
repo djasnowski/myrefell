@@ -8,6 +8,7 @@ use App\Models\ConstructionProject;
 use App\Models\PlayerInventory;
 use App\Models\Town;
 use App\Models\Village;
+use App\Services\InventoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -31,7 +32,7 @@ class BuildingController extends Controller
             default => null,
         };
 
-        if (!$location) {
+        if (! $location) {
             return Inertia::render('Buildings/Index', [
                 'location' => null,
                 'buildings' => [],
@@ -49,9 +50,8 @@ class BuildingController extends Controller
             ->map(fn ($building) => $this->mapBuilding($building));
 
         // Get active construction projects
-        $projects = ConstructionProject::whereHas('building', fn ($q) =>
-            $q->where('location_type', $locationType)
-              ->where('location_id', $locationId)
+        $projects = ConstructionProject::whereHas('building', fn ($q) => $q->where('location_type', $locationType)
+            ->where('location_id', $locationId)
         )
             ->active()
             ->with(['building.buildingType', 'manager'])
@@ -110,7 +110,7 @@ class BuildingController extends Controller
             default => null,
         };
 
-        if (!$location) {
+        if (! $location) {
             return response()->json([
                 'success' => false,
                 'message' => 'Location not found.',
@@ -118,7 +118,7 @@ class BuildingController extends Controller
         }
 
         // Check permission
-        if (!$this->canBuildAt($user, $validated['location_type'], $validated['location_id'], $location)) {
+        if (! $this->canBuildAt($user, $validated['location_type'], $validated['location_id'], $location)) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to build here.',
@@ -135,7 +135,7 @@ class BuildingController extends Controller
         if ($existing) {
             return response()->json([
                 'success' => false,
-                'message' => 'A ' . $buildingType->name . ' already exists at this location.',
+                'message' => 'A '.$buildingType->name.' already exists at this location.',
             ], 422);
         }
 
@@ -151,7 +151,7 @@ class BuildingController extends Controller
             }
         }
 
-        if (!empty($missingResources)) {
+        if (! empty($missingResources)) {
             return response()->json([
                 'success' => false,
                 'message' => 'You lack the required resources to start construction.',
@@ -196,7 +196,7 @@ class BuildingController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Construction of ' . $buildingType->name . ' has begun!',
+            'message' => 'Construction of '.$buildingType->name.' has begun!',
             'building' => $this->mapBuilding($building->load('buildingType')),
         ]);
     }
@@ -210,7 +210,7 @@ class BuildingController extends Controller
 
         // Check permission
         $location = $building->location;
-        if (!$this->canBuildAt($user, $building->location_type, $building->location_id, $location)) {
+        if (! $this->canBuildAt($user, $building->location_type, $building->location_id, $location)) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to repair buildings here.',
@@ -218,7 +218,7 @@ class BuildingController extends Controller
         }
 
         // Check if building needs repair
-        if (!$building->needsRepair()) {
+        if (! $building->needsRepair()) {
             return response()->json([
                 'success' => false,
                 'message' => 'This building does not need repairs.',
@@ -259,7 +259,7 @@ class BuildingController extends Controller
             }
         }
 
-        if (!empty($missingResources)) {
+        if (! empty($missingResources)) {
             return response()->json([
                 'success' => false,
                 'message' => 'You lack the required resources for repairs.',
@@ -297,7 +297,7 @@ class BuildingController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Repair work has begun on ' . $building->name . '!',
+            'message' => 'Repair work has begun on '.$building->name.'!',
         ]);
     }
 
@@ -311,7 +311,7 @@ class BuildingController extends Controller
 
         // Check permission
         $location = $building->location;
-        if (!$this->canBuildAt($user, $building->location_type, $building->location_id, $location)) {
+        if (! $this->canBuildAt($user, $building->location_type, $building->location_id, $location)) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to cancel this project.',
@@ -319,7 +319,7 @@ class BuildingController extends Controller
         }
 
         // Check if project is cancellable
-        if (!in_array($project->status, ['pending', 'in_progress'])) {
+        if (! in_array($project->status, ['pending', 'in_progress'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'This project cannot be cancelled.',
@@ -434,25 +434,11 @@ class BuildingController extends Controller
     {
         // Find the item
         $item = \App\Models\Item::whereRaw('LOWER(name) = ?', [strtolower($resourceName)])->first();
-        if (!$item) {
+        if (! $item) {
             return;
         }
 
-        // Find existing slot or create new one
-        $slot = PlayerInventory::where('player_id', $user->id)
-            ->where('item_id', $item->id)
-            ->first();
-
-        if ($slot) {
-            $slot->increment('quantity', $amount);
-        } else {
-            PlayerInventory::create([
-                'player_id' => $user->id,
-                'item_id' => $item->id,
-                'quantity' => $amount,
-                'slot' => PlayerInventory::where('player_id', $user->id)->max('slot') + 1,
-            ]);
-        }
+        app(InventoryService::class)->addItem($user, $item, $amount);
     }
 
     /**

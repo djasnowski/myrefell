@@ -8,8 +8,8 @@ use App\Models\CaravanGoods;
 use App\Models\Item;
 use App\Models\LocationTreasury;
 use App\Models\TariffCollection;
-use App\Models\TradeTariff;
 use App\Models\TradeRoute;
+use App\Models\TradeTariff;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +18,9 @@ class CaravanService
 {
     // Base costs
     public const CARAVAN_CREATION_COST = 1000;
+
     public const GUARD_HIRE_COST = 50;
+
     public const BASE_CAPACITY = 100;
 
     // NPC merchant names
@@ -128,9 +130,9 @@ class CaravanService
         }
 
         // For player caravans, check inventory
-        if ($owner && !$caravan->is_npc) {
+        if ($owner && ! $caravan->is_npc) {
             $inventoryItem = $owner->inventory()->where('item_id', $item->id)->first();
-            if (!$inventoryItem || $inventoryItem->quantity < $quantity) {
+            if (! $inventoryItem || $inventoryItem->quantity < $quantity) {
                 return [
                     'success' => false,
                     'message' => 'Insufficient items in inventory.',
@@ -185,7 +187,7 @@ class CaravanService
         int $destinationId,
         ?TradeRoute $route = null
     ): array {
-        if (!$caravan->canDepart()) {
+        if (! $caravan->canDepart()) {
             return [
                 'success' => false,
                 'message' => 'Caravan cannot depart. Check status and goods.',
@@ -461,7 +463,7 @@ class CaravanService
 
         // Get applicable tariffs for destination
         $tariffs = TradeTariff::active()
-            ->where(function ($query) use ($caravan) {
+            ->where(function ($query) {
                 // Check barony tariffs
                 $query->where('location_type', 'barony')
                     ->orWhere('location_type', 'kingdom');
@@ -518,7 +520,7 @@ class CaravanService
 
         $goods = $caravan->goods()->where('item_id', $itemId)->first();
 
-        if (!$goods || $goods->quantity < $quantity) {
+        if (! $goods || $goods->quantity < $quantity) {
             return [
                 'success' => false,
                 'message' => 'Insufficient goods to sell.',
@@ -556,6 +558,7 @@ class CaravanService
     {
         if ($caravan->is_npc) {
             $caravan->update(['status' => Caravan::STATUS_DISBANDED]);
+
             return [
                 'success' => true,
                 'message' => 'NPC caravan disbanded.',
@@ -563,14 +566,27 @@ class CaravanService
         }
 
         $owner = $caravan->owner;
-        if (!$owner) {
+        if (! $owner) {
             return [
                 'success' => false,
                 'message' => 'No owner found for caravan.',
             ];
         }
 
-        return DB::transaction(function () use ($caravan, $owner) {
+        $inventoryService = app(InventoryService::class);
+
+        // Check if player has enough inventory space for the goods
+        $goodsCount = $caravan->goods()->count();
+        $freeSlots = $inventoryService->freeSlots($owner);
+
+        if ($goodsCount > $freeSlots) {
+            return [
+                'success' => false,
+                'message' => "Not enough inventory space. You need {$goodsCount} free slots but only have {$freeSlots}.",
+            ];
+        }
+
+        return DB::transaction(function () use ($caravan, $owner, $inventoryService) {
             // Return gold to owner
             if ($caravan->gold_carried > 0) {
                 $owner->increment('gold', $caravan->gold_carried);
@@ -578,15 +594,7 @@ class CaravanService
 
             // Return goods to inventory
             foreach ($caravan->goods as $goods) {
-                $existingInventory = $owner->inventory()->where('item_id', $goods->item_id)->first();
-                if ($existingInventory) {
-                    $existingInventory->increment('quantity', $goods->quantity);
-                } else {
-                    $owner->inventory()->create([
-                        'item_id' => $goods->item_id,
-                        'quantity' => $goods->quantity,
-                    ]);
-                }
+                $inventoryService->addItem($owner, $goods->item_id, $goods->quantity);
             }
 
             // Delete goods and update status
