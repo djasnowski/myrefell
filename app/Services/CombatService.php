@@ -24,7 +24,8 @@ class CombatService
     public function __construct(
         protected EnergyService $energyService,
         protected LootService $lootService,
-        protected InventoryService $inventoryService
+        protected InventoryService $inventoryService,
+        protected BlessingEffectService $blessingEffectService
     ) {}
 
     /**
@@ -419,8 +420,12 @@ class CombatService
         $strengthLevel = $player->getSkillLevel('strength');
         $equipment = $this->getPlayerEquipmentBonuses($player);
 
-        // Hit chance: based on attack level vs monster defense
-        $hitChance = 50 + ($attackLevel - $monster->defense_level) * 2 + $equipment['atk_bonus'];
+        // Get blessing bonuses
+        $attackBonus = (int) $this->blessingEffectService->getEffect($player, 'attack_bonus');
+        $strengthBonus = (int) $this->blessingEffectService->getEffect($player, 'strength_bonus');
+
+        // Hit chance: based on attack level vs monster defense + blessing bonus
+        $hitChance = 50 + ($attackLevel - $monster->defense_level) * 2 + $equipment['atk_bonus'] + $attackBonus;
         $hitChance = max(10, min(95, $hitChance)); // Clamp between 10% and 95%
 
         $hit = rand(1, 100) <= $hitChance;
@@ -429,8 +434,8 @@ class CombatService
             return ['hit' => false, 'damage' => 0];
         }
 
-        // Damage calculation: strength level + equipment bonus
-        $baseDamage = $strengthLevel + $equipment['str_bonus'];
+        // Damage calculation: strength level + equipment bonus + blessing bonus
+        $baseDamage = $strengthLevel + $equipment['str_bonus'] + $strengthBonus;
         $maxHit = (int) floor($baseDamage * 0.5);
         $damage = rand(1, max(1, $maxHit));
 
@@ -456,8 +461,11 @@ class CombatService
         $defenseLevel = $player->getSkillLevel('defense');
         $equipment = $this->getPlayerEquipmentBonuses($player);
 
-        // Hit chance
-        $hitChance = 50 + ($monster->attack_level - $defenseLevel - $equipment['def_bonus']) * 2;
+        // Get blessing defense bonus
+        $defenseBonus = (int) $this->blessingEffectService->getEffect($player, 'defense_bonus');
+
+        // Hit chance (defense bonus reduces monster's chance to hit)
+        $hitChance = 50 + ($monster->attack_level - $defenseLevel - $equipment['def_bonus'] - $defenseBonus) * 2;
         $hitChance = max(10, min(95, $hitChance));
 
         $hit = rand(1, 100) <= $hitChance;

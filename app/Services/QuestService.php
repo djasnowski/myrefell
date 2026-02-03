@@ -16,7 +16,8 @@ class QuestService
     public const MAX_ACTIVE_QUESTS = 5;
 
     public function __construct(
-        protected InventoryService $inventoryService
+        protected InventoryService $inventoryService,
+        protected BeliefEffectService $beliefEffectService
     ) {}
 
     /**
@@ -187,13 +188,16 @@ class QuestService
         $rewards = [];
 
         return DB::transaction(function () use ($user, $playerQuest, $quest, &$rewards) {
+            // Calculate quest XP bonus from beliefs (Wisdom belief: +10%)
+            $questXpBonus = $this->beliefEffectService->getEffect($user, 'quest_xp_bonus');
+
             // Grant gold reward
             if ($quest->gold_reward > 0) {
                 $user->increment('gold', $quest->gold_reward);
                 $rewards['gold'] = $quest->gold_reward;
             }
 
-            // Grant XP reward
+            // Grant XP reward (with belief bonus)
             if ($quest->xp_reward > 0 && $quest->xp_skill) {
                 $skill = $user->skills()->where('skill_name', $quest->xp_skill)->first();
 
@@ -205,9 +209,14 @@ class QuestService
                     ]);
                 }
 
-                $skill->addXp($quest->xp_reward);
+                $xpReward = $quest->xp_reward;
+                if ($questXpBonus > 0) {
+                    $xpReward = (int) ceil($xpReward * (1 + $questXpBonus / 100));
+                }
+
+                $skill->addXp($xpReward);
                 $rewards['xp'] = [
-                    'amount' => $quest->xp_reward,
+                    'amount' => $xpReward,
                     'skill' => $quest->xp_skill,
                 ];
             }

@@ -48,9 +48,26 @@ class MonsterLootTable extends Model
      */
     public function rollDrop(): int
     {
+        return $this->rollDropWithBonus(0);
+    }
+
+    /**
+     * Roll for this drop with a bonus percentage (returns quantity or 0 if not dropped).
+     * The bonus is a percentage increase to drop chance (e.g., 20 = +20% relative increase).
+     */
+    public function rollDropWithBonus(float $bonusPercent = 0): int
+    {
         $roll = mt_rand(0, 10000) / 100; // 0.00 to 100.00
 
-        if ($roll <= $this->drop_chance) {
+        // Apply bonus to drop chance (e.g., 5% base with 20% bonus = 6% effective)
+        $effectiveChance = $this->drop_chance;
+        if ($bonusPercent > 0) {
+            $effectiveChance = $this->drop_chance * (1 + $bonusPercent / 100);
+            // Cap at 100% to prevent guaranteed rare drops
+            $effectiveChance = min(100, $effectiveChance);
+        }
+
+        if ($roll <= $effectiveChance) {
             return rand($this->quantity_min, $this->quantity_max);
         }
 

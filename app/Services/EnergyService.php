@@ -7,6 +7,11 @@ use Carbon\Carbon;
 
 class EnergyService
 {
+    public function __construct(
+        protected BlessingEffectService $blessingEffectService,
+        protected BeliefEffectService $beliefEffectService
+    ) {}
+
     /**
      * Energy regeneration rate in minutes.
      */
@@ -27,11 +32,19 @@ class EnergyService
 
     /**
      * Consume energy from player.
+     * Applies belief energy cost reduction.
      *
      * @throws \Exception If player doesn't have enough energy
      */
     public function consumeEnergy(User $player, int $amount): bool
     {
+        // Apply belief energy cost reduction (Sloth belief)
+        $energyCostReduction = $this->beliefEffectService->getEffect($player, 'energy_cost_reduction');
+        if ($energyCostReduction > 0) {
+            $amount = (int) ceil($amount * (1 - $energyCostReduction / 100));
+            $amount = max(1, $amount); // Minimum 1 energy cost
+        }
+
         if (! $this->hasEnergy($player, $amount)) {
             return false;
         }
@@ -77,6 +90,7 @@ class EnergyService
     /**
      * Regenerate energy for a single player.
      * Called periodically by the scheduler.
+     * Applies blessing energy regen bonus.
      */
     public function regenerateEnergy(User $player): int
     {
@@ -84,7 +98,19 @@ class EnergyService
             return 0;
         }
 
-        return $this->addEnergy($player, self::REGEN_AMOUNT);
+        $regenAmount = self::REGEN_AMOUNT;
+
+        // Apply blessing energy regen bonus (e.g., 20 = +20% more energy)
+        $energyRegenBonus = $this->blessingEffectService->getEffect($player, 'energy_regen_bonus');
+
+        // Apply belief energy regen bonus (Temperance belief)
+        $energyRegenBonus += $this->beliefEffectService->getEffect($player, 'energy_regen_bonus');
+
+        if ($energyRegenBonus > 0) {
+            $regenAmount = (int) ceil($regenAmount * (1 + $energyRegenBonus / 100));
+        }
+
+        return $this->addEnergy($player, $regenAmount);
     }
 
     /**

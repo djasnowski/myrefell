@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Notifications\ResetPasswordNotification;
 use App\Notifications\VerifyEmailNotification;
+use App\Services\BeliefEffectService;
+use App\Services\BlessingEffectService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -337,11 +339,21 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get max HP from hitpoints skill level.
+     * Get max HP from hitpoints skill level plus blessing and belief bonuses.
      */
     public function getMaxHpAttribute(): int
     {
-        return $this->getSkillLevel('hitpoints');
+        $baseHp = $this->getSkillLevel('hitpoints');
+
+        // Apply blessing max HP bonus
+        $blessingService = app(BlessingEffectService::class);
+        $maxHpBonus = (int) $blessingService->getEffect($this, 'max_hp_bonus');
+
+        // Apply belief max HP bonus (Fortitude belief)
+        $beliefService = app(BeliefEffectService::class);
+        $maxHpBonus += (int) $beliefService->getEffect($this, 'max_hp_bonus');
+
+        return $baseHp + $maxHpBonus;
     }
 
     /**

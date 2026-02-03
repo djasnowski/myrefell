@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\DB;
 
 class DailyTaskService
 {
+    public function __construct(
+        protected BeliefEffectService $beliefEffectService
+    ) {}
+
     /**
      * Number of daily tasks to assign per day.
      */
@@ -163,13 +167,20 @@ class DailyTaskService
         $rewards = [];
 
         return DB::transaction(function () use ($user, $playerTask, $task, &$rewards) {
-            // Grant gold reward
+            // Calculate daily task bonus from beliefs (Vigilance belief: +15%)
+            $dailyTaskBonus = $this->beliefEffectService->getEffect($user, 'daily_task_bonus');
+
+            // Grant gold reward (with belief bonus)
             if ($task->gold_reward > 0) {
-                $user->increment('gold', $task->gold_reward);
-                $rewards['gold'] = $task->gold_reward;
+                $goldReward = $task->gold_reward;
+                if ($dailyTaskBonus > 0) {
+                    $goldReward = (int) ceil($goldReward * (1 + $dailyTaskBonus / 100));
+                }
+                $user->increment('gold', $goldReward);
+                $rewards['gold'] = $goldReward;
             }
 
-            // Grant XP reward
+            // Grant XP reward (with belief bonus - note: blessing/belief XP bonuses also applied in addXp)
             if ($task->xp_reward > 0 && $task->xp_skill) {
                 $skill = $user->skills()->where('skill_name', $task->xp_skill)->first();
 
@@ -181,9 +192,14 @@ class DailyTaskService
                     ]);
                 }
 
-                $skill->addXp($task->xp_reward);
+                $xpReward = $task->xp_reward;
+                if ($dailyTaskBonus > 0) {
+                    $xpReward = (int) ceil($xpReward * (1 + $dailyTaskBonus / 100));
+                }
+
+                $skill->addXp($xpReward);
                 $rewards['xp'] = [
-                    'amount' => $task->xp_reward,
+                    'amount' => $xpReward,
                     'skill' => $task->xp_skill,
                 ];
             }

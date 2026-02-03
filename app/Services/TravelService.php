@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\DB;
 
 class TravelService
 {
+    public function __construct(
+        protected BlessingEffectService $blessingEffectService,
+        protected BeliefEffectService $beliefEffectService
+    ) {}
+
     /**
      * Distance divisor for travel time calculation.
      * Travel time = ceil(distance / DISTANCE_DIVISOR) in minutes.
@@ -62,8 +67,9 @@ class TravelService
                 throw new \InvalidArgumentException('Your horse is too tired to travel. Rest at a stable or travel on foot.');
             }
         } else {
-            // Check player energy for walking
-            if (! $user->hasEnergy(self::ENERGY_COST)) {
+            // Calculate energy cost with belief penalty (Pilgrimage belief)
+            $energyCost = $this->getTravelEnergyCost($user);
+            if (! $user->hasEnergy($energyCost)) {
                 throw new \InvalidArgumentException('Not enough energy to travel.');
             }
         }
@@ -83,8 +89,8 @@ class TravelService
                 // Consume horse stamina
                 $playerHorse->consumeStamina($playerHorse->stamina_cost);
             } else {
-                // Consume player energy
-                $user->consumeEnergy(self::ENERGY_COST);
+                // Consume player energy (with belief penalty applied)
+                $user->consumeEnergy($this->getTravelEnergyCost($user));
             }
 
             // Set travel state
@@ -356,7 +362,29 @@ class TravelService
         $agilityBonus = min(0.25, $agilityLevel * 0.005); // Cap at 25% reduction
         $adjustedTime = $adjustedTime * (1 - $agilityBonus);
 
+        // Apply blessing travel speed bonus (e.g., 25 = 25% faster travel)
+        $travelSpeedBonus = $this->blessingEffectService->getEffect($user, 'travel_speed_bonus');
+        if ($travelSpeedBonus > 0) {
+            $adjustedTime = $adjustedTime * (1 - $travelSpeedBonus / 100);
+        }
+
         return max(1, (int) ceil($adjustedTime));
+    }
+
+    /**
+     * Get travel energy cost with belief modifiers.
+     */
+    public function getTravelEnergyCost(User $user): int
+    {
+        $baseCost = self::ENERGY_COST;
+
+        // Apply belief travel energy penalty (Pilgrimage belief: +10% energy cost)
+        $travelEnergyPenalty = $this->beliefEffectService->getEffect($user, 'travel_energy_penalty');
+        if ($travelEnergyPenalty > 0) {
+            $baseCost = (int) ceil($baseCost * (1 + $travelEnergyPenalty / 100));
+        }
+
+        return $baseCost;
     }
 
     /**

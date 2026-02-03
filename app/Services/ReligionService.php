@@ -19,7 +19,8 @@ class ReligionService
         protected EnergyService $energyService,
         protected BankService $bankService,
         protected DailyTaskService $dailyTaskService,
-        protected BlessingEffectService $blessingEffects
+        protected BlessingEffectService $blessingEffects,
+        protected BeliefEffectService $beliefEffectService
     ) {}
 
     /**
@@ -358,6 +359,9 @@ class ReligionService
                 $baseDevotion = (int) floor($goldSpent / 10);
             }
             $devotionGained = (int) floor($baseDevotion * $multiplier);
+
+            // Apply belief devotion modifiers
+            $devotionGained = $this->applyBeliefDevotionModifiers($player, $actionType, $devotionGained);
 
             // Create action log
             ReligiousAction::create([
@@ -825,5 +829,46 @@ class ReligionService
             'kingdom' => $player->current_location_id,
             default => null,
         };
+    }
+
+    /**
+     * Apply belief modifiers to devotion gains.
+     */
+    protected function applyBeliefDevotionModifiers(User $player, string $actionType, int $devotionGained): int
+    {
+        // General devotion bonus (Asceticism belief)
+        $devotionBonus = $this->beliefEffectService->getEffect($player, 'devotion_bonus');
+
+        // General devotion penalty (Pride belief)
+        $devotionBonus += $this->beliefEffectService->getEffect($player, 'devotion_penalty');
+
+        // Action-specific bonuses
+        if ($actionType === ReligiousAction::ACTION_DONATION) {
+            // Charity belief: +25% donation devotion
+            $devotionBonus += $this->beliefEffectService->getEffect($player, 'donation_devotion_bonus');
+        }
+
+        if ($actionType === ReligiousAction::ACTION_RITUAL) {
+            // Mysticism belief: +25% ritual devotion
+            $devotionBonus += $this->beliefEffectService->getEffect($player, 'ritual_devotion_bonus');
+        }
+
+        if ($actionType === ReligiousAction::ACTION_SACRIFICE) {
+            // Mysticism belief: +25% sacrifice devotion
+            $devotionBonus += $this->beliefEffectService->getEffect($player, 'sacrifice_devotion_bonus');
+        }
+
+        if ($actionType === ReligiousAction::ACTION_PILGRIMAGE) {
+            // Pilgrimage belief: +100% pilgrimage devotion
+            $devotionBonus += $this->beliefEffectService->getEffect($player, 'pilgrimage_bonus');
+        }
+
+        // Apply the total modifier
+        if ($devotionBonus != 0) {
+            $devotionGained = (int) ceil($devotionGained * (1 + $devotionBonus / 100));
+            $devotionGained = max(1, $devotionGained); // Minimum 1 devotion
+        }
+
+        return $devotionGained;
     }
 }

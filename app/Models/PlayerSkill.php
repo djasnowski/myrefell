@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Services\BeliefEffectService;
+use App\Services\BlessingEffectService;
 use App\Services\ReferralService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -97,9 +99,16 @@ class PlayerSkill extends Model
 
     /**
      * Add XP to this skill and handle level ups.
+     * Applies blessing and belief XP bonuses automatically.
      */
     public function addXp(int $amount): int
     {
+        // Apply blessing XP bonuses
+        $amount = $this->applyBlessingXpBonus($amount);
+
+        // Apply belief XP bonuses (from religion membership)
+        $amount = $this->applyBeliefXpBonus($amount);
+
         $this->xp += $amount;
         $newLevel = self::levelFromXp($this->xp);
 
@@ -116,6 +125,87 @@ class PlayerSkill extends Model
         $this->save();
 
         return $levelsGained;
+    }
+
+    /**
+     * Apply blessing XP bonuses to the XP amount.
+     */
+    protected function applyBlessingXpBonus(int $amount): int
+    {
+        $user = $this->player;
+        if (! $user) {
+            return $amount;
+        }
+
+        $blessingService = app(BlessingEffectService::class);
+
+        // Check for all_xp_bonus first (Blessing of Wisdom)
+        $allXpBonus = $blessingService->getEffect($user, 'all_xp_bonus');
+
+        // Check for skill-specific XP bonuses
+        $skillBonus = match ($this->skill_name) {
+            'farming' => $blessingService->getEffect($user, 'farming_xp_bonus'),
+            'fishing' => $blessingService->getEffect($user, 'fishing_xp_bonus'),
+            'woodcutting' => $blessingService->getEffect($user, 'woodcutting_xp_bonus'),
+            'mining' => $blessingService->getEffect($user, 'mining_xp_bonus'),
+            'smithing' => $blessingService->getEffect($user, 'smithing_xp_bonus'),
+            'crafting' => $blessingService->getEffect($user, 'crafting_xp_bonus'),
+            default => 0,
+        };
+
+        $totalBonus = $allXpBonus + $skillBonus;
+
+        if ($totalBonus > 0) {
+            $amount = (int) ceil($amount * (1 + $totalBonus / 100));
+        }
+
+        return $amount;
+    }
+
+    /**
+     * Apply belief XP bonuses from religion membership.
+     */
+    protected function applyBeliefXpBonus(int $amount): int
+    {
+        $user = $this->player;
+        if (! $user) {
+            return $amount;
+        }
+
+        $beliefService = app(BeliefEffectService::class);
+
+        // Check for global XP penalty (Sloth belief)
+        $xpPenalty = $beliefService->getEffect($user, 'xp_penalty');
+
+        // Check for skill-category XP bonuses
+        $categoryBonus = 0;
+
+        // Gathering skills: mining, fishing, woodcutting, farming, herblore
+        if (in_array($this->skill_name, ['mining', 'fishing', 'woodcutting', 'farming', 'herblore'])) {
+            $categoryBonus += $beliefService->getEffect($user, 'gathering_xp_bonus');
+        }
+
+        // Combat skills: attack, strength, defense, hitpoints, range
+        if (in_array($this->skill_name, ['attack', 'strength', 'defense', 'hitpoints', 'range'])) {
+            $categoryBonus += $beliefService->getEffect($user, 'combat_xp_bonus');
+        }
+
+        // Crafting skills: crafting, smithing, cooking
+        if (in_array($this->skill_name, ['crafting', 'smithing', 'cooking'])) {
+            $categoryBonus += $beliefService->getEffect($user, 'crafting_xp_bonus');
+            // Also check for crafting penalty (Bloodlust belief)
+            $categoryBonus += $beliefService->getEffect($user, 'crafting_xp_penalty');
+        }
+
+        $totalModifier = $categoryBonus + $xpPenalty;
+
+        if ($totalModifier != 0) {
+            $amount = (int) ceil($amount * (1 + $totalModifier / 100));
+            // Ensure at least 1 XP
+            $amount = max(1, $amount);
+        }
+
+        return $amount;
     }
 
     /**

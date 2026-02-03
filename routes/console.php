@@ -8,6 +8,7 @@ use App\Jobs\FinalizeElections;
 use App\Jobs\ProcessDisasters;
 use App\Jobs\ProcessDiseases;
 use App\Jobs\RegenerateEnergy;
+use App\Jobs\RegenerateHp;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -18,6 +19,9 @@ Artisan::command('inspire', function () {
 
 // Energy regeneration - +10 every 5 minutes
 Schedule::job(new RegenerateEnergy)->everyFiveMinutes();
+
+// HP regeneration - 5% of max HP every 5 minutes (with bonuses)
+Schedule::job(new RegenerateHp)->everyFiveMinutes();
 
 // Election finalization - every 5 minutes
 Schedule::job(new FinalizeElections)->everyFiveMinutes();
