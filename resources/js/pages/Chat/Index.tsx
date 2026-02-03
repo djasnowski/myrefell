@@ -62,9 +62,11 @@ export default function ChatIndex() {
         scrollToBottom();
     }, [messages, scrollToBottom]);
 
-    // Poll for new messages
+    // Poll for new messages (only when tab is visible)
     useEffect(() => {
         const poll = async () => {
+            // Skip polling if tab is not visible
+            if (document.visibilityState !== "visible") return;
             if (messages.length === 0) return;
 
             const lastMessageId = messages[messages.length - 1]?.id || 0;
@@ -97,7 +99,7 @@ export default function ChatIndex() {
             }
         };
 
-        pollIntervalRef.current = setInterval(poll, 5000);
+        pollIntervalRef.current = setInterval(poll, 10000);
 
         return () => {
             if (pollIntervalRef.current) {

@@ -63,9 +63,12 @@ export default function PrivateChat() {
         scrollToBottom();
     }, [messages, scrollToBottom]);
 
-    // Poll for new messages
+    // Poll for new messages (only when tab is visible)
     useEffect(() => {
         const poll = async () => {
+            // Skip polling if tab is not visible
+            if (document.visibilityState !== "visible") return;
+
             const lastMessageId = messages[messages.length - 1]?.id || 0;
 
             try {
@@ -95,7 +98,7 @@ export default function PrivateChat() {
             }
         };
 
-        pollIntervalRef.current = setInterval(poll, 5000);
+        pollIntervalRef.current = setInterval(poll, 10000);
 
         return () => {
             if (pollIntervalRef.current) {
