@@ -182,35 +182,24 @@ class DistributeMinigameRewards extends Command
         CarbonInterface $periodStart,
         CarbonInterface $periodEnd
     ): \Illuminate\Support\Collection {
-        // Subquery to get each user's maximum score in the period
-        $maxScoreSubquery = MinigameScore::query()
-            ->select('user_id', DB::raw('MAX(score) as max_score'))
-            ->where('minigame', $minigame)
-            ->whereBetween('played_at', [$periodStart, $periodEnd])
-            ->groupBy('user_id');
-
-        // Join with original table to get the location where the max score was achieved
-        // Use all columns in GROUP BY to satisfy PostgreSQL's strict mode
-        return MinigameScore::query()
+        // Use ROW_NUMBER() to get one row per user (their best score, earliest if tied)
+        $rankedSubquery = MinigameScore::query()
             ->select([
-                'minigame_scores.user_id',
-                'minigame_scores.score as best_score',
-                'minigame_scores.location_type',
-                'minigame_scores.location_id',
+                'user_id',
+                'score',
+                'location_type',
+                'location_id',
+                DB::raw('ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY score DESC, played_at ASC) as rn'),
             ])
-            ->joinSub($maxScoreSubquery, 'max_scores', function ($join) {
-                $join->on('minigame_scores.user_id', '=', 'max_scores.user_id')
-                    ->on('minigame_scores.score', '=', 'max_scores.max_score');
-            })
-            ->where('minigame_scores.minigame', $minigame)
-            ->whereBetween('minigame_scores.played_at', [$periodStart, $periodEnd])
-            ->groupBy([
-                'minigame_scores.user_id',
-                'minigame_scores.score',
-                'minigame_scores.location_type',
-                'minigame_scores.location_id',
-            ])
-            ->orderByDesc('best_score')
+            ->where('minigame', $minigame)
+            ->whereBetween('played_at', [$periodStart, $periodEnd]);
+
+        // Select only the best row per user (rn = 1), ordered by score
+        return DB::table(DB::raw("({$rankedSubquery->toSql()}) as ranked"))
+            ->mergeBindings($rankedSubquery->getQuery())
+            ->select(['user_id', 'score as best_score', 'location_type', 'location_id'])
+            ->where('rn', 1)
+            ->orderByDesc('score')
             ->limit(10)
             ->get();
     }
