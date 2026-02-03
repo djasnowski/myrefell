@@ -1,6 +1,6 @@
-import { Head, Link, router } from "@inertiajs/react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import { ChevronLeft, ChevronRight, Eye, LogIn, Search, Shield, UserX, Users } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { show as showUser } from "@/actions/App/Http/Controllers/Admin/UserController";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import AdminLayout from "@/layouts/admin-layout";
-import type { BreadcrumbItem } from "@/types";
+import type { BreadcrumbItem, SharedData } from "@/types";
 
 interface User {
     id: number;
@@ -47,6 +47,7 @@ interface Filters {
     search: string;
     banned: string;
     admin: string;
+    autosearch?: string;
 }
 
 interface Props {
@@ -60,7 +61,34 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Index({ users, filters }: Props) {
+    const { auth } = usePage<SharedData>().props;
+    const searchInputRef = useRef<HTMLInputElement>(null);
     const [search, setSearch] = useState(filters.search);
+    const [hasAutoSearched, setHasAutoSearched] = useState(false);
+
+    // Auto-focus and auto-search when autosearch=1 is in URL
+    useEffect(() => {
+        if (filters.autosearch === "1" && !hasAutoSearched && auth?.user?.username) {
+            setSearch(auth.user.username);
+            searchInputRef.current?.focus();
+            setHasAutoSearched(true);
+        }
+    }, [filters.autosearch, auth?.user?.username, hasAutoSearched]);
+
+    // Debounced search as user types
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            if (search !== filters.search) {
+                router.get(
+                    "/admin/users",
+                    { ...filters, search, autosearch: undefined },
+                    { preserveState: true, preserveScroll: true },
+                );
+            }
+        }, 300);
+
+        return () => clearTimeout(timeout);
+    }, [search]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -108,8 +136,9 @@ export default function Index({ users, filters }: Props) {
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-stone-500" />
                                     <Input
+                                        ref={searchInputRef}
                                         type="text"
-                                        placeholder="Search by username or email..."
+                                        placeholder="Search by username..."
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
                                         className="pl-10 border-stone-700 bg-stone-900/50"

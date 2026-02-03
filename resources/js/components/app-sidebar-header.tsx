@@ -1,5 +1,5 @@
 import { Link, router, usePage } from "@inertiajs/react";
-import { Sparkles, Trophy, Users } from "lucide-react";
+import { Shield, Sparkles, Trophy, Users } from "lucide-react";
 import { useEffect } from "react";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import ChangelogModal from "@/components/changelog-modal";
@@ -8,8 +8,15 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useChangelog } from "@/contexts/changelog-context";
 import type { BreadcrumbItem as BreadcrumbItemType, SharedData } from "@/types";
 
+interface SidebarData {
+    player: {
+        is_admin: boolean;
+    };
+}
+
 export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: BreadcrumbItemType[] }) {
-    const { online_count } = usePage<SharedData>().props;
+    const { online_count, sidebar } = usePage<SharedData & { sidebar: SidebarData | null }>().props;
+    const isAdmin = sidebar?.player?.is_admin;
     const { hasUnread, showChangelog, openChangelog, closeChangelog } = useChangelog();
 
     // Poll for online count every 5 seconds
@@ -47,6 +54,19 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                             <Users className="size-3 text-green-400" />
                             <span className="font-pixel text-green-300">{online_count}</span>
                         </div>
+                    )}
+                    {isAdmin && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="group gap-2 text-muted-foreground hover:text-foreground"
+                            asChild
+                        >
+                            <Link href="/admin/users?autosearch=1">
+                                <Shield className="size-4 text-red-400" />
+                                <span className="hidden sm:inline">Admin</span>
+                            </Link>
+                        </Button>
                     )}
                     <Button
                         variant="ghost"
