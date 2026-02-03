@@ -57,7 +57,7 @@ class InventoryController extends Controller
         // Get equipped items organized by slot type
         $equippedItems = $inventory->where('is_equipped', true);
         $equipment = [];
-        $equipmentSlots = ['head', 'amulet', 'chest', 'legs', 'weapon', 'shield', 'ring'];
+        $equipmentSlots = ['head', 'amulet', 'chest', 'legs', 'weapon', 'shield', 'ring', 'necklace', 'bracelet'];
 
         foreach ($equipmentSlots as $slotType) {
             $equipped = $equippedItems->first(fn ($inv) => $inv->item->equipment_slot === $slotType);

@@ -23,6 +23,8 @@ class Item extends Model
         'shield',
         'ring',
         'amulet',
+        'necklace',
+        'bracelet',
     ];
 
     protected $fillable = [

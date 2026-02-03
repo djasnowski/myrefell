@@ -22,6 +22,45 @@ class CraftingService
     ];
 
     /**
+     * Gem tiers for cutting uncut gems.
+     */
+    public const GEM_TIERS = [
+        'Opal' => ['level' => 1, 'xp' => 15, 'energy' => 1],
+        'Jade' => ['level' => 13, 'xp' => 20, 'energy' => 2],
+        'Red Topaz' => ['level' => 25, 'xp' => 30, 'energy' => 2],
+        'Sapphire' => ['level' => 35, 'xp' => 50, 'energy' => 3],
+        'Emerald' => ['level' => 43, 'xp' => 65, 'energy' => 3],
+        'Ruby' => ['level' => 55, 'xp' => 85, 'energy' => 4],
+        'Diamond' => ['level' => 65, 'xp' => 110, 'energy' => 4],
+        'Oria Stone' => ['level' => 75, 'xp' => 150, 'energy' => 5],
+    ];
+
+    /**
+     * Jewelry tiers with gem, level requirements, xp, and gold bar costs.
+     */
+    public const JEWELRY_TIERS = [
+        'Gold' => ['gem' => null, 'levels' => ['ring' => 5, 'necklace' => 6, 'bracelet' => 7, 'amulet' => 8], 'xp' => ['ring' => 15, 'necklace' => 20, 'bracelet' => 17, 'amulet' => 25], 'gold_bars' => 1],
+        'Opal' => ['gem' => 'Opal', 'levels' => ['ring' => 1, 'necklace' => 2, 'bracelet' => 3, 'amulet' => 4], 'xp' => ['ring' => 10, 'necklace' => 15, 'bracelet' => 12, 'amulet' => 18], 'gold_bars' => 1],
+        'Jade' => ['gem' => 'Jade', 'levels' => ['ring' => 8, 'necklace' => 10, 'bracelet' => 11, 'amulet' => 12], 'xp' => ['ring' => 20, 'necklace' => 25, 'bracelet' => 22, 'amulet' => 30], 'gold_bars' => 1],
+        'Red Topaz' => ['gem' => 'Red Topaz', 'levels' => ['ring' => 14, 'necklace' => 16, 'bracelet' => 17, 'amulet' => 18], 'xp' => ['ring' => 30, 'necklace' => 35, 'bracelet' => 32, 'amulet' => 40], 'gold_bars' => 1],
+        'Sapphire' => ['gem' => 'Sapphire', 'levels' => ['ring' => 20, 'necklace' => 22, 'bracelet' => 23, 'amulet' => 24], 'xp' => ['ring' => 50, 'necklace' => 55, 'bracelet' => 52, 'amulet' => 65], 'gold_bars' => 1],
+        'Emerald' => ['gem' => 'Emerald', 'levels' => ['ring' => 27, 'necklace' => 29, 'bracelet' => 30, 'amulet' => 31], 'xp' => ['ring' => 65, 'necklace' => 70, 'bracelet' => 67, 'amulet' => 80], 'gold_bars' => 1],
+        'Ruby' => ['gem' => 'Ruby', 'levels' => ['ring' => 34, 'necklace' => 40, 'bracelet' => 45, 'amulet' => 50], 'xp' => ['ring' => 85, 'necklace' => 95, 'bracelet' => 90, 'amulet' => 110], 'gold_bars' => 2],
+        'Diamond' => ['gem' => 'Diamond', 'levels' => ['ring' => 43, 'necklace' => 55, 'bracelet' => 63, 'amulet' => 70], 'xp' => ['ring' => 110, 'necklace' => 120, 'bracelet' => 115, 'amulet' => 140], 'gold_bars' => 2],
+        'Oria' => ['gem' => 'Oria Stone', 'levels' => ['ring' => 55, 'necklace' => 63, 'bracelet' => 70, 'amulet' => 75], 'xp' => ['ring' => 150, 'necklace' => 165, 'bracelet' => 157, 'amulet' => 200], 'gold_bars' => 3],
+    ];
+
+    /**
+     * Jewelry types with mould requirements and energy costs.
+     */
+    public const JEWELRY_TYPES = [
+        'ring' => ['mould' => 'Ring Mould', 'energy' => 3],
+        'necklace' => ['mould' => 'Necklace Mould', 'energy' => 4],
+        'bracelet' => ['mould' => 'Bracelet Mould', 'energy' => 3],
+        'amulet' => ['mould' => 'Amulet Mould', 'energy' => 5],
+    ];
+
+    /**
      * Smithing item templates with bar cost and level offset from metal base.
      */
     public const SMITHING_ITEMS = [
@@ -192,6 +231,19 @@ class CraftingService
             ];
         }
 
+        // Add Gold Bar smelting recipe
+        $recipes['gold_bar'] = [
+            'name' => 'Gold Bar',
+            'category' => 'smelting',
+            'skill' => 'smithing',
+            'required_level' => 40,
+            'xp_reward' => 35,
+            'energy_cost' => 4,
+            'task_type' => 'smelt',
+            'materials' => [['name' => 'Gold Ore', 'quantity' => 1]],
+            'output' => ['name' => 'Gold Bar', 'quantity' => 1],
+        ];
+
         return $recipes;
     }
 
@@ -230,6 +282,77 @@ class CraftingService
     }
 
     /**
+     * Get all gem cutting recipes (uncut gem → cut gem).
+     */
+    public static function getGemCuttingRecipes(): array
+    {
+        $recipes = [];
+
+        foreach (self::GEM_TIERS as $gem => $tier) {
+            $slug = 'cut_'.strtolower(str_replace(' ', '_', $gem));
+
+            $recipes[$slug] = [
+                'name' => $gem,
+                'category' => 'gem_cutting',
+                'skill' => 'crafting',
+                'required_level' => $tier['level'],
+                'xp_reward' => $tier['xp'],
+                'energy_cost' => $tier['energy'],
+                'task_type' => 'craft',
+                'required_tool' => 'Chisel',
+                'materials' => [['name' => "Uncut {$gem}", 'quantity' => 1]],
+                'output' => ['name' => $gem, 'quantity' => 1],
+            ];
+        }
+
+        return $recipes;
+    }
+
+    /**
+     * Get all jewelry crafting recipes.
+     */
+    public static function getJewelryRecipes(): array
+    {
+        $recipes = [];
+
+        foreach (self::JEWELRY_TIERS as $tierName => $tier) {
+            foreach (self::JEWELRY_TYPES as $type => $typeData) {
+                // Build the item name
+                if ($tier['gem'] === null) {
+                    $itemName = 'Gold '.ucfirst($type);
+                } else {
+                    $itemName = "{$tierName} ".ucfirst($type);
+                }
+
+                $slug = strtolower(str_replace(' ', '_', $itemName));
+
+                // Build materials list
+                $materials = [['name' => 'Gold Bar', 'quantity' => $tier['gold_bars']]];
+
+                // Add gem if required
+                if ($tier['gem'] !== null) {
+                    $materials[] = ['name' => $tier['gem'], 'quantity' => 1];
+                }
+
+                $recipes[$slug] = [
+                    'name' => $itemName,
+                    'category' => 'jewelry',
+                    'skill' => 'crafting',
+                    'required_level' => $tier['levels'][$type],
+                    'xp_reward' => $tier['xp'][$type],
+                    'energy_cost' => $typeData['energy'],
+                    'task_type' => 'craft',
+                    'required_tool' => $typeData['mould'],
+                    'materials' => $materials,
+                    'output' => ['name' => $itemName, 'quantity' => 1],
+                ];
+            }
+        }
+
+        return $recipes;
+    }
+
+    /**
      * Get all recipes including crafting, smelting, and smithing.
      */
     public static function getAllRecipeDefinitions(): array
@@ -237,7 +360,9 @@ class CraftingService
         return array_merge(
             self::RECIPES,
             self::getSmeltingRecipes(),
-            self::getSmithingRecipes()
+            self::getSmithingRecipes(),
+            self::getGemCuttingRecipes(),
+            self::getJewelryRecipes()
         );
     }
 

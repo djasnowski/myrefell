@@ -8,6 +8,32 @@ use Illuminate\Database\Seeder;
 class ItemSeeder extends Seeder
 {
     /**
+     * Gem tiers configuration for jewelry items.
+     */
+    private const GEM_TIERS = [
+        'Opal' => ['rarity' => 'common', 'base_level' => 1, 'stat_min' => 1, 'stat_max' => 2, 'uncut_value' => 15, 'cut_value' => 35],
+        'Jade' => ['rarity' => 'common', 'base_level' => 8, 'stat_min' => 2, 'stat_max' => 3, 'uncut_value' => 25, 'cut_value' => 55],
+        'Red Topaz' => ['rarity' => 'common', 'base_level' => 14, 'stat_min' => 3, 'stat_max' => 4, 'uncut_value' => 40, 'cut_value' => 80],
+        'Sapphire' => ['rarity' => 'uncommon', 'base_level' => 20, 'stat_min' => 4, 'stat_max' => 5, 'uncut_value' => 100, 'cut_value' => 200],
+        'Emerald' => ['rarity' => 'uncommon', 'base_level' => 27, 'stat_min' => 5, 'stat_max' => 6, 'uncut_value' => 150, 'cut_value' => 300],
+        'Ruby' => ['rarity' => 'rare', 'base_level' => 34, 'stat_min' => 7, 'stat_max' => 8, 'uncut_value' => 250, 'cut_value' => 500],
+        'Diamond' => ['rarity' => 'rare', 'base_level' => 43, 'stat_min' => 10, 'stat_max' => 12, 'uncut_value' => 500, 'cut_value' => 1000],
+        'Oria' => ['rarity' => 'epic', 'base_level' => 55, 'stat_min' => 12, 'stat_max' => 20, 'uncut_value' => 1500, 'cut_value' => 3000],
+    ];
+
+    /**
+     * Jewelry item templates for each slot type.
+     * offset: level offset from gem's base_level
+     * stat_type: which stats to boost (atk, str, def, or mixed)
+     */
+    private const JEWELRY_TEMPLATES = [
+        'Ring' => ['slot' => 'ring', 'offset' => 0, 'stat_type' => 'atk', 'value_mult' => 1.0],
+        'Necklace' => ['slot' => 'necklace', 'offset' => 1, 'stat_type' => 'str_def', 'value_mult' => 1.2],
+        'Bracelet' => ['slot' => 'bracelet', 'offset' => 2, 'stat_type' => 'str_def', 'value_mult' => 1.1],
+        'Amulet' => ['slot' => 'amulet', 'offset' => 3, 'stat_type' => 'mixed', 'value_mult' => 1.3],
+    ];
+
+    /**
      * Metal tiers configuration for smithed items.
      */
     private const METAL_TIERS = [
@@ -134,6 +160,91 @@ class ItemSeeder extends Seeder
     }
 
     /**
+     * Generate all gem jewelry items.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function generateGemJewelry(): array
+    {
+        $items = [];
+
+        foreach (self::GEM_TIERS as $gem => $gemData) {
+            foreach (self::JEWELRY_TEMPLATES as $jewelryType => $templateData) {
+                $level = $gemData['base_level'] + $templateData['offset'];
+                $statMin = $gemData['stat_min'];
+                $statMax = $gemData['stat_max'];
+                $avgStat = (int) round(($statMin + $statMax) / 2);
+
+                $item = [
+                    'name' => "{$gem} {$jewelryType}",
+                    'description' => $this->generateJewelryDescription($gem, $jewelryType),
+                    'type' => 'armor',
+                    'subtype' => strtolower($jewelryType),
+                    'rarity' => $gemData['rarity'],
+                    'stackable' => false,
+                    'equipment_slot' => $templateData['slot'],
+                    'required_level' => $level,
+                    'base_value' => (int) round($gemData['cut_value'] * $templateData['value_mult'] * 2),
+                ];
+
+                // Apply stats based on jewelry type
+                switch ($templateData['stat_type']) {
+                    case 'atk':
+                        $item['atk_bonus'] = $statMax;
+                        break;
+                    case 'str_def':
+                        // Alternate between STR and DEF based on gem position
+                        $gemIndex = array_search($gem, array_keys(self::GEM_TIERS));
+                        if ($gemIndex % 2 === 0) {
+                            $item['str_bonus'] = $avgStat;
+                        } else {
+                            $item['def_bonus'] = $avgStat;
+                        }
+                        break;
+                    case 'mixed':
+                        $item['atk_bonus'] = $statMin;
+                        $item['str_bonus'] = $avgStat;
+                        $item['def_bonus'] = $statMin;
+                        break;
+                }
+
+                $items[] = $item;
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * Generate a description for a jewelry item.
+     */
+    private function generateJewelryDescription(string $gem, string $jewelryType): string
+    {
+        $gemDescriptions = [
+            'Opal' => 'An iridescent',
+            'Jade' => 'A lustrous green',
+            'Red Topaz' => 'A fiery red',
+            'Sapphire' => 'A brilliant blue',
+            'Emerald' => 'A deep green',
+            'Ruby' => 'A crimson',
+            'Diamond' => 'A dazzling',
+            'Oria' => 'A divine',
+        ];
+
+        $jewelryWords = [
+            'Ring' => 'ring adorned',
+            'Necklace' => 'necklace set',
+            'Bracelet' => 'bracelet embellished',
+            'Amulet' => 'amulet enhanced',
+        ];
+
+        $prefix = $gemDescriptions[$gem] ?? 'A beautiful';
+        $jewelryWord = $jewelryWords[$jewelryType] ?? 'piece of jewelry crafted';
+
+        return "{$prefix} {$jewelryWord} with {$gem}. A precious piece of crafted jewelry.";
+    }
+
+    /**
      * Run the database seeds.
      */
     public function run(): void
@@ -240,13 +351,13 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Gold Ore',
-                'description' => 'Valuable gold ore.',
+                'description' => 'Valuable gold ore used for crafting jewelry.',
                 'type' => 'resource',
                 'subtype' => 'ore',
                 'rarity' => 'uncommon',
                 'stackable' => true,
                 'max_stack' => 100,
-                'base_value' => 50,
+                'base_value' => 100,
             ],
             [
                 'name' => 'Mithril Ore',
@@ -309,6 +420,16 @@ class ItemSeeder extends Seeder
                 'stackable' => true,
                 'max_stack' => 100,
                 'base_value' => 100,
+            ],
+            [
+                'name' => 'Gold Bar',
+                'description' => 'A gleaming bar of pure gold, perfect for crafting jewelry.',
+                'type' => 'resource',
+                'subtype' => 'bar',
+                'rarity' => 'uncommon',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 150,
             ],
             [
                 'name' => 'Mithril Bar',
@@ -640,6 +761,170 @@ class ItemSeeder extends Seeder
                 'stackable' => true,
                 'max_stack' => 20,
                 'base_value' => 500,
+            ],
+
+            // Uncut Gems (for jewelry crafting)
+            [
+                'name' => 'Uncut Opal',
+                'description' => 'An uncut opal with iridescent flashes of color.',
+                'type' => 'resource',
+                'subtype' => 'gem',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 15,
+            ],
+            [
+                'name' => 'Uncut Jade',
+                'description' => 'An uncut jade stone with a deep green hue.',
+                'type' => 'resource',
+                'subtype' => 'gem',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 25,
+            ],
+            [
+                'name' => 'Uncut Red Topaz',
+                'description' => 'An uncut red topaz with fiery orange-red coloring.',
+                'type' => 'resource',
+                'subtype' => 'gem',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 40,
+            ],
+            [
+                'name' => 'Uncut Sapphire',
+                'description' => 'An uncut sapphire with deep blue brilliance.',
+                'type' => 'resource',
+                'subtype' => 'gem',
+                'rarity' => 'uncommon',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 100,
+            ],
+            [
+                'name' => 'Uncut Emerald',
+                'description' => 'An uncut emerald with rich green depths.',
+                'type' => 'resource',
+                'subtype' => 'gem',
+                'rarity' => 'uncommon',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 150,
+            ],
+            [
+                'name' => 'Uncut Ruby',
+                'description' => 'An uncut ruby with intense crimson glow.',
+                'type' => 'resource',
+                'subtype' => 'gem',
+                'rarity' => 'rare',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 250,
+            ],
+            [
+                'name' => 'Uncut Diamond',
+                'description' => 'An uncut diamond of exceptional clarity.',
+                'type' => 'resource',
+                'subtype' => 'gem',
+                'rarity' => 'rare',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 500,
+            ],
+            [
+                'name' => 'Uncut Oria Stone',
+                'description' => 'An uncut oria stone radiating divine energy.',
+                'type' => 'resource',
+                'subtype' => 'gem',
+                'rarity' => 'epic',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 1500,
+            ],
+
+            // Cut Gems (for jewelry crafting)
+            [
+                'name' => 'Opal',
+                'description' => 'A polished opal displaying a play of iridescent colors.',
+                'type' => 'resource',
+                'subtype' => 'cut_gem',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 35,
+            ],
+            [
+                'name' => 'Jade',
+                'description' => 'A polished jade stone with a lustrous green finish.',
+                'type' => 'resource',
+                'subtype' => 'cut_gem',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 55,
+            ],
+            [
+                'name' => 'Red Topaz',
+                'description' => 'A polished red topaz that catches light like fire.',
+                'type' => 'resource',
+                'subtype' => 'cut_gem',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 80,
+            ],
+            [
+                'name' => 'Sapphire',
+                'description' => 'A polished sapphire of brilliant blue perfection.',
+                'type' => 'resource',
+                'subtype' => 'cut_gem',
+                'rarity' => 'uncommon',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 200,
+            ],
+            [
+                'name' => 'Emerald',
+                'description' => 'A polished emerald with mesmerizing green depths.',
+                'type' => 'resource',
+                'subtype' => 'cut_gem',
+                'rarity' => 'uncommon',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 300,
+            ],
+            [
+                'name' => 'Ruby',
+                'description' => 'A polished ruby burning with inner crimson fire.',
+                'type' => 'resource',
+                'subtype' => 'cut_gem',
+                'rarity' => 'rare',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 500,
+            ],
+            [
+                'name' => 'Diamond',
+                'description' => 'A perfectly cut diamond of dazzling brilliance.',
+                'type' => 'resource',
+                'subtype' => 'cut_gem',
+                'rarity' => 'rare',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 1000,
+            ],
+            [
+                'name' => 'Oria Stone',
+                'description' => 'A perfectly cut oria stone pulsing with divine power.',
+                'type' => 'resource',
+                'subtype' => 'cut_gem',
+                'rarity' => 'epic',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 3000,
             ],
 
             // Monster drops for potions
@@ -1191,6 +1476,51 @@ class ItemSeeder extends Seeder
                 'required_skill' => 'crafting',
                 'required_skill_level' => 1,
                 'base_value' => 5,
+            ],
+            [
+                'name' => 'Chisel',
+                'description' => 'A sharp chisel for cutting gems and fine crafting work.',
+                'type' => 'tool',
+                'subtype' => 'crafting',
+                'rarity' => 'common',
+                'stackable' => false,
+                'base_value' => 25,
+            ],
+            [
+                'name' => 'Ring Mould',
+                'description' => 'A mould for crafting gold rings.',
+                'type' => 'tool',
+                'subtype' => 'crafting',
+                'rarity' => 'common',
+                'stackable' => false,
+                'base_value' => 50,
+            ],
+            [
+                'name' => 'Necklace Mould',
+                'description' => 'A mould for crafting gold necklaces.',
+                'type' => 'tool',
+                'subtype' => 'crafting',
+                'rarity' => 'common',
+                'stackable' => false,
+                'base_value' => 60,
+            ],
+            [
+                'name' => 'Bracelet Mould',
+                'description' => 'A mould for crafting gold bracelets.',
+                'type' => 'tool',
+                'subtype' => 'crafting',
+                'rarity' => 'common',
+                'stackable' => false,
+                'base_value' => 55,
+            ],
+            [
+                'name' => 'Amulet Mould',
+                'description' => 'A mould for crafting gold amulets.',
+                'type' => 'tool',
+                'subtype' => 'crafting',
+                'rarity' => 'common',
+                'stackable' => false,
+                'base_value' => 65,
             ],
 
             // === MISC ===
@@ -2662,13 +2992,47 @@ class ItemSeeder extends Seeder
             // Rings and Amulets
             [
                 'name' => 'Gold Ring',
-                'description' => 'A simple gold ring.',
+                'description' => 'A simple gold ring crafted from pure gold.',
                 'type' => 'armor',
                 'subtype' => 'ring',
                 'rarity' => 'uncommon',
                 'stackable' => false,
                 'equipment_slot' => 'ring',
+                'required_level' => 5,
                 'base_value' => 200,
+            ],
+            [
+                'name' => 'Gold Necklace',
+                'description' => 'An elegant gold necklace with fine craftsmanship.',
+                'type' => 'armor',
+                'subtype' => 'necklace',
+                'rarity' => 'uncommon',
+                'stackable' => false,
+                'equipment_slot' => 'necklace',
+                'required_level' => 6,
+                'base_value' => 250,
+            ],
+            [
+                'name' => 'Gold Bracelet',
+                'description' => 'A delicate gold bracelet that gleams in the light.',
+                'type' => 'armor',
+                'subtype' => 'bracelet',
+                'rarity' => 'uncommon',
+                'stackable' => false,
+                'equipment_slot' => 'bracelet',
+                'required_level' => 7,
+                'base_value' => 225,
+            ],
+            [
+                'name' => 'Gold Amulet',
+                'description' => 'A golden amulet of simple but elegant design.',
+                'type' => 'armor',
+                'subtype' => 'amulet',
+                'rarity' => 'uncommon',
+                'stackable' => false,
+                'equipment_slot' => 'amulet',
+                'required_level' => 8,
+                'base_value' => 275,
             ],
             [
                 'name' => 'Ring of Strength',
@@ -2710,8 +3074,11 @@ class ItemSeeder extends Seeder
             ],
         ];
 
-        // Merge smithed items with other items
-        $allItems = array_merge($smithedItems, $items);
+        // Generate gem jewelry items programmatically
+        $gemJewelry = $this->generateGemJewelry();
+
+        // Merge smithed items, gem jewelry, and other items
+        $allItems = array_merge($smithedItems, $gemJewelry, $items);
 
         foreach ($allItems as $item) {
             Item::updateOrCreate(

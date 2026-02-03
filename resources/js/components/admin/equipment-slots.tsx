@@ -32,6 +32,8 @@ const EQUIPMENT_SLOTS = [
     "shield",
     "ring",
     "amulet",
+    "necklace",
+    "bracelet",
 ] as const;
 
 const slotLabels: Record<string, string> = {
@@ -44,6 +46,8 @@ const slotLabels: Record<string, string> = {
     shield: "Shield",
     ring: "Ring",
     amulet: "Amulet",
+    necklace: "Necklace",
+    bracelet: "Bracelet",
 };
 
 const rarityColors: Record<string, string> = {

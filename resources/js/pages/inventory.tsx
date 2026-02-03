@@ -70,6 +70,8 @@ interface Equipment {
     weapon: EquippedItem | null;
     shield: EquippedItem | null;
     ring: EquippedItem | null;
+    necklace: EquippedItem | null;
+    bracelet: EquippedItem | null;
 }
 
 interface CombatStats {
