@@ -12,6 +12,8 @@ class LeaderboardController extends Controller
 {
     private const PER_PAGE = 25;
 
+    private const MAX_ENTRIES = 100;
+
     /**
      * Display the leaderboard page.
      */
@@ -59,22 +61,27 @@ class LeaderboardController extends Controller
 
         $query->orderByDesc('xp');
 
-        $paginated = $query->paginate(self::PER_PAGE, ['*'], 'page', $page);
+        // Cap at MAX_ENTRIES
+        $totalRaw = (clone $query)->count();
+        $total = min($totalRaw, self::MAX_ENTRIES);
+        $lastPage = max(1, (int) ceil($total / self::PER_PAGE));
+        $page = min($page, $lastPage);
 
-        $startRank = ($page - 1) * self::PER_PAGE;
+        $offset = ($page - 1) * self::PER_PAGE;
+        $entries = $query->skip($offset)->take(self::PER_PAGE)->get();
 
         return [
-            'entries' => $paginated->map(function ($skill, $index) use ($startRank) {
+            'entries' => $entries->map(function ($skill, $index) use ($offset) {
                 return [
-                    'rank' => $startRank + $index + 1,
+                    'rank' => $offset + $index + 1,
                     'username' => $skill->player->username ?? 'Unknown',
                     'level' => $skill->level,
                     'xp' => $skill->xp,
                 ];
             }),
-            'current_page' => $paginated->currentPage(),
-            'last_page' => $paginated->lastPage(),
-            'total' => $paginated->total(),
+            'current_page' => $page,
+            'last_page' => $lastPage,
+            'total' => $total,
         ];
     }
 
@@ -91,8 +98,9 @@ class LeaderboardController extends Controller
             ->orderByDesc('total_xp')
             ->with('player:id,username');
 
-        // Manual pagination for grouped query
-        $total = (clone $query)->get()->count();
+        // Manual pagination for grouped query, capped at MAX_ENTRIES
+        $totalRaw = (clone $query)->get()->count();
+        $total = min($totalRaw, self::MAX_ENTRIES);
         $lastPage = max(1, (int) ceil($total / self::PER_PAGE));
         $page = min($page, $lastPage);
 
