@@ -401,6 +401,14 @@ class ArmyController extends Controller
             ], 400);
         }
 
+        // Check if player is at a valid location
+        if (! $user->current_location_type || ! $user->current_location_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You must be at a location to raise an army.',
+            ], 400);
+        }
+
         // Check if player has enough gold
         if ($user->gold < self::ARMY_CREATION_COST) {
             return response()->json([
