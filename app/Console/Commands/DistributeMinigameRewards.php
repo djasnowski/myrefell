@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\MinigameReward;
 use App\Models\MinigameScore;
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -105,8 +105,8 @@ class DistributeMinigameRewards extends Command
     protected function distributeRewards(
         string $minigame,
         string $rewardType,
-        Carbon $periodStart,
-        Carbon $periodEnd
+        CarbonInterface $periodStart,
+        CarbonInterface $periodEnd
     ): int {
         // Get the top 10 players for this period, with their highest score and the location where it was achieved
         $rankings = $this->getTopPlayersWithLocation($minigame, $periodStart, $periodEnd);
@@ -179,8 +179,8 @@ class DistributeMinigameRewards extends Command
      */
     protected function getTopPlayersWithLocation(
         string $minigame,
-        Carbon $periodStart,
-        Carbon $periodEnd
+        CarbonInterface $periodStart,
+        CarbonInterface $periodEnd
     ): \Illuminate\Support\Collection {
         // Subquery to get each user's maximum score in the period
         $maxScoreSubquery = MinigameScore::query()
@@ -190,6 +190,7 @@ class DistributeMinigameRewards extends Command
             ->groupBy('user_id');
 
         // Join with original table to get the location where the max score was achieved
+        // Use all columns in GROUP BY to satisfy PostgreSQL's strict mode
         return MinigameScore::query()
             ->select([
                 'minigame_scores.user_id',
@@ -203,7 +204,12 @@ class DistributeMinigameRewards extends Command
             })
             ->where('minigame_scores.minigame', $minigame)
             ->whereBetween('minigame_scores.played_at', [$periodStart, $periodEnd])
-            ->groupBy('minigame_scores.user_id') // Handle ties (same user, same score, different locations)
+            ->groupBy([
+                'minigame_scores.user_id',
+                'minigame_scores.score',
+                'minigame_scores.location_type',
+                'minigame_scores.location_id',
+            ])
             ->orderByDesc('best_score')
             ->limit(10)
             ->get();

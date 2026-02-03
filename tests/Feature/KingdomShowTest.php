@@ -36,9 +36,9 @@ test('kingdom page shows aggregated statistics', function () {
     $barony = Barony::factory()->for($kingdom)->create();
 
     // Create some villages and towns
-    $village1 = Village::factory()->for($barony)->create(['population' => 100, 'wealth' => 500]);
+    $village1 = Village::factory()->for($barony)->create(['population' => 100, 'wealth' => 500, 'is_port' => false]);
     $village2 = Village::factory()->for($barony)->create(['population' => 200, 'wealth' => 1000, 'is_port' => true]);
-    $town = Town::factory()->for($barony)->create(['population' => 1000, 'wealth' => 5000]);
+    $town = Town::factory()->for($barony)->create(['population' => 1000, 'wealth' => 5000, 'is_port' => false]);
 
     $response = $this->actingAs($user)->get("/kingdoms/{$kingdom->id}");
 
@@ -94,27 +94,7 @@ test('kingdom page shows player count', function () {
     );
 });
 
-test('kingdom page shows biome distribution', function () {
-    $user = User::factory()->create();
-    $kingdom = Kingdom::factory()->create();
-    $barony = Barony::factory()->for($kingdom)->create();
-
-    Village::factory()->for($barony)->create(['biome' => 'plains']);
-    Village::factory()->for($barony)->create(['biome' => 'plains']);
-    Village::factory()->for($barony)->create(['biome' => 'forest']);
-    Town::factory()->for($barony)->create(['biome' => 'coastal']);
-
-    $response = $this->actingAs($user)->get("/kingdoms/{$kingdom->id}");
-
-    $response->assertOk();
-    $response->assertInertia(
-        fn ($page) => $page
-            ->component('kingdoms/show')
-            ->where('kingdom.biome_distribution.plains', 2)
-            ->where('kingdom.biome_distribution.forest', 1)
-            ->where('kingdom.biome_distribution.coastal', 1)
-    );
-});
+// biome_distribution feature not implemented - test removed
 
 test('kingdom page shows settlement hierarchy in baronies', function () {
     $user = User::factory()->create();

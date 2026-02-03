@@ -5,7 +5,6 @@ use App\Models\User;
 use App\Models\Village;
 use App\Models\WorldState;
 use App\Services\GatheringService;
-use App\Services\InventoryService;
 
 beforeEach(function () {
     WorldState::query()->delete();
@@ -146,13 +145,13 @@ test('gathering index endpoint includes seasonal data', function () {
     ]);
 
     $this->actingAs($user)
-        ->get(route('gathering.index'))
+        ->get(route('villages.gathering', $village))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('Gathering/Index')
             ->has('seasonal')
             ->where('seasonal.season', 'summer')
-            ->where('seasonal.modifier', 1.0)
+            ->where('seasonal.modifier', 1)
         );
 });
 
@@ -167,7 +166,7 @@ test('gathering show endpoint includes seasonal data in activity', function () {
     ]);
 
     $this->actingAs($user)
-        ->get(route('gathering.show', 'mining'))
+        ->get(route('villages.gathering.show', [$village, 'mining']))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('Gathering/Activity')

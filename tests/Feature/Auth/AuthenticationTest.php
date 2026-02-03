@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
 
 test('login screen can be rendered', function () {
@@ -68,9 +67,15 @@ test('users can logout', function () {
 test('users are rate limited', function () {
     $user = User::factory()->create();
 
-    // Fortify uses username|ip for rate limiting key
-    RateLimiter::increment(md5('login'.implode('|', [$user->username, '127.0.0.1'])), amount: 5);
+    // Make 5 failed login attempts to trigger rate limiting
+    for ($i = 0; $i < 5; $i++) {
+        $this->post(route('login.store'), [
+            'username' => $user->username,
+            'password' => 'wrong-password',
+        ]);
+    }
 
+    // 6th attempt should be rate limited
     $response = $this->post(route('login.store'), [
         'username' => $user->username,
         'password' => 'wrong-password',
