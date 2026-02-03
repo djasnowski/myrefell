@@ -1,9 +1,11 @@
-import { Head, Link, usePage } from "@inertiajs/react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import type { LucideIcon } from "lucide-react";
 import {
     ArrowLeft,
     Beef,
     BicepsFlexed,
+    ChevronLeft,
+    ChevronRight,
     Crown,
     Crosshair,
     Fish,
@@ -21,7 +23,6 @@ import {
     Trophy,
     Wheat,
 } from "lucide-react";
-import { useState } from "react";
 import { dashboard, login, register } from "@/routes";
 import type { SharedData } from "@/types";
 
@@ -32,8 +33,16 @@ interface LeaderboardEntry {
     xp: number;
 }
 
+interface LeaderboardData {
+    entries: LeaderboardEntry[];
+    current_page: number;
+    last_page: number;
+    total: number;
+}
+
 interface PageProps extends SharedData {
-    leaderboards: Record<string, LeaderboardEntry[]>;
+    leaderboard: LeaderboardData;
+    selectedSkill: string;
     skills: string[];
 }
 
@@ -78,12 +87,22 @@ const skillColors: Record<string, string> = {
 };
 
 export default function LeaderboardIndex() {
-    const { leaderboards, skills, auth } = usePage<PageProps>().props;
-    const [selectedSkill, setSelectedSkill] = useState<string>(skills[0] || "attack");
+    const { leaderboard, selectedSkill, skills, auth } = usePage<PageProps>().props;
 
-    const currentLeaderboard = leaderboards[selectedSkill] || [];
     const Icon = skillIcons[selectedSkill] || Sword;
     const iconColor = skillColors[selectedSkill] || "text-amber-400";
+
+    const handleSkillChange = (skill: string) => {
+        router.get("/leaderboard", { skill }, { preserveState: true, preserveScroll: false });
+    };
+
+    const handlePageChange = (page: number) => {
+        router.get(
+            "/leaderboard",
+            { skill: selectedSkill, page },
+            { preserveState: true, preserveScroll: true },
+        );
+    };
 
     return (
         <>
@@ -158,7 +177,7 @@ export default function LeaderboardIndex() {
                             <span className="text-primary">Highscores</span>
                         </h1>
                         <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-                            Top 15 players for each skill. Train hard, rise through the ranks.
+                            Compete with other players. Train hard, rise through the ranks.
                         </p>
                     </div>
                 </section>
@@ -175,7 +194,7 @@ export default function LeaderboardIndex() {
                                 return (
                                     <button
                                         key={skill}
-                                        onClick={() => setSelectedSkill(skill)}
+                                        onClick={() => handleSkillChange(skill)}
                                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors capitalize ${
                                             isSelected
                                                 ? "bg-primary/20 border-2 border-primary/50 text-primary"
@@ -195,89 +214,138 @@ export default function LeaderboardIndex() {
                 <section className="relative pb-24">
                     <div className="mx-auto max-w-3xl px-6">
                         <div className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-6">
-                            <div className="flex items-center gap-2 mb-6 pb-4 border-b border-border/50">
-                                <Icon className={`h-6 w-6 ${iconColor}`} />
-                                <h2 className="font-[Cinzel] text-xl font-bold capitalize text-foreground">
-                                    {selectedSkill === "total" ? "Total Level" : selectedSkill}{" "}
-                                    Rankings
-                                </h2>
+                            <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/50">
+                                <div className="flex items-center gap-2">
+                                    <Icon className={`h-6 w-6 ${iconColor}`} />
+                                    <h2 className="font-[Cinzel] text-xl font-bold capitalize text-foreground">
+                                        {selectedSkill === "total" ? "Total Level" : selectedSkill}{" "}
+                                        Rankings
+                                    </h2>
+                                </div>
+                                <span className="text-sm text-muted-foreground">
+                                    {leaderboard.total.toLocaleString()} players
+                                </span>
                             </div>
 
-                            {currentLeaderboard.length === 0 ? (
+                            {leaderboard.entries.length === 0 ? (
                                 <p className="text-center text-muted-foreground py-12">
                                     {selectedSkill === "total"
-                                        ? "No players have leveled up yet"
-                                        : "No players with 10+ XP yet"}
+                                        ? "No players with 250+ total XP yet"
+                                        : `No players meeting requirements yet`}
                                 </p>
                             ) : (
-                                <div className="space-y-2">
-                                    {currentLeaderboard.map((entry) => (
-                                        <div
-                                            key={entry.rank}
-                                            className={`flex items-center gap-4 px-4 py-3 rounded-lg border transition-all ${
-                                                entry.rank === 1
-                                                    ? "bg-amber-500/10 border-amber-500/30"
-                                                    : entry.rank === 2
-                                                      ? "bg-slate-400/10 border-slate-400/30"
-                                                      : entry.rank === 3
-                                                        ? "bg-orange-500/10 border-orange-500/30"
-                                                        : "bg-card/30 border-border/30"
-                                            }`}
-                                        >
-                                            {/* Rank */}
-                                            <div className="w-10 text-center shrink-0">
-                                                {entry.rank === 1 ? (
-                                                    <Trophy className="h-6 w-6 text-amber-400 mx-auto" />
-                                                ) : entry.rank === 2 ? (
-                                                    <Trophy className="h-6 w-6 text-slate-300 mx-auto" />
-                                                ) : entry.rank === 3 ? (
-                                                    <Trophy className="h-6 w-6 text-orange-500 mx-auto" />
-                                                ) : (
-                                                    <span className="text-sm text-muted-foreground">
-                                                        #{entry.rank}
-                                                    </span>
-                                                )}
-                                            </div>
+                                <>
+                                    <div className="space-y-2">
+                                        {leaderboard.entries.map((entry) => (
+                                            <div
+                                                key={entry.rank}
+                                                className={`flex items-center gap-4 px-4 py-3 rounded-lg border transition-all ${
+                                                    entry.rank === 1
+                                                        ? "bg-amber-500/10 border-amber-500/30"
+                                                        : entry.rank === 2
+                                                          ? "bg-slate-400/10 border-slate-400/30"
+                                                          : entry.rank === 3
+                                                            ? "bg-orange-500/10 border-orange-500/30"
+                                                            : "bg-card/30 border-border/30"
+                                                }`}
+                                            >
+                                                {/* Rank */}
+                                                <div className="w-10 text-center shrink-0">
+                                                    {entry.rank === 1 ? (
+                                                        <Trophy className="h-6 w-6 text-amber-400 mx-auto" />
+                                                    ) : entry.rank === 2 ? (
+                                                        <Trophy className="h-6 w-6 text-slate-300 mx-auto" />
+                                                    ) : entry.rank === 3 ? (
+                                                        <Trophy className="h-6 w-6 text-orange-500 mx-auto" />
+                                                    ) : (
+                                                        <span className="text-sm text-muted-foreground">
+                                                            #{entry.rank}
+                                                        </span>
+                                                    )}
+                                                </div>
 
-                                            {/* Username */}
-                                            <div className="flex-1 min-w-0">
-                                                <Link
-                                                    href={`/players/${entry.username}`}
-                                                    className={`truncate block hover:underline ${
-                                                        entry.rank === 1
-                                                            ? "text-amber-300 hover:text-amber-200"
-                                                            : entry.rank === 2
-                                                              ? "text-slate-200 hover:text-slate-100"
-                                                              : entry.rank === 3
-                                                                ? "text-orange-300 hover:text-orange-200"
-                                                                : "text-foreground/80 hover:text-foreground"
-                                                    }`}
-                                                >
-                                                    {entry.username}
-                                                </Link>
-                                            </div>
+                                                {/* Username */}
+                                                <div className="flex-1 min-w-0">
+                                                    <Link
+                                                        href={`/players/${entry.username}`}
+                                                        className={`truncate block hover:underline ${
+                                                            entry.rank === 1
+                                                                ? "text-amber-300 hover:text-amber-200"
+                                                                : entry.rank === 2
+                                                                  ? "text-slate-200 hover:text-slate-100"
+                                                                  : entry.rank === 3
+                                                                    ? "text-orange-300 hover:text-orange-200"
+                                                                    : "text-foreground/80 hover:text-foreground"
+                                                        }`}
+                                                    >
+                                                        {entry.username}
+                                                    </Link>
+                                                </div>
 
-                                            {/* Level & XP */}
-                                            <div className="text-right shrink-0">
-                                                <p
-                                                    className={`text-sm ${
-                                                        entry.rank <= 3
-                                                            ? "text-foreground"
-                                                            : "text-foreground/80"
-                                                    }`}
-                                                >
-                                                    {selectedSkill === "total"
-                                                        ? "Total Lv."
-                                                        : "Lv."}{" "}
-                                                    {entry.level}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {entry.xp.toLocaleString()} XP
-                                                </p>
+                                                {/* Level & XP */}
+                                                <div className="flex shrink-0 items-center gap-4">
+                                                    <p className="font-pixel text-sm text-muted-foreground">
+                                                        {entry.xp.toLocaleString()}{" "}
+                                                        <span className="text-xs">xp</span>
+                                                    </p>
+                                                    <div
+                                                        className={`rounded-lg px-3 py-1.5 text-center ${
+                                                            entry.rank === 1
+                                                                ? "bg-amber-500/20 text-amber-300"
+                                                                : entry.rank === 2
+                                                                  ? "bg-slate-400/20 text-slate-200"
+                                                                  : entry.rank === 3
+                                                                    ? "bg-orange-500/20 text-orange-300"
+                                                                    : "bg-primary/10 text-primary"
+                                                        }`}
+                                                    >
+                                                        <p className="text-[9px] uppercase tracking-wide opacity-70">
+                                                            {selectedSkill === "total"
+                                                                ? "total"
+                                                                : "level"}
+                                                        </p>
+                                                        <p className="text-xl font-bold">
+                                                            {entry.level}
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Pagination */}
+                                    {leaderboard.last_page > 1 && (
+                                        <div className="mt-6 flex items-center justify-center gap-2 border-t border-border/50 pt-4">
+                                            <button
+                                                onClick={() =>
+                                                    handlePageChange(leaderboard.current_page - 1)
+                                                }
+                                                disabled={leaderboard.current_page === 1}
+                                                className="flex items-center gap-1 rounded-lg border border-border/50 bg-card/50 px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-border hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                <ChevronLeft className="h-4 w-4" />
+                                                Prev
+                                            </button>
+                                            <span className="px-4 text-sm text-muted-foreground">
+                                                Page {leaderboard.current_page} of{" "}
+                                                {leaderboard.last_page}
+                                            </span>
+                                            <button
+                                                onClick={() =>
+                                                    handlePageChange(leaderboard.current_page + 1)
+                                                }
+                                                disabled={
+                                                    leaderboard.current_page ===
+                                                    leaderboard.last_page
+                                                }
+                                                className="flex items-center gap-1 rounded-lg border border-border/50 bg-card/50 px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-border hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                Next
+                                                <ChevronRight className="h-4 w-4" />
+                                            </button>
                                         </div>
-                                    ))}
-                                </div>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>
