@@ -155,14 +155,10 @@ function ItemTooltip({
     return (
         <div className="absolute top-full left-1/2 z-[100] mt-2 w-56 -translate-x-1/2 rounded border-2 border-stone-600 bg-stone-900 p-3 shadow-lg">
             <div
-                className={`mb-1 font-pixel text-sm capitalize ${rarityTextColors[item.rarity] || "text-stone-300"}`}
+                className={`font-pixel text-sm capitalize ${rarityTextColors[item.rarity] || "text-stone-300"}`}
             >
                 {item.name}
             </div>
-            <div className="mb-1 font-pixel text-xs capitalize text-stone-500">{item.type}</div>
-            {item.description && (
-                <div className="mb-2 text-sm text-stone-300">{item.description}</div>
-            )}
             {!!hasStats && (
                 <div className="mb-2 space-y-1 border-t border-stone-700 pt-2">
                     {item.atk_bonus > 0 && (
@@ -402,12 +398,9 @@ function EquipmentSlotDisplay({
             {equipped && showTooltip && !contextMenuOpen && (
                 <div className="absolute top-full left-1/2 z-[100] mt-2 w-48 -translate-x-1/2 rounded border-2 border-stone-600 bg-stone-900 p-2 shadow-lg">
                     <div
-                        className={`mb-1 font-pixel text-xs capitalize ${rarityTextColors[equipped.item.rarity] || "text-stone-300"}`}
+                        className={`font-pixel text-xs capitalize ${rarityTextColors[equipped.item.rarity] || "text-stone-300"}`}
                     >
                         {equipped.item.name}
-                    </div>
-                    <div className="mb-1 font-pixel text-[10px] capitalize text-stone-500">
-                        {equipped.item.type}
                     </div>
                     {(equipped.item.atk_bonus > 0 ||
                         equipped.item.str_bonus > 0 ||
