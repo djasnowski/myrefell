@@ -473,7 +473,6 @@ class RoleService
         $rulerColumn = match ($roleSlug) {
             'king' => 'king_user_id',
             'baron' => 'baron_user_id',
-            'elder' => 'elder_user_id',
             'mayor' => 'mayor_user_id',
             default => null,
         };
@@ -485,7 +484,6 @@ class RoleService
         $model = match ($locationType) {
             'kingdom' => Kingdom::find($locationId),
             'barony' => Barony::find($locationId),
-            'village' => Village::find($locationId),
             'town' => Town::find($locationId),
             default => null,
         };
