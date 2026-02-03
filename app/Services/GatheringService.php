@@ -88,32 +88,32 @@ class GatheringService
             'name' => 'Herblore',
             'skill' => 'herblore',
             'energy_cost' => 3,
-            'base_xp' => 80,
+            'base_xp' => 15,
             'task_type' => 'forage',
             'location_types' => ['village', 'town', 'wilderness'],
             'resources' => [
                 // Basic herbs (Level 1-10)
                 ['name' => 'Herb', 'weight' => 50, 'min_level' => 1, 'xp_bonus' => 0],
-                ['name' => 'Healing Herb', 'weight' => 45, 'min_level' => 5, 'xp_bonus' => 50],
-                ['name' => 'Sunblossom', 'weight' => 40, 'min_level' => 8, 'xp_bonus' => 60],
+                ['name' => 'Healing Herb', 'weight' => 45, 'min_level' => 5, 'xp_bonus' => 5],
+                ['name' => 'Sunblossom', 'weight' => 40, 'min_level' => 8, 'xp_bonus' => 8],
                 // Intermediate herbs (Level 10-25)
-                ['name' => 'Stoneroot', 'weight' => 35, 'min_level' => 12, 'xp_bonus' => 100],
-                ['name' => 'Moonpetal', 'weight' => 30, 'min_level' => 15, 'xp_bonus' => 120],
-                ['name' => 'Nightshade', 'weight' => 28, 'min_level' => 18, 'xp_bonus' => 140],
-                ['name' => 'Ironbark', 'weight' => 25, 'min_level' => 22, 'xp_bonus' => 160],
+                ['name' => 'Stoneroot', 'weight' => 35, 'min_level' => 12, 'xp_bonus' => 12],
+                ['name' => 'Moonpetal', 'weight' => 30, 'min_level' => 15, 'xp_bonus' => 15],
+                ['name' => 'Nightshade', 'weight' => 28, 'min_level' => 18, 'xp_bonus' => 18],
+                ['name' => 'Ironbark', 'weight' => 25, 'min_level' => 22, 'xp_bonus' => 22],
                 // Advanced herbs (Level 25-40)
-                ['name' => 'Bloodroot', 'weight' => 22, 'min_level' => 25, 'xp_bonus' => 200],
-                ['name' => 'Hawkeye Leaf', 'weight' => 20, 'min_level' => 28, 'xp_bonus' => 220],
-                ['name' => 'Swiftfoot Moss', 'weight' => 18, 'min_level' => 32, 'xp_bonus' => 250],
-                ['name' => 'Ghostcap Mushroom', 'weight' => 15, 'min_level' => 35, 'xp_bonus' => 280],
-                ['name' => 'Windweed', 'weight' => 14, 'min_level' => 38, 'xp_bonus' => 300],
+                ['name' => 'Bloodroot', 'weight' => 22, 'min_level' => 25, 'xp_bonus' => 25],
+                ['name' => 'Hawkeye Leaf', 'weight' => 20, 'min_level' => 28, 'xp_bonus' => 28],
+                ['name' => 'Swiftfoot Moss', 'weight' => 18, 'min_level' => 32, 'xp_bonus' => 32],
+                ['name' => 'Ghostcap Mushroom', 'weight' => 15, 'min_level' => 35, 'xp_bonus' => 35],
+                ['name' => 'Windweed', 'weight' => 14, 'min_level' => 38, 'xp_bonus' => 38],
                 // Rare herbs (Level 45+)
-                ['name' => 'Dragonvine', 'weight' => 10, 'min_level' => 50, 'xp_bonus' => 400],
-                ['name' => 'Starlight Essence', 'weight' => 5, 'min_level' => 60, 'xp_bonus' => 550],
+                ['name' => 'Dragonvine', 'weight' => 10, 'min_level' => 50, 'xp_bonus' => 50],
+                ['name' => 'Starlight Essence', 'weight' => 5, 'min_level' => 60, 'xp_bonus' => 65],
                 // Supplies found while foraging
-                ['name' => 'Vial', 'weight' => 12, 'min_level' => 1, 'xp_bonus' => 20],
-                ['name' => 'Crystal Vial', 'weight' => 6, 'min_level' => 20, 'xp_bonus' => 80],
-                ['name' => 'Holy Water', 'weight' => 4, 'min_level' => 30, 'xp_bonus' => 150],
+                ['name' => 'Vial', 'weight' => 12, 'min_level' => 1, 'xp_bonus' => 2],
+                ['name' => 'Crystal Vial', 'weight' => 6, 'min_level' => 20, 'xp_bonus' => 10],
+                ['name' => 'Holy Water', 'weight' => 4, 'min_level' => 30, 'xp_bonus' => 20],
             ],
         ],
     ];
@@ -121,7 +121,8 @@ class GatheringService
     public function __construct(
         protected InventoryService $inventoryService,
         protected DailyTaskService $dailyTaskService,
-        protected TownBonusService $townBonusService
+        protected TownBonusService $townBonusService,
+        protected BlessingEffectService $blessingEffectService
     ) {}
 
     /**
@@ -268,6 +269,13 @@ class GatheringService
             $yieldBonus = $this->townBonusService->getYieldBonus($user, $bonusActivity);
             $bonusQuantity = $this->townBonusService->calculateBonusQuantity($yieldBonus, $quantity);
             $totalQuantity = $quantity + $bonusQuantity;
+
+            // Apply blessing yield bonus (e.g., fishing_yield_bonus, mining_yield_bonus)
+            $blessingYieldBonus = $this->blessingEffectService->getEffect($user, "{$activity}_yield_bonus");
+            if ($blessingYieldBonus > 0) {
+                $blessingBonusQty = (int) floor($totalQuantity * $blessingYieldBonus / 100);
+                $totalQuantity += $blessingBonusQty;
+            }
 
             // Add item to inventory
             $this->inventoryService->addItem($user, $item, $totalQuantity);
