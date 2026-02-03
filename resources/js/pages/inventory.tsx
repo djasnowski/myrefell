@@ -5,7 +5,6 @@ import {
     Droplets,
     Eye,
     Gift,
-    Heart,
     Package,
     Shield,
     ShieldOff,
@@ -17,7 +16,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
-import { getItemIcon, GoldIcon, HelpCircle } from "@/lib/item-icons";
+import { getItemIcon, GoldIcon } from "@/lib/item-icons";
 import { inventory } from "@/routes";
 import type { BreadcrumbItem } from "@/types";
 
@@ -66,6 +65,7 @@ interface EquippedItem {
     item: {
         id: number;
         name: string;
+        description: string;
         type: string;
         subtype: string | null;
         rarity: string;
@@ -75,6 +75,13 @@ interface EquippedItem {
         hp_bonus: number;
         energy_bonus: number;
     };
+}
+
+interface EquipmentContextMenuState {
+    visible: boolean;
+    x: number;
+    y: number;
+    slotName: keyof Equipment | null;
 }
 
 interface Equipment {
@@ -211,16 +218,12 @@ function ItemTooltip({
 function InventorySlotComponent({
     slot,
     slotIndex,
-    isSelected,
-    onSelect,
     onDrop,
     onContextMenu,
     contextMenuOpen,
 }: {
     slot: InventorySlot | null;
     slotIndex: number;
-    isSelected: boolean;
-    onSelect: () => void;
     onDrop: (fromSlot: number) => void;
     onContextMenu: (e: React.MouseEvent) => void;
     contextMenuOpen: boolean;
@@ -251,8 +254,7 @@ function InventorySlotComponent({
                 slot
                     ? `${rarityColors[slot.item.rarity]} hover:brightness-110`
                     : "border-stone-700 bg-stone-800/30 hover:border-stone-600"
-            } ${isSelected ? "ring-2 ring-amber-400" : ""} ${slot?.is_equipped ? "ring-2 ring-green-500" : ""} ${showTooltip ? "z-50" : ""}`}
-            onClick={onSelect}
+            } ${slot?.is_equipped ? "ring-2 ring-green-500" : ""} ${showTooltip ? "z-50" : ""}`}
             onContextMenu={onContextMenu}
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
@@ -360,22 +362,31 @@ function EquipmentSlotDisplay({
     label,
     equipped,
     slotType,
+    slotName,
+    onContextMenu,
+    contextMenuOpen,
 }: {
     label: string;
     equipped: EquippedItem | null;
     slotType: string;
+    slotName: keyof Equipment;
+    onContextMenu: (e: React.MouseEvent, slotName: keyof Equipment) => void;
+    contextMenuOpen: boolean;
 }) {
+    const [showTooltip, setShowTooltip] = useState(false);
     const SlotIcon = equipmentSlotIcons[slotType] || Package;
 
     return (
-        <div className="flex flex-col items-center">
+        <div className="relative flex flex-col items-center">
             <div
-                className={`flex h-12 w-12 items-center justify-center rounded border-2 ${
+                className={`flex h-12 w-12 cursor-pointer items-center justify-center rounded border-2 transition-all ${
                     equipped
-                        ? `${rarityColors[equipped.item.rarity]} ring-1 ring-green-500`
+                        ? `${rarityColors[equipped.item.rarity]} ring-1 ring-green-500 hover:brightness-110`
                         : "border-stone-700 bg-stone-900/50"
-                }`}
-                title={equipped ? equipped.item.name : `${label} (empty)`}
+                } ${showTooltip ? "z-50" : ""}`}
+                onContextMenu={(e) => equipped && onContextMenu(e, slotName)}
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
             >
                 {equipped ? (
                     (() => {
@@ -387,6 +398,55 @@ function EquipmentSlotDisplay({
                 )}
             </div>
             <span className="mt-1 font-pixel text-[8px] text-stone-500">{label}</span>
+            {/* Tooltip */}
+            {equipped && showTooltip && !contextMenuOpen && (
+                <div className="absolute top-full left-1/2 z-[100] mt-2 w-48 -translate-x-1/2 rounded border-2 border-stone-600 bg-stone-900 p-2 shadow-lg">
+                    <div
+                        className={`mb-1 font-pixel text-xs capitalize ${rarityTextColors[equipped.item.rarity] || "text-stone-300"}`}
+                    >
+                        {equipped.item.name}
+                    </div>
+                    <div className="mb-1 font-pixel text-[10px] capitalize text-stone-500">
+                        {equipped.item.type}
+                    </div>
+                    {(equipped.item.atk_bonus > 0 ||
+                        equipped.item.str_bonus > 0 ||
+                        equipped.item.def_bonus > 0 ||
+                        equipped.item.hp_bonus > 0 ||
+                        equipped.item.energy_bonus > 0) && (
+                        <div className="space-y-0.5 border-t border-stone-700 pt-1">
+                            {equipped.item.atk_bonus > 0 && (
+                                <div className="font-pixel text-[10px] text-red-400">
+                                    +{equipped.item.atk_bonus} ATK BONUS
+                                </div>
+                            )}
+                            {equipped.item.str_bonus > 0 && (
+                                <div className="font-pixel text-[10px] text-orange-400">
+                                    +{equipped.item.str_bonus} STR BONUS
+                                </div>
+                            )}
+                            {equipped.item.def_bonus > 0 && (
+                                <div className="font-pixel text-[10px] text-blue-400">
+                                    +{equipped.item.def_bonus} DEF BONUS
+                                </div>
+                            )}
+                            {equipped.item.hp_bonus > 0 && (
+                                <div className="font-pixel text-[10px] text-green-400">
+                                    +{equipped.item.hp_bonus} HP BONUS
+                                </div>
+                            )}
+                            {equipped.item.energy_bonus > 0 && (
+                                <div className="font-pixel text-[10px] text-yellow-400">
+                                    +{equipped.item.energy_bonus} EN BONUS
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    <div className="mt-1 font-pixel text-[10px] text-green-400">✓ Equipped</div>
+                    {/* Arrow */}
+                    <div className="absolute left-1/2 bottom-full -translate-x-1/2 border-8 border-transparent border-b-stone-600" />
+                </div>
+            )}
         </div>
     );
 }
@@ -394,7 +454,6 @@ function EquipmentSlotDisplay({
 export default function Inventory() {
     const { slots, max_slots, gold, can_donate, equipment, combat_stats } =
         usePage<PageProps>().props;
-    const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
     const [contextMenu, setContextMenu] = useState<ContextMenuState>({
         visible: false,
         x: 0,
@@ -406,18 +465,32 @@ export default function Inventory() {
         slotIndex: null,
         itemName: "",
     });
+    const [equipmentContextMenu, setEquipmentContextMenu] = useState<EquipmentContextMenuState>({
+        visible: false,
+        x: 0,
+        y: 0,
+        slotName: null,
+    });
     const contextMenuRef = useRef<HTMLDivElement>(null);
+    const equipmentContextMenuRef = useRef<HTMLDivElement>(null);
 
-    // Close context menu when clicking outside
+    // Close context menus when clicking outside
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
                 setContextMenu((prev) => ({ ...prev, visible: false }));
             }
+            if (
+                equipmentContextMenuRef.current &&
+                !equipmentContextMenuRef.current.contains(e.target as Node)
+            ) {
+                setEquipmentContextMenu((prev) => ({ ...prev, visible: false }));
+            }
         };
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
                 setContextMenu((prev) => ({ ...prev, visible: false }));
+                setEquipmentContextMenu((prev) => ({ ...prev, visible: false }));
                 setDropModal({ visible: false, slotIndex: null, itemName: "" });
             }
         };
@@ -444,10 +517,46 @@ export default function Inventory() {
         setContextMenu((prev) => ({ ...prev, visible: false }));
     };
 
-    const selectedItem = selectedSlot !== null ? slots[selectedSlot] : null;
+    const handleEquipmentContextMenu = (e: React.MouseEvent, slotName: keyof Equipment) => {
+        e.preventDefault();
+        if (!equipment[slotName]) return;
+        setEquipmentContextMenu({
+            visible: true,
+            x: e.clientX,
+            y: e.clientY,
+            slotName,
+        });
+    };
 
-    const handleSlotClick = (index: number) => {
-        setSelectedSlot(selectedSlot === index ? null : index);
+    const closeEquipmentContextMenu = () => {
+        setEquipmentContextMenu((prev) => ({ ...prev, visible: false }));
+    };
+
+    const handleUnequipFromEquipment = (slotName: keyof Equipment) => {
+        const equipped = equipment[slotName];
+        if (!equipped) return;
+
+        router.post(
+            "/inventory/unequip",
+            { slot: equipped.slot_number },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+            },
+        );
+        closeEquipmentContextMenu();
+    };
+
+    const handleExamineEquipment = (slotName: keyof Equipment) => {
+        const equipped = equipment[slotName];
+        if (!equipped) return;
+        closeEquipmentContextMenu();
+        gameToast.info(equipped.item.name, {
+            description: equipped.item.description || "Nothing interesting.",
+            duration: 5000,
+        });
     };
 
     const handleMove = (fromSlot: number, toSlot: number) => {
@@ -496,7 +605,6 @@ export default function Inventory() {
                 },
             },
         );
-        setSelectedSlot(null);
         setDropModal({ visible: false, slotIndex: null, itemName: "" });
     };
 
@@ -557,17 +665,6 @@ export default function Inventory() {
         closeContextMenu();
     };
 
-    // Wrapper functions for the panel buttons that use selectedSlot
-    const handleDrop = () => {
-        if (selectedSlot !== null) handleDropItem(selectedSlot);
-    };
-    const handleEquip = () => {
-        if (selectedSlot !== null) handleEquipItem(selectedSlot);
-    };
-    const handleConsume = () => {
-        if (selectedSlot !== null) handleConsumeItem(selectedSlot);
-    };
-
     const getConsumeLabel = (item: Item): { label: string; icon: typeof Apple } => {
         if (item.subtype === "food") {
             return { label: "Eat", icon: Apple };
@@ -602,10 +699,6 @@ export default function Inventory() {
         closeContextMenu();
     };
 
-    const handleDonate = () => {
-        if (selectedSlot !== null) handleDonateItem(selectedSlot);
-    };
-
     const usedSlots = slots.filter(Boolean).length;
 
     return (
@@ -637,8 +730,6 @@ export default function Inventory() {
                                     key={index}
                                     slot={slot}
                                     slotIndex={index}
-                                    isSelected={selectedSlot === index}
-                                    onSelect={() => handleSlotClick(index)}
                                     onDrop={(fromSlot) => handleMove(fromSlot, index)}
                                     onContextMenu={(e) => handleContextMenu(e, index)}
                                     contextMenuOpen={
@@ -663,6 +754,12 @@ export default function Inventory() {
                                 label="Head"
                                 equipped={equipment.head}
                                 slotType="head"
+                                slotName="head"
+                                onContextMenu={handleEquipmentContextMenu}
+                                contextMenuOpen={
+                                    equipmentContextMenu.visible &&
+                                    equipmentContextMenu.slotName === "head"
+                                }
                             />
                             <div></div>
 
@@ -671,16 +768,34 @@ export default function Inventory() {
                                 label="Weapon"
                                 equipped={equipment.weapon}
                                 slotType="weapon"
+                                slotName="weapon"
+                                onContextMenu={handleEquipmentContextMenu}
+                                contextMenuOpen={
+                                    equipmentContextMenu.visible &&
+                                    equipmentContextMenu.slotName === "weapon"
+                                }
                             />
                             <EquipmentSlotDisplay
                                 label="Chest"
                                 equipped={equipment.chest}
                                 slotType="chest"
+                                slotName="chest"
+                                onContextMenu={handleEquipmentContextMenu}
+                                contextMenuOpen={
+                                    equipmentContextMenu.visible &&
+                                    equipmentContextMenu.slotName === "chest"
+                                }
                             />
                             <EquipmentSlotDisplay
                                 label="Shield"
                                 equipped={equipment.shield}
                                 slotType="shield"
+                                slotName="shield"
+                                onContextMenu={handleEquipmentContextMenu}
+                                contextMenuOpen={
+                                    equipmentContextMenu.visible &&
+                                    equipmentContextMenu.slotName === "shield"
+                                }
                             />
 
                             {/* Bottom row: ring - legs - amulet */}
@@ -688,16 +803,34 @@ export default function Inventory() {
                                 label="Ring"
                                 equipped={equipment.ring}
                                 slotType="ring"
+                                slotName="ring"
+                                onContextMenu={handleEquipmentContextMenu}
+                                contextMenuOpen={
+                                    equipmentContextMenu.visible &&
+                                    equipmentContextMenu.slotName === "ring"
+                                }
                             />
                             <EquipmentSlotDisplay
                                 label="Legs"
                                 equipped={equipment.legs}
                                 slotType="legs"
+                                slotName="legs"
+                                onContextMenu={handleEquipmentContextMenu}
+                                contextMenuOpen={
+                                    equipmentContextMenu.visible &&
+                                    equipmentContextMenu.slotName === "legs"
+                                }
                             />
                             <EquipmentSlotDisplay
                                 label="Amulet"
                                 equipped={equipment.amulet}
                                 slotType="amulet"
+                                slotName="amulet"
+                                onContextMenu={handleEquipmentContextMenu}
+                                contextMenuOpen={
+                                    equipmentContextMenu.visible &&
+                                    equipmentContextMenu.slotName === "amulet"
+                                }
                             />
                         </div>
 
@@ -795,164 +928,6 @@ export default function Inventory() {
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    {/* Item Details Panel */}
-                    <div className="w-full rounded-lg border-2 border-stone-600 bg-stone-800/80 p-3 lg:w-56">
-                        <h2 className="mb-4 flex items-center gap-1 font-pixel text-xs text-amber-400">
-                            Item Details
-                            <HelpCircle className="h-3 w-3 text-stone-500" />
-                        </h2>
-
-                        {selectedItem ? (
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className={`flex h-12 w-12 items-center justify-center rounded border-2 ${rarityColors[selectedItem.item.rarity]}`}
-                                    >
-                                        {(() => {
-                                            const Icon = getItemIcon(
-                                                selectedItem.item.type,
-                                                selectedItem.item.subtype,
-                                            );
-                                            return <Icon className="h-6 w-6 text-stone-300" />;
-                                        })()}
-                                    </div>
-                                    <div>
-                                        <div
-                                            className={`font-pixel text-[10px] capitalize ${rarityTextColors[selectedItem.item.rarity] || "text-stone-300"}`}
-                                        >
-                                            {selectedItem.item.name}
-                                        </div>
-                                        <div className="font-pixel text-[8px] capitalize text-stone-500">
-                                            {selectedItem.item.type}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {selectedItem.item.description && (
-                                    <p className="text-xs text-stone-300">
-                                        {selectedItem.item.description}
-                                    </p>
-                                )}
-
-                                {(selectedItem.item.atk_bonus > 0 ||
-                                    selectedItem.item.str_bonus > 0 ||
-                                    selectedItem.item.def_bonus > 0 ||
-                                    selectedItem.item.hp_bonus > 0 ||
-                                    selectedItem.item.energy_bonus > 0) && (
-                                    <div className="space-y-1 border-t border-stone-700 pt-2">
-                                        {selectedItem.item.atk_bonus > 0 && (
-                                            <div className="font-pixel text-[8px] text-red-400">
-                                                +{selectedItem.item.atk_bonus} ATK
-                                                {selectedItem.item.equipment_slot ? " BONUS" : ""}
-                                            </div>
-                                        )}
-                                        {selectedItem.item.str_bonus > 0 && (
-                                            <div className="font-pixel text-[8px] text-orange-400">
-                                                +{selectedItem.item.str_bonus} STR
-                                                {selectedItem.item.equipment_slot ? " BONUS" : ""}
-                                            </div>
-                                        )}
-                                        {selectedItem.item.def_bonus > 0 && (
-                                            <div className="font-pixel text-[8px] text-blue-400">
-                                                +{selectedItem.item.def_bonus} DEF
-                                                {selectedItem.item.equipment_slot ? " BONUS" : ""}
-                                            </div>
-                                        )}
-                                        {selectedItem.item.hp_bonus > 0 && (
-                                            <div className="font-pixel text-[8px] text-green-400">
-                                                +{selectedItem.item.hp_bonus} HP
-                                                {selectedItem.item.equipment_slot ? " BONUS" : ""}
-                                            </div>
-                                        )}
-                                        {selectedItem.item.energy_bonus > 0 && (
-                                            <div className="font-pixel text-[8px] text-yellow-400">
-                                                +{selectedItem.item.energy_bonus} EN
-                                                {selectedItem.item.equipment_slot ? " BONUS" : ""}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {selectedItem.item.required_level != null &&
-                                    selectedItem.item.equipment_slot && (
-                                        <div className="border-t border-stone-700 pt-2">
-                                            <div className="font-pixel text-[8px] text-purple-400">
-                                                Requires: {selectedItem.item.required_level}{" "}
-                                                {selectedItem.item.required_skill ||
-                                                    (selectedItem.item.equipment_slot === "weapon"
-                                                        ? "ATK"
-                                                        : "DEF")}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                <div className="flex items-center justify-between border-t border-stone-700 pt-2">
-                                    <span className="flex items-center gap-1 font-pixel text-[8px] text-amber-300">
-                                        <GoldIcon className="h-3 w-3" />{" "}
-                                        {selectedItem.item.base_value.toLocaleString()}
-                                    </span>
-                                    {selectedItem.quantity > 1 && (
-                                        <span className="font-pixel text-[8px] text-stone-400">
-                                            Qty: {selectedItem.quantity}
-                                        </span>
-                                    )}
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex flex-col gap-2 border-t border-stone-700 pt-2">
-                                    {selectedItem.item.equipment_slot && (
-                                        <button
-                                            onClick={handleEquip}
-                                            className="flex w-full items-center justify-center gap-1 rounded border-2 border-green-600 bg-green-900/30 px-3 py-1.5 font-pixel text-[8px] text-green-300 transition hover:bg-green-800/50"
-                                        >
-                                            {selectedItem.is_equipped ? (
-                                                <>
-                                                    <ShieldOff className="h-3 w-3" /> Unequip
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Sword className="h-3 w-3" /> Equip
-                                                </>
-                                            )}
-                                        </button>
-                                    )}
-                                    {isConsumable(selectedItem.item) &&
-                                        (() => {
-                                            const { label, icon: ConsumeIcon } = getConsumeLabel(
-                                                selectedItem.item,
-                                            );
-                                            return (
-                                                <button
-                                                    onClick={handleConsume}
-                                                    className="flex w-full items-center justify-center gap-1 rounded border-2 border-amber-600 bg-amber-900/30 px-3 py-1.5 font-pixel text-[8px] text-amber-300 transition hover:bg-amber-800/50"
-                                                >
-                                                    <ConsumeIcon className="h-3 w-3" /> {label}
-                                                </button>
-                                            );
-                                        })()}
-                                    {can_donate && isDonatable(selectedItem.item) && (
-                                        <button
-                                            onClick={handleDonate}
-                                            className="flex w-full items-center justify-center gap-1 rounded border-2 border-blue-600 bg-blue-900/30 px-3 py-1.5 font-pixel text-[8px] text-blue-300 transition hover:bg-blue-800/50"
-                                        >
-                                            <Gift className="h-3 w-3" /> Donate to Granary
-                                        </button>
-                                    )}
-                                    <button
-                                        onClick={handleDrop}
-                                        className="flex w-full items-center justify-center gap-1 rounded border-2 border-red-600 bg-red-900/30 px-3 py-1.5 font-pixel text-[8px] text-red-300 transition hover:bg-red-800/50"
-                                    >
-                                        <Trash2 className="h-3 w-3" /> Drop
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <p className="font-pixel text-[8px] text-stone-500">
-                                Select an item to view details
-                            </p>
-                        )}
                     </div>
                 </div>
             </div>
@@ -1062,6 +1037,52 @@ export default function Inventory() {
                                 </>
                             );
                         })()}
+                    </div>
+                )}
+
+            {/* Equipment Context Menu */}
+            {equipmentContextMenu.visible &&
+                equipmentContextMenu.slotName !== null &&
+                equipment[equipmentContextMenu.slotName] && (
+                    <div
+                        ref={equipmentContextMenuRef}
+                        className="fixed z-[200] min-w-40 rounded-lg border-2 border-stone-600 bg-stone-900 p-1 shadow-xl"
+                        style={{
+                            left: equipmentContextMenu.x,
+                            top: equipmentContextMenu.y,
+                        }}
+                    >
+                        {/* Unequip */}
+                        <button
+                            onClick={() =>
+                                handleUnequipFromEquipment(equipmentContextMenu.slotName!)
+                            }
+                            className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-300 hover:bg-stone-800"
+                        >
+                            <ShieldOff className="h-3.5 w-3.5 text-orange-400" />
+                            Unequip
+                        </button>
+
+                        <div className="my-1 h-px bg-stone-700" />
+
+                        {/* Examine */}
+                        <button
+                            onClick={() => handleExamineEquipment(equipmentContextMenu.slotName!)}
+                            className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-300 hover:bg-stone-800"
+                        >
+                            <Eye className="h-3.5 w-3.5 text-blue-400" />
+                            Examine
+                        </button>
+
+                        <div className="my-1 h-px bg-stone-700" />
+
+                        {/* Cancel */}
+                        <button
+                            onClick={closeEquipmentContextMenu}
+                            className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-400 hover:bg-stone-800"
+                        >
+                            Cancel
+                        </button>
                     </div>
                 )}
 

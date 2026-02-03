@@ -66,6 +66,7 @@ class InventoryController extends Controller
                 'item' => [
                     'id' => $equipped->item->id,
                     'name' => $equipped->item->name,
+                    'description' => $equipped->item->description,
                     'type' => $equipped->item->type,
                     'subtype' => $equipped->item->subtype,
                     'rarity' => $equipped->item->rarity,
