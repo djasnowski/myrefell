@@ -414,6 +414,7 @@ class FarmingController extends Controller
             'ready_at' => $plot->ready_at?->toISOString(),
             'is_ready' => $plot->isReadyToHarvest(),
             'has_withered' => $plot->hasWithered(),
+            'withers_at' => $plot->withers_at?->toISOString(),
             'planted_at' => $plot->planted_at?->diffForHumans(),
         ];
     }

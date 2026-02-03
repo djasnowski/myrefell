@@ -53,6 +53,7 @@ interface Plot {
     ready_at: string | null;
     is_ready: boolean;
     has_withered: boolean;
+    withers_at: string | null;
     planted_at: string | null;
 }
 
@@ -198,6 +199,26 @@ export default function FarmingIndex() {
 
         if (hours > 0) {
             return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
+        } else if (minutes > 0) {
+            return `${minutes}m ${seconds % 60}s`;
+        } else {
+            return `${seconds}s`;
+        }
+    };
+
+    // Calculate countdown until crop withers
+    const getWitherCountdown = (withersAt: string | null): string | null => {
+        if (!withersAt) return null;
+        const witherTime = new Date(withersAt).getTime();
+        const diff = witherTime - now;
+        if (diff <= 0) return null;
+
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+
+        if (hours > 0) {
+            return `${hours}h ${minutes % 60}m`;
         } else if (minutes > 0) {
             return `${minutes}m ${seconds % 60}s`;
         } else {
@@ -464,6 +485,15 @@ export default function FarmingIndex() {
                                             <div className="flex items-center gap-1 font-pixel text-[10px] text-stone-400">
                                                 <Clock className="h-3 w-3" />
                                                 {getCountdown(plot.ready_at) || "Ready!"}
+                                            </div>
+                                        )}
+
+                                        {/* Wither Countdown - shows when crop is ready */}
+                                        {plot.is_ready && !plot.has_withered && plot.withers_at && (
+                                            <div className="flex items-center gap-1 font-pixel text-[10px] text-red-400">
+                                                <AlertTriangle className="h-3 w-3" />
+                                                Withers in{" "}
+                                                {getWitherCountdown(plot.withers_at) || "soon"}
                                             </div>
                                         )}
                                     </>
