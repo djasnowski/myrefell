@@ -16,7 +16,9 @@ class BlessingEffectService
         $hasteBlessing = PlayerBlessing::where('user_id', $user->id)
             ->active()
             ->whereHas('blessingType', function ($query) {
-                $query->whereNotNull('effects->action_cooldown_seconds');
+                // Use PostgreSQL-compatible JSON syntax (->>) instead of Laravel's arrow syntax
+                // which generates MySQL's JSON_EXTRACT function
+                $query->whereRaw("effects->>'action_cooldown_seconds' IS NOT NULL");
             })
             ->with('blessingType')
             ->first();
