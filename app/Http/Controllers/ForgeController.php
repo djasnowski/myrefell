@@ -46,12 +46,11 @@ class ForgeController extends Controller
             ]);
         }
 
-        $info = $this->craftingService->getCraftingInfo($user);
         $smithingSkill = $user->skills()->where('skill_name', 'smithing')->first();
         $smithingLevel = $smithingSkill?->level ?? 1;
 
-        // Get smelting (bar) recipes only for the forge
-        $smeltingRecipes = $info['all_recipes']['smelting'] ?? [];
+        // Get smelting (bar) recipes only for the forge (bypass workshop filter)
+        $smeltingRecipes = $this->craftingService->getAllRecipes($user, ['smelting'])['smelting'] ?? [];
 
         // Get bars in inventory grouped by type
         $barsInInventory = $user->inventory()
@@ -74,9 +73,9 @@ class ForgeController extends Controller
                 'can_forge' => true,
                 'metal_tiers' => $this->getMetalTiersInfo($smithingLevel),
                 'smelting_recipes' => array_values($smeltingRecipes),
-                'player_energy' => $info['player_energy'],
-                'max_energy' => $info['max_energy'],
-                'free_slots' => $info['free_slots'],
+                'player_energy' => $user->energy,
+                'max_energy' => $user->max_energy,
+                'free_slots' => $user->inventory()->count() < 28 ? 28 - $user->inventory()->count() : 0,
                 'bar_count' => (int) $barCount,
                 'bars_in_inventory' => $barsInInventory,
                 'smithing_level' => $smithingLevel,

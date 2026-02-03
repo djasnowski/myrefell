@@ -32,12 +32,25 @@ class GatheringService
             'task_type' => 'mine',
             'location_types' => ['village', 'town', 'barony', 'wilderness'],
             'resources' => [
+                // Ores
                 ['name' => 'Copper Ore', 'weight' => 60, 'min_level' => 1, 'xp_bonus' => 0],
                 ['name' => 'Tin Ore', 'weight' => 40, 'min_level' => 1, 'xp_bonus' => 8],
                 ['name' => 'Iron Ore', 'weight' => 30, 'min_level' => 10, 'xp_bonus' => 23],
                 ['name' => 'Coal', 'weight' => 25, 'min_level' => 15, 'xp_bonus' => 33],
                 ['name' => 'Silver Ore', 'weight' => 15, 'min_level' => 25, 'xp_bonus' => 58],
                 ['name' => 'Gold Ore', 'weight' => 10, 'min_level' => 40, 'xp_bonus' => 108],
+                ['name' => 'Mithril Ore', 'weight' => 6, 'min_level' => 55, 'xp_bonus' => 150],
+                ['name' => 'Celestial Ore', 'weight' => 4, 'min_level' => 70, 'xp_bonus' => 200],
+                ['name' => 'Oria Ore', 'weight' => 2, 'min_level' => 85, 'xp_bonus' => 300],
+                // Uncut gems (rare drops)
+                ['name' => 'Uncut Opal', 'weight' => 5, 'min_level' => 1, 'xp_bonus' => 20],
+                ['name' => 'Uncut Jade', 'weight' => 4, 'min_level' => 15, 'xp_bonus' => 35],
+                ['name' => 'Uncut Red Topaz', 'weight' => 3, 'min_level' => 25, 'xp_bonus' => 50],
+                ['name' => 'Uncut Sapphire', 'weight' => 3, 'min_level' => 35, 'xp_bonus' => 75],
+                ['name' => 'Uncut Emerald', 'weight' => 2, 'min_level' => 45, 'xp_bonus' => 100],
+                ['name' => 'Uncut Ruby', 'weight' => 2, 'min_level' => 55, 'xp_bonus' => 130],
+                ['name' => 'Uncut Diamond', 'weight' => 1, 'min_level' => 65, 'xp_bonus' => 175],
+                ['name' => 'Uncut Oria Stone', 'weight' => 1, 'min_level' => 80, 'xp_bonus' => 250],
             ],
         ],
         'fishing' => [
