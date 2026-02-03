@@ -124,15 +124,16 @@ class InventoryController extends Controller
             return back();
         }
 
-        $fromItem = $player->inventory()->where('slot_number', $fromSlot)->first();
-        $toItem = $player->inventory()->where('slot_number', $toSlot)->first();
+        // Swap slots - use transaction with row locking to prevent race conditions
+        DB::transaction(function () use ($player, $fromSlot, $toSlot) {
+            // Lock rows while reading to prevent race conditions
+            $fromItem = $player->inventory()->where('slot_number', $fromSlot)->lockForUpdate()->first();
+            $toItem = $player->inventory()->where('slot_number', $toSlot)->lockForUpdate()->first();
 
-        if (! $fromItem) {
-            return back()->withErrors(['error' => 'No item in source slot.']);
-        }
+            if (! $fromItem) {
+                return; // No item in source slot
+            }
 
-        // Swap slots - use temporary slot to avoid unique constraint violation
-        DB::transaction(function () use ($fromItem, $toItem, $fromSlot, $toSlot) {
             if ($toItem) {
                 // Move toItem to temp slot first
                 $toItem->update(['slot_number' => -1]);

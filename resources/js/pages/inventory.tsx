@@ -217,23 +217,58 @@ function InventorySlotComponent({
     onDrop,
     onContextMenu,
     contextMenuOpen,
+    draggedItem,
+    isBeingDragged,
+    isDragTarget,
+    onDragStart,
+    onDragEnd,
+    onDragEnter,
+    onDragLeave,
 }: {
     slot: InventorySlot | null;
     slotIndex: number;
     onDrop: (fromSlot: number) => void;
     onContextMenu: (e: React.MouseEvent) => void;
     contextMenuOpen: boolean;
+    draggedItem: InventorySlot | null;
+    isBeingDragged: boolean;
+    isDragTarget: boolean;
+    onDragStart: (slotIndex: number) => void;
+    onDragEnd: () => void;
+    onDragEnter: (slotIndex: number) => void;
+    onDragLeave: () => void;
 }) {
     const [showTooltip, setShowTooltip] = useState(false);
+    const dragImageRef = useRef<HTMLDivElement>(null);
 
     const handleDragStart = (e: React.DragEvent) => {
         if (slot) {
             e.dataTransfer.setData("slotIndex", slotIndex.toString());
+            onDragStart(slotIndex);
+            setShowTooltip(false);
+
+            // Use the icon-only element as drag image
+            if (dragImageRef.current) {
+                e.dataTransfer.setDragImage(dragImageRef.current, 28, 28);
+            }
         }
+    };
+
+    const handleDragEnd = () => {
+        onDragEnd();
     };
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
+    };
+
+    const handleDragEnter = (e: React.DragEvent) => {
+        e.preventDefault();
+        onDragEnter(slotIndex);
+    };
+
+    const handleDragLeave = () => {
+        onDragLeave();
     };
 
     const handleDrop = (e: React.DragEvent) => {
@@ -244,49 +279,88 @@ function InventorySlotComponent({
         }
     };
 
+    // Show ghost of dragged item when this slot is the target
+    const showGhost = isDragTarget && draggedItem && !isBeingDragged;
+
     return (
-        <div
-            className={`relative h-14 w-14 cursor-pointer rounded border-2 transition-all ${
-                slot
-                    ? `${rarityColors[slot.item.rarity]} hover:brightness-110`
-                    : "border-stone-700 bg-stone-800/30 hover:border-stone-600"
-            } ${slot?.is_equipped ? "ring-2 ring-green-500" : ""} ${showTooltip ? "z-50" : ""}`}
-            onContextMenu={onContextMenu}
-            onMouseEnter={() => setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
-            draggable={!!slot}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-        >
+        <>
+            {/* Hidden drag image - just the item square */}
             {slot && (
-                <>
-                    <div className="flex h-full items-center justify-center">
-                        {(() => {
-                            const Icon = getItemIcon(slot.item.type, slot.item.subtype);
-                            return <Icon className="h-7 w-7 text-stone-300" />;
-                        })()}
-                    </div>
+                <div
+                    ref={dragImageRef}
+                    className={`pointer-events-none fixed -left-[9999px] flex h-14 w-14 items-center justify-center rounded border-2 ${rarityColors[slot.item.rarity]}`}
+                >
+                    {(() => {
+                        const Icon = getItemIcon(slot.item.type, slot.item.subtype);
+                        return <Icon className="h-7 w-7 text-stone-300" />;
+                    })()}
                     {slot.quantity > 1 && (
                         <div className="absolute bottom-0.5 right-1 font-pixel text-[10px] text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
                             {slot.quantity}
                         </div>
                     )}
-                    {slot.is_equipped && (
-                        <div className="absolute left-1 top-0.5 font-pixel text-[10px] text-green-400">
-                            E
-                        </div>
-                    )}
-                    {showTooltip && !contextMenuOpen && (
-                        <ItemTooltip
-                            item={slot.item}
-                            quantity={slot.quantity}
-                            isEquipped={slot.is_equipped}
-                        />
-                    )}
-                </>
+                </div>
             )}
-        </div>
+            <div
+                className={`relative h-14 w-14 cursor-pointer rounded border-2 transition-all ${
+                    slot
+                        ? `${rarityColors[slot.item.rarity]} hover:brightness-110`
+                        : isDragTarget
+                          ? "border-amber-500 bg-amber-900/30"
+                          : "border-stone-700 bg-stone-800/30 hover:border-stone-600"
+                } ${slot?.is_equipped ? "ring-2 ring-green-500" : ""} ${showTooltip && !isBeingDragged ? "z-50" : ""} ${isBeingDragged ? "opacity-50" : ""}`}
+                onContextMenu={onContextMenu}
+                onMouseEnter={() => !isBeingDragged && setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+                draggable={!!slot}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onDragOver={handleDragOver}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+            >
+                {/* Ghost preview of dragged item */}
+                {showGhost && (
+                    <div className="absolute inset-0 flex items-center justify-center opacity-50">
+                        {(() => {
+                            const Icon = getItemIcon(
+                                draggedItem.item.type,
+                                draggedItem.item.subtype,
+                            );
+                            return <Icon className="h-7 w-7 text-stone-300" />;
+                        })()}
+                    </div>
+                )}
+                {slot && (
+                    <>
+                        <div className="flex h-full items-center justify-center">
+                            {(() => {
+                                const Icon = getItemIcon(slot.item.type, slot.item.subtype);
+                                return <Icon className="h-7 w-7 text-stone-300" />;
+                            })()}
+                        </div>
+                        {slot.quantity > 1 && (
+                            <div className="absolute bottom-0.5 right-1 font-pixel text-[10px] text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
+                                {slot.quantity}
+                            </div>
+                        )}
+                        {slot.is_equipped && (
+                            <div className="absolute left-1 top-0.5 font-pixel text-[10px] text-green-400">
+                                E
+                            </div>
+                        )}
+                        {showTooltip && !contextMenuOpen && !isBeingDragged && (
+                            <ItemTooltip
+                                item={slot.item}
+                                quantity={slot.quantity}
+                                isEquipped={slot.is_equipped}
+                            />
+                        )}
+                    </>
+                )}
+            </div>
+        </>
     );
 }
 
@@ -463,6 +537,13 @@ export default function Inventory() {
         x: 0,
         y: 0,
         slotName: null,
+    });
+    const [dragState, setDragState] = useState<{
+        sourceSlot: number | null;
+        targetSlot: number | null;
+    }>({
+        sourceSlot: null,
+        targetSlot: null,
     });
     const contextMenuRef = useRef<HTMLDivElement>(null);
     const equipmentContextMenuRef = useRef<HTMLDivElement>(null);
@@ -723,10 +804,32 @@ export default function Inventory() {
                                     key={index}
                                     slot={slot}
                                     slotIndex={index}
-                                    onDrop={(fromSlot) => handleMove(fromSlot, index)}
+                                    onDrop={(fromSlot) => {
+                                        handleMove(fromSlot, index);
+                                        setDragState({ sourceSlot: null, targetSlot: null });
+                                    }}
                                     onContextMenu={(e) => handleContextMenu(e, index)}
                                     contextMenuOpen={
                                         contextMenu.visible && contextMenu.slotIndex === index
+                                    }
+                                    draggedItem={
+                                        dragState.sourceSlot !== null
+                                            ? slots[dragState.sourceSlot]
+                                            : null
+                                    }
+                                    isBeingDragged={dragState.sourceSlot === index}
+                                    isDragTarget={dragState.targetSlot === index}
+                                    onDragStart={(slotIndex) =>
+                                        setDragState({ sourceSlot: slotIndex, targetSlot: null })
+                                    }
+                                    onDragEnd={() =>
+                                        setDragState({ sourceSlot: null, targetSlot: null })
+                                    }
+                                    onDragEnter={(slotIndex) =>
+                                        setDragState((prev) => ({ ...prev, targetSlot: slotIndex }))
+                                    }
+                                    onDragLeave={() =>
+                                        setDragState((prev) => ({ ...prev, targetSlot: null }))
                                     }
                                 />
                             ))}
