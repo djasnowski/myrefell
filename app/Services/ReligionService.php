@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Belief;
+use App\Models\Item;
 use App\Models\Kingdom;
 use App\Models\KingdomReligion;
 use App\Models\PlayerSkill;
@@ -20,7 +21,8 @@ class ReligionService
         protected BankService $bankService,
         protected DailyTaskService $dailyTaskService,
         protected BlessingEffectService $blessingEffects,
-        protected BeliefEffectService $beliefEffectService
+        protected BeliefEffectService $beliefEffectService,
+        protected InventoryService $inventoryService
     ) {}
 
     /**
@@ -130,13 +132,14 @@ class ReligionService
      */
     public function createCult(User $player, string $name, string $description, array $beliefIds): array
     {
-        // Check if player is already a prophet
-        $existingProphet = ReligionMember::where('user_id', $player->id)
-            ->where('rank', ReligionMember::RANK_PROPHET)
-            ->exists();
+        // Check if player is already a member of any religion
+        $existingMembership = ReligionMember::where('user_id', $player->id)->first();
+        if ($existingMembership) {
+            if ($existingMembership->isProphet()) {
+                return ['success' => false, 'message' => 'You are already the prophet of another religion.'];
+            }
 
-        if ($existingProphet) {
-            return ['success' => false, 'message' => 'You are already the prophet of another religion.'];
+            return ['success' => false, 'message' => 'You must leave your current religion before founding a cult.'];
         }
 
         // Validate name
@@ -197,9 +200,14 @@ class ReligionService
             return ['success' => false, 'message' => 'Religion not found.'];
         }
 
-        // Check if already a member
-        if (ReligionMember::where('user_id', $player->id)->where('religion_id', $religionId)->exists()) {
-            return ['success' => false, 'message' => 'You are already a member of this religion.'];
+        // Check if already a member of any religion
+        $existingMembership = ReligionMember::where('user_id', $player->id)->first();
+        if ($existingMembership) {
+            if ($existingMembership->religion_id === $religionId) {
+                return ['success' => false, 'message' => 'You are already a member of this religion.'];
+            }
+
+            return ['success' => false, 'message' => 'You must leave your current religion before joining another.'];
         }
 
         // Check member limit
@@ -266,7 +274,7 @@ class ReligionService
     /**
      * Perform a religious action.
      */
-    public function performAction(User $player, int $religionId, string $actionType, ?int $structureId = null, int $donationAmount = 0): array
+    public function performAction(User $player, int $religionId, string $actionType, ?int $structureId = null, int $donationAmount = 0, ?int $sacrificeItemId = null): array
     {
         // Validate action type
         if (! in_array($actionType, ReligiousAction::ACTIONS)) {
@@ -327,6 +335,25 @@ class ReligionService
             $goldSpent = $donationAmount;
         }
 
+        // Handle sacrifice - requires bones
+        $sacrificeItem = null;
+        if ($actionType === ReligiousAction::ACTION_SACRIFICE) {
+            if (! $sacrificeItemId) {
+                return ['success' => false, 'message' => 'You must select bones to sacrifice.'];
+            }
+
+            // Get the item and verify it's bones (subtype = remains)
+            $sacrificeItem = Item::find($sacrificeItemId);
+            if (! $sacrificeItem || $sacrificeItem->subtype !== 'remains') {
+                return ['success' => false, 'message' => 'You can only sacrifice bones.'];
+            }
+
+            // Check player has the item
+            if (! $this->inventoryService->hasItem($player, $sacrificeItemId, 1)) {
+                return ['success' => false, 'message' => "You don't have any {$sacrificeItem->name} to sacrifice."];
+            }
+        }
+
         // Get structure multiplier
         $multiplier = 1.0;
         $structure = null;
@@ -341,7 +368,7 @@ class ReligionService
             }
         }
 
-        return DB::transaction(function () use ($player, $membership, $actionType, $energyCost, $goldSpent, $multiplier, $structure) {
+        return DB::transaction(function () use ($player, $membership, $actionType, $energyCost, $goldSpent, $multiplier, $structure, $sacrificeItem) {
             // Consume energy
             if ($energyCost > 0) {
                 $this->energyService->consumeEnergy($player, $energyCost);
@@ -352,11 +379,20 @@ class ReligionService
                 $player->decrement('gold', $goldSpent);
             }
 
+            // Consume bones for sacrifice
+            if ($sacrificeItem) {
+                $this->inventoryService->removeItem($player, $sacrificeItem->id, 1);
+            }
+
             // Calculate devotion gained
             $baseDevotion = ReligiousAction::getBaseDevotion($actionType);
             if ($actionType === ReligiousAction::ACTION_DONATION) {
                 // 1 devotion per 10 gold donated
                 $baseDevotion = (int) floor($goldSpent / 10);
+            }
+            if ($actionType === ReligiousAction::ACTION_SACRIFICE && $sacrificeItem) {
+                // Devotion scales with bone value (1 devotion per 5 prayer XP from bone)
+                $baseDevotion = max(5, (int) floor($sacrificeItem->prayer_bonus / 5));
             }
             $devotionGained = (int) floor($baseDevotion * $multiplier);
 
@@ -382,6 +418,10 @@ class ReligionService
                 // 1 Prayer XP per 25 gold donated
                 $basePrayerXp = (int) floor($goldSpent / 25);
             }
+            if ($actionType === ReligiousAction::ACTION_SACRIFICE && $sacrificeItem) {
+                // Prayer XP comes from the bone's prayer_bonus value
+                $basePrayerXp = $sacrificeItem->prayer_bonus;
+            }
             $prayerXpGained = (int) floor($basePrayerXp * $multiplier);
 
             $prayerSkill = null;
@@ -397,7 +437,7 @@ class ReligionService
                 ReligiousAction::ACTION_PRAYER => 'prayed',
                 ReligiousAction::ACTION_DONATION => 'donated',
                 ReligiousAction::ACTION_RITUAL => 'performed a ritual',
-                ReligiousAction::ACTION_SACRIFICE => 'made a sacrifice',
+                ReligiousAction::ACTION_SACRIFICE => "sacrificed {$sacrificeItem->name}",
                 ReligiousAction::ACTION_PILGRIMAGE => 'completed a pilgrimage',
                 default => 'performed an action',
             };

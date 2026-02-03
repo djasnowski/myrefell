@@ -2,6 +2,12 @@ import { router, usePage } from "@inertiajs/react";
 import * as LucideIcons from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+interface HpBonus {
+    source: string;
+    amount: number;
+}
 
 interface SidebarData {
     player: {
@@ -10,6 +16,8 @@ interface SidebarData {
         gender: "male" | "female";
         hp: number;
         max_hp: number;
+        base_max_hp: number;
+        hp_bonuses: HpBonus[];
         energy: number;
         max_energy: number;
         gold: number;
@@ -158,24 +166,56 @@ export function NavPlayerInfo() {
             </div>
 
             {/* HP */}
-            <div className="mb-1">
-                <div className="mb-0.5 flex items-center justify-between">
-                    <span className="flex items-center gap-1">
-                        <span className="text-xs">❤️</span>
-                        <span className="font-pixel text-[10px] text-sidebar-foreground/80">
-                            HP
-                        </span>
-                    </span>
-                    <span className="font-pixel text-[10px] text-sidebar-foreground/60">
-                        {player.hp}/{player.max_hp}
-                    </span>
-                </div>
-                <StatBar
-                    current={player.hp}
-                    max={player.max_hp}
-                    color="bg-gradient-to-r from-red-700 to-red-500"
-                />
-            </div>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <div className="mb-1 cursor-help">
+                            <div className="mb-0.5 flex items-center justify-between">
+                                <span className="flex items-center gap-1">
+                                    <span className="text-xs">❤️</span>
+                                    <span className="font-pixel text-[10px] text-sidebar-foreground/80">
+                                        HP
+                                    </span>
+                                </span>
+                                <span className="font-pixel text-[10px] text-sidebar-foreground/60">
+                                    {player.hp}/
+                                    {player.hp_bonuses.length > 0 ? (
+                                        <span className="text-green-400">{player.max_hp}</span>
+                                    ) : (
+                                        player.max_hp
+                                    )}
+                                    {player.hp_bonuses.length > 0 && (
+                                        <span className="text-green-400 ml-0.5">
+                                            (+{player.max_hp - player.base_max_hp})
+                                        </span>
+                                    )}
+                                </span>
+                            </div>
+                            <StatBar
+                                current={player.hp}
+                                max={player.max_hp}
+                                color="bg-gradient-to-r from-red-700 to-red-500"
+                            />
+                        </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="bg-stone-900 border-stone-700">
+                        <div className="font-pixel text-xs">
+                            <div className="text-stone-300 mb-1">Max HP Breakdown</div>
+                            <div className="text-stone-400">
+                                Base (Hitpoints Lv): {player.base_max_hp}
+                            </div>
+                            {player.hp_bonuses.map((bonus, i) => (
+                                <div key={i} className="text-green-400">
+                                    {bonus.source}: +{bonus.amount}
+                                </div>
+                            ))}
+                            <div className="border-t border-stone-700 mt-1 pt-1 text-stone-200">
+                                Total: {player.max_hp}
+                            </div>
+                        </div>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
 
             {/* Energy */}
             <div className="mb-2">

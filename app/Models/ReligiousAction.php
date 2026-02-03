@@ -11,9 +11,13 @@ class ReligiousAction extends Model
     use HasFactory;
 
     public const ACTION_PRAYER = 'prayer';
+
     public const ACTION_DONATION = 'donation';
+
     public const ACTION_RITUAL = 'ritual';
+
     public const ACTION_SACRIFICE = 'sacrifice';
+
     public const ACTION_PILGRIMAGE = 'pilgrimage';
 
     public const ACTIONS = [
@@ -29,7 +33,7 @@ class ReligiousAction extends Model
         self::ACTION_PRAYER => 10,
         self::ACTION_DONATION => 0, // Based on gold amount
         self::ACTION_RITUAL => 25,
-        self::ACTION_SACRIFICE => 50,
+        self::ACTION_SACRIFICE => 0, // Based on bone type
         self::ACTION_PILGRIMAGE => 100,
     ];
 
@@ -38,7 +42,7 @@ class ReligiousAction extends Model
         self::ACTION_PRAYER => 5,
         self::ACTION_DONATION => 0,
         self::ACTION_RITUAL => 15,
-        self::ACTION_SACRIFICE => 20,
+        self::ACTION_SACRIFICE => 5, // Energy cost + requires bones
         self::ACTION_PILGRIMAGE => 50,
     ];
 
@@ -47,7 +51,7 @@ class ReligiousAction extends Model
         self::ACTION_PRAYER => 5,
         self::ACTION_DONATION => 0,
         self::ACTION_RITUAL => 60,
-        self::ACTION_SACRIFICE => 180,
+        self::ACTION_SACRIFICE => 0, // No cooldown, limited by bones
         self::ACTION_PILGRIMAGE => 1440, // 24 hours
     ];
 
@@ -56,7 +60,7 @@ class ReligiousAction extends Model
         self::ACTION_PRAYER => 5,
         self::ACTION_DONATION => 0, // Based on gold amount
         self::ACTION_RITUAL => 15,
-        self::ACTION_SACRIFICE => 25,
+        self::ACTION_SACRIFICE => 0, // Based on bone type
         self::ACTION_PILGRIMAGE => 50,
     ];
 

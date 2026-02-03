@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\BeliefEffectService;
+use App\Services\BlessingEffectService;
 use App\Services\EnergyService;
 use App\Services\OnlinePlayersService;
 use App\Services\TravelService;
@@ -22,7 +24,9 @@ class HandleInertiaRequests extends Middleware
     public function __construct(
         protected EnergyService $energyService,
         protected TravelService $travelService,
-        protected OnlinePlayersService $onlinePlayersService
+        protected OnlinePlayersService $onlinePlayersService,
+        protected BlessingEffectService $blessingEffectService,
+        protected BeliefEffectService $beliefEffectService
     ) {}
 
     /**
@@ -109,6 +113,8 @@ class HandleInertiaRequests extends Middleware
                 'gender' => $player->gender,
                 'hp' => $player->hp,
                 'max_hp' => $player->max_hp,
+                'base_max_hp' => $player->getSkillLevel('hitpoints'),
+                'hp_bonuses' => $this->getHpBonuses($player),
                 'energy' => $player->energy,
                 'max_energy' => $player->max_energy,
                 'gold' => $player->gold,
@@ -562,5 +568,33 @@ class HandleInertiaRequests extends Middleware
             // Table may not exist yet
             return [];
         }
+    }
+
+    /**
+     * Get HP bonuses breakdown for the player.
+     *
+     * @return array<int, array{source: string, amount: int}>
+     */
+    protected function getHpBonuses($player): array
+    {
+        $bonuses = [];
+
+        $blessingBonus = (int) $this->blessingEffectService->getEffect($player, 'max_hp_bonus');
+        if ($blessingBonus > 0) {
+            $bonuses[] = [
+                'source' => 'Blessing',
+                'amount' => $blessingBonus,
+            ];
+        }
+
+        $beliefBonus = (int) $this->beliefEffectService->getEffect($player, 'max_hp_bonus');
+        if ($beliefBonus > 0) {
+            $bonuses[] = [
+                'source' => 'Belief',
+                'amount' => $beliefBonus,
+            ];
+        }
+
+        return $bonuses;
     }
 }

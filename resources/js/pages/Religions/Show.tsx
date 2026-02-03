@@ -1,6 +1,19 @@
 import { Head, router, usePage } from "@inertiajs/react";
-import { ArrowLeft, Church, Coins, Crown, Heart, Shield, Star, Users, Zap } from "lucide-react";
-import { useState } from "react";
+import {
+    ArrowLeft,
+    Church,
+    Coins,
+    Crown,
+    Flame,
+    Heart,
+    Shield,
+    Skull,
+    Star,
+    Users,
+    X,
+    Zap,
+} from "lucide-react";
+import { useState, useEffect } from "react";
 import AppLayout from "@/layouts/app-layout";
 import type { BreadcrumbItem } from "@/types";
 
@@ -62,6 +75,13 @@ interface Structure {
     location_id: number;
 }
 
+interface SacrificeBone {
+    item_id: number;
+    name: string;
+    quantity: number;
+    prayer_xp: number;
+}
+
 interface PageProps {
     religion: Religion;
     membership: Membership | null;
@@ -70,6 +90,7 @@ interface PageProps {
     kingdom_status: string | null;
     members: Member[];
     structures: Structure[];
+    sacrifice_bones: SacrificeBone[];
     energy: { current: number };
     gold: number;
     [key: string]: unknown;
@@ -104,6 +125,7 @@ export default function ReligionShow() {
         kingdom_status,
         members,
         structures,
+        sacrifice_bones,
         energy,
         gold,
     } = usePage<PageProps>().props;
@@ -112,6 +134,27 @@ export default function ReligionShow() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [donationAmount, setDonationAmount] = useState(100);
+
+    // Sacrifice modal state
+    const [showSacrificeModal, setShowSacrificeModal] = useState(false);
+    const [selectedBoneId, setSelectedBoneId] = useState<number | null>(
+        sacrifice_bones.length > 0 ? sacrifice_bones[0].item_id : null,
+    );
+    const [isSacrificing, setIsSacrificing] = useState(false);
+    const [sacrificeAnimation, setSacrificeAnimation] = useState<"idle" | "burning" | "complete">(
+        "idle",
+    );
+    const [lastSacrificeResult, setLastSacrificeResult] = useState<{
+        xp: number;
+        devotion: number;
+        boneName: string;
+    } | null>(null);
+    const [localBones, setLocalBones] = useState(sacrifice_bones);
+
+    // Update local bones when props change
+    useEffect(() => {
+        setLocalBones(sacrifice_bones);
+    }, [sacrifice_bones]);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -153,6 +196,65 @@ export default function ReligionShow() {
             setError("Failed to perform action");
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const performSacrifice = async (boneId: number) => {
+        const bone = localBones.find((b) => b.item_id === boneId);
+        if (!bone || bone.quantity <= 0) return;
+
+        setIsSacrificing(true);
+        setSacrificeAnimation("burning");
+
+        try {
+            const response = await fetch("/religions/action", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
+                },
+                body: JSON.stringify({
+                    religion_id: religion.id,
+                    action_type: "sacrifice",
+                    sacrifice_item_id: boneId,
+                }),
+            });
+
+            const data = await response.json();
+
+            // Wait for burning animation
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+
+            if (data.success) {
+                setSacrificeAnimation("complete");
+                setLastSacrificeResult({
+                    xp: bone.prayer_xp,
+                    devotion: Math.max(5, Math.floor(bone.prayer_xp / 5)),
+                    boneName: bone.name,
+                });
+
+                // Update local bone count
+                setLocalBones((prev) =>
+                    prev
+                        .map((b) => (b.item_id === boneId ? { ...b, quantity: b.quantity - 1 } : b))
+                        .filter((b) => b.quantity > 0),
+                );
+
+                // Reset animation after showing result
+                await new Promise((resolve) => setTimeout(resolve, 2000));
+                setSacrificeAnimation("idle");
+                setLastSacrificeResult(null);
+            } else {
+                setError(data.message);
+                setSacrificeAnimation("idle");
+            }
+        } catch {
+            setError("Failed to sacrifice");
+            setSacrificeAnimation("idle");
+        } finally {
+            setIsSacrificing(false);
         }
     };
 
@@ -480,11 +582,11 @@ export default function ReligionShow() {
                                 <h2 className="mb-3 font-pixel text-sm text-purple-300">
                                     Religious Actions
                                 </h2>
-                                <div className="grid gap-3 md:grid-cols-2">
+                                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                                     <button
                                         onClick={() => performAction("prayer")}
                                         disabled={isLoading || energy.current < 5}
-                                        className="flex items-center justify-center gap-2 rounded bg-purple-600/50 py-2 font-pixel text-xs text-purple-200 transition hover:bg-purple-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="flex items-center justify-center gap-2 rounded bg-purple-600/50 py-3 font-pixel text-xs text-purple-200 transition hover:bg-purple-600 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                         <Heart className="h-4 w-4" />
                                         Pray (5 Energy)
@@ -492,56 +594,20 @@ export default function ReligionShow() {
                                     <button
                                         onClick={() => performAction("ritual")}
                                         disabled={isLoading || energy.current < 15}
-                                        className="flex items-center justify-center gap-2 rounded bg-indigo-600/50 py-2 font-pixel text-xs text-indigo-200 transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="flex items-center justify-center gap-2 rounded bg-indigo-600/50 py-3 font-pixel text-xs text-indigo-200 transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                         <Star className="h-4 w-4" />
                                         Ritual (15 Energy)
                                     </button>
                                     <button
-                                        onClick={() => performAction("sacrifice")}
-                                        disabled={isLoading || energy.current < 20}
-                                        className="flex items-center justify-center gap-2 rounded bg-red-600/50 py-2 font-pixel text-xs text-red-200 transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                        onClick={() => setShowSacrificeModal(true)}
+                                        disabled={localBones.length === 0}
+                                        className="flex items-center justify-center gap-2 rounded bg-red-600/50 py-3 font-pixel text-xs text-red-200 transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
-                                        <Shield className="h-4 w-4" />
-                                        Sacrifice (20 Energy)
+                                        <Skull className="h-4 w-4" />
+                                        Sacrifice Bones
                                     </button>
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="number"
-                                            value={donationAmount}
-                                            onChange={(e) =>
-                                                setDonationAmount(
-                                                    Math.max(10, parseInt(e.target.value) || 10),
-                                                )
-                                            }
-                                            min={10}
-                                            className="w-24 rounded border border-stone-600 bg-stone-800 px-2 py-2 font-pixel text-xs text-white"
-                                        />
-                                        <button
-                                            onClick={() =>
-                                                performAction("donation", {
-                                                    donation_amount: donationAmount,
-                                                })
-                                            }
-                                            disabled={isLoading || gold < donationAmount}
-                                            className="flex flex-1 items-center justify-center gap-2 rounded bg-amber-600/50 py-2 font-pixel text-xs text-amber-200 transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
-                                        >
-                                            <Coins className="h-4 w-4" />
-                                            Donate
-                                        </button>
-                                    </div>
                                 </div>
-
-                                {/* Leave Button */}
-                                {!membership.is_prophet && (
-                                    <button
-                                        onClick={leaveReligion}
-                                        disabled={isLoading}
-                                        className="mt-4 w-full rounded border border-red-500/50 bg-transparent py-2 font-pixel text-xs text-red-400 transition hover:bg-red-900/30 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                        Leave Religion
-                                    </button>
-                                )}
                             </div>
                         )}
 
@@ -606,6 +672,35 @@ export default function ReligionShow() {
                                     <div className="flex justify-between">
                                         <span className="text-stone-400">Devotion:</span>
                                         <span className="text-pink-400">{membership.devotion}</span>
+                                    </div>
+                                </div>
+
+                                {/* Donate */}
+                                <div className="mt-4 border-t border-stone-700 pt-4">
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            value={donationAmount}
+                                            onChange={(e) =>
+                                                setDonationAmount(
+                                                    Math.max(10, parseInt(e.target.value) || 10),
+                                                )
+                                            }
+                                            min={10}
+                                            className="w-20 rounded border border-stone-600 bg-stone-800 px-2 py-2 font-pixel text-xs text-white"
+                                        />
+                                        <button
+                                            onClick={() =>
+                                                performAction("donation", {
+                                                    donation_amount: donationAmount,
+                                                })
+                                            }
+                                            disabled={isLoading || gold < donationAmount}
+                                            className="flex flex-1 items-center justify-center gap-2 rounded bg-amber-600/50 py-2 font-pixel text-xs text-amber-200 transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            <Coins className="h-4 w-4" />
+                                            Donate
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -710,9 +805,186 @@ export default function ReligionShow() {
                                 </div>
                             </div>
                         )}
+
+                        {/* Leave Religion Button */}
+                        {membership && !membership.is_prophet && (
+                            <button
+                                onClick={leaveReligion}
+                                disabled={isLoading}
+                                className="w-full rounded border border-red-500/50 bg-transparent py-2 font-pixel text-xs text-red-400 transition hover:bg-red-900/30 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                Leave Religion
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
+
+            {/* Sacrifice Modal */}
+            {showSacrificeModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+                    <div className="relative w-full max-w-lg rounded-lg border border-red-500/50 bg-stone-900 p-6">
+                        {/* Close Button */}
+                        <button
+                            onClick={() => {
+                                setShowSacrificeModal(false);
+                                setSacrificeAnimation("idle");
+                                setLastSacrificeResult(null);
+                                router.reload();
+                            }}
+                            className="absolute right-4 top-4 text-stone-400 hover:text-white"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+
+                        <h2 className="mb-6 text-center font-pixel text-lg text-red-400">
+                            Sacrifice at the Altar
+                        </h2>
+
+                        {/* Altar Animation Area */}
+                        <div className="relative mb-6 flex min-h-48 items-center justify-center rounded-lg border border-stone-700 bg-gradient-to-b from-stone-800 to-stone-900 py-6">
+                            {/* Altar Base - hide during success animation */}
+                            {sacrificeAnimation !== "complete" && (
+                                <>
+                                    <div className="absolute bottom-4 h-8 w-32 rounded bg-stone-600 shadow-lg" />
+                                    <div className="absolute bottom-10 h-4 w-40 rounded-t bg-stone-500" />
+                                </>
+                            )}
+
+                            {/* Fire/Flames */}
+                            {sacrificeAnimation === "burning" && (
+                                <div className="absolute bottom-16 flex items-end justify-center gap-1">
+                                    <Flame
+                                        className="h-12 w-12 animate-pulse text-orange-500"
+                                        style={{ animationDuration: "0.3s" }}
+                                    />
+                                    <Flame
+                                        className="h-16 w-16 animate-pulse text-red-500"
+                                        style={{ animationDuration: "0.2s" }}
+                                    />
+                                    <Flame
+                                        className="h-12 w-12 animate-pulse text-orange-500"
+                                        style={{ animationDuration: "0.4s" }}
+                                    />
+                                </div>
+                            )}
+
+                            {/* Bone being sacrificed */}
+                            {sacrificeAnimation === "burning" && (
+                                <div className="absolute bottom-36 animate-bounce">
+                                    <Skull className="h-8 w-8 text-stone-300 opacity-75" />
+                                </div>
+                            )}
+
+                            {/* Idle state */}
+                            {sacrificeAnimation === "idle" && (
+                                <div className="mb-12 text-center">
+                                    <Skull className="mx-auto h-12 w-12 text-stone-500" />
+                                    <p className="mt-2 font-pixel text-xs text-stone-500">
+                                        Select bones to sacrifice
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Success Animation */}
+                            {sacrificeAnimation === "complete" && lastSacrificeResult && (
+                                <div className="animate-fade-in text-center">
+                                    <div className="mb-2 font-pixel text-lg text-amber-400">
+                                        ✨ Sacrifice Accepted ✨
+                                    </div>
+                                    <div className="font-pixel text-sm text-stone-300">
+                                        {lastSacrificeResult.boneName}
+                                    </div>
+                                    <div className="mt-3 flex justify-center gap-6">
+                                        <div className="text-center">
+                                            <div className="font-pixel text-2xl text-cyan-400">
+                                                +{lastSacrificeResult.xp}
+                                            </div>
+                                            <div className="font-pixel text-xs text-stone-400">
+                                                Prayer XP
+                                            </div>
+                                        </div>
+                                        <div className="text-center">
+                                            <div className="font-pixel text-2xl text-pink-400">
+                                                +{lastSacrificeResult.devotion}
+                                            </div>
+                                            <div className="font-pixel text-xs text-stone-400">
+                                                Devotion
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Low Energy Warning */}
+                        {energy.current < 5 && (
+                            <div className="mb-4 rounded border border-yellow-500/50 bg-yellow-900/20 p-3 text-center">
+                                <p className="font-pixel text-sm text-yellow-400">
+                                    ⚡ Not enough energy
+                                </p>
+                                <p className="font-pixel text-xs text-stone-400">
+                                    You need at least 5 energy to sacrifice bones
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Bone Selection */}
+                        <div className="mb-4">
+                            <h3 className="mb-3 font-pixel text-sm text-stone-300">Your Bones</h3>
+                            {localBones.length === 0 ? (
+                                <p className="text-center font-pixel text-xs text-stone-500">
+                                    You have no bones to sacrifice. Kill monsters to obtain bones.
+                                </p>
+                            ) : (
+                                <div className="grid max-h-48 grid-cols-1 gap-2 overflow-y-auto">
+                                    {localBones.map((bone) => (
+                                        <button
+                                            key={bone.item_id}
+                                            onClick={() => performSacrifice(bone.item_id)}
+                                            disabled={
+                                                isSacrificing ||
+                                                bone.quantity <= 0 ||
+                                                energy.current < 5
+                                            }
+                                            className={`flex items-center justify-between rounded border p-3 transition ${
+                                                isSacrificing || energy.current < 5
+                                                    ? "cursor-not-allowed border-stone-700 bg-stone-800/50 opacity-50"
+                                                    : "border-stone-600 bg-stone-800 hover:border-red-500 hover:bg-red-900/20"
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <Skull className="h-5 w-5 text-stone-400" />
+                                                <div className="text-left">
+                                                    <div className="font-pixel text-sm text-white">
+                                                        {bone.name}
+                                                    </div>
+                                                    <div className="font-pixel text-xs text-stone-400">
+                                                        +{bone.prayer_xp} Prayer XP • 5 ⚡
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-pixel text-sm text-amber-400">
+                                                    x{bone.quantity}
+                                                </span>
+                                                <span className="font-pixel text-xs text-red-400">
+                                                    Sacrifice
+                                                </span>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Instructions */}
+                        <p className="text-center font-pixel text-xs text-stone-500">
+                            Click on a bone type to sacrifice one to the altar (costs 5 energy)
+                        </p>
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }
