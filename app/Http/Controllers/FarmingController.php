@@ -44,6 +44,7 @@ class FarmingController extends Controller
             ->where('location_type', $user->current_location_type)
             ->where('location_id', $user->current_location_id)
             ->with('cropType')
+            ->orderBy('id')
             ->get()
             ->map(fn ($plot) => $this->formatPlot($plot));
 

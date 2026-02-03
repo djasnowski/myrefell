@@ -46,6 +46,14 @@ class EnsurePlayerAtLocation
         // Check if player is at this location
         if ($user->current_location_type !== $locationType ||
             $user->current_location_id !== $location->id) {
+            \Log::warning('EnsurePlayerAtLocation failed', [
+                'user_id' => $user->id,
+                'user_location_type' => $user->current_location_type,
+                'user_location_id' => $user->current_location_id,
+                'route_location_type' => $locationType,
+                'route_location_id' => $location->id,
+                'url' => $request->fullUrl(),
+            ]);
             return back()->with('error', 'You must be at this location to access its services.');
         }
 

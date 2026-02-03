@@ -6,6 +6,7 @@ import {
     Coins,
     Droplets,
     Hand,
+    HelpCircle,
     Leaf,
     Plus,
     Scissors,
@@ -157,6 +158,7 @@ export default function FarmingIndex() {
     const [showCropModal, setShowCropModal] = useState<number | null>(null); // plot id
     const [cropSearch, setCropSearch] = useState("");
     const [now, setNow] = useState(Date.now());
+    const [showFoodHelp, setShowFoodHelp] = useState(false);
     const { sendNotification } = useNotifications();
     const notifiedPlotsRef = useRef<Set<number>>(new Set());
 
@@ -338,11 +340,20 @@ export default function FarmingIndex() {
                                   : "border-stone-600/50 bg-stone-800/30"
                         }`}
                     >
-                        <div className="mb-2 flex items-center gap-2">
-                            <Warehouse className="h-4 w-4 text-amber-400" />
-                            <span className="font-pixel text-xs text-amber-300">
-                                {location_name} Granary
-                            </span>
+                        <div className="mb-2 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Warehouse className="h-4 w-4 text-amber-400" />
+                                <span className="font-pixel text-xs text-amber-300">
+                                    {location_name} Granary
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => setShowFoodHelp(true)}
+                                className="flex items-center gap-1 rounded px-2 py-1 font-pixel text-[10px] text-stone-400 hover:bg-stone-700 hover:text-stone-200"
+                            >
+                                <HelpCircle className="h-3 w-3" />
+                                How Food Works
+                            </button>
                         </div>
                         <div className="grid grid-cols-2 gap-3 font-pixel text-[10px] sm:grid-cols-4">
                             <div>
@@ -459,23 +470,23 @@ export default function FarmingIndex() {
                                 )}
 
                                 {/* Actions */}
-                                {isSelected && (
-                                    <div className="mt-3 flex flex-wrap gap-2 border-t border-stone-700 pt-3">
-                                        {plot.status === "empty" && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setShowCropModal(plot.id);
-                                                    setCropSearch("");
-                                                }}
-                                                disabled={loading !== null}
-                                                className="flex w-full items-center justify-center gap-2 rounded bg-amber-600/50 px-3 py-2 font-pixel text-xs text-amber-200 hover:bg-amber-600"
-                                            >
-                                                <Sprout className="h-4 w-4" />
-                                                Choose Crop to Plant
-                                            </button>
-                                        )}
+                                <div className="mt-3 flex flex-wrap gap-2 border-t border-stone-700 pt-3">
+                                    {plot.status === "empty" && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setShowCropModal(plot.id);
+                                                setCropSearch("");
+                                            }}
+                                            disabled={loading !== null}
+                                            className="flex w-full items-center justify-center gap-2 rounded bg-amber-600/50 px-3 py-2 font-pixel text-xs text-amber-200 hover:bg-amber-600"
+                                        >
+                                            <Sprout className="h-4 w-4" />
+                                            Choose Crop to Plant
+                                        </button>
+                                    )}
 
+                                    <div className="flex min-h-[28px] flex-wrap gap-1">
                                         {["planted", "growing"].includes(plot.status) &&
                                             !plot.is_watered && (
                                                 <button
@@ -534,22 +545,22 @@ export default function FarmingIndex() {
                                                 )}
                                             </>
                                         )}
-
-                                        {(plot.has_withered || plot.status !== "empty") && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleAction("clear", plot.id);
-                                                }}
-                                                disabled={loading !== null}
-                                                className="flex items-center gap-1 rounded bg-red-600/50 px-2 py-1 font-pixel text-[10px] text-red-200 hover:bg-red-600"
-                                            >
-                                                <Scissors className="h-3 w-3" />
-                                                Clear
-                                            </button>
-                                        )}
                                     </div>
-                                )}
+
+                                    {(plot.has_withered || plot.status !== "empty") && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleAction("clear", plot.id);
+                                            }}
+                                            disabled={loading !== null}
+                                            className="flex items-center gap-1 rounded bg-red-600/50 px-2 py-1 font-pixel text-[10px] text-red-200 hover:bg-red-600"
+                                        >
+                                            <Scissors className="h-3 w-3" />
+                                            Clear
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         );
                     })}
@@ -772,6 +783,120 @@ export default function FarmingIndex() {
                                 Tip: Higher level crops take longer to grow but yield more XP and
                                 produce.
                             </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Food System Help Modal */}
+            {showFoodHelp && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div
+                        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                        onClick={() => setShowFoodHelp(false)}
+                    />
+                    <div className="relative max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-amber-600/50 bg-stone-900 shadow-2xl">
+                        {/* Header */}
+                        <div className="flex items-center justify-between border-b border-stone-700 px-4 py-3">
+                            <div className="flex items-center gap-2">
+                                <Warehouse className="h-5 w-5 text-amber-400" />
+                                <h2 className="font-pixel text-lg text-amber-300">
+                                    How Food Works
+                                </h2>
+                            </div>
+                            <button
+                                onClick={() => setShowFoodHelp(false)}
+                                className="rounded p-1 hover:bg-stone-700"
+                            >
+                                <X className="h-5 w-5 text-stone-400" />
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="space-y-4 p-4">
+                            <div>
+                                <h3 className="mb-2 font-pixel text-sm text-amber-300">
+                                    Feeding the Population
+                                </h3>
+                                <p className="font-pixel text-xs text-stone-400">
+                                    Every week, the town consumes food from the granary to feed its
+                                    population. If there's not enough food, people will starve!
+                                </p>
+                            </div>
+
+                            <div>
+                                <h3 className="mb-2 font-pixel text-sm text-amber-300">
+                                    Food Values
+                                </h3>
+                                <p className="mb-2 font-pixel text-xs text-stone-400">
+                                    Different foods have different nutritional values. Better food
+                                    feeds more people per unit:
+                                </p>
+                                <div className="space-y-1 rounded-lg border border-stone-700 bg-stone-800/50 p-3">
+                                    <div className="flex items-center justify-between font-pixel text-xs">
+                                        <span className="text-stone-300">Raw Crops</span>
+                                        <span className="text-stone-500">
+                                            Wheat, Potatoes, Corn...
+                                        </span>
+                                        <span className="text-amber-400">Feeds 2</span>
+                                    </div>
+                                    <div className="flex items-center justify-between font-pixel text-xs">
+                                        <span className="text-stone-300">Processed</span>
+                                        <span className="text-stone-500">
+                                            Grain, Bread, Cheese...
+                                        </span>
+                                        <span className="text-amber-400">Feeds 4</span>
+                                    </div>
+                                    <div className="flex items-center justify-between font-pixel text-xs">
+                                        <span className="text-stone-300">Cooked</span>
+                                        <span className="text-stone-500">
+                                            Meat Pie, Roasted Boar...
+                                        </span>
+                                        <span className="text-amber-400">Feeds 6</span>
+                                    </div>
+                                    <div className="flex items-center justify-between font-pixel text-xs">
+                                        <span className="text-stone-300">Premium</span>
+                                        <span className="text-stone-500">
+                                            Dragon Steak, Ambrosia...
+                                        </span>
+                                        <span className="text-amber-400">Feeds 8</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 className="mb-2 font-pixel text-sm text-amber-300">
+                                    How to Donate Food
+                                </h3>
+                                <ul className="list-inside list-disc space-y-1 font-pixel text-xs text-stone-400">
+                                    <li>
+                                        <strong className="text-stone-300">From Farming:</strong>{" "}
+                                        Click "Donate" when harvesting to send crops directly to the
+                                        granary
+                                    </li>
+                                    <li>
+                                        <strong className="text-stone-300">From Inventory:</strong>{" "}
+                                        Go to your inventory and donate any food items you have
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h3 className="mb-2 font-pixel text-sm text-amber-300">
+                                    Consumption Priority
+                                </h3>
+                                <p className="font-pixel text-xs text-stone-400">
+                                    The town will consume cheaper food first (raw crops before
+                                    premium food) to preserve valuable food for emergencies.
+                                </p>
+                            </div>
+
+                            <div className="rounded-lg border border-amber-600/30 bg-amber-900/20 p-3">
+                                <p className="font-pixel text-xs text-amber-300">
+                                    Tip: Donating food helps the community thrive! A well-fed
+                                    population means more workers, traders, and opportunities.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
