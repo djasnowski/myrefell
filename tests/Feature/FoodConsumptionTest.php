@@ -3,6 +3,7 @@
 use App\Models\Item;
 use App\Models\LocationNpc;
 use App\Models\LocationStockpile;
+use App\Models\Role;
 use App\Models\User;
 use App\Models\Village;
 use App\Models\WorldState;
@@ -14,11 +15,12 @@ beforeEach(function () {
     WorldState::query()->delete();
     LocationNpc::query()->delete();
     LocationStockpile::query()->delete();
+    Role::query()->delete();
     Village::query()->delete();
     User::query()->delete();
     Item::query()->delete();
 
-    // Create the grain item
+    // Create the grain item with food_value for the new multi-food system
     Item::create([
         'name' => 'Grain',
         'description' => 'A sack of grain. The staple food of the realm.',
@@ -28,6 +30,7 @@ beforeEach(function () {
         'stackable' => true,
         'max_stack' => 1000,
         'base_value' => 2,
+        'food_value' => 4, // Each unit feeds 4 people for a week
     ]);
 
     // Create a world state
@@ -71,8 +74,8 @@ test('food is consumed weekly from village stockpile', function () {
         'granary_capacity' => 500,
     ]);
 
-    // Create some NPCs in the village
-    LocationNpc::factory()->count(3)->create([
+    // Create 8 NPCs in the village (will need 2 units of grain at food_value=4)
+    LocationNpc::factory()->count(8)->create([
         'location_type' => 'village',
         'location_id' => $village->id,
         'weeks_without_food' => 0,
@@ -89,9 +92,9 @@ test('food is consumed weekly from village stockpile', function () {
     // Refresh stockpile
     $stockpile->refresh();
 
-    // Should have consumed 3 units (1 per NPC per week)
-    expect($stockpile->quantity)->toBe(97);
-    expect($results['food_consumed'])->toBe(3);
+    // With 8 NPCs and food_value=4, need ceil(8/4)=2 units of grain
+    expect($stockpile->quantity)->toBe(98);
+    expect($results['food_consumed'])->toBe(2);
     expect($results['villages_processed'])->toBe(1);
 });
 
@@ -274,8 +277,10 @@ test('service can initialize village food supplies', function () {
         ->forItem($grainItem->id)
         ->first();
 
-    // Should have 5 * 1 * 12 = 60 units of food
-    expect($stockpile->quantity)->toBe(60);
+    // Formula: ceil(population / PEOPLE_FED_PER_FOOD) * weeksOfFood
+    // ceil(5/4) * 12 = 2 * 12 = 24 units of grain
+    // This provides 24 * 4 = 96 food points, enough for 96/5 = 19 weeks for 5 NPCs
+    expect($stockpile->quantity)->toBe(24);
 });
 
 test('calendar service dispatches food consumption job on week advance', function () {
@@ -330,14 +335,14 @@ test('partial food shortage affects all population', function () {
         'granary_capacity' => 500,
     ]);
 
-    // Create 5 NPCs
-    LocationNpc::factory()->count(5)->create([
+    // Create 10 NPCs (needs 3 food units at food_value=4 to feed 12 people, but we only have 2)
+    LocationNpc::factory()->count(10)->create([
         'location_type' => 'village',
         'location_id' => $village->id,
         'weeks_without_food' => 0,
     ]);
 
-    // Add only 2 units of food (not enough for 5 NPCs)
+    // Add only 2 units of food (feeds 8 people, not enough for 10 NPCs)
     $grainItem = Item::where('name', 'Grain')->first();
     $stockpile = LocationStockpile::getOrCreate('village', $village->id, $grainItem->id);
     $stockpile->addQuantity(2);
@@ -347,10 +352,10 @@ test('partial food shortage affects all population', function () {
 
     $stockpile->refresh();
 
-    // All food consumed
+    // All food consumed (2 units feeding 8 people, 2 people unfed)
     expect($stockpile->quantity)->toBe(0);
     expect($results['food_consumed'])->toBe(2);
 
-    // All NPCs are starving (even though partial food was available)
-    expect($results['npcs_starving'])->toBe(5);
+    // All NPCs are starving when there's any shortage (even though partial food was available)
+    expect($results['npcs_starving'])->toBe(10);
 });

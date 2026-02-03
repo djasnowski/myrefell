@@ -4,6 +4,7 @@ use App\Models\Barony;
 use App\Models\Item;
 use App\Models\LocationNpc;
 use App\Models\LocationStockpile;
+use App\Models\Role;
 use App\Models\Town;
 use App\Models\Village;
 use App\Models\WorldState;
@@ -14,12 +15,13 @@ beforeEach(function () {
     WorldState::query()->delete();
     LocationNpc::query()->delete();
     LocationStockpile::query()->delete();
+    Role::query()->delete();
     Barony::query()->delete();
     Town::query()->delete();
     Village::query()->delete();
     Item::query()->delete();
 
-    // Create the grain item
+    // Create the grain item with food_value for the new multi-food system
     Item::create([
         'name' => 'Grain',
         'description' => 'A sack of grain. The staple food of the realm.',
@@ -29,6 +31,7 @@ beforeEach(function () {
         'stackable' => true,
         'max_stack' => 1000,
         'base_value' => 2,
+        'food_value' => 4, // Each unit feeds 4 people for a week
     ]);
 
     // Create a world state
@@ -289,7 +292,15 @@ test('emigration requires minimum food at destination', function () {
         'barony_id' => $barony->id,
     ]);
 
-    // Add just 5 units of food (less than 10 weeks for 1 NPC)
+    // Add NPCs to the destination to increase food consumption
+    // 5 NPCs need 5 food points per week, so 5 units of grain (20 food points) = 4 weeks of food
+    LocationNpc::factory()->count(5)->create([
+        'location_type' => 'village',
+        'location_id' => $lowFoodVillage->id,
+        'weeks_without_food' => 0,
+    ]);
+
+    // Add 5 units of food (20 food points / 5 NPCs = 4 weeks, less than 10 week minimum)
     $grainItem = Item::where('name', 'Grain')->first();
     LocationStockpile::getOrCreate('village', $lowFoodVillage->id, $grainItem->id)->addQuantity(5);
 
@@ -300,7 +311,7 @@ test('emigration requires minimum food at destination', function () {
 
     $destination = $method->invoke($service, 'village', $starvingVillage);
 
-    // Should return null because destination doesn't have enough food
+    // Should return null because destination doesn't have enough food (only 4 weeks)
     expect($destination)->toBeNull();
 });
 
@@ -326,11 +337,11 @@ test('npcs do not emigrate before threshold weeks', function () {
     $grainItem = Item::where('name', 'Grain')->first();
     LocationStockpile::getOrCreate('village', $fedVillage->id, $grainItem->id)->addQuantity(500);
 
-    // Create NPCs with less than threshold weeks without food
+    // Create NPCs with 0 weeks without food (after increment they'll be at 1, still below threshold of 2)
     LocationNpc::factory()->count(10)->create([
         'location_type' => 'village',
         'location_id' => $starvingVillage->id,
-        'weeks_without_food' => FoodConsumptionService::WEEKS_BEFORE_EMIGRATION - 1,
+        'weeks_without_food' => 0,
     ]);
 
     $service = new FoodConsumptionService;

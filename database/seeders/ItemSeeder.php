@@ -552,6 +552,7 @@ class ItemSeeder extends Seeder
                 'stackable' => true,
                 'max_stack' => 1000,
                 'base_value' => 2,
+                'food_value' => 4,
                 'is_perishable' => true,
                 'decay_rate_per_week' => 1,
             ],
@@ -564,6 +565,7 @@ class ItemSeeder extends Seeder
                 'stackable' => true,
                 'max_stack' => 100,
                 'base_value' => 5,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Raw Meat',
@@ -1035,6 +1037,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 3,
                 'base_value' => 8,
+                'food_value' => 6,
                 'is_perishable' => true,
                 'spoil_after_weeks' => 4,
                 'decays_into' => 'Spoiled Food',
@@ -1049,6 +1052,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 5,
                 'base_value' => 10,
+                'food_value' => 4,
                 'is_perishable' => true,
                 'spoil_after_weeks' => 4,
                 'decays_into' => 'Spoiled Food',
@@ -1063,6 +1067,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 10,
                 'base_value' => 20,
+                'food_value' => 6,
                 'is_perishable' => true,
                 'spoil_after_weeks' => 4,
                 'decays_into' => 'Spoiled Food',
@@ -1077,6 +1082,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 15,
                 'base_value' => 35,
+                'food_value' => 6,
                 'is_perishable' => true,
                 'spoil_after_weeks' => 4,
                 'decays_into' => 'Spoiled Food',
@@ -1091,6 +1097,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 25,
                 'base_value' => 100,
+                'food_value' => 6,
                 'is_perishable' => true,
                 'spoil_after_weeks' => 4,
                 'decays_into' => 'Spoiled Food',
@@ -1105,6 +1112,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 20,
                 'base_value' => 50,
+                'food_value' => 6,
                 'is_perishable' => true,
                 'spoil_after_weeks' => 6,
                 'decays_into' => 'Spoiled Food',
@@ -1119,6 +1127,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 12,
                 'base_value' => 25,
+                'food_value' => 6,
                 'is_perishable' => true,
                 'spoil_after_weeks' => 4,
                 'decays_into' => 'Spoiled Food',
@@ -1394,6 +1403,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 5,
                 'hp_bonus' => 50,
                 'base_value' => 200,
+                'food_value' => 8,
             ],
 
             // === TOOLS ===
@@ -1837,6 +1847,7 @@ class ItemSeeder extends Seeder
                 'stackable' => true,
                 'max_stack' => 100,
                 'base_value' => 3,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Potatoes',
@@ -1848,6 +1859,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 5,
                 'base_value' => 4,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Carrots',
@@ -1859,6 +1871,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 4,
                 'base_value' => 5,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Cabbage',
@@ -1870,6 +1883,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 6,
                 'base_value' => 6,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Onions',
@@ -1880,6 +1894,7 @@ class ItemSeeder extends Seeder
                 'stackable' => true,
                 'max_stack' => 100,
                 'base_value' => 5,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Corn',
@@ -1891,6 +1906,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 8,
                 'base_value' => 8,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Tomatoes',
@@ -1902,6 +1918,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 6,
                 'base_value' => 7,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Pumpkins',
@@ -1913,6 +1930,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 12,
                 'base_value' => 15,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Grapes',
@@ -1965,6 +1983,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 6,
                 'base_value' => 5,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Blueberries',
@@ -1976,6 +1995,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 5,
                 'base_value' => 4,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Raspberries',
@@ -1987,6 +2007,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 5,
                 'base_value' => 4,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Watermelon',
@@ -1998,6 +2019,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 20,
                 'hp_bonus' => 15,
                 'base_value' => 18,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Melon',
@@ -2009,6 +2031,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 30,
                 'hp_bonus' => 10,
                 'base_value' => 12,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Peppers',
@@ -2020,6 +2043,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 7,
                 'base_value' => 6,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Lettuce',
@@ -2031,6 +2055,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 3,
                 'base_value' => 3,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Squash',
@@ -2042,6 +2067,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 30,
                 'hp_bonus' => 10,
                 'base_value' => 10,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Beans',
@@ -2053,6 +2079,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 6,
                 'base_value' => 5,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Cucumber',
@@ -2064,6 +2091,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 4,
                 'base_value' => 4,
+                'food_value' => 4,
             ],
             // More fruits
             [
@@ -2076,6 +2104,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 5,
                 'base_value' => 4,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Orange',
@@ -2087,6 +2116,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 6,
                 'base_value' => 5,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Lemon',
@@ -2098,6 +2128,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 3,
                 'base_value' => 4,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Cherries',
@@ -2109,6 +2140,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 5,
                 'base_value' => 5,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Peach',
@@ -2120,6 +2152,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 7,
                 'base_value' => 6,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Pear',
@@ -2131,6 +2164,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 6,
                 'base_value' => 5,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Plum',
@@ -2142,6 +2176,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 5,
                 'base_value' => 5,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Banana',
@@ -2153,6 +2188,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 8,
                 'base_value' => 8,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Coconut',
@@ -2164,6 +2200,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 30,
                 'hp_bonus' => 12,
                 'base_value' => 15,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Pineapple',
@@ -2175,6 +2212,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 30,
                 'hp_bonus' => 14,
                 'base_value' => 18,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Mango',
@@ -2186,6 +2224,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 10,
                 'base_value' => 12,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Pomegranate',
@@ -2197,6 +2236,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 12,
                 'base_value' => 14,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Fig',
@@ -2208,6 +2248,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 6,
                 'base_value' => 6,
+                'food_value' => 4,
             ],
             // More vegetables
             [
@@ -2220,6 +2261,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 4,
                 'base_value' => 3,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Beet',
@@ -2231,6 +2273,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 5,
                 'base_value' => 4,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Radish',
@@ -2242,6 +2285,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 3,
                 'base_value' => 3,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Spinach',
@@ -2253,6 +2297,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 4,
                 'base_value' => 4,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Kale',
@@ -2264,6 +2309,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 5,
                 'base_value' => 5,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Celery',
@@ -2275,6 +2321,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 2,
                 'base_value' => 2,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Asparagus',
@@ -2286,6 +2333,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 8,
                 'base_value' => 10,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Broccoli',
@@ -2297,6 +2345,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 6,
                 'base_value' => 6,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Cauliflower',
@@ -2308,6 +2357,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 5,
                 'base_value' => 5,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Garlic',
@@ -2329,6 +2379,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 4,
                 'base_value' => 4,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Parsnip',
@@ -2340,6 +2391,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 5,
                 'base_value' => 5,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Sweet Potato',
@@ -2351,6 +2403,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 7,
                 'base_value' => 6,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Artichoke',
@@ -2362,6 +2415,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 10,
                 'base_value' => 12,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Eggplant',
@@ -2373,6 +2427,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 6,
                 'base_value' => 6,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Zucchini',
@@ -2384,6 +2439,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 5,
                 'base_value' => 5,
+                'food_value' => 4,
             ],
             // Grains and seeds
             [
@@ -2395,6 +2451,7 @@ class ItemSeeder extends Seeder
                 'stackable' => true,
                 'max_stack' => 100,
                 'base_value' => 3,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Oats',
@@ -2405,6 +2462,7 @@ class ItemSeeder extends Seeder
                 'stackable' => true,
                 'max_stack' => 100,
                 'base_value' => 3,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Rye',
@@ -2415,6 +2473,7 @@ class ItemSeeder extends Seeder
                 'stackable' => true,
                 'max_stack' => 100,
                 'base_value' => 3,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Rice',
@@ -2425,6 +2484,7 @@ class ItemSeeder extends Seeder
                 'stackable' => true,
                 'max_stack' => 100,
                 'base_value' => 4,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Sunflower Seeds',
@@ -2436,6 +2496,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 100,
                 'hp_bonus' => 3,
                 'base_value' => 3,
+                'food_value' => 2,
             ],
             // Exotic high-level crops (65+)
             [
@@ -2448,6 +2509,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 30,
                 'hp_bonus' => 25,
                 'base_value' => 75,
+                'food_value' => 8,
             ],
             [
                 'name' => 'Starfruit',
@@ -2459,6 +2521,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 30,
                 'hp_bonus' => 30,
                 'base_value' => 100,
+                'food_value' => 8,
             ],
             [
                 'name' => 'Ancient Grain',
@@ -2481,6 +2544,7 @@ class ItemSeeder extends Seeder
                 'hp_bonus' => 28,
                 'energy_bonus' => 15,
                 'base_value' => 90,
+                'food_value' => 8,
             ],
             [
                 'name' => 'Blood Orange',
@@ -2492,6 +2556,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 18,
                 'base_value' => 45,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Saffron',
@@ -2565,6 +2630,7 @@ class ItemSeeder extends Seeder
                 'stackable' => false,
                 'hp_bonus' => 50,
                 'base_value' => 250,
+                'food_value' => 8,
             ],
             [
                 'name' => 'Prized Melon',
@@ -2575,6 +2641,7 @@ class ItemSeeder extends Seeder
                 'stackable' => false,
                 'hp_bonus' => 45,
                 'base_value' => 200,
+                'food_value' => 8,
             ],
             [
                 'name' => 'Golden Wheat',
@@ -2596,6 +2663,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 22,
                 'base_value' => 60,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Mandrake Root',
@@ -2618,6 +2686,7 @@ class ItemSeeder extends Seeder
                 'hp_bonus' => 40,
                 'energy_bonus' => 20,
                 'base_value' => 300,
+                'food_value' => 8,
             ],
             [
                 'name' => 'Void Pepper',
@@ -2629,6 +2698,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 20,
                 'hp_bonus' => 35,
                 'base_value' => 350,
+                'food_value' => 8,
             ],
             [
                 'name' => 'Celestial Carrot',
@@ -2640,6 +2710,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 20,
                 'hp_bonus' => 50,
                 'base_value' => 400,
+                'food_value' => 8,
             ],
             // Monster drops / foraged foods
             [
@@ -2651,6 +2722,7 @@ class ItemSeeder extends Seeder
                 'stackable' => true,
                 'max_stack' => 50,
                 'base_value' => 3,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Golden Egg',
@@ -2662,6 +2734,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 10,
                 'hp_bonus' => 30,
                 'base_value' => 100,
+                'food_value' => 8,
             ],
             [
                 'name' => 'Honey',
@@ -2673,6 +2746,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 10,
                 'base_value' => 15,
+                'food_value' => 6,
             ],
             [
                 'name' => 'Royal Jelly',
@@ -2684,6 +2758,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 20,
                 'hp_bonus' => 25,
                 'base_value' => 80,
+                'food_value' => 8,
             ],
             [
                 'name' => 'Milk',
@@ -2695,6 +2770,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 20,
                 'hp_bonus' => 8,
                 'base_value' => 5,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Cheese',
@@ -2706,6 +2782,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 12,
                 'base_value' => 10,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Wild Mushroom',
@@ -2717,6 +2794,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 4,
                 'base_value' => 3,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Giant Mushroom Cap',
@@ -2728,6 +2806,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 30,
                 'hp_bonus' => 15,
                 'base_value' => 20,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Truffle',
@@ -2739,6 +2818,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 20,
                 'hp_bonus' => 20,
                 'base_value' => 75,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Wild Berries',
@@ -2750,6 +2830,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 4,
                 'base_value' => 2,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Walnuts',
@@ -2761,6 +2842,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 100,
                 'hp_bonus' => 4,
                 'base_value' => 4,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Almonds',
@@ -2772,6 +2854,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 100,
                 'hp_bonus' => 5,
                 'base_value' => 5,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Chestnuts',
@@ -2783,6 +2866,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 100,
                 'hp_bonus' => 6,
                 'base_value' => 5,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Acorn',
@@ -2793,6 +2877,7 @@ class ItemSeeder extends Seeder
                 'stackable' => true,
                 'max_stack' => 100,
                 'base_value' => 1,
+                'food_value' => 2,
             ],
             // Exotic / Magical foods
             [
@@ -2805,6 +2890,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 20,
                 'hp_bonus' => 25,
                 'base_value' => 50,
+                'food_value' => 8,
             ],
             [
                 'name' => 'Starfruit',
@@ -2816,6 +2902,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 20,
                 'hp_bonus' => 30,
                 'base_value' => 65,
+                'food_value' => 8,
             ],
             [
                 'name' => 'Moonberry',
@@ -2827,6 +2914,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 20,
                 'hp_bonus' => 35,
                 'base_value' => 80,
+                'food_value' => 8,
             ],
             [
                 'name' => 'Sunfruit',
@@ -2838,6 +2926,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 20,
                 'hp_bonus' => 35,
                 'base_value' => 80,
+                'food_value' => 8,
             ],
             [
                 'name' => 'Ambrosia',
@@ -2849,6 +2938,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 5,
                 'hp_bonus' => 100,
                 'base_value' => 500,
+                'food_value' => 8,
             ],
             [
                 'name' => 'Goblin Rations',
@@ -2860,6 +2950,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 3,
                 'base_value' => 1,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Orc Jerky',
@@ -2871,6 +2962,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 8,
                 'base_value' => 5,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Spider Egg Sac',
@@ -2882,6 +2974,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 20,
                 'hp_bonus' => 12,
                 'base_value' => 15,
+                'food_value' => 4,
             ],
             [
                 'name' => 'Slime Jelly',
@@ -2893,6 +2986,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 5,
                 'base_value' => 4,
+                'food_value' => 2,
             ],
             [
                 'name' => 'Beast Meat',
@@ -2954,6 +3048,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 10,
                 'hp_bonus' => 50,
                 'base_value' => 200,
+                'food_value' => 8,
             ],
             [
                 'name' => 'Cooked Venison',
@@ -2965,6 +3060,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 18,
                 'base_value' => 25,
+                'food_value' => 6,
             ],
             [
                 'name' => 'Roasted Boar',
@@ -2976,6 +3072,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 50,
                 'hp_bonus' => 16,
                 'base_value' => 22,
+                'food_value' => 6,
             ],
             [
                 'name' => 'Bear Stew',
@@ -2987,6 +3084,7 @@ class ItemSeeder extends Seeder
                 'max_stack' => 20,
                 'hp_bonus' => 30,
                 'base_value' => 45,
+                'food_value' => 6,
             ],
 
             // Rings and Amulets

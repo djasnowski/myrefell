@@ -9,19 +9,25 @@ use App\Models\Town;
 use App\Models\User;
 use App\Models\Village;
 use App\Models\WorldState;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class FoodConsumptionService
 {
     /**
-     * Food item name used for village stockpiles.
+     * Default food item name used for adding food to stockpiles (e.g., from farming).
      */
     public const FOOD_ITEM_NAME = 'Grain';
 
     /**
-     * Number of people fed by 1 food item per week.
-     * E.g., 1 Grain feeds 4 people for a week.
+     * Subtypes that are considered food for consumption purposes.
+     */
+    public const FOOD_SUBTYPES = ['food', 'crop', 'grain'];
+
+    /**
+     * Baseline: Number of people fed by 1 food item with food_value of 1.
+     * Used as a reference point - actual feeding depends on item's food_value.
      */
     public const PEOPLE_FED_PER_FOOD = 4;
 
@@ -63,18 +69,10 @@ class FoodConsumptionService
             'players_penalized' => 0,
         ];
 
-        // Get the grain item ID
-        $grainItem = Item::where('name', self::FOOD_ITEM_NAME)->first();
-        if (! $grainItem) {
-            Log::warning('FoodConsumption: Grain item not found, skipping food consumption');
-
-            return $results;
-        }
-
         // Process each village
         $villages = Village::all();
         foreach ($villages as $village) {
-            $villageResults = $this->processVillageConsumption($village, $grainItem->id, $currentYear);
+            $villageResults = $this->processVillageConsumption($village, $currentYear);
 
             $results['villages_processed']++;
             $results['food_consumed'] += $villageResults['food_consumed'];
@@ -88,7 +86,7 @@ class FoodConsumptionService
         // Process each town
         $towns = Town::all();
         foreach ($towns as $town) {
-            $townResults = $this->processTownConsumption($town, $grainItem->id, $currentYear);
+            $townResults = $this->processTownConsumption($town, $currentYear);
 
             $results['towns_processed']++;
             $results['food_consumed'] += $townResults['food_consumed'];
@@ -120,9 +118,9 @@ class FoodConsumptionService
      *
      * @return array{food_consumed: int, npcs_starving: int, npcs_died: int, npcs_emigrated: int, players_starving: int, players_penalized: int}
      */
-    protected function processVillageConsumption(Village $village, int $grainItemId, int $currentYear): array
+    protected function processVillageConsumption(Village $village, int $currentYear): array
     {
-        return DB::transaction(function () use ($village, $grainItemId, $currentYear) {
+        return DB::transaction(function () use ($village, $currentYear) {
             $results = [
                 'food_consumed' => 0,
                 'npcs_starving' => 0,
@@ -132,9 +130,6 @@ class FoodConsumptionService
                 'players_penalized' => 0,
             ];
 
-            // Get or create the food stockpile for this village
-            $stockpile = LocationStockpile::getOrCreate('village', $village->id, $grainItemId);
-
             // Count population: living NPCs at this location + players residing here
             $npcCount = LocationNpc::alive()
                 ->atLocation('village', $village->id)
@@ -143,21 +138,17 @@ class FoodConsumptionService
             $playerCount = User::where('home_village_id', $village->id)->count();
 
             $totalPopulation = $npcCount + $playerCount;
-            $foodNeeded = (int) ceil($totalPopulation / self::PEOPLE_FED_PER_FOOD);
 
-            // Calculate how much food can be consumed
-            $foodAvailable = $stockpile->quantity;
-            $foodToConsume = min($foodNeeded, $foodAvailable);
-            $foodShortage = $foodNeeded - $foodToConsume;
-
-            // Consume available food
-            if ($foodToConsume > 0) {
-                $stockpile->removeQuantity($foodToConsume);
-                $results['food_consumed'] = $foodToConsume;
+            if ($totalPopulation === 0) {
+                return $results;
             }
 
-            // If there's a shortage, apply starvation effects
-            if ($foodShortage > 0) {
+            // Consume food from multiple stockpiles until everyone is fed
+            $consumptionResult = $this->consumeFoodFromStockpiles('village', $village->id, $totalPopulation);
+            $results['food_consumed'] = $consumptionResult['food_consumed'];
+
+            // If there's a shortage (not everyone was fed), apply starvation effects
+            if ($consumptionResult['people_unfed'] > 0) {
                 $npcResults = $this->applyNpcStarvation('village', $village, $currentYear);
                 $results['npcs_starving'] = $npcResults['starving'];
                 $results['npcs_died'] = $npcResults['died'];
@@ -180,9 +171,9 @@ class FoodConsumptionService
      *
      * @return array{food_consumed: int, npcs_starving: int, npcs_died: int, npcs_emigrated: int, players_starving: int, players_penalized: int}
      */
-    protected function processTownConsumption(Town $town, int $grainItemId, int $currentYear): array
+    protected function processTownConsumption(Town $town, int $currentYear): array
     {
-        return DB::transaction(function () use ($town, $grainItemId, $currentYear) {
+        return DB::transaction(function () use ($town, $currentYear) {
             $results = [
                 'food_consumed' => 0,
                 'npcs_starving' => 0,
@@ -191,9 +182,6 @@ class FoodConsumptionService
                 'players_starving' => 0,
                 'players_penalized' => 0,
             ];
-
-            // Get or create the food stockpile for this town
-            $stockpile = LocationStockpile::getOrCreate('town', $town->id, $grainItemId);
 
             // Count population: living NPCs at this location + players with home town
             $npcCount = LocationNpc::alive()
@@ -207,21 +195,17 @@ class FoodConsumptionService
                 ->count();
 
             $totalPopulation = $npcCount + $playerCount;
-            $foodNeeded = (int) ceil($totalPopulation / self::PEOPLE_FED_PER_FOOD);
 
-            // Calculate how much food can be consumed
-            $foodAvailable = $stockpile->quantity;
-            $foodToConsume = min($foodNeeded, $foodAvailable);
-            $foodShortage = $foodNeeded - $foodToConsume;
-
-            // Consume available food
-            if ($foodToConsume > 0) {
-                $stockpile->removeQuantity($foodToConsume);
-                $results['food_consumed'] = $foodToConsume;
+            if ($totalPopulation === 0) {
+                return $results;
             }
 
-            // If there's a shortage, apply starvation effects
-            if ($foodShortage > 0) {
+            // Consume food from multiple stockpiles until everyone is fed
+            $consumptionResult = $this->consumeFoodFromStockpiles('town', $town->id, $totalPopulation);
+            $results['food_consumed'] = $consumptionResult['food_consumed'];
+
+            // If there's a shortage (not everyone was fed), apply starvation effects
+            if ($consumptionResult['people_unfed'] > 0) {
                 $npcResults = $this->applyNpcStarvation('town', $town, $currentYear);
                 $results['npcs_starving'] = $npcResults['starving'];
                 $results['npcs_died'] = $npcResults['died'];
@@ -237,6 +221,67 @@ class FoodConsumptionService
 
             return $results;
         });
+    }
+
+    /**
+     * Get all food stockpiles at a location, ordered by food_value ASC (cheap food first).
+     *
+     * @return Collection<LocationStockpile>
+     */
+    protected function getFoodStockpiles(string $locationType, int $locationId): Collection
+    {
+        return LocationStockpile::atLocation($locationType, $locationId)
+            ->where('quantity', '>', 0)
+            ->whereHas('item', function ($query) {
+                $query->whereIn('subtype', self::FOOD_SUBTYPES)
+                    ->where('food_value', '>', 0);
+            })
+            ->with('item')
+            ->get()
+            ->sortBy(fn ($stockpile) => $stockpile->item->food_value);
+    }
+
+    /**
+     * Consume food from multiple stockpiles to feed the population.
+     * Consumes cheap food first (lowest food_value).
+     *
+     * @return array{food_consumed: int, people_fed: int, people_unfed: int}
+     */
+    protected function consumeFoodFromStockpiles(string $locationType, int $locationId, int $population): array
+    {
+        $result = [
+            'food_consumed' => 0,
+            'people_fed' => 0,
+            'people_unfed' => $population,
+        ];
+
+        // Get all food stockpiles ordered by food_value (cheap food first)
+        $stockpiles = $this->getFoodStockpiles($locationType, $locationId);
+
+        foreach ($stockpiles as $stockpile) {
+            if ($result['people_unfed'] <= 0) {
+                break;
+            }
+
+            $foodValue = $stockpile->item->food_value;
+            $available = $stockpile->quantity;
+
+            // Each unit of this food feeds food_value people
+            // Calculate how many units needed to feed remaining people
+            $unitsNeeded = (int) ceil($result['people_unfed'] / $foodValue);
+            $unitsToConsume = min($unitsNeeded, $available);
+
+            if ($unitsToConsume > 0) {
+                $stockpile->removeQuantity($unitsToConsume);
+                $result['food_consumed'] += $unitsToConsume;
+
+                $peopleFedFromThis = min($unitsToConsume * $foodValue, $result['people_unfed']);
+                $result['people_fed'] += $peopleFedFromThis;
+                $result['people_unfed'] -= $peopleFedFromThis;
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -315,6 +360,20 @@ class FoodConsumptionService
     }
 
     /**
+     * Calculate weeks of food available at a location based on all food stockpiles.
+     */
+    protected function calculateWeeksOfFood(string $locationType, int $locationId): int
+    {
+        $foodStockpiles = $this->getFoodStockpiles($locationType, $locationId);
+        $totalFoodPoints = $foodStockpiles->sum(fn ($stockpile) => $stockpile->quantity * $stockpile->item->food_value);
+
+        $npcCount = LocationNpc::alive()->atLocation($locationType, $locationId)->count();
+        $population = max(1, $npcCount);
+
+        return $population > 0 ? (int) floor($totalFoodPoints / $population) : 0;
+    }
+
+    /**
      * Find a suitable emigration destination for an NPC.
      *
      * @param  Village|Town  $fromLocation
@@ -322,11 +381,6 @@ class FoodConsumptionService
      */
     protected function findEmigrationDestination(string $fromType, $fromLocation): ?array
     {
-        $grainItem = Item::where('name', self::FOOD_ITEM_NAME)->first();
-        if (! $grainItem) {
-            return null;
-        }
-
         // Get the barony of the current location
         $baronyId = $fromLocation->barony_id;
 
@@ -334,21 +388,9 @@ class FoodConsumptionService
         $villagesWithFood = Village::where('id', '!=', $fromType === 'village' ? $fromLocation->id : 0)
             ->when($baronyId, fn ($q) => $q->where('barony_id', $baronyId))
             ->get()
-            ->filter(function ($village) use ($grainItem) {
-                $stockpile = LocationStockpile::atLocation('village', $village->id)
-                    ->forItem($grainItem->id)
-                    ->first();
-
+            ->filter(function ($village) {
                 // Only consider as destination if has at least 10 weeks of food
-                if (! $stockpile) {
-                    return false;
-                }
-
-                $npcCount = LocationNpc::alive()->atLocation('village', $village->id)->count();
-                $foodNeeded = (int) ceil(max(1, $npcCount) / self::PEOPLE_FED_PER_FOOD);
-                $weeksOfFood = $stockpile->quantity / $foodNeeded;
-
-                return $weeksOfFood >= 10;
+                return $this->calculateWeeksOfFood('village', $village->id) >= 10;
             });
 
         if ($villagesWithFood->isNotEmpty()) {
@@ -366,20 +408,8 @@ class FoodConsumptionService
         $townsWithFood = Town::where('id', '!=', $fromType === 'town' ? $fromLocation->id : 0)
             ->when($baronyId, fn ($q) => $q->where('barony_id', $baronyId))
             ->get()
-            ->filter(function ($town) use ($grainItem) {
-                $stockpile = LocationStockpile::atLocation('town', $town->id)
-                    ->forItem($grainItem->id)
-                    ->first();
-
-                if (! $stockpile) {
-                    return false;
-                }
-
-                $npcCount = LocationNpc::alive()->atLocation('town', $town->id)->count();
-                $foodNeeded = (int) ceil(max(1, $npcCount) / self::PEOPLE_FED_PER_FOOD);
-                $weeksOfFood = $stockpile->quantity / $foodNeeded;
-
-                return $weeksOfFood >= 10;
+            ->filter(function ($town) {
+                return $this->calculateWeeksOfFood('town', $town->id) >= 10;
             });
 
         if ($townsWithFood->isNotEmpty()) {
@@ -396,20 +426,8 @@ class FoodConsumptionService
         $allVillagesWithFood = Village::where('id', '!=', $fromType === 'village' ? $fromLocation->id : 0)
             ->where('barony_id', '!=', $baronyId)
             ->get()
-            ->filter(function ($village) use ($grainItem) {
-                $stockpile = LocationStockpile::atLocation('village', $village->id)
-                    ->forItem($grainItem->id)
-                    ->first();
-
-                if (! $stockpile) {
-                    return false;
-                }
-
-                $npcCount = LocationNpc::alive()->atLocation('village', $village->id)->count();
-                $foodNeeded = (int) ceil(max(1, $npcCount) / self::PEOPLE_FED_PER_FOOD);
-                $weeksOfFood = $stockpile->quantity / $foodNeeded;
-
-                return $weeksOfFood >= 10;
+            ->filter(function ($village) {
+                return $this->calculateWeeksOfFood('village', $village->id) >= 10;
             });
 
         if ($allVillagesWithFood->isNotEmpty()) {
@@ -553,25 +571,10 @@ class FoodConsumptionService
 
     /**
      * Get food statistics for a village.
+     * Calculates total food points from all food stockpiles (quantity * food_value).
      */
     public function getVillageFoodStats(Village $village): array
     {
-        $grainItem = Item::where('name', self::FOOD_ITEM_NAME)->first();
-        if (! $grainItem) {
-            return [
-                'food_available' => 0,
-                'food_needed_per_week' => 0,
-                'weeks_of_food' => 0,
-                'population' => 0,
-                'starving_npcs' => 0,
-                'starving_players' => 0,
-            ];
-        }
-
-        $stockpile = LocationStockpile::atLocation('village', $village->id)
-            ->forItem($grainItem->id)
-            ->first();
-
         $npcCount = LocationNpc::alive()
             ->atLocation('village', $village->id)
             ->count();
@@ -584,8 +587,21 @@ class FoodConsumptionService
         $playerCount = User::where('home_village_id', $village->id)->count();
 
         $totalPopulation = $npcCount + $playerCount;
-        $foodPerWeek = (int) ceil($totalPopulation / self::PEOPLE_FED_PER_FOOD);
-        $foodAvailable = $stockpile?->quantity ?? 0;
+
+        // Calculate total "food points" from all food stockpiles
+        // Food points = sum of (stockpile.quantity * item.food_value)
+        $foodStockpiles = $this->getFoodStockpiles('village', $village->id);
+        $totalFoodPoints = $foodStockpiles->sum(fn ($stockpile) => $stockpile->quantity * $stockpile->item->food_value);
+        $totalFoodUnits = $foodStockpiles->sum('quantity');
+
+        // Calculate average food value (default to 4 if no food available)
+        $avgFoodValue = $totalFoodUnits > 0 ? $totalFoodPoints / $totalFoodUnits : self::PEOPLE_FED_PER_FOOD;
+
+        // Estimated food units needed per week = population / average food value
+        $foodNeededPerWeek = $totalPopulation > 0 ? (int) ceil($totalPopulation / $avgFoodValue) : 0;
+
+        // Weeks of food = total food points / population
+        $weeksOfFood = $totalPopulation > 0 ? floor($totalFoodPoints / $totalPopulation) : 0;
 
         $starvingNpcs = LocationNpc::alive()
             ->atLocation('village', $village->id)
@@ -597,9 +613,10 @@ class FoodConsumptionService
             ->count();
 
         return [
-            'food_available' => $foodAvailable,
-            'food_needed_per_week' => $foodPerWeek,
-            'weeks_of_food' => $foodPerWeek > 0 ? floor($foodAvailable / $foodPerWeek) : 0,
+            'food_available' => $totalFoodUnits,
+            'food_points' => $totalFoodPoints,
+            'food_needed_per_week' => $foodNeededPerWeek,
+            'weeks_of_food' => $weeksOfFood,
             'granary_capacity' => $village->granary_capacity ?? 500,
             'population' => $totalPopulation,
             'npc_count' => $npcCount,
@@ -611,28 +628,10 @@ class FoodConsumptionService
 
     /**
      * Get food statistics for a town.
+     * Calculates total food points from all food stockpiles (quantity * food_value).
      */
     public function getTownFoodStats(Town $town): array
     {
-        $grainItem = Item::where('name', self::FOOD_ITEM_NAME)->first();
-        if (! $grainItem) {
-            return [
-                'food_available' => 0,
-                'food_needed_per_week' => 0,
-                'weeks_of_food' => 0,
-                'granary_capacity' => $town->granary_capacity ?? 1000,
-                'population' => 0,
-                'npc_count' => 0,
-                'player_count' => 0,
-                'starving_npcs' => 0,
-                'starving_players' => 0,
-            ];
-        }
-
-        $stockpile = LocationStockpile::atLocation('town', $town->id)
-            ->forItem($grainItem->id)
-            ->first();
-
         $npcCount = LocationNpc::alive()
             ->atLocation('town', $town->id)
             ->count();
@@ -648,8 +647,21 @@ class FoodConsumptionService
             ->count();
 
         $totalPopulation = $npcCount + $playerCount;
-        $foodPerWeek = (int) ceil($totalPopulation / self::PEOPLE_FED_PER_FOOD);
-        $foodAvailable = $stockpile?->quantity ?? 0;
+
+        // Calculate total "food points" from all food stockpiles
+        // Food points = sum of (stockpile.quantity * item.food_value)
+        $foodStockpiles = $this->getFoodStockpiles('town', $town->id);
+        $totalFoodPoints = $foodStockpiles->sum(fn ($stockpile) => $stockpile->quantity * $stockpile->item->food_value);
+        $totalFoodUnits = $foodStockpiles->sum('quantity');
+
+        // Calculate average food value (default to 4 if no food available)
+        $avgFoodValue = $totalFoodUnits > 0 ? $totalFoodPoints / $totalFoodUnits : self::PEOPLE_FED_PER_FOOD;
+
+        // Estimated food units needed per week = population / average food value
+        $foodNeededPerWeek = $totalPopulation > 0 ? (int) ceil($totalPopulation / $avgFoodValue) : 0;
+
+        // Weeks of food = total food points / population
+        $weeksOfFood = $totalPopulation > 0 ? floor($totalFoodPoints / $totalPopulation) : 0;
 
         $starvingNpcs = LocationNpc::alive()
             ->atLocation('town', $town->id)
@@ -663,9 +675,10 @@ class FoodConsumptionService
             ->count();
 
         return [
-            'food_available' => $foodAvailable,
-            'food_needed_per_week' => $foodPerWeek,
-            'weeks_of_food' => $foodPerWeek > 0 ? floor($foodAvailable / $foodPerWeek) : 0,
+            'food_available' => $totalFoodUnits,
+            'food_points' => $totalFoodPoints,
+            'food_needed_per_week' => $foodNeededPerWeek,
+            'weeks_of_food' => $weeksOfFood,
             'granary_capacity' => $town->granary_capacity ?? 1000,
             'population' => $totalPopulation,
             'npc_count' => $npcCount,

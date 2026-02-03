@@ -3,6 +3,7 @@
 use App\Models\Item;
 use App\Models\LocationNpc;
 use App\Models\LocationStockpile;
+use App\Models\Role;
 use App\Models\Town;
 use App\Models\User;
 use App\Models\Village;
@@ -14,12 +15,13 @@ beforeEach(function () {
     WorldState::query()->delete();
     LocationNpc::query()->delete();
     LocationStockpile::query()->delete();
+    Role::query()->delete();
     Town::query()->delete();
     Village::query()->delete();
     User::query()->delete();
     Item::query()->delete();
 
-    // Create the grain item
+    // Create the grain item with food_value for the new multi-food system
     Item::create([
         'name' => 'Grain',
         'description' => 'A sack of grain. The staple food of the realm.',
@@ -29,6 +31,7 @@ beforeEach(function () {
         'stackable' => true,
         'max_stack' => 1000,
         'base_value' => 2,
+        'food_value' => 4, // Each unit feeds 4 people for a week
     ]);
 
     // Create a world state
@@ -72,8 +75,8 @@ test('food is consumed weekly from town stockpile', function () {
         'granary_capacity' => 1000,
     ]);
 
-    // Create some NPCs in the town
-    LocationNpc::factory()->count(3)->create([
+    // Create 8 NPCs in the town (will need 2 units of grain at food_value=4)
+    LocationNpc::factory()->count(8)->create([
         'location_type' => 'town',
         'location_id' => $town->id,
         'weeks_without_food' => 0,
@@ -90,9 +93,9 @@ test('food is consumed weekly from town stockpile', function () {
     // Refresh stockpile
     $stockpile->refresh();
 
-    // Should have consumed 3 units (1 per NPC per week)
-    expect($stockpile->quantity)->toBe(97);
-    expect($results['food_consumed'])->toBe(3);
+    // With 8 NPCs and food_value=4, need ceil(8/4)=2 units of grain
+    expect($stockpile->quantity)->toBe(98);
+    expect($results['food_consumed'])->toBe(2);
     expect($results['towns_processed'])->toBe(1);
 });
 
@@ -275,14 +278,14 @@ test('processWeeklyConsumption processes both villages and towns', function () {
         'granary_capacity' => 1000,
     ]);
 
-    // Create NPCs in both
-    LocationNpc::factory()->count(2)->create([
+    // Create NPCs in both - 4 per location to match food_value for easy calculation
+    LocationNpc::factory()->count(4)->create([
         'location_type' => 'village',
         'location_id' => $village->id,
         'weeks_without_food' => 0,
     ]);
 
-    LocationNpc::factory()->count(3)->create([
+    LocationNpc::factory()->count(4)->create([
         'location_type' => 'town',
         'location_id' => $town->id,
         'weeks_without_food' => 0,
@@ -298,5 +301,6 @@ test('processWeeklyConsumption processes both villages and towns', function () {
 
     expect($results['villages_processed'])->toBe(1);
     expect($results['towns_processed'])->toBe(1);
-    expect($results['food_consumed'])->toBe(5); // 2 + 3 NPCs
+    // With food_value=4, each location with 4 NPCs needs 1 unit of grain, total 2
+    expect($results['food_consumed'])->toBe(2);
 });

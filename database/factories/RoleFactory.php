@@ -16,9 +16,11 @@ class RoleFactory extends Factory
      */
     public function definition(): array
     {
+        $uniqueId = $this->faker->unique()->uuid();
+
         return [
             'name' => 'Elder',
-            'slug' => 'elder',
+            'slug' => 'elder-'.$uniqueId,
             'icon' => 'crown',
             'description' => 'The village elder.',
             'location_type' => 'village',

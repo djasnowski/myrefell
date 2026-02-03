@@ -53,6 +53,7 @@ class Item extends Model
         'spoil_after_weeks',
         'decays_into',
         'is_tradeable',
+        'food_value',
     ];
 
     protected function casts(): array
@@ -74,6 +75,7 @@ class Item extends Model
             'decay_rate_per_week' => 'integer',
             'spoil_after_weeks' => 'integer',
             'is_tradeable' => 'boolean',
+            'food_value' => 'integer',
         ];
     }
 
