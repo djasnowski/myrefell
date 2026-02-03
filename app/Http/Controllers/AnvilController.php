@@ -46,12 +46,11 @@ class AnvilController extends Controller
             ]);
         }
 
-        $info = $this->craftingService->getCraftingInfo($user);
         $smithingSkill = $user->skills()->where('skill_name', 'smithing')->first();
         $smithingLevel = $smithingSkill?->level ?? 1;
 
-        // Get smithing (weapon/armor) recipes only for the anvil
-        $smithingRecipes = $info['all_recipes']['smithing'] ?? [];
+        // Get smithing (weapon/armor) recipes only for the anvil (bypass workshop filter)
+        $smithingRecipes = $this->craftingService->getAllRecipes($user, ['smithing'])['smithing'] ?? [];
         $organizedRecipes = $this->organizeByMetalTier($smithingRecipes);
 
         // Get bars in inventory grouped by type
@@ -75,9 +74,9 @@ class AnvilController extends Controller
                 'can_smith' => true,
                 'metal_tiers' => $this->getMetalTiersInfo($smithingLevel),
                 'recipes_by_tier' => $organizedRecipes,
-                'player_energy' => $info['player_energy'],
-                'max_energy' => $info['max_energy'],
-                'free_slots' => $info['free_slots'],
+                'player_energy' => $user->energy,
+                'max_energy' => $user->max_energy,
+                'free_slots' => $user->inventory()->count() < 28 ? 28 - $user->inventory()->count() : 0,
                 'bar_count' => (int) $barCount,
                 'bars_in_inventory' => $barsInInventory,
                 'smithing_level' => $smithingLevel,

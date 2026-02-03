@@ -106,6 +106,12 @@ const metalColors: Record<string, { bg: string; border: string; text: string; gl
         text: "text-slate-300",
         glow: "shadow-slate-400/20",
     },
+    Gold: {
+        bg: "bg-yellow-900/30",
+        border: "border-yellow-500/50",
+        text: "text-yellow-400",
+        glow: "shadow-yellow-500/20",
+    },
     Mithril: {
         bg: "bg-blue-900/30",
         border: "border-blue-500/50",
@@ -308,7 +314,7 @@ export default function ForgeIndex() {
         recipesByMetal[metal].push(recipe);
     }
 
-    const metalOrder = ["Bronze", "Iron", "Steel", "Mithril", "Celestial", "Oria"];
+    const metalOrder = ["Bronze", "Iron", "Steel", "Gold", "Mithril", "Celestial", "Oria"];
 
     return (
         <AppLayout breadcrumbs={getBreadcrumbs(location)}>
