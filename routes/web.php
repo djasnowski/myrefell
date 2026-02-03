@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\ItemController as AdminItemController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AgilityController;
@@ -794,6 +795,9 @@ Route::middleware(['auth', 'verified', 'admin'])
         Route::post('/users/{user}/ban', [AdminUserController::class, 'ban'])->name('users.ban');
         Route::post('/users/{user}/unban', [AdminUserController::class, 'unban'])->name('users.unban');
         Route::put('/users/{user}/password', [AdminUserController::class, 'setPassword'])->name('users.set-password');
+
+        // Items
+        Route::get('/items', [AdminItemController::class, 'index'])->name('items.index');
     });
 
 require __DIR__.'/settings.php';

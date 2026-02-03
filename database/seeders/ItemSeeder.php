@@ -136,19 +136,45 @@ class ItemSeeder extends Seeder
      */
     private function generateDescription(string $metal, string $itemName, string $type): string
     {
-        $metalDescriptions = [
-            'Bronze' => 'A basic',
-            'Iron' => 'A sturdy',
-            'Steel' => 'A well-crafted',
-            'Mithril' => 'A gleaming',
-            'Celestial' => 'A radiant',
-            'Oria' => 'A divine',
+        $metalLore = [
+            'Bronze' => 'The alloy that built civilizations. Apprentice smiths begin their craft with bronze, learning to respect the forge before mastering it.',
+            'Iron' => 'Cold iron, feared by the fae and trusted by warriors. A reliable metal that has ended countless battles.',
+            'Steel' => 'Forged through fire and patience, steel represents the pinnacle of mortal smithing. Knights and kings alike covet its edge.',
+            'Mithril' => 'Dwarven legends speak of mithril as starlight made solid. Lighter than silk yet stronger than iron, it sings when struck.',
+            'Celestial' => 'Fallen from the heavens in blazing meteorites, celestial metal pulses with cosmic energy. Only master smiths dare work it.',
+            'Oria' => 'The gods themselves blessed this metal. Oria weapons have slain demons, and oria armor has turned aside dragon fire.',
         ];
 
-        $typeWord = $type === 'armor' ? 'piece of armor' : ($type === 'weapon' ? 'weapon' : 'item');
-        $prefix = $metalDescriptions[$metal] ?? 'A';
+        $itemLore = [
+            'Dagger' => 'A blade for close quarters. Assassins prefer them, but wise travelers keep one in their boot.',
+            'Axe' => 'As useful for splitting wood as splitting skulls. A frontier favorite.',
+            'Mace' => 'Designed to crush armor and bone alike. Clerics favor them, claiming they shed no blood.',
+            'Sword' => 'The weapon of nobility. A sword speaks of training, discipline, and deadly intent.',
+            'Scimitar' => 'Curved for slashing from horseback. Desert warriors swear by its fluid arc.',
+            'Spear' => 'The first weapon of war. Simple, effective, and terrifying in formation.',
+            'Longsword' => 'A two-handed grip allows devastating cuts. Knights dedicate years to mastering its reach.',
+            'Warhammer' => 'When armor became too strong for blades, smiths answered with hammers. Nothing withstands the impact.',
+            'Battleaxe' => 'A berserker\'s companion. The weight demands strength, but the cleaving power rewards it.',
+            'Claws' => 'Fitted over the knuckles for vicious close combat. Brawlers and monks favor their speed.',
+            '2h Sword' => 'Massive and intimidating. These blades were forged to cut through cavalry and pike formations.',
+            'Medium Helm' => 'Protects the skull while maintaining visibility. A practical choice for skirmishers.',
+            'Full Helm' => 'Complete head protection at the cost of peripheral vision. Trust your allies to watch your flanks.',
+            'Sq Shield' => 'A square shield offering solid protection. Infantry have carried these into battle for centuries.',
+            'Chainbody' => 'Thousands of interlocking rings absorb slashing blows. Flexible enough for mounted combat.',
+            'Kiteshield' => 'Named for its distinctive shape, this shield can protect from chin to knee.',
+            'Platelegs' => 'Articulated plates protect the legs while allowing movement. Essential for any serious warrior.',
+            'Plateskirt' => 'An alternative to platelegs, favored by those who value mobility over complete coverage.',
+            'Platebody' => 'The pinnacle of armored protection. A full breastplate turns aside all but the mightiest blows.',
+            'Dart Tips' => 'Sharpen these and fletch them for deadly ranged attacks. Assassins coat them in poison.',
+            'Arrowtips' => 'Standard tips for arrows. Quality tips mean the difference between a wound and a kill.',
+            'Javelin Tips' => 'Heavy tips for throwing spears. The impact can pierce shields.',
+            'Throwing Knives' => 'Balanced for flight. Skilled throwers can strike with lethal accuracy.',
+        ];
 
-        return "{$prefix} {$metal} {$itemName}. A formidable {$typeWord}.";
+        $metalDesc = $metalLore[$metal] ?? '';
+        $itemDesc = $itemLore[$itemName] ?? '';
+
+        return trim("{$itemDesc} {$metalDesc}");
     }
 
     /**
@@ -220,28 +246,28 @@ class ItemSeeder extends Seeder
      */
     private function generateJewelryDescription(string $gem, string $jewelryType): string
     {
-        $gemDescriptions = [
-            'Opal' => 'An iridescent',
-            'Jade' => 'A lustrous green',
-            'Red Topaz' => 'A fiery red',
-            'Sapphire' => 'A brilliant blue',
-            'Emerald' => 'A deep green',
-            'Ruby' => 'A crimson',
-            'Diamond' => 'A dazzling',
-            'Oria' => 'A divine',
+        $gemLore = [
+            'Opal' => 'Opals contain trapped rainbows, remnants of the first storm that blessed Myrefell. Fortune-tellers prize them for visions.',
+            'Jade' => 'The elves revere jade as crystallized forest spirits. It brings calm to troubled minds and steady hands to archers.',
+            'Red Topaz' => 'Born in volcanic depths, red topaz carries the fury of the earth. Warriors believe it grants courage in battle.',
+            'Sapphire' => 'Sapphires hold the essence of twilight skies. Scholars say they enhance wisdom and clear thought.',
+            'Emerald' => 'The gem of spring and rebirth. Emeralds are said to reveal truth and expose liars to their wearers.',
+            'Ruby' => 'Drops of dragon blood turned to stone, or so the legends claim. Rubies amplify passion and power alike.',
+            'Diamond' => 'Unbreakable and eternal, diamonds are tears of the gods shed at creation. They symbolize invincibility.',
+            'Oria' => 'The rarest gem in existence, oria stones pulse with divine energy. Temples have waged wars over single specimens.',
         ];
 
-        $jewelryWords = [
-            'Ring' => 'ring adorned',
-            'Necklace' => 'necklace set',
-            'Bracelet' => 'bracelet embellished',
-            'Amulet' => 'amulet enhanced',
+        $jewelryLore = [
+            'Ring' => 'Worn on the finger, close to the pulse, where its magic flows directly through the blood.',
+            'Necklace' => 'Resting near the heart, necklaces are said to amplify emotions and protect the wearer\'s spirit.',
+            'Bracelet' => 'Encircling the wrist, bracelets empower the hands that wield weapons and cast spells.',
+            'Amulet' => 'Ancient symbols of protection. Amulets have guarded kings and peasants alike from curses and evil.',
         ];
 
-        $prefix = $gemDescriptions[$gem] ?? 'A beautiful';
-        $jewelryWord = $jewelryWords[$jewelryType] ?? 'piece of jewelry crafted';
+        $gemDesc = $gemLore[$gem] ?? 'A precious gem of considerable worth.';
+        $jewelryDesc = $jewelryLore[$jewelryType] ?? 'A beautifully crafted piece of jewelry.';
 
-        return "{$prefix} {$jewelryWord} with {$gem}. A precious piece of crafted jewelry.";
+        return "{$gemDesc} {$jewelryDesc}";
     }
 
     /**
@@ -256,7 +282,7 @@ class ItemSeeder extends Seeder
             // === LEGACY WEAPONS (kept for backwards compatibility) ===
             [
                 'name' => 'Dragon Slayer',
-                'description' => 'A legendary sword said to have felled dragons.',
+                'description' => 'Forged in dragonfire and quenched in the blood of wyrms, this blade hungers for scaled prey. The hero Aldric the Bold carried it into the Sundering, where he slew Vexarion the Eternal. The blade still hums with ancient fury when dragons draw near.',
                 'type' => 'weapon',
                 'subtype' => 'sword',
                 'rarity' => 'legendary',
@@ -272,7 +298,7 @@ class ItemSeeder extends Seeder
             // === LEGACY ARMOR (kept for backwards compatibility) ===
             [
                 'name' => 'Leather Cap',
-                'description' => 'A simple leather cap offering minimal protection.',
+                'description' => 'Every adventurer starts somewhere. This humble cap has protected countless fools from their first goblin club. The leather is thick enough to matter, though veterans smile when they see one.',
                 'type' => 'armor',
                 'subtype' => 'helmet',
                 'rarity' => 'common',
@@ -284,7 +310,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Leather Vest',
-                'description' => 'A simple leather vest.',
+                'description' => 'Tanned hide stitched with care by village craftsmen. It won\'t stop a knight\'s blade, but it\'ll turn a wolf\'s teeth and keep you breathing. Good enough for the road.',
                 'type' => 'armor',
                 'subtype' => 'chest',
                 'rarity' => 'common',
@@ -296,7 +322,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Wooden Shield',
-                'description' => 'A basic wooden shield.',
+                'description' => 'Oak planks bound with iron bands. Militia have carried these into battle for generations. It splinters under heavy blows, but splinters beat the alternative.',
                 'type' => 'armor',
                 'subtype' => 'shield',
                 'rarity' => 'common',
@@ -311,7 +337,7 @@ class ItemSeeder extends Seeder
             // Ores
             [
                 'name' => 'Copper Ore',
-                'description' => 'Raw copper ore ready to be smelted.',
+                'description' => 'The first metal humanity learned to work. Veins of copper run through the hills of Myrefell, each chunk a promise of tools, coins, or the beginning of a smith\'s journey.',
                 'type' => 'resource',
                 'subtype' => 'ore',
                 'rarity' => 'common',
@@ -321,7 +347,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Tin Ore',
-                'description' => 'Raw tin ore. Combine with copper to make bronze.',
+                'description' => 'Soft and silver-grey, tin alone is nearly useless. But combine it with copper in the forge, and bronze emerges—the alloy that armed the first heroes of legend.',
                 'type' => 'resource',
                 'subtype' => 'ore',
                 'rarity' => 'common',
@@ -331,7 +357,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Iron Ore',
-                'description' => 'Raw iron ore ready to be smelted.',
+                'description' => 'Cold iron, feared by faeries and prized by mortals. The backbone of civilization\'s might, this ore has built empires and brought them crashing down.',
                 'type' => 'resource',
                 'subtype' => 'ore',
                 'rarity' => 'common',
@@ -341,7 +367,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Coal',
-                'description' => 'Black coal used in smithing.',
+                'description' => 'Black as midnight and hot as hatred. Coal burns fiercely enough to make iron flow and steel sing. Every great forge is built upon mountains of this dark fuel.',
                 'type' => 'resource',
                 'subtype' => 'ore',
                 'rarity' => 'common',
@@ -351,7 +377,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Gold Ore',
-                'description' => 'Valuable gold ore used for crafting jewelry.',
+                'description' => 'The eternal metal. Gold does not tarnish, does not rust, does not yield to time. Kings hoard it, merchants worship it, and jewelers transform it into dreams made solid.',
                 'type' => 'resource',
                 'subtype' => 'ore',
                 'rarity' => 'uncommon',
@@ -361,7 +387,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Mithril Ore',
-                'description' => 'Rare mithril ore with a blue shimmer.',
+                'description' => 'The dwarves discovered mithril in the deepest places, where the roots of mountains touch the bones of the world. It shimmers like moonlight trapped in stone.',
                 'type' => 'resource',
                 'subtype' => 'ore',
                 'rarity' => 'rare',
@@ -371,7 +397,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Celestial Ore',
-                'description' => 'A rare ore from meteorites, pulsing with cosmic energy.',
+                'description' => 'When the heavens weep, they weep fire and metal. This ore fell burning from the void between stars. It pulses with cosmic energy that makes lesser metals seem dead.',
                 'type' => 'resource',
                 'subtype' => 'ore',
                 'rarity' => 'rare',
@@ -381,7 +407,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Oria Ore',
-                'description' => 'The rarest and most powerful ore in existence, said to be blessed by the gods.',
+                'description' => 'The gods themselves worked this metal at the dawn of creation. Finding oria ore is a miracle. Working it requires divine favor. Owning it makes you a target.',
                 'type' => 'resource',
                 'subtype' => 'ore',
                 'rarity' => 'epic',
@@ -393,7 +419,7 @@ class ItemSeeder extends Seeder
             // Bars
             [
                 'name' => 'Bronze Bar',
-                'description' => 'A bar of smelted bronze.',
+                'description' => 'Copper and tin united in fire. This ancient alloy taught humanity that together, metals become more than themselves. The foundation of smithing.',
                 'type' => 'resource',
                 'subtype' => 'bar',
                 'rarity' => 'common',
@@ -403,7 +429,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Iron Bar',
-                'description' => 'A bar of smelted iron.',
+                'description' => 'Heavy and honest, iron does not forgive mistakes at the anvil. But shaped with skill, it becomes blades that bite and armor that endures.',
                 'type' => 'resource',
                 'subtype' => 'bar',
                 'rarity' => 'common',
@@ -413,7 +439,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Steel Bar',
-                'description' => 'A refined bar of steel.',
+                'description' => 'Iron reborn through patience and coal. Steel holds an edge longer, bends before it breaks, and represents mastery of the forge.',
                 'type' => 'resource',
                 'subtype' => 'bar',
                 'rarity' => 'uncommon',
@@ -423,7 +449,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Gold Bar',
-                'description' => 'A gleaming bar of pure gold, perfect for crafting jewelry.',
+                'description' => 'Worth more than its weight in promises. This gleaming bar could buy a farm or adorn a queen. Jewelers dream in gold.',
                 'type' => 'resource',
                 'subtype' => 'bar',
                 'rarity' => 'uncommon',
@@ -433,7 +459,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Mithril Bar',
-                'description' => 'A gleaming bar of refined mithril.',
+                'description' => 'Light as a whisper, strong as conviction. The dwarves guard their mithril-working secrets with their lives. This bar represents rare trust.',
                 'type' => 'resource',
                 'subtype' => 'bar',
                 'rarity' => 'uncommon',
@@ -443,7 +469,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Celestial Bar',
-                'description' => 'A bar of refined celestial metal, radiating with cosmic power.',
+                'description' => 'The forge that shaped this bar burned with starfire. It radiates faint warmth and hums at frequencies that only dragons and the mad can hear.',
                 'type' => 'resource',
                 'subtype' => 'bar',
                 'rarity' => 'rare',
@@ -453,7 +479,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Oria Bar',
-                'description' => 'The most precious metal bar, forged from divine oria ore.',
+                'description' => 'Divine metal rendered workable by mortal hands—barely. This bar thrums with power that makes master smiths weep at the responsibility.',
                 'type' => 'resource',
                 'subtype' => 'bar',
                 'rarity' => 'epic',
@@ -465,7 +491,7 @@ class ItemSeeder extends Seeder
             // Fish (perishable - spoils after time)
             [
                 'name' => 'Raw Shrimp',
-                'description' => 'A small freshwater shrimp. Will spoil if not cooked.',
+                'description' => 'Tiny but plentiful in Myrefell\'s streams. Children learn to net these before they can hold a rod. Best fried crisp with salt and herbs.',
                 'type' => 'resource',
                 'subtype' => 'fish',
                 'rarity' => 'common',
@@ -478,7 +504,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Raw Sardine',
-                'description' => 'A small silvery fish. Will spoil if not cooked.',
+                'description' => 'Silver schools flash through coastal waters. Sardines are the bread of the sea—common, nourishing, and honest. Cook before they turn.',
                 'type' => 'resource',
                 'subtype' => 'fish',
                 'rarity' => 'common',
@@ -491,7 +517,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Raw Trout',
-                'description' => 'A freshly caught trout. Will spoil if not cooked.',
+                'description' => 'River trout fight hard and taste better. Every fishing village has an old-timer who claims to know the secret spot. They all do.',
                 'type' => 'resource',
                 'subtype' => 'fish',
                 'rarity' => 'common',
@@ -504,7 +530,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Raw Salmon',
-                'description' => 'A freshly caught salmon. Will spoil if not cooked.',
+                'description' => 'Pink flesh rich with oil and flavor. Salmon swim upstream to spawn, leaping waterfalls with determination adventurers might envy.',
                 'type' => 'resource',
                 'subtype' => 'fish',
                 'rarity' => 'common',
@@ -517,7 +543,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Raw Lobster',
-                'description' => 'A freshly caught lobster. Will spoil if not cooked.',
+                'description' => 'Armored in shell and armed with claws, lobsters lurk in rocky depths. Nobility pay handsomely for their sweet meat. Cook them quick.',
                 'type' => 'resource',
                 'subtype' => 'fish',
                 'rarity' => 'uncommon',
@@ -530,7 +556,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Raw Swordfish',
-                'description' => 'A magnificent swordfish. Will spoil if not cooked.',
+                'description' => 'Lords of the deep with blades on their faces. Landing one is a battle; cooking one is an art. Tales are told of swordfish that sank boats.',
                 'type' => 'resource',
                 'subtype' => 'fish',
                 'rarity' => 'rare',
@@ -545,7 +571,7 @@ class ItemSeeder extends Seeder
             // Grain (base food for village stockpiles - slow decay)
             [
                 'name' => 'Grain',
-                'description' => 'A sack of grain. The staple food of the realm. Slowly decays over time.',
+                'description' => 'The golden gift that feeds Myrefell. Wars are fought over granaries; kingdoms rise and fall on harvests. Store it dry or watch your village starve.',
                 'type' => 'resource',
                 'subtype' => 'grain',
                 'rarity' => 'common',
@@ -558,7 +584,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Flour',
-                'description' => 'Ground flour from grain. Used for baking bread and pies.',
+                'description' => 'Ground between millstones until soft as snow. Flour becomes bread, pies, and the thousand small miracles that make civilization possible.',
                 'type' => 'resource',
                 'subtype' => 'grain',
                 'rarity' => 'common',
@@ -569,7 +595,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Raw Meat',
-                'description' => 'Fresh raw meat from hunting. Will spoil if not cooked.',
+                'description' => 'Fresh from the hunt, still warm. Cook it before the flies find it, or the rot sets in. A hunter\'s reward and a cook\'s challenge.',
                 'type' => 'resource',
                 'subtype' => 'meat',
                 'rarity' => 'common',
@@ -582,7 +608,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Wood',
-                'description' => 'A bundle of common wood logs.',
+                'description' => 'Common timber from the endless forests. Homes are built of it, fires fed by it, and tools shaped from it. Civilization\'s quiet backbone.',
                 'type' => 'resource',
                 'subtype' => 'wood',
                 'rarity' => 'common',
@@ -592,7 +618,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Oak Wood',
-                'description' => 'Sturdy oak logs, good for construction.',
+                'description' => 'Dense and patient, oak trees grow for centuries. Their wood builds ships that cross oceans and beams that hold up cathedrals.',
                 'type' => 'resource',
                 'subtype' => 'wood',
                 'rarity' => 'common',
@@ -602,7 +628,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Willow Wood',
-                'description' => 'Flexible willow logs, good for bows and fishing rods.',
+                'description' => 'Supple as a dancer, willow bends rather than breaks. Bowyers prize it, and fishermen swear by willow rods. It weeps by rivers.',
                 'type' => 'resource',
                 'subtype' => 'wood',
                 'rarity' => 'common',
@@ -614,7 +640,7 @@ class ItemSeeder extends Seeder
             // Herbs (herblore gathering)
             [
                 'name' => 'Herb',
-                'description' => 'A common herb with mild properties.',
+                'description' => 'Grandmother\'s remedy for everything. These common herbs grow in meadows and roadsides, waiting for those wise enough to recognize their value.',
                 'type' => 'resource',
                 'subtype' => 'herb',
                 'rarity' => 'common',
@@ -624,7 +650,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Healing Herb',
-                'description' => 'A herb known for its healing properties.',
+                'description' => 'Apothecaries seek these green miracles. Chewed raw, they numb pain. Brewed properly, they mend wounds that should kill. Every healer knows them.',
                 'type' => 'resource',
                 'subtype' => 'herb',
                 'rarity' => 'common',
@@ -634,7 +660,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Moonpetal',
-                'description' => 'A luminescent flower that blooms at night.',
+                'description' => 'When the moon rises full, these flowers open their silver petals and drink the pale light. Witches whisper that they remember every secret told beneath the stars.',
                 'type' => 'resource',
                 'subtype' => 'herb',
                 'rarity' => 'uncommon',
@@ -644,7 +670,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Bloodroot',
-                'description' => 'A deep red root with potent alchemical uses.',
+                'description' => 'Pull it from the earth and it bleeds crimson sap. Alchemists prize bloodroot for potions of strength and rage. Some say battlefields grow thick with it.',
                 'type' => 'resource',
                 'subtype' => 'herb',
                 'rarity' => 'uncommon',
@@ -654,7 +680,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Ghostcap Mushroom',
-                'description' => 'A pale, ethereal mushroom found in dark places.',
+                'description' => 'They grow in tombs and forgotten places, pale as spirits. The dead don\'t mind their company. Potions brewed with ghostcap touch the boundary between worlds.',
                 'type' => 'resource',
                 'subtype' => 'herb',
                 'rarity' => 'rare',
@@ -664,7 +690,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Dragonvine',
-                'description' => 'A legendary plant said to grow where dragons once slept.',
+                'description' => 'Legend holds that where dragons sleep for centuries, their dreams seep into the soil. Dragonvine sprouts from those dreams—thorned, dangerous, and impossibly potent.',
                 'type' => 'resource',
                 'subtype' => 'herb',
                 'rarity' => 'epic',
@@ -676,7 +702,7 @@ class ItemSeeder extends Seeder
             // Additional herbs and ingredients for apothecary
             [
                 'name' => 'Nightshade',
-                'description' => 'A dark purple plant with potent properties. Handle with care.',
+                'description' => 'Beautiful and deadly, with berries black as sin. Assassins know its uses. Healers know its dangers. In the right hands, it saves lives. In the wrong ones...',
                 'type' => 'resource',
                 'subtype' => 'herb',
                 'rarity' => 'uncommon',
@@ -686,7 +712,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Sunblossom',
-                'description' => 'A bright yellow flower that only blooms at midday.',
+                'description' => 'These golden flowers track the sun across the sky and close at dusk. Priests use them in rituals of blessing. Tea brewed from them brings warmth to cold bones.',
                 'type' => 'resource',
                 'subtype' => 'herb',
                 'rarity' => 'common',
@@ -696,7 +722,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Stoneroot',
-                'description' => 'A tough, hardy root found near rocky outcrops.',
+                'description' => 'Growing where nothing should, stoneroot cracks boulders with patient determination. Potions made from it harden resolve and toughen skin.',
                 'type' => 'resource',
                 'subtype' => 'herb',
                 'rarity' => 'common',
@@ -706,7 +732,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Ironbark',
-                'description' => 'Bark from the rare ironwood tree, as hard as metal.',
+                'description' => 'Stripped from trees that grow in cursed soil, ironbark is literally harder than iron. Dwarves chew it for strong teeth. Alchemists grind it for defense tonics.',
                 'type' => 'resource',
                 'subtype' => 'herb',
                 'rarity' => 'uncommon',
@@ -716,7 +742,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Hawkeye Leaf',
-                'description' => 'A leaf said to sharpen one\'s sight and focus.',
+                'description' => 'Archers chew these before competition, swearing they can see the wind itself. The leaves come from high peaks where eagles nest. The climb is worth it.',
                 'type' => 'resource',
                 'subtype' => 'herb',
                 'rarity' => 'uncommon',
@@ -726,7 +752,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Swiftfoot Moss',
-                'description' => 'A soft moss that grows in swift-flowing streams.',
+                'description' => 'It clings to river stones where the water runs fastest. Messengers and thieves pay well for swiftfoot—a potion made from it lends unnatural speed.',
                 'type' => 'resource',
                 'subtype' => 'herb',
                 'rarity' => 'uncommon',
@@ -736,7 +762,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Windweed',
-                'description' => 'A wispy plant that seems to blow even without wind.',
+                'description' => 'Even in dead calm, windweed dances. Some say it remembers every breeze that ever touched it. Ground fine, it grants fleetness of foot.',
                 'type' => 'resource',
                 'subtype' => 'herb',
                 'rarity' => 'uncommon',
@@ -746,7 +772,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Starlight Essence',
-                'description' => 'A rare essence collected from dew under starlight.',
+                'description' => 'Gathered in crystal vials at midnight from dew that forms on sacred stones. It glows faintly and smells of impossible distances. Handle with reverence.',
                 'type' => 'resource',
                 'subtype' => 'essence',
                 'rarity' => 'rare',
@@ -756,7 +782,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Void Essence',
-                'description' => 'A mysterious dark essence from the void between realms.',
+                'description' => 'This shouldn\'t exist. Darkness made tangible, cold as the space between stars. Archmages have gone mad studying it. It whispers if you listen.',
                 'type' => 'resource',
                 'subtype' => 'essence',
                 'rarity' => 'epic',
@@ -768,7 +794,7 @@ class ItemSeeder extends Seeder
             // Uncut Gems (for jewelry crafting)
             [
                 'name' => 'Uncut Opal',
-                'description' => 'An uncut opal with iridescent flashes of color.',
+                'description' => 'Raw opal still dressed in mother stone. Trapped rainbows wait within, glimpsed only when light strikes at angles. A skilled cutter will free its fire.',
                 'type' => 'resource',
                 'subtype' => 'gem',
                 'rarity' => 'common',
@@ -778,7 +804,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Uncut Jade',
-                'description' => 'An uncut jade stone with a deep green hue.',
+                'description' => 'The elves call jade "forest tears." This rough stone hides cool green depths that only patience and skill can reveal.',
                 'type' => 'resource',
                 'subtype' => 'gem',
                 'rarity' => 'common',
@@ -788,7 +814,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Uncut Red Topaz',
-                'description' => 'An uncut red topaz with fiery orange-red coloring.',
+                'description' => 'Born in volcanic heat, this rough crystal holds fire\'s memory. Cut it well and it will blaze like sunset caught in stone.',
                 'type' => 'resource',
                 'subtype' => 'gem',
                 'rarity' => 'common',
@@ -798,7 +824,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Uncut Sapphire',
-                'description' => 'An uncut sapphire with deep blue brilliance.',
+                'description' => 'Deep blue as twilight skies, this rough sapphire dreams of becoming a king\'s crown or a wizard\'s focus. The cutter will decide its fate.',
                 'type' => 'resource',
                 'subtype' => 'gem',
                 'rarity' => 'uncommon',
@@ -808,7 +834,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Uncut Emerald',
-                'description' => 'An uncut emerald with rich green depths.',
+                'description' => 'Green as envy, green as spring, green as hope. This rough emerald holds enough beauty to start wars. Cut it with respect.',
                 'type' => 'resource',
                 'subtype' => 'gem',
                 'rarity' => 'uncommon',
@@ -818,7 +844,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Uncut Ruby',
-                'description' => 'An uncut ruby with intense crimson glow.',
+                'description' => 'They say rubies are dragon blood turned to stone. This rough crystal pulses with crimson light, as if a heart still beats within.',
                 'type' => 'resource',
                 'subtype' => 'gem',
                 'rarity' => 'rare',
@@ -828,7 +854,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Uncut Diamond',
-                'description' => 'An uncut diamond of exceptional clarity.',
+                'description' => 'Nothing cuts diamond but diamond. This rough stone is harder than anything mortal hands have made. Eternity locked in crystal form.',
                 'type' => 'resource',
                 'subtype' => 'gem',
                 'rarity' => 'rare',
@@ -838,7 +864,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Uncut Oria Stone',
-                'description' => 'An uncut oria stone radiating divine energy.',
+                'description' => 'Divinity made manifest, still wearing its rough disguise. High priests have fasted for years seeking one. Hold it and feel the weight of the sacred.',
                 'type' => 'resource',
                 'subtype' => 'gem',
                 'rarity' => 'epic',
@@ -850,7 +876,7 @@ class ItemSeeder extends Seeder
             // Cut Gems (for jewelry crafting)
             [
                 'name' => 'Opal',
-                'description' => 'A polished opal displaying a play of iridescent colors.',
+                'description' => 'Every angle reveals new colors dancing beneath the surface. Seers claim opals show the future to those who know how to look.',
                 'type' => 'resource',
                 'subtype' => 'cut_gem',
                 'rarity' => 'common',
@@ -860,7 +886,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Jade',
-                'description' => 'A polished jade stone with a lustrous green finish.',
+                'description' => 'Carved into amulets since before written history. This polished jade carries the serenity of ancient forests in its cool green depths.',
                 'type' => 'resource',
                 'subtype' => 'cut_gem',
                 'rarity' => 'common',
@@ -870,7 +896,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Red Topaz',
-                'description' => 'A polished red topaz that catches light like fire.',
+                'description' => 'Faceted to catch every spark of light, this topaz burns with captive flame. Warriors wear them for courage; lovers, for passion.',
                 'type' => 'resource',
                 'subtype' => 'cut_gem',
                 'rarity' => 'common',
@@ -880,7 +906,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Sapphire',
-                'description' => 'A polished sapphire of brilliant blue perfection.',
+                'description' => 'Blue as a cloudless noon, cut to perfection. Sapphires adorn the scepters of just rulers and the rings of faithful lovers.',
                 'type' => 'resource',
                 'subtype' => 'cut_gem',
                 'rarity' => 'uncommon',
@@ -890,7 +916,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Emerald',
-                'description' => 'A polished emerald with mesmerizing green depths.',
+                'description' => 'Cut to maximize its hypnotic green depths. Stare too long and you might forget what you were doing. Emeralds demand attention.',
                 'type' => 'resource',
                 'subtype' => 'cut_gem',
                 'rarity' => 'uncommon',
@@ -900,7 +926,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Ruby',
-                'description' => 'A polished ruby burning with inner crimson fire.',
+                'description' => 'Fire made solid, passion crystallized. This ruby\'s facets multiply its inner flame until it seems to blaze with its own light.',
                 'type' => 'resource',
                 'subtype' => 'cut_gem',
                 'rarity' => 'rare',
@@ -910,7 +936,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Diamond',
-                'description' => 'A perfectly cut diamond of dazzling brilliance.',
+                'description' => 'Perfect and eternal, this diamond will outlast the hands that cut it, the kingdom that mined it, perhaps the world itself.',
                 'type' => 'resource',
                 'subtype' => 'cut_gem',
                 'rarity' => 'rare',
@@ -920,7 +946,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Oria Stone',
-                'description' => 'A perfectly cut oria stone pulsing with divine power.',
+                'description' => 'Divine radiance given form. This sacred gem pulses with holy energy that even the faithless can feel. Wars have been fought over lesser stones.',
                 'type' => 'resource',
                 'subtype' => 'cut_gem',
                 'rarity' => 'epic',
@@ -932,7 +958,7 @@ class ItemSeeder extends Seeder
             // Monster drops for potions
             [
                 'name' => 'Venom Sac',
-                'description' => 'A venom sac from a poisonous creature.',
+                'description' => 'Harvested from serpents and spiders, handle with thick gloves. The poison within can kill or cure depending on the alchemist\'s skill.',
                 'type' => 'resource',
                 'subtype' => 'monster_part',
                 'rarity' => 'uncommon',
@@ -942,7 +968,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Giant Essence',
-                'description' => 'The essence of a giant\'s strength.',
+                'description' => 'The distilled strength of fallen giants. One drop contains the power that let them hurl boulders. Drink with caution—bones have shattered from the strain.',
                 'type' => 'resource',
                 'subtype' => 'essence',
                 'rarity' => 'uncommon',
@@ -952,7 +978,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Turtle Shell Powder',
-                'description' => 'Ground turtle shell, known for its protective properties.',
+                'description' => 'Ground from shells that turned aside sword and spell alike. Mix it into defense tonics and feel your skin harden like ancient armor.',
                 'type' => 'resource',
                 'subtype' => 'monster_part',
                 'rarity' => 'uncommon',
@@ -962,7 +988,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Phoenix Feather',
-                'description' => 'A radiant feather from the legendary phoenix.',
+                'description' => 'It still radiates warmth, as if death cannot touch it. Alchemists say a single feather can restore life to the recently departed. If the price is right.',
                 'type' => 'resource',
                 'subtype' => 'monster_part',
                 'rarity' => 'rare',
@@ -972,7 +998,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Unicorn Tears',
-                'description' => 'Sacred tears from a unicorn, with miraculous healing properties.',
+                'description' => 'No one who has seen a unicorn weep can speak of it without trembling. These crystalline drops cure any poison, mend any wound, and break any curse.',
                 'type' => 'resource',
                 'subtype' => 'essence',
                 'rarity' => 'epic',
@@ -982,7 +1008,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Holy Water',
-                'description' => 'Water blessed by priests, imbued with divine energy.',
+                'description' => 'Blessed beneath cathedral spires by priests who fasted and prayed. The undead shriek from its touch. Evil cannot abide its purity.',
                 'type' => 'resource',
                 'subtype' => 'essence',
                 'rarity' => 'uncommon',
@@ -994,7 +1020,7 @@ class ItemSeeder extends Seeder
             // Vials for potion crafting
             [
                 'name' => 'Vial',
-                'description' => 'A small glass vial for holding potions.',
+                'description' => 'Simple blown glass, but essential. Every potion needs a home. Glassblowers in every town make their living from these humble vessels.',
                 'type' => 'misc',
                 'subtype' => 'container',
                 'rarity' => 'common',
@@ -1004,7 +1030,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Crystal Vial',
-                'description' => 'A high-quality crystal vial for potent potions.',
+                'description' => 'Cut from pure quartz by master craftsmen. These vials preserve potions longer and prevent volatile reactions. Worth every coin for serious alchemy.',
                 'type' => 'misc',
                 'subtype' => 'container',
                 'rarity' => 'uncommon',
@@ -1016,7 +1042,7 @@ class ItemSeeder extends Seeder
             // Spoiled Food (result of decay)
             [
                 'name' => 'Spoiled Food',
-                'description' => 'Rotten food that is no longer edible. Can be used as compost.',
+                'description' => 'Once nourishing, now crawling with decay. Even failure has uses—farmers mix it into soil, and desperate goblins still eat it.',
                 'type' => 'misc',
                 'subtype' => 'waste',
                 'rarity' => 'common',
@@ -1029,7 +1055,7 @@ class ItemSeeder extends Seeder
             // Food (cooked food lasts longer but still perishable)
             [
                 'name' => 'Cooked Shrimp',
-                'description' => 'A cooked shrimp. Heals 3 HP. Lasts longer than raw shrimp.',
+                'description' => 'Crisp and pink from the fire. A humble meal, but hunger makes fine philosophers of us all. Heals minor wounds.',
                 'type' => 'consumable',
                 'subtype' => 'food',
                 'rarity' => 'common',
@@ -1044,7 +1070,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Bread',
-                'description' => 'A loaf of freshly baked bread. Heals 5 HP. Will go stale over time.',
+                'description' => 'The smell of fresh bread has ended more bar fights than any guard. This golden loaf fills the belly and lifts the spirit. The staff of life.',
                 'type' => 'consumable',
                 'subtype' => 'food',
                 'rarity' => 'common',
@@ -1059,7 +1085,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Cooked Trout',
-                'description' => 'A cooked trout. Heals 10 HP. Lasts longer than raw fish.',
+                'description' => 'Grilled over an open flame until the skin crisps. River trout sustained generations of rangers and outlaws hiding in the wild.',
                 'type' => 'consumable',
                 'subtype' => 'food',
                 'rarity' => 'common',
@@ -1074,7 +1100,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Cooked Salmon',
-                'description' => 'A cooked salmon. Heals 15 HP. Lasts longer than raw fish.',
+                'description' => 'The pink flesh flakes perfectly. Adventurers carry smoked salmon on long journeys—it travels well and tastes better than it should.',
                 'type' => 'consumable',
                 'subtype' => 'food',
                 'rarity' => 'common',
@@ -1089,7 +1115,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Cooked Lobster',
-                'description' => 'A delicious cooked lobster. Heals 25 HP. Lasts longer than raw lobster.',
+                'description' => 'Nobility pay silver for this delicacy. The sweet meat restores strength and reminds warriors what they\'re fighting for—the good life.',
                 'type' => 'consumable',
                 'subtype' => 'food',
                 'rarity' => 'uncommon',
@@ -1104,7 +1130,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Meat Pie',
-                'description' => 'A hearty meat pie. Heals 20 HP. Preserves well.',
+                'description' => 'Golden crust hiding savory filling. Tavern keepers guard their pie recipes like family secrets. This one\'s worth protecting.',
                 'type' => 'consumable',
                 'subtype' => 'food',
                 'rarity' => 'common',
@@ -1119,7 +1145,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Cooked Meat',
-                'description' => 'A cooked piece of meat. Heals 12 HP.',
+                'description' => 'Seared over flame until the juices run clear. Meat is strength, every warrior knows. Eat well tonight; fight better tomorrow.',
                 'type' => 'consumable',
                 'subtype' => 'food',
                 'rarity' => 'common',
@@ -1136,7 +1162,7 @@ class ItemSeeder extends Seeder
             // Potions
             [
                 'name' => 'Minor Health Potion',
-                'description' => 'A small red potion. Heals 15 HP instantly.',
+                'description' => 'Ruby liquid that tastes like copper and hope. The first potion apprentices learn to brew. It won\'t save you from death, but it might buy time.',
                 'type' => 'consumable',
                 'subtype' => 'potion',
                 'rarity' => 'common',
@@ -1147,7 +1173,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Health Potion',
-                'description' => 'A red potion. Heals 30 HP instantly.',
+                'description' => 'Wounds knit closed as you drink, flesh remembering what it was before steel tore it. Every adventurer carries these. The smart ones carry more.',
                 'type' => 'consumable',
                 'subtype' => 'potion',
                 'rarity' => 'uncommon',
@@ -1158,7 +1184,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Greater Health Potion',
-                'description' => 'A large red potion. Heals 50 HP instantly.',
+                'description' => 'Alchemists call this "liquid miracle." It can bring warriors back from the edge of death, sealing wounds that should have been graves.',
                 'type' => 'consumable',
                 'subtype' => 'potion',
                 'rarity' => 'rare',
@@ -1169,7 +1195,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Energy Elixir',
-                'description' => 'A yellow potion that restores 10 energy.',
+                'description' => 'Golden as dawn and twice as invigorating. This elixir restores the stamina of youth. Laborers dream of it; nobles hoard it.',
                 'type' => 'consumable',
                 'subtype' => 'potion',
                 'rarity' => 'rare',
@@ -1180,7 +1206,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Energy Tonic',
-                'description' => 'A refreshing tonic that restores 5 energy.',
+                'description' => 'A fizzing draught that banishes fatigue. Messengers and miners swear by it. The crash comes later, but later is someone else\'s problem.',
                 'type' => 'consumable',
                 'subtype' => 'potion',
                 'rarity' => 'uncommon',
@@ -1193,7 +1219,7 @@ class ItemSeeder extends Seeder
             // Combat potions
             [
                 'name' => 'Attack Potion',
-                'description' => 'Temporarily boosts attack by 10%. Lasts 5 minutes.',
+                'description' => 'Red as rage, sharp as hate. Drink this and your strikes find gaps in armor you couldn\'t see before. The battlefield slows while you quicken.',
                 'type' => 'consumable',
                 'subtype' => 'potion',
                 'rarity' => 'uncommon',
@@ -1206,7 +1232,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Strength Potion',
-                'description' => 'Temporarily boosts strength by 10%. Lasts 5 minutes.',
+                'description' => 'Muscles surge with borrowed power. Swords swing easier, shields feel lighter. The giant within awakens—but only briefly.',
                 'type' => 'consumable',
                 'subtype' => 'potion',
                 'rarity' => 'uncommon',
@@ -1219,7 +1245,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Defense Potion',
-                'description' => 'Temporarily boosts defense by 10%. Lasts 5 minutes.',
+                'description' => 'Your skin doesn\'t harden, but somehow blows land softer. Instincts sharpen; you move where steel isn\'t. Survival made liquid.',
                 'type' => 'consumable',
                 'subtype' => 'potion',
                 'rarity' => 'uncommon',
@@ -1232,7 +1258,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Accuracy Potion',
-                'description' => 'Temporarily boosts hit chance by 10%. Lasts 5 minutes.',
+                'description' => 'The world crystallizes into perfect clarity. Archers speak of seeing the space between heartbeats. Every shot finds its mark.',
                 'type' => 'consumable',
                 'subtype' => 'potion',
                 'rarity' => 'uncommon',
@@ -1245,7 +1271,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Agility Potion',
-                'description' => 'Temporarily boosts dodge chance by 10%. Lasts 5 minutes.',
+                'description' => 'The world moves through honey while you dance through air. Blades that should connect miss by inches. Rogues pay fortunes for this edge.',
                 'type' => 'consumable',
                 'subtype' => 'potion',
                 'rarity' => 'uncommon',
@@ -1258,7 +1284,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Super Attack Potion',
-                'description' => 'Greatly boosts attack by 20%. Lasts 5 minutes.',
+                'description' => 'Concentrated fury in a bottle. Veterans say it makes you see killing strokes before enemies begin them. The hangover is terrible.',
                 'type' => 'consumable',
                 'subtype' => 'potion',
                 'rarity' => 'rare',
@@ -1271,7 +1297,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Super Strength Potion',
-                'description' => 'Greatly boosts strength by 20%. Lasts 5 minutes.',
+                'description' => 'Brewed with giant essence, this potion grants strength that shouldn\'t fit in mortal bodies. Blacksmiths use it to bend steel barehanded.',
                 'type' => 'consumable',
                 'subtype' => 'potion',
                 'rarity' => 'rare',
@@ -1284,7 +1310,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Super Defense Potion',
-                'description' => 'Greatly boosts defense by 20%. Lasts 5 minutes.',
+                'description' => 'Turtle shell and ironbark, distilled to essence. Those who drink it shrug off blows that would fell oxen. Kings keep these for assassins.',
                 'type' => 'consumable',
                 'subtype' => 'potion',
                 'rarity' => 'rare',
@@ -1297,7 +1323,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Prayer Potion',
-                'description' => 'Restores 30 prayer points.',
+                'description' => 'Holy water and sacred herbs restore the connection between mortal and divine. Paladins carry these into unholy places where faith falters.',
                 'type' => 'consumable',
                 'subtype' => 'potion',
                 'rarity' => 'rare',
@@ -1308,7 +1334,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Combat Potion',
-                'description' => 'Boosts attack, strength, and defense by 15%. Lasts 5 minutes.',
+                'description' => 'Three potions in one, perfectly balanced. Warriors call it "liquid victory." The recipe is a guild secret punishable by death to share.',
                 'type' => 'consumable',
                 'subtype' => 'potion',
                 'rarity' => 'rare',
@@ -1321,7 +1347,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Overload Potion',
-                'description' => 'Massively boosts all combat stats by 25%. Lasts 5 minutes.',
+                'description' => 'Drinking this is agony—it tears you apart to rebuild you stronger. For five minutes, you fight like a demigod. The crash nearly kills the unwary.',
                 'type' => 'consumable',
                 'subtype' => 'potion',
                 'rarity' => 'epic',
@@ -1334,7 +1360,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Elixir of Life',
-                'description' => 'A legendary elixir that fully restores HP and provides regeneration.',
+                'description' => 'Alchemists spend lifetimes seeking this formula. A single dose pulls souls back from death\'s threshold and holds the reaper at bay. Priceless.',
                 'type' => 'consumable',
                 'subtype' => 'potion',
                 'rarity' => 'legendary',
@@ -1350,7 +1376,7 @@ class ItemSeeder extends Seeder
             // Medical supplies
             [
                 'name' => 'Bandage',
-                'description' => 'Clean linen bandages for treating wounds. Heals 8 HP.',
+                'description' => 'Clean linen boiled and dried. Every soldier learns to wrap wounds tight. A bandage won\'t heal you, but it\'ll stop you bleeding out.',
                 'type' => 'consumable',
                 'subtype' => 'medical',
                 'rarity' => 'common',
@@ -1361,7 +1387,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Medicine',
-                'description' => 'Herbal medicine that speeds recovery. Heals 20 HP.',
+                'description' => 'Village healers prepare this paste from a dozen herbs. It tastes like dirt and regret, but it works. Bodies remember how to mend.',
                 'type' => 'consumable',
                 'subtype' => 'medical',
                 'rarity' => 'uncommon',
@@ -1372,7 +1398,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Antidote',
-                'description' => 'Cures poison and removes toxins from the body.',
+                'description' => 'Bitter as the poisons it fights. Drink within minutes of a venomous bite and watch death retreat. Wait too long and join the dead.',
                 'type' => 'consumable',
                 'subtype' => 'medical',
                 'rarity' => 'uncommon',
@@ -1382,7 +1408,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Healing Potion',
-                'description' => 'A potent healing draught prepared by a physician. Heals 40 HP.',
+                'description' => 'Physicians guard their formulas jealously. This draught combines alchemy and medicine into something that shouldn\'t work—but does.',
                 'type' => 'consumable',
                 'subtype' => 'medical',
                 'rarity' => 'rare',
@@ -1395,7 +1421,7 @@ class ItemSeeder extends Seeder
             // Feast items
             [
                 'name' => 'Feast Platter',
-                'description' => 'A grand platter of assorted meats, cheeses, and delicacies. Heals 50 HP and provides a temporary buff.',
+                'description' => 'The lord\'s table made portable. Roasted meats, aged cheeses, honeyed fruits—enough to make a starving adventurer weep with joy.',
                 'type' => 'consumable',
                 'subtype' => 'food',
                 'rarity' => 'rare',
@@ -1409,7 +1435,7 @@ class ItemSeeder extends Seeder
             // === TOOLS ===
             [
                 'name' => 'Bronze Pickaxe',
-                'description' => 'A basic pickaxe for mining.',
+                'description' => 'The first tool of every aspiring miner. Bronze dulls quickly against hard rock, but it teaches patience. Master this before demanding better.',
                 'type' => 'tool',
                 'subtype' => 'pickaxe',
                 'rarity' => 'common',
@@ -1421,7 +1447,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Iron Pickaxe',
-                'description' => 'An iron pickaxe for efficient mining.',
+                'description' => 'Cold iron bites deeper and lasts longer. Experienced miners swing these into rock faces that would blunt bronze in an hour.',
                 'type' => 'tool',
                 'subtype' => 'pickaxe',
                 'rarity' => 'common',
@@ -1433,7 +1459,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Steel Pickaxe',
-                'description' => 'A high-quality steel pickaxe.',
+                'description' => 'The professional\'s choice. Steel pickaxes crack stone that laughs at lesser metals. Dwarven miners won\'t use anything else.',
                 'type' => 'tool',
                 'subtype' => 'pickaxe',
                 'rarity' => 'uncommon',
@@ -1445,7 +1471,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Fishing Rod',
-                'description' => 'A basic fishing rod.',
+                'description' => 'A simple pole, some line, and a hook. Generations have fed families with rods like this. Patience catches more fish than equipment.',
                 'type' => 'tool',
                 'subtype' => 'fishing',
                 'rarity' => 'common',
@@ -1456,7 +1482,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Fishing Net',
-                'description' => 'A net for catching small fish.',
+                'description' => 'Woven by patient hands, cast by practiced arms. Nets catch what lines miss—the small fry that feed villages through winter.',
                 'type' => 'tool',
                 'subtype' => 'fishing',
                 'rarity' => 'common',
@@ -1467,7 +1493,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Hammer',
-                'description' => 'A smithing hammer for metalwork.',
+                'description' => 'The smith\'s voice. Every ring of hammer on anvil shapes metal and destiny alike. Wars have been won and lost by the quality of a smith\'s hammer.',
                 'type' => 'tool',
                 'subtype' => 'smithing',
                 'rarity' => 'common',
@@ -1478,7 +1504,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Needle',
-                'description' => 'A needle for crafting.',
+                'description' => 'Tiny but essential. With a needle and thread, torn armor becomes wearable, wounds become closed, and leather becomes luxury.',
                 'type' => 'tool',
                 'subtype' => 'crafting',
                 'rarity' => 'common',
@@ -1489,7 +1515,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Chisel',
-                'description' => 'A sharp chisel for cutting gems and fine crafting work.',
+                'description' => 'Precision incarnate. Gem cutters use these to transform rough stones into fortunes. One slip destroys months of work.',
                 'type' => 'tool',
                 'subtype' => 'crafting',
                 'rarity' => 'common',
@@ -1498,7 +1524,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Ring Mould',
-                'description' => 'A mould for crafting gold rings.',
+                'description' => 'Pour molten gold and watch circles of power form. This mould has shaped engagement rings and enchanted bands alike.',
                 'type' => 'tool',
                 'subtype' => 'crafting',
                 'rarity' => 'common',
@@ -1507,7 +1533,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Necklace Mould',
-                'description' => 'A mould for crafting gold necklaces.',
+                'description' => 'Delicate channels for molten metal to follow. The necklaces cast from this mould have adorned queens and courtesans.',
                 'type' => 'tool',
                 'subtype' => 'crafting',
                 'rarity' => 'common',
@@ -1516,7 +1542,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Bracelet Mould',
-                'description' => 'A mould for crafting gold bracelets.',
+                'description' => 'Circular paths that gold flows through to become jewelry. Skilled crafters can produce bracelets worth a peasant\'s yearly wage.',
                 'type' => 'tool',
                 'subtype' => 'crafting',
                 'rarity' => 'common',
@@ -1525,7 +1551,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Amulet Mould',
-                'description' => 'A mould for crafting gold amulets.',
+                'description' => 'Amulets hold magic more readily than other jewelry. This mould shapes the metal; the enchanter shapes the power within.',
                 'type' => 'tool',
                 'subtype' => 'crafting',
                 'rarity' => 'common',
@@ -1536,7 +1562,7 @@ class ItemSeeder extends Seeder
             // === MISC ===
             [
                 'name' => 'Nails',
-                'description' => 'Metal nails for construction and crafting.',
+                'description' => 'Small iron spikes that hold civilization together. Houses, fences, coffins—nails make them all. Never travel without spares.',
                 'type' => 'misc',
                 'subtype' => 'material',
                 'rarity' => 'common',
@@ -1546,7 +1572,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Oak Plank',
-                'description' => 'A sturdy oak plank for construction.',
+                'description' => 'Sawn and dried until the grain runs true. Oak planks build ships that cross oceans and floors that last generations.',
                 'type' => 'misc',
                 'subtype' => 'material',
                 'rarity' => 'common',
@@ -1556,7 +1582,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Wooden Arrow',
-                'description' => 'A simple wooden arrow for ranged combat.',
+                'description' => 'Straightened shaft, sharpened point, feather fletching. Simple and deadly. Archers loose thousands in a single battle.',
                 'type' => 'misc',
                 'subtype' => 'ammunition',
                 'rarity' => 'common',
@@ -1566,7 +1592,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Bones',
-                'description' => 'Bones from a defeated creature.',
+                'description' => 'All that remains when the soul departs. Priests use bones in rituals; alchemists grind them for reagents. Everything serves a purpose.',
                 'type' => 'misc',
                 'subtype' => 'remains',
                 'rarity' => 'common',
@@ -1576,7 +1602,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Big Bones',
-                'description' => 'Large bones from a powerful creature.',
+                'description' => 'Giants, ogres, and trolls leave these behind. The marrow contains echoes of terrible strength. Temples pay well for proper burials.',
                 'type' => 'misc',
                 'subtype' => 'remains',
                 'rarity' => 'uncommon',
@@ -1586,7 +1612,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Dragon Bones',
-                'description' => 'Rare bones from a slain dragon.',
+                'description' => 'Heavier than stone and warm to the touch even in death. Dragon bones hold magic that outlasts the creature. Scholars kill for these.',
                 'type' => 'misc',
                 'subtype' => 'remains',
                 'rarity' => 'rare',
@@ -1596,7 +1622,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Thread',
-                'description' => 'A spool of thread for crafting.',
+                'description' => 'Spun from wool or flax, dyed in village vats. Thread connects cloth to cloth, wound to skin, and craftsman to livelihood.',
                 'type' => 'misc',
                 'subtype' => 'material',
                 'rarity' => 'common',
@@ -1606,7 +1632,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Leather',
-                'description' => 'Tanned leather for crafting.',
+                'description' => 'Hides transformed through salt and time. Leather protects, binds, and adorns. Every armor starts with leather backing.',
                 'type' => 'misc',
                 'subtype' => 'material',
                 'rarity' => 'common',
@@ -1618,7 +1644,7 @@ class ItemSeeder extends Seeder
             // === SEEDS (for farming) ===
             [
                 'name' => 'Wheat Seeds',
-                'description' => 'Seeds for planting wheat.',
+                'description' => 'Golden promise in tiny form. These seeds fed the first settlements and will feed the last. Plant them and watch civilization grow.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'common',
@@ -1628,7 +1654,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Potato Seeds',
-                'description' => 'Seed potatoes for planting.',
+                'description' => 'Ugly, humble, and miraculous. Potatoes grow where wheat fears to sprout. They\'ve saved more lives than any sword.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'common',
@@ -1638,7 +1664,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Carrot Seeds',
-                'description' => 'Tiny seeds that grow into carrots.',
+                'description' => 'So small you could lose them in a breeze. Yet from these specks spring orange roots that sharpen eyes and sweeten stews.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'common',
@@ -1648,7 +1674,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Cabbage Seeds',
-                'description' => 'Seeds for growing cabbage.',
+                'description' => 'Patient farmers grow cabbages. The heads take time to form, but when they do—soups, slaws, and survival through winter.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'common',
@@ -1658,7 +1684,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Onion Seeds',
-                'description' => 'Seeds for planting onions.',
+                'description' => 'They\'ll make you cry when you harvest them, but they\'ll make your meals sing. No proper kitchen lacks onions.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'common',
@@ -1668,7 +1694,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Corn Seeds',
-                'description' => 'Kernels for planting corn.',
+                'description' => 'Each kernel contains a stalk, each stalk an ear, each ear a hundred kernels more. Mathematics made edible.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'common',
@@ -1678,7 +1704,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Tomato Seeds',
-                'description' => 'Seeds for growing tomatoes.',
+                'description' => 'Once thought poisonous, now beloved. Red globes of summer sweetness grow from these tiny flat seeds.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'common',
@@ -1688,7 +1714,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Pumpkin Seeds',
-                'description' => 'Large seeds for growing pumpkins.',
+                'description' => 'Large pale seeds that become enormous orange gourds. Children carve faces; adults make pies. Both are right.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'common',
@@ -1698,7 +1724,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Grape Seeds',
-                'description' => 'Seeds for planting grapevines.',
+                'description' => 'Tiny seeds of intoxicating potential. From these come vineyards, from vineyards come wines, from wines come songs and regrets.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'uncommon',
@@ -1708,7 +1734,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Hop Seeds',
-                'description' => 'Seeds for growing hops.',
+                'description' => 'Brewers prize these bitter flowers. Without hops, ale is just bread water. With them, it becomes art.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'uncommon',
@@ -1718,7 +1744,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Herb Seeds',
-                'description' => 'Mixed herb seeds for the garden.',
+                'description' => 'A mix of culinary and medicinal herbs. Every garden needs these—for flavor, for health, for the bees.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'common',
@@ -1728,7 +1754,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Flax Seeds',
-                'description' => 'Seeds for growing flax.',
+                'description' => 'Blue flowers become linen cloth. These small seeds connect farmers to weavers to tailors to the well-dressed.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'uncommon',
@@ -1738,7 +1764,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Strawberry Seeds',
-                'description' => 'Tiny seeds for strawberry plants.',
+                'description' => 'Barely visible specks that become summer\'s sweetest treats. Children learn patience waiting for strawberry season.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'common',
@@ -1748,7 +1774,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Blueberry Seeds',
-                'description' => 'Seeds for blueberry bushes.',
+                'description' => 'Wild in the forests, cultivated in gardens. Blueberries stain fingers and tongues with summer memories.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'common',
@@ -1758,7 +1784,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Raspberry Seeds',
-                'description' => 'Seeds for raspberry bushes.',
+                'description' => 'Thorny bushes guard these treasures. The scratch marks are worth it when you taste that first ripe berry.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'common',
@@ -1768,7 +1794,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Lettuce Seeds',
-                'description' => 'Quick-growing lettuce seeds.',
+                'description' => 'Quick from soil to salad. Lettuce forgives impatient farmers and rewards them with crisp green leaves.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'common',
@@ -1778,7 +1804,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Cucumber Seeds',
-                'description' => 'Seeds for growing cucumbers.',
+                'description' => 'Cool and refreshing even in concept. Plant these when summer threatens and harvest relief.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'common',
@@ -1788,7 +1814,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Pepper Seeds',
-                'description' => 'Seeds for bell peppers.',
+                'description' => 'From mild to murderous, peppers add life to meals. These seeds contain spectrum of heat waiting to emerge.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'common',
@@ -1798,7 +1824,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Bean Seeds',
-                'description' => 'Bean seeds for planting.',
+                'description' => 'Protein from the soil. Beans build muscle and feed armies. They\'re less glamorous than meat but more reliable.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'common',
@@ -1808,7 +1834,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Melon Seeds',
-                'description' => 'Seeds for growing melons.',
+                'description' => 'Summer sweetness in potential form. Plant these and wait for the heavy, fragrant reward.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'common',
@@ -1818,7 +1844,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Watermelon Seeds',
-                'description' => 'Seeds for large watermelons.',
+                'description' => 'Black seeds for green shells filled with red sweetness. Watermelons are summer\'s greatest gift to hot days.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'uncommon',
@@ -1828,7 +1854,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Squash Seeds',
-                'description' => 'Seeds for growing squash.',
+                'description' => 'Autumn\'s bounty begins with these seeds. Squash stores through winter, feeding families when snow covers fields.',
                 'type' => 'resource',
                 'subtype' => 'seed',
                 'rarity' => 'common',
@@ -3090,7 +3116,7 @@ class ItemSeeder extends Seeder
             // Rings and Amulets
             [
                 'name' => 'Gold Ring',
-                'description' => 'A simple gold ring crafted from pure gold.',
+                'description' => 'Pure gold shaped into a perfect circle. Merchants use these as portable wealth; lovers exchange them as promises. Enchanters see blank canvas.',
                 'type' => 'armor',
                 'subtype' => 'ring',
                 'rarity' => 'uncommon',
@@ -3101,7 +3127,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Gold Necklace',
-                'description' => 'An elegant gold necklace with fine craftsmanship.',
+                'description' => 'Links of gold cascade like liquid sunlight. This necklace has adorned the necks of merchants\' wives and merchant princes alike.',
                 'type' => 'armor',
                 'subtype' => 'necklace',
                 'rarity' => 'uncommon',
@@ -3112,7 +3138,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Gold Bracelet',
-                'description' => 'A delicate gold bracelet that gleams in the light.',
+                'description' => 'A band of woven gold threads encircles the wrist. Subtle wealth, easily hidden in sleeves when traveling through dangerous lands.',
                 'type' => 'armor',
                 'subtype' => 'bracelet',
                 'rarity' => 'uncommon',
@@ -3123,7 +3149,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Gold Amulet',
-                'description' => 'A golden amulet of simple but elegant design.',
+                'description' => 'Ancient symbols pressed into gold, their meaning lost to time. Some say amulets remember the prayers of previous owners.',
                 'type' => 'armor',
                 'subtype' => 'amulet',
                 'rarity' => 'uncommon',
@@ -3134,7 +3160,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Ring of Strength',
-                'description' => 'A ring imbued with strengthening magic.',
+                'description' => 'Forged by battlemages for soldiers who needed more than muscle could provide. The ring pulses with contained fury, lending might to every motion.',
                 'type' => 'armor',
                 'subtype' => 'ring',
                 'rarity' => 'rare',
@@ -3146,7 +3172,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Amulet of Defense',
-                'description' => 'An amulet that provides protection.',
+                'description' => 'Priests blessed this amulet with wards against harm. Those who wear it feel blows land softer, as if the world conspires to protect them.',
                 'type' => 'armor',
                 'subtype' => 'amulet',
                 'rarity' => 'rare',
@@ -3158,7 +3184,7 @@ class ItemSeeder extends Seeder
             ],
             [
                 'name' => 'Amulet of Power',
-                'description' => 'A legendary amulet radiating power.',
+                'description' => 'Champions have lived and died wearing this amulet. Its power grew with each bearer, until now it hums with centuries of accumulated might. To wear it is to inherit legends.',
                 'type' => 'armor',
                 'subtype' => 'amulet',
                 'rarity' => 'epic',

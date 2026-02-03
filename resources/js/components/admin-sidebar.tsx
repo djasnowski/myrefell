@@ -1,6 +1,7 @@
 import { Link, usePage } from "@inertiajs/react";
-import { LayoutDashboard, Shield, Users } from "lucide-react";
+import { LayoutDashboard, Package, Shield, Users } from "lucide-react";
 import { index as adminDashboard } from "@/actions/App/Http/Controllers/Admin/DashboardController";
+import { index as adminItems } from "@/actions/App/Http/Controllers/Admin/ItemController";
 import { index as adminUsers } from "@/actions/App/Http/Controllers/Admin/UserController";
 import AppLogo from "@/components/app-logo";
 import { NavUser } from "@/components/nav-user";
@@ -28,6 +29,11 @@ const adminNavItems = [
         title: "Users",
         url: adminUsers.url(),
         icon: Users,
+    },
+    {
+        title: "Items",
+        url: adminItems.url(),
+        icon: Package,
     },
 ];
 

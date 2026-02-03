@@ -3,6 +3,7 @@ import { gameToast } from "@/components/ui/game-toast";
 import {
     Apple,
     Droplets,
+    Eye,
     Gift,
     Heart,
     Package,
@@ -12,12 +13,26 @@ import {
     Swords,
     Trash2,
     User,
+    X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { getItemIcon, GoldIcon, HelpCircle } from "@/lib/item-icons";
 import { inventory } from "@/routes";
 import type { BreadcrumbItem } from "@/types";
+
+interface ContextMenuState {
+    visible: boolean;
+    x: number;
+    y: number;
+    slotIndex: number | null;
+}
+
+interface DropModalState {
+    visible: boolean;
+    slotIndex: number | null;
+    itemName: string;
+}
 
 interface Item {
     id: number;
@@ -199,12 +214,16 @@ function InventorySlotComponent({
     isSelected,
     onSelect,
     onDrop,
+    onContextMenu,
+    contextMenuOpen,
 }: {
     slot: InventorySlot | null;
     slotIndex: number;
     isSelected: boolean;
     onSelect: () => void;
     onDrop: (fromSlot: number) => void;
+    onContextMenu: (e: React.MouseEvent) => void;
+    contextMenuOpen: boolean;
 }) {
     const [showTooltip, setShowTooltip] = useState(false);
 
@@ -234,6 +253,7 @@ function InventorySlotComponent({
                     : "border-stone-700 bg-stone-800/30 hover:border-stone-600"
             } ${isSelected ? "ring-2 ring-amber-400" : ""} ${slot?.is_equipped ? "ring-2 ring-green-500" : ""} ${showTooltip ? "z-50" : ""}`}
             onClick={onSelect}
+            onContextMenu={onContextMenu}
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
             draggable={!!slot}
@@ -259,7 +279,7 @@ function InventorySlotComponent({
                             E
                         </div>
                     )}
-                    {showTooltip && (
+                    {showTooltip && !contextMenuOpen && (
                         <ItemTooltip
                             item={slot.item}
                             quantity={slot.quantity}
@@ -375,6 +395,54 @@ export default function Inventory() {
     const { slots, max_slots, gold, can_donate, equipment, combat_stats } =
         usePage<PageProps>().props;
     const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+    const [contextMenu, setContextMenu] = useState<ContextMenuState>({
+        visible: false,
+        x: 0,
+        y: 0,
+        slotIndex: null,
+    });
+    const [dropModal, setDropModal] = useState<DropModalState>({
+        visible: false,
+        slotIndex: null,
+        itemName: "",
+    });
+    const contextMenuRef = useRef<HTMLDivElement>(null);
+
+    // Close context menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
+                setContextMenu((prev) => ({ ...prev, visible: false }));
+            }
+        };
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                setContextMenu((prev) => ({ ...prev, visible: false }));
+                setDropModal({ visible: false, slotIndex: null, itemName: "" });
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("keydown", handleEscape);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("keydown", handleEscape);
+        };
+    }, []);
+
+    const handleContextMenu = (e: React.MouseEvent, slotIndex: number) => {
+        e.preventDefault();
+        if (!slots[slotIndex]) return;
+        setContextMenu({
+            visible: true,
+            x: e.clientX,
+            y: e.clientY,
+            slotIndex,
+        });
+    };
+
+    const closeContextMenu = () => {
+        setContextMenu((prev) => ({ ...prev, visible: false }));
+    };
 
     const selectedItem = selectedSlot !== null ? slots[selectedSlot] : null;
 
@@ -395,32 +463,55 @@ export default function Inventory() {
         );
     };
 
-    const handleDrop = () => {
-        if (selectedSlot === null || !slots[selectedSlot]) return;
-
-        if (confirm(`Drop ${slots[selectedSlot]!.item.name}?`)) {
-            router.post(
-                "/inventory/drop",
-                { slot: selectedSlot },
-                {
-                    preserveScroll: true,
-                    onSuccess: () => {
-                        router.reload();
-                    },
-                },
-            );
-            setSelectedSlot(null);
-        }
+    const handleExamineItem = (slotIndex: number) => {
+        if (!slots[slotIndex]) return;
+        const item = slots[slotIndex]!.item;
+        closeContextMenu();
+        gameToast.info(item.name, {
+            description: item.description || "Nothing interesting.",
+            duration: 5000,
+        });
     };
 
-    const handleEquip = () => {
-        if (selectedSlot === null || !slots[selectedSlot]) return;
-        const item = slots[selectedSlot]!;
+    const handleDropItem = (slotIndex: number) => {
+        if (!slots[slotIndex]) return;
+        const itemName = slots[slotIndex]!.item.name;
+        closeContextMenu();
+        setDropModal({
+            visible: true,
+            slotIndex,
+            itemName,
+        });
+    };
+
+    const confirmDrop = () => {
+        if (dropModal.slotIndex === null) return;
+        router.post(
+            "/inventory/drop",
+            { slot: dropModal.slotIndex },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+            },
+        );
+        setSelectedSlot(null);
+        setDropModal({ visible: false, slotIndex: null, itemName: "" });
+    };
+
+    const cancelDrop = () => {
+        setDropModal({ visible: false, slotIndex: null, itemName: "" });
+    };
+
+    const handleEquipItem = (slotIndex: number) => {
+        if (!slots[slotIndex]) return;
+        const item = slots[slotIndex]!;
 
         if (item.is_equipped) {
             router.post(
                 "/inventory/unequip",
-                { slot: selectedSlot },
+                { slot: slotIndex },
                 {
                     preserveScroll: true,
                     onSuccess: () => {
@@ -431,7 +522,7 @@ export default function Inventory() {
         } else if (item.item.equipment_slot) {
             router.post(
                 "/inventory/equip",
-                { slot: selectedSlot },
+                { slot: slotIndex },
                 {
                     preserveScroll: true,
                     onSuccess: () => {
@@ -447,14 +538,15 @@ export default function Inventory() {
                 },
             );
         }
+        closeContextMenu();
     };
 
-    const handleConsume = () => {
-        if (selectedSlot === null || !slots[selectedSlot]) return;
+    const handleConsumeItem = (slotIndex: number) => {
+        if (!slots[slotIndex]) return;
 
         router.post(
             "/inventory/consume",
-            { slot: selectedSlot },
+            { slot: slotIndex },
             {
                 preserveScroll: true,
                 onSuccess: () => {
@@ -462,6 +554,18 @@ export default function Inventory() {
                 },
             },
         );
+        closeContextMenu();
+    };
+
+    // Wrapper functions for the panel buttons that use selectedSlot
+    const handleDrop = () => {
+        if (selectedSlot !== null) handleDropItem(selectedSlot);
+    };
+    const handleEquip = () => {
+        if (selectedSlot !== null) handleEquipItem(selectedSlot);
+    };
+    const handleConsume = () => {
+        if (selectedSlot !== null) handleConsumeItem(selectedSlot);
     };
 
     const getConsumeLabel = (item: Item): { label: string; icon: typeof Apple } => {
@@ -482,12 +586,12 @@ export default function Inventory() {
         return ["food", "crop", "grain"].includes(item.subtype || "");
     };
 
-    const handleDonate = () => {
-        if (selectedSlot === null || !slots[selectedSlot]) return;
+    const handleDonateItem = (slotIndex: number) => {
+        if (!slots[slotIndex]) return;
 
         router.post(
             "/inventory/donate",
-            { slot: selectedSlot },
+            { slot: slotIndex },
             {
                 preserveScroll: true,
                 onSuccess: () => {
@@ -495,6 +599,11 @@ export default function Inventory() {
                 },
             },
         );
+        closeContextMenu();
+    };
+
+    const handleDonate = () => {
+        if (selectedSlot !== null) handleDonateItem(selectedSlot);
     };
 
     const usedSlots = slots.filter(Boolean).length;
@@ -531,6 +640,10 @@ export default function Inventory() {
                                     isSelected={selectedSlot === index}
                                     onSelect={() => handleSlotClick(index)}
                                     onDrop={(fromSlot) => handleMove(fromSlot, index)}
+                                    onContextMenu={(e) => handleContextMenu(e, index)}
+                                    contextMenuOpen={
+                                        contextMenu.visible && contextMenu.slotIndex === index
+                                    }
                                 />
                             ))}
                         </div>
@@ -843,6 +956,166 @@ export default function Inventory() {
                     </div>
                 </div>
             </div>
+
+            {/* Context Menu */}
+            {contextMenu.visible &&
+                contextMenu.slotIndex !== null &&
+                slots[contextMenu.slotIndex] && (
+                    <div
+                        ref={contextMenuRef}
+                        className="fixed z-[200] min-w-40 rounded-lg border-2 border-stone-600 bg-stone-900 p-1 shadow-xl"
+                        style={{
+                            left: contextMenu.x,
+                            top: contextMenu.y,
+                        }}
+                    >
+                        {(() => {
+                            const slot = slots[contextMenu.slotIndex!]!;
+                            const item = slot.item;
+                            return (
+                                <>
+                                    {/* Equip/Unequip */}
+                                    {item.equipment_slot && (
+                                        <button
+                                            onClick={() => handleEquipItem(contextMenu.slotIndex!)}
+                                            className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-300 hover:bg-stone-800"
+                                        >
+                                            {slot.is_equipped ? (
+                                                <>
+                                                    <ShieldOff className="h-3.5 w-3.5 text-orange-400" />
+                                                    Unequip
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Sword className="h-3.5 w-3.5 text-green-400" />
+                                                    Equip
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+
+                                    {/* Consume */}
+                                    {isConsumable(item) &&
+                                        (() => {
+                                            const { label, icon: ConsumeIcon } =
+                                                getConsumeLabel(item);
+                                            return (
+                                                <button
+                                                    onClick={() =>
+                                                        handleConsumeItem(contextMenu.slotIndex!)
+                                                    }
+                                                    className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-300 hover:bg-stone-800"
+                                                >
+                                                    <ConsumeIcon className="h-3.5 w-3.5 text-amber-400" />
+                                                    {label}
+                                                </button>
+                                            );
+                                        })()}
+
+                                    {/* Donate */}
+                                    {can_donate && isDonatable(item) && (
+                                        <button
+                                            onClick={() => handleDonateItem(contextMenu.slotIndex!)}
+                                            className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-300 hover:bg-stone-800"
+                                        >
+                                            <Gift className="h-3.5 w-3.5 text-blue-400" />
+                                            Donate to Granary
+                                        </button>
+                                    )}
+
+                                    {/* Separator only if there are actions above */}
+                                    {(item.equipment_slot ||
+                                        isConsumable(item) ||
+                                        (can_donate && isDonatable(item))) && (
+                                        <div className="my-1 h-px bg-stone-700" />
+                                    )}
+
+                                    {/* Examine */}
+                                    <button
+                                        onClick={() => handleExamineItem(contextMenu.slotIndex!)}
+                                        className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-300 hover:bg-stone-800"
+                                    >
+                                        <Eye className="h-3.5 w-3.5 text-blue-400" />
+                                        Examine
+                                    </button>
+
+                                    <div className="my-1 h-px bg-stone-700" />
+
+                                    {/* Drop */}
+                                    <button
+                                        onClick={() => handleDropItem(contextMenu.slotIndex!)}
+                                        className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-red-400 hover:bg-red-900/30"
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                        Drop
+                                    </button>
+
+                                    <div className="my-1 h-px bg-stone-700" />
+
+                                    {/* Cancel */}
+                                    <button
+                                        onClick={closeContextMenu}
+                                        className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-400 hover:bg-stone-800"
+                                    >
+                                        Cancel
+                                    </button>
+                                </>
+                            );
+                        })()}
+                    </div>
+                )}
+
+            {/* Drop Confirmation Modal */}
+            {dropModal.visible && (
+                <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/70">
+                    <div className="relative w-80 rounded-lg border-2 border-stone-600 bg-stone-900 p-4 shadow-2xl">
+                        {/* Close button */}
+                        <button
+                            onClick={cancelDrop}
+                            className="absolute right-2 top-2 text-stone-500 hover:text-stone-300"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+
+                        {/* Icon */}
+                        <div className="mb-4 flex justify-center">
+                            <div className="rounded-full bg-red-900/50 p-3">
+                                <Trash2 className="h-8 w-8 text-red-400" />
+                            </div>
+                        </div>
+
+                        {/* Title */}
+                        <h3 className="mb-2 text-center font-pixel text-sm text-amber-400">
+                            Drop Item
+                        </h3>
+
+                        {/* Message */}
+                        <p className="mb-4 text-center font-pixel text-xs text-stone-300">
+                            Are you sure you want to drop{" "}
+                            <span className="text-amber-300">{dropModal.itemName}</span>?
+                        </p>
+                        <p className="mb-4 text-center font-pixel text-[10px] text-stone-500">
+                            This action cannot be undone.
+                        </p>
+
+                        {/* Buttons */}
+                        <div className="flex gap-2">
+                            <button
+                                onClick={cancelDrop}
+                                className="flex-1 rounded border-2 border-stone-600 bg-stone-800 px-4 py-2 font-pixel text-xs text-stone-300 transition hover:bg-stone-700"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDrop}
+                                className="flex-1 rounded border-2 border-red-600 bg-red-900/50 px-4 py-2 font-pixel text-xs text-red-300 transition hover:bg-red-800/50"
+                            >
+                                Drop
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }
