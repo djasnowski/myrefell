@@ -719,13 +719,13 @@ class CraftingService
         $craftingXpProgress = $craftingSkill?->getXpProgress() ?? 0;
         $craftingXpToNext = $craftingSkill?->xpToNextLevel() ?? 60;
 
-        // Workshop only shows crafting category (not smithing/smelting)
-        $craftingOnly = ['crafting'];
+        // Workshop shows crafting, gem cutting, and jewelry (not smithing/smelting)
+        $workshopCategories = ['crafting', 'gem_cutting', 'jewelry'];
 
         return [
             'can_craft' => true,
-            'recipes' => $this->getAvailableRecipes($user, $craftingOnly),
-            'all_recipes' => $this->getAllRecipes($user, $craftingOnly),
+            'recipes' => $this->getAvailableRecipes($user, $workshopCategories),
+            'all_recipes' => $this->getAllRecipes($user, $workshopCategories),
             'player_energy' => $user->energy,
             'max_energy' => $user->max_energy,
             'free_slots' => $this->inventoryService->freeSlots($user),
