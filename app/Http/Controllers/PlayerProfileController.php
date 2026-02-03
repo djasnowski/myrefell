@@ -57,13 +57,20 @@ class PlayerProfileController extends Controller
         $totalXp = $player->skills->sum('xp');
         $totalLevel = $skills->sum('level');
 
+        // Calculate rank based on total levels (matching leaderboard logic)
+        $playerDbTotalLevel = $player->skills->sum('level');
         $totalRank = null;
         if ($totalXp > 0) {
+            // Count players with higher total level, or same level but higher XP (tiebreaker)
             $totalRank = PlayerSkill::query()
-                ->select('player_id', DB::raw('SUM(xp) as total_xp'))
+                ->select('player_id', DB::raw('SUM(level) as total_level'), DB::raw('SUM(xp) as total_xp'))
                 ->groupBy('player_id')
-                ->having(DB::raw('SUM(xp)'), '>', $totalXp)
+                ->having(DB::raw('SUM(xp)'), '>', 0)
                 ->get()
+                ->filter(function ($row) use ($playerDbTotalLevel, $totalXp) {
+                    return $row->total_level > $playerDbTotalLevel
+                        || ($row->total_level == $playerDbTotalLevel && $row->total_xp > $totalXp);
+                })
                 ->count() + 1;
         }
 

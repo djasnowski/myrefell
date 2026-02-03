@@ -142,14 +142,19 @@ export default function PlayerShow() {
                     </div>
                     <div className="text-right">
                         {isRanked ? (
-                            <Link
-                                href="/leaderboard"
-                                className="text-2xl font-bold text-primary hover:text-primary/80 hover:underline"
-                            >
-                                #{skill.rank}
-                            </Link>
+                            <div className="flex items-center gap-2">
+                                <Link
+                                    href="/leaderboard"
+                                    className="text-2xl font-bold text-primary hover:text-primary/80 hover:underline"
+                                >
+                                    #{skill.rank}
+                                </Link>
+                                <span className="text-sm text-muted-foreground">
+                                    Lv. {skill.level}
+                                </span>
+                            </div>
                         ) : (
-                            <p className="text-lg text-muted-foreground/60">Unranked</p>
+                            <p className="text-lg text-muted-foreground/60">Lv. {skill.level}</p>
                         )}
                     </div>
                 </div>
@@ -159,10 +164,6 @@ export default function PlayerShow() {
                             className={`h-full transition-all ${bgColor}`}
                             style={{ width: `${skill.xp_progress}%` }}
                         />
-                    </div>
-                    <div className="mt-1 flex items-center justify-between text-xs">
-                        <p className="text-primary">Lv. {skill.level}</p>
-                        <p className="text-muted-foreground">{skill.xp_progress.toFixed(1)}%</p>
                     </div>
                 </div>
             </div>
