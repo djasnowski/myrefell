@@ -69,6 +69,12 @@ interface MasterFarmerBonuses {
     xp_bonus: number;
 }
 
+interface ActiveBlessing {
+    name: string;
+    xp_bonus: number;
+    expires_at: string;
+}
+
 interface FoodBreakdownItem {
     name: string;
     quantity: number;
@@ -98,6 +104,7 @@ interface PageProps {
     max_plots: number;
     gold: number;
     master_farmer_bonuses: MasterFarmerBonuses | null;
+    active_blessings: ActiveBlessing[] | null;
     village_food: VillageFoodStats | null;
     location_name: string | null;
     error?: string;
@@ -144,6 +151,7 @@ export default function FarmingIndex() {
         max_plots,
         gold,
         master_farmer_bonuses,
+        active_blessings,
         village_food,
         location_name,
         error,
@@ -336,6 +344,25 @@ export default function FarmingIndex() {
                         <div className="mt-1 flex gap-4 font-pixel text-[10px] text-amber-400/80">
                             <span>+{master_farmer_bonuses.yield_bonus}% crop yield</span>
                             <span>+{master_farmer_bonuses.xp_bonus}% farming XP</span>
+                        </div>
+                    </div>
+                )}
+
+                {/* Active Blessings */}
+                {active_blessings && active_blessings.length > 0 && (
+                    <div className="rounded-lg border border-purple-500/50 bg-purple-900/20 p-3">
+                        <div className="flex items-center gap-2">
+                            <Sparkles className="h-4 w-4 text-purple-400" />
+                            <span className="font-pixel text-xs text-purple-300">
+                                Blessing Active!
+                            </span>
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-4 font-pixel text-[10px] text-purple-400/80">
+                            {active_blessings.map((blessing, idx) => (
+                                <span key={idx}>
+                                    {blessing.name}: +{blessing.xp_bonus}% farming XP
+                                </span>
+                            ))}
                         </div>
                     </div>
                 )}

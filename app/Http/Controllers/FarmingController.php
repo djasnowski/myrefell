@@ -98,6 +98,27 @@ class FarmingController extends Controller
             $user->current_location_id
         );
 
+        // Check for active blessings with farming bonuses
+        $activeFarmingBlessings = PlayerBlessing::where('user_id', $user->id)
+            ->where('expires_at', '>', now())
+            ->with('blessingType')
+            ->get()
+            ->filter(function ($blessing) {
+                $effects = $blessing->blessingType->effects ?? [];
+
+                return isset($effects['farming_xp_bonus']);
+            })
+            ->map(function ($blessing) {
+                $effects = $blessing->blessingType->effects ?? [];
+
+                return [
+                    'name' => $blessing->blessingType->name,
+                    'xp_bonus' => $effects['farming_xp_bonus'] ?? 0,
+                    'expires_at' => $blessing->expires_at->toISOString(),
+                ];
+            })
+            ->values();
+
         // Get village/town food stats
         $villageFoodStats = null;
         $locationName = null;
@@ -134,6 +155,7 @@ class FarmingController extends Controller
                 'yield_bonus' => $masterFarmerBonuses['crop_yield_bonus'] ?? 0,
                 'xp_bonus' => $masterFarmerBonuses['farming_xp_bonus'] ?? 0,
             ] : null,
+            'active_blessings' => $activeFarmingBlessings->isNotEmpty() ? $activeFarmingBlessings : null,
             'village_food' => $villageFoodStats,
             'location_name' => $locationName,
         ]);
