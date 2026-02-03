@@ -445,6 +445,14 @@ class CombatService
      */
     protected function calculateMonsterAttack(User $player, Monster $monster): array
     {
+        // Agility dodge chance: 0.2% per level (max 10% at level 50+)
+        $agilityLevel = $player->getSkillLevel('agility');
+        $dodgeChance = min(10, $agilityLevel * 0.2);
+
+        if (rand(1, 100) <= $dodgeChance) {
+            return ['hit' => false, 'damage' => 0, 'dodged' => true];
+        }
+
         $defenseLevel = $player->getSkillLevel('defense');
         $equipment = $this->getPlayerEquipmentBonuses($player);
 

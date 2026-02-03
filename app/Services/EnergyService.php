@@ -32,7 +32,7 @@ class EnergyService
      */
     public function consumeEnergy(User $player, int $amount): bool
     {
-        if (!$this->hasEnergy($player, $amount)) {
+        if (! $this->hasEnergy($player, $amount)) {
             return false;
         }
 
@@ -93,8 +93,21 @@ class EnergyService
      */
     public function regenerateAllPlayers(): int
     {
+        // Base regeneration for all players
         $affected = User::where('energy', '<', \DB::raw('max_energy'))
             ->increment('energy', self::REGEN_AMOUNT);
+
+        // Agility bonus: +1 energy per 20 agility levels
+        // Join with player_skills to get agility level and add bonus
+        \DB::statement("
+            UPDATE users
+            SET energy = energy + FLOOR(COALESCE(
+                (SELECT level FROM player_skills
+                 WHERE player_skills.player_id = users.id
+                 AND player_skills.skill_name = 'agility'), 0
+            ) / 20)
+            WHERE energy < max_energy
+        ");
 
         // Clamp any that went over max
         User::whereRaw('energy > max_energy')

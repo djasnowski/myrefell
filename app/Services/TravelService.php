@@ -58,8 +58,8 @@ class TravelService
         if ($usingHorse) {
             // Check horse stamina
             $staminaCost = $playerHorse->stamina_cost;
-            if (!$playerHorse->hasStamina($staminaCost)) {
-                throw new \InvalidArgumentException("Your horse is too tired to travel. Rest at a stable or travel on foot.");
+            if (! $playerHorse->hasStamina($staminaCost)) {
+                throw new \InvalidArgumentException('Your horse is too tired to travel. Rest at a stable or travel on foot.');
             }
         } else {
             // Check player energy for walking
@@ -350,6 +350,11 @@ class TravelService
         // Apply seasonal travel modifier (>1 = slower, <1 = faster)
         $seasonalModifier = WorldState::current()->getTravelModifier();
         $adjustedTime = $adjustedTime * $seasonalModifier;
+
+        // Apply agility bonus: 0.5% faster travel per agility level (max 25% at level 50+)
+        $agilityLevel = $user->getSkillLevel('agility');
+        $agilityBonus = min(0.25, $agilityLevel * 0.005); // Cap at 25% reduction
+        $adjustedTime = $adjustedTime * (1 - $agilityBonus);
 
         return max(1, (int) ceil($adjustedTime));
     }
