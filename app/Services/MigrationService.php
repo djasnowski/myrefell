@@ -478,71 +478,75 @@ class MigrationService
 
         return MigrationRequest::pending()
             ->with(['user', 'fromVillage', 'toVillage.barony.kingdom'])
-            ->where(function ($q) use ($elderVillages, $mayorTowns) {
-                // Elder can approve requests to their village
-                $q->where(function ($sq) use ($elderVillages) {
-                    $sq->where('to_location_type', 'village')
-                        ->whereIn('to_location_id', $elderVillages)
-                        ->whereNull('elder_approved');
-                })
-                // Also check legacy village field
-                    ->orWhere(function ($sq) use ($elderVillages) {
-                        $sq->whereNull('to_location_type')
-                            ->whereIn('to_village_id', $elderVillages)
+            ->where(function ($query) use ($elderVillages, $mayorTowns, $baronBaronies, $kingKingdoms) {
+                // Wrap all role-based conditions in a single where clause
+                // so they're properly ANDed with the pending() scope
+                $query->where(function ($q) use ($elderVillages, $mayorTowns) {
+                    // Elder can approve requests to their village
+                    $q->where(function ($sq) use ($elderVillages) {
+                        $sq->where('to_location_type', 'village')
+                            ->whereIn('to_location_id', $elderVillages)
                             ->whereNull('elder_approved');
                     })
-                // Mayor can approve requests to their town
-                    ->orWhere(function ($sq) use ($mayorTowns) {
-                        $sq->where('to_location_type', 'town')
-                            ->whereIn('to_location_id', $mayorTowns)
-                            ->whereNull('mayor_approved');
+                    // Also check legacy village field
+                        ->orWhere(function ($sq) use ($elderVillages) {
+                            $sq->whereNull('to_location_type')
+                                ->whereIn('to_village_id', $elderVillages)
+                                ->whereNull('elder_approved');
+                        })
+                    // Mayor can approve requests to their town
+                        ->orWhere(function ($sq) use ($mayorTowns) {
+                            $sq->where('to_location_type', 'town')
+                                ->whereIn('to_location_id', $mayorTowns)
+                                ->whereNull('mayor_approved');
+                        });
+                })
+                    ->orWhere(function ($q) use ($baronBaronies) {
+                        // Baron can approve requests to villages/towns in their barony
+                        $q->where(function ($sq) use ($baronBaronies) {
+                            $sq->whereHas('toVillage', fn ($vq) => $vq->whereIn('barony_id', $baronBaronies));
+                        })
+                            ->orWhere(function ($sq) use ($baronBaronies) {
+                                $sq->where('to_location_type', 'town')
+                                    ->whereIn('to_location_id', function ($tq) use ($baronBaronies) {
+                                        $tq->select('id')->from('towns')->whereIn('barony_id', $baronBaronies);
+                                    });
+                            })
+                        // Baron can approve direct barony settlement requests
+                            ->orWhere(function ($sq) use ($baronBaronies) {
+                                $sq->where('to_location_type', 'barony')
+                                    ->whereIn('to_location_id', $baronBaronies);
+                            })
+                            ->whereNull('baron_approved');
+                    })
+                    ->orWhere(function ($q) use ($kingKingdoms) {
+                        // King can approve requests to villages/towns in their kingdom
+                        $q->where(function ($sq) use ($kingKingdoms) {
+                            $sq->whereHas('toVillage.barony', fn ($bq) => $bq->whereIn('kingdom_id', $kingKingdoms));
+                        })
+                            ->orWhere(function ($sq) use ($kingKingdoms) {
+                                $sq->where('to_location_type', 'town')
+                                    ->whereIn('to_location_id', function ($tq) use ($kingKingdoms) {
+                                        $tq->select('towns.id')
+                                            ->from('towns')
+                                            ->join('baronies', 'towns.barony_id', '=', 'baronies.id')
+                                            ->whereIn('baronies.kingdom_id', $kingKingdoms);
+                                    });
+                            })
+                        // King can approve requests to baronies in their kingdom
+                            ->orWhere(function ($sq) use ($kingKingdoms) {
+                                $sq->where('to_location_type', 'barony')
+                                    ->whereIn('to_location_id', function ($bq) use ($kingKingdoms) {
+                                        $bq->select('id')->from('baronies')->whereIn('kingdom_id', $kingKingdoms);
+                                    });
+                            })
+                        // King can approve direct kingdom settlement requests
+                            ->orWhere(function ($sq) use ($kingKingdoms) {
+                                $sq->where('to_location_type', 'kingdom')
+                                    ->whereIn('to_location_id', $kingKingdoms);
+                            })
+                            ->whereNull('king_approved');
                     });
-            })
-            ->orWhere(function ($q) use ($baronBaronies) {
-                // Baron can approve requests to villages/towns in their barony
-                $q->where(function ($sq) use ($baronBaronies) {
-                    $sq->whereHas('toVillage', fn ($vq) => $vq->whereIn('barony_id', $baronBaronies));
-                })
-                    ->orWhere(function ($sq) use ($baronBaronies) {
-                        $sq->where('to_location_type', 'town')
-                            ->whereIn('to_location_id', function ($tq) use ($baronBaronies) {
-                                $tq->select('id')->from('towns')->whereIn('barony_id', $baronBaronies);
-                            });
-                    })
-                // Baron can approve direct barony settlement requests
-                    ->orWhere(function ($sq) use ($baronBaronies) {
-                        $sq->where('to_location_type', 'barony')
-                            ->whereIn('to_location_id', $baronBaronies);
-                    })
-                    ->whereNull('baron_approved');
-            })
-            ->orWhere(function ($q) use ($kingKingdoms) {
-                // King can approve requests to villages/towns in their kingdom
-                $q->where(function ($sq) use ($kingKingdoms) {
-                    $sq->whereHas('toVillage.barony', fn ($bq) => $bq->whereIn('kingdom_id', $kingKingdoms));
-                })
-                    ->orWhere(function ($sq) use ($kingKingdoms) {
-                        $sq->where('to_location_type', 'town')
-                            ->whereIn('to_location_id', function ($tq) use ($kingKingdoms) {
-                                $tq->select('towns.id')
-                                    ->from('towns')
-                                    ->join('baronies', 'towns.barony_id', '=', 'baronies.id')
-                                    ->whereIn('baronies.kingdom_id', $kingKingdoms);
-                            });
-                    })
-                // King can approve requests to baronies in their kingdom
-                    ->orWhere(function ($sq) use ($kingKingdoms) {
-                        $sq->where('to_location_type', 'barony')
-                            ->whereIn('to_location_id', function ($bq) use ($kingKingdoms) {
-                                $bq->select('id')->from('baronies')->whereIn('kingdom_id', $kingKingdoms);
-                            });
-                    })
-                // King can approve direct kingdom settlement requests
-                    ->orWhere(function ($sq) use ($kingKingdoms) {
-                        $sq->where('to_location_type', 'kingdom')
-                            ->whereIn('to_location_id', $kingKingdoms);
-                    })
-                    ->whereNull('king_approved');
             })
             ->get();
     }
