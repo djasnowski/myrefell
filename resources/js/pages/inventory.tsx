@@ -14,11 +14,63 @@ import {
     User,
     X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { getItemIcon, GoldIcon } from "@/lib/item-icons";
 import { inventory } from "@/routes";
 import type { BreadcrumbItem } from "@/types";
+
+// Long-press hook for mobile context menu support
+function useLongPress(
+    onLongPress: (e: React.TouchEvent | React.MouseEvent) => void,
+    onClick?: () => void,
+    { delay = 500 }: { delay?: number } = {},
+) {
+    const timeout = useRef<NodeJS.Timeout | null>(null);
+    const target = useRef<EventTarget | null>(null);
+    const moved = useRef(false);
+
+    const start = useCallback(
+        (e: React.TouchEvent | React.MouseEvent) => {
+            target.current = e.target;
+            moved.current = false;
+            timeout.current = setTimeout(() => {
+                if (!moved.current) {
+                    onLongPress(e);
+                }
+            }, delay);
+        },
+        [onLongPress, delay],
+    );
+
+    const move = useCallback(() => {
+        moved.current = true;
+        if (timeout.current) {
+            clearTimeout(timeout.current);
+            timeout.current = null;
+        }
+    }, []);
+
+    const end = useCallback(
+        (e: React.TouchEvent | React.MouseEvent) => {
+            if (timeout.current) {
+                clearTimeout(timeout.current);
+                timeout.current = null;
+                // Only trigger click if we didn't long-press and didn't move
+                if (!moved.current && onClick) {
+                    onClick();
+                }
+            }
+        },
+        [onClick],
+    );
+
+    return {
+        onTouchStart: start,
+        onTouchMove: move,
+        onTouchEnd: end,
+    };
+}
 
 interface ContextMenuState {
     visible: boolean;
@@ -144,16 +196,27 @@ function ItemTooltip({
     item,
     quantity,
     isEquipped,
+    position = "center",
 }: {
     item: Item;
     quantity: number;
     isEquipped: boolean;
+    position?: "left" | "center" | "right";
 }) {
     const hasStats =
         item.atk_bonus || item.str_bonus || item.def_bonus || item.hp_bonus || item.energy_bonus;
 
+    // Position classes based on where the slot is on screen
+    const positionClasses = {
+        left: "left-0", // Align to left edge of slot
+        center: "left-1/2 -translate-x-1/2", // Center under slot
+        right: "right-0", // Align to right edge of slot
+    };
+
     return (
-        <div className="absolute top-full left-1/2 z-[100] mt-2 w-56 -translate-x-1/2 rounded border-2 border-stone-600 bg-stone-900 p-3 shadow-lg">
+        <div
+            className={`absolute top-full z-[100] mt-2 w-56 rounded border-2 border-stone-600 bg-stone-900 p-3 shadow-lg ${positionClasses[position]}`}
+        >
             <div
                 className={`font-pixel text-sm capitalize ${rarityTextColors[item.rarity] || "text-stone-300"}`}
             >
@@ -216,6 +279,7 @@ function InventorySlotComponent({
     slotIndex,
     onDrop,
     onContextMenu,
+    onLongPress,
     contextMenuOpen,
     draggedItem,
     isBeingDragged,
@@ -229,6 +293,7 @@ function InventorySlotComponent({
     slotIndex: number;
     onDrop: (fromSlot: number) => void;
     onContextMenu: (e: React.MouseEvent) => void;
+    onLongPress: (e: React.TouchEvent) => void;
     contextMenuOpen: boolean;
     draggedItem: InventorySlot | null;
     isBeingDragged: boolean;
@@ -239,7 +304,43 @@ function InventorySlotComponent({
     onDragLeave: () => void;
 }) {
     const [showTooltip, setShowTooltip] = useState(false);
+    const [tooltipPosition, setTooltipPosition] = useState<"left" | "center" | "right">("center");
     const dragImageRef = useRef<HTMLDivElement>(null);
+    const slotRef = useRef<HTMLDivElement>(null);
+
+    // Calculate tooltip position based on slot position on screen
+    const updateTooltipPosition = () => {
+        if (slotRef.current) {
+            const rect = slotRef.current.getBoundingClientRect();
+            const screenWidth = window.innerWidth;
+            const tooltipWidth = 224; // w-56 = 14rem = 224px
+
+            // If slot is near left edge, align tooltip to left
+            if (rect.left < tooltipWidth / 2) {
+                setTooltipPosition("left");
+            }
+            // If slot is near right edge, align tooltip to right
+            else if (rect.right > screenWidth - tooltipWidth / 2) {
+                setTooltipPosition("right");
+            }
+            // Otherwise center it
+            else {
+                setTooltipPosition("center");
+            }
+        }
+    };
+
+    // Long-press for mobile context menu
+    const longPressHandlers = useLongPress(
+        (e) => {
+            if (slot) {
+                e.preventDefault();
+                onLongPress(e as React.TouchEvent);
+            }
+        },
+        undefined,
+        { delay: 500 },
+    );
 
     const handleDragStart = (e: React.DragEvent) => {
         if (slot) {
@@ -302,6 +403,7 @@ function InventorySlotComponent({
                 </div>
             )}
             <div
+                ref={slotRef}
                 className={`relative h-14 w-14 cursor-pointer rounded border-2 transition-all ${
                     slot
                         ? `${rarityColors[slot.item.rarity]} hover:brightness-110`
@@ -310,7 +412,12 @@ function InventorySlotComponent({
                           : "border-stone-700 bg-stone-800/30 hover:border-stone-600"
                 } ${slot?.is_equipped ? "ring-2 ring-green-500" : ""} ${showTooltip && !isBeingDragged ? "z-50" : ""} ${isBeingDragged ? "opacity-50" : ""}`}
                 onContextMenu={onContextMenu}
-                onMouseEnter={() => !isBeingDragged && setShowTooltip(true)}
+                onMouseEnter={() => {
+                    if (!isBeingDragged) {
+                        updateTooltipPosition();
+                        setShowTooltip(true);
+                    }
+                }}
                 onMouseLeave={() => setShowTooltip(false)}
                 draggable={!!slot}
                 onDragStart={handleDragStart}
@@ -319,6 +426,7 @@ function InventorySlotComponent({
                 onDragEnter={handleDragEnter}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
+                {...longPressHandlers}
             >
                 {/* Ghost preview of dragged item */}
                 {showGhost && (
@@ -355,6 +463,7 @@ function InventorySlotComponent({
                                 item={slot.item}
                                 quantity={slot.quantity}
                                 isEquipped={slot.is_equipped}
+                                position={tooltipPosition}
                             />
                         )}
                     </>
@@ -434,6 +543,7 @@ function EquipmentSlotDisplay({
     slotType,
     slotName,
     onContextMenu,
+    onLongPress,
     contextMenuOpen,
 }: {
     label: string;
@@ -441,10 +551,23 @@ function EquipmentSlotDisplay({
     slotType: string;
     slotName: keyof Equipment;
     onContextMenu: (e: React.MouseEvent, slotName: keyof Equipment) => void;
+    onLongPress: (e: React.TouchEvent, slotName: keyof Equipment) => void;
     contextMenuOpen: boolean;
 }) {
     const [showTooltip, setShowTooltip] = useState(false);
     const SlotIcon = equipmentSlotIcons[slotType] || Package;
+
+    // Long-press for mobile context menu
+    const longPressHandlers = useLongPress(
+        (e) => {
+            if (equipped) {
+                e.preventDefault();
+                onLongPress(e as React.TouchEvent, slotName);
+            }
+        },
+        undefined,
+        { delay: 500 },
+    );
 
     return (
         <div className="relative flex flex-col items-center">
@@ -457,6 +580,7 @@ function EquipmentSlotDisplay({
                 onContextMenu={(e) => equipped && onContextMenu(e, slotName)}
                 onMouseEnter={() => setShowTooltip(true)}
                 onMouseLeave={() => setShowTooltip(false)}
+                {...longPressHandlers}
             >
                 {equipped ? (
                     (() => {
@@ -548,15 +672,16 @@ export default function Inventory() {
     const contextMenuRef = useRef<HTMLDivElement>(null);
     const equipmentContextMenuRef = useRef<HTMLDivElement>(null);
 
-    // Close context menus when clicking outside
+    // Close context menus when clicking/tapping outside
     useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
+        const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+            const target = e.target as Node;
+            if (contextMenuRef.current && !contextMenuRef.current.contains(target)) {
                 setContextMenu((prev) => ({ ...prev, visible: false }));
             }
             if (
                 equipmentContextMenuRef.current &&
-                !equipmentContextMenuRef.current.contains(e.target as Node)
+                !equipmentContextMenuRef.current.contains(target)
             ) {
                 setEquipmentContextMenu((prev) => ({ ...prev, visible: false }));
             }
@@ -569,9 +694,11 @@ export default function Inventory() {
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("touchstart", handleClickOutside);
         document.addEventListener("keydown", handleEscape);
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("touchstart", handleClickOutside);
             document.removeEventListener("keydown", handleEscape);
         };
     }, []);
@@ -587,6 +714,20 @@ export default function Inventory() {
         });
     };
 
+    // Long-press handler for mobile - uses touch coordinates
+    const handleLongPress = (e: React.TouchEvent, slotIndex: number) => {
+        if (!slots[slotIndex]) return;
+        const touch = e.touches?.[0] || e.changedTouches?.[0];
+        const x = touch?.clientX ?? 0;
+        const y = touch?.clientY ?? 0;
+        setContextMenu({
+            visible: true,
+            x,
+            y,
+            slotIndex,
+        });
+    };
+
     const closeContextMenu = () => {
         setContextMenu((prev) => ({ ...prev, visible: false }));
     };
@@ -598,6 +739,20 @@ export default function Inventory() {
             visible: true,
             x: e.clientX,
             y: e.clientY,
+            slotName,
+        });
+    };
+
+    // Long-press handler for equipment slots on mobile
+    const handleEquipmentLongPress = (e: React.TouchEvent, slotName: keyof Equipment) => {
+        if (!equipment[slotName]) return;
+        const touch = e.touches?.[0] || e.changedTouches?.[0];
+        const x = touch?.clientX ?? 0;
+        const y = touch?.clientY ?? 0;
+        setEquipmentContextMenu({
+            visible: true,
+            x,
+            y,
             slotName,
         });
     };
@@ -809,6 +964,7 @@ export default function Inventory() {
                                         setDragState({ sourceSlot: null, targetSlot: null });
                                     }}
                                     onContextMenu={(e) => handleContextMenu(e, index)}
+                                    onLongPress={(e) => handleLongPress(e, index)}
                                     contextMenuOpen={
                                         contextMenu.visible && contextMenu.slotIndex === index
                                     }
@@ -852,6 +1008,7 @@ export default function Inventory() {
                                 slotType="head"
                                 slotName="head"
                                 onContextMenu={handleEquipmentContextMenu}
+                                onLongPress={handleEquipmentLongPress}
                                 contextMenuOpen={
                                     equipmentContextMenu.visible &&
                                     equipmentContextMenu.slotName === "head"
@@ -866,6 +1023,7 @@ export default function Inventory() {
                                 slotType="weapon"
                                 slotName="weapon"
                                 onContextMenu={handleEquipmentContextMenu}
+                                onLongPress={handleEquipmentLongPress}
                                 contextMenuOpen={
                                     equipmentContextMenu.visible &&
                                     equipmentContextMenu.slotName === "weapon"
@@ -877,6 +1035,7 @@ export default function Inventory() {
                                 slotType="chest"
                                 slotName="chest"
                                 onContextMenu={handleEquipmentContextMenu}
+                                onLongPress={handleEquipmentLongPress}
                                 contextMenuOpen={
                                     equipmentContextMenu.visible &&
                                     equipmentContextMenu.slotName === "chest"
@@ -888,6 +1047,7 @@ export default function Inventory() {
                                 slotType="shield"
                                 slotName="shield"
                                 onContextMenu={handleEquipmentContextMenu}
+                                onLongPress={handleEquipmentLongPress}
                                 contextMenuOpen={
                                     equipmentContextMenu.visible &&
                                     equipmentContextMenu.slotName === "shield"
@@ -901,6 +1061,7 @@ export default function Inventory() {
                                 slotType="ring"
                                 slotName="ring"
                                 onContextMenu={handleEquipmentContextMenu}
+                                onLongPress={handleEquipmentLongPress}
                                 contextMenuOpen={
                                     equipmentContextMenu.visible &&
                                     equipmentContextMenu.slotName === "ring"
@@ -912,6 +1073,7 @@ export default function Inventory() {
                                 slotType="legs"
                                 slotName="legs"
                                 onContextMenu={handleEquipmentContextMenu}
+                                onLongPress={handleEquipmentLongPress}
                                 contextMenuOpen={
                                     equipmentContextMenu.visible &&
                                     equipmentContextMenu.slotName === "legs"
@@ -923,6 +1085,7 @@ export default function Inventory() {
                                 slotType="amulet"
                                 slotName="amulet"
                                 onContextMenu={handleEquipmentContextMenu}
+                                onLongPress={handleEquipmentLongPress}
                                 contextMenuOpen={
                                     equipmentContextMenu.visible &&
                                     equipmentContextMenu.slotName === "amulet"
