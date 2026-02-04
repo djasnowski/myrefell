@@ -1,7 +1,8 @@
 import { Link, usePage } from "@inertiajs/react";
-import { LayoutDashboard, Package, Shield, Users } from "lucide-react";
+import { LayoutDashboard, Package, Shield, ShieldAlert, Users } from "lucide-react";
 import { index as adminDashboard } from "@/actions/App/Http/Controllers/Admin/DashboardController";
 import { index as adminItems } from "@/actions/App/Http/Controllers/Admin/ItemController";
+import { index as adminSuspiciousActivity } from "@/actions/App/Http/Controllers/Admin/SuspiciousActivityController";
 import { index as adminUsers } from "@/actions/App/Http/Controllers/Admin/UserController";
 import AppLogo from "@/components/app-logo";
 import { NavUser } from "@/components/nav-user";
@@ -34,6 +35,11 @@ const adminNavItems = [
         title: "Items",
         url: adminItems.url(),
         icon: Package,
+    },
+    {
+        title: "Cheating",
+        url: adminSuspiciousActivity.url(),
+        icon: ShieldAlert,
     },
 ];
 
