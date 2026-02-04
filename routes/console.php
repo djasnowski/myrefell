@@ -56,3 +56,6 @@ Schedule::command('hq:complete-construction')->everyMinute();
 
 // Cult hideout construction completion - every minute (check for timer expirations)
 Schedule::command('hideout:complete-construction')->everyMinute();
+
+// Prune old tab activity logs - daily at 03:00
+Schedule::command('tab-activity:prune')->dailyAt('03:00');
