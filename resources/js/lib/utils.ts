@@ -87,3 +87,21 @@ export function formatBonusLabel(key: string): string {
 export function formatBonus(key: string, value: number): string {
     return `+${value}% ${formatBonusLabel(key)}`;
 }
+
+/**
+ * Pluralize a location type for URL building.
+ * Handles irregular pluralization (barony -> baronies, duchy -> duchies).
+ */
+export function pluralizeLocationType(type: string): string {
+    if (type.endsWith("y")) {
+        return type.slice(0, -1) + "ies";
+    }
+    return type + "s";
+}
+
+/**
+ * Build a location URL path from type and id.
+ */
+export function locationPath(type: string, id: number | string): string {
+    return `/${pluralizeLocationType(type)}/${id}`;
+}
