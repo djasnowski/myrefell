@@ -270,9 +270,12 @@ function MetalTierSection({
     const [expanded, setExpanded] = useState(defaultExpanded);
     const colors = metalColors[metal] || metalColors.Bronze;
 
-    const totalRecipes = recipes.weapons.length + recipes.armor.length + recipes.ammunition.length;
-    const availableRecipes = [...recipes.weapons, ...recipes.armor, ...recipes.ammunition].filter(
-        (r) => r.can_make,
+    const allRecipes = [...recipes.weapons, ...recipes.armor, ...recipes.ammunition];
+    const totalRecipes = allRecipes.length;
+    const craftableRecipes = allRecipes.filter((r) => r.can_make).length;
+    // Count recipes that have materials but can't craft (likely due to full inventory)
+    const hasMatsMissing = allRecipes.filter(
+        (r) => !r.can_make && !r.is_locked && r.materials.every((m) => m.has_enough),
     ).length;
 
     return (
@@ -301,10 +304,18 @@ function MetalTierSection({
                     {tier.unlocked ? (
                         <>
                             <div className="text-right">
-                                <span className="font-pixel text-xs text-stone-400">
-                                    {availableRecipes}/{totalRecipes}
+                                <span
+                                    className={`font-pixel text-xs ${craftableRecipes > 0 ? "text-green-400" : hasMatsMissing > 0 ? "text-yellow-400" : "text-stone-400"}`}
+                                >
+                                    {craftableRecipes}/{totalRecipes}
                                 </span>
-                                <p className="font-pixel text-[10px] text-stone-500">available</p>
+                                <p className="font-pixel text-[10px] text-stone-500">
+                                    {craftableRecipes > 0
+                                        ? "can craft"
+                                        : hasMatsMissing > 0
+                                          ? "need inventory space"
+                                          : "need materials"}
+                                </p>
                             </div>
                             {expanded ? (
                                 <ChevronDown className={`h-4 w-4 ${colors.text}`} />
@@ -498,14 +509,20 @@ export default function AnvilIndex() {
                             {currentEnergy} / {anvil_info.max_energy}
                         </div>
                     </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
+                    <div
+                        className={`rounded-lg border p-3 ${anvil_info.free_slots <= 0 ? "border-red-600/50 bg-red-900/20" : "border-stone-700 bg-stone-800/50"}`}
+                    >
                         <div className="mb-1 flex items-center justify-between">
                             <div className="flex items-center gap-1 font-pixel text-xs text-amber-300">
                                 <Backpack className="h-3 w-3" />
                                 Bars Available
                             </div>
-                            <span className="font-pixel text-xs text-stone-400">
-                                {anvil_info.free_slots} slots
+                            <span
+                                className={`font-pixel text-xs ${anvil_info.free_slots <= 0 ? "text-red-400" : "text-stone-400"}`}
+                            >
+                                {anvil_info.free_slots <= 0
+                                    ? "Inventory Full!"
+                                    : `${anvil_info.free_slots} slots`}
                             </span>
                         </div>
                         {anvil_info.bars_in_inventory.length > 0 ? (
@@ -559,6 +576,20 @@ export default function AnvilIndex() {
                         </div>
                     </div>
                 </div>
+
+                {/* Inventory Full Warning */}
+                {anvil_info.free_slots <= 0 && (
+                    <div className="mb-4 rounded-lg border border-red-600/50 bg-red-900/30 p-3 flex items-center gap-3">
+                        <Backpack className="h-5 w-5 text-red-400 shrink-0" />
+                        <div>
+                            <div className="font-pixel text-sm text-red-300">Inventory Full</div>
+                            <div className="font-pixel text-xs text-red-400/80">
+                                You need at least 1 free inventory slot to smith items. Sell or drop
+                                some items first.
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Metal Tiers */}
                 <div className="space-y-3">

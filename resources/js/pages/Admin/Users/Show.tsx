@@ -819,7 +819,7 @@ export default function Show({
                                             Inventory
                                         </CardTitle>
                                         <CardDescription className="text-stone-400">
-                                            {inventory.filter((i) => i.item).length} / 28 slots used
+                                            {inventory.filter((i) => i.item).length} / 50 slots used
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent>

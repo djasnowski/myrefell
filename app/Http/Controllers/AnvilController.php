@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Barony;
 use App\Models\Duchy;
 use App\Models\Kingdom;
+use App\Models\PlayerInventory;
 use App\Models\Town;
 use App\Models\Village;
 use App\Services\CraftingService;
@@ -76,7 +77,7 @@ class AnvilController extends Controller
                 'recipes_by_tier' => $organizedRecipes,
                 'player_energy' => $user->energy,
                 'max_energy' => $user->max_energy,
-                'free_slots' => $user->inventory()->count() < 28 ? 28 - $user->inventory()->count() : 0,
+                'free_slots' => PlayerInventory::MAX_SLOTS - $user->inventory()->count(),
                 'bar_count' => (int) $barCount,
                 'bars_in_inventory' => $barsInInventory,
                 'smithing_level' => $smithingLevel,

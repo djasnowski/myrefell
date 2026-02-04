@@ -39,7 +39,7 @@ const rarityTextColors: Record<string, string> = {
     legendary: "text-amber-400",
 };
 
-export function InventoryGrid({ inventory, maxSlots = 28 }: Props) {
+export function InventoryGrid({ inventory, maxSlots = 50 }: Props) {
     // Create a map of slot_number to inventory item
     const slotMap = new Map<number, InventoryItem>();
     inventory.forEach((item) => {

@@ -360,14 +360,20 @@ export default function ForgeIndex() {
                             {currentEnergy} / {forge_info.max_energy}
                         </div>
                     </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
+                    <div
+                        className={`rounded-lg border p-3 ${forge_info.free_slots <= 0 ? "border-red-600/50 bg-red-900/20" : "border-stone-700 bg-stone-800/50"}`}
+                    >
                         <div className="mb-1 flex items-center justify-between">
                             <div className="flex items-center gap-1 font-pixel text-xs text-amber-300">
                                 <Backpack className="h-3 w-3" />
                                 Bars in Inventory
                             </div>
-                            <span className="font-pixel text-xs text-stone-400">
-                                {forge_info.bar_count} total
+                            <span
+                                className={`font-pixel text-xs ${forge_info.free_slots <= 0 ? "text-red-400" : "text-stone-400"}`}
+                            >
+                                {forge_info.free_slots <= 0
+                                    ? "Inventory Full!"
+                                    : `${forge_info.free_slots} slots free`}
                             </span>
                         </div>
                         {forge_info.bars_in_inventory.length > 0 ? (
@@ -421,6 +427,20 @@ export default function ForgeIndex() {
                         </div>
                     </div>
                 </div>
+
+                {/* Inventory Full Warning */}
+                {forge_info.free_slots <= 0 && (
+                    <div className="mb-4 rounded-lg border border-red-600/50 bg-red-900/30 p-3 flex items-center gap-3">
+                        <Backpack className="h-5 w-5 text-red-400 shrink-0" />
+                        <div>
+                            <div className="font-pixel text-sm text-red-300">Inventory Full</div>
+                            <div className="font-pixel text-xs text-red-400/80">
+                                You need at least 1 free inventory slot to smelt bars. Sell or drop
+                                some items first.
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Smelting Recipes Grid */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
