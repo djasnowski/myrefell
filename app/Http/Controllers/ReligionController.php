@@ -7,6 +7,7 @@ use App\Models\Duchy;
 use App\Models\Kingdom;
 use App\Models\PlayerInventory;
 use App\Models\Religion;
+use App\Models\ReligionHeadquarters;
 use App\Models\Town;
 use App\Models\Village;
 use App\Services\ReligionInviteService;
@@ -105,6 +106,21 @@ class ReligionController extends Controller
                 'prayer_xp' => $inv->item->prayer_bonus,
             ]);
 
+        // Get headquarters info if it exists
+        $hq = ReligionHeadquarters::where('religion_id', $religion->id)->first();
+        $hqInfo = null;
+        if ($hq) {
+            $hqLocation = $hq->location;
+            $hqInfo = [
+                'exists' => true,
+                'is_built' => $hq->is_built,
+                'tier_name' => $hq->tier_name,
+                'location_type' => $hq->location_type,
+                'location_id' => $hq->location_id,
+                'location_name' => $hqLocation?->name,
+            ];
+        }
+
         return Inertia::render('Religions/Show', [
             'religion' => $details['religion'],
             'membership' => $details['membership'],
@@ -115,6 +131,7 @@ class ReligionController extends Controller
             'structures' => $details['structures'],
             'history' => $details['history'],
             'sacrifice_bones' => $sacrificeBones,
+            'headquarters' => $hqInfo,
             'energy' => [
                 'current' => $user->energy,
             ],

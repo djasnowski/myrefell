@@ -194,10 +194,13 @@ export default function HeadquartersIndex() {
         usePage<PageProps>().props;
 
     // Build location-scoped base URL for HQ routes
+    // Use HQ location if built, otherwise use player's current location
     const hqBaseUrl =
         headquarters.location_type && headquarters.location_id
             ? `${locationPath(headquarters.location_type, headquarters.location_id)}/religions/${religion.id}/headquarters`
-            : `/religions/${religion.id}/headquarters`;
+            : current_location.type && current_location.id
+              ? `${locationPath(current_location.type, current_location.id)}/religions/${religion.id}/headquarters`
+              : `/religions/${religion.id}/headquarters`;
 
     // Build location-scoped URL for religion show page
     const religionUrl =
