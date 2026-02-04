@@ -1640,6 +1640,16 @@ class ItemSeeder extends Seeder
                 'max_stack' => 100,
                 'base_value' => 10,
             ],
+            [
+                'name' => 'Rope',
+                'description' => 'Twisted fibers wound tight, strong enough to bind beasts or lower heroes into darkness. Every dungeon delver knows its worth.',
+                'type' => 'misc',
+                'subtype' => 'material',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 8,
+            ],
 
             // === SEEDS (for farming) ===
             [
