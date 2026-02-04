@@ -198,6 +198,7 @@ interface SuspiciousActivityStats {
     new_tab_switches: number;
     unique_tabs: number;
     suspicious_percentage: number;
+    requests_per_hour: number;
 }
 
 interface SuspiciousActivity {

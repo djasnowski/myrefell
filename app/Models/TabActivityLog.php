@@ -142,11 +142,17 @@ class TabActivityLog extends Model
         $newTabCount = (clone $query)->where('is_new_tab', true)->count();
         $uniqueTabs = (clone $query)->distinct('tab_id')->count('tab_id');
 
+        // Calculate requests per hour
+        $requestsLastHour = self::where('user_id', $userId)
+            ->where('created_at', '>=', now()->subHour())
+            ->count();
+
         return [
             'total_requests' => $total,
             'new_tab_switches' => $newTabCount,
             'unique_tabs' => $uniqueTabs,
             'suspicious_percentage' => $total > 0 ? round(($newTabCount / $total) * 100, 2) : 0,
+            'requests_per_hour' => $requestsLastHour,
         ];
     }
 

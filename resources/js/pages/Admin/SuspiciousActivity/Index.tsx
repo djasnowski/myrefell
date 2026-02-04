@@ -19,6 +19,7 @@ interface FlaggedUser {
         new_tab_switches: number;
         unique_tabs: number;
         suspicious_percentage: number;
+        requests_per_hour: number;
     };
 }
 
@@ -146,13 +147,21 @@ export default function Index({ flaggedUsers }: Props) {
 
                                         <div className="flex items-center gap-6">
                                             {/* Stats */}
-                                            <div className="grid grid-cols-3 gap-4 text-center">
+                                            <div className="grid grid-cols-4 gap-4 text-center">
                                                 <div>
                                                     <div className="text-lg font-semibold text-stone-100">
                                                         {user.stats.total_requests.toLocaleString()}
                                                     </div>
                                                     <div className="text-xs text-stone-500">
                                                         Requests (24h)
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-lg font-semibold text-cyan-400">
+                                                        {user.stats.requests_per_hour.toLocaleString()}
+                                                    </div>
+                                                    <div className="text-xs text-stone-500">
+                                                        Reqs/Hour
                                                     </div>
                                                 </div>
                                                 <div>
