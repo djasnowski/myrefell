@@ -12,15 +12,10 @@ class TabActivityLog extends Model
     public $timestamps = false;
 
     /**
-     * Threshold for flagging: if user has more than this percentage
-     * of tab switches in last hour, flag them.
+     * Number of tab switches required to trigger a flag.
+     * Any multi-tab usage is cheating - being in two places at once.
      */
-    public const SUSPICIOUS_THRESHOLD_PERCENT = 20;
-
-    /**
-     * Minimum number of requests in the last hour before we consider flagging.
-     */
-    public const MINIMUM_REQUESTS_FOR_FLAG = 50;
+    public const TAB_SWITCHES_TO_FLAG = 1;
 
     /**
      * Admin email to notify when suspicious activity is detected.
@@ -103,17 +98,19 @@ class TabActivityLog extends Model
             return;
         }
 
-        // Already flagged in the last 24 hours? Don't re-flag
+        // Already flagged in the last 24 hours? Don't re-flag (but still log)
         if ($user->suspicious_activity_flagged_at && $user->suspicious_activity_flagged_at->gt(now()->subDay())) {
             return;
         }
 
-        // Get stats for last hour
-        $stats = self::getSuspiciousActivity($userId, now()->subHour()->toDateTimeString());
+        // Count tab switches in last hour
+        $tabSwitches = self::where('user_id', $userId)
+            ->where('is_new_tab', true)
+            ->where('created_at', '>=', now()->subHour())
+            ->count();
 
-        // Check if meets threshold
-        if ($stats['total_requests'] >= self::MINIMUM_REQUESTS_FOR_FLAG
-            && $stats['suspicious_percentage'] >= self::SUSPICIOUS_THRESHOLD_PERCENT) {
+        // Flag immediately if any tab switching detected
+        if ($tabSwitches >= self::TAB_SWITCHES_TO_FLAG) {
             // Flag the user
             $user->suspicious_activity_flagged_at = now();
             $user->save();
