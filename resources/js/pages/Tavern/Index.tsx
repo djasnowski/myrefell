@@ -116,12 +116,16 @@ function RecipeCard({
     recipe,
     onCook,
     loading,
+    cooldown,
 }: {
     recipe: Recipe;
     onCook: (id: string) => void;
     loading: string | null;
+    cooldown: number;
 }) {
     const isLoading = loading === recipe.id;
+    const isOnCooldown = cooldown > 0;
+    const isDisabled = isLoading || isOnCooldown;
 
     return (
         <div
@@ -178,12 +182,22 @@ function RecipeCard({
                         Requires Level {recipe.required_level}
                     </span>
                 </div>
+            ) : isOnCooldown ? (
+                <div className="relative h-7 w-full overflow-hidden rounded-md bg-stone-700">
+                    <div
+                        className="absolute inset-y-0 right-0 bg-orange-600/50 transition-all duration-1000 ease-linear"
+                        style={{ width: `${(cooldown / 3) * 100}%` }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="font-pixel text-xs text-stone-300">{cooldown}s</span>
+                    </div>
+                </div>
             ) : (
                 <button
                     onClick={() => onCook(recipe.id)}
-                    disabled={!recipe.can_make || loading !== null}
+                    disabled={!recipe.can_make || isDisabled}
                     className={`flex w-full items-center justify-center gap-2 rounded-md px-2 py-1.5 font-pixel text-xs transition ${
-                        recipe.can_make && !loading
+                        recipe.can_make && !isDisabled
                             ? "bg-orange-600 text-stone-900 hover:bg-orange-500"
                             : "cursor-not-allowed bg-stone-700 text-stone-500"
                     }`}
@@ -240,6 +254,7 @@ export default function TavernIndex() {
     const { location, player, rest, recent_activity, cooking, dice } = usePage<PageProps>().props;
     const [loading, setLoading] = useState(false);
     const [cookingLoading, setCookingLoading] = useState<string | null>(null);
+    const [cookingCooldown, setCookingCooldown] = useState(0); // seconds remaining
     const [currentEnergy, setCurrentEnergy] = useState(player.energy);
     const [selectedDiceGame, setSelectedDiceGame] = useState<GameType | null>(null);
 
@@ -279,6 +294,7 @@ export default function TavernIndex() {
     };
 
     const handleCook = async (recipeId: string) => {
+        if (cookingCooldown > 0) return;
         setCookingLoading(recipeId);
 
         try {
@@ -314,6 +330,18 @@ export default function TavernIndex() {
 
             // Reload to update materials
             router.reload({ only: ["cooking", "player", "sidebar"] });
+
+            // Start 3 second cooldown with countdown
+            setCookingCooldown(3);
+            const interval = setInterval(() => {
+                setCookingCooldown((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(interval);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
         } catch {
             gameToast.error("An error occurred");
         } finally {
@@ -524,6 +552,7 @@ export default function TavernIndex() {
                                     recipe={recipe}
                                     onCook={handleCook}
                                     loading={cookingLoading}
+                                    cooldown={cookingCooldown}
                                 />
                             ))}
                         </div>
