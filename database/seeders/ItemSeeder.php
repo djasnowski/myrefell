@@ -1631,6 +1631,16 @@ class ItemSeeder extends Seeder
                 'base_value' => 3,
             ],
             [
+                'name' => 'Cloth',
+                'description' => 'Woven from thread by patient hands. Cloth wraps wounds, makes sails, and clothes the common folk. The foundation of civilization\'s comfort.',
+                'type' => 'misc',
+                'subtype' => 'material',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 5,
+            ],
+            [
                 'name' => 'Leather',
                 'description' => 'Hides transformed through salt and time. Leather protects, binds, and adorns. Every armor starts with leather backing.',
                 'type' => 'misc',
@@ -1649,6 +1659,16 @@ class ItemSeeder extends Seeder
                 'stackable' => true,
                 'max_stack' => 100,
                 'base_value' => 8,
+            ],
+            [
+                'name' => 'Torch',
+                'description' => 'A simple stick wrapped in oil-soaked cloth. It banishes darkness, reveals hidden paths, and keeps the night terrors at bay.',
+                'type' => 'misc',
+                'subtype' => 'tool',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 50,
+                'base_value' => 5,
             ],
 
             // === SEEDS (for farming) ===
