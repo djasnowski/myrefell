@@ -593,7 +593,7 @@ class ThievingService
             // Apply energy cost reduction
             $effectiveEnergyCost = $config['energy_cost'];
             if ($energyReduction > 0) {
-                $effectiveEnergyCost = max(1, (int) ceil($config['energy_cost'] * (1 - $energyReduction / 100)));
+                $effectiveEnergyCost = max(1, (int) floor($config['energy_cost'] * (1 - $energyReduction / 100)));
             }
 
             $targets[] = [
@@ -683,7 +683,7 @@ class ThievingService
         $energyReduction = $this->beliefEffectService->getEffect($user, 'thieving_energy_reduction');
         $effectiveEnergyCost = $config['energy_cost'];
         if ($energyReduction > 0) {
-            $effectiveEnergyCost = max(1, (int) ceil($config['energy_cost'] * (1 - $energyReduction / 100)));
+            $effectiveEnergyCost = max(1, (int) floor($config['energy_cost'] * (1 - $energyReduction / 100)));
         }
 
         if (! $user->hasEnergy($effectiveEnergyCost)) {

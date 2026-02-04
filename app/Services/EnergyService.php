@@ -41,7 +41,7 @@ class EnergyService
         // Apply belief energy cost reduction (Sloth belief)
         $energyCostReduction = $this->beliefEffectService->getEffect($player, 'energy_cost_reduction');
         if ($energyCostReduction > 0) {
-            $amount = (int) ceil($amount * (1 - $energyCostReduction / 100));
+            $amount = (int) floor($amount * (1 - $energyCostReduction / 100));
             $amount = max(1, $amount); // Minimum 1 energy cost
         }
 
