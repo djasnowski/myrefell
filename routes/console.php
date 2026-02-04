@@ -18,7 +18,11 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Energy regeneration - +10 every 5 minutes (10 seconds in local for testing)
-Schedule::job(new RegenerateEnergy)->everyTenSeconds();
+if (app()->environment('local')) {
+    Schedule::job(new RegenerateEnergy)->everyTenSeconds();
+} else {
+    Schedule::job(new RegenerateEnergy)->everyFiveMinutes();
+}
 
 // HP regeneration - 5% of max HP every 5 minutes (with bonuses)
 Schedule::job(new RegenerateHp)->everyFiveMinutes();

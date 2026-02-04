@@ -14,8 +14,12 @@ class EnergyService
 
     /**
      * Energy regeneration rate in seconds.
+     * Local: 10 seconds, Production: 300 seconds (5 minutes)
      */
-    public const REGEN_SECONDS = 10; // 10 seconds for testing (normally 300 = 5 minutes)
+    public static function getRegenSeconds(): int
+    {
+        return app()->environment('local') ? 10 : 300;
+    }
 
     /**
      * Energy amount regenerated per tick.
@@ -166,7 +170,7 @@ class EnergyService
         // Calculate time until next regen interval
         $now = Carbon::now();
         $currentSecond = $now->timestamp;
-        $nextRegen = (int) ceil($currentSecond / self::REGEN_SECONDS) * self::REGEN_SECONDS;
+        $nextRegen = (int) ceil($currentSecond / self::getRegenSeconds()) * self::getRegenSeconds();
 
         return max(1, $nextRegen - $currentSecond);
     }
@@ -221,7 +225,7 @@ class EnergyService
             'current' => $player->energy,
             'max' => $player->max_energy,
             'at_max' => $atMax,
-            'regen_rate' => self::REGEN_SECONDS,
+            'regen_rate' => self::getRegenSeconds(),
             'regen_amount' => $regenAmount,
             'base_regen_amount' => $baseAmount,
             'regen_bonuses' => $bonuses,
