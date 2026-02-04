@@ -30,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { RulerDisplay } from "@/components/ui/legitimacy-badge";
 import AppLayout from "@/layouts/app-layout";
+import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
 interface Village {
@@ -414,14 +415,20 @@ export default function BaronyShow({
                                     >
                                         <div className="flex items-center gap-2">
                                             <Link
-                                                href={`/${route.origin.type}s/${route.origin.id}`}
+                                                href={locationPath(
+                                                    route.origin.type,
+                                                    route.origin.id,
+                                                )}
                                                 className="text-stone-300 hover:text-amber-400"
                                             >
                                                 {route.origin.name}
                                             </Link>
                                             <ArrowRight className="h-3 w-3 text-stone-600" />
                                             <Link
-                                                href={`/${route.destination.type}s/${route.destination.id}`}
+                                                href={locationPath(
+                                                    route.destination.type,
+                                                    route.destination.id,
+                                                )}
                                                 className="text-stone-300 hover:text-amber-400"
                                             >
                                                 {route.destination.name}

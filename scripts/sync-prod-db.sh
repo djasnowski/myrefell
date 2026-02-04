@@ -12,7 +12,7 @@ PROD_APP_DIR="/home/forge/myrefell.com/current"
 # Local settings
 LOCAL_DB_HOST="pgsql"
 LOCAL_DB_NAME="myrefell"
-LOCAL_DB_USER="sail"
+LOCAL_DB_USER="postgres"
 
 DUMP_FILE="/tmp/myrefell_prod_dump.sql"
 

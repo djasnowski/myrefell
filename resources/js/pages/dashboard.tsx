@@ -36,6 +36,7 @@ import { useState } from "react";
 import TutorialModal from "@/components/tutorial-modal";
 import HealthStatusWidget from "@/components/widgets/health-status-widget";
 import AppLayout from "@/layouts/app-layout";
+import { pluralizeLocationType } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
 interface LocationFeatures {
@@ -50,18 +51,6 @@ interface LocationFeatures {
     guilds: boolean;
     elections: boolean;
     stables: boolean;
-}
-
-// Helper to pluralize location types correctly
-function pluralizeLocationType(type: string): string {
-    const plurals: Record<string, string> = {
-        village: "villages",
-        town: "towns",
-        barony: "baronies",
-        duchy: "duchies",
-        kingdom: "kingdoms",
-    };
-    return plurals[type] || `${type}s`;
 }
 
 interface DiseaseInfection {

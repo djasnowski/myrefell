@@ -3,6 +3,7 @@ import { Crosshair, Gift, Medal, Swords, Target, Trophy } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { ArcheryGame } from "@/components/games/archery-game";
+import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
 interface LeaderboardEntry {
@@ -80,7 +81,7 @@ export default function ArenaIndex() {
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
-        { title: location.name, href: `/${location.type}s/${location.id}` },
+        { title: location.name, href: locationPath(location.type, location.id) },
         { title: "Arena", href: "#" },
     ];
 
