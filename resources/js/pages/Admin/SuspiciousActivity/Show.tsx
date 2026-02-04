@@ -396,24 +396,28 @@ export default function Show({ user, stats, recentActivity }: Props) {
                                                         activity.is_new_tab && "bg-red-900/10",
                                                     )}
                                                 >
-                                                    <td className="p-2 text-stone-400">
-                                                        <div>
-                                                            {formatDateTime(activity.created_at)}
-                                                        </div>
-                                                        {secondsDiff !== null && (
-                                                            <div
-                                                                className={cn(
-                                                                    "text-xs",
-                                                                    secondsDiff <= 1
-                                                                        ? "text-red-400"
-                                                                        : secondsDiff <= 3
-                                                                          ? "text-amber-400"
-                                                                          : "text-stone-500",
+                                                    <td className="p-2">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="text-stone-400">
+                                                                {formatDateTime(
+                                                                    activity.created_at,
                                                                 )}
-                                                            >
-                                                                +{secondsDiff}s
-                                                            </div>
-                                                        )}
+                                                            </span>
+                                                            {secondsDiff !== null && (
+                                                                <span
+                                                                    className={cn(
+                                                                        "text-sm font-medium",
+                                                                        secondsDiff <= 1
+                                                                            ? "text-red-400"
+                                                                            : secondsDiff <= 3
+                                                                              ? "text-amber-400"
+                                                                              : "text-stone-500",
+                                                                    )}
+                                                                >
+                                                                    +{secondsDiff}s
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                     <td className="p-2">
                                                         <span
