@@ -83,7 +83,8 @@ const WHEEL_SEGMENTS = [
 ];
 
 const SEGMENT_COUNT = WHEEL_SEGMENTS.length;
-const SEGMENT_ANGLE = 360 / SEGMENT_COUNT;
+const TAU = 2 * Math.PI;
+const ARC = TAU / SEGMENT_COUNT;
 
 interface WheelOfFortuneProps {
     disabled: boolean;
@@ -100,130 +101,179 @@ function WheelOfFortune({
     targetSegment,
     spinning,
 }: WheelOfFortuneProps) {
-    const wheelRef = useRef<HTMLUListElement>(null);
-    const animationRef = useRef<Animation | null>(null);
-    const previousEndDegreeRef = useRef(0);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const currentAngleRef = useRef(0);
+    const animationRef = useRef<number | null>(null);
 
+    const WHEEL_SIZE = 320;
+    const RAD = WHEEL_SIZE / 2;
+
+    // Draw the wheel segments on canvas
+    const drawWheel = (ctx: CanvasRenderingContext2D) => {
+        ctx.clearRect(0, 0, WHEEL_SIZE, WHEEL_SIZE);
+
+        WHEEL_SEGMENTS.forEach((segment, i) => {
+            const ang = ARC * i;
+            ctx.save();
+
+            // Draw segment
+            ctx.beginPath();
+            ctx.fillStyle = segment.color;
+            ctx.moveTo(RAD, RAD);
+            ctx.arc(RAD, RAD, RAD, ang, ang + ARC);
+            ctx.lineTo(RAD, RAD);
+            ctx.fill();
+
+            // Draw segment border
+            ctx.strokeStyle = "#1c1917";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Draw text
+            ctx.translate(RAD, RAD);
+            ctx.rotate(ang + ARC / 2);
+            ctx.textAlign = "right";
+            ctx.fillStyle = segment.textColor;
+            ctx.font = 'bold 12px "Press Start 2P", monospace';
+            ctx.fillText(segment.label, RAD - 12, 4);
+
+            ctx.restore();
+        });
+
+        // Draw center circle
+        ctx.beginPath();
+        ctx.arc(RAD, RAD, 35, 0, TAU);
+        ctx.fillStyle = "#292524";
+        ctx.fill();
+        ctx.strokeStyle = "#c9a227";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Draw inner decoration
+        ctx.beginPath();
+        ctx.arc(RAD, RAD, 25, 0, TAU);
+        ctx.fillStyle = "#1c1917";
+        ctx.fill();
+        ctx.strokeStyle = "#78716c";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    };
+
+    // Initialize wheel
     useEffect(() => {
-        if (spinning && targetSegment !== null && wheelRef.current) {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        drawWheel(ctx);
+    }, []);
+
+    // Handle spinning animation
+    useEffect(() => {
+        if (spinning && targetSegment !== null) {
+            const canvas = canvasRef.current;
+            if (!canvas) return;
+
             // Cancel any existing animation
             if (animationRef.current) {
-                animationRef.current.cancel();
+                cancelAnimationFrame(animationRef.current);
             }
 
-            // Pointer is at TOP (90° from right/3 o'clock position)
-            // Segment i (0-indexed) has center at i * 30° from right
-            // To land segment i under top pointer:
-            // zeroAngle = 360 - finalAngle + 90 should equal i * 30
-            // So: finalAngle = 450 - i * 30 (normalized to 0-360)
-            const targetFinalAngle = (((450 - targetSegment * 30) % 360) + 360) % 360;
+            // Calculate target angle
+            // Canvas draws segment 0 starting at 3 o'clock (0 radians)
+            // Pointer is at top (12 o'clock = -PI/2 or 3PI/2)
+            // To land segment i under top pointer, we need to rotate so that
+            // the CENTER of segment i aligns with the top
+            // Segment i center is at: i * ARC + ARC/2 from 3 o'clock
+            // We need to rotate BACKWARDS (negative/clockwise visually) to bring it to top
 
-            // Add 5-7 full rotations for spin effect
-            const extraSpins = 5 + Math.floor(Math.random() * 3);
-            const newEndDegree =
-                previousEndDegreeRef.current +
-                extraSpins * 360 +
-                ((targetFinalAngle - (previousEndDegreeRef.current % 360) + 360) % 360);
+            // The angle we need the wheel to show at rest:
+            // Top = -PI/2 (or 3PI/2), segment center = targetSegment * ARC + ARC/2
+            // So final rotation = -(targetSegment * ARC + ARC/2) - PI/2
+            // But we rotate the canvas, so positive rotation = clockwise
+            // We want segment to move TO the top, so:
+            const segmentCenterAngle = targetSegment * ARC + ARC / 2;
+            // To put this at top (which is at -PI/2 from 3 o'clock perspective):
+            // We need rotation such that segmentCenterAngle + rotation = -PI/2 (mod TAU)
+            // rotation = -PI/2 - segmentCenterAngle
+            // But CSS rotation is opposite, and we want multiple spins
+            const targetAngle = -segmentCenterAngle - Math.PI / 2;
 
-            // Use Web Animations API
-            animationRef.current = wheelRef.current.animate(
-                [
-                    { transform: `rotate(${previousEndDegreeRef.current}deg)` },
-                    { transform: `rotate(${newEndDegree}deg)` },
-                ],
-                {
-                    duration: 4000,
-                    direction: "normal",
-                    easing: "cubic-bezier(0.440, -0.205, 0.000, 1.130)",
-                    fill: "forwards",
-                    iterations: 1,
-                },
-            );
+            // Add 5-8 full rotations and normalize
+            const extraSpins = 5 + Math.floor(Math.random() * 4);
+            const totalRotation =
+                extraSpins * TAU + ((targetAngle - (currentAngleRef.current % TAU) + TAU) % TAU);
+            const finalAngle = currentAngleRef.current + totalRotation;
 
-            previousEndDegreeRef.current = newEndDegree;
+            const startAngle = currentAngleRef.current;
+            const startTime = performance.now();
+            const duration = 4000; // 4 seconds
 
-            animationRef.current.onfinish = () => {
-                onSpinComplete(targetSegment);
+            const animate = (currentTime: number) => {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                // Easing function: ease-out cubic
+                const eased = 1 - Math.pow(1 - progress, 3);
+
+                const currentRotation = startAngle + (finalAngle - startAngle) * eased;
+                currentAngleRef.current = currentRotation;
+
+                canvas.style.transform = `rotate(${currentRotation}rad)`;
+
+                if (progress < 1) {
+                    animationRef.current = requestAnimationFrame(animate);
+                } else {
+                    // Animation complete
+                    currentAngleRef.current = finalAngle;
+                    onSpinComplete(targetSegment);
+                }
             };
+
+            animationRef.current = requestAnimationFrame(animate);
         }
+
+        return () => {
+            if (animationRef.current) {
+                cancelAnimationFrame(animationRef.current);
+            }
+        };
     }, [spinning, targetSegment, onSpinComplete]);
 
     return (
         <div className="relative flex flex-col items-center">
             {/* Wheel container */}
-            <fieldset
-                className="relative grid aspect-square w-[320px] place-content-center"
-                style={{
-                    containerType: "inline-size",
-                }}
-            >
+            <div className="relative" style={{ width: WHEEL_SIZE, height: WHEEL_SIZE }}>
                 {/* Pointer at TOP pointing down */}
                 <div
-                    className="absolute left-1/2 top-0 z-10 -translate-x-1/2"
+                    className="absolute left-1/2 -top-2 z-10 -translate-x-1/2"
                     style={{
                         width: 0,
                         height: 0,
-                        borderLeft: "14px solid transparent",
-                        borderRight: "14px solid transparent",
-                        borderTop: "24px solid #dc2626",
-                        filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.6))",
+                        borderLeft: "16px solid transparent",
+                        borderRight: "16px solid transparent",
+                        borderTop: "28px solid #dc2626",
+                        filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.8))",
                     }}
                 />
 
-                {/* Wheel */}
-                <ul
-                    ref={wheelRef}
-                    className="absolute inset-0"
+                {/* Canvas wheel */}
+                <canvas
+                    ref={canvasRef}
+                    width={WHEEL_SIZE}
+                    height={WHEEL_SIZE}
+                    className="rounded-full"
                     style={{
-                        clipPath: "inset(0 0 0 0 round 50%)",
-                        display: "grid",
-                        placeContent: "center start",
-                    }}
-                >
-                    {WHEEL_SEGMENTS.map((segment, index) => (
-                        <li
-                            key={index}
-                            className="grid content-center"
-                            style={{
-                                gridArea: "1 / -1",
-                                aspectRatio: `1 / calc(2 * tan(180deg / ${SEGMENT_COUNT}))`,
-                                backgroundColor: segment.color,
-                                clipPath: "polygon(0% 0%, 100% 50%, 0% 100%)",
-                                width: "50cqi",
-                                paddingLeft: "1ch",
-                                transformOrigin: "center right",
-                                rotate: `${index * SEGMENT_ANGLE}deg`,
-                                userSelect: "none",
-                            }}
-                        >
-                            <span
-                                className="font-pixel text-[3cqi] font-bold"
-                                style={{ color: segment.textColor }}
-                            >
-                                {segment.label}
-                            </span>
-                        </li>
-                    ))}
-                </ul>
-
-                {/* Center circle */}
-                <div
-                    className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-                    style={{
-                        width: "20cqi",
-                        height: "20cqi",
-                        borderRadius: "50%",
-                        backgroundColor: "hsla(0, 0%, 100%, 0.1)",
-                        border: "3px solid #c9a227",
+                        boxShadow: "0 0 0 6px #c9a227, 0 0 20px rgba(0,0,0,0.5)",
                     }}
                 />
-            </fieldset>
+            </div>
 
             {/* Spin button */}
             <button
                 onClick={onSpinStart}
                 disabled={disabled || spinning}
-                className={`mt-6 flex items-center gap-2 rounded-lg border-2 px-8 py-3 font-pixel text-lg transition-all ${
+                className={`mt-8 flex items-center gap-2 rounded-lg border-2 px-8 py-3 font-pixel text-lg transition-all ${
                     disabled || spinning
                         ? "cursor-not-allowed border-stone-600 bg-stone-800/50 text-stone-500"
                         : "border-amber-500 bg-gradient-to-br from-amber-800 to-amber-900 text-amber-200 hover:from-amber-700 hover:to-amber-800"
