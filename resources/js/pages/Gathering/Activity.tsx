@@ -155,6 +155,11 @@ export default function GatheringActivity() {
         }, 50);
     };
 
+    // Sync energy state when props change (from router.reload)
+    useEffect(() => {
+        setCurrentEnergy(player_energy);
+    }, [player_energy]);
+
     useEffect(() => {
         return () => {
             if (cooldownInterval.current) {
