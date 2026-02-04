@@ -196,7 +196,8 @@ class CraftingService
     public function __construct(
         protected InventoryService $inventoryService,
         protected DailyTaskService $dailyTaskService,
-        protected TownBonusService $townBonusService
+        protected TownBonusService $townBonusService,
+        protected BeliefEffectService $beliefEffectService
     ) {}
 
     /**
@@ -627,6 +628,20 @@ class CraftingService
 
             // Award XP (scaled by total quantity)
             $xpAwarded = (int) ceil($recipe['xp_reward'] * ($totalQuantity / max(1, $baseQuantity)));
+
+            // Apply belief crafting XP bonus/penalty (Craftsmanship, Pride, Bloodlust)
+            $craftingXpBonus = $this->beliefEffectService->getEffect($user, 'crafting_xp_bonus');
+            $craftingXpPenalty = $this->beliefEffectService->getEffect($user, 'crafting_xp_penalty');
+            $totalBonus = $craftingXpBonus + $craftingXpPenalty;
+            if ($totalBonus != 0) {
+                $xpAwarded = (int) ceil($xpAwarded * (1 + $totalBonus / 100));
+            }
+
+            // Apply general XP penalty (Sloth belief)
+            $xpPenalty = $this->beliefEffectService->getEffect($user, 'xp_penalty');
+            if ($xpPenalty != 0) {
+                $xpAwarded = (int) ceil($xpAwarded * (1 + $xpPenalty / 100));
+            }
 
             // Get or create the skill
             $skill = $user->skills()->where('skill_name', $recipe['skill'])->first();

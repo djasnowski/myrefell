@@ -486,6 +486,12 @@ class ReligionService
             if ($actionType === ReligiousAction::ACTION_SACRIFICE && $sacrificeItem) {
                 // Prayer XP comes from the bone's prayer_bonus value
                 $basePrayerXp = $sacrificeItem->prayer_bonus;
+
+                // Apply Sacrificial Rites belief: +50% sacrifice XP bonus
+                $sacrificeXpBonus = $this->beliefEffectService->getEffect($player, 'sacrifice_xp_bonus');
+                if ($sacrificeXpBonus > 0) {
+                    $basePrayerXp = (int) ceil($basePrayerXp * (1 + $sacrificeXpBonus / 100));
+                }
             }
             $prayerXpGained = (int) floor($basePrayerXp * $multiplier);
 
@@ -721,7 +727,14 @@ class ReligionService
         }
 
         // Get build cost
-        $cost = ReligiousStructure::getBuildCost($structureType);
+        $baseCost = ReligiousStructure::getBuildCost($structureType);
+
+        // Apply Communion belief: structures cost 15% less
+        $structureBonus = $this->beliefEffectService->getEffect($player, 'structure_bonus');
+        $cost = $structureBonus > 0
+            ? (int) ceil($baseCost * (1 - $structureBonus / 100))
+            : $baseCost;
+
         if ($player->gold < $cost) {
             return ['success' => false, 'message' => 'You need '.number_format($cost).' gold to build a '.$structureType.'.'];
         }
@@ -988,6 +1001,11 @@ class ReligionService
         if ($actionType === ReligiousAction::ACTION_DONATION) {
             // Charity belief: +25% donation devotion
             $devotionBonus += $this->beliefEffectService->getEffect($player, 'donation_devotion_bonus');
+            // Greed belief: -25% donation efficiency (costs more gold per devotion)
+            $donationPenalty = $this->beliefEffectService->getEffect($player, 'donation_cost_penalty');
+            if ($donationPenalty > 0) {
+                $devotionBonus -= $donationPenalty;
+            }
         }
 
         if ($actionType === ReligiousAction::ACTION_RITUAL) {
@@ -1004,6 +1022,14 @@ class ReligionService
             // Pilgrimage belief: +100% pilgrimage devotion
             $devotionBonus += $this->beliefEffectService->getEffect($player, 'pilgrimage_bonus');
         }
+
+        if ($actionType === ReligiousAction::ACTION_PRAYER) {
+            // Sacrificial Rites belief: -25% prayer devotion
+            $devotionBonus += $this->beliefEffectService->getEffect($player, 'prayer_devotion_penalty');
+        }
+
+        // Blood Tithe belief: -10% devotion gain from all sources
+        $devotionBonus += $this->beliefEffectService->getEffect($player, 'devotion_gain_penalty');
 
         // Apply the total modifier
         if ($devotionBonus != 0) {

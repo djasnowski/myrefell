@@ -651,6 +651,18 @@ class CombatService
      */
     protected function awardCombatXp(User $player, string $skillName, int $xp): void
     {
+        // Apply belief combat XP bonus (Martial Prowess, Bloodlust, Pride)
+        $combatXpBonus = $this->beliefEffectService->getEffect($player, 'combat_xp_bonus');
+        if ($combatXpBonus != 0) {
+            $xp = (int) ceil($xp * (1 + $combatXpBonus / 100));
+        }
+
+        // Apply general XP penalty (Sloth belief)
+        $xpPenalty = $this->beliefEffectService->getEffect($player, 'xp_penalty');
+        if ($xpPenalty != 0) {
+            $xp = (int) ceil($xp * (1 + $xpPenalty / 100));
+        }
+
         $skill = $player->skills()->where('skill_name', $skillName)->first();
 
         if (! $skill) {

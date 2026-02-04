@@ -45,6 +45,9 @@ interface SidebarData {
         max: number;
         at_max: boolean;
         regen_rate: number;
+        regen_amount: number;
+        base_regen_amount: number;
+        regen_bonuses: { source: string; amount: string }[];
         seconds_until_next: number | null;
     };
 }
@@ -76,7 +79,13 @@ function StatBar({ current, max, color }: { current: number; max: number; color:
     );
 }
 
-function EnergyTimer({ secondsUntilNext }: { secondsUntilNext: number | null }) {
+function EnergyTimer({
+    secondsUntilNext,
+    regenAmount,
+}: {
+    secondsUntilNext: number | null;
+    regenAmount: number;
+}) {
     const [seconds, setSeconds] = useState(secondsUntilNext ?? 0);
 
     useEffect(() => {
@@ -100,9 +109,12 @@ function EnergyTimer({ secondsUntilNext }: { secondsUntilNext: number | null }) 
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
 
+    const hasBonus = regenAmount > 10;
+
     return (
         <span className="font-pixel text-[8px] text-stone-400">
-            +10 in {minutes}:{secs.toString().padStart(2, "0")}
+            <span className={hasBonus ? "text-green-400" : ""}>+{regenAmount}</span> in {minutes}:
+            {secs.toString().padStart(2, "0")}
         </span>
     );
 }
@@ -218,32 +230,85 @@ export function NavPlayerInfo() {
             </TooltipProvider>
 
             {/* Energy */}
-            <div className="mb-2">
-                <div className="mb-0.5 flex items-center justify-between">
-                    <span className="flex items-center gap-1">
-                        <span className="text-xs">⚡</span>
-                        <span className="font-pixel text-[10px] text-sidebar-foreground/80">
-                            Energy
+            {energy_info.regen_bonuses.length > 0 ? (
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className="mb-2 cursor-help">
+                                <div className="mb-0.5 flex items-center justify-between">
+                                    <span className="flex items-center gap-1">
+                                        <span className="text-xs">⚡</span>
+                                        <span className="font-pixel text-[10px] text-sidebar-foreground/80">
+                                            Energy
+                                        </span>
+                                    </span>
+                                    <span className="font-pixel text-[10px] text-sidebar-foreground/60">
+                                        {energy_info.current}/{energy_info.max}
+                                    </span>
+                                </div>
+                                <StatBar
+                                    current={energy_info.current}
+                                    max={energy_info.max}
+                                    color="bg-gradient-to-r from-yellow-600 to-yellow-400"
+                                />
+                                {!energy_info.at_max && (
+                                    <div className="mt-0.5 text-right">
+                                        <EnergyTimer
+                                            key={energy_info.seconds_until_next}
+                                            secondsUntilNext={energy_info.seconds_until_next}
+                                            regenAmount={energy_info.regen_amount}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="bg-stone-900 border-stone-700">
+                            <div className="font-pixel text-xs">
+                                <div className="text-stone-300 mb-1">Energy Regen Bonuses</div>
+                                <div className="text-stone-400">
+                                    Base: +{energy_info.base_regen_amount}
+                                </div>
+                                {energy_info.regen_bonuses.map((bonus, i) => (
+                                    <div key={i} className="text-green-400">
+                                        {bonus.source}: {bonus.amount}
+                                    </div>
+                                ))}
+                                <div className="border-t border-stone-700 mt-1 pt-1 text-stone-200">
+                                    Total: +{energy_info.regen_amount}
+                                </div>
+                            </div>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            ) : (
+                <div className="mb-2">
+                    <div className="mb-0.5 flex items-center justify-between">
+                        <span className="flex items-center gap-1">
+                            <span className="text-xs">⚡</span>
+                            <span className="font-pixel text-[10px] text-sidebar-foreground/80">
+                                Energy
+                            </span>
                         </span>
-                    </span>
-                    <span className="font-pixel text-[10px] text-sidebar-foreground/60">
-                        {energy_info.current}/{energy_info.max}
-                    </span>
-                </div>
-                <StatBar
-                    current={energy_info.current}
-                    max={energy_info.max}
-                    color="bg-gradient-to-r from-yellow-600 to-yellow-400"
-                />
-                {!energy_info.at_max && (
-                    <div className="mt-0.5 text-right">
-                        <EnergyTimer
-                            key={energy_info.seconds_until_next}
-                            secondsUntilNext={energy_info.seconds_until_next}
-                        />
+                        <span className="font-pixel text-[10px] text-sidebar-foreground/60">
+                            {energy_info.current}/{energy_info.max}
+                        </span>
                     </div>
-                )}
-            </div>
+                    <StatBar
+                        current={energy_info.current}
+                        max={energy_info.max}
+                        color="bg-gradient-to-r from-yellow-600 to-yellow-400"
+                    />
+                    {!energy_info.at_max && (
+                        <div className="mt-0.5 text-right">
+                            <EnergyTimer
+                                key={energy_info.seconds_until_next}
+                                secondsUntilNext={energy_info.seconds_until_next}
+                                regenAmount={energy_info.regen_amount}
+                            />
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Gold */}
             <div className="flex items-center justify-center gap-1.5 rounded border border-amber-600/30 bg-amber-900/20 py-1.5">

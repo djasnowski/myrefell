@@ -13,9 +13,9 @@ class EnergyService
     ) {}
 
     /**
-     * Energy regeneration rate in minutes.
+     * Energy regeneration rate in seconds.
      */
-    public const REGEN_MINUTES = 5;
+    public const REGEN_SECONDS = 10; // 10 seconds for testing (normally 300 = 5 minutes)
 
     /**
      * Energy amount regenerated per tick.
@@ -122,25 +122,38 @@ class EnergyService
      */
     public function regenerateAllPlayers(): int
     {
-        // Base regeneration for all players
-        $affected = User::where('energy', '<', \DB::raw('max_energy'))
-            ->increment('energy', self::REGEN_AMOUNT);
+        // Get all players who need energy regen
+        $players = User::where('energy', '<', \DB::raw('max_energy'))->get();
+        $affected = 0;
 
-        // Agility bonus: +1 energy per 20 agility levels
-        // Join with player_skills to get agility level and add bonus
-        \DB::statement("
-            UPDATE users
-            SET energy = energy + FLOOR(COALESCE(
-                (SELECT level FROM player_skills
-                 WHERE player_skills.player_id = users.id
-                 AND player_skills.skill_name = 'agility'), 0
-            ) / 20)
-            WHERE energy < max_energy
-        ");
+        foreach ($players as $player) {
+            $regenAmount = self::REGEN_AMOUNT;
 
-        // Clamp any that went over max
-        User::whereRaw('energy > max_energy')
-            ->update(['energy' => \DB::raw('max_energy')]);
+            // Agility bonus: +1 energy per 20 agility levels
+            $agilityLevel = $player->getSkillLevel('agility');
+            $regenAmount += (int) floor($agilityLevel / 20);
+
+            // Apply blessing energy regen bonus (e.g., 20 = +20% more energy)
+            $energyRegenBonus = $this->blessingEffectService->getEffect($player, 'energy_regen_bonus');
+
+            // Apply HQ prayer energy recovery bonus (flat bonus, not percentage)
+            $regenAmount += (int) $this->blessingEffectService->getEffect($player, 'energy_recovery_bonus');
+
+            // Apply belief energy regen bonus (Temperance belief)
+            $energyRegenBonus += $this->beliefEffectService->getEffect($player, 'energy_regen_bonus');
+
+            if ($energyRegenBonus > 0) {
+                $regenAmount = (int) ceil($regenAmount * (1 + $energyRegenBonus / 100));
+            }
+
+            // Add energy up to max
+            $newEnergy = min($player->energy + $regenAmount, $player->max_energy);
+            if ($newEnergy > $player->energy) {
+                $player->energy = $newEnergy;
+                $player->save();
+                $affected++;
+            }
+        }
 
         return $affected;
     }
@@ -150,11 +163,12 @@ class EnergyService
      */
     public function getTimeUntilNextEnergy(): int
     {
-        // Calculate time until next 5-minute mark
+        // Calculate time until next regen interval
         $now = Carbon::now();
-        $nextRegen = $now->copy()->addMinutes(self::REGEN_MINUTES - ($now->minute % self::REGEN_MINUTES))->second(0);
+        $currentSecond = $now->timestamp;
+        $nextRegen = (int) ceil($currentSecond / self::REGEN_SECONDS) * self::REGEN_SECONDS;
 
-        return $now->diffInSeconds($nextRegen);
+        return max(1, $nextRegen - $currentSecond);
     }
 
     /**
@@ -164,12 +178,53 @@ class EnergyService
     {
         $atMax = $player->energy >= $player->max_energy;
 
+        // Calculate actual regen amount with all bonuses
+        $baseAmount = self::REGEN_AMOUNT;
+        $regenAmount = $baseAmount;
+        $bonuses = [];
+
+        // Apply blessing energy regen bonus (percentage)
+        $blessingRegenBonus = $this->blessingEffectService->getEffect($player, 'energy_regen_bonus');
+        if ($blessingRegenBonus > 0) {
+            $bonuses[] = [
+                'source' => 'Blessing',
+                'amount' => "+{$blessingRegenBonus}%",
+            ];
+        }
+
+        // Apply HQ prayer energy recovery bonus (flat bonus)
+        $hqRecoveryBonus = (int) $this->blessingEffectService->getEffect($player, 'energy_recovery_bonus');
+        if ($hqRecoveryBonus > 0) {
+            $regenAmount += $hqRecoveryBonus;
+            $bonuses[] = [
+                'source' => 'HQ Prayer',
+                'amount' => "+{$hqRecoveryBonus}",
+            ];
+        }
+
+        // Apply belief energy regen bonus (percentage)
+        $beliefRegenBonus = $this->beliefEffectService->getEffect($player, 'energy_regen_bonus');
+        if ($beliefRegenBonus > 0) {
+            $bonuses[] = [
+                'source' => 'Belief',
+                'amount' => "+{$beliefRegenBonus}%",
+            ];
+        }
+
+        // Apply total percentage bonus
+        $totalPercentBonus = $blessingRegenBonus + $beliefRegenBonus;
+        if ($totalPercentBonus > 0) {
+            $regenAmount = (int) ceil($regenAmount * (1 + $totalPercentBonus / 100));
+        }
+
         return [
             'current' => $player->energy,
             'max' => $player->max_energy,
             'at_max' => $atMax,
-            'regen_rate' => self::REGEN_MINUTES,
-            'regen_amount' => self::REGEN_AMOUNT,
+            'regen_rate' => self::REGEN_SECONDS,
+            'regen_amount' => $regenAmount,
+            'base_regen_amount' => $baseAmount,
+            'regen_bonuses' => $bonuses,
             'seconds_until_next' => $atMax ? null : $this->getTimeUntilNextEnergy(),
         ];
     }

@@ -122,7 +122,8 @@ class GatheringService
         protected InventoryService $inventoryService,
         protected DailyTaskService $dailyTaskService,
         protected TownBonusService $townBonusService,
-        protected BlessingEffectService $blessingEffectService
+        protected BlessingEffectService $blessingEffectService,
+        protected BeliefEffectService $beliefEffectService
     ) {}
 
     /**
@@ -291,6 +292,18 @@ class GatheringService
             // Award XP (scaled by quantity for bonus yields)
             $baseXp = $config['base_xp'] + $resource['xp_bonus'];
             $xpAwarded = (int) ceil($baseXp * $totalQuantity);
+
+            // Apply belief gathering XP bonus (Industriousness belief)
+            $gatheringXpBonus = $this->beliefEffectService->getEffect($user, 'gathering_xp_bonus');
+            if ($gatheringXpBonus != 0) {
+                $xpAwarded = (int) ceil($xpAwarded * (1 + $gatheringXpBonus / 100));
+            }
+
+            // Apply general XP penalty (Sloth belief)
+            $xpPenalty = $this->beliefEffectService->getEffect($user, 'xp_penalty');
+            if ($xpPenalty != 0) {
+                $xpAwarded = (int) ceil($xpAwarded * (1 + $xpPenalty / 100));
+            }
 
             // Get or create the skill
             $skill = $user->skills()->where('skill_name', $config['skill'])->first();
