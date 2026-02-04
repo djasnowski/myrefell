@@ -12,8 +12,8 @@ class TabActivityLog extends Model
     public $timestamps = false;
 
     /**
-     * Number of tab switches required to trigger a flag.
-     * Any multi-tab usage is cheating - being in two places at once.
+     * Number of XP-granting tab switches required to trigger a flag.
+     * Multi-tab XP farming is cheating - being in two places at once.
      */
     public const TAB_SWITCHES_TO_FLAG = 1;
 
@@ -21,6 +21,40 @@ class TabActivityLog extends Model
      * Admin email to notify when suspicious activity is detected.
      */
     public const ADMIN_EMAIL = 'd.jasnowski@gmail.com';
+
+    /**
+     * Route patterns that grant XP (cheating if multi-tabbed).
+     */
+    public const XP_ROUTES = [
+        'gathering/gather',
+        'training/train',
+        'thieving/attempt',
+        'crafting/craft',
+        'agility/train',
+        'apothecary/brew',
+        'combat/attack',
+        'anvil/smith',
+        'forge/',
+        'fishing/',
+    ];
+
+    /**
+     * Check if a route grants XP.
+     */
+    public static function isXpRoute(?string $route): bool
+    {
+        if (! $route) {
+            return false;
+        }
+
+        foreach (self::XP_ROUTES as $pattern) {
+            if (str_contains($route, $pattern)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     protected $fillable = [
         'user_id',
@@ -80,9 +114,9 @@ class TabActivityLog extends Model
             'created_at' => now(),
         ]);
 
-        // Check if we should flag the user (only check periodically, every 10 new_tab events)
-        if ($isNewTab) {
-            self::checkAndFlagUser($userId);
+        // Check if we should flag the user - only for XP-granting activities
+        if ($isNewTab && self::isXpRoute($route)) {
+            self::checkAndFlagUser($userId, $route);
         }
 
         return $log;
@@ -91,7 +125,7 @@ class TabActivityLog extends Model
     /**
      * Check if user should be flagged for suspicious activity.
      */
-    protected static function checkAndFlagUser(int $userId): void
+    protected static function checkAndFlagUser(int $userId, ?string $currentRoute = null): void
     {
         $user = User::find($userId);
         if (! $user) {
@@ -103,14 +137,16 @@ class TabActivityLog extends Model
             return;
         }
 
-        // Count tab switches in last hour
-        $tabSwitches = self::where('user_id', $userId)
+        // Count XP-granting tab switches in last hour
+        $xpTabSwitches = self::where('user_id', $userId)
             ->where('is_new_tab', true)
             ->where('created_at', '>=', now()->subHour())
+            ->get()
+            ->filter(fn ($log) => self::isXpRoute($log->route))
             ->count();
 
-        // Flag immediately if any tab switching detected
-        if ($tabSwitches >= self::TAB_SWITCHES_TO_FLAG) {
+        // Flag immediately if any XP-granting tab switching detected
+        if ($xpTabSwitches >= self::TAB_SWITCHES_TO_FLAG) {
             // Flag the user
             $user->suspicious_activity_flagged_at = now();
             $user->save();
@@ -139,8 +175,13 @@ class TabActivityLog extends Model
         }
 
         $total = $query->count();
-        $newTabCount = (clone $query)->where('is_new_tab', true)->count();
+        $tabSwitchLogs = (clone $query)->where('is_new_tab', true)->get();
+        $newTabCount = $tabSwitchLogs->count();
         $uniqueTabs = (clone $query)->distinct('tab_id')->count('tab_id');
+
+        // Separate XP vs non-XP tab switches
+        $xpTabSwitches = $tabSwitchLogs->filter(fn ($log) => self::isXpRoute($log->route))->count();
+        $nonXpTabSwitches = $newTabCount - $xpTabSwitches;
 
         // Calculate requests per hour
         $requestsLastHour = self::where('user_id', $userId)
@@ -150,6 +191,8 @@ class TabActivityLog extends Model
         return [
             'total_requests' => $total,
             'new_tab_switches' => $newTabCount,
+            'xp_tab_switches' => $xpTabSwitches,
+            'non_xp_tab_switches' => $nonXpTabSwitches,
             'unique_tabs' => $uniqueTabs,
             'suspicious_percentage' => $total > 0 ? round(($newTabCount / $total) * 100, 2) : 0,
             'requests_per_hour' => $requestsLastHour,

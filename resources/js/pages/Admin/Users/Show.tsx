@@ -196,6 +196,8 @@ interface BankAccount {
 interface SuspiciousActivityStats {
     total_requests: number;
     new_tab_switches: number;
+    xp_tab_switches: number;
+    non_xp_tab_switches: number;
     unique_tabs: number;
     suspicious_percentage: number;
     requests_per_hour: number;

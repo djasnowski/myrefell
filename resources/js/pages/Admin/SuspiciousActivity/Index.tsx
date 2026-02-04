@@ -17,6 +17,8 @@ interface FlaggedUser {
     stats: {
         total_requests: number;
         new_tab_switches: number;
+        xp_tab_switches: number;
+        non_xp_tab_switches: number;
         unique_tabs: number;
         suspicious_percentage: number;
         requests_per_hour: number;
@@ -147,7 +149,7 @@ export default function Index({ flaggedUsers }: Props) {
 
                                         <div className="flex items-center gap-6">
                                             {/* Stats */}
-                                            <div className="grid grid-cols-4 gap-4 text-center">
+                                            <div className="grid grid-cols-5 gap-4 text-center">
                                                 <div>
                                                     <div className="text-lg font-semibold text-stone-100">
                                                         {user.stats.total_requests.toLocaleString()}
@@ -165,11 +167,19 @@ export default function Index({ flaggedUsers }: Props) {
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <div className="text-lg font-semibold text-amber-400">
-                                                        {user.stats.new_tab_switches.toLocaleString()}
+                                                    <div className="text-lg font-semibold text-red-400">
+                                                        {user.stats.xp_tab_switches.toLocaleString()}
                                                     </div>
                                                     <div className="text-xs text-stone-500">
-                                                        Tab Switches
+                                                        XP Switches
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-lg font-semibold text-amber-400">
+                                                        {user.stats.non_xp_tab_switches.toLocaleString()}
+                                                    </div>
+                                                    <div className="text-xs text-stone-500">
+                                                        Other Switches
                                                     </div>
                                                 </div>
                                                 <div>
