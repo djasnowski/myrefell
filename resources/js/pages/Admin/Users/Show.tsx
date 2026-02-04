@@ -2,6 +2,7 @@ import { Head, Link, router, usePage } from "@inertiajs/react";
 import { formatDistanceToNow } from "date-fns";
 import {
     Activity,
+    AlertTriangle,
     ArrowLeft,
     Backpack,
     Ban,
@@ -22,6 +23,7 @@ import {
     MapPin,
     Scroll,
     Shield,
+    ShieldAlert,
     ShieldOff,
     Sparkles,
     Swords,
@@ -191,6 +193,19 @@ interface BankAccount {
     account_type: string;
 }
 
+interface SuspiciousActivityStats {
+    total_requests: number;
+    new_tab_switches: number;
+    unique_tabs: number;
+    suspicious_percentage: number;
+}
+
+interface SuspiciousActivity {
+    flagged_at: string | null;
+    stats_24h: SuspiciousActivityStats;
+    stats_1h: SuspiciousActivityStats;
+}
+
 interface Props {
     user: UserData;
     skills: Skill[];
@@ -204,6 +219,7 @@ interface Props {
     diseases: Disease[];
     activities: ActivityItem[];
     bankAccounts: BankAccount[];
+    suspiciousActivity: SuspiciousActivity;
 }
 
 type TabType =
@@ -215,6 +231,7 @@ type TabType =
     | "religion"
     | "employment"
     | "activity"
+    | "suspicious"
     | "admin";
 
 const tabs: { id: TabType; label: string; icon: typeof User }[] = [
@@ -226,6 +243,7 @@ const tabs: { id: TabType; label: string; icon: typeof User }[] = [
     { id: "religion", label: "Religion", icon: Church },
     { id: "employment", label: "Employment", icon: Briefcase },
     { id: "activity", label: "Activity Log", icon: Activity },
+    { id: "suspicious", label: "Suspicious Activity", icon: ShieldAlert },
     { id: "admin", label: "Admin Actions", icon: Shield },
 ];
 
@@ -242,6 +260,7 @@ export default function Show({
     diseases,
     activities,
     bankAccounts,
+    suspiciousActivity,
 }: Props) {
     const { auth } = usePage<SharedData>().props;
     const [activeTab, setActiveTab] = useState<TabType>("overview");
@@ -1209,6 +1228,178 @@ export default function Show({
                                 <ActivityTable activities={activities} />
                             </CardContent>
                         </Card>
+                    )}
+
+                    {/* Suspicious Activity Tab */}
+                    {activeTab === "suspicious" && (
+                        <div className="space-y-6">
+                            {/* Flag Status */}
+                            {suspiciousActivity.flagged_at && (
+                                <Card className="border-amber-900/50 bg-amber-900/10">
+                                    <CardContent className="flex items-center gap-4 p-4">
+                                        <AlertTriangle className="size-6 text-amber-400" />
+                                        <div>
+                                            <p className="font-medium text-amber-400">
+                                                User Flagged for Suspicious Activity
+                                            </p>
+                                            <p className="text-sm text-stone-400">
+                                                Flagged{" "}
+                                                {formatDistanceToNow(
+                                                    new Date(suspiciousActivity.flagged_at),
+                                                    { addSuffix: true },
+                                                )}
+                                            </p>
+                                        </div>
+                                        <Link
+                                            href={`/admin/suspicious-activity/${user.id}`}
+                                            className="ml-auto"
+                                        >
+                                            <Button variant="outline" className="border-amber-900">
+                                                View Full Details
+                                            </Button>
+                                        </Link>
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Stats */}
+                            <div className="grid gap-4 lg:grid-cols-2">
+                                <Card className="border-stone-800 bg-stone-900/50">
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="flex items-center gap-2 text-sm text-stone-400">
+                                            <Clock className="size-4" />
+                                            Last Hour
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <div className="text-2xl font-bold text-stone-100">
+                                                    {suspiciousActivity.stats_1h.total_requests}
+                                                </div>
+                                                <div className="text-xs text-stone-500">
+                                                    Total Requests
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div
+                                                    className={cn(
+                                                        "text-2xl font-bold",
+                                                        suspiciousActivity.stats_1h
+                                                            .suspicious_percentage >= 30
+                                                            ? "text-red-400"
+                                                            : suspiciousActivity.stats_1h
+                                                                    .suspicious_percentage >= 20
+                                                              ? "text-amber-400"
+                                                              : "text-green-400",
+                                                    )}
+                                                >
+                                                    {
+                                                        suspiciousActivity.stats_1h
+                                                            .suspicious_percentage
+                                                    }
+                                                    %
+                                                </div>
+                                                <div className="text-xs text-stone-500">
+                                                    Suspicious
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div className="text-xl font-semibold text-amber-400">
+                                                    {suspiciousActivity.stats_1h.new_tab_switches}
+                                                </div>
+                                                <div className="text-xs text-stone-500">
+                                                    Tab Switches
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div className="text-xl font-semibold text-stone-100">
+                                                    {suspiciousActivity.stats_1h.unique_tabs}
+                                                </div>
+                                                <div className="text-xs text-stone-500">
+                                                    Unique Tabs
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                <Card className="border-stone-800 bg-stone-900/50">
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="flex items-center gap-2 text-sm text-stone-400">
+                                            <Activity className="size-4" />
+                                            Last 24 Hours
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <div className="text-2xl font-bold text-stone-100">
+                                                    {suspiciousActivity.stats_24h.total_requests.toLocaleString()}
+                                                </div>
+                                                <div className="text-xs text-stone-500">
+                                                    Total Requests
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div
+                                                    className={cn(
+                                                        "text-2xl font-bold",
+                                                        suspiciousActivity.stats_24h
+                                                            .suspicious_percentage >= 30
+                                                            ? "text-red-400"
+                                                            : suspiciousActivity.stats_24h
+                                                                    .suspicious_percentage >= 20
+                                                              ? "text-amber-400"
+                                                              : "text-green-400",
+                                                    )}
+                                                >
+                                                    {
+                                                        suspiciousActivity.stats_24h
+                                                            .suspicious_percentage
+                                                    }
+                                                    %
+                                                </div>
+                                                <div className="text-xs text-stone-500">
+                                                    Suspicious
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div className="text-xl font-semibold text-amber-400">
+                                                    {suspiciousActivity.stats_24h.new_tab_switches.toLocaleString()}
+                                                </div>
+                                                <div className="text-xs text-stone-500">
+                                                    Tab Switches
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div className="text-xl font-semibold text-stone-100">
+                                                    {suspiciousActivity.stats_24h.unique_tabs}
+                                                </div>
+                                                <div className="text-xs text-stone-500">
+                                                    Unique Tabs
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            {/* Link to full details */}
+                            <Card className="border-stone-800 bg-stone-900/50">
+                                <CardContent className="p-4">
+                                    <Link href={`/admin/suspicious-activity/${user.id}`}>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full border-stone-700"
+                                        >
+                                            <ShieldAlert className="size-4" />
+                                            View Full Tab Activity Log
+                                        </Button>
+                                    </Link>
+                                </CardContent>
+                            </Card>
+                        </div>
                     )}
 
                     {/* Admin Actions Tab */}

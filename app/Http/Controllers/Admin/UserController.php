@@ -9,6 +9,7 @@ use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\LocationActivityLog;
 use App\Models\PlayerSkill;
 use App\Models\ReligionMember;
+use App\Models\TabActivityLog;
 use App\Models\User;
 use App\Models\UserBan;
 use Illuminate\Http\RedirectResponse;
@@ -251,6 +252,11 @@ class UserController extends Controller
                 'started_at' => $pq->started_at?->toISOString(),
                 'completed_at' => $pq->completed_at?->toISOString(),
             ]),
+            'suspiciousActivity' => [
+                'flagged_at' => $user->suspicious_activity_flagged_at?->toISOString(),
+                'stats_24h' => TabActivityLog::getSuspiciousActivity($user->id, now()->subDay()->toDateTimeString()),
+                'stats_1h' => TabActivityLog::getSuspiciousActivity($user->id, now()->subHour()->toDateTimeString()),
+            ],
         ]);
     }
 

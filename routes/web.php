@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ItemController as AdminItemController;
+use App\Http\Controllers\Admin\SuspiciousActivityController as AdminSuspiciousActivityController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AgilityController;
@@ -898,6 +899,11 @@ Route::middleware(['auth', 'verified', 'admin'])
 
         // Items
         Route::get('/items', [AdminItemController::class, 'index'])->name('items.index');
+
+        // Suspicious Activity
+        Route::get('/suspicious-activity', [AdminSuspiciousActivityController::class, 'index'])->name('suspicious-activity.index');
+        Route::get('/suspicious-activity/{user}', [AdminSuspiciousActivityController::class, 'show'])->name('suspicious-activity.show');
+        Route::post('/suspicious-activity/{user}/clear', [AdminSuspiciousActivityController::class, 'clearFlag'])->name('suspicious-activity.clear');
     });
 
 require __DIR__.'/settings.php';

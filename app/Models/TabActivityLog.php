@@ -2,12 +2,30 @@
 
 namespace App\Models;
 
+use App\Mail\SuspiciousActivityDetected;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Mail;
 
 class TabActivityLog extends Model
 {
     public $timestamps = false;
+
+    /**
+     * Threshold for flagging: if user has more than this percentage
+     * of tab switches in last hour, flag them.
+     */
+    public const SUSPICIOUS_THRESHOLD_PERCENT = 20;
+
+    /**
+     * Minimum number of requests in the last hour before we consider flagging.
+     */
+    public const MINIMUM_REQUESTS_FOR_FLAG = 50;
+
+    /**
+     * Admin email to notify when suspicious activity is detected.
+     */
+    public const ADMIN_EMAIL = 'd.jasnowski@gmail.com';
 
     protected $fillable = [
         'user_id',
@@ -55,7 +73,7 @@ class TabActivityLog extends Model
         $isNewTab = $recentActivity !== null;
         $previousTabId = $recentActivity?->tab_id;
 
-        return self::create([
+        $log = self::create([
             'user_id' => $userId,
             'tab_id' => $tabId,
             'ip_address' => $ipAddress,
@@ -66,6 +84,50 @@ class TabActivityLog extends Model
             'previous_tab_id' => $previousTabId,
             'created_at' => now(),
         ]);
+
+        // Check if we should flag the user (only check periodically, every 10 new_tab events)
+        if ($isNewTab) {
+            self::checkAndFlagUser($userId);
+        }
+
+        return $log;
+    }
+
+    /**
+     * Check if user should be flagged for suspicious activity.
+     */
+    protected static function checkAndFlagUser(int $userId): void
+    {
+        $user = User::find($userId);
+        if (! $user) {
+            return;
+        }
+
+        // Already flagged in the last 24 hours? Don't re-flag
+        if ($user->suspicious_activity_flagged_at && $user->suspicious_activity_flagged_at->gt(now()->subDay())) {
+            return;
+        }
+
+        // Get stats for last hour
+        $stats = self::getSuspiciousActivity($userId, now()->subHour()->toDateTimeString());
+
+        // Check if meets threshold
+        if ($stats['total_requests'] >= self::MINIMUM_REQUESTS_FOR_FLAG
+            && $stats['suspicious_percentage'] >= self::SUSPICIOUS_THRESHOLD_PERCENT) {
+            // Flag the user
+            $user->suspicious_activity_flagged_at = now();
+            $user->save();
+
+            // Get 24-hour stats for the email
+            $dayStats = self::getSuspiciousActivity($userId, now()->subDay()->toDateTimeString());
+
+            // Send email notification
+            try {
+                Mail::to(self::ADMIN_EMAIL)->send(new SuspiciousActivityDetected($user, $dayStats));
+            } catch (\Exception $e) {
+                report($e);
+            }
+        }
     }
 
     /**
@@ -89,5 +151,16 @@ class TabActivityLog extends Model
             'unique_tabs' => $uniqueTabs,
             'suspicious_percentage' => $total > 0 ? round(($newTabCount / $total) * 100, 2) : 0,
         ];
+    }
+
+    /**
+     * Get recent tab activity for a user (for admin display).
+     */
+    public static function getRecentActivity(int $userId, int $limit = 100): \Illuminate\Database\Eloquent\Collection
+    {
+        return self::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get();
     }
 }
