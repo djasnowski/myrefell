@@ -375,57 +375,87 @@ export default function Show({ user, stats, recentActivity }: Props) {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {recentActivity.map((activity) => (
-                                            <tr
-                                                key={activity.id}
-                                                className={cn(
-                                                    "border-b border-stone-800/50",
-                                                    activity.is_new_tab && "bg-red-900/10",
-                                                )}
-                                            >
-                                                <td className="p-2 text-stone-400">
-                                                    {formatDateTime(activity.created_at)}
-                                                </td>
-                                                <td className="p-2">
-                                                    <span
-                                                        className={cn(
-                                                            "rounded px-2 py-0.5 font-mono text-xs",
-                                                            getTabColor(activity.tab_id),
+                                        {recentActivity.map((activity, index) => {
+                                            // Calculate seconds since next entry (entries are in desc order)
+                                            const nextActivity = recentActivity[index + 1];
+                                            const secondsDiff = nextActivity
+                                                ? Math.round(
+                                                      (new Date(activity.created_at).getTime() -
+                                                          new Date(
+                                                              nextActivity.created_at,
+                                                          ).getTime()) /
+                                                          1000,
+                                                  )
+                                                : null;
+
+                                            return (
+                                                <tr
+                                                    key={activity.id}
+                                                    className={cn(
+                                                        "border-b border-stone-800/50",
+                                                        activity.is_new_tab && "bg-red-900/10",
+                                                    )}
+                                                >
+                                                    <td className="p-2 text-stone-400">
+                                                        <div>
+                                                            {formatDateTime(activity.created_at)}
+                                                        </div>
+                                                        {secondsDiff !== null && (
+                                                            <div
+                                                                className={cn(
+                                                                    "text-xs",
+                                                                    secondsDiff <= 1
+                                                                        ? "text-red-400"
+                                                                        : secondsDiff <= 3
+                                                                          ? "text-amber-400"
+                                                                          : "text-stone-500",
+                                                                )}
+                                                            >
+                                                                +{secondsDiff}s
+                                                            </div>
                                                         )}
-                                                    >
-                                                        {activity.tab_id.slice(0, 8)}...
-                                                    </span>
-                                                </td>
-                                                <td className="max-w-[300px] truncate p-2 font-mono text-stone-100">
-                                                    {activity.route}
-                                                </td>
-                                                <td className="p-2">
-                                                    <Badge
-                                                        variant="secondary"
-                                                        className="bg-stone-800 text-stone-300"
-                                                    >
-                                                        {activity.method}
-                                                    </Badge>
-                                                </td>
-                                                <td className="p-2">
-                                                    {activity.is_new_tab ? (
-                                                        <Badge
-                                                            variant="destructive"
-                                                            className="bg-red-900/30 text-red-400"
+                                                    </td>
+                                                    <td className="p-2">
+                                                        <span
+                                                            className={cn(
+                                                                "rounded px-2 py-0.5 font-mono text-xs",
+                                                                getTabColor(activity.tab_id),
+                                                            )}
                                                         >
-                                                            Tab Switch
-                                                        </Badge>
-                                                    ) : (
+                                                            {activity.tab_id.slice(0, 8)}...
+                                                        </span>
+                                                    </td>
+                                                    <td className="max-w-[300px] truncate p-2 font-mono text-stone-100">
+                                                        {activity.route}
+                                                    </td>
+                                                    <td className="p-2">
                                                         <Badge
                                                             variant="secondary"
-                                                            className="bg-stone-800 text-stone-500"
+                                                            className="bg-stone-800 text-stone-300"
                                                         >
-                                                            Normal
+                                                            {activity.method}
                                                         </Badge>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
+                                                    </td>
+                                                    <td className="p-2">
+                                                        {activity.is_new_tab ? (
+                                                            <Badge
+                                                                variant="destructive"
+                                                                className="bg-red-900/30 text-red-400"
+                                                            >
+                                                                Tab Switch
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge
+                                                                variant="secondary"
+                                                                className="bg-stone-800 text-stone-500"
+                                                            >
+                                                                Normal
+                                                            </Badge>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
