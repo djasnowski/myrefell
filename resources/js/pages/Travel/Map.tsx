@@ -70,6 +70,13 @@ interface PlayerLocation {
     home_village_x: number;
     home_village_y: number;
     is_traveling: boolean;
+    speed_multiplier: number;
+    seasonal_modifier: number;
+    agility_bonus: number;
+    active_horse: {
+        name: string;
+        speed_multiplier: number;
+    } | null;
 }
 
 interface MapBounds {
@@ -317,16 +324,32 @@ export default function Dashboard() {
         };
     }, []);
 
-    // Calculate travel time from player position
+    // Calculate travel time from player position (with all modifiers)
     const getTravelTime = useCallback(
-        (loc: Location) => {
+        (loc: Location): { minutes: number; seconds: number; display: string } => {
             const dist = Math.sqrt(
                 Math.pow(loc.coordinates_x - player.coordinates_x, 2) +
                     Math.pow(loc.coordinates_y - player.coordinates_y, 2),
             );
-            return Math.max(1, Math.ceil(dist / 10));
+            const baseTime = dist / 10;
+            // Apply speed multiplier (horse), seasonal modifier, and agility bonus
+            const adjustedTime =
+                (baseTime / player.speed_multiplier) *
+                player.seasonal_modifier *
+                (1 - player.agility_bonus);
+            const totalSeconds = Math.max(60, Math.round(adjustedTime * 60));
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            const display = seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
+            return { minutes, seconds, display };
         },
-        [player.coordinates_x, player.coordinates_y],
+        [
+            player.coordinates_x,
+            player.coordinates_y,
+            player.speed_multiplier,
+            player.seasonal_modifier,
+            player.agility_bonus,
+        ],
     );
 
     // Get rumor-style population description
@@ -1849,15 +1872,54 @@ export default function Dashboard() {
                                 </div>
 
                                 {/* Travel Time */}
-                                <div className="flex items-center gap-2 rounded border border-stone-700 bg-stone-800/50 px-3 py-2">
-                                    <MapPin className="h-4 w-4 text-amber-500" />
-                                    <span className="text-sm text-stone-300">
-                                        About{" "}
-                                        <span className="font-medium text-amber-400">
-                                            {getTravelTime(clickedLocation.data)} minutes
-                                        </span>{" "}
-                                        journey from here
-                                    </span>
+                                <div className="rounded border border-stone-700 bg-stone-800/50 px-3 py-2">
+                                    <div className="flex items-center gap-2">
+                                        <MapPin className="h-4 w-4 text-amber-500" />
+                                        <span className="text-sm text-stone-300">
+                                            Travel time:{" "}
+                                            <span className="font-medium text-amber-400">
+                                                {getTravelTime(clickedLocation.data).display}
+                                            </span>
+                                        </span>
+                                    </div>
+                                    <div className="mt-2 space-y-1 border-t border-stone-700 pt-2 text-xs text-stone-400">
+                                        {player.active_horse && (
+                                            <div className="flex justify-between">
+                                                <span>{player.active_horse.name}</span>
+                                                <span className="text-green-400">
+                                                    {player.active_horse.speed_multiplier}x speed
+                                                </span>
+                                            </div>
+                                        )}
+                                        {player.seasonal_modifier !== 1 && (
+                                            <div className="flex justify-between">
+                                                <span>Season</span>
+                                                <span
+                                                    className={
+                                                        player.seasonal_modifier > 1
+                                                            ? "text-red-400"
+                                                            : "text-green-400"
+                                                    }
+                                                >
+                                                    {player.seasonal_modifier > 1 ? "+" : "-"}
+                                                    {Math.abs(
+                                                        Math.round(
+                                                            (player.seasonal_modifier - 1) * 100,
+                                                        ),
+                                                    )}
+                                                    %
+                                                </span>
+                                            </div>
+                                        )}
+                                        {player.agility_bonus > 0 && (
+                                            <div className="flex justify-between">
+                                                <span>Agility</span>
+                                                <span className="text-green-400">
+                                                    -{Math.round(player.agility_bonus * 100)}%
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 

@@ -77,14 +77,13 @@ class TravelService
         // Calculate travel time based on coordinate distance
         // In dev mode, use fast travel for testing
         if (app()->environment('local') && self::DEV_TRAVEL_SECONDS !== null) {
-            $arrivesAt = now()->addSeconds(self::DEV_TRAVEL_SECONDS);
-            $travelMinutes = 0;
+            $travelSeconds = self::DEV_TRAVEL_SECONDS;
         } else {
-            $travelMinutes = $this->calculateTravelTime($user, $destinationType, $destinationId);
-            $arrivesAt = now()->addMinutes($travelMinutes);
+            $travelSeconds = $this->calculateTravelTimeSeconds($user, $destinationType, $destinationId);
         }
+        $arrivesAt = now()->addSeconds($travelSeconds);
 
-        return DB::transaction(function () use ($user, $destinationType, $destinationId, $arrivesAt, $destination, $travelMinutes, $usingHorse, $playerHorse) {
+        return DB::transaction(function () use ($user, $destinationType, $destinationId, $arrivesAt, $destination, $travelSeconds, $usingHorse, $playerHorse) {
             if ($usingHorse) {
                 // Consume horse stamina
                 $playerHorse->consumeStamina($playerHorse->stamina_cost);
@@ -107,7 +106,7 @@ class TravelService
                     'id' => $destinationId,
                     'name' => $destination->name,
                 ],
-                'travel_time_minutes' => $travelMinutes,
+                'travel_time_seconds' => $travelSeconds,
                 'arrives_at' => $arrivesAt->toIso8601String(),
                 'started_at' => now()->toIso8601String(),
                 'used_horse' => $usingHorse,
@@ -263,7 +262,7 @@ class TravelService
                     'name' => $village->name,
                     'biome' => $village->biome,
                     'distance' => $distance,
-                    'travel_time' => max(1, (int) ceil($adjustedTime)),
+                    'travel_time' => max(1, (int) round($adjustedTime)),
                     'is_hamlet' => $village->isHamlet(),
                 ];
             }
@@ -287,7 +286,7 @@ class TravelService
                     'name' => $barony->name,
                     'biome' => $barony->biome,
                     'distance' => $distance,
-                    'travel_time' => max(1, (int) ceil($adjustedTime)),
+                    'travel_time' => max(1, (int) round($adjustedTime)),
                 ];
             }
         }
@@ -310,7 +309,7 @@ class TravelService
                     'name' => $town->name,
                     'biome' => $town->biome,
                     'distance' => $distance,
-                    'travel_time' => max(1, (int) ceil($adjustedTime)),
+                    'travel_time' => max(1, (int) round($adjustedTime)),
                 ];
             }
         }
@@ -331,11 +330,11 @@ class TravelService
 
     /**
      * Calculate travel time based on coordinate distance.
-     * Returns time in minutes: 1 minute per 10 coordinate units (minimum 1 minute).
+     * Returns time in seconds (minimum 60 seconds).
      * Applies horse speed multiplier if user has a horse.
      * Applies seasonal travel modifier based on current world time.
      */
-    protected function calculateTravelTime(User $user, string $destType, int $destId): int
+    protected function calculateTravelTimeSeconds(User $user, string $destType, int $destId): int
     {
         // Get current location coordinates
         $currentCoords = $this->getCurrentCoordinates($user);
@@ -345,13 +344,13 @@ class TravelService
         $destX = $destination->coordinates_x ?? 0;
         $destY = $destination->coordinates_y ?? 0;
 
-        // Euclidean distance, 1 minute per 10 units (min 1 minute)
+        // Euclidean distance, 1 minute per 10 units
         $distance = sqrt(pow($destX - $currentCoords['x'], 2) + pow($destY - $currentCoords['y'], 2));
-        $baseTime = $distance / self::DISTANCE_DIVISOR;
+        $baseTimeMinutes = $distance / self::DISTANCE_DIVISOR;
 
         // Apply horse speed multiplier (faster = lower time)
         $speedMultiplier = $user->getTravelSpeedMultiplier();
-        $adjustedTime = $baseTime / $speedMultiplier;
+        $adjustedTime = $baseTimeMinutes / $speedMultiplier;
 
         // Apply seasonal travel modifier (>1 = slower, <1 = faster)
         $seasonalModifier = WorldState::current()->getTravelModifier();
@@ -368,7 +367,8 @@ class TravelService
             $adjustedTime = $adjustedTime * (1 - $travelSpeedBonus / 100);
         }
 
-        return max(1, (int) ceil($adjustedTime));
+        // Convert to seconds, minimum 60 seconds
+        return max(60, (int) round($adjustedTime * 60));
     }
 
     /**

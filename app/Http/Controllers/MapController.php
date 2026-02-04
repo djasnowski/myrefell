@@ -136,6 +136,22 @@ class MapController extends Controller
 
         $coordinates = $this->getLocationCoordinates($locationType, $locationId);
 
+        // Get travel speed modifiers
+        $speedMultiplier = $user->getTravelSpeedMultiplier();
+        $seasonalModifier = \App\Models\WorldState::current()->getTravelModifier();
+        $agilityLevel = $user->getSkillLevel('agility');
+        $agilityBonus = min(0.25, $agilityLevel * 0.005);
+
+        // Get active horse info
+        $activeHorse = $user->activeHorse;
+        $horseInfo = null;
+        if ($activeHorse && $user->hasHorseWithMe()) {
+            $horseInfo = [
+                'name' => $activeHorse->display_name,
+                'speed_multiplier' => $activeHorse->speed_multiplier,
+            ];
+        }
+
         return [
             'location_type' => $locationType,
             'location_id' => $locationId,
@@ -145,6 +161,10 @@ class MapController extends Controller
             'home_village_x' => $homeVillage?->coordinates_x ?? 0,
             'home_village_y' => $homeVillage?->coordinates_y ?? 0,
             'is_traveling' => $user->is_traveling,
+            'speed_multiplier' => $speedMultiplier,
+            'seasonal_modifier' => $seasonalModifier,
+            'agility_bonus' => $agilityBonus,
+            'active_horse' => $horseInfo,
         ];
     }
 
