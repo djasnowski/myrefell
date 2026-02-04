@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { gameToast } from "@/components/ui/game-toast";
 import { DiceGame } from "@/components/games/dice-game";
+import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
 interface Activity {
@@ -251,14 +252,16 @@ export default function TavernIndex() {
         { title: "Dashboard", href: "/dashboard" },
         ...(location
             ? [
-                  { title: location.name, href: `/${location.type}s/${location.id}` },
+                  { title: location.name, href: locationPath(location.type, location.id) },
                   { title: "Tavern", href: "#" },
               ]
             : [{ title: "Tavern", href: "#" }]),
     ];
 
     // Build the correct URL based on location type
-    const baseUrl = location ? `/${location.type}s/${location.id}/tavern` : "/villages/1/tavern";
+    const baseUrl = location
+        ? `${locationPath(location.type, location.id)}/tavern`
+        : "/villages/1/tavern";
 
     const handleRest = () => {
         setLoading(true);

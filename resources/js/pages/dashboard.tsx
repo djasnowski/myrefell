@@ -252,7 +252,13 @@ export default function Dashboard() {
                 { name: "Dynasty", href: "/dynasty", icon: Crown },
                 { name: "Marriage", href: "/dynasty/proposals", icon: Heart },
                 features?.guilds && { name: "Guilds", href: "/guilds", icon: UsersRound },
-                { name: "Religion", href: "/religions", icon: Church },
+                {
+                    name: "Shrine",
+                    href: location
+                        ? `/${pluralizeLocationType(location.type)}/${location.id}/shrine`
+                        : "/shrine",
+                    icon: Church,
+                },
             ].filter(Boolean),
         },
         {

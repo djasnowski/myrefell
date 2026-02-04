@@ -19,6 +19,7 @@ import { useEffect, useRef, useState } from "react";
 const BREW_COOLDOWN_MS = 3000;
 import AppLayout from "@/layouts/app-layout";
 import { gameToast } from "@/components/ui/game-toast";
+import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
 interface Material {
@@ -86,14 +87,17 @@ interface PageProps {
     [key: string]: unknown;
 }
 
-const getBreadcrumbs = (location?: Location): BreadcrumbItem[] => [
-    { title: "Dashboard", href: "/dashboard" },
-    ...(location ? [{ title: location.name, href: `/${location.type}s/${location.id}` }] : []),
-    {
-        title: "Apothecary",
-        href: location ? `/${location.type}s/${location.id}/apothecary` : "/apothecary",
-    },
-];
+const getBreadcrumbs = (location?: Location): BreadcrumbItem[] => {
+    const baseUrl = location ? locationPath(location.type, location.id) : null;
+    return [
+        { title: "Dashboard", href: "/dashboard" },
+        ...(location && baseUrl ? [{ title: location.name, href: baseUrl }] : []),
+        {
+            title: "Apothecary",
+            href: baseUrl ? `${baseUrl}/apothecary` : "/apothecary",
+        },
+    ];
+};
 
 const categoryIcons: Record<string, typeof FlaskConical> = {
     restoration: Heart,
@@ -260,7 +264,7 @@ export default function ApothecaryIndex() {
     }, []);
 
     const brewUrl = location
-        ? `/${location.type}s/${location.id}/apothecary/brew`
+        ? `${locationPath(location.type, location.id)}/apothecary/brew`
         : "/apothecary/brew";
 
     const handleBrew = async (recipeId: string) => {

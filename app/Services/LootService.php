@@ -29,11 +29,18 @@ class LootService
         // Roll gold drop with blessing and belief bonuses
         $gold = $monster->rollGoldDrop();
         if ($gold > 0) {
-            // Apply gold find bonus from blessings
+            // Apply gold find bonus from blessings (includes gold_drop_bonus from HQ prayer)
             $goldBonus = $this->blessingEffectService->getEffect($player, 'gold_find_bonus');
+            $goldBonus += $this->blessingEffectService->getEffect($player, 'gold_drop_bonus');
 
             // Apply gold bonus from beliefs (Greed belief)
             $goldBonus += $this->beliefEffectService->getEffect($player, 'gold_bonus');
+
+            // Apply monster gold bonus from cult beliefs (Blood Tithe: +25% gold from monster kills)
+            $goldBonus += $this->beliefEffectService->getEffect($player, 'monster_gold_bonus');
+
+            // Apply all gold bonus from cult beliefs (Forbidden Wealth: +15% ALL gold gains)
+            $goldBonus += $this->beliefEffectService->getEffect($player, 'all_gold_bonus');
 
             // Apply gold penalty from beliefs (Asceticism belief)
             $goldBonus += $this->beliefEffectService->getEffect($player, 'gold_penalty');
@@ -47,8 +54,9 @@ class LootService
             $rewards['gold'] = $gold;
         }
 
-        // Get rare drop bonus for loot rolls
+        // Get rare drop bonus for loot rolls (includes rare_loot_drop_bonus from HQ prayer)
         $rareDropBonus = $this->blessingEffectService->getEffect($player, 'rare_drop_bonus');
+        $rareDropBonus += $this->blessingEffectService->getEffect($player, 'rare_loot_drop_bonus');
 
         // Roll for each loot table entry
         foreach ($monster->lootTable as $lootEntry) {

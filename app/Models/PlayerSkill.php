@@ -150,10 +150,19 @@ class PlayerSkill extends Model
             'mining' => $blessingService->getEffect($user, 'mining_xp_bonus'),
             'smithing' => $blessingService->getEffect($user, 'smithing_xp_bonus'),
             'crafting' => $blessingService->getEffect($user, 'crafting_xp_bonus'),
+            'prayer' => $blessingService->getEffect($user, 'prayer_xp_bonus'),
+            'herblore' => $blessingService->getEffect($user, 'herblore_xp_bonus'),
             default => 0,
         };
 
-        $totalBonus = $allXpBonus + $skillBonus;
+        // Check for combat XP bonus (from HQ prayer) for combat skills
+        $combatXpBonus = 0;
+        if (in_array($this->skill_name, ['attack', 'strength', 'defense', 'hitpoints', 'range'])) {
+            $combatXpBonus = $blessingService->getEffect($user, 'combat_xp_bonus');
+            $combatXpBonus += $blessingService->getEffect($user, 'all_combat_xp_bonus');
+        }
+
+        $totalBonus = $allXpBonus + $skillBonus + $combatXpBonus;
 
         if ($totalBonus > 0) {
             $amount = (int) ceil($amount * (1 + $totalBonus / 100));

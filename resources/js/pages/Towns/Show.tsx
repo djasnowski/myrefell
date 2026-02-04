@@ -136,6 +136,8 @@ interface Props {
     is_resident: boolean;
     is_mayor: boolean;
     can_migrate: boolean;
+    cooldown_ends_at: string | null;
+    cooldown_remaining: string | null;
     has_pending_request: boolean;
     current_user_id: number;
     disasters?: Disaster[];
@@ -210,6 +212,7 @@ export default function TownShow({
     is_resident,
     is_mayor,
     can_migrate,
+    cooldown_remaining,
     has_pending_request,
     current_user_id,
     disasters = [],
@@ -755,7 +758,9 @@ export default function TownShow({
                             <div className="rounded-xl border border-stone-700 bg-stone-800/30 p-4 text-center">
                                 <p className="font-pixel text-stone-500">Migration on Cooldown</p>
                                 <p className="text-xs text-stone-600">
-                                    You must wait before you can move again
+                                    {cooldown_remaining
+                                        ? `You can migrate again ${cooldown_remaining}`
+                                        : "You must wait before you can move again"}
                                 </p>
                             </div>
                         )}

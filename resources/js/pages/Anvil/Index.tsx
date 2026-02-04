@@ -17,6 +17,7 @@ import { useEffect, useRef, useState } from "react";
 
 const SMITH_COOLDOWN_MS = 3000;
 import AppLayout from "@/layouts/app-layout";
+import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
 interface Material {
@@ -87,14 +88,17 @@ interface PageProps {
     [key: string]: unknown;
 }
 
-const getBreadcrumbs = (location?: Location): BreadcrumbItem[] => [
-    { title: "Dashboard", href: "/dashboard" },
-    ...(location ? [{ title: location.name, href: `/${location.type}s/${location.id}` }] : []),
-    {
-        title: "Anvil",
-        href: location ? `/${location.type}s/${location.id}/anvil` : "/anvil",
-    },
-];
+const getBreadcrumbs = (location?: Location): BreadcrumbItem[] => {
+    const baseUrl = location ? locationPath(location.type, location.id) : null;
+    return [
+        { title: "Dashboard", href: "/dashboard" },
+        ...(location && baseUrl ? [{ title: location.name, href: baseUrl }] : []),
+        {
+            title: "Anvil",
+            href: baseUrl ? `${baseUrl}/anvil` : "/anvil",
+        },
+    ];
+};
 
 const metalColors: Record<string, { bg: string; border: string; text: string; glow: string }> = {
     Bronze: {
@@ -432,7 +436,9 @@ export default function AnvilIndex() {
         };
     }, []);
 
-    const smithUrl = location ? `/${location.type}s/${location.id}/anvil/smith` : "/anvil/smith";
+    const smithUrl = location
+        ? `${locationPath(location.type, location.id)}/anvil/smith`
+        : "/anvil/smith";
 
     const handleSmith = (recipeId: string) => {
         if (loading || cooldown > 0) return;

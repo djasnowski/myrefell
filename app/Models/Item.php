@@ -54,6 +54,7 @@ class Item extends Model
         'decays_into',
         'is_tradeable',
         'food_value',
+        'prayer_bonus',
     ];
 
     protected function casts(): array

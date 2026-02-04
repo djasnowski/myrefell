@@ -82,7 +82,7 @@ class TownController extends Controller
         $isResident = $user->home_location_type === 'town' && $user->home_location_id === $town->id;
 
         // Check if user can migrate (not on cooldown)
-        $canMigrate = $this->migrationService->canMigrate($user);
+        $migrationCooldownInfo = $this->migrationService->getMigrationCooldownInfo($user);
 
         // Check for pending migration request
         $hasPendingRequest = MigrationRequest::where('user_id', $user->id)
@@ -171,7 +171,7 @@ class TownController extends Controller
             'is_visitor' => $isVisitor,
             'is_resident' => $isResident,
             'is_mayor' => $isMayor,
-            'can_migrate' => $canMigrate,
+            ...$migrationCooldownInfo,
             'has_pending_request' => $hasPendingRequest,
             'current_user_id' => $user->id,
             'disasters' => $disasters,

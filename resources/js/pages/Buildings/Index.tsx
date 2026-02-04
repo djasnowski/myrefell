@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
-import { formatBonusLabel } from "@/lib/utils";
+import { formatBonusLabel, locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
 interface BuildingType {
@@ -438,7 +438,9 @@ export default function BuildingsIndex() {
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
-        ...(location ? [{ title: location.name, href: `/${location.type}s/${location.id}` }] : []),
+        ...(location
+            ? [{ title: location.name, href: locationPath(location.type, location.id) }]
+            : []),
         { title: "Buildings", href: "#" },
     ];
 

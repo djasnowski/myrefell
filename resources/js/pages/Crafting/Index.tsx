@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 const CRAFT_COOLDOWN_MS = 3000;
 import AppLayout from "@/layouts/app-layout";
 import { gameToast } from "@/components/ui/game-toast";
+import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
 interface Material {
@@ -65,14 +66,17 @@ interface PageProps {
     [key: string]: unknown;
 }
 
-const getBreadcrumbs = (location?: Location): BreadcrumbItem[] => [
-    { title: "Dashboard", href: "/dashboard" },
-    ...(location ? [{ title: location.name, href: `/${location.type}s/${location.id}` }] : []),
-    {
-        title: "Crafting",
-        href: location ? `/${location.type}s/${location.id}/crafting` : "/crafting",
-    },
-];
+const getBreadcrumbs = (location?: Location): BreadcrumbItem[] => {
+    const baseUrl = location ? locationPath(location.type, location.id) : null;
+    return [
+        { title: "Dashboard", href: "/dashboard" },
+        ...(location && baseUrl ? [{ title: location.name, href: baseUrl }] : []),
+        {
+            title: "Crafting",
+            href: baseUrl ? `${baseUrl}/crafting` : "/crafting",
+        },
+    ];
+};
 
 function RecipeCard({
     recipe,
@@ -219,7 +223,7 @@ export default function CraftingIndex() {
 
     // Build the craft URL based on location
     const craftUrl = location
-        ? `/${location.type}s/${location.id}/crafting/craft`
+        ? `${locationPath(location.type, location.id)}/crafting/craft`
         : "/crafting/craft";
 
     const handleCraft = async (recipeId: string) => {

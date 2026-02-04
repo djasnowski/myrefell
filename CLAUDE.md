@@ -250,7 +250,6 @@ Route::get('/users', function () {
 - Avoid `DB::`; prefer `Model::query()`. Generate code that leverages Laravel's ORM capabilities rather than bypassing them.
 - Generate code that prevents N+1 query problems by using eager loading.
 - Use Laravel's query builder for very complex database operations.
-- Use Laravel's Eloquent JSON syntax (e.g., `whereNotNull('column->key')`) instead of `whereRaw()`. Laravel automatically translates this to the correct syntax for PostgreSQL (`column->>'key'`) or MySQL (`JSON_EXTRACT`).
 
 ### Model Creation
 - When creating new models, create useful factories and seeders for them too. Ask the user if they need any other things, using `list-artisan-commands` to check the available options to `php artisan make:model`.

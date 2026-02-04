@@ -46,3 +46,9 @@ Schedule::job(new ExpireMarriageProposals)->dailyAt('00:30');
 
 // Seed restocking - twice daily (farmer supply runs)
 Schedule::command('market:restock-seeds')->twiceDaily(8, 20);
+
+// HQ construction completion - every minute (check for timer expirations)
+Schedule::command('hq:complete-construction')->everyMinute();
+
+// Cult hideout construction completion - every minute (check for timer expirations)
+Schedule::command('hideout:complete-construction')->everyMinute();

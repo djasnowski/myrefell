@@ -3,18 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Models\Barony;
+use App\Models\Belief;
 use App\Models\BlessingRequest;
 use App\Models\BlessingType;
 use App\Models\Duchy;
 use App\Models\Kingdom;
+use App\Models\KingdomReligion;
 use App\Models\LocationActivityLog;
+use App\Models\PlayerActiveBelief;
 use App\Models\PlayerBlessing;
 use App\Models\PlayerRole;
 use App\Models\PlayerSkill;
+use App\Models\Religion;
+use App\Models\ReligionMember;
 use App\Models\Role;
 use App\Models\Town;
 use App\Models\User;
 use App\Models\Village;
+use App\Services\BlessingEffectService;
+use App\Services\ReligionHeadquartersService;
+use App\Services\ReligionInviteService;
+use App\Services\ReligionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,6 +32,13 @@ use Inertia\Response;
 
 class BlessingController extends Controller
 {
+    public function __construct(
+        protected ReligionHeadquartersService $hqService,
+        protected ReligionInviteService $inviteService,
+        protected ReligionService $religionService,
+        protected BlessingEffectService $blessingEffectService
+    ) {}
+
     /**
      * Show the blessing shrine/church page (location-scoped).
      */
@@ -150,8 +166,64 @@ class BlessingController extends Controller
                 'prayer_level_required' => $type->prayer_level_required,
             ]);
 
+        // Get religions with HQ at this location
+        $localReligions = $this->getLocalReligions($user, $locationType, $location?->id);
+
+        // Get player's pending religion invites
+        $pendingInvites = $this->inviteService->getPendingInvitesForUser($user);
+
+        // Get player's current religion membership
+        $playerMembership = $this->religionService->getPlayerReligions($user);
+        $currentMembership = ! empty($playerMembership) ? $playerMembership[0] : null;
+
+        // Get all beliefs for cult creation (non-cult beliefs only)
+        $beliefs = $this->religionService->getAllBeliefs();
+
+        // Get cult-only beliefs with unlock status based on player's cult membership
+        $cultBeliefs = [];
+        if ($currentMembership && $currentMembership['is_cult']) {
+            $cultReligion = Religion::find($currentMembership['religion_id']);
+            if ($cultReligion && $cultReligion->hasHideout()) {
+                $cultBeliefs = Belief::cultOnly()
+                    ->orderBy('required_hideout_tier')
+                    ->get()
+                    ->map(fn ($b) => [
+                        'id' => $b->id,
+                        'name' => $b->name,
+                        'description' => $b->description,
+                        'icon' => $b->icon,
+                        'type' => $b->type,
+                        'effects' => $b->effects,
+                        'required_hideout_tier' => $b->required_hideout_tier,
+                        'tier_name' => Religion::HIDEOUT_TIERS[$b->required_hideout_tier]['name'] ?? 'Unknown',
+                        'hp_cost' => $b->getHpCost(),
+                        'energy_cost' => $b->getEnergyCost(),
+                        'is_unlocked' => $b->required_hideout_tier <= $cultReligion->hideout_tier,
+                    ]);
+            }
+        }
+
+        // Get player's active beliefs
+        $activeBeliefs = PlayerActiveBelief::where('user_id', $user->id)
+            ->active()
+            ->with(['belief', 'religion'])
+            ->get()
+            ->map(fn ($ab) => [
+                'id' => $ab->id,
+                'belief_id' => $ab->belief_id,
+                'belief_name' => $ab->belief->name,
+                'belief_icon' => $ab->belief->icon,
+                'belief_effects' => $ab->belief->effects,
+                'religion_id' => $ab->religion_id,
+                'religion_name' => $ab->religion->name,
+                'devotion_spent' => $ab->devotion_spent,
+                'expires_at' => $ab->expires_at->toIso8601String(),
+                'remaining_seconds' => $ab->getRemainingSeconds(),
+            ]);
+
         $data = [
             'active_blessings' => $activeBlessings,
+            'active_beliefs' => $activeBeliefs,
             'is_priest' => $isPriest,
             'priest_data' => $priestData,
             'shrine_blessings' => $shrineBlessings,
@@ -164,6 +236,36 @@ class BlessingController extends Controller
                 'type' => $user->current_location_type,
                 'id' => $user->current_location_id,
             ],
+            'local_religions' => $localReligions,
+            'pending_invites' => $pendingInvites,
+            'current_membership' => $currentMembership,
+            'beliefs' => $beliefs,
+            'belief_activation' => [
+                'min_devotion' => PlayerActiveBelief::MIN_DEVOTION,
+                'max_devotion' => PlayerActiveBelief::MAX_DEVOTION,
+                'min_duration_minutes' => PlayerActiveBelief::MIN_DURATION_MINUTES,
+                'max_duration_minutes' => PlayerActiveBelief::MAX_DURATION_MINUTES,
+            ],
+            'cult_beliefs' => $cultBeliefs,
+            'player_hp' => $user->hp,
+            'player_max_hp' => $user->max_hp,
+            'nearby_players_for_invite' => ($currentMembership && ($currentMembership['is_prophet'] || $currentMembership['is_officer']))
+                ? User::where('current_location_type', $user->current_location_type)
+                    ->where('current_location_id', $user->current_location_id)
+                    ->where('id', '!=', $user->id)
+                    ->whereNotIn('id', ReligionMember::where('religion_id', $currentMembership['religion_id'])->pluck('user_id'))
+                    ->orderBy('username')
+                    ->limit(50)
+                    ->get()
+                    ->map(fn ($u) => [
+                        'id' => $u->id,
+                        'username' => $u->username,
+                        'combat_level' => $u->combat_level,
+                    ])
+                : [],
+            'pending_outgoing_invites' => ($currentMembership && ($currentMembership['is_prophet'] || $currentMembership['is_officer']))
+                ? $this->inviteService->getPendingInvitesForReligion($currentMembership['religion_id'])
+                : [],
         ];
 
         // Add location context with activity feed if location-scoped
@@ -243,10 +345,14 @@ class BlessingController extends Controller
             ]);
         }
 
+        // Calculate gold cost with HQ modifier
+        $costModifier = $this->hqService->getBlessingCostModifier($targetUser);
+        $actualGoldCost = (int) ceil($blessingType->gold_cost * $costModifier);
+
         // Check target has enough gold for donation
-        if ($targetUser->gold < $blessingType->gold_cost) {
+        if ($targetUser->gold < $actualGoldCost) {
             return back()->withErrors([
-                'error' => "{$targetUser->username} cannot afford the {$blessingType->gold_cost}g donation.",
+                'error' => "{$targetUser->username} cannot afford the {$actualGoldCost}g donation.",
             ]);
         }
 
@@ -259,6 +365,15 @@ class BlessingController extends Controller
         if ($existingBlessing) {
             return back()->withErrors([
                 'error' => "{$targetUser->username} already has {$blessingType->name} active.",
+            ]);
+        }
+
+        // Check if target has room for another blessing (slot limit)
+        if (! $this->blessingEffectService->canReceiveBlessing($targetUser)) {
+            $maxSlots = $this->blessingEffectService->getMaxBlessingSlots($targetUser);
+
+            return back()->withErrors([
+                'error' => "{$targetUser->username} already has {$maxSlots} active blessings (maximum).",
             ]);
         }
 
@@ -282,13 +397,24 @@ class BlessingController extends Controller
         // Deduct energy from priest
         $user->decrement('energy', $blessingType->energy_cost);
 
-        // Deduct gold from target (donation)
-        if ($blessingType->gold_cost > 0) {
-            $targetUser->decrement('gold', $blessingType->gold_cost);
+        // Deduct gold from target (donation) with HQ modifier
+        if ($actualGoldCost > 0) {
+            $targetUser->decrement('gold', $actualGoldCost);
             // Give portion to priest as offering
-            $priestShare = (int) floor($blessingType->gold_cost * 0.5);
+            $priestShare = (int) floor($actualGoldCost * 0.5);
             $user->increment('gold', $priestShare);
         }
+
+        // Calculate duration with HQ modifier (from target's HQ tier)
+        $durationModifier = $this->hqService->getBlessingDurationModifier($targetUser);
+
+        // Apply priest's prophet blessing duration bonus (from their prayer buff)
+        $prophetDurationBonus = $this->blessingEffectService->getEffect($user, 'prophet_blessing_duration');
+        if ($prophetDurationBonus > 0) {
+            $durationModifier *= (1 + $prophetDurationBonus / 100);
+        }
+
+        $actualDuration = (int) ceil($blessingType->duration_minutes * $durationModifier);
 
         // Create the blessing
         $blessing = PlayerBlessing::create([
@@ -297,7 +423,7 @@ class BlessingController extends Controller
             'granted_by' => $user->id,
             'location_type' => $user->current_location_type,
             'location_id' => $user->current_location_id,
-            'expires_at' => now()->addMinutes($blessingType->duration_minutes),
+            'expires_at' => now()->addMinutes($actualDuration),
         ]);
 
         // Award prayer XP to priest
@@ -328,8 +454,12 @@ class BlessingController extends Controller
         $blessingType = BlessingType::findOrFail($validated['blessing_type_id']);
 
         // Self-service blessings cost more and are weaker (no priest bonus)
-        $goldCost = (int) ceil($blessingType->gold_cost * 1.5);
-        $duration = (int) floor($blessingType->duration_minutes * 0.75); // 75% duration without priest
+        // Apply HQ modifiers on top of self-service penalties
+        $hqCostModifier = $this->hqService->getBlessingCostModifier($user);
+        $hqDurationModifier = $this->hqService->getBlessingDurationModifier($user);
+
+        $goldCost = (int) ceil($blessingType->gold_cost * 1.5 * $hqCostModifier);
+        $duration = (int) floor($blessingType->duration_minutes * 0.75 * $hqDurationModifier); // 75% duration without priest + HQ bonus
 
         // Check gold
         if ($user->gold < $goldCost) {
@@ -347,6 +477,15 @@ class BlessingController extends Controller
         if ($existingBlessing) {
             return back()->withErrors([
                 'error' => "You already have {$blessingType->name} active.",
+            ]);
+        }
+
+        // Check if player has room for another blessing (slot limit)
+        if (! $this->blessingEffectService->canReceiveBlessing($user)) {
+            $maxSlots = $this->blessingEffectService->getMaxBlessingSlots($user);
+
+            return back()->withErrors([
+                'error' => "You already have {$maxSlots} active blessings (maximum).",
             ]);
         }
 
@@ -566,5 +705,261 @@ class BlessingController extends Controller
         }
 
         return "{$minutes}m";
+    }
+
+    /**
+     * Get religions with HQ at this location.
+     */
+    protected function getLocalReligions(User $user, ?string $locationType, ?int $locationId): array
+    {
+        if (! $locationType || ! $locationId) {
+            return [];
+        }
+
+        // Get player's kingdom for ban checking
+        $playerKingdomId = $this->getPlayerKingdomId($user);
+
+        // Get religions with HQ at this location
+        $religions = Religion::query()
+            ->where('is_active', true)
+            ->whereHas('headquarters', function ($q) use ($locationType, $locationId) {
+                $q->where('location_type', $locationType)
+                    ->where('location_id', $locationId)
+                    ->whereNotNull('location_type'); // Only built HQs
+            })
+            ->with(['headquarters', 'beliefs', 'founder'])
+            ->withCount('members')
+            ->get();
+
+        // Check if player is already a member of any religion
+        $playerMembership = ReligionMember::where('user_id', $user->id)->first();
+
+        return $religions->map(function ($religion) use ($playerKingdomId, $playerMembership) {
+            // Check kingdom ban status
+            $kingdomStatus = null;
+            $isBanned = false;
+            if ($playerKingdomId) {
+                $status = KingdomReligion::where('kingdom_id', $playerKingdomId)
+                    ->where('religion_id', $religion->id)
+                    ->first();
+                $kingdomStatus = $status?->status;
+                $isBanned = $status && $status->isBanned();
+            }
+
+            // Check if player is a member of this religion
+            $isMember = $playerMembership && $playerMembership->religion_id === $religion->id;
+
+            // Can join: public, not banned, not already a member of any religion, can accept members
+            $canJoin = $religion->is_public
+                && ! $isBanned
+                && ! $playerMembership
+                && $religion->canAcceptMembers();
+
+            return [
+                'id' => $religion->id,
+                'name' => $religion->name,
+                'description' => $religion->description,
+                'icon' => $religion->icon,
+                'color' => $religion->color,
+                'type' => $religion->type,
+                'is_cult' => $religion->isCult(),
+                'is_public' => $religion->is_public,
+                'member_count' => $religion->members_count,
+                'founder' => $religion->founder ? [
+                    'id' => $religion->founder->id,
+                    'username' => $religion->founder->username,
+                ] : null,
+                'beliefs' => $religion->beliefs->map(fn ($b) => [
+                    'id' => $b->id,
+                    'name' => $b->name,
+                    'description' => $b->description,
+                    'icon' => $b->icon,
+                ])->toArray(),
+                'hq_tier' => $religion->headquarters?->tier ?? 1,
+                'kingdom_status' => $kingdomStatus,
+                'is_banned' => $isBanned,
+                'is_member' => $isMember,
+                'can_join' => $canJoin,
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Get player's kingdom ID.
+     */
+    protected function getPlayerKingdomId(User $user): ?int
+    {
+        return match ($user->current_location_type) {
+            'village' => Village::find($user->current_location_id)?->barony?->kingdom_id,
+            'barony' => Barony::find($user->current_location_id)?->kingdom_id,
+            'town' => Town::find($user->current_location_id)?->barony?->kingdom_id,
+            'kingdom' => $user->current_location_id,
+            default => null,
+        };
+    }
+
+    /**
+     * Activate a religion's beliefs for temporary buffs.
+     */
+    public function activateBeliefs(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'religion_id' => 'required|integer|exists:religions,id',
+            'devotion' => 'required|integer|min:'.PlayerActiveBelief::MIN_DEVOTION.'|max:'.PlayerActiveBelief::MAX_DEVOTION,
+        ]);
+
+        $religion = Religion::with('beliefs')->findOrFail($validated['religion_id']);
+        $devotionToSpend = $validated['devotion'];
+
+        // Check user is a member of this religion
+        $membership = ReligionMember::where('user_id', $user->id)
+            ->where('religion_id', $religion->id)
+            ->first();
+
+        if (! $membership) {
+            return back()->withErrors(['error' => 'You must be a member of this religion to activate its beliefs.']);
+        }
+
+        // Check user has enough devotion
+        if ($membership->devotion < $devotionToSpend) {
+            return back()->withErrors(['error' => 'You do not have enough devotion.']);
+        }
+
+        // Check religion has beliefs
+        if ($religion->beliefs->isEmpty()) {
+            return back()->withErrors(['error' => 'This religion has no beliefs to activate.']);
+        }
+
+        // Check if any of these beliefs are already active for the user
+        $activeBeliefIds = PlayerActiveBelief::where('user_id', $user->id)
+            ->active()
+            ->pluck('belief_id')
+            ->toArray();
+
+        $religionBeliefIds = $religion->beliefs->pluck('id')->toArray();
+        $alreadyActive = array_intersect($activeBeliefIds, $religionBeliefIds);
+
+        if (! empty($alreadyActive)) {
+            return back()->withErrors(['error' => 'You already have beliefs from this religion active.']);
+        }
+
+        // Calculate duration
+        $durationMinutes = PlayerActiveBelief::calculateDurationMinutes($devotionToSpend);
+        $expiresAt = now()->addMinutes($durationMinutes);
+
+        // Deduct devotion from membership
+        $membership->decrement('devotion', $devotionToSpend);
+
+        // Create active belief records for all religion's beliefs
+        foreach ($religion->beliefs as $belief) {
+            PlayerActiveBelief::create([
+                'user_id' => $user->id,
+                'belief_id' => $belief->id,
+                'religion_id' => $religion->id,
+                'devotion_spent' => $devotionToSpend,
+                'expires_at' => $expiresAt,
+            ]);
+        }
+
+        $beliefNames = $religion->beliefs->pluck('name')->join(', ');
+
+        return back()->with('success', "Activated beliefs ({$beliefNames}) for {$durationMinutes} minutes.");
+    }
+
+    /**
+     * Activate a cult's forbidden beliefs (with HP cost).
+     */
+    public function activateCultBeliefs(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'religion_id' => 'required|integer|exists:religions,id',
+            'belief_id' => 'required|integer|exists:beliefs,id',
+            'devotion' => 'required|integer|min:'.PlayerActiveBelief::MIN_DEVOTION.'|max:'.PlayerActiveBelief::MAX_DEVOTION,
+        ]);
+
+        $religion = Religion::findOrFail($validated['religion_id']);
+        $belief = Belief::findOrFail($validated['belief_id']);
+        $devotionToSpend = $validated['devotion'];
+
+        // Verify this is a cult
+        if (! $religion->isCult()) {
+            return back()->withErrors(['error' => 'This is not a cult.']);
+        }
+
+        // Verify this is a cult-only belief
+        if (! $belief->isCultOnly()) {
+            return back()->withErrors(['error' => 'This is not a Forbidden Art.']);
+        }
+
+        // Check user is a member of this cult
+        $membership = ReligionMember::where('user_id', $user->id)
+            ->where('religion_id', $religion->id)
+            ->first();
+
+        if (! $membership) {
+            return back()->withErrors(['error' => 'You must be a member of this cult to activate its Forbidden Arts.']);
+        }
+
+        // Check hideout tier requirement
+        if (! $religion->hasHideout()) {
+            return back()->withErrors(['error' => 'Your cult must have a hideout to use Forbidden Arts.']);
+        }
+
+        if ($religion->hideout_tier < $belief->required_hideout_tier) {
+            $requiredTierName = Religion::HIDEOUT_TIERS[$belief->required_hideout_tier]['name'] ?? 'Unknown';
+
+            return back()->withErrors(['error' => "This Forbidden Art requires a {$requiredTierName} hideout."]);
+        }
+
+        // Check user has enough devotion
+        if ($membership->devotion < $devotionToSpend) {
+            return back()->withErrors(['error' => 'You do not have enough devotion.']);
+        }
+
+        // Check HP cost (can't go below 1 HP)
+        $hpCost = $belief->getHpCost();
+        if ($user->hp < $hpCost + 1) {
+            return back()->withErrors(['error' => 'You need at least '.($hpCost + 1).' HP for the blood sacrifice.']);
+        }
+
+        // Check energy cost
+        $energyCost = $belief->getEnergyCost();
+        if ($user->energy < $energyCost) {
+            return back()->withErrors(['error' => "You need {$energyCost} energy to perform this ritual."]);
+        }
+
+        // Check if this belief is already active
+        $existingBelief = PlayerActiveBelief::where('user_id', $user->id)
+            ->where('belief_id', $belief->id)
+            ->active()
+            ->first();
+
+        if ($existingBelief) {
+            return back()->withErrors(['error' => 'This Forbidden Art is already active.']);
+        }
+
+        // Calculate duration
+        $durationMinutes = PlayerActiveBelief::calculateDurationMinutes($devotionToSpend);
+        $expiresAt = now()->addMinutes($durationMinutes);
+
+        // Deduct resources
+        $membership->decrement('devotion', $devotionToSpend);
+        $user->decrement('hp', $hpCost);
+        $user->decrement('energy', $energyCost);
+
+        // Create active belief record
+        PlayerActiveBelief::create([
+            'user_id' => $user->id,
+            'belief_id' => $belief->id,
+            'religion_id' => $religion->id,
+            'devotion_spent' => $devotionToSpend,
+            'expires_at' => $expiresAt,
+        ]);
+
+        return back()->with('success', "The blood sacrifice is complete. {$belief->name} activated for {$durationMinutes} minutes. (-{$hpCost} HP, -{$energyCost} energy)");
     }
 }

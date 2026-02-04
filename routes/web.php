@@ -23,6 +23,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CombatController;
 use App\Http\Controllers\CraftingController;
 use App\Http\Controllers\CrimeController;
+use App\Http\Controllers\CultHideoutController;
 use App\Http\Controllers\DailyTaskController;
 use App\Http\Controllers\DiceGameController;
 use App\Http\Controllers\DocketController;
@@ -52,6 +53,7 @@ use App\Http\Controllers\PortController;
 use App\Http\Controllers\QuestController;
 use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\ReligionController;
+use App\Http\Controllers\ReligionHeadquartersController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RoleStockingController;
 use App\Http\Controllers\ServiceFavoriteController;
@@ -310,6 +312,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('shrine', [BlessingController::class, 'index'])->name('shrine.index');
     Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
     Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
+    Route::post('shrine/activate-beliefs', [BlessingController::class, 'activateBeliefs'])->name('shrine.activate-beliefs');
+    Route::post('shrine/activate-cult-beliefs', [BlessingController::class, 'activateCultBeliefs'])->name('shrine.activate-cult-beliefs');
     Route::get('shrine/active', [BlessingController::class, 'getActiveBlessings'])->name('shrine.active');
 
     // Training (Combat Stats) - Legacy routes (redirect to location-scoped)
@@ -338,6 +342,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
         Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
+        Route::post('shrine/activate-beliefs', [BlessingController::class, 'activateBeliefs'])->name('shrine.activate-beliefs');
+        Route::post('shrine/activate-cult-beliefs', [BlessingController::class, 'activateCultBeliefs'])->name('shrine.activate-cult-beliefs');
         Route::post('shrine/request/{blessingRequest}/approve', [BlessingController::class, 'approveRequest'])->name('shrine.approve');
         Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
         Route::get('stables', [StableController::class, 'index'])->name('stables');
@@ -359,6 +365,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('farming/{plot}/clear', [FarmingController::class, 'clear'])->name('farming.clear');
         Route::get('agility', [AgilityController::class, 'index'])->name('agility');
         Route::post('agility/train', [AgilityController::class, 'train'])->name('agility.train');
+        Route::get('religions/{religion}', [ReligionController::class, 'showAtLocation'])->name('religions.show');
+        Route::get('religions/{religion}/headquarters', [ReligionHeadquartersController::class, 'showAtLocation'])->name('religions.headquarters.show');
+        Route::post('religions/{religion}/headquarters/build', [ReligionHeadquartersController::class, 'build'])->name('religions.headquarters.build');
+        Route::post('religions/{religion}/headquarters/donate', [ReligionHeadquartersController::class, 'donate'])->name('religions.headquarters.donate');
+        Route::post('religions/{religion}/headquarters/upgrade', [ReligionHeadquartersController::class, 'startUpgrade'])->name('religions.headquarters.upgrade');
+        Route::post('religions/{religion}/headquarters/features', [ReligionHeadquartersController::class, 'buildFeature'])->name('religions.headquarters.features.build');
+        Route::post('religions/{religion}/headquarters/features/{feature}/upgrade', [ReligionHeadquartersController::class, 'upgradeFeature'])->name('religions.headquarters.features.upgrade');
+        Route::post('religions/{religion}/headquarters/features/{feature}/pray', [ReligionHeadquartersController::class, 'pray'])->name('religions.headquarters.features.pray');
+        Route::post('religions/{religion}/headquarters/projects/{project}/contribute', [ReligionHeadquartersController::class, 'contribute'])->name('religions.headquarters.contribute');
+        Route::post('religions/{religion}/headquarters/projects/{project}/complete', [ReligionHeadquartersController::class, 'completeProject'])->name('religions.headquarters.complete');
+        Route::get('cults/{religion}/hideout', [CultHideoutController::class, 'showAtLocation'])->name('cults.hideout.show');
+        Route::post('cults/{religion}/hideout/build', [CultHideoutController::class, 'build'])->name('cults.hideout.build');
+        Route::post('cults/{religion}/hideout/upgrade', [CultHideoutController::class, 'startUpgrade'])->name('cults.hideout.upgrade');
+        Route::post('cults/{religion}/hideout/projects/{project}/contribute', [CultHideoutController::class, 'contribute'])->name('cults.hideout.contribute');
+        Route::post('cults/{religion}/hideout/projects/{project}/complete', [CultHideoutController::class, 'completeProject'])->name('cults.hideout.complete');
     });
 
     // Location-scoped services: Towns
@@ -377,6 +398,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
         Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
+        Route::post('shrine/activate-beliefs', [BlessingController::class, 'activateBeliefs'])->name('shrine.activate-beliefs');
+        Route::post('shrine/activate-cult-beliefs', [BlessingController::class, 'activateCultBeliefs'])->name('shrine.activate-cult-beliefs');
         Route::post('shrine/request/{blessingRequest}/approve', [BlessingController::class, 'approveRequest'])->name('shrine.approve');
         Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
         Route::get('stables', [StableController::class, 'index'])->name('stables');
@@ -398,6 +421,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('farming/{plot}/clear', [FarmingController::class, 'clear'])->name('farming.clear');
         Route::get('agility', [AgilityController::class, 'index'])->name('agility');
         Route::post('agility/train', [AgilityController::class, 'train'])->name('agility.train');
+        Route::get('religions/{religion}', [ReligionController::class, 'showAtLocation'])->name('religions.show');
+        Route::get('religions/{religion}/headquarters', [ReligionHeadquartersController::class, 'showAtLocation'])->name('religions.headquarters.show');
+        Route::post('religions/{religion}/headquarters/build', [ReligionHeadquartersController::class, 'build'])->name('religions.headquarters.build');
+        Route::post('religions/{religion}/headquarters/donate', [ReligionHeadquartersController::class, 'donate'])->name('religions.headquarters.donate');
+        Route::post('religions/{religion}/headquarters/upgrade', [ReligionHeadquartersController::class, 'startUpgrade'])->name('religions.headquarters.upgrade');
+        Route::post('religions/{religion}/headquarters/features', [ReligionHeadquartersController::class, 'buildFeature'])->name('religions.headquarters.features.build');
+        Route::post('religions/{religion}/headquarters/features/{feature}/upgrade', [ReligionHeadquartersController::class, 'upgradeFeature'])->name('religions.headquarters.features.upgrade');
+        Route::post('religions/{religion}/headquarters/features/{feature}/pray', [ReligionHeadquartersController::class, 'pray'])->name('religions.headquarters.features.pray');
+        Route::post('religions/{religion}/headquarters/projects/{project}/contribute', [ReligionHeadquartersController::class, 'contribute'])->name('religions.headquarters.contribute');
+        Route::post('religions/{religion}/headquarters/projects/{project}/complete', [ReligionHeadquartersController::class, 'completeProject'])->name('religions.headquarters.complete');
+        Route::get('cults/{religion}/hideout', [CultHideoutController::class, 'showAtLocation'])->name('cults.hideout.show');
+        Route::post('cults/{religion}/hideout/build', [CultHideoutController::class, 'build'])->name('cults.hideout.build');
+        Route::post('cults/{religion}/hideout/upgrade', [CultHideoutController::class, 'startUpgrade'])->name('cults.hideout.upgrade');
+        Route::post('cults/{religion}/hideout/projects/{project}/contribute', [CultHideoutController::class, 'contribute'])->name('cults.hideout.contribute');
+        Route::post('cults/{religion}/hideout/projects/{project}/complete', [CultHideoutController::class, 'completeProject'])->name('cults.hideout.complete');
     });
 
     // Location-scoped services: Baronies
@@ -413,6 +451,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
         Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
+        Route::post('shrine/activate-beliefs', [BlessingController::class, 'activateBeliefs'])->name('shrine.activate-beliefs');
+        Route::post('shrine/activate-cult-beliefs', [BlessingController::class, 'activateCultBeliefs'])->name('shrine.activate-cult-beliefs');
         Route::post('shrine/request/{blessingRequest}/approve', [BlessingController::class, 'approveRequest'])->name('shrine.approve');
         Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
         Route::get('stables', [StableController::class, 'index'])->name('stables');
@@ -427,6 +467,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('apothecary/brew', [ApothecaryController::class, 'brew'])->name('apothecary.brew');
         Route::get('agility', [AgilityController::class, 'index'])->name('agility');
         Route::post('agility/train', [AgilityController::class, 'train'])->name('agility.train');
+        Route::get('religions/{religion}', [ReligionController::class, 'showAtLocation'])->name('religions.show');
+        Route::get('religions/{religion}/headquarters', [ReligionHeadquartersController::class, 'showAtLocation'])->name('religions.headquarters.show');
+        Route::post('religions/{religion}/headquarters/build', [ReligionHeadquartersController::class, 'build'])->name('religions.headquarters.build');
+        Route::post('religions/{religion}/headquarters/donate', [ReligionHeadquartersController::class, 'donate'])->name('religions.headquarters.donate');
+        Route::post('religions/{religion}/headquarters/upgrade', [ReligionHeadquartersController::class, 'startUpgrade'])->name('religions.headquarters.upgrade');
+        Route::post('religions/{religion}/headquarters/features', [ReligionHeadquartersController::class, 'buildFeature'])->name('religions.headquarters.features.build');
+        Route::post('religions/{religion}/headquarters/features/{feature}/upgrade', [ReligionHeadquartersController::class, 'upgradeFeature'])->name('religions.headquarters.features.upgrade');
+        Route::post('religions/{religion}/headquarters/features/{feature}/pray', [ReligionHeadquartersController::class, 'pray'])->name('religions.headquarters.features.pray');
+        Route::post('religions/{religion}/headquarters/projects/{project}/contribute', [ReligionHeadquartersController::class, 'contribute'])->name('religions.headquarters.contribute');
+        Route::post('religions/{religion}/headquarters/projects/{project}/complete', [ReligionHeadquartersController::class, 'completeProject'])->name('religions.headquarters.complete');
+        Route::get('cults/{religion}/hideout', [CultHideoutController::class, 'showAtLocation'])->name('cults.hideout.show');
+        Route::post('cults/{religion}/hideout/build', [CultHideoutController::class, 'build'])->name('cults.hideout.build');
+        Route::post('cults/{religion}/hideout/upgrade', [CultHideoutController::class, 'startUpgrade'])->name('cults.hideout.upgrade');
+        Route::post('cults/{religion}/hideout/projects/{project}/contribute', [CultHideoutController::class, 'contribute'])->name('cults.hideout.contribute');
+        Route::post('cults/{religion}/hideout/projects/{project}/complete', [CultHideoutController::class, 'completeProject'])->name('cults.hideout.complete');
     });
 
     // Location-scoped services: Duchies
@@ -442,6 +497,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
         Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
+        Route::post('shrine/activate-beliefs', [BlessingController::class, 'activateBeliefs'])->name('shrine.activate-beliefs');
+        Route::post('shrine/activate-cult-beliefs', [BlessingController::class, 'activateCultBeliefs'])->name('shrine.activate-cult-beliefs');
         Route::post('shrine/request/{blessingRequest}/approve', [BlessingController::class, 'approveRequest'])->name('shrine.approve');
         Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
         Route::get('stables', [StableController::class, 'index'])->name('stables');
@@ -456,6 +513,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('apothecary/brew', [ApothecaryController::class, 'brew'])->name('apothecary.brew');
         Route::get('agility', [AgilityController::class, 'index'])->name('agility');
         Route::post('agility/train', [AgilityController::class, 'train'])->name('agility.train');
+        Route::get('religions/{religion}', [ReligionController::class, 'showAtLocation'])->name('religions.show');
+        Route::get('religions/{religion}/headquarters', [ReligionHeadquartersController::class, 'showAtLocation'])->name('religions.headquarters.show');
+        Route::post('religions/{religion}/headquarters/build', [ReligionHeadquartersController::class, 'build'])->name('religions.headquarters.build');
+        Route::post('religions/{religion}/headquarters/donate', [ReligionHeadquartersController::class, 'donate'])->name('religions.headquarters.donate');
+        Route::post('religions/{religion}/headquarters/upgrade', [ReligionHeadquartersController::class, 'startUpgrade'])->name('religions.headquarters.upgrade');
+        Route::post('religions/{religion}/headquarters/features', [ReligionHeadquartersController::class, 'buildFeature'])->name('religions.headquarters.features.build');
+        Route::post('religions/{religion}/headquarters/features/{feature}/upgrade', [ReligionHeadquartersController::class, 'upgradeFeature'])->name('religions.headquarters.features.upgrade');
+        Route::post('religions/{religion}/headquarters/features/{feature}/pray', [ReligionHeadquartersController::class, 'pray'])->name('religions.headquarters.features.pray');
+        Route::post('religions/{religion}/headquarters/projects/{project}/contribute', [ReligionHeadquartersController::class, 'contribute'])->name('religions.headquarters.contribute');
+        Route::post('religions/{religion}/headquarters/projects/{project}/complete', [ReligionHeadquartersController::class, 'completeProject'])->name('religions.headquarters.complete');
+        Route::get('cults/{religion}/hideout', [CultHideoutController::class, 'showAtLocation'])->name('cults.hideout.show');
+        Route::post('cults/{religion}/hideout/build', [CultHideoutController::class, 'build'])->name('cults.hideout.build');
+        Route::post('cults/{religion}/hideout/upgrade', [CultHideoutController::class, 'startUpgrade'])->name('cults.hideout.upgrade');
+        Route::post('cults/{religion}/hideout/projects/{project}/contribute', [CultHideoutController::class, 'contribute'])->name('cults.hideout.contribute');
+        Route::post('cults/{religion}/hideout/projects/{project}/complete', [CultHideoutController::class, 'completeProject'])->name('cults.hideout.complete');
     });
 
     // Location-scoped services: Kingdoms
@@ -471,6 +543,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('shrine', [BlessingController::class, 'index'])->name('shrine');
         Route::post('shrine/bless', [BlessingController::class, 'bless'])->name('shrine.bless');
         Route::post('shrine/pray', [BlessingController::class, 'pray'])->name('shrine.pray');
+        Route::post('shrine/activate-beliefs', [BlessingController::class, 'activateBeliefs'])->name('shrine.activate-beliefs');
+        Route::post('shrine/activate-cult-beliefs', [BlessingController::class, 'activateCultBeliefs'])->name('shrine.activate-cult-beliefs');
         Route::post('shrine/request/{blessingRequest}/approve', [BlessingController::class, 'approveRequest'])->name('shrine.approve');
         Route::post('shrine/request/{blessingRequest}/deny', [BlessingController::class, 'denyRequest'])->name('shrine.deny');
         Route::get('stables', [StableController::class, 'index'])->name('stables');
@@ -482,6 +556,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('thieving/attempt', [ThievingController::class, 'thieve'])->name('thieving.attempt');
         Route::get('apothecary', [ApothecaryController::class, 'index'])->name('apothecary');
         Route::post('apothecary/brew', [ApothecaryController::class, 'brew'])->name('apothecary.brew');
+        Route::get('religions/{religion}', [ReligionController::class, 'showAtLocation'])->name('religions.show');
+        Route::get('religions/{religion}/headquarters', [ReligionHeadquartersController::class, 'showAtLocation'])->name('religions.headquarters.show');
+        Route::post('religions/{religion}/headquarters/build', [ReligionHeadquartersController::class, 'build'])->name('religions.headquarters.build');
+        Route::post('religions/{religion}/headquarters/donate', [ReligionHeadquartersController::class, 'donate'])->name('religions.headquarters.donate');
+        Route::post('religions/{religion}/headquarters/upgrade', [ReligionHeadquartersController::class, 'startUpgrade'])->name('religions.headquarters.upgrade');
+        Route::post('religions/{religion}/headquarters/features', [ReligionHeadquartersController::class, 'buildFeature'])->name('religions.headquarters.features.build');
+        Route::post('religions/{religion}/headquarters/features/{feature}/upgrade', [ReligionHeadquartersController::class, 'upgradeFeature'])->name('religions.headquarters.features.upgrade');
+        Route::post('religions/{religion}/headquarters/features/{feature}/pray', [ReligionHeadquartersController::class, 'pray'])->name('religions.headquarters.features.pray');
+        Route::post('religions/{religion}/headquarters/projects/{project}/contribute', [ReligionHeadquartersController::class, 'contribute'])->name('religions.headquarters.contribute');
+        Route::post('religions/{religion}/headquarters/projects/{project}/complete', [ReligionHeadquartersController::class, 'completeProject'])->name('religions.headquarters.complete');
+        Route::get('cults/{religion}/hideout', [CultHideoutController::class, 'showAtLocation'])->name('cults.hideout.show');
+        Route::post('cults/{religion}/hideout/build', [CultHideoutController::class, 'build'])->name('cults.hideout.build');
+        Route::post('cults/{religion}/hideout/upgrade', [CultHideoutController::class, 'startUpgrade'])->name('cults.hideout.upgrade');
+        Route::post('cults/{religion}/hideout/projects/{project}/contribute', [CultHideoutController::class, 'contribute'])->name('cults.hideout.contribute');
+        Route::post('cults/{religion}/hideout/projects/{project}/complete', [CultHideoutController::class, 'completeProject'])->name('cults.hideout.complete');
     });
 
     // Crafting Docket
@@ -582,6 +671,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Religions
     Route::get('religions', [ReligionController::class, 'index'])->name('religions.index');
     Route::get('religions/structures', [ReligionController::class, 'structures'])->name('religions.structures');
+    Route::get('religions/successors', [ReligionController::class, 'successors'])->name('religions.successors');
+    Route::get('religions/invites', [ReligionController::class, 'pendingInvites'])->name('religions.invites');
     Route::get('religions/{religion}', [ReligionController::class, 'show'])->name('religions.show');
     Route::post('religions/create-cult', [ReligionController::class, 'createCult'])->name('religions.create-cult');
     Route::post('religions/join', [ReligionController::class, 'join'])->name('religions.join');
@@ -593,6 +684,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('religions/build-structure', [ReligionController::class, 'buildStructure'])->name('religions.build-structure');
     Route::post('religions/make-public', [ReligionController::class, 'makePublic'])->name('religions.make-public');
     Route::post('religions/kingdom-status', [ReligionController::class, 'setKingdomStatus'])->name('religions.kingdom-status');
+    Route::post('religions/dissolve', [ReligionController::class, 'dissolve'])->name('religions.dissolve');
+    Route::post('religions/invite', [ReligionController::class, 'invite'])->name('religions.invite');
+    Route::post('religions/invite/accept', [ReligionController::class, 'acceptInvite'])->name('religions.invite.accept');
+    Route::post('religions/invite/decline', [ReligionController::class, 'declineInvite'])->name('religions.invite.decline');
+    Route::post('religions/invite/cancel', [ReligionController::class, 'cancelInvite'])->name('religions.invite.cancel');
+
+    // Legacy HQ redirect - redirects old /religions/{id}/headquarters to location-scoped URL
+    Route::get('religions/{religion}/headquarters', [ReligionHeadquartersController::class, 'redirectToLocationScoped'])
+        ->name('religions.headquarters.redirect');
 
     // Calendar (World Time)
     Route::get('calendar', [CalendarController::class, 'index'])->name('calendar.index');

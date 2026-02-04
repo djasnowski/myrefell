@@ -1,14 +1,18 @@
 import { Head, router, usePage } from "@inertiajs/react";
 import {
+    AlertTriangle,
     ArrowLeft,
+    Building2,
     Church,
     Coins,
     Crown,
     Flame,
     Heart,
+    History,
     Shield,
     Skull,
     Star,
+    Trash2,
     Users,
     X,
     Zap,
@@ -52,7 +56,7 @@ interface Membership {
     rank_display: string;
     devotion: number;
     is_prophet: boolean;
-    is_priest: boolean;
+    is_officer: boolean;
     can_be_promoted: boolean;
 }
 
@@ -64,6 +68,8 @@ interface Member {
     rank_display: string;
     devotion: number;
     joined_at: string;
+    can_be_promoted: boolean;
+    can_be_demoted: boolean;
 }
 
 interface Structure {
@@ -82,6 +88,22 @@ interface SacrificeBone {
     prayer_xp: number;
 }
 
+interface HistoryLog {
+    id: number;
+    event_type: string;
+    description: string;
+    actor: { id: number; username: string } | null;
+    target: { id: number; username: string } | null;
+    created_at: string;
+    time_ago: string;
+}
+
+interface Location {
+    type: string;
+    id: number;
+    name: string;
+}
+
 interface PageProps {
     religion: Religion;
     membership: Membership | null;
@@ -91,8 +113,10 @@ interface PageProps {
     members: Member[];
     structures: Structure[];
     sacrifice_bones: SacrificeBone[];
+    history: HistoryLog[];
     energy: { current: number };
     gold: number;
+    location: Location;
     [key: string]: unknown;
 }
 
@@ -103,9 +127,17 @@ const beliefTypeColors: Record<string, string> = {
 };
 
 const rankColors: Record<string, string> = {
+    // Shared
     prophet: "text-yellow-400 bg-yellow-900/30",
-    priest: "text-purple-400 bg-purple-900/30",
     follower: "text-stone-400 bg-stone-700/30",
+    // Religion ranks
+    archbishop: "text-amber-400 bg-amber-900/30",
+    priest: "text-purple-400 bg-purple-900/30",
+    deacon: "text-blue-400 bg-blue-900/30",
+    // Cult ranks
+    apostle: "text-red-400 bg-red-900/30",
+    acolyte: "text-orange-400 bg-orange-900/30",
+    disciple: "text-cyan-400 bg-cyan-900/30",
 };
 
 // Format effect keys: combat_xp_bonus -> Combat XP Bonus
@@ -126,9 +158,20 @@ export default function ReligionShow() {
         members,
         structures,
         sacrifice_bones,
+        history = [],
         energy,
         gold,
+        location,
     } = usePage<PageProps>().props;
+
+    // Build location-scoped URLs
+    const pluralizeLocationType = (type: string): string => {
+        if (type === "barony") return "baronies";
+        if (type === "duchy") return "duchies";
+        return `${type}s`;
+    };
+    const baseLocationUrl = `/${pluralizeLocationType(location.type)}/${location.id}`;
+    const shrineUrl = `${baseLocationUrl}/shrine`;
 
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -151,6 +194,23 @@ export default function ReligionShow() {
     } | null>(null);
     const [localBones, setLocalBones] = useState(sacrifice_bones);
 
+    // History modal state
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+
+    // Dissolve modal state
+    const [showDissolveModal, setShowDissolveModal] = useState(false);
+    const [potentialSuccessors, setPotentialSuccessors] = useState<
+        Array<{
+            user_id: number;
+            username: string;
+            rank: string;
+            rank_display: string;
+            devotion: number;
+        }>
+    >([]);
+    const [selectedSuccessorId, setSelectedSuccessorId] = useState<number | null>(null);
+    const [isDissolving, setIsDissolving] = useState(false);
+
     // Update local bones when props change
     useEffect(() => {
         setLocalBones(sacrifice_bones);
@@ -158,8 +218,9 @@ export default function ReligionShow() {
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
-        { title: "Religions", href: "/religions" },
-        { title: religion.name, href: `/religions/${religion.id}` },
+        { title: location.name, href: baseLocationUrl },
+        { title: "Shrine", href: shrineUrl },
+        { title: religion.name, href: `${baseLocationUrl}/religions/${religion.id}` },
     ];
 
     const performAction = async (
@@ -309,7 +370,7 @@ export default function ReligionShow() {
             const data = await response.json();
             if (data.success) {
                 setSuccess(data.message);
-                router.visit("/religions");
+                router.visit(shrineUrl);
             } else {
                 setError(data.message);
             }
@@ -447,17 +508,79 @@ export default function ReligionShow() {
         }
     };
 
+    const openDissolveModal = async () => {
+        // Fetch potential successors
+        try {
+            const response = await fetch(`/religions/successors?religion_id=${religion.id}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setPotentialSuccessors(data.data.successors);
+                setSelectedSuccessorId(data.data.successors[0]?.user_id || null);
+            }
+        } catch {
+            // Continue anyway - may have no successors
+        }
+
+        setShowDissolveModal(true);
+    };
+
+    const dissolveReligion = async () => {
+        // If there are potential successors (other members), require selection
+        if (potentialSuccessors.length > 0 && !selectedSuccessorId) {
+            setError("You must select a successor before dissolving.");
+            return;
+        }
+
+        setIsDissolving(true);
+        setError(null);
+
+        try {
+            const response = await fetch("/religions/dissolve", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
+                },
+                body: JSON.stringify({
+                    religion_id: religion.id,
+                    successor_user_id: selectedSuccessorId,
+                }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setSuccess(data.message);
+                setShowDissolveModal(false);
+                router.visit(shrineUrl);
+            } else {
+                setError(data.message);
+            }
+        } catch {
+            setError("Failed to dissolve religion");
+        } finally {
+            setIsDissolving(false);
+        }
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={religion.name} />
             <div className="flex h-full flex-1 flex-col gap-6 p-4">
                 {/* Back Button */}
                 <a
-                    href="/religions"
+                    href={shrineUrl}
                     className="flex items-center gap-2 font-pixel text-sm text-stone-400 hover:text-white"
                 >
                     <ArrowLeft className="h-4 w-4" />
-                    Back to Religions
+                    Back to Shrine
                 </a>
 
                 {/* Header */}
@@ -611,34 +734,60 @@ export default function ReligionShow() {
                             </div>
                         )}
 
-                        {/* Prophet Controls */}
-                        {membership?.is_prophet && (
-                            <div className="rounded-lg border border-yellow-500/30 bg-yellow-900/20 p-4">
-                                <h2 className="mb-3 font-pixel text-sm text-yellow-300">
-                                    Prophet Controls
-                                </h2>
-                                <div className="flex flex-wrap gap-2">
-                                    {!religion.is_public && (
-                                        <button
-                                            onClick={makePublic}
-                                            disabled={isLoading}
-                                            className="rounded bg-green-600/50 px-4 py-2 font-pixel text-xs text-green-200 transition hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
-                                        >
-                                            Make Public
-                                        </button>
-                                    )}
-                                    {religion.is_cult && religion.member_count >= 15 && (
-                                        <button
-                                            onClick={convertToReligion}
-                                            disabled={isLoading || gold < 100000}
-                                            className="rounded bg-amber-600/50 px-4 py-2 font-pixel text-xs text-amber-200 transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
-                                        >
-                                            Convert to Religion (100K Gold)
-                                        </button>
-                                    )}
+                        {/* Headquarters/Hideout Button (visible to all members) */}
+                        {is_member && (
+                            <a
+                                href={
+                                    religion.is_cult
+                                        ? `${baseLocationUrl}/cults/${religion.id}/hideout`
+                                        : `${baseLocationUrl}/religions/${religion.id}/headquarters`
+                                }
+                                className="flex items-center justify-center gap-3 rounded-lg border border-amber-500/50 bg-gradient-to-r from-amber-900/40 to-yellow-900/40 p-4 transition hover:border-amber-400 hover:from-amber-900/60 hover:to-yellow-900/60"
+                            >
+                                <Building2 className="h-6 w-6 text-amber-400" />
+                                <div className="text-left">
+                                    <div className="font-pixel text-sm text-amber-300">
+                                        {religion.is_cult ? "Hideout" : "Headquarters"}
+                                    </div>
+                                    <div className="font-pixel text-xs text-stone-400">
+                                        {religion.is_cult
+                                            ? "Manage your secret lair"
+                                            : "Manage treasury, upgrades & bonuses"}
+                                    </div>
                                 </div>
-                            </div>
+                            </a>
                         )}
+
+                        {/* Prophet Controls - only show if there are actions available */}
+                        {membership?.is_prophet &&
+                            (!religion.is_public ||
+                                (religion.is_cult && religion.member_count >= 15)) && (
+                                <div className="rounded-lg border border-yellow-500/30 bg-yellow-900/20 p-4">
+                                    <h2 className="mb-3 font-pixel text-sm text-yellow-300">
+                                        Prophet Controls
+                                    </h2>
+                                    <div className="flex flex-wrap gap-2">
+                                        {!religion.is_public && (
+                                            <button
+                                                onClick={makePublic}
+                                                disabled={isLoading}
+                                                className="rounded bg-green-600/50 px-4 py-2 font-pixel text-xs text-green-200 transition hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                Make Public
+                                            </button>
+                                        )}
+                                        {religion.is_cult && religion.member_count >= 15 && (
+                                            <button
+                                                onClick={convertToReligion}
+                                                disabled={isLoading || gold < 100000}
+                                                className="rounded bg-amber-600/50 px-4 py-2 font-pixel text-xs text-amber-200 transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                Convert to Religion (100K Gold)
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
 
                         {/* Join Button */}
                         {!is_member && can_join && (
@@ -706,6 +855,17 @@ export default function ReligionShow() {
                             </div>
                         )}
 
+                        {/* History Button (members only) */}
+                        {is_member && history.length > 0 && (
+                            <button
+                                onClick={() => setShowHistoryModal(true)}
+                                className="flex w-full items-center justify-center gap-2 rounded-lg border border-stone-600 bg-stone-800/50 px-4 py-3 font-pixel text-sm text-stone-300 transition hover:border-amber-500/50 hover:bg-stone-700/50 hover:text-amber-300"
+                            >
+                                <History className="h-4 w-4" />
+                                View History
+                            </button>
+                        )}
+
                         {/* Members */}
                         <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4">
                             <h2 className="mb-3 flex items-center gap-2 font-pixel text-sm text-amber-300">
@@ -729,30 +889,23 @@ export default function ReligionShow() {
                                                 </span>
                                             </div>
                                             <span
-                                                className={`font-pixel text-[10px] ${
-                                                    member.rank === "prophet"
-                                                        ? "text-yellow-400"
-                                                        : member.rank === "priest"
-                                                          ? "text-purple-400"
-                                                          : "text-stone-500"
-                                                }`}
+                                                className={`font-pixel text-[10px] ${rankColors[member.rank]?.split(" ")[0] || "text-stone-500"}`}
                                             >
                                                 {member.rank_display} - {member.devotion} devotion
                                             </span>
                                         </div>
                                         {membership?.is_prophet && member.rank !== "prophet" && (
                                             <div className="flex gap-1">
-                                                {member.rank === "follower" &&
-                                                    member.devotion >= 1000 && (
-                                                        <button
-                                                            onClick={() => promoteMember(member.id)}
-                                                            disabled={isLoading}
-                                                            className="rounded bg-green-600/50 px-2 py-1 font-pixel text-[10px] text-green-200 hover:bg-green-600"
-                                                        >
-                                                            Promote
-                                                        </button>
-                                                    )}
-                                                {member.rank === "priest" && (
+                                                {member.can_be_promoted && (
+                                                    <button
+                                                        onClick={() => promoteMember(member.id)}
+                                                        disabled={isLoading}
+                                                        className="rounded bg-green-600/50 px-2 py-1 font-pixel text-[10px] text-green-200 hover:bg-green-600"
+                                                    >
+                                                        Promote
+                                                    </button>
+                                                )}
+                                                {member.can_be_demoted && (
                                                     <button
                                                         onClick={() => demoteMember(member.id)}
                                                         disabled={isLoading}
@@ -806,7 +959,7 @@ export default function ReligionShow() {
                             </div>
                         )}
 
-                        {/* Leave Religion Button */}
+                        {/* Leave Religion Button (for non-prophets) */}
                         {membership && !membership.is_prophet && (
                             <button
                                 onClick={leaveReligion}
@@ -814,6 +967,18 @@ export default function ReligionShow() {
                                 className="w-full rounded border border-red-500/50 bg-transparent py-2 font-pixel text-xs text-red-400 transition hover:bg-red-900/30 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 Leave Religion
+                            </button>
+                        )}
+
+                        {/* Dissolve Cult/Religion Button (for prophets) */}
+                        {membership && membership.is_prophet && (
+                            <button
+                                onClick={openDissolveModal}
+                                disabled={isLoading}
+                                className="flex w-full items-center justify-center gap-2 rounded border border-red-500/50 bg-transparent py-2 font-pixel text-xs text-red-400 transition hover:bg-red-900/30 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                <Trash2 className="h-3 w-3" />
+                                Dissolve {religion.is_cult ? "Cult" : "Religion"}
                             </button>
                         )}
                     </div>
@@ -982,6 +1147,160 @@ export default function ReligionShow() {
                         <p className="text-center font-pixel text-xs text-stone-500">
                             Click on a bone type to sacrifice one to the altar (costs 5 energy)
                         </p>
+                    </div>
+                </div>
+            )}
+
+            {/* Dissolve Religion Modal */}
+            {showDissolveModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+                    <div className="relative w-full max-w-md rounded-lg border border-red-500/50 bg-stone-900 p-6">
+                        {/* Close Button */}
+                        <button
+                            onClick={() => setShowDissolveModal(false)}
+                            className="absolute right-4 top-4 text-stone-400 hover:text-white"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+
+                        <div className="mb-4 flex items-center justify-center gap-2">
+                            <AlertTriangle className="h-6 w-6 text-red-400" />
+                            <h2 className="font-pixel text-lg text-red-400">
+                                Dissolve {religion.is_cult ? "Cult" : "Religion"}
+                            </h2>
+                        </div>
+
+                        {potentialSuccessors.length > 0 ? (
+                            <>
+                                <p className="mb-4 text-center font-pixel text-sm text-stone-300">
+                                    You must choose a successor to lead {religion.name} after you
+                                    leave.
+                                </p>
+
+                                <div className="mb-4 max-h-60 overflow-y-auto">
+                                    <div className="space-y-2">
+                                        {potentialSuccessors.map((successor) => (
+                                            <button
+                                                key={successor.user_id}
+                                                onClick={() =>
+                                                    setSelectedSuccessorId(successor.user_id)
+                                                }
+                                                className={`flex w-full items-center justify-between rounded-lg border p-3 transition ${
+                                                    selectedSuccessorId === successor.user_id
+                                                        ? "border-amber-500 bg-amber-900/30"
+                                                        : "border-stone-700 bg-stone-800/50 hover:border-stone-600"
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div
+                                                        className={`rounded px-2 py-0.5 font-pixel text-xs ${rankColors[successor.rank]}`}
+                                                    >
+                                                        {successor.rank_display}
+                                                    </div>
+                                                    <span className="font-pixel text-sm text-white">
+                                                        {successor.username}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-1 font-pixel text-xs text-pink-400">
+                                                    <Heart className="h-3 w-3" />
+                                                    {successor.devotion}
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <p className="mb-4 text-center font-pixel text-xs text-stone-500">
+                                    The selected member will become the new Prophet.
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <p className="mb-4 text-center font-pixel text-sm text-stone-300">
+                                    You are the only member of {religion.name}.
+                                </p>
+                                <p className="mb-4 text-center font-pixel text-sm text-red-400">
+                                    Dissolving will permanently delete this{" "}
+                                    {religion.is_cult ? "cult" : "religion"}!
+                                </p>
+                            </>
+                        )}
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowDissolveModal(false)}
+                                className="flex-1 rounded border border-stone-600 bg-stone-800 py-2 font-pixel text-sm text-stone-300 transition hover:bg-stone-700"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={dissolveReligion}
+                                disabled={
+                                    isDissolving ||
+                                    (potentialSuccessors.length > 0 && !selectedSuccessorId)
+                                }
+                                className="flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded border border-red-500 bg-red-900/30 px-4 py-2 font-pixel text-sm text-red-300 transition hover:bg-red-900/50 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                {isDissolving ? (
+                                    "Processing..."
+                                ) : potentialSuccessors.length > 0 ? (
+                                    <>
+                                        <Crown className="h-4 w-4 shrink-0" />
+                                        <span>Pass Leadership</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash2 className="h-4 w-4 shrink-0" />
+                                        <span>Dissolve</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* History Modal */}
+            {showHistoryModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+                    <div className="relative w-full max-w-lg rounded-lg border border-stone-600 bg-stone-900 p-6">
+                        {/* Close Button */}
+                        <button
+                            onClick={() => setShowHistoryModal(false)}
+                            className="absolute right-4 top-4 text-stone-400 hover:text-white"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+
+                        <div className="mb-4 flex items-center justify-center gap-2">
+                            <History className="h-6 w-6 text-amber-400" />
+                            <h2 className="font-pixel text-lg text-amber-300">Religion History</h2>
+                        </div>
+
+                        <div className="max-h-96 space-y-2 overflow-y-auto">
+                            {history.map((log) => (
+                                <div
+                                    key={log.id}
+                                    className="rounded border border-stone-700 bg-stone-800/50 p-3"
+                                >
+                                    <div className="font-pixel text-sm text-stone-200">
+                                        {log.description}
+                                    </div>
+                                    <div className="mt-1 font-pixel text-xs text-stone-500">
+                                        {log.time_ago}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-4">
+                            <button
+                                onClick={() => setShowHistoryModal(false)}
+                                className="w-full rounded border border-stone-600 bg-stone-800 py-2 font-pixel text-sm text-stone-300 transition hover:bg-stone-700"
+                            >
+                                Close
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

@@ -181,7 +181,7 @@ class BaronyController extends Controller
             'current_user_id' => $user->id,
             'is_baron' => $isBaron,
             'is_resident' => $isResident,
-            'can_migrate' => $migrationService->canMigrate($user),
+            ...$migrationService->getMigrationCooldownInfo($user),
             'has_pending_request' => $hasPendingRequest,
         ]);
     }

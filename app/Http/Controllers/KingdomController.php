@@ -175,7 +175,7 @@ class KingdomController extends Controller
             ],
             'current_user_id' => $user->id,
             'is_resident' => $isResident,
-            'can_migrate' => $migrationService->canMigrate($user),
+            ...$migrationService->getMigrationCooldownInfo($user),
             'has_pending_request' => $hasPendingRequest,
         ]);
     }
@@ -271,7 +271,7 @@ class KingdomController extends Controller
                 'biome' => $kingdom->biome,
             ],
             'settlements' => $settlements,
-            'can_migrate' => $migrationService->canMigrate($user),
+            ...$migrationService->getMigrationCooldownInfo($user),
             'has_pending_request' => $hasPendingRequest,
             'current_home_village_id' => $user->home_village_id,
         ]);

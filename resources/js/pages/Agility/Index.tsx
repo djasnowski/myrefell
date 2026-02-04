@@ -3,6 +3,7 @@ import { Footprints, Loader2, Lock, Sparkles, Zap } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { gameToast } from "@/components/ui/game-toast";
+import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
 const AGILITY_COOLDOWN_MS = 3000;
@@ -133,9 +134,11 @@ export default function AgilityIndex() {
         };
     }, []);
 
+    const baseLocationUrl = location ? locationPath(location.type, location.id) : null;
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
-        ...(location ? [{ title: location.name, href: `/${location.type}s/${location.id}` }] : []),
+        ...(location && baseLocationUrl ? [{ title: location.name, href: baseLocationUrl }] : []),
         { title: "Agility Course", href: "#" },
     ];
 
@@ -148,9 +151,7 @@ export default function AgilityIndex() {
         setLoading(obstacle);
 
         // Build the URL based on location
-        const baseUrl = location
-            ? `/${location.type}s/${location.id}/agility/train`
-            : "/agility/train";
+        const baseUrl = baseLocationUrl ? `${baseLocationUrl}/agility/train` : "/agility/train";
 
         try {
             const response = await fetch(baseUrl, {

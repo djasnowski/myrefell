@@ -548,7 +548,8 @@ class ThievingService
 
     public function __construct(
         protected InventoryService $inventoryService,
-        protected DailyTaskService $dailyTaskService
+        protected DailyTaskService $dailyTaskService,
+        protected BeliefEffectService $beliefEffectService
     ) {}
 
     /**
@@ -578,20 +579,30 @@ class ThievingService
         $targets = [];
         $thievingLevel = $user->getSkillLevel('thieving');
 
+        // Get energy reduction from cult beliefs (Shadow Step)
+        $energyReduction = $this->beliefEffectService->getEffect($user, 'thieving_energy_reduction');
+
         foreach (self::TARGETS as $key => $config) {
             if (! in_array($user->current_location_type, $config['location_types'])) {
                 continue;
             }
 
             $isUnlocked = $thievingLevel >= $config['min_level'];
-            $successRate = $this->calculateSuccessRate($thievingLevel, $config);
+            $successRate = $this->calculateSuccessRate($thievingLevel, $config, $user);
+
+            // Apply energy cost reduction
+            $effectiveEnergyCost = $config['energy_cost'];
+            if ($energyReduction > 0) {
+                $effectiveEnergyCost = max(1, (int) ceil($config['energy_cost'] * (1 - $energyReduction / 100)));
+            }
 
             $targets[] = [
                 'id' => $key,
                 'name' => $config['name'],
                 'description' => $config['description'],
                 'min_level' => $config['min_level'],
-                'energy_cost' => $config['energy_cost'],
+                'energy_cost' => $effectiveEnergyCost,
+                'base_energy_cost' => $config['energy_cost'],
                 'base_xp' => $config['base_xp'],
                 'gold_range' => $config['gold_range'],
                 'success_rate' => $successRate,
@@ -599,7 +610,7 @@ class ThievingService
                 'catch_energy_loss' => $config['catch_energy_loss'],
                 'is_unlocked' => $isUnlocked,
                 'is_legendary' => $config['is_legendary'] ?? false,
-                'can_attempt' => $isUnlocked && $user->hasEnergy($config['energy_cost']),
+                'can_attempt' => $isUnlocked && $user->hasEnergy($effectiveEnergyCost),
             ];
         }
 
@@ -608,8 +619,9 @@ class ThievingService
 
     /**
      * Calculate success rate based on player level vs target requirement.
+     * Applies cult belief bonuses for thieving success.
      */
-    protected function calculateSuccessRate(int $playerLevel, array $config): int
+    protected function calculateSuccessRate(int $playerLevel, array $config, ?User $user = null): int
     {
         $baseRate = $config['base_success_rate'];
         $levelDiff = $playerLevel - $config['min_level'];
@@ -617,12 +629,24 @@ class ThievingService
         // Each level above requirement adds 0.5% success rate (max +15%)
         $levelBonus = min(15, $levelDiff * 0.5);
 
-        // For legendary targets, the rate is much lower
-        if ($config['is_legendary'] ?? false) {
-            return max(1, min(10, $baseRate + $levelBonus)); // Cap at 10% for legendary
+        // Apply cult belief bonuses
+        $beliefBonus = 0;
+        if ($user) {
+            // Shadow's Embrace: +thieving_success_bonus
+            $beliefBonus += $this->beliefEffectService->getEffect($user, 'thieving_success_bonus');
+
+            // Night Stalker: high_level_thieving_bonus for level 40+ targets
+            if ($config['min_level'] >= 40) {
+                $beliefBonus += $this->beliefEffectService->getEffect($user, 'high_level_thieving_bonus');
+            }
         }
 
-        return max(5, min(95, $baseRate + $levelBonus));
+        // For legendary targets, the rate is much lower
+        if ($config['is_legendary'] ?? false) {
+            return max(1, min(15, $baseRate + $levelBonus + $beliefBonus)); // Cap at 15% for legendary with beliefs
+        }
+
+        return max(5, min(98, $baseRate + $levelBonus + $beliefBonus));
     }
 
     /**
@@ -655,23 +679,30 @@ class ThievingService
             ];
         }
 
-        if (! $user->hasEnergy($config['energy_cost'])) {
+        // Calculate effective energy cost with cult belief reduction
+        $energyReduction = $this->beliefEffectService->getEffect($user, 'thieving_energy_reduction');
+        $effectiveEnergyCost = $config['energy_cost'];
+        if ($energyReduction > 0) {
+            $effectiveEnergyCost = max(1, (int) ceil($config['energy_cost'] * (1 - $energyReduction / 100)));
+        }
+
+        if (! $user->hasEnergy($effectiveEnergyCost)) {
             return [
                 'success' => false,
-                'message' => "Not enough energy. Need {$config['energy_cost']} energy.",
+                'message' => "Not enough energy. Need {$effectiveEnergyCost} energy.",
             ];
         }
 
         $locationType = $locationType ?? $user->current_location_type;
         $locationId = $locationId ?? $user->current_location_id;
 
-        $successRate = $this->calculateSuccessRate($thievingLevel, $config);
+        $successRate = $this->calculateSuccessRate($thievingLevel, $config, $user);
         $roll = mt_rand(1, 100);
         $isSuccess = $roll <= $successRate;
 
-        return DB::transaction(function () use ($user, $config, $targetId, $isSuccess, $thievingLevel, $locationType, $locationId) {
-            // Always consume base energy
-            $user->consumeEnergy($config['energy_cost']);
+        return DB::transaction(function () use ($user, $config, $targetId, $isSuccess, $thievingLevel, $locationType, $locationId, $effectiveEnergyCost) {
+            // Always consume reduced energy cost
+            $user->consumeEnergy($effectiveEnergyCost);
 
             if ($isSuccess) {
                 return $this->handleSuccess($user, $config, $targetId, $thievingLevel, $locationType, $locationId);
@@ -690,18 +721,28 @@ class ThievingService
         $goldStolen = mt_rand($config['gold_range'][0], $config['gold_range'][1]);
         $user->increment('gold', $goldStolen);
 
-        // Award XP
+        // Calculate XP with belief bonuses (Shadow's Embrace, Dark Whispers)
+        $xpBonus = $this->beliefEffectService->getEffect($user, 'thieving_xp_bonus');
+        $xpPenalty = $this->beliefEffectService->getEffect($user, 'all_xp_penalty'); // Forbidden Wealth
         $xpAwarded = $config['base_xp'];
+        if ($xpBonus != 0 || $xpPenalty != 0) {
+            $xpAwarded = (int) ceil($xpAwarded * (1 + ($xpBonus + $xpPenalty) / 100));
+            $xpAwarded = max(1, $xpAwarded);
+        }
+
         $skill = $user->skills()->where('skill_name', 'thieving')->first();
         $oldLevel = $skill->level;
         $skill->addXp($xpAwarded);
         $newLevel = $skill->fresh()->level;
         $leveledUp = $newLevel > $oldLevel;
 
-        // Chance to get loot item (40% base chance)
+        // Chance to get loot item (40% base chance + Night Stalker bonus)
         $lootItem = null;
         $lootQuantity = 0;
-        if (mt_rand(1, 100) <= 40 && ! empty($config['loot_table'])) {
+        $lootBonus = $this->beliefEffectService->getEffect($user, 'thieving_loot_bonus');
+        $lootChance = 40 + $lootBonus;
+
+        if (mt_rand(1, 100) <= $lootChance && ! empty($config['loot_table'])) {
             $loot = $this->selectWeightedLoot($config['loot_table']);
             if ($loot) {
                 $item = Item::where('name', $loot['item'])->first();
@@ -765,16 +806,29 @@ class ThievingService
      */
     protected function handleFailure(User $user, array $config, string $targetId, ?string $locationType, ?int $locationId): array
     {
-        // Extra energy penalty
-        $extraEnergyLoss = $config['catch_energy_loss'] - $config['energy_cost'];
+        // Calculate catch penalty reduction from Dark Whispers
+        $catchPenaltyReduction = $this->beliefEffectService->getEffect($user, 'catch_penalty_reduction');
+
+        // Extra energy penalty (reduced by belief)
+        $baseExtraEnergyLoss = $config['catch_energy_loss'] - $config['energy_cost'];
+        $extraEnergyLoss = $baseExtraEnergyLoss;
+        if ($catchPenaltyReduction > 0 && $extraEnergyLoss > 0) {
+            $extraEnergyLoss = max(0, (int) ceil($baseExtraEnergyLoss * (1 - $catchPenaltyReduction / 100)));
+        }
         if ($extraEnergyLoss > 0 && $user->energy >= $extraEnergyLoss) {
             $user->consumeEnergy($extraEnergyLoss);
         }
 
-        // Gold fine (only if player has enough)
+        // Gold fine (reduced by belief, only if player has enough)
+        $baseGoldLoss = $config['catch_gold_loss'];
+        $effectiveGoldLoss = $baseGoldLoss;
+        if ($catchPenaltyReduction > 0) {
+            $effectiveGoldLoss = max(0, (int) ceil($baseGoldLoss * (1 - $catchPenaltyReduction / 100)));
+        }
+
         $goldLost = 0;
-        if ($user->gold >= $config['catch_gold_loss']) {
-            $goldLost = $config['catch_gold_loss'];
+        if ($user->gold >= $effectiveGoldLoss) {
+            $goldLost = $effectiveGoldLoss;
             $user->decrement('gold', $goldLost);
         } elseif ($user->gold > 0) {
             $goldLost = $user->gold;

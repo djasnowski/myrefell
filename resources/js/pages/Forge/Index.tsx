@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from "react";
 
 const SMELT_COOLDOWN_MS = 3000;
 import AppLayout from "@/layouts/app-layout";
+import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
 interface Material {
@@ -78,14 +79,17 @@ interface PageProps {
     [key: string]: unknown;
 }
 
-const getBreadcrumbs = (location?: Location): BreadcrumbItem[] => [
-    { title: "Dashboard", href: "/dashboard" },
-    ...(location ? [{ title: location.name, href: `/${location.type}s/${location.id}` }] : []),
-    {
-        title: "Forge",
-        href: location ? `/${location.type}s/${location.id}/forge` : "/forge",
-    },
-];
+const getBreadcrumbs = (location?: Location): BreadcrumbItem[] => {
+    const baseUrl = location ? locationPath(location.type, location.id) : null;
+    return [
+        { title: "Dashboard", href: "/dashboard" },
+        ...(location && baseUrl ? [{ title: location.name, href: baseUrl }] : []),
+        {
+            title: "Forge",
+            href: baseUrl ? `${baseUrl}/forge` : "/forge",
+        },
+    ];
+};
 
 const metalColors: Record<string, { bg: string; border: string; text: string; glow: string }> = {
     Bronze: {
@@ -281,7 +285,9 @@ export default function ForgeIndex() {
         };
     }, []);
 
-    const smeltUrl = location ? `/${location.type}s/${location.id}/forge/smelt` : "/forge/smelt";
+    const smeltUrl = location
+        ? `${locationPath(location.type, location.id)}/forge/smelt`
+        : "/forge/smelt";
 
     const handleSmelt = (recipeId: string) => {
         if (loading || cooldown > 0) return;

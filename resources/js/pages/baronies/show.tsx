@@ -129,6 +129,8 @@ interface Props {
     is_baron: boolean;
     is_resident: boolean;
     can_migrate: boolean;
+    cooldown_ends_at: string | null;
+    cooldown_remaining: string | null;
     has_pending_request: boolean;
 }
 
@@ -199,6 +201,7 @@ export default function BaronyShow({
     is_baron,
     is_resident,
     can_migrate,
+    cooldown_remaining,
     has_pending_request,
 }: Props) {
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
@@ -517,7 +520,9 @@ export default function BaronyShow({
                             <div className="rounded-xl border border-stone-700 bg-stone-800/30 p-4 text-center">
                                 <p className="font-pixel text-stone-500">Migration on Cooldown</p>
                                 <p className="text-xs text-stone-600">
-                                    You must wait before you can move again
+                                    {cooldown_remaining
+                                        ? `You can migrate again ${cooldown_remaining}`
+                                        : "You must wait before you can move again"}
                                 </p>
                             </div>
                         )}

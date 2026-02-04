@@ -103,6 +103,9 @@ class EnergyService
         // Apply blessing energy regen bonus (e.g., 20 = +20% more energy)
         $energyRegenBonus = $this->blessingEffectService->getEffect($player, 'energy_regen_bonus');
 
+        // Apply HQ prayer energy recovery bonus (flat bonus, not percentage)
+        $regenAmount += (int) $this->blessingEffectService->getEffect($player, 'energy_recovery_bonus');
+
         // Apply belief energy regen bonus (Temperance belief)
         $energyRegenBonus += $this->beliefEffectService->getEffect($player, 'energy_regen_bonus');
 

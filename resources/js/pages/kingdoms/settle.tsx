@@ -43,6 +43,8 @@ interface Props {
     kingdom: Kingdom;
     settlements: Settlement[];
     can_migrate: boolean;
+    cooldown_ends_at: string | null;
+    cooldown_remaining: string | null;
     has_pending_request: boolean;
     current_home_village_id: number | null;
 }
@@ -109,6 +111,7 @@ export default function KingdomSettle({
     kingdom,
     settlements,
     can_migrate,
+    cooldown_remaining,
     has_pending_request,
     current_home_village_id,
 }: Props) {
@@ -181,7 +184,9 @@ export default function KingdomSettle({
                     <div className="rounded-xl border border-red-600/30 bg-red-900/10 p-4">
                         <p className="font-pixel text-red-300">Migration Cooldown Active</p>
                         <p className="text-xs text-stone-400">
-                            You must wait before you can move again.
+                            {cooldown_remaining
+                                ? `You can migrate again ${cooldown_remaining}`
+                                : "You must wait before you can move again."}
                         </p>
                     </div>
                 )}

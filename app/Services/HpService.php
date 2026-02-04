@@ -44,10 +44,13 @@ class HpService
             $baseRegen = (int) ceil($baseRegen * (1 + $hpRegenBonus / 100));
         }
 
+        // Apply HQ prayer flat HP regen bonus
+        $hpRegenFlat = (int) $this->blessingEffectService->getEffect($player, 'hp_regen_per_minute');
+
         // Apply hitpoints skill bonus: +1 HP per 10 hitpoints levels
         $hitpointsLevel = $player->getSkillLevel('hitpoints');
         $skillBonus = (int) floor($hitpointsLevel / 10);
-        $totalRegen = $baseRegen + $skillBonus;
+        $totalRegen = $baseRegen + $skillBonus + $hpRegenFlat;
 
         // Cap at max HP
         $newHp = min($player->hp + $totalRegen, $player->max_hp);

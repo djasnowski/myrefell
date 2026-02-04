@@ -1,5 +1,6 @@
 import {
     Anvil,
+    Church,
     Dices,
     FlaskConical,
     Footprints,
@@ -21,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 // Update this when adding new changelog entries
-export const CURRENT_CHANGELOG_VERSION = "0.8.0";
+export const CURRENT_CHANGELOG_VERSION = "0.8.1";
 
 interface ChangelogEntry {
     version: string;
@@ -37,6 +38,36 @@ interface ChangelogEntry {
 }
 
 const changelog: ChangelogEntry[] = [
+    {
+        version: "0.8.1",
+        date: "February 4, 2026",
+        title: "Sacred Sanctuaries",
+        description:
+            "Religions and cults can now establish permanent sanctuaries in the world. Build your faith's headquarters or hidden hideout and unlock powerful new abilities for your followers.",
+        icon: <Church className="h-8 w-8 text-amber-500" />,
+        changes: [
+            {
+                type: "added",
+                text: "Religions can now build Headquarters - from humble Chapels to grand Cathedrals",
+            },
+            {
+                type: "added",
+                text: "Cults can establish secret Hideouts - hidden sanctuaries for forbidden practices",
+            },
+            {
+                type: "added",
+                text: "Upgrade your sanctuary through multiple tiers to unlock new powers",
+            },
+            {
+                type: "added",
+                text: "Expanded rank system for both religions and cults",
+            },
+            {
+                type: "added",
+                text: "Members can contribute gold and devotion to upgrade projects",
+            },
+        ],
+    },
     {
         version: "0.8.0",
         date: "February 2, 2026",

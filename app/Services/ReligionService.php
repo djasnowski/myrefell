@@ -8,7 +8,10 @@ use App\Models\Kingdom;
 use App\Models\KingdomReligion;
 use App\Models\PlayerSkill;
 use App\Models\Religion;
+use App\Models\ReligionHeadquarters;
+use App\Models\ReligionLog;
 use App\Models\ReligionMember;
+use App\Models\ReligionTreasury;
 use App\Models\ReligiousAction;
 use App\Models\ReligiousStructure;
 use App\Models\User;
@@ -22,7 +25,8 @@ class ReligionService
         protected DailyTaskService $dailyTaskService,
         protected BlessingEffectService $blessingEffects,
         protected BeliefEffectService $beliefEffectService,
-        protected InventoryService $inventoryService
+        protected InventoryService $inventoryService,
+        protected ReligionHeadquartersService $hqService
     ) {}
 
     /**
@@ -115,6 +119,8 @@ class ReligionService
                 'rank_display' => $m->rank_display,
                 'devotion' => $m->devotion,
                 'joined_at' => $m->joined_at->toIso8601String(),
+                'can_be_promoted' => $m->canBePromoted(),
+                'can_be_demoted' => $m->canBeDemoted(),
             ])->toArray(),
             'structures' => $religion->structures->map(fn ($s) => [
                 'id' => $s->id,
@@ -124,6 +130,7 @@ class ReligionService
                 'location_type' => $s->location_type,
                 'location_id' => $s->location_id,
             ])->toArray(),
+            'history' => $membership ? $this->getReligionLogs($player, $religion->id, 20) : [],
         ];
     }
 
@@ -182,6 +189,28 @@ class ReligionService
                 'joined_at' => now(),
             ]);
 
+            // Create treasury for the religion
+            ReligionTreasury::create([
+                'religion_id' => $religion->id,
+                'balance' => 0,
+                'total_collected' => 0,
+                'total_distributed' => 0,
+            ]);
+
+            // Create headquarters record (location to be set by prophet later)
+            ReligionHeadquarters::create([
+                'religion_id' => $religion->id,
+                'tier' => 1,
+            ]);
+
+            // Log the founding
+            ReligionLog::log(
+                $religion->id,
+                ReligionLog::EVENT_FOUNDED,
+                "{$player->username} founded the cult",
+                $player->id
+            );
+
             return [
                 'success' => true,
                 'message' => "You have founded the cult '{$name}'.",
@@ -235,6 +264,14 @@ class ReligionService
                 'joined_at' => now(),
             ]);
 
+            // Log the join
+            ReligionLog::log(
+                $religion->id,
+                ReligionLog::EVENT_MEMBER_JOINED,
+                "{$player->username} joined as a follower",
+                $player->id
+            );
+
             return [
                 'success' => true,
                 'message' => "You have joined {$religion->name}.",
@@ -261,8 +298,18 @@ class ReligionService
         }
 
         return DB::transaction(function () use ($membership) {
+            $religionId = $membership->religion_id;
             $religionName = $membership->religion->name;
+            $username = $membership->user->username;
             $membership->delete();
+
+            // Log the leave
+            ReligionLog::log(
+                $religionId,
+                ReligionLog::EVENT_MEMBER_LEFT,
+                "{$username} left the religion",
+                $membership->user_id
+            );
 
             return [
                 'success' => true,
@@ -399,6 +446,24 @@ class ReligionService
             // Apply belief devotion modifiers
             $devotionGained = $this->applyBeliefDevotionModifiers($player, $actionType, $devotionGained);
 
+            // Apply HQ devotion modifiers (passive from HQ tier)
+            $hqDevotionModifier = $this->hqService->getDevotionGainModifier($player);
+            if ($hqDevotionModifier !== 1.0) {
+                $devotionGained = (int) ceil($devotionGained * $hqDevotionModifier);
+            }
+
+            // Apply blessing/prayer buff devotion bonus
+            $devotionBonusPercent = $this->blessingEffects->getEffect($player, 'devotion_bonus');
+            if ($devotionBonusPercent > 0) {
+                $devotionGained = (int) ceil($devotionGained * (1 + $devotionBonusPercent / 100));
+            }
+
+            // Apply double devotion chance (from HQ prayer buff)
+            $doubleDevotionChance = (int) $this->blessingEffects->getEffect($player, 'double_devotion_chance');
+            if ($doubleDevotionChance > 0 && rand(1, 100) <= $doubleDevotionChance) {
+                $devotionGained *= 2;
+            }
+
             // Create action log
             ReligiousAction::create([
                 'user_id' => $player->id,
@@ -477,9 +542,9 @@ class ReligionService
     /**
      * Promote a member to priest.
      */
-    public function promoteToPriest(User $player, int $memberId): array
+    public function promoteMember(User $player, int $memberId): array
     {
-        $targetMember = ReligionMember::with('religion')->find($memberId);
+        $targetMember = ReligionMember::with(['religion', 'user'])->find($memberId);
         if (! $targetMember) {
             return ['success' => false, 'message' => 'Member not found.'];
         }
@@ -494,28 +559,43 @@ class ReligionService
         }
 
         // Check if target can be promoted
-        if (! $targetMember->canBePromoted()) {
-            if (! $targetMember->isFollower()) {
-                return ['success' => false, 'message' => 'This member cannot be promoted further.'];
-            }
-
-            return ['success' => false, 'message' => 'This member needs '.ReligionMember::PRIEST_DEVOTION_REQUIREMENT.' devotion to be promoted.'];
+        $nextRank = $targetMember->getNextRank();
+        if (! $nextRank) {
+            return ['success' => false, 'message' => 'This member cannot be promoted further.'];
         }
 
-        return DB::transaction(function () use ($targetMember) {
-            $targetMember->update(['rank' => ReligionMember::RANK_PRIEST]);
+        if (! $targetMember->canBePromoted()) {
+            $requirement = $targetMember->getDevotionRequirementForNextRank();
+
+            return ['success' => false, 'message' => "This member needs {$requirement} devotion to be promoted."];
+        }
+
+        return DB::transaction(function () use ($player, $targetMember, $nextRank) {
+            $oldRank = $targetMember->rank_display;
+            $targetMember->update(['rank' => $nextRank]);
+            $targetMember->refresh();
+            $newRank = $targetMember->rank_display;
+
+            // Log the promotion
+            ReligionLog::log(
+                $targetMember->religion_id,
+                ReligionLog::EVENT_MEMBER_PROMOTED,
+                "{$targetMember->user->username} was promoted to {$newRank} by {$player->username}",
+                $player->id,
+                $targetMember->user_id
+            );
 
             return [
                 'success' => true,
-                'message' => "{$targetMember->user->username} has been promoted to Priest.",
+                'message' => "{$targetMember->user->username} has been promoted to {$newRank}.",
             ];
         });
     }
 
     /**
-     * Demote a priest to follower.
+     * Demote a member one rank.
      */
-    public function demoteToFollower(User $player, int $memberId): array
+    public function demoteMember(User $player, int $memberId): array
     {
         $targetMember = ReligionMember::with(['religion', 'user'])->find($memberId);
         if (! $targetMember) {
@@ -531,16 +611,29 @@ class ReligionService
             return ['success' => false, 'message' => 'Only the prophet can demote members.'];
         }
 
-        if (! $targetMember->isPriest()) {
-            return ['success' => false, 'message' => 'This member is not a priest.'];
+        $previousRank = $targetMember->getPreviousRank();
+        if (! $previousRank) {
+            return ['success' => false, 'message' => 'This member cannot be demoted further.'];
         }
 
-        return DB::transaction(function () use ($targetMember) {
-            $targetMember->update(['rank' => ReligionMember::RANK_FOLLOWER]);
+        return DB::transaction(function () use ($player, $targetMember, $previousRank) {
+            $oldRank = $targetMember->rank_display;
+            $targetMember->update(['rank' => $previousRank]);
+            $targetMember->refresh();
+            $newRank = $targetMember->rank_display;
+
+            // Log the demotion
+            ReligionLog::log(
+                $targetMember->religion_id,
+                ReligionLog::EVENT_MEMBER_DEMOTED,
+                "{$targetMember->user->username} was demoted to {$newRank} by {$player->username}",
+                $player->id,
+                $targetMember->user_id
+            );
 
             return [
                 'success' => true,
-                'message' => "{$targetMember->user->username} has been demoted to Follower.",
+                'message' => "{$targetMember->user->username} has been demoted to {$newRank}.",
             ];
         });
     }
@@ -587,6 +680,14 @@ class ReligionService
                 'is_public' => true,
                 'member_limit' => 0, // No limit
             ]);
+
+            // Log the conversion
+            ReligionLog::log(
+                $religion->id,
+                ReligionLog::EVENT_CONVERTED_TO_RELIGION,
+                "{$religion->name} was elevated from a cult to a full religion by {$player->username}",
+                $player->id
+            );
 
             return [
                 'success' => true,
@@ -846,13 +947,14 @@ class ReligionService
             'religion_icon' => $membership->religion->icon,
             'religion_color' => $membership->religion->color,
             'religion_type' => $membership->religion->type,
+            'is_cult' => $membership->religion->isCult(),
             'rank' => $membership->rank,
             'rank_display' => $membership->rank_display,
             'devotion' => $membership->devotion,
             'joined_at' => $membership->joined_at->toIso8601String(),
             'can_be_promoted' => $membership->canBePromoted(),
             'is_prophet' => $membership->isProphet(),
-            'is_priest' => $membership->isPriest(),
+            'is_officer' => $membership->isOfficer(),
         ];
     }
 
@@ -910,5 +1012,184 @@ class ReligionService
         }
 
         return $devotionGained;
+    }
+
+    /**
+     * Dissolve a religion (prophet only).
+     * If there are other members, a successor must be chosen.
+     * If no other members, the religion is deleted.
+     */
+    public function dissolveReligion(User $player, int $religionId, ?int $successorUserId = null): array
+    {
+        $religion = Religion::find($religionId);
+
+        if (! $religion) {
+            return ['success' => false, 'message' => 'Religion not found.'];
+        }
+
+        // Must be the prophet
+        $membership = ReligionMember::where('user_id', $player->id)
+            ->where('religion_id', $religionId)
+            ->first();
+
+        if (! $membership || ! $membership->isProphet()) {
+            return ['success' => false, 'message' => 'Only the prophet can dissolve the religion.'];
+        }
+
+        // Check if there are other members
+        $otherMembers = ReligionMember::where('religion_id', $religionId)
+            ->where('user_id', '!=', $player->id)
+            ->get();
+
+        $memberCount = $otherMembers->count();
+
+        // If there are other members, successor must be chosen
+        if ($memberCount > 0) {
+            if (! $successorUserId) {
+                return [
+                    'success' => false,
+                    'message' => 'You must choose a successor before leaving.',
+                    'requires_successor' => true,
+                    'members' => $otherMembers->map(fn ($m) => [
+                        'user_id' => $m->user_id,
+                        'username' => $m->user->username,
+                        'rank' => $m->rank,
+                        'devotion' => $m->devotion,
+                    ])->toArray(),
+                ];
+            }
+
+            // Validate successor is a member
+            $successorMembership = $otherMembers->firstWhere('user_id', $successorUserId);
+            if (! $successorMembership) {
+                return ['success' => false, 'message' => 'Successor must be a member of the religion.'];
+            }
+
+            return DB::transaction(function () use ($religion, $membership, $successorMembership) {
+                $oldProphetUsername = $membership->user->username;
+                $oldProphetId = $membership->user_id;
+                $newProphetUsername = $successorMembership->user->username;
+                $newProphetId = $successorMembership->user_id;
+
+                // Transfer leadership to successor
+                $successorMembership->rank = ReligionMember::RANK_PROPHET;
+                $successorMembership->save();
+
+                // Remove the old prophet
+                $membership->delete();
+
+                // Log the leadership transfer
+                ReligionLog::log(
+                    $religion->id,
+                    ReligionLog::EVENT_LEADERSHIP_TRANSFERRED,
+                    "{$oldProphetUsername} passed leadership to {$newProphetUsername}",
+                    $oldProphetId,
+                    $newProphetId
+                );
+
+                // Log the old prophet leaving
+                ReligionLog::log(
+                    $religion->id,
+                    ReligionLog::EVENT_MEMBER_LEFT,
+                    "{$oldProphetUsername} left the religion",
+                    $oldProphetId
+                );
+
+                return [
+                    'success' => true,
+                    'message' => "You have passed leadership of {$religion->name} to {$newProphetUsername} and left the religion.",
+                ];
+            });
+        }
+
+        // No other members - fully dissolve the religion
+        return DB::transaction(function () use ($religion, $membership) {
+            $religionName = $religion->name;
+            $prophetUsername = $membership->user->username;
+            $prophetId = $membership->user_id;
+
+            // Log the dissolution before deleting
+            ReligionLog::log(
+                $religion->id,
+                ReligionLog::EVENT_DISSOLVED,
+                "{$prophetUsername} dissolved the religion",
+                $prophetId
+            );
+
+            // Delete the membership
+            $membership->delete();
+
+            // Deactivate the religion (cascade will handle related data)
+            $religion->is_active = false;
+            $religion->save();
+
+            // Actually delete it since there are no members
+            $religion->delete();
+
+            return [
+                'success' => true,
+                'message' => "{$religionName} has been dissolved.",
+            ];
+        });
+    }
+
+    /**
+     * Get potential successors for a religion.
+     */
+    public function getPotentialSuccessors(User $player, int $religionId): array
+    {
+        $membership = ReligionMember::where('user_id', $player->id)
+            ->where('religion_id', $religionId)
+            ->first();
+
+        if (! $membership || ! $membership->isProphet()) {
+            return [];
+        }
+
+        return ReligionMember::where('religion_id', $religionId)
+            ->where('user_id', '!=', $player->id)
+            ->with('user:id,username')
+            ->orderByRaw("CASE WHEN rank = 'priest' THEN 0 ELSE 1 END")
+            ->orderByDesc('devotion')
+            ->get()
+            ->map(fn ($m) => [
+                'user_id' => $m->user_id,
+                'username' => $m->user->username,
+                'rank' => $m->rank,
+                'rank_display' => ucfirst($m->rank),
+                'devotion' => $m->devotion,
+            ])
+            ->toArray();
+    }
+
+    /**
+     * Get religion history logs (members only).
+     */
+    public function getReligionLogs(User $player, int $religionId, int $limit = 50): array
+    {
+        // Check if player is a member
+        $membership = ReligionMember::where('user_id', $player->id)
+            ->where('religion_id', $religionId)
+            ->first();
+
+        if (! $membership) {
+            return [];
+        }
+
+        return ReligionLog::where('religion_id', $religionId)
+            ->with(['actor:id,username', 'target:id,username'])
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($log) => [
+                'id' => $log->id,
+                'event_type' => $log->event_type,
+                'description' => $log->description,
+                'actor' => $log->actor ? ['id' => $log->actor->id, 'username' => $log->actor->username] : null,
+                'target' => $log->target ? ['id' => $log->target->id, 'username' => $log->target->username] : null,
+                'created_at' => $log->created_at->toIso8601String(),
+                'time_ago' => $log->created_at->diffForHumans(),
+            ])
+            ->toArray();
     }
 }

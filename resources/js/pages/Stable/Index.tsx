@@ -15,6 +15,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AppLayout from "@/layouts/app-layout";
+import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
 interface HorseStock {
@@ -136,26 +137,18 @@ const rarityConfig: Record<
     },
 };
 
-const locationTypeToPlural: Record<string, string> = {
-    village: "villages",
-    town: "towns",
-    barony: "baronies",
-    duchy: "duchies",
-    kingdom: "kingdoms",
-};
-
 function getBreadcrumbs(location?: LocationContext): BreadcrumbItem[] {
     const crumbs: BreadcrumbItem[] = [{ title: "Dashboard", href: "/dashboard" }];
 
     if (location) {
-        const plural = locationTypeToPlural[location.type] || `${location.type}s`;
+        const baseUrl = locationPath(location.type, location.id);
         crumbs.push({
             title: location.name,
-            href: `/${plural}/${location.id}`,
+            href: baseUrl,
         });
         crumbs.push({
             title: "Stables",
-            href: `/${plural}/${location.id}/stables`,
+            href: `${baseUrl}/stables`,
         });
     } else {
         crumbs.push({ title: "Stables", href: "/stable" });

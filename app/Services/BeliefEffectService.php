@@ -2,22 +2,25 @@
 
 namespace App\Services;
 
+use App\Models\PlayerActiveBelief;
 use App\Models\ReligionMember;
 use App\Models\User;
 
 class BeliefEffectService
 {
     /**
-     * Get all active belief effects for a user from their religion memberships.
-     * Effects from multiple religions stack.
+     * Get all active belief effects for a user from their religion memberships
+     * AND temporarily activated beliefs (cult Forbidden Arts).
+     * Effects from multiple sources stack.
      */
     public function getActiveEffects(User $user): array
     {
+        $effects = [];
+
+        // Get permanent effects from religion membership beliefs (regular religions)
         $memberships = ReligionMember::where('user_id', $user->id)
             ->with('religion.beliefs')
             ->get();
-
-        $effects = [];
 
         foreach ($memberships as $membership) {
             $religion = $membership->religion;
@@ -25,14 +28,32 @@ class BeliefEffectService
                 continue;
             }
 
+            // Only get non-cult-only beliefs from permanent religion membership
             foreach ($religion->beliefs as $belief) {
-                if (! $belief->effects) {
+                if (! $belief->effects || $belief->cult_only) {
                     continue;
                 }
 
                 foreach ($belief->effects as $key => $value) {
                     $effects[$key] = ($effects[$key] ?? 0) + $value;
                 }
+            }
+        }
+
+        // Get effects from activated beliefs (including cult Forbidden Arts)
+        $activeBeliefs = PlayerActiveBelief::where('user_id', $user->id)
+            ->active()
+            ->with('belief')
+            ->get();
+
+        foreach ($activeBeliefs as $activeBelief) {
+            $belief = $activeBelief->belief;
+            if (! $belief || ! $belief->effects) {
+                continue;
+            }
+
+            foreach ($belief->effects as $key => $value) {
+                $effects[$key] = ($effects[$key] ?? 0) + $value;
             }
         }
 

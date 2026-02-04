@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from "@inertiajs/react";
 import { Axe, Fish, Leaf, Pickaxe, Snowflake, Sun, TreeDeciduous, Zap } from "lucide-react";
 import AppLayout from "@/layouts/app-layout";
+import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
 interface Activity {
@@ -78,10 +79,11 @@ export default function GatheringIndex() {
     const isBonus = modifierPercent > 0;
     const isPenalty = modifierPercent < 0;
 
+    const baseLocationUrl = locationPath(location.type, location.id);
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
-        { title: location.name, href: `/${location.type}s/${location.id}` },
-        { title: "Gathering", href: `/${location.type}s/${location.id}/gathering` },
+        { title: location.name, href: baseLocationUrl },
+        { title: "Gathering", href: `${baseLocationUrl}/gathering` },
     ];
 
     return (
@@ -157,7 +159,7 @@ export default function GatheringIndex() {
                         return (
                             <Link
                                 key={activity.id}
-                                href={`/${location.type}s/${location.id}/gathering/${activity.id}`}
+                                href={`${baseLocationUrl}/gathering/${activity.id}`}
                                 className={`rounded-xl border-2 p-5 transition ${colorClass}`}
                             >
                                 <div className="mb-4 flex items-center gap-3">

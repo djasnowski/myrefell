@@ -16,6 +16,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { gameToast } from "@/components/ui/game-toast";
+import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
 const THIEVE_COOLDOWN_MS = 3000;
@@ -284,19 +285,19 @@ export default function ThievingIndex() {
         };
     }, []);
 
+    const baseUrl = location
+        ? `${locationPath(location.type, location.id)}/thieving`
+        : "/villages/1/thieving";
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
         ...(location
             ? [
-                  { title: location.name, href: `/${location.type}s/${location.id}` },
+                  { title: location.name, href: locationPath(location.type, location.id) },
                   { title: "Thieving", href: "#" },
               ]
             : [{ title: "Thieving", href: "#" }]),
     ];
-
-    const baseUrl = location
-        ? `/${location.type}s/${location.id}/thieving`
-        : "/villages/1/thieving";
 
     const handleThieve = async (targetId: string) => {
         if (cooldown > 0) return;

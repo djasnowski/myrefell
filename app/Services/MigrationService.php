@@ -380,6 +380,29 @@ class MigrationService
     }
 
     /**
+     * Get migration cooldown info for a user.
+     */
+    public function getMigrationCooldownInfo(User $user): array
+    {
+        if (! $user->last_migration_at) {
+            return [
+                'can_migrate' => true,
+                'cooldown_ends_at' => null,
+                'cooldown_remaining' => null,
+            ];
+        }
+
+        $cooldownEnd = $user->last_migration_at->addDays(MigrationRequest::MIGRATION_COOLDOWN_DAYS);
+        $canMigrate = now()->gte($cooldownEnd);
+
+        return [
+            'can_migrate' => $canMigrate,
+            'cooldown_ends_at' => $canMigrate ? null : $cooldownEnd->toIso8601String(),
+            'cooldown_remaining' => $canMigrate ? null : $cooldownEnd->diffForHumans(),
+        ];
+    }
+
+    /**
      * Check if a user can approve at a specific level.
      */
     public function canApproveAt(User $user, MigrationRequest $request, string $level): bool

@@ -17,6 +17,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { gameToast } from "@/components/ui/game-toast";
+import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
 const GATHER_COOLDOWN_MS = 3000;
@@ -123,13 +124,14 @@ export default function GatheringActivity() {
     const isBonus = modifierPercent > 0;
     const isPenalty = modifierPercent < 0;
 
+    const baseLocationUrl = locationPath(location.type, location.id);
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
-        { title: location.name, href: `/${location.type}s/${location.id}` },
-        { title: "Gathering", href: `/${location.type}s/${location.id}/gathering` },
+        { title: location.name, href: baseLocationUrl },
+        { title: "Gathering", href: `${baseLocationUrl}/gathering` },
         {
             title: activity.name,
-            href: `/${location.type}s/${location.id}/gathering/${activity.id}`,
+            href: `${baseLocationUrl}/gathering/${activity.id}`,
         },
     ];
 
@@ -167,7 +169,7 @@ export default function GatheringActivity() {
         setLoading(true);
 
         try {
-            const response = await fetch(`/${location.type}s/${location.id}/gathering/gather`, {
+            const response = await fetch(`${baseLocationUrl}/gathering/gather`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -25,7 +25,8 @@ class CombatService
         protected EnergyService $energyService,
         protected LootService $lootService,
         protected InventoryService $inventoryService,
-        protected BlessingEffectService $blessingEffectService
+        protected BlessingEffectService $blessingEffectService,
+        protected BeliefEffectService $beliefEffectService
     ) {}
 
     /**
@@ -157,8 +158,8 @@ class CombatService
             $logs = [];
             $monster = $session->monster;
 
-            // Player attacks first
-            $playerAttack = $this->calculatePlayerAttack($player, $monster);
+            // Player attacks first (pass round for first-strike bonus)
+            $playerAttack = $this->calculatePlayerAttack($player, $monster, $session->round);
             $session->monster_hp = max(0, $session->monster_hp - $playerAttack['damage']);
 
             // Award XP immediately based on damage dealt
@@ -166,6 +167,14 @@ class CombatService
             if ($xpThisHit > 0) {
                 $session->xp_gained += $xpThisHit;
                 $this->awardCombatXp($player, $session->training_style, $xpThisHit);
+            }
+
+            // Apply Soul Siphon HP leech (cult belief)
+            $hpLeech = $this->beliefEffectService->getEffect($player, 'combat_hp_leech');
+            $hpHealed = 0;
+            if ($hpLeech > 0 && $playerAttack['damage'] > 0) {
+                $hpHealed = (int) ceil($playerAttack['damage'] * $hpLeech / 100);
+                $session->player_hp = min($player->max_hp, $session->player_hp + $hpHealed);
             }
 
             $logs[] = CombatLog::create([
@@ -178,6 +187,7 @@ class CombatService
                 'player_hp_after' => $session->player_hp,
                 'monster_hp_after' => $session->monster_hp,
                 'xp_gained' => $xpThisHit,
+                'hp_restored' => $hpHealed > 0 ? $hpHealed : null,
             ]);
 
             // Check if monster is dead
@@ -414,7 +424,7 @@ class CombatService
     /**
      * Calculate player's attack damage.
      */
-    protected function calculatePlayerAttack(User $player, Monster $monster): array
+    protected function calculatePlayerAttack(User $player, Monster $monster, int $round = 1): array
     {
         $attackLevel = $player->getSkillLevel('attack');
         $strengthLevel = $player->getSkillLevel('strength');
@@ -423,6 +433,11 @@ class CombatService
         // Get blessing bonuses
         $attackBonus = (int) $this->blessingEffectService->getEffect($player, 'attack_bonus');
         $strengthBonus = (int) $this->blessingEffectService->getEffect($player, 'strength_bonus');
+
+        // Apply all combat stats bonus (from HQ prayer)
+        $allCombatBonus = (int) $this->blessingEffectService->getEffect($player, 'all_combat_stats_bonus');
+        $attackBonus += $allCombatBonus;
+        $strengthBonus += $allCombatBonus;
 
         // Hit chance: based on attack level vs monster defense + blessing bonus
         $hitChance = 50 + ($attackLevel - $monster->defense_level) * 2 + $equipment['atk_bonus'] + $attackBonus;
@@ -442,7 +457,22 @@ class CombatService
         // Check weapon effectiveness
         $damage = $this->applyWeaponEffectiveness($player, $monster, $damage);
 
-        return ['hit' => true, 'damage' => $damage];
+        // Apply first-strike damage bonus (Assassin's Creed cult belief) - only on round 1
+        if ($round === 1) {
+            $firstStrikeBonus = $this->beliefEffectService->getEffect($player, 'first_strike_damage_bonus');
+            if ($firstStrikeBonus > 0) {
+                $damage = (int) ceil($damage * (1 + $firstStrikeBonus / 100));
+            }
+        }
+
+        // Check for critical hit against monsters (from HQ prayer buff)
+        $critChance = (int) $this->blessingEffectService->getEffect($player, 'monster_crit_chance');
+        $isCrit = $critChance > 0 && rand(1, 100) <= $critChance;
+        if ($isCrit) {
+            $damage = (int) floor($damage * 1.5); // 50% bonus damage on crit
+        }
+
+        return ['hit' => true, 'damage' => $damage, 'crit' => $isCrit];
     }
 
     /**
@@ -463,6 +493,16 @@ class CombatService
 
         // Get blessing defense bonus
         $defenseBonus = (int) $this->blessingEffectService->getEffect($player, 'defense_bonus');
+
+        // Apply all combat stats bonus (from HQ prayer)
+        $defenseBonus += (int) $this->blessingEffectService->getEffect($player, 'all_combat_stats_bonus');
+
+        // Apply defense penalty from cult beliefs (Assassin's Creed)
+        $defensePenalty = $this->beliefEffectService->getEffect($player, 'defense_penalty');
+        if ($defensePenalty < 0) {
+            // Penalty is stored as negative, so this reduces effective defense
+            $defenseBonus += (int) $defensePenalty;
+        }
 
         // Hit chance (defense bonus reduces monster's chance to hit)
         $hitChance = 50 + ($monster->attack_level - $defenseLevel - $equipment['def_bonus'] - $defenseBonus) * 2;
