@@ -265,75 +265,70 @@ export default function CombatIndex() {
                                     "border-stone-600/50 bg-stone-800/50";
 
                                 return (
-                                    <button
+                                    <div
                                         key={monster.id}
-                                        onClick={() => setSelectedMonster(monster)}
-                                        className={`rounded-xl border-2 p-4 text-left transition ${colorClass} ${
+                                        className={`rounded-xl border-2 p-4 transition ${colorClass} ${
                                             isSelected ? "ring-2 ring-amber-500" : ""
                                         }`}
                                     >
-                                        <div className="mb-3 flex items-center justify-between">
-                                            <div>
-                                                <h4 className="font-pixel text-base text-amber-300">
-                                                    {monster.is_boss && (
-                                                        <span className="text-red-400">
-                                                            [BOSS]{" "}
-                                                        </span>
-                                                    )}
-                                                    {monster.name}
-                                                </h4>
-                                                <p className="font-pixel text-[10px] capitalize text-stone-400">
-                                                    {monster.type} - Level {monster.combat_level}
-                                                </p>
+                                        <button
+                                            onClick={() =>
+                                                setSelectedMonster(isSelected ? null : monster)
+                                            }
+                                            className="w-full text-left"
+                                        >
+                                            <div className="mb-3 flex items-center justify-between">
+                                                <div>
+                                                    <h4 className="font-pixel text-base text-amber-300">
+                                                        {monster.is_boss && (
+                                                            <span className="text-red-400">
+                                                                [BOSS]{" "}
+                                                            </span>
+                                                        )}
+                                                        {monster.name}
+                                                    </h4>
+                                                    <p className="font-pixel text-[10px] capitalize text-stone-400">
+                                                        {monster.type} - Level{" "}
+                                                        {monster.combat_level}
+                                                    </p>
+                                                </div>
+                                                <div className="rounded bg-stone-800/50 px-2 py-1">
+                                                    <Heart className="inline h-3 w-3 text-red-400" />
+                                                    <span className="ml-1 font-pixel text-xs text-stone-300">
+                                                        {monster.max_hp}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="rounded bg-stone-800/50 px-2 py-1">
-                                                <Heart className="inline h-3 w-3 text-red-400" />
-                                                <span className="ml-1 font-pixel text-xs text-stone-300">
-                                                    {monster.max_hp}
+
+                                            <div className="flex items-center justify-between font-pixel text-xs text-stone-400">
+                                                <span>XP: {monster.xp_reward}</span>
+                                                <span>
+                                                    Gold: {monster.gold_drop_min}-
+                                                    {monster.gold_drop_max}
                                                 </span>
                                             </div>
-                                        </div>
+                                        </button>
 
-                                        <div className="flex items-center justify-between font-pixel text-xs text-stone-400">
-                                            <span>XP: {monster.xp_reward}</span>
-                                            <span>
-                                                Gold: {monster.gold_drop_min}-
-                                                {monster.gold_drop_max}
-                                            </span>
-                                        </div>
-                                    </button>
+                                        {/* Fight button appears when selected */}
+                                        {isSelected && (
+                                            <button
+                                                onClick={startCombat}
+                                                disabled={!canFight || isStarting}
+                                                className={`mt-3 w-full rounded-lg py-2 font-pixel text-sm transition ${
+                                                    canFight && !isStarting
+                                                        ? "bg-red-600 text-white hover:bg-red-500"
+                                                        : "cursor-not-allowed bg-stone-700 text-stone-500"
+                                                }`}
+                                            >
+                                                {isStarting ? "Starting..." : "Fight!"}
+                                            </button>
+                                        )}
+                                    </div>
                                 );
                             })}
                         </div>
                     )}
                 </div>
-
-                {/* Fight Button */}
-                {selectedMonster && (
-                    <div className="fixed bottom-20 left-0 right-0 border-t border-stone-700 bg-stone-900/95 p-4">
-                        <div className="mx-auto flex max-w-4xl items-center justify-between">
-                            <div>
-                                <p className="font-pixel text-sm text-amber-300">
-                                    Selected: {selectedMonster.name}
-                                </p>
-                                <p className="font-pixel text-xs text-stone-400">
-                                    Level {selectedMonster.combat_level} | Training: {trainingStyle}
-                                </p>
-                            </div>
-                            <button
-                                onClick={startCombat}
-                                disabled={!canFight || isStarting}
-                                className={`rounded-lg px-6 py-3 font-pixel text-sm transition ${
-                                    canFight && !isStarting
-                                        ? "bg-red-600 text-white hover:bg-red-500"
-                                        : "cursor-not-allowed bg-stone-700 text-stone-500"
-                                }`}
-                            >
-                                {isStarting ? "Starting..." : "Fight!"}
-                            </button>
-                        </div>
-                    </div>
-                )}
             </div>
         </AppLayout>
     );
