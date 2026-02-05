@@ -95,8 +95,8 @@ function EnergyTimer({
         const interval = setInterval(() => {
             setSeconds((prev) => {
                 if (prev <= 1) {
-                    // Use Inertia's partial reload instead of full page reload
-                    router.reload({ only: ["sidebar"] });
+                    // Just reset the timer - don't reload the page
+                    // Energy will update on next user action
                     return secondsUntilNext ?? 5;
                 }
                 return prev - 1;

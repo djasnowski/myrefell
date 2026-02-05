@@ -75,7 +75,7 @@ class DungeonService
         }
 
         // Check if player is alive
-        if (!$player->isAlive()) {
+        if (! $player->isAlive()) {
             return ['success' => false, 'message' => 'You are dead and cannot enter a dungeon.'];
         }
 
@@ -93,22 +93,22 @@ class DungeonService
 
         // Find the dungeon
         $dungeon = Dungeon::with('floors')->find($dungeonId);
-        if (!$dungeon) {
+        if (! $dungeon) {
             return ['success' => false, 'message' => 'Dungeon not found.'];
         }
 
         // Check level requirement
-        if (!$dungeon->canBeEnteredBy($player)) {
+        if (! $dungeon->canBeEnteredBy($player)) {
             return ['success' => false, 'message' => "You need combat level {$dungeon->min_combat_level} to enter this dungeon."];
         }
 
         // Check energy
-        if (!$this->energyService->hasEnergy($player, $dungeon->energy_cost)) {
+        if (! $this->energyService->hasEnergy($player, $dungeon->energy_cost)) {
             return ['success' => false, 'message' => "You need {$dungeon->energy_cost} energy to enter this dungeon."];
         }
 
         // Validate training style
-        if (!in_array($trainingStyle, DungeonSession::TRAINING_STYLES)) {
+        if (! in_array($trainingStyle, DungeonSession::TRAINING_STYLES)) {
             $trainingStyle = 'attack';
         }
 
@@ -154,7 +154,7 @@ class DungeonService
     public function fightMonster(User $player): array
     {
         $session = $this->getActiveSession($player);
-        if (!$session) {
+        if (! $session) {
             return ['success' => false, 'message' => 'You are not in a dungeon.'];
         }
 
@@ -163,19 +163,19 @@ class DungeonService
         }
 
         // Check if player is alive
-        if (!$player->isAlive()) {
+        if (! $player->isAlive()) {
             return $this->handleDeath($player, $session);
         }
 
         return DB::transaction(function () use ($player, $session) {
             $floor = $session->getCurrentFloor();
-            if (!$floor) {
+            if (! $floor) {
                 return ['success' => false, 'message' => 'Floor data error.'];
             }
 
             // Get the monster for this encounter
             $monster = $this->getMonsterForFloor($session, $floor);
-            if (!$monster) {
+            if (! $monster) {
                 return ['success' => false, 'message' => 'No monsters available on this floor.'];
             }
 
@@ -183,8 +183,8 @@ class DungeonService
             $combatResult = $this->simulateCombat($player, $monster, $floor);
 
             if ($combatResult['player_won']) {
-                // Award XP (with floor multiplier)
-                $xpGained = (int) floor($monster->xp_reward * $floor->xp_multiplier);
+                // Award XP based on damage dealt (4 XP per damage, like regular combat)
+                $xpGained = $combatResult['damage_dealt'] * CombatService::XP_PER_DAMAGE;
                 $session->addXp($xpGained);
 
                 // Award gold
@@ -250,6 +250,7 @@ class DungeonService
         $monsterHp = $monster->max_hp;
         $rounds = 0;
         $maxRounds = 50; // Safety limit
+        $totalDamageDealt = 0;
 
         $equipment = $this->getPlayerEquipmentBonuses($player);
         $attackLevel = $player->getSkillLevel('attack');
@@ -268,9 +269,12 @@ class DungeonService
                 $maxHit = (int) floor($baseDamage * 0.5);
                 $damage = rand(1, max(1, $maxHit));
                 $monsterHp -= $damage;
+                $totalDamageDealt += $damage;
             }
 
-            if ($monsterHp <= 0) break;
+            if ($monsterHp <= 0) {
+                break;
+            }
 
             // Monster attacks
             $monsterHitChance = 50 + ($monster->attack_level - $defenseLevel - $equipment['def_bonus']) * 2;
@@ -292,6 +296,7 @@ class DungeonService
             'rounds' => $rounds,
             'player_hp_remaining' => max(0, $playerHp),
             'damage_taken' => $player->hp - max(0, $playerHp),
+            'damage_dealt' => $totalDamageDealt,
         ];
     }
 
@@ -355,11 +360,11 @@ class DungeonService
     public function nextFloor(User $player): array
     {
         $session = $this->getActiveSession($player);
-        if (!$session) {
+        if (! $session) {
             return ['success' => false, 'message' => 'You are not in a dungeon.'];
         }
 
-        if (!$session->isFloorCleared()) {
+        if (! $session->isFloorCleared()) {
             return ['success' => false, 'message' => 'You must defeat all monsters on this floor first.'];
         }
 
@@ -367,11 +372,11 @@ class DungeonService
             return ['success' => false, 'message' => 'You are on the final floor. Complete the dungeon.'];
         }
 
-        return DB::transaction(function () use ($player, $session) {
+        return DB::transaction(function () use ($session) {
             $nextFloorNumber = $session->current_floor + 1;
             $nextFloor = $session->dungeon->floors()->where('floor_number', $nextFloorNumber)->first();
 
-            if (!$nextFloor) {
+            if (! $nextFloor) {
                 return ['success' => false, 'message' => 'Next floor not found.'];
             }
 
@@ -440,19 +445,16 @@ class DungeonService
      */
     protected function awardAccumulatedRewards(User $player, DungeonSession $session): void
     {
+        $xp = $session->xp_accumulated;
+
         // Award XP to training skill
-        $skill = $player->skills()->where('skill_name', $session->training_style)->first();
+        $this->addXpToSkill($player, $session->training_style, $xp);
 
-        if (!$skill) {
-            $skill = PlayerSkill::create([
-                'player_id' => $player->id,
-                'skill_name' => $session->training_style,
-                'level' => 5,
-                'xp' => 0,
-            ]);
+        // Award HP XP (1/3 of combat XP, floored like OSRS)
+        $hpXp = (int) floor($xp / 3);
+        if ($hpXp > 0) {
+            $this->addXpToSkill($player, 'hitpoints', $hpXp);
         }
-
-        $skill->addXp($session->xp_accumulated);
 
         // Award gold
         $player->increment('gold', $session->gold_accumulated);
@@ -468,6 +470,25 @@ class DungeonService
     }
 
     /**
+     * Add XP to a specific skill.
+     */
+    protected function addXpToSkill(User $player, string $skillName, int $xp): void
+    {
+        $skill = $player->skills()->where('skill_name', $skillName)->first();
+
+        if (! $skill) {
+            $skill = PlayerSkill::create([
+                'player_id' => $player->id,
+                'skill_name' => $skillName,
+                'level' => 1,
+                'xp' => 0,
+            ]);
+        }
+
+        $skill->addXp($xp);
+    }
+
+    /**
      * Handle player death in dungeon.
      */
     protected function handleDeath(User $player, DungeonSession $session): array
@@ -480,7 +501,7 @@ class DungeonService
 
         return [
             'success' => false,
-            'message' => "You died in the dungeon. All accumulated rewards are lost.",
+            'message' => 'You died in the dungeon. All accumulated rewards are lost.',
             'data' => [
                 'session' => $session,
                 'status' => 'failed',
@@ -494,7 +515,7 @@ class DungeonService
     public function abandonDungeon(User $player): array
     {
         $session = $this->getActiveSession($player);
-        if (!$session) {
+        if (! $session) {
             return ['success' => false, 'message' => 'You are not in a dungeon.'];
         }
 
@@ -518,7 +539,7 @@ class DungeonService
     public function eatFood(User $player, int $inventorySlotId): array
     {
         $session = $this->getActiveSession($player);
-        if (!$session) {
+        if (! $session) {
             return ['success' => false, 'message' => 'You are not in a dungeon.'];
         }
 
@@ -528,7 +549,7 @@ class DungeonService
             ->with('item')
             ->first();
 
-        if (!$slot) {
+        if (! $slot) {
             return ['success' => false, 'message' => 'Item not found in your inventory.'];
         }
 

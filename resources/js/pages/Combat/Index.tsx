@@ -118,88 +118,96 @@ export default function CombatIndex() {
                     </p>
                 </div>
 
-                {/* Player Stats */}
-                <div className="mb-6 grid gap-4 md:grid-cols-2">
-                    {/* Health & Energy */}
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4">
-                        <h3 className="mb-3 font-pixel text-sm text-amber-300">Status</h3>
-                        <div className="space-y-3">
-                            <div>
-                                <div className="mb-1 flex items-center justify-between font-pixel text-xs">
-                                    <span className="flex items-center gap-1 text-red-400">
-                                        <Heart className="h-3 w-3" /> HP
-                                    </span>
-                                    <span className="text-stone-300">
-                                        {player_stats.hp} / {player_stats.max_hp}
-                                    </span>
-                                </div>
-                                <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
-                                    <div
-                                        className="h-full bg-gradient-to-r from-red-600 to-red-400"
-                                        style={{
-                                            width: `${(player_stats.hp / player_stats.max_hp) * 100}%`,
-                                        }}
-                                    />
-                                </div>
+                {/* Player Stats - Full Width */}
+                <div className="mb-6 rounded-lg border border-stone-700 bg-stone-800/50 p-6">
+                    <div className="grid grid-cols-2 gap-6 lg:grid-cols-5">
+                        {/* HP */}
+                        <div className="col-span-2 lg:col-span-1">
+                            <div className="mb-2 flex items-center gap-2">
+                                <Heart className="h-5 w-5 text-red-400" />
+                                <span className="font-pixel text-sm text-stone-400">Health</span>
                             </div>
-                            <div>
-                                <div className="mb-1 flex items-center justify-between font-pixel text-xs">
-                                    <span className="flex items-center gap-1 text-yellow-400">
-                                        <Zap className="h-3 w-3" /> Energy
+                            <div className="mb-1 h-3 w-full overflow-hidden rounded-full bg-stone-700">
+                                <div
+                                    className="h-full bg-gradient-to-r from-red-600 to-red-400"
+                                    style={{
+                                        width: `${(player_stats.hp / player_stats.max_hp) * 100}%`,
+                                    }}
+                                />
+                            </div>
+                            <div className="font-pixel text-lg text-white">
+                                {player_stats.hp} <span className="text-stone-500">/</span>{" "}
+                                <span className="text-stone-400">{player_stats.max_hp}</span>
+                            </div>
+                        </div>
+
+                        {/* Energy */}
+                        <div>
+                            <div className="mb-2 flex items-center gap-2">
+                                <Zap className="h-5 w-5 text-yellow-400" />
+                                <span className="font-pixel text-sm text-stone-400">Energy</span>
+                            </div>
+                            <div className="font-pixel text-2xl text-yellow-400">
+                                {energy.current}
+                            </div>
+                            <div className="font-pixel text-xs text-stone-500">
+                                costs {energy.cost} per fight
+                            </div>
+                        </div>
+
+                        {/* Attack */}
+                        <div>
+                            <div className="mb-2 flex items-center gap-2">
+                                <Sword className="h-5 w-5 text-red-400" />
+                                <span className="font-pixel text-sm text-stone-400">Attack</span>
+                            </div>
+                            <div className="font-pixel text-2xl text-white">
+                                {player_stats.attack}
+                                {equipment.atk_bonus > 0 && (
+                                    <span className="ml-1 text-lg text-green-400">
+                                        +{equipment.atk_bonus}
                                     </span>
-                                    <span className="text-stone-300">
-                                        {energy.current} (costs {energy.cost})
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Strength */}
+                        <div>
+                            <div className="mb-2 flex items-center gap-2">
+                                <Skull className="h-5 w-5 text-orange-400" />
+                                <span className="font-pixel text-sm text-stone-400">Strength</span>
+                            </div>
+                            <div className="font-pixel text-2xl text-white">
+                                {player_stats.strength}
+                                {equipment.str_bonus > 0 && (
+                                    <span className="ml-1 text-lg text-green-400">
+                                        +{equipment.str_bonus}
                                     </span>
-                                </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Defense */}
+                        <div>
+                            <div className="mb-2 flex items-center gap-2">
+                                <Shield className="h-5 w-5 text-blue-400" />
+                                <span className="font-pixel text-sm text-stone-400">Defense</span>
+                            </div>
+                            <div className="font-pixel text-2xl text-white">
+                                {player_stats.defense}
+                                {equipment.def_bonus > 0 && (
+                                    <span className="ml-1 text-lg text-green-400">
+                                        +{equipment.def_bonus}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Combat Stats */}
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4">
-                        <h3 className="mb-3 font-pixel text-sm text-amber-300">
+                    {/* Combat Level Badge */}
+                    <div className="mt-4 flex items-center justify-between border-t border-stone-700 pt-4">
+                        <div className="font-pixel text-lg text-amber-400">
                             Combat Level {player_stats.combat_level}
-                        </h3>
-                        <div className="grid grid-cols-3 gap-3">
-                            <div className="text-center">
-                                <Sword className="mx-auto h-5 w-5 text-red-400" />
-                                <div className="font-pixel text-xs text-stone-400">Attack</div>
-                                <div className="font-pixel text-sm text-white">
-                                    {player_stats.attack}
-                                    {equipment.atk_bonus > 0 && (
-                                        <span className="text-green-400">
-                                            {" "}
-                                            +{equipment.atk_bonus}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                            <div className="text-center">
-                                <Skull className="mx-auto h-5 w-5 text-orange-400" />
-                                <div className="font-pixel text-xs text-stone-400">Strength</div>
-                                <div className="font-pixel text-sm text-white">
-                                    {player_stats.strength}
-                                    {equipment.str_bonus > 0 && (
-                                        <span className="text-green-400">
-                                            {" "}
-                                            +{equipment.str_bonus}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                            <div className="text-center">
-                                <Shield className="mx-auto h-5 w-5 text-blue-400" />
-                                <div className="font-pixel text-xs text-stone-400">Defense</div>
-                                <div className="font-pixel text-sm text-white">
-                                    {player_stats.defense}
-                                    {equipment.def_bonus > 0 && (
-                                        <span className="text-green-400">
-                                            {" "}
-                                            +{equipment.def_bonus}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -209,12 +217,12 @@ export default function CombatIndex() {
                     <h3 className="mb-3 font-pixel text-sm text-amber-300">
                         Training Style (XP Focus)
                     </h3>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         {(["attack", "strength", "defense"] as const).map((style) => (
                             <button
                                 key={style}
                                 onClick={() => setTrainingStyle(style)}
-                                className={`flex-1 rounded-lg border px-4 py-2 font-pixel text-xs capitalize transition ${
+                                className={`flex-1 rounded-lg border-2 px-3 py-2 font-pixel text-sm capitalize transition sm:px-4 sm:py-3 ${
                                     trainingStyle === style
                                         ? "border-amber-500 bg-amber-900/50 text-amber-300"
                                         : "border-stone-600 bg-stone-800/50 text-stone-400 hover:bg-stone-700/50"

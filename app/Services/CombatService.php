@@ -187,7 +187,7 @@ class CombatService
                 'player_hp_after' => $session->player_hp,
                 'monster_hp_after' => $session->monster_hp,
                 'xp_gained' => $xpThisHit,
-                'hp_restored' => $hpHealed > 0 ? $hpHealed : null,
+                'hp_restored' => $hpHealed,
             ]);
 
             // Check if monster is dead
@@ -647,7 +647,8 @@ class CombatService
     }
 
     /**
-     * Award XP to a combat skill.
+     * Award XP to a combat skill and hitpoints.
+     * HP XP is always 1/3 of the combat XP earned.
      */
     protected function awardCombatXp(User $player, string $skillName, int $xp): void
     {
@@ -663,6 +664,22 @@ class CombatService
             $xp = (int) ceil($xp * (1 + $xpPenalty / 100));
         }
 
+        // Award XP to the training style skill
+        $this->addXpToSkill($player, $skillName, $xp);
+
+        // Award HP XP (1/3 of combat XP, floored per hit like OSRS)
+        // e.g., 4 combat XP = 1.33 HP XP → floored to 1 HP XP
+        $hpXp = (int) floor($xp / 3);
+        if ($hpXp > 0) {
+            $this->addXpToSkill($player, 'hitpoints', $hpXp);
+        }
+    }
+
+    /**
+     * Add XP to a specific skill.
+     */
+    protected function addXpToSkill(User $player, string $skillName, int $xp): void
+    {
         $skill = $player->skills()->where('skill_name', $skillName)->first();
 
         if (! $skill) {

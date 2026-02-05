@@ -1,5 +1,16 @@
 import { Head, router, usePage } from "@inertiajs/react";
-import { Sword, Heart, Zap, Apple, DoorOpen, Skull } from "lucide-react";
+import {
+    Sword,
+    Shield,
+    Heart,
+    Zap,
+    Apple,
+    DoorOpen,
+    Skull,
+    Coins,
+    Package,
+    Sparkles,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import AppLayout from "@/layouts/app-layout";
 import type { BreadcrumbItem } from "@/types";
@@ -268,12 +279,12 @@ export default function CombatArena() {
                     </div>
                 </div>
 
-                {/* Combat Log */}
-                <div className="mb-6 flex-1 rounded-lg border border-stone-700 bg-stone-900/50 p-4">
+                {/* Combat Log - Flexible Height */}
+                <div className="mb-4 flex min-h-[100px] flex-1 flex-col rounded-lg border border-stone-700 bg-stone-900/50 p-4">
                     <h3 className="mb-3 font-pixel text-sm text-amber-300">Combat Log</h3>
                     <div
                         id="combat-logs"
-                        className="h-48 space-y-2 overflow-y-auto scrollbar-thin scrollbar-track-stone-800 scrollbar-thumb-stone-600"
+                        className="flex-1 space-y-1 overflow-y-auto scrollbar-thin scrollbar-track-stone-800 scrollbar-thumb-stone-600"
                     >
                         {combatLogs.map((log) => (
                             <div
@@ -298,82 +309,178 @@ export default function CombatArena() {
 
                 {/* Victory Screen */}
                 {isVictory && rewards && (
-                    <div className="mb-6 rounded-lg border border-green-500/50 bg-green-900/30 p-6 text-center">
-                        <Sword className="mx-auto mb-3 h-12 w-12 text-green-400" />
-                        <h2 className="mb-2 font-pixel text-xl text-green-400">Victory!</h2>
-                        <p className="mb-4 font-pixel text-sm text-stone-300">
-                            You defeated {session.monster.name}!
-                        </p>
-
-                        <div className="grid gap-2 text-left">
-                            <div className="font-pixel text-xs text-stone-400">
-                                <Zap className="mr-1 inline h-3 w-3 text-amber-400" />
-                                {rewards.xp} {rewards.skill} XP
-                                {rewards.levels_gained > 0 && (
-                                    <span className="ml-2 text-green-400">
-                                        +{rewards.levels_gained} level(s)!
-                                    </span>
-                                )}
+                    <div className="rounded-xl border-2 border-green-500/50 bg-gradient-to-b from-green-900/40 to-green-950/60 p-4">
+                        {/* Header - Compact */}
+                        <div className="mb-4 flex items-center justify-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/20 ring-2 ring-green-500/50">
+                                <Sword className="h-6 w-6 text-green-400" />
                             </div>
-                            {rewards.gold > 0 && (
-                                <div className="font-pixel text-xs text-stone-400">
-                                    <span className="mr-1 text-yellow-400">Gold:</span>{" "}
-                                    {rewards.gold}
-                                </div>
-                            )}
-                            {rewards.items.map((item, i) => (
-                                <div key={i} className="font-pixel text-xs text-stone-400">
-                                    <span className="mr-1 text-blue-400">Loot:</span> {item.name} x
-                                    {item.quantity}
-                                </div>
-                            ))}
+                            <div>
+                                <h2 className="font-pixel text-xl text-green-400">Victory!</h2>
+                                <p className="font-pixel text-xs text-stone-300">
+                                    Defeated {session.monster.name}
+                                </p>
+                            </div>
                         </div>
 
-                        <button
-                            onClick={returnToCombat}
-                            className="mt-4 rounded-lg bg-green-600 px-6 py-2 font-pixel text-sm text-white hover:bg-green-500"
-                        >
-                            Continue
-                        </button>
+                        {/* Rewards Row - Horizontal flex */}
+                        <div className="mb-4 flex flex-wrap items-stretch justify-center gap-3">
+                            {/* XP Reward */}
+                            <div
+                                className={`flex min-w-[120px] flex-1 items-center gap-3 rounded-lg border-2 px-4 py-3 ${
+                                    rewards.skill === "attack"
+                                        ? "border-red-500/50 bg-red-900/30"
+                                        : rewards.skill === "strength"
+                                          ? "border-orange-500/50 bg-orange-900/30"
+                                          : "border-blue-500/50 bg-blue-900/30"
+                                }`}
+                            >
+                                {rewards.skill === "attack" ? (
+                                    <Sword className="h-8 w-8 text-red-400" />
+                                ) : rewards.skill === "strength" ? (
+                                    <Zap className="h-8 w-8 text-orange-400" />
+                                ) : (
+                                    <Shield className="h-8 w-8 text-blue-400" />
+                                )}
+                                <div>
+                                    <div
+                                        className={`font-pixel text-2xl ${
+                                            rewards.skill === "attack"
+                                                ? "text-red-400"
+                                                : rewards.skill === "strength"
+                                                  ? "text-orange-400"
+                                                  : "text-blue-400"
+                                        }`}
+                                    >
+                                        +{rewards.xp}
+                                    </div>
+                                    <div className="font-pixel text-xs capitalize text-stone-400">
+                                        {rewards.skill} XP
+                                        {rewards.levels_gained > 0 && (
+                                            <span className="ml-1 text-yellow-400">
+                                                <Sparkles className="inline h-3 w-3" /> Level Up!
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Gold Reward */}
+                            <div className="flex min-w-[120px] flex-1 items-center gap-3 rounded-lg border-2 border-yellow-500/50 bg-yellow-900/30 px-4 py-3">
+                                <Coins className="h-8 w-8 text-yellow-400" />
+                                <div>
+                                    <div className="font-pixel text-2xl text-yellow-400">
+                                        +{rewards.gold}
+                                    </div>
+                                    <div className="font-pixel text-xs text-stone-400">Gold</div>
+                                </div>
+                            </div>
+
+                            {/* Loot Items */}
+                            {rewards.items.map((item, i) => (
+                                <div
+                                    key={i}
+                                    className="flex min-w-[120px] flex-1 items-center gap-3 rounded-lg border-2 border-purple-500/50 bg-purple-900/30 px-4 py-3"
+                                >
+                                    <Package className="h-8 w-8 text-purple-400" />
+                                    <div>
+                                        <div className="font-pixel text-lg text-purple-300">
+                                            {item.name}
+                                        </div>
+                                        <div className="font-pixel text-xs text-stone-400">
+                                            x{item.quantity}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* Empty slot if no loot */}
+                            {rewards.items.length === 0 && (
+                                <div className="flex min-w-[120px] flex-1 items-center gap-3 rounded-lg border-2 border-dashed border-stone-600/50 bg-stone-800/30 px-4 py-3">
+                                    <Package className="h-8 w-8 text-stone-500" />
+                                    <div className="font-pixel text-sm text-stone-500">No loot</div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center justify-center gap-3">
+                            <button
+                                onClick={returnToCombat}
+                                className="rounded-lg bg-green-600 px-6 py-2 font-pixel text-sm text-white shadow-lg shadow-green-900/50 transition hover:bg-green-500 hover:shadow-green-800/50"
+                            >
+                                Continue Fighting
+                            </button>
+                            <button
+                                onClick={() => router.visit("/dashboard")}
+                                className="rounded-lg border border-stone-600 bg-stone-700 px-6 py-2 font-pixel text-sm text-stone-300 transition hover:bg-stone-600"
+                            >
+                                Retreat
+                            </button>
+                        </div>
                     </div>
                 )}
 
                 {/* Defeat Screen */}
                 {isDefeat && (
-                    <div className="mb-6 rounded-lg border border-red-500/50 bg-red-900/30 p-6 text-center">
-                        <Skull className="mx-auto mb-3 h-12 w-12 text-red-400" />
-                        <h2 className="mb-2 font-pixel text-xl text-red-400">Defeat!</h2>
-                        <p className="mb-4 font-pixel text-sm text-stone-300">
-                            You were killed by {session.monster.name}.
-                        </p>
-                        <p className="mb-4 font-pixel text-xs text-stone-400">
-                            Your energy has been reduced.
-                        </p>
+                    <div className="rounded-xl border-2 border-red-500/50 bg-gradient-to-b from-red-900/40 to-red-950/60 p-4">
+                        {/* Header - Compact */}
+                        <div className="mb-4 flex items-center justify-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/20 ring-2 ring-red-500/50">
+                                <Skull className="h-6 w-6 text-red-400" />
+                            </div>
+                            <div>
+                                <h2 className="font-pixel text-xl text-red-400">Defeat!</h2>
+                                <p className="font-pixel text-xs text-stone-300">
+                                    Killed by {session.monster.name}
+                                </p>
+                            </div>
+                        </div>
 
-                        <button
-                            onClick={returnToCombat}
-                            className="rounded-lg bg-stone-700 px-6 py-2 font-pixel text-sm text-white hover:bg-stone-600"
-                        >
-                            Return
-                        </button>
+                        {/* Info Box */}
+                        <div className="mb-4 rounded-lg border border-red-500/30 bg-red-950/50 p-3 text-center">
+                            <p className="font-pixel text-xs text-stone-400">
+                                Your energy has been reduced. Rest or eat to recover.
+                            </p>
+                        </div>
+
+                        {/* Return Button */}
+                        <div className="text-center">
+                            <button
+                                onClick={returnToCombat}
+                                className="rounded-lg bg-stone-700 px-8 py-2 font-pixel text-sm text-white shadow-lg transition hover:bg-stone-600"
+                            >
+                                Return
+                            </button>
+                        </div>
                     </div>
                 )}
 
                 {/* Fled Screen */}
                 {hasFled && (
-                    <div className="mb-6 rounded-lg border border-yellow-500/50 bg-yellow-900/30 p-6 text-center">
-                        <DoorOpen className="mx-auto mb-3 h-12 w-12 text-yellow-400" />
-                        <h2 className="mb-2 font-pixel text-xl text-yellow-400">Escaped!</h2>
-                        <p className="mb-4 font-pixel text-sm text-stone-300">
-                            You successfully fled from combat.
-                        </p>
+                    <div className="rounded-xl border-2 border-yellow-500/50 bg-gradient-to-b from-yellow-900/40 to-yellow-950/60 p-4">
+                        {/* Header - Compact */}
+                        <div className="mb-4 flex items-center justify-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-500/20 ring-2 ring-yellow-500/50">
+                                <DoorOpen className="h-6 w-6 text-yellow-400" />
+                            </div>
+                            <div>
+                                <h2 className="font-pixel text-xl text-yellow-400">Escaped!</h2>
+                                <p className="font-pixel text-xs text-stone-300">
+                                    Successfully fled from combat
+                                </p>
+                            </div>
+                        </div>
 
-                        <button
-                            onClick={returnToCombat}
-                            className="rounded-lg bg-yellow-600 px-6 py-2 font-pixel text-sm text-white hover:bg-yellow-500"
-                        >
-                            Continue
-                        </button>
+                        {/* Continue Button */}
+                        <div className="text-center">
+                            <button
+                                onClick={returnToCombat}
+                                className="rounded-lg bg-yellow-600 px-8 py-2 font-pixel text-sm text-white shadow-lg shadow-yellow-900/50 transition hover:bg-yellow-500"
+                            >
+                                Continue
+                            </button>
+                        </div>
                     </div>
                 )}
 

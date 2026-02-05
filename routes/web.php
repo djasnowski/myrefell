@@ -163,6 +163,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('changelog.mark-read');
     Route::get('api/player/stats', [PlayerController::class, 'stats'])->name('player.stats');
 
+    // Online count API (for polling without page reload)
+    Route::get('api/online-count', function () {
+        return response()->json([
+            'count' => app(\App\Services\OnlinePlayersService::class)->getOnlineCount(),
+        ]);
+    })->name('api.online-count');
+
     // Skills
     Route::get('skills', [SkillsController::class, 'index'])->name('skills.index');
 

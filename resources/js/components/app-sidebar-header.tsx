@@ -1,6 +1,6 @@
-import { Link, router, usePage } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 import { Shield, Sparkles, Trophy, Users } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import ChangelogModal from "@/components/changelog-modal";
 import { Button } from "@/components/ui/button";
@@ -15,18 +15,17 @@ interface SidebarData {
 }
 
 export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: BreadcrumbItemType[] }) {
-    const { online_count, sidebar } = usePage<SharedData & { sidebar: SidebarData | null }>().props;
+    const { online_count: initialOnlineCount, sidebar } = usePage<
+        SharedData & { sidebar: SidebarData | null }
+    >().props;
     const isAdmin = sidebar?.player?.is_admin;
     const { hasUnread, showChangelog, openChangelog, closeChangelog } = useChangelog();
+    const [onlineCount, setOnlineCount] = useState(initialOnlineCount);
 
-    // Poll for online count every 5 seconds
+    // Update from props when page changes
     useEffect(() => {
-        const interval = setInterval(() => {
-            router.reload({ only: ["online_count"] });
-        }, 5000);
-
-        return () => clearInterval(interval);
-    }, []);
+        setOnlineCount(initialOnlineCount);
+    }, [initialOnlineCount]);
 
     return (
         <>
@@ -45,14 +44,14 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                     <Breadcrumbs breadcrumbs={breadcrumbs} />
                 </div>
                 <div className="ml-auto flex items-center gap-2">
-                    {online_count !== undefined && online_count > 0 && (
+                    {onlineCount !== undefined && onlineCount > 0 && (
                         <div className="flex items-center gap-1.5 rounded-md bg-green-900/30 px-2 py-1 text-xs">
                             <span className="relative flex h-2 w-2">
                                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
                                 <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
                             </span>
                             <Users className="size-3 text-green-400" />
-                            <span className="font-pixel text-green-300">{online_count}</span>
+                            <span className="font-pixel text-green-300">{onlineCount}</span>
                         </div>
                     )}
                     {isAdmin && (
