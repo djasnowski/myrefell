@@ -42,16 +42,21 @@ const changelog: ChangelogEntry[] = [
         version: "0.8.2",
         date: "February 5, 2026",
         title: "Kingdom Dungeons",
-        description: "New dangers lurk beneath each kingdom. Are you brave enough to explore?",
+        description:
+            "Each kingdom now holds its own secrets underground. Explore unique dungeons tied to the land you call home.",
         icon: <Swords className="h-8 w-8 text-violet-500" />,
         changes: [
             {
                 type: "added",
-                text: "Kingdom-specific dungeons",
+                text: "Dungeons now vary by kingdom - discover what lurks in each realm",
             },
             {
                 type: "added",
-                text: "Dungeon loot storage",
+                text: "Loot storage lets you collect your spoils when the time is right",
+            },
+            {
+                type: "added",
+                text: "Victory screen celebrates your dungeon conquests",
             },
         ],
     },
