@@ -49,6 +49,7 @@ class LeaderboardController extends Controller
         $isCombat = in_array($skillName, PlayerSkill::COMBAT_SKILLS);
 
         $query = PlayerSkill::where('skill_name', $skillName)
+            ->whereHas('player', fn ($q) => $q->whereNull('banned_at'))
             ->with('player:id,username');
 
         // Combat skills: level 6+ (default is 5)
@@ -92,6 +93,7 @@ class LeaderboardController extends Controller
     {
         $query = PlayerSkill::query()
             ->select('player_id', DB::raw('SUM(level) as total_level'), DB::raw('SUM(xp) as total_xp'))
+            ->whereHas('player', fn ($q) => $q->whereNull('banned_at'))
             ->groupBy('player_id')
             ->having(DB::raw('SUM(xp)'), '>=', 250)
             ->orderByDesc('total_level')

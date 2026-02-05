@@ -19,6 +19,8 @@ class UserBan extends Model
         'unbanned_at',
         'unbanned_by',
         'unban_reason',
+        'appeal_text',
+        'appeal_submitted_at',
     ];
 
     /**
@@ -29,6 +31,7 @@ class UserBan extends Model
         return [
             'banned_at' => 'datetime',
             'unbanned_at' => 'datetime',
+            'appeal_submitted_at' => 'datetime',
         ];
     }
 

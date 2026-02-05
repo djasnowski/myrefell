@@ -1,5 +1,15 @@
 import { Link, usePage } from "@inertiajs/react";
-import { Church, Crown, LayoutDashboard, Package, Shield, ShieldAlert, Users } from "lucide-react";
+import {
+    Church,
+    Crown,
+    LayoutDashboard,
+    Package,
+    Scroll,
+    Shield,
+    ShieldAlert,
+    Users,
+} from "lucide-react";
+import { index as adminAppeals } from "@/actions/App/Http/Controllers/Admin/AppealController";
 import { index as adminDashboard } from "@/actions/App/Http/Controllers/Admin/DashboardController";
 import { index as adminDynasties } from "@/actions/App/Http/Controllers/Admin/DynastyController";
 import { index as adminItems } from "@/actions/App/Http/Controllers/Admin/ItemController";
@@ -52,6 +62,11 @@ const adminNavItems = [
         title: "Cheating",
         url: adminSuspiciousActivity.url(),
         icon: ShieldAlert,
+    },
+    {
+        title: "Appeals",
+        url: adminAppeals.url(),
+        icon: Scroll,
     },
 ];
 

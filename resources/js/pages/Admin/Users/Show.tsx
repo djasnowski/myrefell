@@ -58,6 +58,8 @@ interface Ban {
     unbanned_by: { id: number; username: string } | null;
     unban_reason: string | null;
     is_active: boolean;
+    appeal_text: string | null;
+    appeal_submitted_at: string | null;
 }
 
 interface UserData {
@@ -1758,6 +1760,24 @@ export default function Show({
                                                                     Reason: {ban.unban_reason}
                                                                 </p>
                                                             )}
+                                                        </div>
+                                                    )}
+                                                    {ban.appeal_text && (
+                                                        <div className="mt-3 border-t border-amber-900/50 bg-amber-900/10 rounded-lg p-3 -mx-1">
+                                                            <p className="text-sm font-medium text-amber-400 mb-1">
+                                                                <Scroll className="mr-1 inline size-4" />
+                                                                Appeal Submitted
+                                                                {ban.appeal_submitted_at && (
+                                                                    <span className="font-normal text-amber-500/70 ml-2">
+                                                                        {formatDateTime(
+                                                                            ban.appeal_submitted_at,
+                                                                        )}
+                                                                    </span>
+                                                                )}
+                                                            </p>
+                                                            <p className="text-sm text-stone-300 whitespace-pre-wrap">
+                                                                {ban.appeal_text}
+                                                            </p>
                                                         </div>
                                                     )}
                                                 </div>

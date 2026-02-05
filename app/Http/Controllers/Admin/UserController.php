@@ -159,6 +159,8 @@ class UserController extends Controller
                     ] : null,
                     'unban_reason' => $ban->unban_reason,
                     'is_active' => $ban->isActive(),
+                    'appeal_text' => $ban->appeal_text,
+                    'appeal_submitted_at' => $ban->appeal_submitted_at?->toISOString(),
                 ]),
             ],
             'skills' => $this->formatSkills($user),

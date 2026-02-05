@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AppealController as AdminAppealController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DynastyController as AdminDynastyController;
 use App\Http\Controllers\Admin\ItemController as AdminItemController;
@@ -140,7 +141,13 @@ Route::get('players/{username}', [PlayerProfileController::class, 'show'])->name
 // Public leaderboard
 Route::get('leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+// Banned user routes (must be auth but before ban check)
+Route::middleware(['auth'])->group(function () {
+    Route::get('banned', [App\Http\Controllers\BannedController::class, 'index'])->name('banned');
+    Route::post('banned/appeal', [App\Http\Controllers\BannedController::class, 'appeal'])->name('banned.appeal');
+});
+
+Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::class])->group(function () {
     // Impersonation routes
     Route::impersonate();
 
@@ -919,6 +926,9 @@ Route::middleware(['auth', 'verified', 'admin'])
         Route::get('/suspicious-activity', [AdminSuspiciousActivityController::class, 'index'])->name('suspicious-activity.index');
         Route::get('/suspicious-activity/{user}', [AdminSuspiciousActivityController::class, 'show'])->name('suspicious-activity.show');
         Route::post('/suspicious-activity/{user}/clear', [AdminSuspiciousActivityController::class, 'clearFlag'])->name('suspicious-activity.clear');
+
+        // Appeals
+        Route::get('/appeals', [AdminAppealController::class, 'index'])->name('appeals.index');
 
         // Dynasties
         Route::get('/dynasties', [AdminDynastyController::class, 'index'])->name('dynasties.index');
