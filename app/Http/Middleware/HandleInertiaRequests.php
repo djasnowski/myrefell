@@ -328,12 +328,28 @@ class HandleInertiaRequests extends Middleware
         $isTown = $locationType === 'town';
         $isNotVillage = $locationType !== 'village';
 
+        // Load kingdom relationship for dungeon check
+        if ($locationType === 'village' || $locationType === 'town') {
+            $location->load('barony.kingdom');
+        } elseif ($locationType === 'barony') {
+            $location->load('kingdom');
+        } elseif ($locationType === 'duchy') {
+            $location->load('kingdom');
+        }
+
+        // Get the kingdom for this location (for dungeon links)
+        $kingdom = $this->getLocationKingdom($location, $locationType);
+
         return [
             'type' => $locationType,
             'id' => $location->id,
             'name' => $location->name,
             'biome' => $location->biome ?? 'unknown',
             'is_port' => $location->is_port ?? false,
+            'kingdom' => $kingdom ? [
+                'id' => $kingdom->id,
+                'name' => $kingdom->name,
+            ] : null,
             // Location features - what's available here
             'features' => [
                 'market' => $isTownOrVillage,
@@ -343,7 +359,7 @@ class HandleInertiaRequests extends Middleware
                 'tavern' => $isTownOrVillage,
                 'crafting' => $isTownOrVillage,
                 'port' => $location->is_port ?? false,
-                'dungeon' => $this->hasDungeonNearby($location, $locationType),
+                'dungeon' => $kingdom ? $this->hasDungeonNearby($location, $locationType) : false,
                 'guilds' => $isTown,
                 'elections' => $isTownOrVillage,
                 'stables' => $isNotVillage, // Towns, baronies, duchies, kingdoms have stables
@@ -352,22 +368,42 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
+     * Get the kingdom for a location.
+     */
+    protected function getLocationKingdom($location, string $locationType): ?\App\Models\Kingdom
+    {
+        return match ($locationType) {
+            'kingdom' => $location,
+            'duchy' => $location->kingdom ?? null,
+            'barony' => $location->kingdom ?? null,
+            'town' => $location->barony?->kingdom ?? null,
+            'village' => $location->barony?->kingdom ?? null,
+            default => null,
+        };
+    }
+
+    /**
      * Check if there's a dungeon accessible from this location.
-     * Dungeons are biome-based, so we check if there's a dungeon matching the location's biome.
+     * Dungeons are now kingdom-specific, so we check if the player's kingdom has dungeons.
      */
     protected function hasDungeonNearby($location, string $locationType): bool
     {
-        if (! in_array($locationType, ['village', 'town'])) {
-            return false;
-        }
-
-        $biome = $location->biome ?? null;
-        if (! $biome) {
-            return false;
-        }
-
         try {
-            return \App\Models\Dungeon::where('biome', $biome)->exists();
+            // Get the kingdom for this location
+            $kingdom = match ($locationType) {
+                'kingdom' => $location,
+                'duchy' => $location->kingdom ?? null,
+                'barony' => $location->kingdom ?? null,
+                'town' => $location->barony?->kingdom ?? null,
+                'village' => $location->barony?->kingdom ?? null,
+                default => null,
+            };
+
+            if (! $kingdom) {
+                return false;
+            }
+
+            return \App\Models\Dungeon::where('kingdom_id', $kingdom->id)->exists();
         } catch (\Illuminate\Database\QueryException $e) {
             // Table may not exist yet
             return false;

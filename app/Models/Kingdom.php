@@ -88,4 +88,12 @@ class Kingdom extends Model
     {
         return $this->morphMany(Election::class, 'domain', 'domain_type', 'domain_id');
     }
+
+    /**
+     * Get all dungeons in this kingdom.
+     */
+    public function dungeons(): HasMany
+    {
+        return $this->hasMany(Dungeon::class);
+    }
 }

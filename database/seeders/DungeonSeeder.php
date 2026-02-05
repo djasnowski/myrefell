@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Dungeon;
 use App\Models\DungeonFloor;
 use App\Models\DungeonFloorMonster;
+use App\Models\Kingdom;
 use App\Models\Monster;
 use Illuminate\Database\Seeder;
 
@@ -15,14 +16,21 @@ class DungeonSeeder extends Seeder
      */
     public function run(): void
     {
+        // Fetch kingdoms for assignment
+        $valdoria = Kingdom::where('name', 'Valdoria')->first();
+        $frostholm = Kingdom::where('name', 'Frostholm')->first();
+        $sandmar = Kingdom::where('name', 'Sandmar')->first();
+        $ashenfell = Kingdom::where('name', 'Ashenfell')->first();
+
         $dungeons = [
-            // === EASY DUNGEONS ===
+            // === VALDORIA DUNGEONS (Plains biome - beginner friendly) ===
             [
                 'name' => 'Goblin Warrens',
                 'description' => 'A network of tunnels infested with goblins.',
                 'theme' => 'goblin_fortress',
                 'difficulty' => 'easy',
                 'biome' => null,
+                'kingdom_id' => $valdoria?->id,
                 'min_combat_level' => 1,
                 'recommended_level' => 5,
                 'floor_count' => 3,
@@ -43,6 +51,7 @@ class DungeonSeeder extends Seeder
                 'theme' => 'bandit_hideout',
                 'difficulty' => 'easy',
                 'biome' => null,
+                'kingdom_id' => $valdoria?->id,
                 'min_combat_level' => 5,
                 'recommended_level' => 10,
                 'floor_count' => 3,
@@ -57,14 +66,13 @@ class DungeonSeeder extends Seeder
                     ['name' => 'Leader\'s Quarters', 'monster_count' => 3, 'is_boss' => true, 'monsters' => ['Bandit']],
                 ],
             ],
-
-            // === NORMAL DUNGEONS ===
             [
                 'name' => 'Forgotten Crypt',
                 'description' => 'An ancient burial ground where the dead refuse to rest.',
                 'theme' => 'undead_crypt',
                 'difficulty' => 'normal',
                 'biome' => null,
+                'kingdom_id' => $valdoria?->id,
                 'min_combat_level' => 10,
                 'recommended_level' => 18,
                 'floor_count' => 4,
@@ -86,6 +94,7 @@ class DungeonSeeder extends Seeder
                 'theme' => 'ancient_ruins',
                 'difficulty' => 'normal',
                 'biome' => 'forest',
+                'kingdom_id' => $valdoria?->id,
                 'min_combat_level' => 12,
                 'recommended_level' => 20,
                 'floor_count' => 4,
@@ -102,27 +111,26 @@ class DungeonSeeder extends Seeder
                 ],
             ],
 
-            // === HARD DUNGEONS ===
+            // === FROSTHOLM DUNGEONS (Tundra biome - ice themed) ===
             [
-                'name' => 'Mountain Fortress',
-                'description' => 'A massive stronghold carved into the mountainside.',
-                'theme' => 'goblin_fortress',
-                'difficulty' => 'hard',
-                'biome' => 'mountain',
-                'min_combat_level' => 20,
-                'recommended_level' => 30,
-                'floor_count' => 5,
-                'boss_monster' => 'Goblin King',
-                'xp_reward_base' => 500,
-                'gold_reward_min' => 400,
-                'gold_reward_max' => 800,
-                'energy_cost' => 20,
+                'name' => 'Frozen Caverns',
+                'description' => 'A cave system encased in eternal ice.',
+                'theme' => 'elemental_cavern',
+                'difficulty' => 'easy',
+                'biome' => 'tundra',
+                'kingdom_id' => $frostholm?->id,
+                'min_combat_level' => 1,
+                'recommended_level' => 8,
+                'floor_count' => 3,
+                'boss_monster' => null,
+                'xp_reward_base' => 120,
+                'gold_reward_min' => 60,
+                'gold_reward_max' => 180,
+                'energy_cost' => 10,
                 'floors' => [
-                    ['name' => 'Outer Gates', 'monster_count' => 4, 'monsters' => ['Hobgoblin']],
-                    ['name' => 'Barracks', 'monster_count' => 5, 'monsters' => ['Hobgoblin', 'Troll']],
-                    ['name' => 'War Room', 'monster_count' => 5, 'monsters' => ['Hobgoblin', 'Ogre']],
-                    ['name' => 'Treasury', 'monster_count' => 4, 'monsters' => ['Ogre', 'Troll']],
-                    ['name' => 'King\'s Chamber', 'monster_count' => 3, 'is_boss' => true, 'monsters' => ['Hobgoblin', 'Ogre']],
+                    ['name' => 'Icy Entrance', 'monster_count' => 3, 'monsters' => ['Wolf']],
+                    ['name' => 'Crystal Chambers', 'monster_count' => 4, 'monsters' => ['Wolf', 'Bear']],
+                    ['name' => 'Frost Core', 'monster_count' => 3, 'is_boss' => true, 'monsters' => ['Bear']],
                 ],
             ],
             [
@@ -131,6 +139,7 @@ class DungeonSeeder extends Seeder
                 'theme' => 'elemental_cavern',
                 'difficulty' => 'hard',
                 'biome' => 'tundra',
+                'kingdom_id' => $frostholm?->id,
                 'min_combat_level' => 22,
                 'recommended_level' => 32,
                 'floor_count' => 5,
@@ -148,13 +157,104 @@ class DungeonSeeder extends Seeder
                 ],
             ],
 
-            // === NIGHTMARE DUNGEONS ===
+            // === SANDMAR DUNGEONS (Coastal biome - trade/bandit themed) ===
+            [
+                'name' => 'Smuggler\'s Cove',
+                'description' => 'A hidden cove used by pirates and smugglers.',
+                'theme' => 'bandit_hideout',
+                'difficulty' => 'easy',
+                'biome' => 'coastal',
+                'kingdom_id' => $sandmar?->id,
+                'min_combat_level' => 1,
+                'recommended_level' => 6,
+                'floor_count' => 3,
+                'boss_monster' => null,
+                'xp_reward_base' => 110,
+                'gold_reward_min' => 80,
+                'gold_reward_max' => 200,
+                'energy_cost' => 10,
+                'floors' => [
+                    ['name' => 'Beach Entrance', 'monster_count' => 3, 'monsters' => ['Bandit']],
+                    ['name' => 'Storage Caves', 'monster_count' => 4, 'monsters' => ['Bandit']],
+                    ['name' => 'Captain\'s Quarters', 'monster_count' => 3, 'is_boss' => true, 'monsters' => ['Bandit']],
+                ],
+            ],
+            [
+                'name' => 'Desert Ruins',
+                'description' => 'Ancient ruins half-buried in the desert sands.',
+                'theme' => 'ancient_ruins',
+                'difficulty' => 'normal',
+                'biome' => 'coastal',
+                'kingdom_id' => $sandmar?->id,
+                'min_combat_level' => 15,
+                'recommended_level' => 25,
+                'floor_count' => 4,
+                'boss_monster' => 'Lich',
+                'xp_reward_base' => 400,
+                'gold_reward_min' => 250,
+                'gold_reward_max' => 550,
+                'energy_cost' => 18,
+                'floors' => [
+                    ['name' => 'Sand-Covered Entry', 'monster_count' => 3, 'monsters' => ['Skeleton']],
+                    ['name' => 'Collapsed Halls', 'monster_count' => 4, 'monsters' => ['Skeleton', 'Zombie']],
+                    ['name' => 'Treasure Vault', 'monster_count' => 4, 'monsters' => ['Zombie']],
+                    ['name' => 'Pharaoh\'s Chamber', 'monster_count' => 3, 'is_boss' => true, 'monsters' => ['Skeleton', 'Zombie']],
+                ],
+            ],
+
+            // === ASHENFELL DUNGEONS (Volcano biome - fire/demon themed) ===
+            [
+                'name' => 'Lava Tunnels',
+                'description' => 'Tunnels carved by flowing lava through the mountain.',
+                'theme' => 'elemental_cavern',
+                'difficulty' => 'normal',
+                'biome' => 'volcano',
+                'kingdom_id' => $ashenfell?->id,
+                'min_combat_level' => 10,
+                'recommended_level' => 18,
+                'floor_count' => 4,
+                'boss_monster' => null,
+                'xp_reward_base' => 320,
+                'gold_reward_min' => 200,
+                'gold_reward_max' => 500,
+                'energy_cost' => 15,
+                'floors' => [
+                    ['name' => 'Magma Entry', 'monster_count' => 3, 'monsters' => ['Fire Elemental']],
+                    ['name' => 'Sulfur Pits', 'monster_count' => 4, 'monsters' => ['Fire Elemental']],
+                    ['name' => 'Obsidian Halls', 'monster_count' => 4, 'monsters' => ['Fire Elemental']],
+                    ['name' => 'Volcanic Core', 'monster_count' => 3, 'is_boss' => true, 'monsters' => ['Fire Elemental']],
+                ],
+            ],
+            [
+                'name' => 'Mountain Fortress',
+                'description' => 'A massive stronghold carved into the mountainside.',
+                'theme' => 'goblin_fortress',
+                'difficulty' => 'hard',
+                'biome' => 'mountain',
+                'kingdom_id' => $ashenfell?->id,
+                'min_combat_level' => 20,
+                'recommended_level' => 30,
+                'floor_count' => 5,
+                'boss_monster' => 'Goblin King',
+                'xp_reward_base' => 500,
+                'gold_reward_min' => 400,
+                'gold_reward_max' => 800,
+                'energy_cost' => 20,
+                'floors' => [
+                    ['name' => 'Outer Gates', 'monster_count' => 4, 'monsters' => ['Hobgoblin']],
+                    ['name' => 'Barracks', 'monster_count' => 5, 'monsters' => ['Hobgoblin', 'Troll']],
+                    ['name' => 'War Room', 'monster_count' => 5, 'monsters' => ['Hobgoblin', 'Ogre']],
+                    ['name' => 'Treasury', 'monster_count' => 4, 'monsters' => ['Ogre', 'Troll']],
+                    ['name' => 'King\'s Chamber', 'monster_count' => 3, 'is_boss' => true, 'monsters' => ['Hobgoblin', 'Ogre']],
+                ],
+            ],
             [
                 'name' => 'Dragon\'s Lair',
                 'description' => 'The volcanic home of an ancient dragon.',
                 'theme' => 'dragon_lair',
                 'difficulty' => 'nightmare',
                 'biome' => 'volcano',
+                'kingdom_id' => $ashenfell?->id,
                 'min_combat_level' => 40,
                 'recommended_level' => 55,
                 'floor_count' => 6,
@@ -178,6 +278,7 @@ class DungeonSeeder extends Seeder
                 'theme' => 'demon_pit',
                 'difficulty' => 'nightmare',
                 'biome' => 'volcano',
+                'kingdom_id' => $ashenfell?->id,
                 'min_combat_level' => 35,
                 'recommended_level' => 50,
                 'floor_count' => 6,
@@ -203,7 +304,7 @@ class DungeonSeeder extends Seeder
 
             // Find boss monster
             $bossMonster = null;
-            if (!empty($dungeonData['boss_monster'])) {
+            if (! empty($dungeonData['boss_monster'])) {
                 $bossMonster = Monster::where('name', $dungeonData['boss_monster'])->first();
                 unset($dungeonData['boss_monster']);
             } else {
@@ -212,10 +313,21 @@ class DungeonSeeder extends Seeder
 
             $dungeonData['boss_monster_id'] = $bossMonster?->id;
 
-            $dungeon = Dungeon::create($dungeonData);
+            // Skip if kingdom doesn't exist (for development)
+            if (isset($dungeonData['kingdom_id']) && $dungeonData['kingdom_id'] === null) {
+                continue;
+            }
 
-            // Create floors
-            $this->seedFloors($dungeon, $floorsData);
+            // Use updateOrCreate to handle existing dungeons
+            $dungeon = Dungeon::updateOrCreate(
+                ['name' => $dungeonData['name']],
+                $dungeonData
+            );
+
+            // Only create floors if they don't exist
+            if ($dungeon->floors()->count() === 0) {
+                $this->seedFloors($dungeon, $floorsData);
+            }
         }
     }
 
@@ -258,7 +370,7 @@ class DungeonSeeder extends Seeder
 
         foreach ($monsterNames as $index => $monsterName) {
             $monster = Monster::where('name', $monsterName)->first();
-            if (!$monster) {
+            if (! $monster) {
                 continue;
             }
 

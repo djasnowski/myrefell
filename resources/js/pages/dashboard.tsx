@@ -53,6 +53,11 @@ interface LocationFeatures {
     stables: boolean;
 }
 
+interface LocationKingdom {
+    id: number;
+    name: string;
+}
+
 interface DiseaseInfection {
     id: number;
     disease_name: string;
@@ -82,6 +87,7 @@ interface SidebarData {
         name: string;
         biome: string;
         is_port?: boolean;
+        kingdom?: LocationKingdom | null;
         features?: LocationFeatures;
     } | null;
     home_village: {
@@ -200,7 +206,12 @@ export default function Dashboard() {
                     icon: Swords,
                 },
                 { name: "Combat", href: "/combat", icon: Shield },
-                features?.dungeon && { name: "Dungeons", href: "/dungeons", icon: Sparkles },
+                features?.dungeon &&
+                    location?.kingdom && {
+                        name: "Dungeons",
+                        href: `/kingdoms/${location.kingdom.id}/dungeons`,
+                        icon: Sparkles,
+                    },
             ].filter(Boolean),
         },
         {
@@ -544,7 +555,7 @@ export default function Dashboard() {
                                     >
                                         {category.category}
                                     </h3>
-                                    <div className="grid grid-cols-3 gap-2">
+                                    <div className="grid grid-cols-5 gap-2">
                                         {category.items.map((item) => (
                                             <Link
                                                 key={item.name}

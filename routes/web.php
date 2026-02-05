@@ -189,8 +189,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('kingdoms', [KingdomController::class, 'index'])->name('kingdoms.index');
     Route::get('kingdoms/{kingdom}', [KingdomController::class, 'show'])->name('kingdoms.show');
     Route::get('kingdoms/{kingdom}/baronies', [KingdomController::class, 'baronies'])->name('kingdoms.baronies');
-    Route::get('kingdoms/{kingdom}/settle', [KingdomController::class, 'settle'])->name('kingdoms.settle');
-
     Route::get('duchies', [DuchyController::class, 'index'])->name('duchies.index');
     Route::get('duchies/{duchy}', [DuchyController::class, 'show'])->name('duchies.show');
     Route::get('duchies/{duchy}/baronies', [DuchyController::class, 'baronies'])->name('duchies.baronies');
@@ -656,15 +654,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('combat/eat', [CombatController::class, 'eat'])->name('combat.eat');
     Route::post('combat/flee', [CombatController::class, 'flee'])->name('combat.flee');
 
-    // Dungeons
-    Route::get('dungeons', [DungeonController::class, 'index'])->name('dungeons.index');
-    Route::get('dungeons/status', [DungeonController::class, 'status'])->name('dungeons.status');
-    Route::get('dungeons/{dungeon}', [DungeonController::class, 'show'])->name('dungeons.show');
-    Route::post('dungeons/enter', [DungeonController::class, 'enter'])->name('dungeons.enter');
-    Route::post('dungeons/fight', [DungeonController::class, 'fight'])->name('dungeons.fight');
-    Route::post('dungeons/next-floor', [DungeonController::class, 'nextFloor'])->name('dungeons.next-floor');
-    Route::post('dungeons/eat', [DungeonController::class, 'eat'])->name('dungeons.eat');
-    Route::post('dungeons/abandon', [DungeonController::class, 'abandon'])->name('dungeons.abandon');
+    // Dungeons (kingdom-scoped)
+    Route::get('kingdoms/{kingdom}/dungeons', [DungeonController::class, 'index'])->name('kingdoms.dungeons.index');
+    Route::get('kingdoms/{kingdom}/dungeons/loot', [DungeonController::class, 'lootStorage'])->name('kingdoms.dungeons.loot');
+    Route::post('kingdoms/{kingdom}/dungeons/loot/claim', [DungeonController::class, 'claimLoot'])->name('kingdoms.dungeons.loot.claim');
+    Route::post('kingdoms/{kingdom}/dungeons/loot/claim-all', [DungeonController::class, 'claimAllLoot'])->name('kingdoms.dungeons.loot.claim-all');
+    Route::get('kingdoms/{kingdom}/dungeons/{dungeon}', [DungeonController::class, 'show'])->name('kingdoms.dungeons.show');
+    Route::post('kingdoms/{kingdom}/dungeons/enter', [DungeonController::class, 'enter'])->name('kingdoms.dungeons.enter');
+    Route::post('kingdoms/{kingdom}/dungeons/fight', [DungeonController::class, 'fight'])->name('kingdoms.dungeons.fight');
+    Route::post('kingdoms/{kingdom}/dungeons/next-floor', [DungeonController::class, 'nextFloor'])->name('kingdoms.dungeons.next-floor');
+    Route::post('kingdoms/{kingdom}/dungeons/eat', [DungeonController::class, 'eat'])->name('kingdoms.dungeons.eat');
+    Route::post('kingdoms/{kingdom}/dungeons/abandon', [DungeonController::class, 'abandon'])->name('kingdoms.dungeons.abandon');
+    Route::get('kingdoms/{kingdom}/dungeons/status', [DungeonController::class, 'status'])->name('kingdoms.dungeons.status');
+
+    // Legacy dungeon route - redirect to kingdom-scoped
+    Route::get('dungeons', [DungeonController::class, 'legacyIndex'])->name('dungeons.index');
 
     // Chat
     Route::get('chat', [ChatController::class, 'index'])->name('chat.index');

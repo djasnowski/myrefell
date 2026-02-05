@@ -22,6 +22,7 @@ import {
     Snowflake,
     Sparkles,
     Sun,
+    Swords,
     TreePine,
     Trees,
     Users,
@@ -493,6 +494,16 @@ export default function KingdomShow({
                             </div>
                         </Link>
                         <Link
+                            href={`/kingdoms/${kingdom.id}/dungeons`}
+                            className="flex items-center gap-3 rounded-lg border-2 border-violet-600/50 bg-violet-900/20 p-4 transition hover:bg-violet-800/30"
+                        >
+                            <Swords className="h-8 w-8 text-violet-400" />
+                            <div>
+                                <span className="font-pixel text-sm text-violet-300">Dungeons</span>
+                                <p className="text-xs text-stone-500">Explore dangerous depths</p>
+                            </div>
+                        </Link>
+                        <Link
                             href={`/kingdoms/${kingdom.id}/charters`}
                             className="flex items-center gap-3 rounded-lg border-2 border-purple-600/50 bg-purple-900/20 p-4 transition hover:bg-purple-800/30"
                         >
@@ -572,20 +583,6 @@ export default function KingdomShow({
                             <div>
                                 <span className="font-pixel text-sm text-green-300">Elections</span>
                                 <p className="text-xs text-stone-500">Political affairs</p>
-                            </div>
-                        </Link>
-                        <Link
-                            href={`/kingdoms/${kingdom.id}/settle`}
-                            className="flex items-center gap-3 rounded-lg border-2 border-teal-600/50 bg-teal-900/20 p-4 transition hover:bg-teal-800/30"
-                        >
-                            <Home className="h-8 w-8 text-teal-400" />
-                            <div>
-                                <span className="font-pixel text-sm text-teal-300">
-                                    Browse Settlements
-                                </span>
-                                <p className="text-xs text-stone-500">
-                                    Find a village or town in this kingdom
-                                </p>
                             </div>
                         </Link>
                     </div>

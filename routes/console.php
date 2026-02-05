@@ -9,8 +9,10 @@ use App\Jobs\ProcessDisasters;
 use App\Jobs\ProcessDiseases;
 use App\Jobs\RegenerateEnergy;
 use App\Jobs\RegenerateHp;
+use App\Services\DungeonLootService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -59,3 +61,9 @@ Schedule::command('hideout:complete-construction')->everyMinute();
 
 // Prune old tab activity logs - daily at 03:00
 Schedule::command('tab-activity:prune')->dailyAt('03:00');
+
+// Clean up expired dungeon loot - daily at 04:00
+Schedule::call(function () {
+    $deleted = DungeonLootService::cleanupExpiredLoot();
+    Log::info("Cleaned up {$deleted} expired dungeon loot entries");
+})->dailyAt('04:00');

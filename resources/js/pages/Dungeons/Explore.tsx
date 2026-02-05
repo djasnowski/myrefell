@@ -60,7 +60,13 @@ interface FoodItem {
     quantity: number;
 }
 
+interface Kingdom {
+    id: number;
+    name: string;
+}
+
 interface PageProps {
+    kingdom: Kingdom;
     session: DungeonSession;
     player_stats: PlayerStats;
     equipment: Equipment;
@@ -68,14 +74,8 @@ interface PageProps {
     [key: string]: unknown;
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: "Dashboard", href: "/dashboard" },
-    { title: "Dungeons", href: "/dungeons" },
-    { title: "Explore", href: "#" },
-];
-
 export default function DungeonExplore() {
-    const { session, player_stats, equipment, food } = usePage<PageProps>().props;
+    const { kingdom, session, player_stats, equipment, food } = usePage<PageProps>().props;
     const [isFighting, setIsFighting] = useState(false);
     const [isAdvancing, setIsAdvancing] = useState(false);
     const [isEating, setIsEating] = useState(false);
@@ -87,6 +87,13 @@ export default function DungeonExplore() {
         floor_cleared?: boolean;
     } | null>(null);
     const [showFoodMenu, setShowFoodMenu] = useState(false);
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: "Dashboard", href: "/dashboard" },
+        { title: kingdom.name, href: `/kingdoms/${kingdom.id}` },
+        { title: "Dungeons", href: `/kingdoms/${kingdom.id}/dungeons` },
+        { title: "Explore", href: "#" },
+    ];
 
     const dungeon = session.dungeon;
     const currentFloor = dungeon.floors.find((f) => f.floor_number === session.current_floor);
@@ -101,7 +108,7 @@ export default function DungeonExplore() {
         setLastResult(null);
 
         try {
-            const response = await fetch("/dungeons/fight", {
+            const response = await fetch(`/kingdoms/${kingdom.id}/dungeons/fight`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -147,7 +154,7 @@ export default function DungeonExplore() {
         setLastResult(null);
 
         try {
-            const response = await fetch("/dungeons/next-floor", {
+            const response = await fetch(`/kingdoms/${kingdom.id}/dungeons/next-floor`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -180,7 +187,7 @@ export default function DungeonExplore() {
         setShowFoodMenu(false);
 
         try {
-            const response = await fetch("/dungeons/eat", {
+            const response = await fetch(`/kingdoms/${kingdom.id}/dungeons/eat`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -219,7 +226,7 @@ export default function DungeonExplore() {
         setError(null);
 
         try {
-            const response = await fetch("/dungeons/abandon", {
+            const response = await fetch(`/kingdoms/${kingdom.id}/dungeons/abandon`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

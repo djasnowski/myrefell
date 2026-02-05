@@ -11,8 +11,11 @@ class DungeonSession extends Model
     use HasFactory;
 
     public const STATUS_ACTIVE = 'active';
+
     public const STATUS_COMPLETED = 'completed';
+
     public const STATUS_FAILED = 'failed';
+
     public const STATUS_ABANDONED = 'abandoned';
 
     public const STATUSES = [
@@ -23,6 +26,8 @@ class DungeonSession extends Model
     ];
 
     public const TRAINING_STYLES = ['attack', 'strength', 'defense'];
+
+    protected $appends = ['progress_percentage'];
 
     protected $fillable = [
         'user_id',

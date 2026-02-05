@@ -29,6 +29,7 @@ class Dungeon extends Model
         'theme',
         'difficulty',
         'biome',
+        'kingdom_id',
         'min_combat_level',
         'recommended_level',
         'floor_count',
@@ -66,6 +67,14 @@ class Dungeon extends Model
     public function bossMonster(): BelongsTo
     {
         return $this->belongsTo(Monster::class, 'boss_monster_id');
+    }
+
+    /**
+     * Get the kingdom this dungeon belongs to.
+     */
+    public function kingdom(): BelongsTo
+    {
+        return $this->belongsTo(Kingdom::class);
     }
 
     /**

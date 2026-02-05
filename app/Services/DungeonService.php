@@ -2,12 +2,18 @@
 
 namespace App\Services;
 
+use App\Models\Barony;
+use App\Models\Duchy;
 use App\Models\Dungeon;
 use App\Models\DungeonFloor;
+use App\Models\DungeonLootStorage;
 use App\Models\DungeonSession;
+use App\Models\Kingdom;
 use App\Models\Monster;
 use App\Models\PlayerSkill;
+use App\Models\Town;
 use App\Models\User;
+use App\Models\Village;
 use Illuminate\Support\Facades\DB;
 
 class DungeonService
@@ -20,35 +26,39 @@ class DungeonService
 
     /**
      * Get available dungeons for a player at their current location.
+     * Dungeons are now filtered by the player's current kingdom.
      *
      * @return array<Dungeon>
      */
     public function getAvailableDungeons(User $player): array
     {
-        $biome = $this->getLocationBiome($player);
+        $kingdom = $this->getPlayerKingdom($player);
+
+        if (! $kingdom) {
+            return [];
+        }
 
         return Dungeon::query()
+            ->where('kingdom_id', $kingdom->id)
             ->where('min_combat_level', '<=', $player->combat_level)
-            ->where(function ($query) use ($biome) {
-                $query->where('biome', $biome)
-                    ->orWhereNull('biome');
-            })
-            ->with('bossMonster')
+            ->with(['bossMonster', 'kingdom'])
             ->orderBy('min_combat_level')
             ->get()
             ->toArray();
     }
 
     /**
-     * Get the biome for a player's current location.
+     * Get the kingdom for a player's current location.
+     * Traverses up the location hierarchy to find the kingdom.
      */
-    protected function getLocationBiome(User $player): ?string
+    public function getPlayerKingdom(User $player): ?Kingdom
     {
         return match ($player->current_location_type) {
-            'village' => \App\Models\Village::find($player->current_location_id)?->biome,
-            'barony' => \App\Models\Barony::find($player->current_location_id)?->biome,
-            'town' => \App\Models\Town::find($player->current_location_id)?->biome,
-            'kingdom' => \App\Models\Kingdom::find($player->current_location_id)?->biome,
+            'kingdom' => Kingdom::find($player->current_location_id),
+            'duchy' => Duchy::find($player->current_location_id)?->kingdom,
+            'barony' => Barony::find($player->current_location_id)?->kingdom,
+            'town' => Town::find($player->current_location_id)?->barony?->kingdom,
+            'village' => Village::find($player->current_location_id)?->barony?->kingdom,
             default => null,
         };
     }
@@ -232,9 +242,13 @@ class DungeonService
      */
     protected function getMonsterForFloor(DungeonSession $session, DungeonFloor $floor): ?Monster
     {
-        // On boss floor with all other monsters defeated, spawn boss
+        // On boss floor with all other monsters defeated, spawn boss (if one exists)
         if ($floor->is_boss_floor && $session->monsters_defeated === $session->total_monsters_on_floor - 1) {
-            return $session->dungeon->bossMonster;
+            $boss = $session->dungeon->bossMonster;
+            if ($boss) {
+                return $boss;
+            }
+            // Fall through to regular monster if no boss configured
         }
 
         // Otherwise get random monster from floor spawn table
@@ -291,12 +305,15 @@ class DungeonService
         $player->hp = max(0, $playerHp);
         $player->save();
 
+        // Cap damage dealt at monster's max HP (no overkill XP)
+        $effectiveDamage = min($totalDamageDealt, $monster->max_hp);
+
         return [
             'player_won' => $monsterHp <= 0,
             'rounds' => $rounds,
             'player_hp_remaining' => max(0, $playerHp),
             'damage_taken' => $player->hp - max(0, $playerHp),
-            'damage_dealt' => $totalDamageDealt,
+            'damage_dealt' => $effectiveDamage,
         ];
     }
 
@@ -416,6 +433,18 @@ class DungeonService
         // Award accumulated XP to skill
         $this->awardAccumulatedRewards($player, $session);
 
+        // Get all loot item names for the completion summary
+        $lootItems = [];
+        $allLoot = $session->loot_accumulated ?? [];
+        if (! empty($allLoot)) {
+            $items = \App\Models\Item::whereIn('id', array_keys($allLoot))->get()->keyBy('id');
+            foreach ($allLoot as $itemId => $quantity) {
+                if ($item = $items->get($itemId)) {
+                    $lootItems[] = ['name' => $item->name, 'quantity' => $quantity];
+                }
+            }
+        }
+
         return [
             'success' => true,
             'message' => "Dungeon Complete! You conquered {$dungeon->name}!",
@@ -436,12 +465,14 @@ class DungeonService
                     'gold' => $session->gold_accumulated,
                     'skill' => $session->training_style,
                 ],
+                'loot_items' => $lootItems,
             ],
         ];
     }
 
     /**
      * Award accumulated rewards to the player.
+     * XP and gold are awarded directly, but loot goes to dungeon loot storage.
      */
     protected function awardAccumulatedRewards(User $player, DungeonSession $session): void
     {
@@ -456,15 +487,15 @@ class DungeonService
             $this->addXpToSkill($player, 'hitpoints', $hpXp);
         }
 
-        // Award gold
+        // Award gold directly
         $player->increment('gold', $session->gold_accumulated);
 
-        // Award items (already accumulated in session)
-        $loot = $session->loot_accumulated ?? [];
-        foreach ($loot as $itemId => $quantity) {
-            $item = \App\Models\Item::find($itemId);
-            if ($item) {
-                $this->lootService->inventoryService->addItem($player, $item, $quantity);
+        // Store loot in dungeon loot storage (instead of inventory)
+        $kingdom = $session->dungeon->kingdom;
+        if ($kingdom) {
+            $loot = $session->loot_accumulated ?? [];
+            foreach ($loot as $itemId => $quantity) {
+                DungeonLootStorage::addLoot($player->id, $kingdom->id, (int) $itemId, $quantity);
             }
         }
     }
