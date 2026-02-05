@@ -17,6 +17,22 @@ class MonsterSeeder extends Seeder
         $monsters = [
             // === LOW LEVEL (1-10) ===
             [
+                'name' => 'Chicken',
+                'description' => 'A plump farm chicken. Clucks angrily when threatened.',
+                'type' => 'beast',
+                'biome' => null, // Available everywhere
+                'hp' => 5,
+                'max_hp' => 5,
+                'attack_level' => 1,
+                'strength_level' => 1,
+                'defense_level' => 1,
+                'combat_level' => 1,
+                'xp_reward' => 3,
+                'gold_drop_min' => 0,
+                'gold_drop_max' => 2,
+                'min_player_combat_level' => 1,
+            ],
+            [
                 'name' => 'Rat',
                 'description' => 'A filthy sewer rat.',
                 'type' => 'beast',
@@ -338,6 +354,11 @@ class MonsterSeeder extends Seeder
     {
         $lootTables = [
             // Low level monsters
+            'Chicken' => [
+                ['item' => 'Bones', 'chance' => 100, 'min' => 1, 'max' => 1],
+                ['item' => 'Feather', 'chance' => 100, 'min' => 5, 'max' => 15],
+                ['item' => 'Raw Chicken', 'chance' => 100, 'min' => 1, 'max' => 1],
+            ],
             'Rat' => [
                 ['item' => 'Bones', 'chance' => 100, 'min' => 1, 'max' => 1],
                 ['item' => 'Venom Sac', 'chance' => 5, 'min' => 1, 'max' => 1],

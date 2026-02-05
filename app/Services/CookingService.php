@@ -43,6 +43,16 @@ class CookingService
             ],
             'output' => ['name' => 'Cooked Shrimp', 'quantity' => 1],
         ],
+        'cooked_chicken' => [
+            'name' => 'Cooked Chicken',
+            'required_level' => 1,
+            'xp_reward' => 8,
+            'energy_cost' => 2,
+            'materials' => [
+                ['name' => 'Raw Chicken', 'quantity' => 1],
+            ],
+            'output' => ['name' => 'Cooked Chicken', 'quantity' => 1],
+        ],
         'cooked_sardine' => [
             'name' => 'Cooked Sardine',
             'required_level' => 5,
