@@ -7,6 +7,7 @@ use App\Models\DynastyAlliance;
 use App\Models\DynastyEvent;
 use App\Models\DynastyMember;
 use App\Models\Marriage;
+use App\Models\User;
 use App\Services\DynastyService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -104,12 +105,12 @@ class DynastyController extends Controller
             'motto' => 'nullable|string|max:100',
         ]);
 
-        if (!$this->canFoundDynasty($user)) {
+        if (! $this->canFoundDynasty($user)) {
             return back()->with('error', 'You do not meet the requirements to found a dynasty.');
         }
 
         if ($user->gold < self::FOUNDING_COST) {
-            return back()->with('error', 'You need at least ' . self::FOUNDING_COST . ' gold to found a dynasty.');
+            return back()->with('error', 'You need at least '.self::FOUNDING_COST.' gold to found a dynasty.');
         }
 
         $user->decrement('gold', self::FOUNDING_COST);
@@ -130,7 +131,7 @@ class DynastyController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->dynasty_id) {
+        if (! $user->dynasty_id) {
             return back()->with('error', 'You do not have a dynasty.');
         }
 
@@ -158,7 +159,7 @@ class DynastyController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->dynasty_id) {
+        if (! $user->dynasty_id) {
             return redirect()->route('dynasty.index');
         }
 
@@ -269,7 +270,7 @@ class DynastyController extends Controller
                 'met' => $user->social_class !== 'serf',
             ],
             [
-                'label' => 'Have ' . self::FOUNDING_COST . ' gold',
+                'label' => 'Have '.self::FOUNDING_COST.' gold',
                 'met' => $user->gold >= self::FOUNDING_COST,
             ],
         ];
@@ -304,7 +305,7 @@ class DynastyController extends Controller
             ->where('dynasty_id', $member->dynasty_id)
             ->first();
 
-        if (!$userMember) {
+        if (! $userMember) {
             return 'member';
         }
 
@@ -373,7 +374,7 @@ class DynastyController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->dynasty_id) {
+        if (! $user->dynasty_id) {
             return redirect()->route('dynasty.index');
         }
 
@@ -441,7 +442,7 @@ class DynastyController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->dynasty_id) {
+        if (! $user->dynasty_id) {
             return redirect()->route('dynasty.index');
         }
 
@@ -486,7 +487,7 @@ class DynastyController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->dynasty_id) {
+        if (! $user->dynasty_id) {
             return back()->with('error', 'You do not have a dynasty.');
         }
 
@@ -526,12 +527,130 @@ class DynastyController extends Controller
             'dynasty_id' => $dynasty->id,
             'event_type' => 'alliance',
             'title' => 'Alliance Broken',
-            'description' => "Broke {$alliance->alliance_type} alliance with House " . $alliance->getOtherDynasty($dynasty)?->name,
+            'description' => "Broke {$alliance->alliance_type} alliance with House ".$alliance->getOtherDynasty($dynasty)?->name,
             'prestige_change' => -$prestigePenalty,
             'occurred_at' => now(),
         ]);
 
-        return back()->with('success', 'Alliance broken. You lost ' . $prestigePenalty . ' prestige.');
+        return back()->with('success', 'Alliance broken. You lost '.$prestigePenalty.' prestige.');
+    }
+
+    /**
+     * Leave the dynasty (for non-head members).
+     */
+    public function leave(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user->dynasty_id) {
+            return back()->with('error', 'You are not part of a dynasty.');
+        }
+
+        $dynasty = Dynasty::find($user->dynasty_id);
+
+        if (! $dynasty->isActive()) {
+            return back()->with('error', 'This dynasty has already been dissolved.');
+        }
+
+        // Head cannot leave - must dissolve or transfer headship first
+        if ($dynasty->current_head_id === $user->id) {
+            return back()->with('error', 'As head of the dynasty, you must either transfer headship or dissolve the dynasty.');
+        }
+
+        // Get user's dynasty member record
+        $member = DynastyMember::where('dynasty_id', $dynasty->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        // Record event before leaving
+        DynastyEvent::create([
+            'dynasty_id' => $dynasty->id,
+            'dynasty_member_id' => $member?->id,
+            'event_type' => 'departure',
+            'title' => 'Member Departed',
+            'description' => "{$user->username} hath forsaken House {$dynasty->name}",
+            'prestige_change' => -25,
+            'occurred_at' => now(),
+        ]);
+
+        // Update dynasty prestige
+        $dynasty->decrement('prestige', 25);
+
+        // Remove user from dynasty
+        $user->update(['dynasty_id' => null]);
+
+        // If member record exists, mark as departed (but keep for history)
+        if ($member) {
+            $member->update([
+                'status' => 'departed',
+                'user_id' => null, // Unlink from user but keep the historical record
+            ]);
+        }
+
+        // Recalculate dynasty stats
+        $dynasty->recalculateMembers();
+
+        return redirect()->route('dynasty.index')->with('success', 'You have left House '.$dynasty->name.'.');
+    }
+
+    /**
+     * Dissolve the dynasty (head only).
+     */
+    public function dissolve(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user->dynasty_id) {
+            return back()->with('error', 'You are not part of a dynasty.');
+        }
+
+        $dynasty = Dynasty::find($user->dynasty_id);
+
+        if (! $dynasty->isActive()) {
+            return back()->with('error', 'This dynasty has already been dissolved.');
+        }
+
+        // Only head can dissolve
+        if ($dynasty->current_head_id !== $user->id) {
+            return back()->with('error', 'Only the head of the dynasty can dissolve it.');
+        }
+
+        $validated = $request->validate([
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        // Record final event
+        DynastyEvent::create([
+            'dynasty_id' => $dynasty->id,
+            'event_type' => 'dissolution',
+            'title' => 'Dynasty Dissolved',
+            'description' => "House {$dynasty->name} hath been dissolved by {$user->username}. ".
+                ($validated['reason'] ? "Reason: {$validated['reason']}" : 'The bloodline fades into history.'),
+            'prestige_change' => -$dynasty->prestige, // Lose all prestige
+            'occurred_at' => now(),
+        ]);
+
+        // Remove all users from dynasty
+        User::where('dynasty_id', $dynasty->id)->update(['dynasty_id' => null]);
+
+        // Mark all living members as departed
+        DynastyMember::where('dynasty_id', $dynasty->id)
+            ->where('status', 'alive')
+            ->update([
+                'status' => 'departed',
+                'user_id' => null,
+            ]);
+
+        // Mark dynasty as dissolved
+        $dynasty->update([
+            'status' => Dynasty::STATUS_DISSOLVED,
+            'dissolved_at' => now(),
+            'dissolution_reason' => $validated['reason'] ?? 'The bloodline fades into history.',
+            'current_head_id' => null,
+            'prestige' => 0,
+        ]);
+
+        return redirect()->route('dynasty.index')->with('success', 'House '.$dynasty->name.' has been dissolved. Its history shall not be forgotten.');
     }
 
     /**
@@ -561,7 +680,7 @@ class DynastyController extends Controller
             'expires_at' => $alliance->expires_at?->format('M j, Y'),
             'ended_at' => $alliance->ended_at?->format('M j, Y'),
             'can_break' => $alliance->alliance_type !== DynastyAlliance::TYPE_MARRIAGE
-                || !$alliance->marriage?->isActive(),
+                || ! $alliance->marriage?->isActive(),
         ];
     }
 }

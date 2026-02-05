@@ -854,6 +854,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dynasty', [DynastyController::class, 'index'])->name('dynasty.index');
     Route::post('dynasty', [DynastyController::class, 'found'])->name('dynasty.found');
     Route::put('dynasty', [DynastyController::class, 'update'])->name('dynasty.update');
+    Route::post('dynasty/leave', [DynastyController::class, 'leave'])->name('dynasty.leave');
+    Route::post('dynasty/dissolve', [DynastyController::class, 'dissolve'])->name('dynasty.dissolve');
     Route::get('dynasty/tree', [DynastyController::class, 'tree'])->name('dynasty.tree');
     Route::get('dynasty/history', [DynastyController::class, 'history'])->name('dynasty.history');
     Route::get('dynasty/alliances', [DynastyController::class, 'alliances'])->name('dynasty.alliances');

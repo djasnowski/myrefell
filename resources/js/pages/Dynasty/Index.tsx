@@ -1,6 +1,8 @@
 import { Head, Link, router } from "@inertiajs/react";
 import {
+    AlertTriangle,
     Crown,
+    DoorOpen,
     Heart,
     History,
     ScrollText,
@@ -12,6 +14,7 @@ import {
     Sparkles,
     Check,
     X,
+    Loader2,
 } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
@@ -88,6 +91,14 @@ export default function DynastyIndex({
     const [dynastyMotto, setDynastyMotto] = useState("");
     const [editing, setEditing] = useState(false);
     const [newMotto, setNewMotto] = useState(dynasty?.motto || "");
+    const [showLeaveModal, setShowLeaveModal] = useState(false);
+    const [showDissolveModal, setShowDissolveModal] = useState(false);
+    const [dissolveReason, setDissolveReason] = useState("");
+    const [leaving, setLeaving] = useState(false);
+    const [dissolving, setDissolving] = useState(false);
+
+    // Check if user typed "house" in the dynasty name
+    const hasHouseInName = /\bhouse\b/i.test(dynastyName);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -95,7 +106,7 @@ export default function DynastyIndex({
     ];
 
     const handleFoundDynasty = () => {
-        if (!dynastyName.trim() || founding) return;
+        if (!dynastyName.trim() || founding || hasHouseInName) return;
         setFounding(true);
         router.post(
             "/dynasty",
@@ -124,6 +135,40 @@ export default function DynastyIndex({
                     router.reload();
                 },
                 onFinish: () => setEditing(false),
+            },
+        );
+    };
+
+    const handleLeaveDynasty = () => {
+        setLeaving(true);
+        router.post(
+            "/dynasty/leave",
+            {},
+            {
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => {
+                    setLeaving(false);
+                    setShowLeaveModal(false);
+                },
+            },
+        );
+    };
+
+    const handleDissolveDynasty = () => {
+        setDissolving(true);
+        router.post(
+            "/dynasty/dissolve",
+            { reason: dissolveReason || null },
+            {
+                onSuccess: () => {
+                    router.reload();
+                },
+                onFinish: () => {
+                    setDissolving(false);
+                    setShowDissolveModal(false);
+                },
             },
         );
     };
@@ -249,14 +294,28 @@ export default function DynastyIndex({
                                         <label className="mb-1 block font-pixel text-xs text-stone-400">
                                             Dynasty Name
                                         </label>
-                                        <input
-                                            type="text"
-                                            value={dynastyName}
-                                            onChange={(e) => setDynastyName(e.target.value)}
-                                            placeholder="House of..."
-                                            maxLength={50}
-                                            className="w-full rounded-lg border border-stone-600 bg-stone-900 px-3 py-2 font-pixel text-sm text-stone-200 placeholder:text-stone-600"
-                                        />
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-pixel text-sm text-stone-400">
+                                                House of
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={dynastyName}
+                                                onChange={(e) => setDynastyName(e.target.value)}
+                                                placeholder="Your name..."
+                                                maxLength={50}
+                                                className="flex-1 rounded-lg border border-stone-600 bg-stone-900 px-3 py-2 font-pixel text-sm text-stone-200 placeholder:text-stone-600"
+                                            />
+                                        </div>
+                                        {hasHouseInName && (
+                                            <div className="mt-2 rounded-lg border border-amber-600/50 bg-amber-900/20 p-2">
+                                                <p className="font-pixel text-xs text-amber-400">
+                                                    Hark! The title "House" doth already precede thy
+                                                    name upon the rolls. Pray, inscribe only the
+                                                    name itself.
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                     <div>
                                         <label className="mb-1 block font-pixel text-xs text-stone-400">
@@ -274,7 +333,9 @@ export default function DynastyIndex({
                                     <div className="flex gap-2">
                                         <button
                                             onClick={handleFoundDynasty}
-                                            disabled={founding || !dynastyName.trim()}
+                                            disabled={
+                                                founding || !dynastyName.trim() || hasHouseInName
+                                            }
                                             className="flex-1 rounded-lg bg-amber-600 py-2 font-pixel text-sm text-white transition hover:bg-amber-500 disabled:opacity-50"
                                         >
                                             {founding
@@ -494,6 +555,27 @@ export default function DynastyIndex({
                                 <Crown className="h-4 w-4" />
                                 Succession Settings
                             </Link>
+
+                            {/* Leave / Dissolve */}
+                            <div className="mt-4 border-t border-stone-700 pt-4">
+                                {is_head ? (
+                                    <button
+                                        onClick={() => setShowDissolveModal(true)}
+                                        className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-600/50 bg-red-900/20 p-2 font-pixel text-xs text-red-400 transition hover:bg-red-900/30"
+                                    >
+                                        <AlertTriangle className="h-4 w-4" />
+                                        Dissolve Dynasty
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => setShowLeaveModal(true)}
+                                        className="flex w-full items-center justify-center gap-2 rounded-lg border border-stone-600/50 bg-stone-800/50 p-2 font-pixel text-xs text-stone-400 transition hover:bg-stone-700/50"
+                                    >
+                                        <DoorOpen className="h-4 w-4" />
+                                        Leave Dynasty
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -645,6 +727,129 @@ export default function DynastyIndex({
                     </div>
                 </div>
             </div>
+
+            {/* Leave Dynasty Modal */}
+            {showLeaveModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+                    <div className="w-full max-w-md rounded-xl border-2 border-stone-600 bg-stone-900 p-6">
+                        <div className="mb-4 flex items-center gap-3">
+                            <div className="rounded-lg bg-stone-800 p-2">
+                                <DoorOpen className="h-6 w-6 text-stone-400" />
+                            </div>
+                            <h2 className="font-pixel text-lg text-stone-300">Leave Dynasty</h2>
+                        </div>
+
+                        <div className="mb-4 rounded-lg border border-amber-600/50 bg-amber-900/20 p-3">
+                            <p className="font-pixel text-xs text-amber-400">
+                                Art thou certain? Once departed, thy bond to House {dynasty?.name}{" "}
+                                shall be severed. Thy lineage shall remember this choice.
+                            </p>
+                        </div>
+
+                        <div className="mb-4 rounded-lg border border-stone-700 bg-stone-800/50 p-3">
+                            <p className="font-pixel text-[10px] text-stone-500">Consequences:</p>
+                            <ul className="mt-1 space-y-1 font-pixel text-xs text-stone-400">
+                                <li>- Thou shalt no longer be part of House {dynasty?.name}</li>
+                                <li>- The dynasty shall lose 25 prestige</li>
+                                <li>- Thy departure shall be recorded in history</li>
+                            </ul>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleLeaveDynasty}
+                                disabled={leaving}
+                                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-stone-600 py-2 font-pixel text-sm text-white transition hover:bg-stone-500 disabled:opacity-50"
+                            >
+                                {leaving ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <DoorOpen className="h-4 w-4" />
+                                )}
+                                {leaving ? "Departing..." : "Leave Dynasty"}
+                            </button>
+                            <button
+                                onClick={() => setShowLeaveModal(false)}
+                                disabled={leaving}
+                                className="rounded-lg border border-stone-600 px-4 py-2 font-pixel text-xs text-stone-400 transition hover:bg-stone-800"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Dissolve Dynasty Modal */}
+            {showDissolveModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+                    <div className="w-full max-w-md rounded-xl border-2 border-red-600/50 bg-stone-900 p-6">
+                        <div className="mb-4 flex items-center gap-3">
+                            <div className="rounded-lg bg-red-900/30 p-2">
+                                <AlertTriangle className="h-6 w-6 text-red-400" />
+                            </div>
+                            <h2 className="font-pixel text-lg text-red-400">Dissolve Dynasty</h2>
+                        </div>
+
+                        <div className="mb-4 rounded-lg border border-red-600/50 bg-red-900/20 p-3">
+                            <p className="font-pixel text-xs text-red-400">
+                                This action cannot be undone! House {dynasty?.name} shall fade into
+                                history, its members scattered to the winds. The annals shall
+                                remember what once was.
+                            </p>
+                        </div>
+
+                        <div className="mb-4 rounded-lg border border-stone-700 bg-stone-800/50 p-3">
+                            <p className="font-pixel text-[10px] text-stone-500">Consequences:</p>
+                            <ul className="mt-1 space-y-1 font-pixel text-xs text-stone-400">
+                                <li>- All members shall be released from the dynasty</li>
+                                <li>
+                                    - All {dynasty?.prestige.toLocaleString()} prestige shall be
+                                    lost
+                                </li>
+                                <li>- The dynasty's history shall be preserved</li>
+                                <li>- This cannot be reversed</li>
+                            </ul>
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="mb-1 block font-pixel text-xs text-stone-400">
+                                Reason for dissolution (optional)
+                            </label>
+                            <input
+                                type="text"
+                                value={dissolveReason}
+                                onChange={(e) => setDissolveReason(e.target.value)}
+                                placeholder="The bloodline fades into history..."
+                                maxLength={255}
+                                className="w-full rounded-lg border border-stone-600 bg-stone-800 px-3 py-2 font-pixel text-sm text-stone-200 placeholder:text-stone-600"
+                            />
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleDissolveDynasty}
+                                disabled={dissolving}
+                                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-600 py-2 font-pixel text-sm text-white transition hover:bg-red-500 disabled:opacity-50"
+                            >
+                                {dissolving ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <AlertTriangle className="h-4 w-4" />
+                                )}
+                                {dissolving ? "Dissolving..." : "Dissolve Dynasty"}
+                            </button>
+                            <button
+                                onClick={() => setShowDissolveModal(false)}
+                                disabled={dissolving}
+                                className="rounded-lg border border-stone-600 px-4 py-2 font-pixel text-xs text-stone-400 transition hover:bg-stone-800"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }

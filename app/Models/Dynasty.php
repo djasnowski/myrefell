@@ -12,10 +12,14 @@ class Dynasty extends Model
 {
     use HasFactory;
 
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_DISSOLVED = 'dissolved';
+
     protected $fillable = [
-        'name', 'motto', 'founder_id', 'current_head_id', 'coat_of_arms',
+        'name', 'status', 'motto', 'founder_id', 'current_head_id', 'coat_of_arms',
         'prestige', 'wealth_score', 'members_count', 'generations', 'history',
-        'founded_at',
+        'founded_at', 'dissolved_at', 'dissolution_reason',
     ];
 
     protected function casts(): array
@@ -23,7 +27,18 @@ class Dynasty extends Model
         return [
             'history' => 'array',
             'founded_at' => 'datetime',
+            'dissolved_at' => 'datetime',
         ];
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === self::STATUS_ACTIVE;
+    }
+
+    public function isDissolved(): bool
+    {
+        return $this->status === self::STATUS_DISSOLVED;
     }
 
     public function founder(): BelongsTo
@@ -82,7 +97,7 @@ class Dynasty extends Model
         ]);
     }
 
-    public function addPrestige(int $amount, string $reason = null): void
+    public function addPrestige(int $amount, ?string $reason = null): void
     {
         $this->increment('prestige', $amount);
 
