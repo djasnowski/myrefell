@@ -8,6 +8,7 @@ use App\Models\Kingdom;
 use App\Models\PlayerInventory;
 use App\Models\Town;
 use App\Models\Village;
+use App\Services\BiomeService;
 use App\Services\CraftingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,7 +31,8 @@ class ForgeController extends Controller
     ];
 
     public function __construct(
-        protected CraftingService $craftingService
+        protected CraftingService $craftingService,
+        protected BiomeService $biomeService
     ) {}
 
     /**
@@ -70,6 +72,10 @@ class ForgeController extends Controller
 
         $barCount = array_sum(array_column($barsInInventory, 'quantity'));
 
+        // Get biome attunement info for smelting
+        $biomeInfo = $this->biomeService->getAttunementInfo($user);
+        $biomeBonus = $this->biomeService->getBiomeBonusForSkill($user, 'smelting');
+
         $data = [
             'forge_info' => [
                 'can_forge' => true,
@@ -84,6 +90,8 @@ class ForgeController extends Controller
                 'smithing_xp' => $smithingSkill?->xp ?? 0,
                 'smithing_xp_progress' => $smithingSkill?->getXpProgress() ?? 0,
                 'smithing_xp_to_next' => $smithingSkill?->xpToNextLevel() ?? 60,
+                'biome_attunement' => $biomeInfo,
+                'biome_bonus' => $biomeBonus,
             ],
         ];
 

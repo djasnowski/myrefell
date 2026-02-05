@@ -5,14 +5,40 @@ import {
     ChevronDown,
     ChevronRight,
     Flame,
+    Info,
     Loader2,
     Lock,
+    Mountain,
     Package,
+    Waves,
+    Wheat,
     Zap,
 } from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 import { useEffect, useRef, useState } from "react";
 
 const SMELT_COOLDOWN_MS = 3000;
+
+const formatTimeRemaining = (hours: number): string => {
+    if (hours < 1) {
+        const minutes = Math.ceil(hours * 60);
+        return `${minutes}m`;
+    }
+    const wholeHours = Math.floor(hours);
+    const minutes = Math.round((hours - wholeHours) * 60);
+    if (minutes === 0) {
+        return `${wholeHours}h`;
+    }
+    return `${wholeHours}h ${minutes}m`;
+};
+
 import AppLayout from "@/layouts/app-layout";
 import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
@@ -52,6 +78,24 @@ interface BarInventory {
     metal: string;
 }
 
+interface BiomeAttunement {
+    kingdom_id: number | null;
+    kingdom_name: string | null;
+    biome: string | null;
+    biome_description: string | null;
+    biome_skills: string[];
+    attunement_level: number;
+    attunement_bonus: number;
+    hours_in_kingdom: number;
+    arrived_at: string | null;
+    next_level: {
+        level: number;
+        bonus: number;
+        hours_remaining: number;
+    } | null;
+    max_level: number;
+}
+
 interface ForgeInfo {
     can_forge: boolean;
     metal_tiers: Record<string, MetalTier>;
@@ -65,6 +109,8 @@ interface ForgeInfo {
     smithing_xp: number;
     smithing_xp_progress: number;
     smithing_xp_to_next: number;
+    biome_attunement: BiomeAttunement | null;
+    biome_bonus: number;
 }
 
 interface Location {
@@ -454,6 +500,123 @@ export default function ForgeIndex() {
                         </div>
                     </div>
                 </div>
+
+                {/* Biome Attunement Banner */}
+                {forge_info.biome_attunement && forge_info.biome_bonus > 0 && (
+                    <div className="mb-4 rounded-lg border border-purple-600/50 bg-purple-900/20 p-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="rounded-md bg-purple-800/50 p-1.5">
+                                    {forge_info.biome_attunement.biome === "plains" && (
+                                        <Wheat className="h-4 w-4 text-green-400" />
+                                    )}
+                                    {forge_info.biome_attunement.biome === "tundra" && (
+                                        <Mountain className="h-4 w-4 text-blue-400" />
+                                    )}
+                                    {forge_info.biome_attunement.biome === "coastal" && (
+                                        <Waves className="h-4 w-4 text-cyan-400" />
+                                    )}
+                                    {forge_info.biome_attunement.biome === "volcano" && (
+                                        <Flame className="h-4 w-4 text-orange-400" />
+                                    )}
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-1">
+                                        <span className="font-pixel text-xs capitalize text-purple-300">
+                                            {forge_info.biome_attunement.biome} Attunement
+                                        </span>
+                                        <Dialog>
+                                            <DialogTrigger asChild>
+                                                <button className="text-purple-400 hover:text-purple-300">
+                                                    <Info className="h-3 w-3" />
+                                                </button>
+                                            </DialogTrigger>
+                                            <DialogContent className="border-purple-600/50 bg-stone-900">
+                                                <DialogHeader>
+                                                    <DialogTitle className="font-pixel capitalize text-purple-300">
+                                                        {forge_info.biome_attunement.biome}{" "}
+                                                        Attunement
+                                                    </DialogTitle>
+                                                    <DialogDescription className="text-stone-400">
+                                                        {
+                                                            forge_info.biome_attunement
+                                                                .biome_description
+                                                        }
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                <div className="space-y-3 text-sm text-stone-300">
+                                                    <p>
+                                                        The longer you stay in a kingdom, the more
+                                                        attuned you become to its land. This grants
+                                                        bonus XP for certain skills.
+                                                    </p>
+                                                    <div className="rounded-lg bg-stone-800/50 p-3">
+                                                        <div className="font-pixel text-xs text-purple-400 mb-2">
+                                                            Attunement Levels
+                                                        </div>
+                                                        <div className="space-y-1 text-xs">
+                                                            <div className="flex justify-between">
+                                                                <span>Level 1 (30 minutes)</span>
+                                                                <span className="text-purple-300">
+                                                                    +10% XP
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span>Level 2 (2 hours)</span>
+                                                                <span className="text-purple-300">
+                                                                    +20% XP
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span>Level 3 (4 hours)</span>
+                                                                <span className="text-purple-300">
+                                                                    +30% XP
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-xs text-stone-500">
+                                                        Attunement resets when you travel to a
+                                                        different kingdom.
+                                                    </p>
+                                                </div>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        {[1, 2, 3].map((lvl) => (
+                                            <div
+                                                key={lvl}
+                                                className={`h-1.5 w-4 rounded-full ${
+                                                    lvl <=
+                                                    forge_info.biome_attunement!.attunement_level
+                                                        ? "bg-purple-400"
+                                                        : "bg-stone-700"
+                                                }`}
+                                            />
+                                        ))}
+                                        <span className="ml-1 font-pixel text-[10px] text-stone-400">
+                                            Lvl {forge_info.biome_attunement.attunement_level}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <div className="font-pixel text-sm text-purple-300">
+                                    +{forge_info.biome_bonus}% XP
+                                </div>
+                                {forge_info.biome_attunement.next_level && (
+                                    <div className="font-pixel text-[10px] text-stone-500">
+                                        +{forge_info.biome_attunement.next_level.bonus}% in{" "}
+                                        {formatTimeRemaining(
+                                            forge_info.biome_attunement.next_level.hours_remaining,
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Inventory Full Warning */}
                 {forge_info.free_slots <= 0 && (

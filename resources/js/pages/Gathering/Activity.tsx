@@ -5,6 +5,7 @@ import {
     Backpack,
     Fish,
     Flame,
+    Info,
     Leaf,
     Loader2,
     Mountain,
@@ -18,6 +19,14 @@ import {
     Wheat,
     Zap,
 } from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 import { useEffect, useRef, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { gameToast } from "@/components/ui/game-toast";
@@ -25,6 +34,19 @@ import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
 const GATHER_COOLDOWN_MS = 3000;
+
+const formatTimeRemaining = (hours: number): string => {
+    if (hours < 1) {
+        const minutes = Math.ceil(hours * 60);
+        return `${minutes}m`;
+    }
+    const wholeHours = Math.floor(hours);
+    const minutes = Math.round((hours - wholeHours) * 60);
+    if (minutes === 0) {
+        return `${wholeHours}h`;
+    }
+    return `${wholeHours}h ${minutes}m`;
+};
 
 interface Resource {
     name: string;
@@ -315,9 +337,70 @@ export default function GatheringActivity() {
                                         )}
                                     </div>
                                     <div>
-                                        <span className="font-pixel text-xs capitalize text-purple-300">
-                                            {activity.biome_attunement.biome} Attunement
-                                        </span>
+                                        <div className="flex items-center gap-1">
+                                            <span className="font-pixel text-xs capitalize text-purple-300">
+                                                {activity.biome_attunement.biome} Attunement
+                                            </span>
+                                            <Dialog>
+                                                <DialogTrigger asChild>
+                                                    <button className="text-purple-400 hover:text-purple-300">
+                                                        <Info className="h-3 w-3" />
+                                                    </button>
+                                                </DialogTrigger>
+                                                <DialogContent className="border-purple-600/50 bg-stone-900">
+                                                    <DialogHeader>
+                                                        <DialogTitle className="font-pixel capitalize text-purple-300">
+                                                            {activity.biome_attunement.biome}{" "}
+                                                            Attunement
+                                                        </DialogTitle>
+                                                        <DialogDescription className="text-stone-400">
+                                                            {
+                                                                activity.biome_attunement
+                                                                    .biome_description
+                                                            }
+                                                        </DialogDescription>
+                                                    </DialogHeader>
+                                                    <div className="space-y-3 text-sm text-stone-300">
+                                                        <p>
+                                                            The longer you stay in a kingdom, the
+                                                            more attuned you become to its land.
+                                                            This grants bonus XP for certain skills.
+                                                        </p>
+                                                        <div className="rounded-lg bg-stone-800/50 p-3">
+                                                            <div className="font-pixel text-xs text-purple-400 mb-2">
+                                                                Attunement Levels
+                                                            </div>
+                                                            <div className="space-y-1 text-xs">
+                                                                <div className="flex justify-between">
+                                                                    <span>
+                                                                        Level 1 (30 minutes)
+                                                                    </span>
+                                                                    <span className="text-purple-300">
+                                                                        +10% XP
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex justify-between">
+                                                                    <span>Level 2 (2 hours)</span>
+                                                                    <span className="text-purple-300">
+                                                                        +20% XP
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex justify-between">
+                                                                    <span>Level 3 (4 hours)</span>
+                                                                    <span className="text-purple-300">
+                                                                        +30% XP
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <p className="text-xs text-stone-500">
+                                                            Attunement resets when you travel to a
+                                                            different kingdom.
+                                                        </p>
+                                                    </div>
+                                                </DialogContent>
+                                            </Dialog>
+                                        </div>
                                         <div className="flex items-center gap-1">
                                             {[1, 2, 3].map((lvl) => (
                                                 <div
@@ -343,7 +426,10 @@ export default function GatheringActivity() {
                                     {activity.biome_attunement.next_level && (
                                         <div className="font-pixel text-[10px] text-stone-500">
                                             +{activity.biome_attunement.next_level.bonus}% in{" "}
-                                            {activity.biome_attunement.next_level.hours_remaining}h
+                                            {formatTimeRemaining(
+                                                activity.biome_attunement.next_level
+                                                    .hours_remaining,
+                                            )}
                                         </div>
                                     )}
                                 </div>

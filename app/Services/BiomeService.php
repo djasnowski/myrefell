@@ -12,9 +12,9 @@ class BiomeService
      * Attunement levels: time required (hours) => bonus percentage
      */
     public const ATTUNEMENT_LEVELS = [
-        1 => ['hours' => 0, 'bonus' => 5],    // Immediate
-        2 => ['hours' => 1, 'bonus' => 8],    // 1 hour
-        3 => ['hours' => 4, 'bonus' => 10],   // 4 hours
+        1 => ['hours' => 0.5, 'bonus' => 10],  // 30 minutes
+        2 => ['hours' => 2, 'bonus' => 20],    // 2 hours
+        3 => ['hours' => 4, 'bonus' => 30],    // 4 hours
     ];
 
     /**
