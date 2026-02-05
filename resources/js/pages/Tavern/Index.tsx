@@ -105,6 +105,7 @@ interface PageProps {
         cost: number;
         energy_restored: number;
         can_rest: boolean;
+        cooldown_ends: string | null;
     };
     recent_activity: Activity[];
     cooking: CookingInfo;
@@ -255,8 +256,36 @@ export default function TavernIndex() {
     const [loading, setLoading] = useState(false);
     const [cookingLoading, setCookingLoading] = useState<string | null>(null);
     const [cookingCooldown, setCookingCooldown] = useState(0); // seconds remaining
+    const [restCooldown, setRestCooldown] = useState(0); // seconds remaining
     const [currentEnergy, setCurrentEnergy] = useState(player.energy);
     const [selectedDiceGame, setSelectedDiceGame] = useState<GameType | null>(null);
+
+    // Initialize rest cooldown from server
+    useEffect(() => {
+        if (rest.cooldown_ends) {
+            const remaining = Math.ceil(
+                (new Date(rest.cooldown_ends).getTime() - Date.now()) / 1000,
+            );
+            if (remaining > 0) {
+                setRestCooldown(remaining);
+            }
+        }
+    }, [rest.cooldown_ends]);
+
+    // Countdown timer for rest cooldown
+    useEffect(() => {
+        if (restCooldown <= 0) return;
+        const interval = setInterval(() => {
+            setRestCooldown((prev) => {
+                if (prev <= 1) {
+                    clearInterval(interval);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [restCooldown]);
 
     // Sync energy when props change (after router.reload)
     useEffect(() => {
@@ -279,6 +308,7 @@ export default function TavernIndex() {
         : "/villages/1/tavern";
 
     const handleRest = () => {
+        if (restCooldown > 0) return;
         setLoading(true);
         router.post(
             `${baseUrl}/rest`,
@@ -286,6 +316,7 @@ export default function TavernIndex() {
             {
                 preserveScroll: true,
                 onSuccess: () => {
+                    setRestCooldown(3);
                     router.reload();
                 },
                 onFinish: () => setLoading(false),
@@ -433,6 +464,18 @@ export default function TavernIndex() {
                                     <span className="font-pixel text-sm text-red-300">
                                         Need {rest.cost}g
                                     </span>
+                                </div>
+                            ) : restCooldown > 0 ? (
+                                <div className="relative h-12 w-full overflow-hidden rounded-lg border-2 border-amber-600/50 bg-stone-700">
+                                    <div
+                                        className="absolute inset-y-0 left-0 bg-amber-600/50 transition-all duration-1000 ease-linear"
+                                        style={{ width: `${((3 - restCooldown) / 3) * 100}%` }}
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <span className="font-pixel text-sm text-amber-300">
+                                            {restCooldown}s
+                                        </span>
+                                    </div>
                                 </div>
                             ) : (
                                 <button

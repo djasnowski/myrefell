@@ -123,6 +123,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'max_hp' => 'integer',
             'energy' => 'integer',
             'max_energy' => 'integer',
+            'last_rested_at' => 'datetime',
             'weeks_without_food' => 'integer',
             'gold' => 'integer',
             'title_tier' => 'integer',

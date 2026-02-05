@@ -18,6 +18,11 @@ use Inertia\Response;
 class TavernController extends Controller
 {
     /**
+     * Rest cooldown in seconds.
+     */
+    private const REST_COOLDOWN_SECONDS = 3;
+
+    /**
      * Rest configuration by location type.
      */
     private const REST_CONFIG = [
@@ -69,6 +74,17 @@ class TavernController extends Controller
         $restCost = $restConfig['cost'];
         $energyRestored = min($restConfig['energy'], $user->max_energy - $user->energy);
 
+        // Check rest cooldown
+        $restCooldownEnds = null;
+        $canRest = $user->gold >= $restCost && $user->energy < $user->max_energy;
+        if ($user->last_rested_at) {
+            $cooldownEnds = $user->last_rested_at->addSeconds(self::REST_COOLDOWN_SECONDS);
+            if ($cooldownEnds->isFuture()) {
+                $restCooldownEnds = $cooldownEnds->toIso8601String();
+                $canRest = false;
+            }
+        }
+
         // Get cooking recipes
         $cookingInfo = $this->cookingService->getCookingInfo($user);
 
@@ -93,7 +109,8 @@ class TavernController extends Controller
             'rest' => [
                 'cost' => $restCost,
                 'energy_restored' => $energyRestored,
-                'can_rest' => $user->gold >= $restCost && $user->energy < $user->max_energy,
+                'can_rest' => $canRest,
+                'cooldown_ends' => $restCooldownEnds,
             ],
             'recent_activity' => $recentActivity,
             'cooking' => $cookingInfo,
@@ -123,6 +140,14 @@ class TavernController extends Controller
         $restCost = $restConfig['cost'];
         $energyRestored = min($restConfig['energy'], $user->max_energy - $user->energy);
 
+        // Check cooldown
+        if ($user->last_rested_at) {
+            $cooldownEnds = $user->last_rested_at->addSeconds(self::REST_COOLDOWN_SECONDS);
+            if ($cooldownEnds->isFuture()) {
+                return back()->withErrors(['error' => 'You need to wait before resting again.']);
+            }
+        }
+
         if ($user->gold < $restCost) {
             return back()->withErrors(['error' => "You need {$restCost}g to rest at the tavern."]);
         }
@@ -133,6 +158,7 @@ class TavernController extends Controller
 
         $user->decrement('gold', $restCost);
         $user->increment('energy', $energyRestored);
+        $user->update(['last_rested_at' => now()]);
 
         // Log activity
         if ($user->current_location_type && $user->current_location_id) {
