@@ -66,3 +66,4 @@ pnpm-debug.log
 
 # Misc
 .claude/todos.json
+.claude/skills/update/
