@@ -197,7 +197,8 @@ class CraftingService
         protected InventoryService $inventoryService,
         protected DailyTaskService $dailyTaskService,
         protected TownBonusService $townBonusService,
-        protected BeliefEffectService $beliefEffectService
+        protected BeliefEffectService $beliefEffectService,
+        protected BiomeService $biomeService
     ) {}
 
     /**
@@ -641,6 +642,12 @@ class CraftingService
             $xpPenalty = $this->beliefEffectService->getEffect($user, 'xp_penalty');
             if ($xpPenalty != 0) {
                 $xpAwarded = (int) ceil($xpAwarded * (1 + $xpPenalty / 100));
+            }
+
+            // Apply biome attunement bonus (smithing/smelting in volcano)
+            $biomeBonus = $this->biomeService->getBiomeBonusForSkill($user, $recipe['skill']);
+            if ($biomeBonus > 0) {
+                $xpAwarded = (int) ceil($xpAwarded * (1 + $biomeBonus / 100));
             }
 
             // Get or create the skill

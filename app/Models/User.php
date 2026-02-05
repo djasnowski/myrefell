@@ -135,6 +135,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'last_obligation_check' => 'date',
             'last_migration_at' => 'datetime',
             'suspicious_activity_flagged_at' => 'datetime',
+            'current_kingdom_id' => 'integer',
+            'kingdom_arrived_at' => 'datetime',
         ];
     }
 

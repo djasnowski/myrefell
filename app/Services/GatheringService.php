@@ -123,7 +123,8 @@ class GatheringService
         protected DailyTaskService $dailyTaskService,
         protected TownBonusService $townBonusService,
         protected BlessingEffectService $blessingEffectService,
-        protected BeliefEffectService $beliefEffectService
+        protected BeliefEffectService $beliefEffectService,
+        protected BiomeService $biomeService
     ) {}
 
     /**
@@ -303,6 +304,12 @@ class GatheringService
             $xpPenalty = $this->beliefEffectService->getEffect($user, 'xp_penalty');
             if ($xpPenalty != 0) {
                 $xpAwarded = (int) ceil($xpAwarded * (1 + $xpPenalty / 100));
+            }
+
+            // Apply biome attunement bonus
+            $biomeBonus = $this->biomeService->getBiomeBonusForSkill($user, $config['skill']);
+            if ($biomeBonus > 0) {
+                $xpAwarded = (int) ceil($xpAwarded * (1 + $biomeBonus / 100));
             }
 
             // Get or create the skill
@@ -485,6 +492,10 @@ class GatheringService
         $yieldBonus = $this->townBonusService->getYieldBonus($user, $bonusActivity);
         $contributionRate = $this->townBonusService->getContributionRate($user, $bonusActivity);
 
+        // Get biome attunement info
+        $biomeInfo = $this->biomeService->getAttunementInfo($user);
+        $biomeBonus = $this->biomeService->getBiomeBonusForSkill($user, $config['skill']);
+
         return [
             'id' => $activity,
             'name' => $config['name'],
@@ -507,6 +518,8 @@ class GatheringService
             'yield_bonus_percent' => round($yieldBonus * 100),
             'contribution_rate' => $contributionRate,
             'contribution_rate_percent' => round($contributionRate * 100),
+            'biome_attunement' => $biomeInfo,
+            'biome_bonus' => $biomeBonus,
         ];
     }
 

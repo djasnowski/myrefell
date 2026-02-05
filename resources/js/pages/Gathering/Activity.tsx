@@ -4,14 +4,18 @@ import {
     Axe,
     Backpack,
     Fish,
+    Flame,
     Leaf,
     Loader2,
+    Mountain,
     Package,
     Pickaxe,
     Snowflake,
     Sparkles,
     Sun,
     TreeDeciduous,
+    Waves,
+    Wheat,
     Zap,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -27,6 +31,24 @@ interface Resource {
     weight: number;
     min_level: number;
     xp_bonus: number;
+}
+
+interface BiomeAttunement {
+    kingdom_id: number | null;
+    kingdom_name: string | null;
+    biome: string | null;
+    biome_description: string | null;
+    biome_skills: string[];
+    attunement_level: number;
+    attunement_bonus: number;
+    hours_in_kingdom: number;
+    arrived_at: string | null;
+    next_level: {
+        level: number;
+        bonus: number;
+        hours_remaining: number;
+    } | null;
+    max_level: number;
 }
 
 interface Activity {
@@ -47,6 +69,8 @@ interface Activity {
     free_slots: number;
     seasonal_modifier: number;
     current_season: "spring" | "summer" | "autumn" | "winter";
+    biome_attunement: BiomeAttunement | null;
+    biome_bonus: number;
 }
 
 interface GatherResult {
@@ -270,6 +294,62 @@ export default function GatheringActivity() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Biome Attunement Banner */}
+                    {activity.biome_attunement && activity.biome_bonus > 0 && (
+                        <div className="mb-4 rounded-lg border border-purple-600/50 bg-purple-900/20 p-3">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className="rounded-md bg-purple-800/50 p-1.5">
+                                        {activity.biome_attunement.biome === "plains" && (
+                                            <Wheat className="h-4 w-4 text-green-400" />
+                                        )}
+                                        {activity.biome_attunement.biome === "tundra" && (
+                                            <Mountain className="h-4 w-4 text-blue-400" />
+                                        )}
+                                        {activity.biome_attunement.biome === "coastal" && (
+                                            <Waves className="h-4 w-4 text-cyan-400" />
+                                        )}
+                                        {activity.biome_attunement.biome === "volcano" && (
+                                            <Flame className="h-4 w-4 text-orange-400" />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <span className="font-pixel text-xs capitalize text-purple-300">
+                                            {activity.biome_attunement.biome} Attunement
+                                        </span>
+                                        <div className="flex items-center gap-1">
+                                            {[1, 2, 3].map((lvl) => (
+                                                <div
+                                                    key={lvl}
+                                                    className={`h-1.5 w-4 rounded-full ${
+                                                        lvl <=
+                                                        activity.biome_attunement!.attunement_level
+                                                            ? "bg-purple-400"
+                                                            : "bg-stone-700"
+                                                    }`}
+                                                />
+                                            ))}
+                                            <span className="ml-1 font-pixel text-[10px] text-stone-400">
+                                                Lvl {activity.biome_attunement.attunement_level}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="font-pixel text-sm text-purple-300">
+                                        +{activity.biome_bonus}% XP
+                                    </div>
+                                    {activity.biome_attunement.next_level && (
+                                        <div className="font-pixel text-[10px] text-stone-500">
+                                            +{activity.biome_attunement.next_level.bonus}% in{" "}
+                                            {activity.biome_attunement.next_level.hours_remaining}h
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Inventory Full Warning */}
                     {activity.inventory_full && (

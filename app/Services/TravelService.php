@@ -15,7 +15,8 @@ class TravelService
 {
     public function __construct(
         protected BlessingEffectService $blessingEffectService,
-        protected BeliefEffectService $beliefEffectService
+        protected BeliefEffectService $beliefEffectService,
+        protected BiomeService $biomeService
     ) {}
 
     /**
@@ -158,6 +159,9 @@ class TravelService
             $user->travel_started_at = null;
             $user->travel_arrives_at = null;
             $user->save();
+
+            // Update kingdom tracking for biome attunement
+            $this->biomeService->updatePlayerKingdom($user);
 
             return [
                 'arrived' => true,
