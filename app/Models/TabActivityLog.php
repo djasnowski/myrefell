@@ -124,22 +124,33 @@ class TabActivityLog extends Model
 
     /**
      * Check if user should be flagged for suspicious activity.
+     * Only flags when XP actions occur across DIFFERENT tabs within the interval.
      */
     protected static function checkAndFlagUser(int $userId, ?string $currentRoute = null): void
     {
-        // Check for XP action within the minimum interval (too fast = cheating)
+        // Get the current tab from the most recent log entry
+        $currentLog = self::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (! $currentLog) {
+            return;
+        }
+
+        // Check for XP action within the minimum interval from a DIFFERENT tab
         $recentXpAction = self::where('user_id', $userId)
+            ->where('tab_id', '!=', $currentLog->tab_id) // Must be from a different tab
             ->where('created_at', '>=', now()->subSeconds(self::MIN_XP_ACTION_INTERVAL))
             ->where('created_at', '<', now()) // Exclude the current action
             ->orderBy('created_at', 'desc')
             ->first();
 
-        // If there's a recent XP action, check if it was also an XP route
+        // If there's a recent XP action from a different tab, check if it was also an XP route
         if (! $recentXpAction || ! self::isXpRoute($recentXpAction->route)) {
             return;
         }
 
-        // XP action within 3s of another XP action - suspicious!
+        // XP action from different tab within 3s - this is multi-tabbing!
         $user = User::find($userId);
         if (! $user) {
             return;
@@ -181,12 +192,15 @@ class TabActivityLog extends Model
         $newTabCount = $tabSwitchLogs->count();
         $uniqueTabs = (clone $query)->distinct('tab_id')->count('tab_id');
 
-        // Count rapid XP actions (within 3s of each other)
+        // Count rapid XP actions across DIFFERENT tabs (within 3s of each other)
+        // This is the real indicator of multi-tabbing - same tab rapid actions are normal gameplay
         $xpLogs = (clone $query)->get()->filter(fn ($log) => self::isXpRoute($log->route))->sortBy('created_at')->values();
         $rapidXpActions = 0;
         for ($i = 1; $i < $xpLogs->count(); $i++) {
             $timeDiff = $xpLogs[$i]->created_at->diffInSeconds($xpLogs[$i - 1]->created_at);
-            if ($timeDiff <= self::MIN_XP_ACTION_INTERVAL) {
+            $differentTab = $xpLogs[$i]->tab_id !== $xpLogs[$i - 1]->tab_id;
+            // Only count as suspicious if it's from a different tab AND within the interval
+            if ($timeDiff <= self::MIN_XP_ACTION_INTERVAL && $differentTab) {
                 $rapidXpActions++;
             }
         }
@@ -196,12 +210,17 @@ class TabActivityLog extends Model
             ->where('created_at', '>=', now()->subHour())
             ->count();
 
+        // Suspicious percentage based on multi-tab XP actions vs total XP actions
+        $suspiciousPercentage = $xpLogs->count() > 0
+            ? round(($rapidXpActions / $xpLogs->count()) * 100, 2)
+            : 0;
+
         return [
             'total_requests' => $total,
             'new_tab_switches' => $newTabCount,
             'rapid_xp_actions' => $rapidXpActions,
             'unique_tabs' => $uniqueTabs,
-            'suspicious_percentage' => $total > 0 ? round(($rapidXpActions / max(1, $xpLogs->count())) * 100, 2) : 0,
+            'suspicious_percentage' => $suspiciousPercentage,
             'requests_per_hour' => $requestsLastHour,
         ];
     }
