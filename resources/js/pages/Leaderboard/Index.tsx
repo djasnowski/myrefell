@@ -239,7 +239,7 @@ export default function LeaderboardIndex() {
                                         {leaderboard.entries.map((entry) => (
                                             <div
                                                 key={entry.rank}
-                                                className={`flex items-center gap-4 px-4 py-3 rounded-lg border transition-all ${
+                                                className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-4 py-3 rounded-lg border transition-all ${
                                                     entry.rank === 1
                                                         ? "bg-amber-500/10 border-amber-500/30"
                                                         : entry.rank === 2
@@ -249,41 +249,44 @@ export default function LeaderboardIndex() {
                                                             : "bg-card/30 border-border/30"
                                                 }`}
                                             >
-                                                {/* Rank */}
-                                                <div className="w-10 text-center shrink-0">
-                                                    {entry.rank === 1 ? (
-                                                        <Trophy className="h-6 w-6 text-amber-400 mx-auto" />
-                                                    ) : entry.rank === 2 ? (
-                                                        <Trophy className="h-6 w-6 text-slate-300 mx-auto" />
-                                                    ) : entry.rank === 3 ? (
-                                                        <Trophy className="h-6 w-6 text-orange-500 mx-auto" />
-                                                    ) : (
-                                                        <span className="text-sm text-muted-foreground">
-                                                            #{entry.rank}
-                                                        </span>
-                                                    )}
-                                                </div>
+                                                {/* Mobile: Username row with rank */}
+                                                <div className="flex items-center gap-3 sm:contents">
+                                                    {/* Rank */}
+                                                    <div className="w-8 sm:w-10 text-center shrink-0">
+                                                        {entry.rank === 1 ? (
+                                                            <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-amber-400 mx-auto" />
+                                                        ) : entry.rank === 2 ? (
+                                                            <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-slate-300 mx-auto" />
+                                                        ) : entry.rank === 3 ? (
+                                                            <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-orange-500 mx-auto" />
+                                                        ) : (
+                                                            <span className="text-sm text-muted-foreground">
+                                                                #{entry.rank}
+                                                            </span>
+                                                        )}
+                                                    </div>
 
-                                                {/* Username */}
-                                                <div className="flex-1 min-w-0">
-                                                    <Link
-                                                        href={`/players/${entry.username}`}
-                                                        className={`truncate block hover:underline ${
-                                                            entry.rank === 1
-                                                                ? "text-amber-300 hover:text-amber-200"
-                                                                : entry.rank === 2
-                                                                  ? "text-slate-200 hover:text-slate-100"
-                                                                  : entry.rank === 3
-                                                                    ? "text-orange-300 hover:text-orange-200"
-                                                                    : "text-foreground/80 hover:text-foreground"
-                                                        }`}
-                                                    >
-                                                        {entry.username}
-                                                    </Link>
+                                                    {/* Username */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <Link
+                                                            href={`/players/${entry.username}`}
+                                                            className={`truncate block hover:underline font-medium ${
+                                                                entry.rank === 1
+                                                                    ? "text-amber-300 hover:text-amber-200"
+                                                                    : entry.rank === 2
+                                                                      ? "text-slate-200 hover:text-slate-100"
+                                                                      : entry.rank === 3
+                                                                        ? "text-orange-300 hover:text-orange-200"
+                                                                        : "text-foreground/80 hover:text-foreground"
+                                                            }`}
+                                                        >
+                                                            {entry.username}
+                                                        </Link>
+                                                    </div>
                                                 </div>
 
                                                 {/* Level & XP */}
-                                                <div className="flex shrink-0 items-center gap-4">
+                                                <div className="flex shrink-0 items-center gap-4 pl-11 sm:pl-0">
                                                     <p className="font-pixel text-sm text-muted-foreground">
                                                         {entry.xp.toLocaleString()}{" "}
                                                         <span className="text-xs">xp</span>

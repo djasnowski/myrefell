@@ -40,6 +40,7 @@ class PlayerProfileController extends Controller
             $rank = null;
             if ($xp >= 10) {
                 $rank = PlayerSkill::where('skill_name', $skillName)
+                    ->whereHas('player', fn ($q) => $q->whereNull('banned_at'))
                     ->where('xp', '>=', 10)
                     ->where('xp', '>', $xp)
                     ->count() + 1;
@@ -62,8 +63,10 @@ class PlayerProfileController extends Controller
         $totalRank = null;
         if ($totalXp > 0) {
             // Count players with higher total level, or same level but higher XP (tiebreaker)
+            // Exclude banned players from ranking
             $totalRank = PlayerSkill::query()
                 ->select('player_id', DB::raw('SUM(level) as total_level'), DB::raw('SUM(xp) as total_xp'))
+                ->whereHas('player', fn ($q) => $q->whereNull('banned_at'))
                 ->groupBy('player_id')
                 ->having(DB::raw('SUM(xp)'), '>', 0)
                 ->get()
