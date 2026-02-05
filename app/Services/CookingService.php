@@ -16,7 +16,7 @@ class CookingService
         'flour' => [
             'name' => 'Flour',
             'required_level' => 1,
-            'xp_reward' => 5,
+            'xp_reward' => 8,
             'energy_cost' => 2,
             'materials' => [
                 ['name' => 'Grain', 'quantity' => 2],
@@ -26,7 +26,7 @@ class CookingService
         'bread' => [
             'name' => 'Bread',
             'required_level' => 1,
-            'xp_reward' => 8,
+            'xp_reward' => 15,
             'energy_cost' => 2,
             'materials' => [
                 ['name' => 'Flour', 'quantity' => 1],
@@ -36,7 +36,7 @@ class CookingService
         'cooked_shrimp' => [
             'name' => 'Cooked Shrimp',
             'required_level' => 1,
-            'xp_reward' => 10,
+            'xp_reward' => 18,
             'energy_cost' => 2,
             'materials' => [
                 ['name' => 'Raw Shrimp', 'quantity' => 1],
@@ -46,7 +46,7 @@ class CookingService
         'cooked_chicken' => [
             'name' => 'Cooked Chicken',
             'required_level' => 1,
-            'xp_reward' => 8,
+            'xp_reward' => 15,
             'energy_cost' => 2,
             'materials' => [
                 ['name' => 'Raw Chicken', 'quantity' => 1],
@@ -56,7 +56,7 @@ class CookingService
         'cooked_sardine' => [
             'name' => 'Cooked Sardine',
             'required_level' => 5,
-            'xp_reward' => 12,
+            'xp_reward' => 22,
             'energy_cost' => 2,
             'materials' => [
                 ['name' => 'Raw Sardine', 'quantity' => 1],
@@ -66,7 +66,7 @@ class CookingService
         'cooked_trout' => [
             'name' => 'Cooked Trout',
             'required_level' => 10,
-            'xp_reward' => 20,
+            'xp_reward' => 35,
             'energy_cost' => 3,
             'materials' => [
                 ['name' => 'Raw Trout', 'quantity' => 1],
@@ -76,7 +76,7 @@ class CookingService
         'cooked_salmon' => [
             'name' => 'Cooked Salmon',
             'required_level' => 20,
-            'xp_reward' => 30,
+            'xp_reward' => 50,
             'energy_cost' => 3,
             'materials' => [
                 ['name' => 'Raw Salmon', 'quantity' => 1],
@@ -86,7 +86,7 @@ class CookingService
         'cooked_lobster' => [
             'name' => 'Cooked Lobster',
             'required_level' => 30,
-            'xp_reward' => 50,
+            'xp_reward' => 75,
             'energy_cost' => 4,
             'materials' => [
                 ['name' => 'Raw Lobster', 'quantity' => 1],
@@ -96,7 +96,7 @@ class CookingService
         'cooked_swordfish' => [
             'name' => 'Cooked Swordfish',
             'required_level' => 40,
-            'xp_reward' => 60,
+            'xp_reward' => 100,
             'energy_cost' => 4,
             'materials' => [
                 ['name' => 'Raw Swordfish', 'quantity' => 1],
@@ -106,7 +106,7 @@ class CookingService
         'cooked_meat' => [
             'name' => 'Cooked Meat',
             'required_level' => 5,
-            'xp_reward' => 15,
+            'xp_reward' => 25,
             'energy_cost' => 2,
             'materials' => [
                 ['name' => 'Raw Meat', 'quantity' => 1],
@@ -116,7 +116,7 @@ class CookingService
         'meat_pie' => [
             'name' => 'Meat Pie',
             'required_level' => 15,
-            'xp_reward' => 35,
+            'xp_reward' => 55,
             'energy_cost' => 4,
             'materials' => [
                 ['name' => 'Flour', 'quantity' => 1],

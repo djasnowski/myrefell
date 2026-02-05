@@ -312,7 +312,7 @@ export function NavPlayerInfo() {
 
             {/* Gold */}
             <div className="flex items-center justify-center gap-1.5 rounded border border-amber-600/30 bg-amber-900/20 py-1.5">
-                <span className="text-sm">🪙</span>
+                <LucideIcons.Coins className="h-4 w-4 text-amber-400" />
                 <span className="font-pixel text-sm text-amber-300">
                     {player.gold.toLocaleString()}
                 </span>

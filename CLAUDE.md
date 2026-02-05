@@ -61,6 +61,15 @@ return response()->json(['success' => true]);
 
 When creating new features or making changes, **do NOT automatically `git push`**. Only commit the changes and let the user test first. Push only when explicitly asked.
 
+## Discord Updates
+
+After pushing significant changes, offer to post an update to Discord using `/update`. This will:
+1. Check `git diff --stat` for uncommitted changes, or use the last commit if clean
+2. Summarize the changes in player-friendly terms
+3. Post to the #updates channel via webhook
+
+The `/update` skill handles all of this automatically.
+
 ## Package Manager
 
 Use **pnpm** instead of npm where possible (e.g., `pnpm install`, `pnpm run dev`, `pnpm run build`).
