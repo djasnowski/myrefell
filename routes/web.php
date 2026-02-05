@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\DynastyController as AdminDynastyController;
 use App\Http\Controllers\Admin\ItemController as AdminItemController;
+use App\Http\Controllers\Admin\ReligionController as AdminReligionController;
 use App\Http\Controllers\Admin\SuspiciousActivityController as AdminSuspiciousActivityController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AdminController;
@@ -904,6 +906,18 @@ Route::middleware(['auth', 'verified', 'admin'])
         Route::get('/suspicious-activity', [AdminSuspiciousActivityController::class, 'index'])->name('suspicious-activity.index');
         Route::get('/suspicious-activity/{user}', [AdminSuspiciousActivityController::class, 'show'])->name('suspicious-activity.show');
         Route::post('/suspicious-activity/{user}/clear', [AdminSuspiciousActivityController::class, 'clearFlag'])->name('suspicious-activity.clear');
+
+        // Dynasties
+        Route::get('/dynasties', [AdminDynastyController::class, 'index'])->name('dynasties.index');
+        Route::get('/dynasties/{dynasty}', [AdminDynastyController::class, 'show'])->name('dynasties.show');
+        Route::get('/dynasties/{dynasty}/edit', [AdminDynastyController::class, 'edit'])->name('dynasties.edit');
+        Route::put('/dynasties/{dynasty}', [AdminDynastyController::class, 'update'])->name('dynasties.update');
+
+        // Religions
+        Route::get('/religions', [AdminReligionController::class, 'index'])->name('religions.index');
+        Route::get('/religions/{religion}', [AdminReligionController::class, 'show'])->name('religions.show');
+        Route::get('/religions/{religion}/edit', [AdminReligionController::class, 'edit'])->name('religions.edit');
+        Route::put('/religions/{religion}', [AdminReligionController::class, 'update'])->name('religions.update');
     });
 
 require __DIR__.'/settings.php';

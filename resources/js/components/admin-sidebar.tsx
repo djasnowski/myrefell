@@ -1,7 +1,9 @@
 import { Link, usePage } from "@inertiajs/react";
-import { LayoutDashboard, Package, Shield, ShieldAlert, Users } from "lucide-react";
+import { Church, Crown, LayoutDashboard, Package, Shield, ShieldAlert, Users } from "lucide-react";
 import { index as adminDashboard } from "@/actions/App/Http/Controllers/Admin/DashboardController";
+import { index as adminDynasties } from "@/actions/App/Http/Controllers/Admin/DynastyController";
 import { index as adminItems } from "@/actions/App/Http/Controllers/Admin/ItemController";
+import { index as adminReligions } from "@/actions/App/Http/Controllers/Admin/ReligionController";
 import { index as adminSuspiciousActivity } from "@/actions/App/Http/Controllers/Admin/SuspiciousActivityController";
 import { index as adminUsers } from "@/actions/App/Http/Controllers/Admin/UserController";
 import AppLogo from "@/components/app-logo";
@@ -30,6 +32,16 @@ const adminNavItems = [
         title: "Users",
         url: adminUsers.url(),
         icon: Users,
+    },
+    {
+        title: "Dynasties",
+        url: adminDynasties.url(),
+        icon: Crown,
+    },
+    {
+        title: "Religions",
+        url: adminReligions.url(),
+        icon: Church,
     },
     {
         title: "Items",

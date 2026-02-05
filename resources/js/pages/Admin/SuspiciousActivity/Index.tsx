@@ -1,8 +1,7 @@
-import { Head, Link } from "@inertiajs/react";
+import { Head, router } from "@inertiajs/react";
 import { formatDistanceToNow } from "date-fns";
-import { AlertTriangle, Eye, ShieldAlert, UserX } from "lucide-react";
+import { AlertTriangle, ShieldAlert, UserX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import AdminLayout from "@/layouts/admin-layout";
 import { cn } from "@/lib/utils";
@@ -116,11 +115,14 @@ export default function Index({ flaggedUsers }: Props) {
                                     <div
                                         key={user.id}
                                         className={cn(
-                                            "flex items-center justify-between rounded-lg border p-4",
+                                            "flex items-center justify-between rounded-lg border p-4 cursor-pointer transition hover:bg-stone-800/50",
                                             user.is_banned
                                                 ? "border-stone-800 bg-stone-900/30 opacity-60"
                                                 : "border-amber-900/50 bg-amber-900/10",
                                         )}
+                                        onClick={() =>
+                                            router.visit(`/admin/suspicious-activity/${user.id}`)
+                                        }
                                     >
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2">
@@ -208,18 +210,6 @@ export default function Index({ flaggedUsers }: Props) {
                                                     No stats available
                                                 </div>
                                             )}
-
-                                            {/* Actions */}
-                                            <Link href={`/admin/suspicious-activity/${user.id}`}>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="border-stone-700"
-                                                >
-                                                    <Eye className="size-4" />
-                                                    View Details
-                                                </Button>
-                                            </Link>
                                         </div>
                                     </div>
                                 ))}

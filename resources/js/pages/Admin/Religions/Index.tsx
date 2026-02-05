@@ -1,7 +1,7 @@
-import { Head, Link, router, usePage } from "@inertiajs/react";
-import { ChevronLeft, ChevronRight, LogIn, Search, Shield, UserX, Users } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
-import { show as showUser } from "@/actions/App/Http/Controllers/Admin/UserController";
+import { Head, router } from "@inertiajs/react";
+import { ChevronLeft, ChevronRight, Church, Search, Skull } from "lucide-react";
+import { useState, useEffect } from "react";
+import { show as showReligion } from "@/actions/App/Http/Controllers/Admin/ReligionController";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,22 +14,26 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import AdminLayout from "@/layouts/admin-layout";
-import type { BreadcrumbItem, SharedData } from "@/types";
+import type { BreadcrumbItem } from "@/types";
 
-interface User {
+interface Religion {
     id: number;
-    username: string;
-    email: string;
-    is_admin: boolean;
-    is_banned: boolean;
-    banned_at: string | null;
-    bans_count: number;
+    name: string;
+    type: "cult" | "religion";
+    icon: string | null;
+    color: string | null;
+    is_public: boolean;
+    is_active: boolean;
+    members_count: number;
+    member_limit: number | null;
+    hideout_tier: number | null;
+    treasury_balance: number;
+    founder: { id: number; username: string } | null;
     created_at: string;
-    email_verified_at: string | null;
 }
 
-interface PaginatedUsers {
-    data: User[];
+interface PaginatedReligions {
+    data: Religion[];
     current_page: number;
     last_page: number;
     per_page: number;
@@ -45,43 +49,29 @@ interface PaginatedUsers {
 
 interface Filters {
     search: string;
-    banned: string;
-    admin: string;
-    autosearch?: string;
+    type: string;
+    active: string;
 }
 
 interface Props {
-    users: PaginatedUsers;
+    religions: PaginatedReligions;
     filters: Filters;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: "Admin", href: "/admin" },
-    { title: "Users", href: "/admin/users" },
+    { title: "Religions", href: "/admin/religions" },
 ];
 
-export default function Index({ users, filters }: Props) {
-    const { auth } = usePage<SharedData>().props;
-    const searchInputRef = useRef<HTMLInputElement>(null);
+export default function Index({ religions, filters }: Props) {
     const [search, setSearch] = useState(filters.search);
-    const [hasAutoSearched, setHasAutoSearched] = useState(false);
 
-    // Auto-focus and auto-search when autosearch=1 is in URL
-    useEffect(() => {
-        if (filters.autosearch === "1" && !hasAutoSearched && auth?.user?.username) {
-            setSearch(auth.user.username);
-            searchInputRef.current?.focus();
-            setHasAutoSearched(true);
-        }
-    }, [filters.autosearch, auth?.user?.username, hasAutoSearched]);
-
-    // Debounced search as user types
     useEffect(() => {
         const timeout = setTimeout(() => {
             if (search !== filters.search) {
                 router.get(
-                    "/admin/users",
-                    { ...filters, search, autosearch: undefined },
+                    "/admin/religions",
+                    { ...filters, search },
                     { preserveState: true, preserveScroll: true },
                 );
             }
@@ -90,13 +80,8 @@ export default function Index({ users, filters }: Props) {
         return () => clearTimeout(timeout);
     }, [search]);
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        router.get("/admin/users", { ...filters, search }, { preserveState: true });
-    };
-
     const handleFilterChange = (key: string, value: string) => {
-        router.get("/admin/users", { ...filters, [key]: value }, { preserveState: true });
+        router.get("/admin/religions", { ...filters, [key]: value }, { preserveState: true });
     };
 
     const formatDate = (dateStr: string) => {
@@ -109,20 +94,20 @@ export default function Index({ users, filters }: Props) {
 
     return (
         <AdminLayout breadcrumbs={breadcrumbs}>
-            <Head title="Manage Users" />
+            <Head title="Manage Religions" />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-blue-900/30 p-2">
-                        <Users className="size-6 text-blue-400" />
+                    <div className="rounded-lg bg-purple-900/30 p-2">
+                        <Church className="size-6 text-purple-400" />
                     </div>
                     <div>
                         <h1 className="font-[Cinzel] text-2xl font-bold text-stone-100">
-                            Manage Users
+                            Manage Religions
                         </h1>
                         <p className="text-sm text-stone-400">
-                            {users.total.toLocaleString()} total users
+                            {religions.total.toLocaleString()} total religions & cults
                         </p>
                     </div>
                 </div>
@@ -132,61 +117,60 @@ export default function Index({ users, filters }: Props) {
                     <CardContent className="pt-6">
                         <div className="flex flex-wrap items-center gap-4">
                             {/* Search */}
-                            <form onSubmit={handleSearch} className="flex-1">
+                            <div className="flex-1">
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-stone-500" />
                                     <Input
-                                        ref={searchInputRef}
                                         type="text"
-                                        placeholder="Search by username..."
+                                        placeholder="Search by name..."
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
                                         className="pl-10 border-stone-700 bg-stone-900/50"
                                     />
                                 </div>
-                            </form>
+                            </div>
 
-                            {/* Banned Filter */}
+                            {/* Type Filter */}
                             <Select
-                                value={filters.banned || "all"}
+                                value={filters.type || "all"}
                                 onValueChange={(value) =>
-                                    handleFilterChange("banned", value === "all" ? "" : value)
+                                    handleFilterChange("type", value === "all" ? "" : value)
                                 }
                             >
                                 <SelectTrigger className="w-[150px] border-stone-700 bg-stone-900/50">
-                                    <SelectValue placeholder="Ban status" />
+                                    <SelectValue placeholder="Type" />
                                 </SelectTrigger>
                                 <SelectContent className="border-stone-700 bg-stone-900">
-                                    <SelectItem value="all">All users</SelectItem>
-                                    <SelectItem value="true">Banned only</SelectItem>
-                                    <SelectItem value="false">Active only</SelectItem>
+                                    <SelectItem value="all">All types</SelectItem>
+                                    <SelectItem value="religion">Religions</SelectItem>
+                                    <SelectItem value="cult">Cults</SelectItem>
                                 </SelectContent>
                             </Select>
 
-                            {/* Admin Filter */}
+                            {/* Active Filter */}
                             <Select
-                                value={filters.admin || "all"}
+                                value={filters.active || "all"}
                                 onValueChange={(value) =>
-                                    handleFilterChange("admin", value === "all" ? "" : value)
+                                    handleFilterChange("active", value === "all" ? "" : value)
                                 }
                             >
                                 <SelectTrigger className="w-[150px] border-stone-700 bg-stone-900/50">
-                                    <SelectValue placeholder="Admin status" />
+                                    <SelectValue placeholder="Status" />
                                 </SelectTrigger>
                                 <SelectContent className="border-stone-700 bg-stone-900">
-                                    <SelectItem value="all">All users</SelectItem>
-                                    <SelectItem value="true">Admins only</SelectItem>
-                                    <SelectItem value="false">Non-admins</SelectItem>
+                                    <SelectItem value="all">All statuses</SelectItem>
+                                    <SelectItem value="true">Active only</SelectItem>
+                                    <SelectItem value="false">Inactive only</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Users Table */}
+                {/* Religions Table */}
                 <Card className="border-stone-800 bg-stone-900/50">
                     <CardHeader>
-                        <CardTitle className="text-stone-100">Users</CardTitle>
+                        <CardTitle className="text-stone-100">Religions & Cults</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
@@ -194,94 +178,102 @@ export default function Index({ users, filters }: Props) {
                                 <thead>
                                     <tr className="border-b border-stone-800">
                                         <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-stone-400">
-                                            User
+                                            ID
                                         </th>
                                         <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-stone-400">
-                                            Email
+                                            Name
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-stone-400">
+                                            Type
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-stone-400">
+                                            Founder
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-stone-400">
+                                            Members
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-stone-400">
+                                            Treasury
                                         </th>
                                         <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-stone-400">
                                             Status
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-stone-400">
-                                            Joined
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-stone-400">
-                                            Actions
-                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-stone-800">
-                                    {users.data.map((user) => (
+                                    {religions.data.map((religion) => (
                                         <tr
-                                            key={user.id}
+                                            key={religion.id}
                                             className="hover:bg-stone-800/50 transition cursor-pointer"
-                                            onClick={() => router.visit(showUser.url(user.id))}
+                                            onClick={() =>
+                                                router.visit(showReligion.url(religion.id))
+                                            }
                                         >
-                                            <td className="px-4 py-3">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-medium text-stone-100">
-                                                        {user.username}
-                                                    </span>
-                                                    {user.is_admin && (
-                                                        <Badge
-                                                            variant="secondary"
-                                                            className="bg-purple-900/30 text-purple-400"
-                                                        >
-                                                            <Shield className="size-3" />
-                                                            Admin
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3 text-stone-400">
-                                                {user.email}
+                                            <td className="px-4 py-3 text-stone-500">
+                                                {religion.id}
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-2">
-                                                    {user.is_banned ? (
-                                                        <Badge
-                                                            variant="destructive"
-                                                            className="bg-red-900/30 text-red-400"
-                                                        >
-                                                            <UserX className="size-3" />
-                                                            Banned
-                                                        </Badge>
+                                                    {religion.type === "cult" ? (
+                                                        <Skull className="size-4 text-red-400" />
                                                     ) : (
+                                                        <Church className="size-4 text-purple-400" />
+                                                    )}
+                                                    <span className="font-medium text-stone-100">
+                                                        {religion.name}
+                                                    </span>
+                                                    {!religion.is_public && (
                                                         <Badge
                                                             variant="secondary"
-                                                            className="bg-green-900/30 text-green-400"
+                                                            className="bg-stone-700 text-stone-400 text-xs"
                                                         >
-                                                            Active
+                                                            Private
                                                         </Badge>
-                                                    )}
-                                                    {user.bans_count > 0 && !user.is_banned && (
-                                                        <span className="text-xs text-stone-500">
-                                                            ({user.bans_count} prior{" "}
-                                                            {user.bans_count === 1 ? "ban" : "bans"}
-                                                            )
-                                                        </span>
                                                     )}
                                                 </div>
                                             </td>
+                                            <td className="px-4 py-3">
+                                                <Badge
+                                                    variant="secondary"
+                                                    className={
+                                                        religion.type === "cult"
+                                                            ? "bg-red-900/30 text-red-400"
+                                                            : "bg-purple-900/30 text-purple-400"
+                                                    }
+                                                >
+                                                    {religion.type === "cult" ? "Cult" : "Religion"}
+                                                </Badge>
+                                                {religion.type === "cult" &&
+                                                    religion.hideout_tier !== null &&
+                                                    religion.hideout_tier > 0 && (
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className="ml-1 bg-stone-700 text-stone-300 text-xs"
+                                                        >
+                                                            T{religion.hideout_tier}
+                                                        </Badge>
+                                                    )}
+                                            </td>
                                             <td className="px-4 py-3 text-stone-400">
-                                                {formatDate(user.created_at)}
+                                                {religion.founder?.username ?? "—"}
+                                            </td>
+                                            <td className="px-4 py-3 text-stone-100">
+                                                {religion.members_count}
+                                            </td>
+                                            <td className="px-4 py-3 text-amber-400">
+                                                {religion.treasury_balance.toLocaleString()}g
                                             </td>
                                             <td className="px-4 py-3">
-                                                {!user.is_admin && (
-                                                    <a
-                                                        href={`/impersonate/take/${user.id}`}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="text-amber-400 hover:text-amber-300 hover:bg-amber-900/20"
-                                                        >
-                                                            <LogIn className="size-4" />
-                                                            Impersonate
-                                                        </Button>
-                                                    </a>
-                                                )}
+                                                <Badge
+                                                    variant="secondary"
+                                                    className={
+                                                        religion.is_active
+                                                            ? "bg-green-900/30 text-green-400"
+                                                            : "bg-stone-700 text-stone-400"
+                                                    }
+                                                >
+                                                    {religion.is_active ? "Active" : "Inactive"}
+                                                </Badge>
                                             </td>
                                         </tr>
                                     ))}
@@ -290,13 +282,14 @@ export default function Index({ users, filters }: Props) {
                         </div>
 
                         {/* Pagination */}
-                        {users.last_page > 1 && (
+                        {religions.last_page > 1 && (
                             <div className="mt-6 flex items-center justify-between border-t border-stone-800 pt-6">
                                 <p className="text-sm text-stone-400">
-                                    Showing {users.from} to {users.to} of {users.total} users
+                                    Showing {religions.from} to {religions.to} of {religions.total}{" "}
+                                    religions
                                 </p>
                                 <div className="flex gap-2">
-                                    {users.links.map((link, index) => {
+                                    {religions.links.map((link, index) => {
                                         if (link.label.includes("Previous")) {
                                             return (
                                                 <Button
