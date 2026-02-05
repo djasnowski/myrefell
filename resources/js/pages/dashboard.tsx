@@ -346,40 +346,40 @@ export default function Dashboard() {
 
                         {/* Current Status */}
                         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                            <div className="rounded-lg border border-stone-800 bg-stone-900/30 p-2 text-center">
-                                <div className="flex items-center justify-center gap-1 text-[10px] text-stone-500 sm:text-xs">
-                                    <Heart className="h-3 w-3 text-red-400" />
-                                    HP
-                                </div>
-                                <div className="text-xs font-semibold text-stone-100 sm:text-sm">
-                                    {player?.hp ?? 0}/{player?.max_hp ?? 10}
-                                </div>
-                            </div>
-                            <div className="rounded-lg border border-stone-800 bg-stone-900/30 p-2 text-center">
-                                <div className="flex items-center justify-center gap-1 text-[10px] text-stone-500 sm:text-xs">
-                                    <Compass className="h-3 w-3 text-blue-400" />
-                                    Energy
-                                </div>
-                                <div className="text-xs font-semibold text-stone-100 sm:text-sm">
-                                    {player?.energy ?? 0}/{player?.max_energy ?? 100}
+                            <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-900/20 px-2 py-2">
+                                <Heart className="h-5 w-5 shrink-0 text-red-400" />
+                                <div className="min-w-0">
+                                    <div className="font-pixel text-sm text-red-400">
+                                        {player?.hp ?? 0}/{player?.max_hp ?? 10}
+                                    </div>
+                                    <div className="text-[10px] text-stone-400">HP</div>
                                 </div>
                             </div>
-                            <div className="rounded-lg border border-stone-800 bg-stone-900/30 p-2 text-center">
-                                <div className="flex items-center justify-center gap-1 text-[10px] text-stone-500 sm:text-xs">
-                                    <Coins className="h-3 w-3 text-amber-400" />
-                                    Gold
-                                </div>
-                                <div className="text-xs font-semibold text-stone-100 sm:text-sm">
-                                    {(player?.gold ?? 0).toLocaleString()}
+                            <div className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-900/20 px-2 py-2">
+                                <Compass className="h-5 w-5 shrink-0 text-green-400" />
+                                <div className="min-w-0">
+                                    <div className="font-pixel text-sm text-green-400">
+                                        {player?.energy ?? 0}/{player?.max_energy ?? 100}
+                                    </div>
+                                    <div className="text-[10px] text-stone-400">Energy</div>
                                 </div>
                             </div>
-                            <div className="rounded-lg border border-stone-800 bg-stone-900/30 p-2 text-center">
-                                <div className="flex items-center justify-center gap-1 text-[10px] text-stone-500 sm:text-xs">
-                                    <Shield className="h-3 w-3 text-purple-400" />
-                                    Combat
+                            <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-900/20 px-2 py-2">
+                                <Coins className="h-5 w-5 shrink-0 text-amber-400" />
+                                <div className="min-w-0">
+                                    <div className="font-pixel text-sm text-amber-400">
+                                        {(player?.gold ?? 0).toLocaleString()}
+                                    </div>
+                                    <div className="text-[10px] text-stone-400">Gold</div>
                                 </div>
-                                <div className="text-xs font-semibold text-stone-100 sm:text-sm">
-                                    Lv. {player?.combat_level ?? 1}
+                            </div>
+                            <div className="flex items-center gap-2 rounded-lg border border-purple-500/30 bg-purple-900/20 px-2 py-2">
+                                <Shield className="h-5 w-5 shrink-0 text-purple-400" />
+                                <div className="min-w-0">
+                                    <div className="font-pixel text-sm text-purple-400">
+                                        Lv. {player?.combat_level ?? 1}
+                                    </div>
+                                    <div className="text-[10px] text-stone-400">Combat</div>
                                 </div>
                             </div>
                         </div>
