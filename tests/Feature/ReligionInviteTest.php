@@ -260,7 +260,7 @@ test('cannot accept expired invite', function () {
     expect($result['message'])->toContain('expired');
 });
 
-test('cannot accept invite if already in religion', function () {
+test('accepting invite while in another religion auto-leaves and joins', function () {
     $prophet = User::factory()->create();
     $invitee = User::factory()->create();
     $religion1 = Religion::create([
@@ -322,6 +322,17 @@ test('cannot accept invite if already in religion', function () {
     $service = app(ReligionInviteService::class);
     $result = $service->acceptInvite($invitee, $invite->id);
 
-    expect($result['success'])->toBeFalse();
-    expect($result['message'])->toContain('must leave your current religion');
+    // Should succeed - auto-leaves old religion and joins new one
+    expect($result['success'])->toBeTrue();
+
+    // Verify invitee is now in religion1
+    $membership = ReligionMember::where('user_id', $invitee->id)->first();
+    expect($membership)->not->toBeNull();
+    expect($membership->religion_id)->toBe($religion1->id);
+
+    // Verify invitee is no longer in religion2
+    $oldMembership = ReligionMember::where('user_id', $invitee->id)
+        ->where('religion_id', $religion2->id)
+        ->first();
+    expect($oldMembership)->toBeNull();
 });

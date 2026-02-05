@@ -59,11 +59,6 @@ class ReligionService
                     }
                 }
 
-                // Check member limit for cults
-                if ($religion->isCult() && ! $religion->canAcceptMembers()) {
-                    return false;
-                }
-
                 return true;
             })
             ->map(fn ($religion) => $this->formatReligion($religion))
@@ -173,7 +168,7 @@ class ReligionService
                 'type' => Religion::TYPE_CULT,
                 'founder_id' => $player->id,
                 'is_public' => false, // Cults are secret by default
-                'member_limit' => Religion::CULT_MEMBER_LIMIT,
+                'member_limit' => 0, // No limit
                 'founding_cost' => Religion::CULT_FOUNDING_COST,
             ]);
 
@@ -237,11 +232,6 @@ class ReligionService
             }
 
             return ['success' => false, 'message' => 'You must leave your current religion before joining another.'];
-        }
-
-        // Check member limit
-        if (! $religion->canAcceptMembers()) {
-            return ['success' => false, 'message' => 'This cult has reached its member limit.'];
         }
 
         // Check kingdom ban

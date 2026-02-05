@@ -59,11 +59,6 @@ class ReligionInviteService
             return ['success' => false, 'message' => "{$invitee->username} already has a pending invite."];
         }
 
-        // Check member limit for cults
-        if ($religion->isCult() && ! $religion->canAcceptMembers()) {
-            return ['success' => false, 'message' => 'This cult has reached its member limit.'];
-        }
-
         return DB::transaction(function () use ($inviter, $religion, $invitee, $message) {
             // Create the invite
             $invite = ReligionInvite::create([
@@ -127,14 +122,6 @@ class ReligionInviteService
             }
 
             return ['success' => false, 'message' => 'This invite can no longer be accepted.'];
-        }
-
-        // Check member limit for cults
-        $religion = $invite->religion;
-        if ($religion->isCult() && ! $religion->canAcceptMembers()) {
-            $invite->cancel();
-
-            return ['success' => false, 'message' => 'This cult has reached its member limit.'];
         }
 
         return DB::transaction(function () use ($player, $invite) {

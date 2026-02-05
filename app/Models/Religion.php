@@ -209,11 +209,7 @@ class Religion extends Model
      */
     public function canAcceptMembers(): bool
     {
-        if ($this->isCult()) {
-            return $this->members()->count() < $this->member_limit;
-        }
-
-        return true; // Religions have no member limit
+        return true; // No member limit for cults or religions
     }
 
     /**

@@ -1,7 +1,7 @@
 <x-mail::message>
 # Suspicious Activity Detected
 
-A user has been flagged for potential multi-tab abuse.
+A user has been flagged for rapid XP actions (possible multi-tabbing or botting).
 
 **User:** {{ $user->username }} (ID: {{ $user->id }})
 **Email:** {{ $user->email }}
@@ -9,9 +9,9 @@ A user has been flagged for potential multi-tab abuse.
 ## Activity Stats (Last 24 Hours)
 
 - **Total Requests:** {{ number_format($stats['total_requests']) }}
+- **Rapid XP Actions (≤3s apart):** {{ number_format($stats['rapid_xp_actions']) }}
 - **Tab Switches:** {{ number_format($stats['new_tab_switches']) }}
 - **Unique Tabs:** {{ $stats['unique_tabs'] }}
-- **Suspicious Percentage:** {{ $stats['suspicious_percentage'] }}%
 
 <x-mail::button :url="config('app.url') . '/admin/users/' . $user->id">
 View User Profile

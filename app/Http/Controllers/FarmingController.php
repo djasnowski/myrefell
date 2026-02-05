@@ -10,6 +10,7 @@ use App\Models\PlayerSkill;
 use App\Models\Role;
 use App\Models\Town;
 use App\Models\Village;
+use App\Models\WorldState;
 use App\Services\FoodConsumptionService;
 use App\Services\InventoryService;
 use Illuminate\Http\RedirectResponse;
@@ -73,6 +74,8 @@ class FarmingController extends Controller
                     $seedCount = $playerSeeds[$crop->seed_item_id]->quantity;
                 }
 
+                $isInSeason = $crop->canPlantInSeason();
+
                 return [
                     'id' => $crop->id,
                     'name' => $crop->name,
@@ -87,7 +90,9 @@ class FarmingController extends Controller
                     'seed_item_id' => $crop->seed_item_id,
                     'seed_name' => $crop->seedItem?->name,
                     'seeds_owned' => $seedCount,
-                    'can_plant' => $crop->canPlantInSeason() && $seedCount > 0,
+                    'seasons' => $crop->seasons,
+                    'is_in_season' => $isInSeason,
+                    'can_plant' => $isInSeason && $seedCount > 0,
                 ];
             });
 
@@ -139,6 +144,7 @@ class FarmingController extends Controller
         return Inertia::render('Farming/Index', [
             'plots' => $plots,
             'crop_types' => $cropTypes,
+            'current_season' => WorldState::current()->current_season,
             'farming_skill' => $farmingSkill ? [
                 'level' => $farmingSkill->level,
                 'xp' => $farmingSkill->xp,

@@ -38,6 +38,8 @@ interface CropType {
     seed_item_id: number | null;
     seed_name: string | null;
     seeds_owned: number;
+    seasons: string[] | null;
+    is_in_season: boolean;
     can_plant: boolean;
 }
 
@@ -99,6 +101,7 @@ interface VillageFoodStats {
 interface PageProps {
     plots: Plot[];
     crop_types: CropType[];
+    current_season: string;
     farming_skill: FarmingSkill;
     location: { type: string; id: number };
     max_plots: number;
@@ -146,6 +149,7 @@ export default function FarmingIndex() {
     const {
         plots,
         crop_types,
+        current_season,
         farming_skill,
         location,
         max_plots,
@@ -178,6 +182,7 @@ export default function FarmingIndex() {
     const [now, setNow] = useState(Date.now());
     const [showFoodHelp, setShowFoodHelp] = useState(false);
     const [showFoodBreakdown, setShowFoodBreakdown] = useState(false);
+    const [cropTab, setCropTab] = useState<"available" | "out_of_season">("available");
     const { sendNotification } = useNotifications();
     const notifiedPlotsRef = useRef<Set<number>>(new Set());
 
@@ -680,49 +685,121 @@ export default function FarmingIndex() {
                 {/* Crop Types Reference */}
                 {crop_types.length > 0 && (
                     <div className="mt-4 rounded-lg border border-stone-700 bg-stone-800/30 p-4">
-                        <h2 className="mb-3 font-pixel text-sm text-amber-300">Available Crops</h2>
-                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                            {crop_types.map((crop) => (
-                                <div
-                                    key={crop.id}
-                                    className={`rounded-lg border border-stone-700 bg-stone-800/50 p-2 ${!crop.can_plant ? "opacity-50" : ""}`}
+                        {/* Current Season Badge */}
+                        <div className="mb-3 flex items-center justify-between">
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setCropTab("available")}
+                                    className={`font-pixel text-sm px-3 py-1 rounded ${
+                                        cropTab === "available"
+                                            ? "bg-amber-600 text-white"
+                                            : "bg-stone-700 text-stone-400 hover:bg-stone-600"
+                                    }`}
                                 >
-                                    <div className="flex items-center justify-between">
-                                        <span className="font-pixel text-xs text-stone-200">
-                                            {crop.name}
-                                        </span>
-                                        <span className="font-pixel text-[10px] text-green-400">
-                                            Lvl {crop.farming_level_required}
-                                        </span>
-                                    </div>
-                                    <div className="mt-1 flex items-center gap-2 font-pixel text-[10px] text-stone-400">
-                                        <span>
-                                            <Clock className="inline h-2 w-2" />{" "}
-                                            {formatTime(crop.grow_time_minutes)}
-                                        </span>
-                                        <span
-                                            className={
-                                                crop.seeds_owned > 0
-                                                    ? "text-green-400"
-                                                    : "text-red-400"
-                                            }
-                                        >
-                                            <Sprout className="inline h-2 w-2" /> {crop.seeds_owned}{" "}
-                                            seeds
-                                        </span>
-                                        <span>
-                                            <Wheat className="inline h-2 w-2" /> {crop.yield_min}-
-                                            {crop.yield_max}
-                                        </span>
-                                    </div>
-                                    {!crop.can_plant && (
-                                        <span className="font-pixel text-[10px] text-red-400">
-                                            Out of season
+                                    Available Crops
+                                </button>
+                                <button
+                                    onClick={() => setCropTab("out_of_season")}
+                                    className={`font-pixel text-sm px-3 py-1 rounded ${
+                                        cropTab === "out_of_season"
+                                            ? "bg-amber-600 text-white"
+                                            : "bg-stone-700 text-stone-400 hover:bg-stone-600"
+                                    }`}
+                                >
+                                    Out of Season
+                                    {crop_types.filter((c) => !c.is_in_season).length > 0 && (
+                                        <span className="ml-1 text-stone-500">
+                                            ({crop_types.filter((c) => !c.is_in_season).length})
                                         </span>
                                     )}
-                                </div>
-                            ))}
+                                </button>
+                            </div>
+                            <div className="flex items-center gap-1.5 rounded bg-stone-700/50 px-2 py-1">
+                                <Leaf className="h-3 w-3 text-green-400" />
+                                <span className="font-pixel text-xs text-stone-300 capitalize">
+                                    {current_season}
+                                </span>
+                            </div>
                         </div>
+
+                        {/* Crop Grid */}
+                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                            {crop_types
+                                .filter((crop) =>
+                                    cropTab === "available"
+                                        ? crop.is_in_season
+                                        : !crop.is_in_season,
+                                )
+                                .map((crop) => (
+                                    <div
+                                        key={crop.id}
+                                        className={`rounded-lg border border-stone-700 bg-stone-800/50 p-2 ${!crop.can_plant ? "opacity-50" : ""}`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-pixel text-xs text-stone-200">
+                                                {crop.name}
+                                            </span>
+                                            <span className="font-pixel text-[10px] text-green-400">
+                                                Lvl {crop.farming_level_required}
+                                            </span>
+                                        </div>
+                                        <div className="mt-1 flex items-center justify-between">
+                                            <div className="flex flex-wrap items-center gap-2 font-pixel text-[10px] text-stone-400">
+                                                <span>
+                                                    <Clock className="inline h-2 w-2" />{" "}
+                                                    {formatTime(crop.grow_time_minutes)}
+                                                </span>
+                                                <span
+                                                    className={
+                                                        crop.seeds_owned > 0
+                                                            ? "text-green-400"
+                                                            : "text-red-400"
+                                                    }
+                                                >
+                                                    <Sprout className="inline h-2 w-2" />{" "}
+                                                    {crop.seeds_owned} seeds
+                                                </span>
+                                                <span>
+                                                    <Wheat className="inline h-2 w-2" />{" "}
+                                                    {crop.yield_min}-{crop.yield_max}
+                                                </span>
+                                            </div>
+                                            <div className="flex gap-1 font-pixel text-[10px]">
+                                                {(
+                                                    crop.seasons || [
+                                                        "spring",
+                                                        "summer",
+                                                        "autumn",
+                                                        "winter",
+                                                    ]
+                                                ).map((season) => {
+                                                    const isCurrent = season === current_season;
+                                                    return (
+                                                        <span
+                                                            key={season}
+                                                            className={`px-1 rounded capitalize ${
+                                                                isCurrent
+                                                                    ? "bg-green-600 text-white"
+                                                                    : "bg-stone-600 text-stone-300"
+                                                            }`}
+                                                        >
+                                                            {season}
+                                                        </span>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                        </div>
+
+                        {/* Empty state for out of season tab */}
+                        {cropTab === "out_of_season" &&
+                            crop_types.filter((c) => !c.is_in_season).length === 0 && (
+                                <p className="font-pixel text-xs text-stone-500 text-center py-4">
+                                    All crops you can grow are in season!
+                                </p>
+                            )}
                     </div>
                 )}
             </div>
