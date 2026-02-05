@@ -4,6 +4,7 @@ import {
     ArrowLeft,
     Beef,
     BicepsFlexed,
+    ChevronDown,
     ChevronLeft,
     ChevronRight,
     Crown,
@@ -23,6 +24,7 @@ import {
     Trophy,
     Wheat,
 } from "lucide-react";
+import { useState } from "react";
 import { dashboard, login, register } from "@/routes";
 import type { SharedData } from "@/types";
 
@@ -88,11 +90,13 @@ const skillColors: Record<string, string> = {
 
 export default function LeaderboardIndex() {
     const { leaderboard, selectedSkill, skills, auth } = usePage<PageProps>().props;
+    const [dropdownOpen, setDropdownOpen] = useState(false);
 
     const Icon = skillIcons[selectedSkill] || Sword;
     const iconColor = skillColors[selectedSkill] || "text-amber-400";
 
     const handleSkillChange = (skill: string) => {
+        setDropdownOpen(false);
         router.get("/leaderboard", { skill }, { preserveState: true, preserveScroll: false });
     };
 
@@ -143,9 +147,10 @@ export default function LeaderboardIndex() {
                             {auth.user ? (
                                 <Link
                                     href={dashboard()}
-                                    className="rounded-lg bg-primary px-6 py-2 font-semibold text-primary-foreground transition hover:bg-primary/90"
+                                    className="rounded-lg bg-primary px-4 sm:px-6 py-2 font-semibold text-primary-foreground transition hover:bg-primary/90"
                                 >
-                                    Enter World
+                                    <span className="sm:hidden">Enter</span>
+                                    <span className="hidden sm:inline">Enter World</span>
                                 </Link>
                             ) : (
                                 <>
@@ -182,8 +187,8 @@ export default function LeaderboardIndex() {
                     </div>
                 </section>
 
-                {/* Skill Tabs */}
-                <section className="relative pb-6">
+                {/* Skill Tabs - Desktop */}
+                <section className="relative pb-6 hidden sm:block">
                     <div className="mx-auto max-w-7xl px-6">
                         <div className="flex flex-wrap justify-center gap-2">
                             {skills.map((skill) => {
@@ -210,6 +215,61 @@ export default function LeaderboardIndex() {
                     </div>
                 </section>
 
+                {/* Skill Dropdown - Mobile */}
+                <section className="relative pb-6 sm:hidden">
+                    <div className="mx-auto max-w-7xl px-6">
+                        <div className="relative">
+                            <button
+                                onClick={() => setDropdownOpen(!dropdownOpen)}
+                                className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-lg bg-card/50 border-2 border-primary/50 text-primary"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Icon className={`h-5 w-5 ${iconColor}`} />
+                                    <span className="font-medium capitalize">
+                                        {selectedSkill === "total" ? "Total" : selectedSkill}
+                                    </span>
+                                </div>
+                                <ChevronDown
+                                    className={`h-5 w-5 transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
+                                />
+                            </button>
+
+                            {dropdownOpen && (
+                                <>
+                                    <div
+                                        className="fixed inset-0 z-10"
+                                        onClick={() => setDropdownOpen(false)}
+                                    />
+                                    <div className="absolute top-full left-0 right-0 mt-2 z-20 rounded-lg border-2 border-border/50 bg-card/95 backdrop-blur-sm shadow-xl max-h-80 overflow-y-auto">
+                                        {skills.map((skill) => {
+                                            const SkillIcon = skillIcons[skill] || Sword;
+                                            const color = skillColors[skill] || "text-amber-400";
+                                            const isSelected = selectedSkill === skill;
+
+                                            return (
+                                                <button
+                                                    key={skill}
+                                                    onClick={() => handleSkillChange(skill)}
+                                                    className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors capitalize border-b border-border/30 last:border-b-0 ${
+                                                        isSelected
+                                                            ? "bg-primary/20 text-primary"
+                                                            : "text-muted-foreground hover:bg-card hover:text-foreground"
+                                                    }`}
+                                                >
+                                                    <SkillIcon className={`h-5 w-5 ${color}`} />
+                                                    <span className="font-medium">
+                                                        {skill === "total" ? "Total" : skill}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </section>
+
                 {/* Leaderboard Content */}
                 <section className="relative pb-24">
                     <div className="mx-auto max-w-3xl px-6">
@@ -217,8 +277,7 @@ export default function LeaderboardIndex() {
                             <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/50">
                                 <div className="flex items-center gap-2">
                                     <Icon className={`h-6 w-6 ${iconColor}`} />
-                                    <h2 className="font-[Cinzel] text-xl font-bold capitalize text-foreground">
-                                        {selectedSkill === "total" ? "Total Level" : selectedSkill}{" "}
+                                    <h2 className="font-[Cinzel] text-xl font-bold text-foreground">
                                         Rankings
                                     </h2>
                                 </div>
@@ -239,7 +298,7 @@ export default function LeaderboardIndex() {
                                         {leaderboard.entries.map((entry) => (
                                             <div
                                                 key={entry.rank}
-                                                className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-4 py-3 rounded-lg border transition-all ${
+                                                className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border transition-all ${
                                                     entry.rank === 1
                                                         ? "bg-amber-500/10 border-amber-500/30"
                                                         : entry.rank === 2
@@ -249,68 +308,62 @@ export default function LeaderboardIndex() {
                                                             : "bg-card/30 border-border/30"
                                                 }`}
                                             >
-                                                {/* Mobile: Username row with rank */}
-                                                <div className="flex items-center gap-3 sm:contents">
-                                                    {/* Rank */}
-                                                    <div className="w-8 sm:w-10 text-center shrink-0">
-                                                        {entry.rank === 1 ? (
-                                                            <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-amber-400 mx-auto" />
-                                                        ) : entry.rank === 2 ? (
-                                                            <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-slate-300 mx-auto" />
-                                                        ) : entry.rank === 3 ? (
-                                                            <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-orange-500 mx-auto" />
-                                                        ) : (
-                                                            <span className="text-sm text-muted-foreground">
-                                                                #{entry.rank}
-                                                            </span>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Username */}
-                                                    <div className="flex-1 min-w-0">
-                                                        <Link
-                                                            href={`/players/${entry.username}`}
-                                                            className={`truncate block hover:underline font-medium ${
-                                                                entry.rank === 1
-                                                                    ? "text-amber-300 hover:text-amber-200"
-                                                                    : entry.rank === 2
-                                                                      ? "text-slate-200 hover:text-slate-100"
-                                                                      : entry.rank === 3
-                                                                        ? "text-orange-300 hover:text-orange-200"
-                                                                        : "text-foreground/80 hover:text-foreground"
-                                                            }`}
-                                                        >
-                                                            {entry.username}
-                                                        </Link>
-                                                    </div>
+                                                {/* Rank */}
+                                                <div className="w-8 sm:w-10 text-center shrink-0">
+                                                    {entry.rank === 1 ? (
+                                                        <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-amber-400 mx-auto" />
+                                                    ) : entry.rank === 2 ? (
+                                                        <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-slate-300 mx-auto" />
+                                                    ) : entry.rank === 3 ? (
+                                                        <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-orange-500 mx-auto" />
+                                                    ) : (
+                                                        <span className="text-sm text-muted-foreground">
+                                                            #{entry.rank}
+                                                        </span>
+                                                    )}
                                                 </div>
 
-                                                {/* Level & XP */}
-                                                <div className="flex shrink-0 items-center gap-4 pl-11 sm:pl-0">
-                                                    <p className="font-pixel text-sm text-muted-foreground">
-                                                        {entry.xp.toLocaleString()}{" "}
-                                                        <span className="text-xs">xp</span>
-                                                    </p>
-                                                    <div
-                                                        className={`rounded-lg px-3 py-1.5 text-center ${
+                                                {/* Username & XP */}
+                                                <div className="flex-1 min-w-0">
+                                                    <Link
+                                                        href={`/players/${entry.username}`}
+                                                        className={`truncate block hover:underline font-medium ${
                                                             entry.rank === 1
-                                                                ? "bg-amber-500/20 text-amber-300"
+                                                                ? "text-amber-300 hover:text-amber-200"
                                                                 : entry.rank === 2
-                                                                  ? "bg-slate-400/20 text-slate-200"
+                                                                  ? "text-slate-200 hover:text-slate-100"
                                                                   : entry.rank === 3
-                                                                    ? "bg-orange-500/20 text-orange-300"
-                                                                    : "bg-primary/10 text-primary"
+                                                                    ? "text-orange-300 hover:text-orange-200"
+                                                                    : "text-foreground/80 hover:text-foreground"
                                                         }`}
                                                     >
-                                                        <p className="text-[9px] uppercase tracking-wide opacity-70">
-                                                            {selectedSkill === "total"
-                                                                ? "total"
-                                                                : "level"}
-                                                        </p>
-                                                        <p className="text-xl font-bold">
-                                                            {entry.level}
-                                                        </p>
-                                                    </div>
+                                                        {entry.username}
+                                                    </Link>
+                                                    <p className="font-pixel text-xs text-muted-foreground mt-0.5">
+                                                        {entry.xp.toLocaleString()} xp
+                                                    </p>
+                                                </div>
+
+                                                {/* Level Box */}
+                                                <div
+                                                    className={`shrink-0 rounded-lg px-2.5 sm:px-3 py-1 sm:py-1.5 text-center ${
+                                                        entry.rank === 1
+                                                            ? "bg-amber-500/20 text-amber-300"
+                                                            : entry.rank === 2
+                                                              ? "bg-slate-400/20 text-slate-200"
+                                                              : entry.rank === 3
+                                                                ? "bg-orange-500/20 text-orange-300"
+                                                                : "bg-primary/10 text-primary"
+                                                    }`}
+                                                >
+                                                    <p className="text-[8px] sm:text-[9px] uppercase tracking-wide opacity-70">
+                                                        {selectedSkill === "total"
+                                                            ? "total"
+                                                            : "lvl"}
+                                                    </p>
+                                                    <p className="text-lg sm:text-xl font-bold">
+                                                        {entry.level}
+                                                    </p>
                                                 </div>
                                             </div>
                                         ))}
