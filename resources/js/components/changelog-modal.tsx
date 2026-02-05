@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 // Update this when adding new changelog entries
-export const CURRENT_CHANGELOG_VERSION = "0.8.1";
+export const CURRENT_CHANGELOG_VERSION = "0.8.2";
 
 interface ChangelogEntry {
     version: string;
@@ -38,6 +38,32 @@ interface ChangelogEntry {
 }
 
 const changelog: ChangelogEntry[] = [
+    {
+        version: "0.8.2",
+        date: "February 5, 2026",
+        title: "Kingdom Dungeons",
+        description:
+            "Each kingdom now has its own unique dungeons to explore. Venture into the depths for glory and riches!",
+        icon: <Swords className="h-8 w-8 text-violet-500" />,
+        changes: [
+            {
+                type: "added",
+                text: "Dungeons are now kingdom-specific - each realm has unique challenges",
+            },
+            {
+                type: "added",
+                text: "New Dungeon Loot Storage - claim your rewards when you're ready",
+            },
+            {
+                type: "added",
+                text: "Victory celebration screen after conquering a dungeon",
+            },
+            {
+                type: "changed",
+                text: "Dungeon loot expires after 2 weeks if unclaimed",
+            },
+        ],
+    },
     {
         version: "0.8.1",
         date: "February 4, 2026",
