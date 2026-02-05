@@ -290,11 +290,11 @@ export default function GatheringActivity() {
                     )}
 
                     {/* Energy, Skill, and Inventory Status */}
-                    <div className="mb-6 grid grid-cols-3 gap-4">
-                        <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
-                            <div className="mb-1 flex items-center gap-1 font-pixel text-xs text-yellow-400">
-                                <Zap className="h-3 w-3" />
-                                Energy
+                    <div className="mb-6 grid grid-cols-3 gap-2 sm:gap-4">
+                        <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-2 sm:p-3">
+                            <div className="mb-1 flex items-center gap-1 font-pixel text-[10px] text-yellow-400 sm:text-xs">
+                                <Zap className="h-3 w-3 shrink-0" />
+                                <span className="truncate">Energy</span>
                             </div>
                             <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
                                 <div
@@ -302,18 +302,25 @@ export default function GatheringActivity() {
                                     style={{ width: `${(currentEnergy / max_energy) * 100}%` }}
                                 />
                             </div>
-                            <div className="mt-1 font-pixel text-[10px] text-stone-400">
-                                {currentEnergy} / {max_energy} ({activity.energy_cost} per action)
+                            <div className="mt-1 font-pixel text-[9px] text-stone-400 sm:text-[10px]">
+                                <span className="sm:hidden">
+                                    {currentEnergy} / {max_energy} ({activity.energy_cost} per
+                                    action)
+                                </span>
+                                <span className="hidden sm:inline">
+                                    {currentEnergy} / {max_energy} ({activity.energy_cost} per
+                                    action)
+                                </span>
                             </div>
                         </div>
-                        <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
-                            <div className="mb-1 flex items-center justify-between">
-                                <div className="flex items-center gap-1 font-pixel text-xs capitalize text-amber-400">
-                                    <Icon className="h-3 w-3" />
-                                    {activity.skill}
+                        <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-2 sm:p-3">
+                            <div className="mb-1 flex items-center justify-between gap-1">
+                                <div className="flex min-w-0 items-center gap-1 font-pixel text-[10px] capitalize text-amber-400 sm:text-xs">
+                                    <Icon className="h-3 w-3 shrink-0" />
+                                    <span className="truncate">{activity.skill}</span>
                                 </div>
-                                <span className="font-pixel text-xs text-stone-300">
-                                    {activity.skill_level}/99
+                                <span className="shrink-0 font-pixel text-[10px] text-stone-300 sm:text-xs">
+                                    {activity.skill_level}
                                 </span>
                             </div>
                             <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
@@ -322,20 +329,26 @@ export default function GatheringActivity() {
                                     style={{ width: `${activity.skill_xp_progress}%` }}
                                 />
                             </div>
-                            <div className="mt-1 font-pixel text-[10px] text-stone-400">
-                                {activity.skill_xp_to_next.toLocaleString()} XP to next level
+                            <div className="mt-1 font-pixel text-[9px] text-stone-400 sm:text-[10px]">
+                                <span className="sm:hidden">
+                                    {activity.skill_xp_to_next.toLocaleString()} XP to next level
+                                </span>
+                                <span className="hidden sm:inline">
+                                    {activity.skill_xp_to_next.toLocaleString()} XP to next level
+                                </span>
                             </div>
                         </div>
-                        <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
-                            <div className="mb-1 flex items-center gap-1 font-pixel text-xs text-amber-300">
-                                <Backpack className="h-3 w-3" />
-                                Inventory
+                        <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-2 sm:p-3">
+                            <div className="mb-1 flex items-center gap-1 font-pixel text-[10px] text-amber-300 sm:text-xs">
+                                <Backpack className="h-3 w-3 shrink-0" />
+                                <span className="truncate">Inventory</span>
                             </div>
-                            <div className="font-pixel text-lg text-stone-300">
-                                {activity.free_slots} slots
+                            <div className="font-pixel text-base text-stone-300 sm:text-lg">
+                                {activity.free_slots}{" "}
+                                <span className="text-[10px] text-stone-500 sm:text-xs">slots</span>
                             </div>
-                            <div className="font-pixel text-[10px] text-stone-500">
-                                {activity.inventory_full ? "Inventory is full!" : "Space available"}
+                            <div className="font-pixel text-[9px] text-stone-500 sm:text-[10px]">
+                                {activity.inventory_full ? "Full!" : "Space available"}
                             </div>
                         </div>
                     </div>
