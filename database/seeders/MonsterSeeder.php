@@ -345,6 +345,7 @@ class MonsterSeeder extends Seeder
             'Goblin' => [
                 ['item' => 'Bones', 'chance' => 100, 'min' => 1, 'max' => 1],
                 ['item' => 'Bronze Dagger', 'chance' => 10, 'min' => 1, 'max' => 1],
+                ['item' => 'Feather', 'chance' => 40, 'min' => 1, 'max' => 3],
             ],
             'Wolf' => [
                 ['item' => 'Bones', 'chance' => 100, 'min' => 1, 'max' => 1],
@@ -359,6 +360,7 @@ class MonsterSeeder extends Seeder
                 ['item' => 'Iron Sword', 'chance' => 5, 'min' => 1, 'max' => 1],
                 ['item' => 'Leather Vest', 'chance' => 8, 'min' => 1, 'max' => 1],
                 ['item' => 'Venom Sac', 'chance' => 10, 'min' => 1, 'max' => 1],
+                ['item' => 'Feather', 'chance' => 35, 'min' => 2, 'max' => 5],
             ],
 
             // Mid level monsters
@@ -406,6 +408,7 @@ class MonsterSeeder extends Seeder
                 ['item' => 'Big Bones', 'chance' => 100, 'min' => 1, 'max' => 2],
                 ['item' => 'Phoenix Feather', 'chance' => 8, 'min' => 1, 'max' => 1],
                 ['item' => 'Venom Sac', 'chance' => 30, 'min' => 1, 'max' => 2],
+                ['item' => 'Feather', 'chance' => 80, 'min' => 5, 'max' => 15],
             ],
 
             // Boss monsters

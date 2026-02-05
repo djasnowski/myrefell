@@ -1681,6 +1681,16 @@ class ItemSeeder extends Seeder
                 'base_value' => 500,
             ],
             [
+                'name' => 'Feather',
+                'description' => 'Plucked from fowl and fallen birds. Fletchers prize these for arrow-making, while scribes fashion them into quills. Light as air, yet essential for flight.',
+                'type' => 'resource',
+                'subtype' => 'monster_part',
+                'rarity' => 'common',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 3,
+            ],
+            [
                 'name' => 'Thread',
                 'description' => 'Spun from wool or flax, dyed in village vats. Thread connects cloth to cloth, wound to skin, and craftsman to livelihood.',
                 'type' => 'misc',

@@ -122,7 +122,7 @@ class CraftingService
         ],
         'wooden_arrow' => [
             'name' => 'Wooden Arrow',
-            'category' => 'crafting',
+            'category' => 'fletching',
             'skill' => 'crafting',
             'required_level' => 1,
             'xp_reward' => 5,
@@ -130,6 +130,7 @@ class CraftingService
             'task_type' => 'craft',
             'materials' => [
                 ['name' => 'Wood', 'quantity' => 1],
+                ['name' => 'Feather', 'quantity' => 1],
             ],
             'output' => ['name' => 'Wooden Arrow', 'quantity' => 15],
         ],
@@ -142,7 +143,8 @@ class CraftingService
             'energy_cost' => 1,
             'task_type' => 'craft',
             'materials' => [
-                ['name' => 'Wooden Arrow', 'quantity' => 15],
+                ['name' => 'Wood', 'quantity' => 1],
+                ['name' => 'Feather', 'quantity' => 1],
                 ['name' => 'Bronze Arrowtips', 'quantity' => 15],
             ],
             'output' => ['name' => 'Bronze Arrow', 'quantity' => 15],
@@ -156,7 +158,8 @@ class CraftingService
             'energy_cost' => 2,
             'task_type' => 'craft',
             'materials' => [
-                ['name' => 'Wooden Arrow', 'quantity' => 15],
+                ['name' => 'Wood', 'quantity' => 1],
+                ['name' => 'Feather', 'quantity' => 1],
                 ['name' => 'Iron Arrowtips', 'quantity' => 15],
             ],
             'output' => ['name' => 'Iron Arrow', 'quantity' => 15],
@@ -170,7 +173,8 @@ class CraftingService
             'energy_cost' => 2,
             'task_type' => 'craft',
             'materials' => [
-                ['name' => 'Wooden Arrow', 'quantity' => 15],
+                ['name' => 'Wood', 'quantity' => 1],
+                ['name' => 'Feather', 'quantity' => 1],
                 ['name' => 'Steel Arrowtips', 'quantity' => 15],
             ],
             'output' => ['name' => 'Steel Arrow', 'quantity' => 15],
@@ -184,7 +188,8 @@ class CraftingService
             'energy_cost' => 3,
             'task_type' => 'craft',
             'materials' => [
-                ['name' => 'Wooden Arrow', 'quantity' => 15],
+                ['name' => 'Wood', 'quantity' => 1],
+                ['name' => 'Feather', 'quantity' => 1],
                 ['name' => 'Mithril Arrowtips', 'quantity' => 15],
             ],
             'output' => ['name' => 'Mithril Arrow', 'quantity' => 15],
@@ -198,7 +203,8 @@ class CraftingService
             'energy_cost' => 3,
             'task_type' => 'craft',
             'materials' => [
-                ['name' => 'Wooden Arrow', 'quantity' => 15],
+                ['name' => 'Wood', 'quantity' => 1],
+                ['name' => 'Feather', 'quantity' => 1],
                 ['name' => 'Celestial Arrowtips', 'quantity' => 15],
             ],
             'output' => ['name' => 'Celestial Arrow', 'quantity' => 15],
@@ -212,7 +218,8 @@ class CraftingService
             'energy_cost' => 4,
             'task_type' => 'craft',
             'materials' => [
-                ['name' => 'Wooden Arrow', 'quantity' => 15],
+                ['name' => 'Wood', 'quantity' => 1],
+                ['name' => 'Feather', 'quantity' => 1],
                 ['name' => 'Oria Arrowtips', 'quantity' => 15],
             ],
             'output' => ['name' => 'Oria Arrow', 'quantity' => 15],
