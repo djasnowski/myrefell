@@ -338,58 +338,61 @@ export default function ApothecaryIndex() {
                 </div>
 
                 {/* Status Bar */}
-                <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-                    {/* Energy */}
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
-                        <div className="mb-1 flex items-center gap-1 font-pixel text-xs text-yellow-400">
-                            <Zap className="h-3 w-3" />
-                            Energy
+                <div className="mb-4 space-y-2 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-4">
+                    {/* Energy and Herblore - 2 columns on mobile, part of 3-col on desktop */}
+                    <div className="grid grid-cols-2 gap-2 sm:contents">
+                        {/* Energy */}
+                        <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-2 sm:p-3">
+                            <div className="mb-1 flex items-center gap-1 font-pixel text-[10px] text-yellow-400 sm:text-xs">
+                                <Zap className="h-3 w-3 shrink-0" />
+                                <span>Energy</span>
+                            </div>
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
+                                <div
+                                    className="h-full bg-gradient-to-r from-yellow-600 to-yellow-400 transition-all"
+                                    style={{
+                                        width: `${(currentEnergy / brewing_info.max_energy) * 100}%`,
+                                    }}
+                                />
+                            </div>
+                            <div className="mt-1 font-pixel text-[9px] text-stone-400 sm:text-[10px]">
+                                {currentEnergy} / {brewing_info.max_energy}
+                            </div>
                         </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
-                            <div
-                                className="h-full bg-gradient-to-r from-yellow-600 to-yellow-400 transition-all"
-                                style={{
-                                    width: `${(currentEnergy / brewing_info.max_energy) * 100}%`,
-                                }}
-                            />
-                        </div>
-                        <div className="mt-1 font-pixel text-[10px] text-stone-400">
-                            {currentEnergy} / {brewing_info.max_energy}
+
+                        {/* Herblore Skill - mobile version */}
+                        <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-2 sm:hidden">
+                            <div className="mb-1 flex items-center justify-between gap-1">
+                                <div className="flex min-w-0 items-center gap-1 font-pixel text-[10px] text-emerald-400">
+                                    <Leaf className="h-3 w-3 shrink-0" />
+                                    <span>Herblore</span>
+                                </div>
+                                <span className="shrink-0 font-pixel text-[10px] text-stone-300">
+                                    {brewing_info.herblore_level}
+                                </span>
+                            </div>
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
+                                <div
+                                    className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all"
+                                    style={{
+                                        width: `${brewing_info.herblore_xp_progress}%`,
+                                    }}
+                                />
+                            </div>
+                            <div className="mt-1 font-pixel text-[9px] text-stone-400">
+                                {brewing_info.herblore_xp_to_next.toLocaleString()} XP to next
+                            </div>
                         </div>
                     </div>
 
-                    {/* Herblore Skill */}
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
+                    {/* Inventory - full width on mobile, middle column on desktop */}
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-2 sm:p-3">
                         <div className="mb-1 flex items-center justify-between">
-                            <div className="flex items-center gap-1 font-pixel text-xs text-emerald-400">
-                                <Leaf className="h-3 w-3" />
-                                Herblore
+                            <div className="flex items-center gap-1 font-pixel text-[10px] text-amber-300 sm:text-xs">
+                                <Backpack className="h-3 w-3 shrink-0" />
+                                <span>Ingredients</span>
                             </div>
-                            <span className="font-pixel text-xs text-stone-300">
-                                {brewing_info.herblore_level}/99
-                            </span>
-                        </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
-                            <div
-                                className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all"
-                                style={{
-                                    width: `${brewing_info.herblore_xp_progress}%`,
-                                }}
-                            />
-                        </div>
-                        <div className="mt-1 font-pixel text-[10px] text-stone-400">
-                            {brewing_info.herblore_xp_to_next.toLocaleString()} XP to next level
-                        </div>
-                    </div>
-
-                    {/* Inventory */}
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
-                        <div className="mb-1 flex items-center justify-between">
-                            <div className="flex items-center gap-1 font-pixel text-xs text-amber-300">
-                                <Backpack className="h-3 w-3" />
-                                Inventory
-                            </div>
-                            <span className="font-pixel text-xs text-stone-400">
+                            <span className="font-pixel text-[10px] text-stone-400 sm:text-xs">
                                 {brewing_info.free_slots} slots
                             </span>
                         </div>
@@ -423,13 +426,14 @@ export default function ApothecaryIndex() {
                                         },
                                     };
                                     const style = styles[ingredient.type] || styles.herb;
-                                    const Icon = ingredient.type === "vial" ? FlaskConical : Leaf;
+                                    const IngredientIcon =
+                                        ingredient.type === "vial" ? FlaskConical : Leaf;
                                     return (
                                         <div
                                             key={ingredient.name}
                                             className={`flex items-center gap-1.5 rounded border ${style.border} ${style.bg} px-2 py-1`}
                                         >
-                                            <Icon className={`h-3 w-3 ${style.icon}`} />
+                                            <IngredientIcon className={`h-3 w-3 ${style.icon}`} />
                                             <span
                                                 className={`font-pixel text-[10px] ${style.text}`}
                                             >
@@ -456,6 +460,30 @@ export default function ApothecaryIndex() {
                                 No ingredients
                             </div>
                         )}
+                    </div>
+
+                    {/* Herblore Skill - desktop version */}
+                    <div className="hidden rounded-lg border border-stone-700 bg-stone-800/50 p-3 sm:block">
+                        <div className="mb-1 flex items-center justify-between">
+                            <div className="flex items-center gap-1 font-pixel text-xs text-emerald-400">
+                                <Leaf className="h-3 w-3 shrink-0" />
+                                <span>Herblore</span>
+                            </div>
+                            <span className="font-pixel text-xs text-stone-300">
+                                {brewing_info.herblore_level}/99
+                            </span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
+                            <div
+                                className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all"
+                                style={{
+                                    width: `${brewing_info.herblore_xp_progress}%`,
+                                }}
+                            />
+                        </div>
+                        <div className="mt-1 font-pixel text-[10px] text-stone-400">
+                            {brewing_info.herblore_xp_to_next.toLocaleString()} XP to next level
+                        </div>
                     </div>
                 </div>
 

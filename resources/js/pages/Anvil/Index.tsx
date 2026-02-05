@@ -491,48 +491,64 @@ export default function AnvilIndex() {
                 </div>
 
                 {/* Status Bar */}
-                <div className="mb-4 grid grid-cols-3 gap-2 sm:gap-4">
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-2 sm:p-3">
-                        <div className="mb-1 flex items-center gap-1 font-pixel text-[10px] text-yellow-400 sm:text-xs">
-                            <Zap className="h-3 w-3 shrink-0" />
-                            <span className="truncate">Energy</span>
+                <div className="mb-4 space-y-2 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-4">
+                    {/* Energy and Smithing - 2 columns on mobile, part of 3-col on desktop */}
+                    <div className="grid grid-cols-2 gap-2 sm:contents">
+                        <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-2 sm:p-3">
+                            <div className="mb-1 flex items-center gap-1 font-pixel text-[10px] text-yellow-400 sm:text-xs">
+                                <Zap className="h-3 w-3 shrink-0" />
+                                <span className="truncate">Energy</span>
+                            </div>
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
+                                <div
+                                    className="h-full bg-gradient-to-r from-yellow-600 to-yellow-400 transition-all"
+                                    style={{
+                                        width: `${(currentEnergy / anvil_info.max_energy) * 100}%`,
+                                    }}
+                                />
+                            </div>
+                            <div className="mt-1 font-pixel text-[9px] text-stone-400 sm:text-[10px]">
+                                {currentEnergy} / {anvil_info.max_energy}
+                            </div>
                         </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
-                            <div
-                                className="h-full bg-gradient-to-r from-yellow-600 to-yellow-400 transition-all"
-                                style={{
-                                    width: `${(currentEnergy / anvil_info.max_energy) * 100}%`,
-                                }}
-                            />
-                        </div>
-                        <div className="mt-1 font-pixel text-[9px] text-stone-400 sm:text-[10px]">
-                            {currentEnergy} / {anvil_info.max_energy}
+                        <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-2 sm:hidden">
+                            <div className="mb-1 flex items-center justify-between gap-1">
+                                <div className="flex min-w-0 items-center gap-1 font-pixel text-[10px] text-amber-400">
+                                    <Anvil className="h-3 w-3 shrink-0" />
+                                    <span className="truncate">Smithing</span>
+                                </div>
+                                <span className="shrink-0 font-pixel text-[10px] text-stone-300">
+                                    {anvil_info.smithing_level}
+                                </span>
+                            </div>
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
+                                <div
+                                    className="h-full bg-gradient-to-r from-amber-600 to-amber-400 transition-all"
+                                    style={{
+                                        width: `${anvil_info.smithing_xp_progress}%`,
+                                    }}
+                                />
+                            </div>
+                            <div className="mt-1 font-pixel text-[9px] text-stone-400">
+                                {anvil_info.smithing_xp_to_next.toLocaleString()} XP to next
+                            </div>
                         </div>
                     </div>
+                    {/* Bars - full width on mobile, middle column on desktop */}
                     <div
                         className={`rounded-lg border p-2 sm:p-3 ${anvil_info.free_slots <= 0 ? "border-red-600/50 bg-red-900/20" : "border-stone-700 bg-stone-800/50"}`}
                     >
                         <div className="mb-1 flex items-center justify-between gap-1">
                             <div className="flex min-w-0 items-center gap-1 font-pixel text-[10px] text-amber-300 sm:text-xs">
                                 <Backpack className="h-3 w-3 shrink-0" />
-                                <span className="hidden sm:inline">Bars Available</span>
-                                <span className="sm:hidden">Bars</span>
+                                <span>Bars Available</span>
                             </div>
                             <span
                                 className={`shrink-0 font-pixel text-[10px] sm:text-xs ${anvil_info.free_slots <= 0 ? "text-red-400" : "text-stone-400"}`}
                             >
-                                {anvil_info.free_slots <= 0 ? (
-                                    <span className="hidden sm:inline">Inventory Full!</span>
-                                ) : (
-                                    <span className="hidden sm:inline">
-                                        {anvil_info.free_slots} slots
-                                    </span>
-                                )}
-                                {anvil_info.free_slots <= 0 ? (
-                                    <span className="sm:hidden">Full!</span>
-                                ) : (
-                                    <span className="sm:hidden">{anvil_info.free_slots}</span>
-                                )}
+                                {anvil_info.free_slots <= 0
+                                    ? "Inventory Full!"
+                                    : `${anvil_info.free_slots} slots`}
                             </span>
                         </div>
                         {anvil_info.bars_in_inventory.length > 0 ? (
@@ -542,7 +558,7 @@ export default function AnvilIndex() {
                                     return (
                                         <div
                                             key={bar.name}
-                                            className={`flex items-center gap-1 rounded border px-1.5 py-0.5 sm:gap-1.5 sm:px-2 sm:py-1 ${colors.border} ${colors.bg}`}
+                                            className={`flex items-center gap-1.5 rounded border px-2 py-1 ${colors.border} ${colors.bg}`}
                                         >
                                             <Package className={`h-3 w-3 ${colors.text}`} />
                                             <span
@@ -558,22 +574,20 @@ export default function AnvilIndex() {
                                 })}
                             </div>
                         ) : (
-                            <div className="mt-1 font-pixel text-[9px] text-stone-500 sm:text-[10px]">
-                                <span className="hidden sm:inline">
-                                    No bars - smelt some at the Forge first
-                                </span>
-                                <span className="sm:hidden">No bars</span>
+                            <div className="mt-1 font-pixel text-[10px] text-stone-500">
+                                No bars - smelt some at the Forge first
                             </div>
                         )}
                     </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-2 sm:p-3">
+                    {/* Smithing - only on desktop (mobile version above) */}
+                    <div className="hidden rounded-lg border border-stone-700 bg-stone-800/50 p-3 sm:block">
                         <div className="mb-1 flex items-center justify-between gap-1">
-                            <div className="flex min-w-0 items-center gap-1 font-pixel text-[10px] text-amber-400 sm:text-xs">
+                            <div className="flex min-w-0 items-center gap-1 font-pixel text-xs text-amber-400">
                                 <Anvil className="h-3 w-3 shrink-0" />
                                 <span className="truncate">Smithing</span>
                             </div>
-                            <span className="shrink-0 font-pixel text-[10px] text-stone-300 sm:text-xs">
-                                {anvil_info.smithing_level}
+                            <span className="shrink-0 font-pixel text-xs text-stone-300">
+                                {anvil_info.smithing_level}/99
                             </span>
                         </div>
                         <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
@@ -584,7 +598,7 @@ export default function AnvilIndex() {
                                 }}
                             />
                         </div>
-                        <div className="mt-1 font-pixel text-[9px] text-stone-400 sm:text-[10px]">
+                        <div className="mt-1 font-pixel text-[10px] text-stone-400">
                             {anvil_info.smithing_xp_to_next.toLocaleString()} XP to next level
                         </div>
                     </div>
