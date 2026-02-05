@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 // Update this when adding new changelog entries
-export const CURRENT_CHANGELOG_VERSION = "0.8.2";
+export const CURRENT_CHANGELOG_VERSION = "0.8.3";
 
 interface ChangelogEntry {
     version: string;
@@ -38,6 +38,32 @@ interface ChangelogEntry {
 }
 
 const changelog: ChangelogEntry[] = [
+    {
+        version: "0.8.3",
+        date: "February 5, 2026",
+        title: "Fair Play Enforcement",
+        description:
+            "We've improved our systems to detect and prevent cheating. Play fair and enjoy the game as intended - using bots, scripts, or multiple tabs to gain an unfair advantage will result in a ban.",
+        icon: <Shield className="h-8 w-8 text-red-500" />,
+        changes: [
+            {
+                type: "added",
+                text: "Improved detection for automated botting and scripting",
+            },
+            {
+                type: "added",
+                text: "Detection for multi-tab exploitation (playing multiple tabs simultaneously)",
+            },
+            {
+                type: "added",
+                text: "Banned players can now view their ban details and submit appeals",
+            },
+            {
+                type: "changed",
+                text: "Banned players are now excluded from leaderboards",
+            },
+        ],
+    },
     {
         version: "0.8.2",
         date: "February 5, 2026",
