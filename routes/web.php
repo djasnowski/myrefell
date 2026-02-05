@@ -112,6 +112,10 @@ Route::get('/rules', function () {
     ]);
 })->name('rules');
 
+Route::get('/ban-appeals', function () {
+    return Inertia::render('BanAppeals');
+})->name('ban-appeals');
+
 // Dev auto-login route (only available in local environment)
 if (app()->environment('local')) {
     Route::get('/dev/login', function () {
@@ -289,6 +293,7 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
     Route::post('market/buy', [MarketController::class, 'buy'])->name('market.buy');
     Route::post('market/sell', [MarketController::class, 'sell'])->name('market.sell');
     Route::get('market/prices', [MarketController::class, 'prices'])->name('market.prices');
+    Route::post('market/sell-quote', [MarketController::class, 'sellQuote'])->name('market.sell-quote');
 
     // Role Stocking
     Route::get('market/stock', [RoleStockingController::class, 'index'])->name('market.stock');

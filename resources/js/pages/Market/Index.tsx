@@ -153,6 +153,11 @@ export default function MarketIndex() {
     const [success, setSuccess] = useState<string | null>(null);
     const [filterType, setFilterType] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState("");
+    const [sellQuote, setSellQuote] = useState<{
+        total_gold: number;
+        price_per_unit: number;
+    } | null>(null);
+    const [fetchingQuote, setFetchingQuote] = useState(false);
 
     const LocationIcon = locationIcons[market_info.location_type] || Home;
 
@@ -289,14 +294,58 @@ export default function MarketIndex() {
         }
     };
 
+    const fetchSellQuote = async (itemId: number, qty: number) => {
+        if (qty <= 0) {
+            setSellQuote(null);
+            return;
+        }
+
+        setFetchingQuote(true);
+        try {
+            const response = await fetch("/market/sell-quote", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
+                },
+                body: JSON.stringify({
+                    item_id: itemId,
+                    quantity: qty,
+                }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setSellQuote({
+                    total_gold: data.total_gold,
+                    price_per_unit: data.price_per_unit,
+                });
+            }
+        } catch {
+            // Silently fail, will use fallback calculation
+        } finally {
+            setFetchingQuote(false);
+        }
+    };
+
     const calculateTotal = () => {
         const qty = parseInt(quantity, 10) || 0;
         if (!selectedItem) return 0;
 
         if (activeTab === "buy" && "buy_price" in selectedItem) {
             return selectedItem.buy_price * qty;
-        } else if (activeTab === "sell" && "sell_price" in selectedItem) {
-            return selectedItem.sell_price * qty;
+        } else if (activeTab === "sell") {
+            // Use the fetched quote if available, otherwise show placeholder
+            if (sellQuote) {
+                return sellQuote.total_gold;
+            }
+            // Fallback to simple calculation while loading
+            if ("sell_price" in selectedItem) {
+                return selectedItem.sell_price * qty;
+            }
         }
         return 0;
     };
@@ -341,6 +390,7 @@ export default function MarketIndex() {
                                     setActiveTab("buy");
                                     setSelectedItem(null);
                                     setQuantity("1");
+                                    setSellQuote(null);
                                 }}
                                 className={`flex items-center gap-2 rounded-lg border-2 px-4 py-2 font-pixel text-sm transition ${
                                     activeTab === "buy"
@@ -356,6 +406,7 @@ export default function MarketIndex() {
                                     setActiveTab("sell");
                                     setSelectedItem(null);
                                     setQuantity("1");
+                                    setSellQuote(null);
                                 }}
                                 className={`flex items-center gap-2 rounded-lg border-2 px-4 py-2 font-pixel text-sm transition ${
                                     activeTab === "sell"
@@ -516,6 +567,8 @@ export default function MarketIndex() {
                                                     setQuantity("1");
                                                     setError(null);
                                                     setSuccess(null);
+                                                    setSellQuote(null);
+                                                    fetchSellQuote(item.item_id, 1);
                                                 }}
                                                 className={`flex w-full items-center gap-3 p-3 text-left transition ${
                                                     isSelected
@@ -539,7 +592,7 @@ export default function MarketIndex() {
                                                     </div>
                                                 </div>
                                                 <div className="font-pixel text-sm text-yellow-400">
-                                                    {formatGold(item.sell_price)}g
+                                                    {formatGold(item.sell_price)}g/ea
                                                 </div>
                                             </button>
                                         );
@@ -603,7 +656,18 @@ export default function MarketIndex() {
                                         <input
                                             type="number"
                                             value={quantity}
-                                            onChange={(e) => setQuantity(e.target.value)}
+                                            onChange={(e) => {
+                                                const newQty = e.target.value;
+                                                setQuantity(newQty);
+                                                if (activeTab === "sell" && selectedItem) {
+                                                    const qty = parseInt(newQty, 10);
+                                                    if (!isNaN(qty) && qty > 0) {
+                                                        fetchSellQuote(selectedItem.item_id, qty);
+                                                    } else {
+                                                        setSellQuote(null);
+                                                    }
+                                                }
+                                            }}
                                             className="w-full rounded-lg border-2 border-stone-600 bg-stone-900 px-4 py-2 font-pixel text-lg text-amber-300 placeholder-stone-600 focus:border-amber-500 focus:outline-none"
                                             min="1"
                                             max={
@@ -617,26 +681,36 @@ export default function MarketIndex() {
                                     {/* Quick Quantity Buttons */}
                                     {"quantity" in selectedItem && (
                                         <div className="mb-4 flex gap-2">
-                                            {[1, 5, 10].map((amt) => (
-                                                <button
-                                                    key={amt}
-                                                    onClick={() =>
-                                                        setQuantity(
-                                                            Math.min(
-                                                                amt,
-                                                                selectedItem.quantity,
-                                                            ).toString(),
-                                                        )
-                                                    }
-                                                    className="flex-1 rounded-lg border border-stone-600 bg-stone-700 px-2 py-1 font-pixel text-[10px] text-stone-300 transition hover:bg-stone-600"
-                                                >
-                                                    {amt}
-                                                </button>
-                                            ))}
+                                            {[1, 5, 10].map((amt) => {
+                                                const qty = Math.min(amt, selectedItem.quantity);
+                                                return (
+                                                    <button
+                                                        key={amt}
+                                                        onClick={() => {
+                                                            setQuantity(qty.toString());
+                                                            if (activeTab === "sell") {
+                                                                fetchSellQuote(
+                                                                    selectedItem.item_id,
+                                                                    qty,
+                                                                );
+                                                            }
+                                                        }}
+                                                        className="flex-1 rounded-lg border border-stone-600 bg-stone-700 px-2 py-1 font-pixel text-[10px] text-stone-300 transition hover:bg-stone-600"
+                                                    >
+                                                        {amt}
+                                                    </button>
+                                                );
+                                            })}
                                             <button
-                                                onClick={() =>
-                                                    setQuantity(selectedItem.quantity.toString())
-                                                }
+                                                onClick={() => {
+                                                    setQuantity(selectedItem.quantity.toString());
+                                                    if (activeTab === "sell") {
+                                                        fetchSellQuote(
+                                                            selectedItem.item_id,
+                                                            selectedItem.quantity,
+                                                        );
+                                                    }
+                                                }}
                                                 className="flex-1 rounded-lg border border-stone-600 bg-stone-700 px-2 py-1 font-pixel text-[10px] text-stone-300 transition hover:bg-stone-600"
                                             >
                                                 All
@@ -647,9 +721,13 @@ export default function MarketIndex() {
                                     {/* Total */}
                                     <div className="mb-4 flex items-center justify-between rounded-lg bg-stone-900/50 p-3">
                                         <span className="font-pixel text-xs text-stone-400">
-                                            Total
+                                            {activeTab === "sell" && fetchingQuote
+                                                ? "Calculating..."
+                                                : "Total"}
                                         </span>
-                                        <span className="font-pixel text-lg text-yellow-400">
+                                        <span
+                                            className={`font-pixel text-lg text-yellow-400 ${fetchingQuote ? "opacity-50" : ""}`}
+                                        >
                                             {formatGold(calculateTotal())}g
                                         </span>
                                     </div>

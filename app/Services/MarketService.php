@@ -262,7 +262,7 @@ class MarketService
      * Calculate sell price accounting for the supply increase from the sale.
      * This prevents arbitrage by pricing items as if they're already in the market.
      */
-    protected function calculateSellPriceWithSupplyIncrease(MarketPrice $marketPrice, int $quantity): int
+    public function calculateSellPriceWithSupplyIncrease(MarketPrice $marketPrice, int $quantity): int
     {
         $stockpile = LocationStockpile::atLocation(
             $marketPrice->location_type,
@@ -286,6 +286,55 @@ class MarketService
 
         // Sell price is 80% of the projected price (same as getSellPriceAttribute)
         return max(1, (int) floor($projectedPrice * 0.8));
+    }
+
+    /**
+     * Get a sell quote for an item showing the actual gold the user will receive.
+     */
+    public function getSellQuote(User $user, int $itemId, int $quantity): array
+    {
+        if (! $this->canAccessMarket($user)) {
+            return [
+                'success' => false,
+                'message' => 'You cannot access a market here.',
+            ];
+        }
+
+        $item = Item::find($itemId);
+        if (! $item) {
+            return [
+                'success' => false,
+                'message' => 'Item not found.',
+            ];
+        }
+
+        $locationType = $user->current_location_type;
+        $locationId = $user->current_location_id;
+
+        // Handle hamlet -> parent village
+        if ($locationType === 'village') {
+            $village = Village::find($locationId);
+            if ($village && $village->isHamlet()) {
+                $serviceProvider = $village->getServiceProvider();
+                $locationId = $serviceProvider->id;
+            }
+        }
+
+        $marketPrice = MarketPrice::getOrCreate($locationType, $locationId, $item);
+        $this->updatePrice($marketPrice);
+
+        // Calculate the actual sell price per unit based on projected supply
+        $sellPricePerUnit = $this->calculateSellPriceWithSupplyIncrease($marketPrice, $quantity);
+        $totalGold = $sellPricePerUnit * $quantity;
+
+        return [
+            'success' => true,
+            'item_id' => $itemId,
+            'quantity' => $quantity,
+            'price_per_unit' => $sellPricePerUnit,
+            'total_gold' => $totalGold,
+            'current_display_price' => $marketPrice->sell_price,
+        ];
     }
 
     /**

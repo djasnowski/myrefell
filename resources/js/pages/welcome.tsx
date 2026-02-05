@@ -970,12 +970,12 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                     </li>
                                     <li className="flex items-center gap-2">
                                         <Scale className="h-4 w-4 text-muted-foreground" />
-                                        <a
-                                            href="mailto:appeals@myrefell.com"
+                                        <Link
+                                            href="/ban-appeals"
                                             className="text-sm text-muted-foreground transition hover:text-primary"
                                         >
                                             Ban Appeals
-                                        </a>
+                                        </Link>
                                     </li>
                                 </ul>
                             </div>

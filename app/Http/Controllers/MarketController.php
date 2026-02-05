@@ -123,6 +123,26 @@ class MarketController extends Controller
     }
 
     /**
+     * Get a sell quote for an item at a specific quantity.
+     */
+    public function sellQuote(Request $request): JsonResponse
+    {
+        $request->validate([
+            'item_id' => 'required|integer|exists:items,id',
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        $user = $request->user();
+        $result = $this->marketService->getSellQuote(
+            $user,
+            $request->input('item_id'),
+            $request->input('quantity')
+        );
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    /**
      * Get current market prices (for polling/refresh).
      */
     public function prices(Request $request): JsonResponse
