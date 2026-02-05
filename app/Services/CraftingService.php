@@ -499,6 +499,17 @@ class CraftingService
             $categories[$category][] = $this->formatRecipe($id, $recipe, $user);
         }
 
+        // Sort each category by required level, then alphabetically by name
+        foreach ($categories as $category => &$recipes) {
+            usort($recipes, function ($a, $b) {
+                if ($a['required_level'] !== $b['required_level']) {
+                    return $a['required_level'] <=> $b['required_level'];
+                }
+
+                return strcmp($a['name'], $b['name']);
+            });
+        }
+
         return $categories;
     }
 
@@ -524,6 +535,17 @@ class CraftingService
             }
 
             $categories[$category][] = $this->formatRecipe($id, $recipe, $user, true);
+        }
+
+        // Sort each category by required level, then alphabetically by name
+        foreach ($categories as $category => &$recipes) {
+            usort($recipes, function ($a, $b) {
+                if ($a['required_level'] !== $b['required_level']) {
+                    return $a['required_level'] <=> $b['required_level'];
+                }
+
+                return strcmp($a['name'], $b['name']);
+            });
         }
 
         return $categories;
