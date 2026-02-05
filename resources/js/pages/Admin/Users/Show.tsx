@@ -187,6 +187,18 @@ interface ActivityItem {
     created_at: string;
 }
 
+interface TabActivityItem {
+    id: number;
+    route: string | null;
+    method: string | null;
+    tab_id: string;
+    is_new_tab: boolean;
+    user_agent: string | null;
+    ip_address: string | null;
+    created_at: string;
+    created_at_formatted: string;
+}
+
 interface BankAccount {
     id: number;
     balance: number;
@@ -221,6 +233,7 @@ interface Props {
     horse: PlayerHorse | null;
     diseases: Disease[];
     activities: ActivityItem[];
+    tabActivities: TabActivityItem[];
     bankAccounts: BankAccount[];
     suspiciousActivity: SuspiciousActivity;
 }
@@ -262,6 +275,7 @@ export default function Show({
     horse,
     diseases,
     activities,
+    tabActivities,
     bankAccounts,
     suspiciousActivity,
 }: Props) {
@@ -1217,20 +1231,166 @@ export default function Show({
 
                     {/* Activity Tab */}
                     {activeTab === "activity" && (
-                        <Card className="border-stone-800 bg-stone-900/50">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-stone-100">
-                                    <Activity className="size-5 text-blue-400" />
-                                    Activity Log
-                                </CardTitle>
-                                <CardDescription className="text-stone-400">
-                                    Recent activities (last 50)
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <ActivityTable activities={activities} />
-                            </CardContent>
-                        </Card>
+                        <div className="space-y-6">
+                            {/* Tab Activity Log (detailed with browser info) */}
+                            <Card className="border-stone-800 bg-stone-900/50">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-stone-100">
+                                        <Globe className="size-5 text-cyan-400" />
+                                        Request Log
+                                    </CardTitle>
+                                    <CardDescription className="text-stone-400">
+                                        Recent requests with browser info (last 100)
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b border-stone-800">
+                                                    <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider text-stone-400">
+                                                        Timestamp
+                                                    </th>
+                                                    <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider text-stone-400">
+                                                        Diff
+                                                    </th>
+                                                    <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider text-stone-400">
+                                                        Route
+                                                    </th>
+                                                    <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider text-stone-400">
+                                                        Tab
+                                                    </th>
+                                                    <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider text-stone-400">
+                                                        Browser
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-stone-800">
+                                                {tabActivities.map((activity, index) => {
+                                                    const prevActivity = tabActivities[index + 1];
+                                                    const timeDiff = prevActivity
+                                                        ? Math.round(
+                                                              (new Date(
+                                                                  activity.created_at,
+                                                              ).getTime() -
+                                                                  new Date(
+                                                                      prevActivity.created_at,
+                                                                  ).getTime()) /
+                                                                  1000,
+                                                          )
+                                                        : null;
+                                                    const tabChanged =
+                                                        prevActivity &&
+                                                        activity.tab_id !== prevActivity.tab_id;
+                                                    const browserChanged =
+                                                        prevActivity &&
+                                                        activity.user_agent !==
+                                                            prevActivity.user_agent;
+
+                                                    return (
+                                                        <tr
+                                                            key={activity.id}
+                                                            className={cn(
+                                                                "hover:bg-stone-800/50",
+                                                                activity.is_new_tab &&
+                                                                    "bg-amber-900/10",
+                                                                tabChanged && "bg-red-900/10",
+                                                            )}
+                                                        >
+                                                            <td className="px-2 py-1.5 font-mono text-xs text-stone-300">
+                                                                {activity.created_at_formatted}
+                                                            </td>
+                                                            <td className="px-2 py-1.5 text-xs">
+                                                                {timeDiff !== null && (
+                                                                    <span
+                                                                        className={cn(
+                                                                            "font-mono",
+                                                                            timeDiff <= 3 &&
+                                                                                tabChanged
+                                                                                ? "text-red-400 font-bold"
+                                                                                : timeDiff <= 3
+                                                                                  ? "text-amber-400"
+                                                                                  : "text-stone-500",
+                                                                        )}
+                                                                    >
+                                                                        +{timeDiff}s
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-2 py-1.5 text-stone-300">
+                                                                <span className="text-stone-500 mr-1">
+                                                                    {activity.method}
+                                                                </span>
+                                                                {activity.route}
+                                                            </td>
+                                                            <td className="px-2 py-1.5">
+                                                                <span
+                                                                    className={cn(
+                                                                        "font-mono text-xs",
+                                                                        tabChanged
+                                                                            ? "text-red-400"
+                                                                            : "text-stone-500",
+                                                                    )}
+                                                                    title={activity.tab_id}
+                                                                >
+                                                                    {activity.tab_id.slice(0, 8)}
+                                                                </span>
+                                                                {activity.is_new_tab && (
+                                                                    <Badge className="ml-1 bg-amber-900/30 text-amber-400 text-xs">
+                                                                        NEW
+                                                                    </Badge>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-2 py-1.5 max-w-[200px]">
+                                                                <span
+                                                                    className={cn(
+                                                                        "text-xs truncate block",
+                                                                        browserChanged
+                                                                            ? "text-red-400"
+                                                                            : "text-stone-500",
+                                                                    )}
+                                                                    title={
+                                                                        activity.user_agent ||
+                                                                        "Unknown"
+                                                                    }
+                                                                >
+                                                                    {activity.user_agent
+                                                                        ? activity.user_agent.slice(
+                                                                              0,
+                                                                              50,
+                                                                          ) +
+                                                                          (activity.user_agent
+                                                                              .length > 50
+                                                                              ? "..."
+                                                                              : "")
+                                                                        : "Unknown"}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Location Activity Log */}
+                            <Card className="border-stone-800 bg-stone-900/50">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-stone-100">
+                                        <Activity className="size-5 text-blue-400" />
+                                        Game Activity Log
+                                    </CardTitle>
+                                    <CardDescription className="text-stone-400">
+                                        Recent game activities (last 50)
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <ActivityTable activities={activities} />
+                                </CardContent>
+                            </Card>
+                        </div>
                     )}
 
                     {/* Suspicious Activity Tab */}

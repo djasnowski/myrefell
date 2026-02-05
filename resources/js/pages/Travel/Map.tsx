@@ -16,11 +16,19 @@ import {
     RotateCcw,
     Scroll,
     Search,
+    Ship,
     Users,
     X,
     Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import {
     HealthStatusWidget,
     type DiseaseInfection,
@@ -42,7 +50,7 @@ interface Kingdom extends Location {
 }
 
 interface Town extends Location {
-    kingdom_id: number;
+    kingdom_id: number | null;
     kingdom_name: string;
     is_capital: boolean;
     population: number;
@@ -56,6 +64,7 @@ interface BaronyType extends Location {
 interface Village extends Location {
     barony_id: number;
     barony_name: string;
+    kingdom_id: number | null;
     kingdom_name: string;
     population: number;
     is_port: boolean;
@@ -77,6 +86,7 @@ interface PlayerLocation {
         name: string;
         speed_multiplier: number;
     } | null;
+    current_kingdom_id: number | null;
 }
 
 interface MapBounds {
@@ -306,6 +316,7 @@ export default function Dashboard() {
         data: Location & {
             population?: number;
             is_port?: boolean;
+            kingdom_id?: number | null;
             kingdom_name?: string;
             barony_name?: string;
             description?: string;
@@ -314,6 +325,8 @@ export default function Dashboard() {
     const [isTraveling, setIsTraveling] = useState(false);
     const [loreExpanded, setLoreExpanded] = useState(false);
     const [travelError, setTravelError] = useState<string | null>(null);
+    const [showHarborModal, setShowHarborModal] = useState(false);
+    const [harborDestination, setHarborDestination] = useState<string | null>(null);
     const svgRef = useRef<SVGSVGElement>(null);
 
     // Prevent page scrolling on the map page
@@ -764,8 +777,37 @@ export default function Dashboard() {
         setTravelError(null);
     };
 
+    // Helper to get the kingdom ID of a destination
+    const getDestinationKingdomId = (
+        type: string,
+        data: { id: number; kingdom_id?: number | null },
+    ): number | null => {
+        if (type === "kingdom") {
+            return data.id;
+        }
+        return data.kingdom_id ?? null;
+    };
+
     const handleTravel = () => {
         if (!clickedLocation) return;
+
+        // Check if trying to travel to a different kingdom
+        const destinationKingdomId = getDestinationKingdomId(
+            clickedLocation.type,
+            clickedLocation.data,
+        );
+
+        if (
+            player.current_kingdom_id !== null &&
+            destinationKingdomId !== null &&
+            player.current_kingdom_id !== destinationKingdomId
+        ) {
+            // Cross-kingdom travel - need to use a harbor
+            setHarborDestination(clickedLocation.data.name);
+            setShowHarborModal(true);
+            return;
+        }
+
         setIsTraveling(true);
         setTravelError(null);
         router.post(
@@ -907,6 +949,15 @@ export default function Dashboard() {
         mapWidth,
         mapHeight,
     ]);
+
+    // Auto-locate on initial load
+    const hasAutoLocated = useRef(false);
+    useEffect(() => {
+        if (!hasAutoLocated.current) {
+            hasAutoLocated.current = true;
+            handleLocateMe();
+        }
+    }, [handleLocateMe]);
 
     const handleMouseDown = (e: React.MouseEvent) => {
         if (e.button === 0) {
@@ -1963,6 +2014,43 @@ export default function Dashboard() {
                     <TravelProgressOverlay status={travel_status} isDev={is_dev} />
                 )}
             </div>
+
+            {/* Cross-Kingdom Travel Modal */}
+            <Dialog open={showHarborModal} onOpenChange={setShowHarborModal}>
+                <DialogContent className="border-stone-700 bg-stone-900">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-stone-100">
+                            <Ship className="h-5 w-5 text-blue-400" />
+                            Sea Travel Required
+                        </DialogTitle>
+                        <DialogDescription className="text-stone-400">
+                            <span className="font-medium text-stone-200">
+                                {harborDestination}
+                            </span>{" "}
+                            is in a different kingdom. You cannot travel there by land.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="mt-4 rounded-lg border border-stone-700 bg-stone-800/50 p-4">
+                        <p className="text-sm text-stone-300">
+                            To reach another kingdom, you must travel to a{" "}
+                            <span className="font-semibold text-blue-400">harbor</span> in your
+                            current kingdom and book passage on a ship.
+                        </p>
+                        <p className="mt-2 text-sm text-stone-400">
+                            Look for port villages marked with an anchor icon (
+                            <Anchor className="inline h-4 w-4 text-blue-400" />) on the map.
+                        </p>
+                    </div>
+                    <div className="mt-4 flex justify-end">
+                        <button
+                            onClick={() => setShowHarborModal(false)}
+                            className="rounded-lg bg-stone-700 px-4 py-2 text-sm font-medium text-stone-200 transition hover:bg-stone-600"
+                        >
+                            Understood
+                        </button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

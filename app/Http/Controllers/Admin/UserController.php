@@ -105,10 +105,16 @@ class UserController extends Controller
             ? \App\Models\DynastyMember::with('dynasty')->find($user->dynasty_member_id)
             : null;
 
-        // Get recent activity
+        // Get recent activity (location-based)
         $activities = LocationActivityLog::where('user_id', $user->id)
             ->orderByDesc('created_at')
             ->limit(50)
+            ->get();
+
+        // Get recent tab activity (for detailed debugging with browser info)
+        $tabActivities = TabActivityLog::where('user_id', $user->id)
+            ->orderByDesc('created_at')
+            ->limit(100)
             ->get();
 
         return Inertia::render('Admin/Users/Show', [
@@ -239,6 +245,17 @@ class UserController extends Controller
                 'description' => $log->description,
                 'location_type' => $log->location_type,
                 'created_at' => $log->created_at->toISOString(),
+            ]),
+            'tabActivities' => $tabActivities->map(fn ($log, $index) => [
+                'id' => $log->id,
+                'route' => $log->route,
+                'method' => $log->method,
+                'tab_id' => $log->tab_id,
+                'is_new_tab' => $log->is_new_tab,
+                'user_agent' => $log->user_agent,
+                'ip_address' => $log->ip_address,
+                'created_at' => $log->created_at->toISOString(),
+                'created_at_formatted' => $log->created_at->format('Y-m-d H:i:s'),
             ]),
             'bankAccounts' => $user->bankAccounts->map(fn ($acc) => [
                 'id' => $acc->id,

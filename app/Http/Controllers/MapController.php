@@ -97,6 +97,7 @@ class MapController extends Controller
             'coordinates_y' => $town->coordinates_y,
             'barony_id' => $town->barony_id,
             'barony_name' => $town->barony?->name,
+            'kingdom_id' => $town->barony?->kingdom_id,
             'kingdom_name' => $town->barony?->kingdom?->name,
             'population' => $town->population,
         ])->toArray();
@@ -115,6 +116,7 @@ class MapController extends Controller
             'coordinates_y' => $village->coordinates_y,
             'barony_id' => $village->barony_id,
             'barony_name' => $village->barony?->name,
+            'kingdom_id' => $village->barony?->kingdom_id,
             'kingdom_name' => $village->barony?->kingdom?->name,
             'population' => $village->population,
             'is_port' => $village->is_port,
@@ -135,6 +137,9 @@ class MapController extends Controller
         $locationId = $user->current_location_id ?? $homeVillage?->id;
 
         $coordinates = $this->getLocationCoordinates($locationType, $locationId);
+
+        // Get player's current kingdom
+        $currentKingdomId = $this->getLocationKingdomId($locationType, $locationId);
 
         // Get travel speed modifiers
         $speedMultiplier = $user->getTravelSpeedMultiplier();
@@ -165,6 +170,7 @@ class MapController extends Controller
             'seasonal_modifier' => $seasonalModifier,
             'agility_bonus' => $agilityBonus,
             'active_horse' => $horseInfo,
+            'current_kingdom_id' => $currentKingdomId,
         ];
     }
 
@@ -189,6 +195,24 @@ class MapController extends Controller
             'x' => $location?->coordinates_x ?? 0,
             'y' => $location?->coordinates_y ?? 0,
         ];
+    }
+
+    /**
+     * Get the kingdom ID for a location.
+     */
+    protected function getLocationKingdomId(string $type, ?int $id): ?int
+    {
+        if (! $id) {
+            return null;
+        }
+
+        return match ($type) {
+            'kingdom' => $id,
+            'barony' => Barony::find($id)?->kingdom_id,
+            'town' => Town::with('barony')->find($id)?->barony?->kingdom_id,
+            'village' => Village::with('barony')->find($id)?->barony?->kingdom_id,
+            default => null,
+        };
     }
 
     /**
