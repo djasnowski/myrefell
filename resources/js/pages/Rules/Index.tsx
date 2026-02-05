@@ -82,7 +82,7 @@ export default function Rules({ canRegister = true }: { canRegister?: boolean })
                             to uphold these rules to ensure a fair and enjoyable realm for everyone.
                         </p>
                         <p className="mt-4 text-sm text-muted-foreground/60">
-                            Last updated: January 2026
+                            Last updated: February 2026
                         </p>
                     </div>
                 </section>
@@ -256,6 +256,18 @@ export default function Rules({ canRegister = true }: { canRegister?: boolean })
                                             Modifying the game client, using packet manipulation
                                             tools, or otherwise tampering with game communications
                                             is prohibited.
+                                        </span>
+                                    </li>
+                                    <li className="flex items-start gap-3">
+                                        <Scroll className="mt-1 h-4 w-4 flex-shrink-0 text-primary" />
+                                        <span>
+                                            <strong className="text-foreground">
+                                                No Tab/Window Manipulation:
+                                            </strong>{" "}
+                                            Opening multiple browser tabs or windows to gain timer
+                                            advantages, bypass cooldowns, or perform actions faster
+                                            than intended is not allowed. Play in a single active
+                                            session at a time.
                                         </span>
                                     </li>
                                 </ul>
