@@ -1,5 +1,5 @@
 import { Link, router } from "@inertiajs/react";
-import { Award, Crown, Gift, LogOut, Settings } from "lucide-react";
+import { Award, Crown, Gift, LogOut, Settings, Trophy } from "lucide-react";
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -75,6 +75,17 @@ export function UserMenuContent({ user }: Props) {
                     >
                         <Gift className="mr-2" />
                         Invite Friends
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="sm:hidden">
+                    <Link
+                        className="block w-full cursor-pointer"
+                        href="/leaderboard"
+                        prefetch
+                        onClick={cleanup}
+                    >
+                        <Trophy className="mr-2" />
+                        Leaderboard
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuGroup>

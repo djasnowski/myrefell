@@ -71,7 +71,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="group gap-2 text-muted-foreground hover:text-foreground"
+                        className="group hidden gap-2 text-muted-foreground hover:text-foreground sm:flex"
                         asChild
                     >
                         <Link href="/leaderboard">
