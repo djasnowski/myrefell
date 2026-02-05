@@ -52,20 +52,24 @@ export default function Banned() {
                         <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-900/30 border-2 border-red-500/50 mb-4">
                             <AlertTriangle className="w-10 h-10 text-red-400" />
                         </div>
-                        <h1 className="font-pixel text-3xl text-red-400 mb-2">Account Suspended</h1>
-                        <p className="font-pixel text-stone-400">Hello, {username}</p>
+                        <h1 className="font-pixel text-2xl text-red-400 mb-2">Account Suspended</h1>
+                        <p className="font-pixel text-sm text-stone-400">Hello, {username}</p>
                     </div>
 
                     {/* Ban Details Card */}
                     <div className="bg-stone-900/50 border border-stone-700 rounded-lg p-6 mb-6">
-                        <h2 className="font-pixel text-lg text-stone-200 mb-4">Ban Details</h2>
+                        <h2 className="font-pixel text-base text-stone-200 mb-4">Ban Details</h2>
 
                         <div className="space-y-4">
                             <div>
                                 <label className="font-pixel text-xs text-stone-500 uppercase">
                                     Reason
                                 </label>
-                                <p className="font-pixel text-stone-300 mt-1">{ban.reason}</p>
+                                <div className="font-pixel text-sm text-stone-300 mt-1 space-y-2">
+                                    {ban.reason.split("\n").map((line, i) => (
+                                        <p key={i}>{line}</p>
+                                    ))}
+                                </div>
                             </div>
 
                             <div>
@@ -89,15 +93,9 @@ export default function Banned() {
                     {/* Appeal Section */}
                     {!showAppealForm ? (
                         <div className="bg-stone-900/30 border border-stone-700 rounded-lg p-6 mb-6">
-                            <h3 className="font-pixel text-stone-200 mb-2">
-                                Think this was a mistake?
-                            </h3>
-                            <p className="font-pixel text-sm text-stone-400 mb-4">
-                                You can submit an appeal to have your ban reviewed by our team.
-                            </p>
                             <button
                                 onClick={() => setShowAppealForm(true)}
-                                className="w-full py-3 px-4 bg-amber-600 hover:bg-amber-500 text-white font-pixel rounded-lg transition flex items-center justify-center gap-2"
+                                className="w-full py-2.5 px-4 bg-amber-600 hover:bg-amber-500 text-white font-pixel text-sm rounded-lg transition flex items-center justify-center gap-2"
                             >
                                 <Send className="w-4 h-4" />
                                 Submit an Appeal
@@ -108,10 +106,12 @@ export default function Banned() {
                             onSubmit={handleSubmit}
                             className="bg-stone-900/30 border border-stone-700 rounded-lg p-6 mb-6"
                         >
-                            <h3 className="font-pixel text-stone-200 mb-4">Submit Appeal</h3>
+                            <h3 className="font-pixel text-sm text-stone-200 mb-4">
+                                Submit Appeal
+                            </h3>
                             <div className="mb-4">
                                 <label className="font-pixel text-xs text-stone-500 uppercase block mb-2">
-                                    Your Appeal (minimum 20 characters)
+                                    Your Appeal
                                 </label>
                                 <textarea
                                     value={data.appeal}
@@ -129,14 +129,14 @@ export default function Banned() {
                                 <button
                                     type="button"
                                     onClick={() => setShowAppealForm(false)}
-                                    className="flex-1 py-3 px-4 bg-stone-700 hover:bg-stone-600 text-stone-200 font-pixel rounded-lg transition"
+                                    className="flex-1 py-2.5 px-4 bg-stone-700 hover:bg-stone-600 text-stone-200 font-pixel text-sm rounded-lg transition"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="flex-1 py-3 px-4 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-pixel rounded-lg transition flex items-center justify-center gap-2"
+                                    className="flex-1 py-2.5 px-4 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-pixel text-sm rounded-lg transition flex items-center justify-center gap-2"
                                 >
                                     {processing ? (
                                         "Submitting..."
