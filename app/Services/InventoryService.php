@@ -158,6 +158,38 @@ class InventoryService
     }
 
     /**
+     * Calculate how many empty inventory slots are needed to hold a given quantity of an item,
+     * accounting for existing partial stacks.
+     */
+    public function slotsNeededForItem(User $player, Item $item, int $quantity): int
+    {
+        $remaining = $quantity;
+
+        // If stackable, account for space in existing partial stacks
+        if ($item->stackable) {
+            $existingSlots = $player->inventory()
+                ->where('item_id', $item->id)
+                ->where('quantity', '<', $item->max_stack)
+                ->get();
+
+            foreach ($existingSlots as $slot) {
+                $canAdd = $item->max_stack - $slot->quantity;
+                $remaining -= $canAdd;
+
+                if ($remaining <= 0) {
+                    return 0;
+                }
+            }
+
+            // Remaining items need new slots, each holding up to max_stack
+            return (int) ceil($remaining / $item->max_stack);
+        }
+
+        // Non-stackable: each item needs its own slot
+        return $remaining;
+    }
+
+    /**
      * Get the number of free inventory slots.
      */
     public function freeSlots(User $player): int

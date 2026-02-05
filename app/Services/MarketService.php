@@ -351,10 +351,13 @@ class MarketService
         }
 
         // Check inventory space
-        if (! $this->inventoryService->hasEmptySlot($user)) {
+        $slotsNeeded = $this->inventoryService->slotsNeededForItem($user, $item, $quantity);
+        $freeSlots = $this->inventoryService->freeSlots($user);
+
+        if ($slotsNeeded > $freeSlots) {
             return [
                 'success' => false,
-                'message' => 'Your inventory is full.',
+                'message' => 'You don\'t have enough inventory space.',
             ];
         }
 
@@ -365,8 +368,10 @@ class MarketService
             // Remove from stockpile
             $stockpile->removeQuantity($quantity);
 
-            // Add to player inventory
-            $this->inventoryService->addItem($user, $item, $quantity);
+            // Add to player inventory - if this fails, the transaction will roll back
+            if (! $this->inventoryService->addItem($user, $item, $quantity)) {
+                throw new \RuntimeException('Failed to add items to inventory.');
+            }
 
             // Record transaction
             MarketTransaction::create([

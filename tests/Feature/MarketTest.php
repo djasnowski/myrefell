@@ -375,6 +375,109 @@ test('market access denied while traveling', function () {
     expect($service->canAccessMarket($user))->toBeFalse();
 });
 
+test('player cannot buy non-stackable items exceeding inventory space', function () {
+    $village = Village::create([
+        'name' => 'Test Village',
+        'description' => 'A test village',
+        'biome' => 'plains',
+        'granary_capacity' => 500,
+    ]);
+
+    $item = Item::create([
+        'name' => 'Bronze Sword',
+        'description' => 'A bronze sword',
+        'type' => 'weapon',
+        'stackable' => false,
+        'max_stack' => 1,
+        'base_value' => 10,
+    ]);
+
+    $user = User::factory()->create([
+        'gold' => 10000,
+        'current_location_type' => 'village',
+        'current_location_id' => $village->id,
+    ]);
+
+    // Fill inventory to leave only 2 empty slots
+    for ($i = 0; $i < PlayerInventory::MAX_SLOTS - 2; $i++) {
+        PlayerInventory::create([
+            'player_id' => $user->id,
+            'item_id' => $item->id,
+            'slot_number' => $i,
+            'quantity' => 1,
+        ]);
+    }
+
+    // Add stock
+    $stockpile = LocationStockpile::getOrCreate('village', $village->id, $item->id);
+    $stockpile->addQuantity(50);
+
+    $service = app(MarketService::class);
+
+    // Trying to buy 5 swords with only 2 slots should fail
+    $result = $service->buyItem($user, $item->id, 5);
+
+    expect($result['success'])->toBeFalse();
+    expect($result['message'])->toBe("You don't have enough inventory space.");
+
+    // Gold should not have been deducted
+    $user->refresh();
+    expect($user->gold)->toBe(10000);
+
+    // Stockpile should not have been reduced
+    $stockpile->refresh();
+    expect($stockpile->quantity)->toBe(50);
+});
+
+test('player can buy items that fit into existing stacks without needing new slots', function () {
+    $village = Village::create([
+        'name' => 'Test Village',
+        'description' => 'A test village',
+        'biome' => 'plains',
+        'granary_capacity' => 500,
+    ]);
+
+    $item = Item::create([
+        'name' => 'Iron Ore',
+        'description' => 'Raw iron ore',
+        'type' => 'resource',
+        'stackable' => true,
+        'max_stack' => 100,
+        'base_value' => 10,
+    ]);
+
+    $user = User::factory()->create([
+        'gold' => 10000,
+        'current_location_type' => 'village',
+        'current_location_id' => $village->id,
+    ]);
+
+    // Fill all slots, but leave room in one existing stack
+    for ($i = 0; $i < PlayerInventory::MAX_SLOTS; $i++) {
+        PlayerInventory::create([
+            'player_id' => $user->id,
+            'item_id' => $item->id,
+            'slot_number' => $i,
+            'quantity' => ($i === 0) ? 50 : 100, // slot 0 has room for 50 more
+        ]);
+    }
+
+    // Add stock
+    $stockpile = LocationStockpile::getOrCreate('village', $village->id, $item->id);
+    $stockpile->addQuantity(100);
+
+    $service = app(MarketService::class);
+
+    // Buying 10 should succeed - fits into existing partial stack
+    $result = $service->buyItem($user, $item->id, 10);
+
+    expect($result['success'])->toBeTrue();
+
+    // The partial stack should now have 60
+    $slot = $user->inventory()->where('slot_number', 0)->first();
+    expect($slot->quantity)->toBe(60);
+});
+
 test('transactions are recorded correctly', function () {
     $village = Village::create([
         'name' => 'Test Village',
