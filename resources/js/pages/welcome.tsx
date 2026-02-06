@@ -110,30 +110,30 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
 
                 {/* Navigation */}
                 <nav className="fixed top-0 z-50 w-full border-b border-border/50 bg-background/90 backdrop-blur-sm">
-                    <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+                    <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6 md:py-4">
                         <Link href="/" className="flex items-center gap-2">
-                            <Crown className="h-8 w-8 text-primary" />
-                            <span className="font-[Cinzel] text-2xl font-bold tracking-wide text-primary">
+                            <Crown className="h-6 w-6 md:h-8 md:w-8 text-primary" />
+                            <span className="font-[Cinzel] text-xl md:text-2xl font-bold tracking-wide text-primary">
                                 Myrefell
                             </span>
                         </Link>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 md:gap-4">
                             <Link
                                 href="/features"
-                                className="px-4 py-2 text-muted-foreground transition hover:text-primary"
+                                className="hidden sm:block px-4 py-2 text-muted-foreground transition hover:text-primary"
                             >
                                 Features
                             </Link>
                             <Link
                                 href="/leaderboard"
-                                className="px-4 py-2 text-muted-foreground transition hover:text-primary"
+                                className="hidden sm:block px-4 py-2 text-muted-foreground transition hover:text-primary"
                             >
                                 Highscores
                             </Link>
                             {auth.user ? (
                                 <Link
                                     href={dashboard()}
-                                    className="rounded-lg bg-primary px-6 py-2 font-semibold text-primary-foreground transition hover:bg-primary/90"
+                                    className="rounded-lg bg-primary px-4 py-2 md:px-6 text-sm md:text-base font-semibold text-primary-foreground transition hover:bg-primary/90"
                                 >
                                     Enter World
                                 </Link>
@@ -141,16 +141,19 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                 <>
                                     <Link
                                         href={login()}
-                                        className="px-4 py-2 text-muted-foreground transition hover:text-primary"
+                                        className="px-3 py-2 text-sm md:text-base text-muted-foreground transition hover:text-primary"
                                     >
                                         Sign In
                                     </Link>
                                     {canRegister && (
                                         <Link
                                             href={register()}
-                                            className="rounded-lg bg-primary px-6 py-2 font-semibold text-primary-foreground transition hover:bg-primary/90"
+                                            className="rounded-lg bg-primary px-4 py-2 md:px-6 text-sm md:text-base font-semibold text-primary-foreground transition hover:bg-primary/90"
                                         >
-                                            Begin Your Journey
+                                            <span className="hidden sm:inline">
+                                                Begin Your Journey
+                                            </span>
+                                            <span className="sm:hidden">Register</span>
                                         </Link>
                                     )}
                                 </>
@@ -160,30 +163,30 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                 </nav>
 
                 {/* Hero Section */}
-                <section className="relative flex min-h-screen items-center justify-center pt-20">
-                    <div className="relative z-10 mx-auto max-w-5xl px-6 text-center">
-                        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-sm text-primary">
-                            <Crown className="h-4 w-4" />
+                <section className="relative flex min-h-screen items-center justify-center pt-16 md:pt-20">
+                    <div className="relative z-10 mx-auto max-w-5xl px-4 md:px-6 text-center">
+                        <div className="mb-4 md:mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm text-primary">
+                            <Crown className="h-3 w-3 md:h-4 md:w-4" />
                             <span>A Living Medieval World</span>
                         </div>
 
-                        <h1 className="mb-6 font-[Cinzel] text-5xl font-bold leading-tight text-foreground md:text-7xl">
+                        <h1 className="mb-4 md:mb-6 font-[Cinzel] text-3xl sm:text-4xl font-bold leading-tight text-foreground md:text-7xl">
                             Rise from Peasant
                             <br />
                             <span className="text-primary">to King</span>
                         </h1>
 
-                        <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
+                        <p className="mx-auto mb-6 md:mb-10 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-xl">
                             In Myrefell, you are one person in a persistent medieval world. Train
                             your combat skills, master crafts, climb the social ladder, and shape
                             history through politics, war, and faith.
                         </p>
 
-                        <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+                        <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
                             {auth.user ? (
                                 <Link
                                     href={dashboard()}
-                                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-8 py-4 text-lg font-semibold text-primary-foreground transition hover:bg-primary/90"
+                                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 md:px-8 md:py-4 text-base md:text-lg font-semibold text-primary-foreground transition hover:bg-primary/90"
                                 >
                                     <MapPin className="h-5 w-5" />
                                     Enter the World
@@ -192,14 +195,14 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                 <>
                                     <Link
                                         href={register()}
-                                        className="inline-flex items-center gap-2 rounded-lg bg-primary px-8 py-4 text-lg font-semibold text-primary-foreground transition hover:bg-primary/90"
+                                        className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 md:px-8 md:py-4 text-base md:text-lg font-semibold text-primary-foreground transition hover:bg-primary/90"
                                     >
                                         <Scroll className="h-5 w-5" />
                                         Create Your Character
                                     </Link>
                                     <Link
                                         href={login()}
-                                        className="inline-flex items-center gap-2 rounded-lg border-2 border-border px-8 py-4 text-lg font-semibold text-muted-foreground transition hover:border-primary hover:text-primary"
+                                        className="inline-flex items-center gap-2 rounded-lg border-2 border-border px-6 py-3 md:px-8 md:py-4 text-base md:text-lg font-semibold text-muted-foreground transition hover:border-primary hover:text-primary"
                                     >
                                         Continue Your Story
                                     </Link>
@@ -208,7 +211,7 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                         </div>
 
                         {/* Quick Stats */}
-                        <div className="mt-16 grid grid-cols-2 gap-4 md:grid-cols-4">
+                        <div className="mt-8 md:mt-16 grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-4">
                             {[
                                 { value: "4", label: "Kingdoms" },
                                 { value: "16", label: "Skills to Master" },
@@ -217,12 +220,12 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                             ].map((stat) => (
                                 <div
                                     key={stat.label}
-                                    className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-4"
+                                    className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-3 md:p-4"
                                 >
-                                    <div className="text-3xl font-bold text-primary">
+                                    <div className="text-2xl md:text-3xl font-bold text-primary">
                                         {stat.value}
                                     </div>
-                                    <div className="text-sm text-muted-foreground">
+                                    <div className="text-xs md:text-sm text-muted-foreground">
                                         {stat.label}
                                     </div>
                                 </div>
@@ -231,13 +234,13 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
 
                         {/* Players Online */}
                         {online_count !== undefined && online_count > 0 && (
-                            <div className="mt-6 flex justify-center">
-                                <div className="inline-flex items-center gap-3 rounded-xl border border-green-500/30 bg-green-900/20 backdrop-blur-sm px-6 py-3">
-                                    <span className="relative flex h-3 w-3">
+                            <div className="mt-4 md:mt-6 flex justify-center">
+                                <div className="inline-flex items-center gap-2 md:gap-3 rounded-xl border border-green-500/30 bg-green-900/20 backdrop-blur-sm px-4 py-2 md:px-6 md:py-3">
+                                    <span className="relative flex h-2.5 w-2.5 md:h-3 md:w-3">
                                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-                                        <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500"></span>
+                                        <span className="relative inline-flex h-2.5 w-2.5 md:h-3 md:w-3 rounded-full bg-green-500"></span>
                                     </span>
-                                    <span className="font-pixel text-lg text-green-300">
+                                    <span className="font-pixel text-sm md:text-lg text-green-300">
                                         {online_count} {online_count === 1 ? "player" : "players"}{" "}
                                         online
                                     </span>
@@ -247,9 +250,9 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                     </div>
 
                     {/* Scroll Indicator */}
-                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-                        <div className="h-12 w-6 rounded-full border-2 border-border">
-                            <div className="mx-auto mt-2 h-3 w-1 rounded-full bg-primary" />
+                    <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+                        <div className="h-10 w-5 md:h-12 md:w-6 rounded-full border-2 border-border">
+                            <div className="mx-auto mt-1.5 md:mt-2 h-2.5 md:h-3 w-1 rounded-full bg-primary" />
                         </div>
                     </div>
                 </section>
