@@ -128,9 +128,9 @@ export default function DungeonExplore() {
                 });
 
                 if (data.data?.status === "completed" || data.data?.status === "failed") {
-                    router.reload();
+                    router.reload({ preserveScroll: true });
                 } else {
-                    router.reload({ only: ["session", "player_stats"] });
+                    router.reload({ only: ["session", "player_stats"], preserveScroll: true });
                 }
             } else {
                 if (data.data?.status === "failed") {
@@ -168,7 +168,7 @@ export default function DungeonExplore() {
 
             if (data.success) {
                 setLastResult({ message: data.message });
-                router.reload();
+                router.reload({ preserveScroll: true });
             } else {
                 setError(data.message);
             }
@@ -202,7 +202,7 @@ export default function DungeonExplore() {
 
             if (data.success) {
                 setLastResult({ message: data.message });
-                router.reload({ only: ["player_stats", "food"] });
+                router.reload({ only: ["player_stats", "food"], preserveScroll: true });
             } else {
                 setError(data.message);
             }
@@ -237,7 +237,7 @@ export default function DungeonExplore() {
             });
 
             await response.json();
-            router.reload();
+            router.reload({ preserveScroll: true });
         } catch {
             setError("Failed to abandon dungeon");
         } finally {
