@@ -6,6 +6,7 @@ use App\Models\Barony;
 use App\Models\Kingdom;
 use App\Models\LocationNpc;
 use App\Models\PlayerRole;
+use App\Models\PlayerTitle;
 use App\Models\Role;
 use App\Models\Town;
 use App\Models\User;
@@ -276,6 +277,9 @@ class RoleService
                 ->where('location_id', $locationId)
                 ->update(['is_active' => false]);
 
+            // Grant title matching the role
+            $this->grantRoleTitle($user, $role, $locationType, $locationId);
+
             // Update the ruler user_id on the location model for primary ruler roles
             $this->updateLocationRuler($role->slug, $locationType, $locationId, $user->id);
 
@@ -285,6 +289,80 @@ class RoleService
                 'player_role' => $playerRole,
             ];
         });
+    }
+
+    /**
+     * Role tier to appropriate social title mapping.
+     * In medieval society, holding an office conferred a minimum social standing.
+     */
+    protected const ROLE_TIER_TO_TITLE = [
+        1 => ['title' => 'peasant', 'tier' => 2],    // Menial roles - no elevation
+        2 => ['title' => 'freeman', 'tier' => 3],     // Skilled tradesmen were free citizens
+        3 => ['title' => 'freeman', 'tier' => 3],     // Guild officers, captains, professionals
+        4 => ['title' => 'yeoman', 'tier' => 4],      // Civic leaders: mayors, elders, marshals
+        5 => ['title' => 'baron', 'tier' => 8],       // Landed nobility
+        6 => ['title' => 'duke', 'tier' => 12],       // High nobility
+        7 => ['title' => 'king', 'tier' => 14],       // Royalty
+    ];
+
+    /**
+     * Grant a title to a user based on their new role.
+     * Maps the role's tier to an appropriate medieval social title.
+     */
+    protected function grantRoleTitle(User $user, Role $role, string $locationType, int $locationId): void
+    {
+        $mapping = self::ROLE_TIER_TO_TITLE[$role->tier] ?? self::ROLE_TIER_TO_TITLE[1];
+        $title = $mapping['title'];
+        $tier = $mapping['tier'];
+
+        // Only upgrade title if new title tier is higher than current
+        if ($tier <= ($user->title_tier ?? 2)) {
+            return;
+        }
+
+        // Revoke existing active titles for this user
+        PlayerTitle::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->update([
+                'is_active' => false,
+                'revoked_at' => now(),
+            ]);
+
+        // Create new title
+        PlayerTitle::create([
+            'user_id' => $user->id,
+            'title' => $title,
+            'tier' => $tier,
+            'domain_type' => $locationType,
+            'domain_id' => $locationId,
+            'acquisition_method' => 'appointment',
+            'is_active' => true,
+            'granted_at' => now(),
+            'legitimacy' => 50,
+        ]);
+
+        // Update user's primary title
+        $user->primary_title = $title;
+        $user->title_tier = $tier;
+        $user->save();
+    }
+
+    /**
+     * Revert a user's title back to peasant when they lose their role.
+     */
+    protected function revertTitle(User $user): void
+    {
+        // Revoke active titles
+        PlayerTitle::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->update([
+                'is_active' => false,
+                'revoked_at' => now(),
+            ]);
+
+        $user->primary_title = 'peasant';
+        $user->title_tier = 2;
+        $user->save();
     }
 
     /**
@@ -301,6 +379,9 @@ class RoleService
 
         return DB::transaction(function () use ($playerRole, $removedBy, $reason) {
             $playerRole->remove($removedBy, $reason);
+
+            // Revert title back to peasant
+            $this->revertTitle($playerRole->user);
 
             // Reactivate NPC if exists
             $this->activateNpcIfNeeded($playerRole->role_id, $playerRole->location_type, $playerRole->location_id);
@@ -336,6 +417,9 @@ class RoleService
 
         return DB::transaction(function () use ($playerRole) {
             $playerRole->resign();
+
+            // Revert title back to peasant
+            $this->revertTitle($playerRole->user);
 
             // Reactivate NPC if exists
             $this->activateNpcIfNeeded($playerRole->role_id, $playerRole->location_type, $playerRole->location_id);
