@@ -23,6 +23,7 @@ class ForgeController extends Controller
     private const METAL_TIERS = [
         'Bronze' => ['base_level' => 1, 'color' => 'orange'],
         'Iron' => ['base_level' => 15, 'color' => 'gray'],
+        'Silver' => ['base_level' => 25, 'color' => 'zinc'],
         'Steel' => ['base_level' => 30, 'color' => 'slate'],
         'Gold' => ['base_level' => 40, 'color' => 'yellow'],
         'Mithril' => ['base_level' => 45, 'color' => 'blue'],
