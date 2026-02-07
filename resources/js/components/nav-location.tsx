@@ -552,40 +552,6 @@ export function NavLocation() {
 
             {/* Favorite Services */}
             <NavFavorites />
-
-            {/* Travel Destinations */}
-            {travelDestinations.length > 0 && (
-                <SidebarGroup className="px-2 py-0">
-                    <SidebarGroupLabel>Nearby ({travelDestinations.length})</SidebarGroupLabel>
-                    <SidebarMenu>
-                        {travelDestinations.slice(0, 5).map((dest) => {
-                            const isLoading = travelingTo === `${dest.type}-${dest.id}`;
-                            const Icon = getDestinationIcon(dest.type);
-                            return (
-                                <SidebarMenuItem key={`${dest.type}-${dest.id}`}>
-                                    <SidebarMenuButton
-                                        onClick={() => handleTravel(dest)}
-                                        disabled={isLoading}
-                                        tooltip={{
-                                            children: `${dest.name} (${dest.travel_time} min)`,
-                                        }}
-                                    >
-                                        {isLoading ? (
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <Icon className="h-4 w-4" />
-                                        )}
-                                        <span className="flex-1 truncate">{dest.name}</span>
-                                        <span className="text-[10px] text-sidebar-foreground/50">
-                                            {dest.travel_time}m
-                                        </span>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            );
-                        })}
-                    </SidebarMenu>
-                </SidebarGroup>
-            )}
         </>
     );
 }

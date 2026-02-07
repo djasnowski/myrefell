@@ -905,7 +905,11 @@ export default function Inventory() {
     };
 
     const isConsumable = (item: Item): boolean => {
-        return item.type === "consumable" && (item.hp_bonus > 0 || item.energy_bonus > 0);
+        // Consumable if it has hp/energy bonus OR if it's a potion (buff potions have no hp/energy but give stat buffs)
+        return (
+            item.type === "consumable" &&
+            (item.hp_bonus > 0 || item.energy_bonus > 0 || item.subtype === "potion")
+        );
     };
 
     const isDonatable = (item: Item): boolean => {

@@ -9,6 +9,21 @@ interface HpBonus {
     amount: number;
 }
 
+interface BuffEffect {
+    key: string;
+    value: number;
+    label: string;
+}
+
+interface ActiveBuff {
+    name: string;
+    type: "blessing" | "hq_prayer" | "belief" | "active_belief" | "potion";
+    effects: BuffEffect[];
+    religion?: string;
+    expires_at: string | null;
+    minutes_remaining: number | null;
+}
+
 interface SidebarData {
     player: {
         id: number;
@@ -50,6 +65,7 @@ interface SidebarData {
         regen_bonuses: { source: string; amount: string }[];
         seconds_until_next: number | null;
     };
+    active_buffs: ActiveBuff[];
 }
 
 function getIconComponent(
@@ -76,6 +92,44 @@ function StatBar({ current, max, color }: { current: number; max: number; color:
                 style={{ width: `${percentage}%` }}
             />
         </div>
+    );
+}
+
+function BuffTimer({
+    expiresAt,
+    minutesRemaining,
+}: {
+    expiresAt: string;
+    minutesRemaining: number;
+}) {
+    const [timeLeft, setTimeLeft] = useState(minutesRemaining * 60);
+
+    useEffect(() => {
+        // Calculate actual seconds remaining from expiry time
+        const expiryDate = new Date(expiresAt);
+        const now = new Date();
+        const actualSeconds = Math.max(
+            0,
+            Math.floor((expiryDate.getTime() - now.getTime()) / 1000),
+        );
+        setTimeLeft(actualSeconds);
+
+        const interval = setInterval(() => {
+            setTimeLeft((prev) => Math.max(0, prev - 1));
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [expiresAt]);
+
+    if (timeLeft <= 0) return <span className="text-red-400">Expired</span>;
+
+    const minutes = Math.floor(timeLeft / 60);
+    const secs = timeLeft % 60;
+
+    return (
+        <span>
+            {minutes}:{secs.toString().padStart(2, "0")}
+        </span>
     );
 }
 
@@ -125,7 +179,7 @@ export function NavPlayerInfo() {
 
     if (!sidebar) return null;
 
-    const { player, energy_info } = sidebar;
+    const { player, energy_info, active_buffs } = sidebar;
 
     const titleDisplay = player.primary_title
         ? player.primary_title.charAt(0).toUpperCase() + player.primary_title.slice(1)
@@ -317,6 +371,119 @@ export function NavPlayerInfo() {
                     {player.gold.toLocaleString()}
                 </span>
             </div>
+
+            {/* Active Buffs (blessings, beliefs, potions) */}
+            {active_buffs && active_buffs.length > 0 && (
+                <div className="mt-2 rounded border border-violet-600/30 bg-violet-900/20 px-2 py-1.5">
+                    <div className="mb-1 flex items-center gap-1">
+                        <LucideIcons.Sparkles className="h-3 w-3 text-violet-400" />
+                        <span className="font-pixel text-[9px] text-violet-300">
+                            Active Buffs ({active_buffs.length})
+                        </span>
+                    </div>
+                    <div className="space-y-0.5">
+                        {active_buffs.map((buff, idx) => {
+                            const typeColors: Record<
+                                string,
+                                { icon: string; text: string; bg: string }
+                            > = {
+                                blessing: {
+                                    icon: "text-yellow-400",
+                                    text: "text-yellow-200",
+                                    bg: "Blessing",
+                                },
+                                hq_prayer: {
+                                    icon: "text-purple-400",
+                                    text: "text-purple-200",
+                                    bg: "HQ Prayer",
+                                },
+                                belief: {
+                                    icon: "text-blue-400",
+                                    text: "text-blue-200",
+                                    bg: "Belief",
+                                },
+                                active_belief: {
+                                    icon: "text-orange-400",
+                                    text: "text-orange-200",
+                                    bg: "Cult Ability",
+                                },
+                                potion: {
+                                    icon: "text-emerald-400",
+                                    text: "text-emerald-200",
+                                    bg: "Potion",
+                                },
+                            };
+                            const colors = typeColors[buff.type] || typeColors.blessing;
+                            const TypeIcon =
+                                buff.type === "potion"
+                                    ? LucideIcons.FlaskConical
+                                    : buff.type === "blessing"
+                                      ? LucideIcons.Sparkles
+                                      : buff.type === "hq_prayer"
+                                        ? LucideIcons.Church
+                                        : LucideIcons.Scroll;
+
+                            return (
+                                <TooltipProvider key={`${buff.type}-${buff.name}-${idx}`}>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex cursor-help items-center gap-1.5 font-pixel text-[9px]">
+                                                <TypeIcon
+                                                    className={`h-3 w-3 shrink-0 ${colors.icon}`}
+                                                />
+                                                <span className={`flex-1 truncate ${colors.text}`}>
+                                                    {buff.name}
+                                                </span>
+                                                {buff.minutes_remaining !== null &&
+                                                    buff.minutes_remaining > 0 && (
+                                                        <span className="text-stone-500 text-[8px]">
+                                                            {buff.minutes_remaining}m
+                                                        </span>
+                                                    )}
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent
+                                            side="right"
+                                            className="bg-stone-900 border-stone-700 max-w-60"
+                                        >
+                                            <div className="font-pixel text-xs">
+                                                <div className={`mb-1 ${colors.text}`}>
+                                                    {buff.name}
+                                                </div>
+                                                <div className="text-stone-500 text-[9px] mb-1">
+                                                    {colors.bg}
+                                                    {buff.religion ? ` (${buff.religion})` : ""}
+                                                </div>
+                                                <div className="space-y-0.5 border-t border-stone-700 pt-1">
+                                                    {buff.effects.map((effect, i) => (
+                                                        <div
+                                                            key={i}
+                                                            className={`text-[10px] ${effect.value > 0 ? "text-green-400" : "text-red-400"}`}
+                                                        >
+                                                            {effect.label}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                {buff.minutes_remaining !== null &&
+                                                    buff.minutes_remaining > 0 && (
+                                                        <div className="text-stone-500 text-[9px] mt-1 border-t border-stone-700 pt-1">
+                                                            {buff.minutes_remaining}m remaining
+                                                        </div>
+                                                    )}
+                                                {buff.minutes_remaining === null && (
+                                                    <div className="text-stone-500 text-[9px] mt-1 border-t border-stone-700 pt-1">
+                                                        Permanent (while member)
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
             {/* Role & Job */}
             {(player.role || player.job) && (

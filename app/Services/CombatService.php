@@ -27,7 +27,8 @@ class CombatService
         protected InventoryService $inventoryService,
         protected BlessingEffectService $blessingEffectService,
         protected BeliefEffectService $beliefEffectService,
-        protected InfirmaryService $infirmaryService
+        protected InfirmaryService $infirmaryService,
+        protected PotionBuffService $potionBuffService
     ) {}
 
     /**
@@ -445,8 +446,18 @@ class CombatService
         $attackBonus += $allCombatBonus;
         $strengthBonus += $allCombatBonus;
 
-        // Hit chance: based on attack level vs monster defense + blessing bonus
-        $hitChance = 50 + ($attackLevel - $monster->defense_level) * 2 + $equipment['atk_bonus'] + $attackBonus;
+        // Get belief bonuses
+        $attackBonus += (int) $this->beliefEffectService->getEffect($player, 'attack_bonus');
+        $strengthBonus += (int) $this->beliefEffectService->getEffect($player, 'strength_bonus');
+
+        // Apply potion buffs (percentage boost to base levels + bonuses)
+        $effectiveAttack = $attackLevel + $attackBonus;
+        $effectiveStrength = $strengthLevel + $strengthBonus;
+        $effectiveAttack = $this->potionBuffService->applyAttackBuff($player, $effectiveAttack);
+        $effectiveStrength = $this->potionBuffService->applyStrengthBuff($player, $effectiveStrength);
+
+        // Hit chance: based on effective attack (with buffs) vs monster defense
+        $hitChance = 50 + ($effectiveAttack - $monster->defense_level) * 2 + $equipment['atk_bonus'];
         $hitChance = max(10, min(95, $hitChance)); // Clamp between 10% and 95%
 
         $hit = rand(1, 100) <= $hitChance;
@@ -455,8 +466,8 @@ class CombatService
             return ['hit' => false, 'damage' => 0];
         }
 
-        // Damage calculation: strength level + equipment bonus + blessing bonus
-        $baseDamage = $strengthLevel + $equipment['str_bonus'] + $strengthBonus;
+        // Damage calculation: effective strength (with buffs) + equipment bonus
+        $baseDamage = $effectiveStrength + $equipment['str_bonus'];
         $maxHit = (int) floor($baseDamage * 0.5);
         $damage = rand(1, max(1, $maxHit));
 
@@ -503,6 +514,9 @@ class CombatService
         // Apply all combat stats bonus (from HQ prayer)
         $defenseBonus += (int) $this->blessingEffectService->getEffect($player, 'all_combat_stats_bonus');
 
+        // Get belief defense bonus
+        $defenseBonus += (int) $this->beliefEffectService->getEffect($player, 'defense_bonus');
+
         // Apply defense penalty from cult beliefs (Assassin's Creed)
         $defensePenalty = $this->beliefEffectService->getEffect($player, 'defense_penalty');
         if ($defensePenalty < 0) {
@@ -510,8 +524,11 @@ class CombatService
             $defenseBonus += (int) $defensePenalty;
         }
 
-        // Hit chance (defense bonus reduces monster's chance to hit)
-        $hitChance = 50 + ($monster->attack_level - $defenseLevel - $equipment['def_bonus'] - $defenseBonus) * 2;
+        // Apply potion buff to defense (includes all bonuses)
+        $effectiveDefense = $this->potionBuffService->applyDefenseBuff($player, $defenseLevel + $defenseBonus);
+
+        // Hit chance (effective defense reduces monster's chance to hit)
+        $hitChance = 50 + ($monster->attack_level - $effectiveDefense - $equipment['def_bonus']) * 2;
         $hitChance = max(10, min(95, $hitChance));
 
         $hit = rand(1, 100) <= $hitChance;

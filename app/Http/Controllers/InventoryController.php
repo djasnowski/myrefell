@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LocationStockpile;
 use App\Models\PlayerInventory;
+use App\Services\PotionBuffService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -248,7 +249,7 @@ class InventoryController extends Controller
     /**
      * Consume an item (eat food, drink potion, use medical supplies).
      */
-    public function consume(Request $request)
+    public function consume(Request $request, PotionBuffService $potionBuffService)
     {
         $request->validate([
             'slot' => 'required|integer|min:0|max:'.(PlayerInventory::MAX_SLOTS - 1),
@@ -267,7 +268,20 @@ class InventoryController extends Controller
             return back()->withErrors(['error' => 'This item cannot be consumed.']);
         }
 
-        // Check if item has any effect
+        // Check if this is a buff potion
+        if ($potionBuffService->isBuffPotion($item)) {
+            $result = $potionBuffService->consumePotion($player, $slot->id);
+
+            if ($result['success']) {
+                $buffs = implode(', ', $result['buffs_applied']);
+
+                return back()->with('success', "{$result['message']} {$buffs} for {$result['duration_minutes']} minutes.");
+            }
+
+            return back()->withErrors(['error' => $result['message']]);
+        }
+
+        // Check if item has any effect (for non-buff consumables)
         if ($item->hp_bonus <= 0 && $item->energy_bonus <= 0) {
             return back()->withErrors(['error' => 'This item has no consumable effect.']);
         }

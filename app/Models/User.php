@@ -244,6 +244,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the player's active potion buffs.
+     */
+    public function potionBuffs(): HasMany
+    {
+        return $this->hasMany(PotionBuff::class);
+    }
+
+    /**
      * Get all titles held by this user.
      */
     public function titles(): HasMany

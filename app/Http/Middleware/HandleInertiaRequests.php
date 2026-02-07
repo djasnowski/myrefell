@@ -7,6 +7,8 @@ use App\Services\BlessingEffectService;
 use App\Services\EnergyService;
 use App\Services\InfirmaryService;
 use App\Services\OnlinePlayersService;
+use App\Services\PotionBuffService;
+use App\Services\SkillBonusService;
 use App\Services\TravelService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -28,7 +30,9 @@ class HandleInertiaRequests extends Middleware
         protected OnlinePlayersService $onlinePlayersService,
         protected BlessingEffectService $blessingEffectService,
         protected BeliefEffectService $beliefEffectService,
-        protected InfirmaryService $infirmaryService
+        protected InfirmaryService $infirmaryService,
+        protected PotionBuffService $potionBuffService,
+        protected SkillBonusService $skillBonusService
     ) {}
 
     /**
@@ -175,6 +179,8 @@ class HandleInertiaRequests extends Middleware
             'favorites' => $this->getServiceFavorites($player),
             'can_play_minigame' => \App\Models\MinigamePlay::canPlayToday($player->id),
             'infirmary' => $this->infirmaryService->getInfirmaryStatus($player),
+            'active_buffs' => $this->skillBonusService->getAllActiveBuffs($player),
+            'skill_bonuses' => $this->skillBonusService->getSkillBonuses($player),
         ];
     }
 
