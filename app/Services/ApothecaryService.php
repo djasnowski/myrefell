@@ -310,7 +310,7 @@ class ApothecaryService
      */
     public function canBrew(User $user): bool
     {
-        if ($user->isTraveling()) {
+        if ($user->isTraveling() || $user->isInInfirmary()) {
             return false;
         }
 

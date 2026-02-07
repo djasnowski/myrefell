@@ -324,6 +324,19 @@ class CraftingService
             ];
         }
 
+        // Add Silver Bar smelting recipe
+        $recipes['silver_bar'] = [
+            'name' => 'Silver Bar',
+            'category' => 'smelting',
+            'skill' => 'smithing',
+            'required_level' => 25,
+            'xp_reward' => 28,
+            'energy_cost' => 3,
+            'task_type' => 'smelt',
+            'materials' => [['name' => 'Silver Ore', 'quantity' => 1]],
+            'output' => ['name' => 'Silver Bar', 'quantity' => 1],
+        ];
+
         // Add Gold Bar smelting recipe
         $recipes['gold_bar'] = [
             'name' => 'Gold Bar',
@@ -464,7 +477,7 @@ class CraftingService
      */
     public function canCraft(User $user): bool
     {
-        if ($user->isTraveling()) {
+        if ($user->isTraveling() || $user->isInInfirmary()) {
             return false;
         }
 

@@ -1,6 +1,17 @@
 import { Head, router, usePage } from "@inertiajs/react";
-import { Castle, Church, Coins, Heart, Home, Loader2, Sparkles } from "lucide-react";
-import { useState } from "react";
+import {
+    Castle,
+    Church,
+    Clock,
+    Coins,
+    Crown,
+    Heart,
+    HeartPulse,
+    Home,
+    Loader2,
+    Sparkles,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import type { BreadcrumbItem } from "@/types";
 
@@ -26,8 +37,16 @@ interface HealerInfo {
     options: HealingOption[];
 }
 
+interface InfirmaryData {
+    is_in_infirmary: boolean;
+    remaining_seconds: number;
+    heals_at: string | null;
+    started_at: string | null;
+}
+
 interface PageProps {
     healer_info: HealerInfo;
+    infirmary: InfirmaryData | null;
     [key: string]: unknown;
 }
 
@@ -43,6 +62,7 @@ const locationIcons: Record<string, typeof Home> = {
     village: Home,
     barony: Castle,
     town: Church,
+    kingdom: Crown,
 };
 
 function formatNumber(n: number): string {
@@ -79,11 +99,146 @@ function HealthBar({ current, max }: { current: number; max: number }) {
     );
 }
 
+function formatTime(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins > 0) {
+        return `${mins}m ${secs}s`;
+    }
+    return `${secs}s`;
+}
+
+function InfirmaryRecovery({
+    infirmary,
+    healerInfo,
+}: {
+    infirmary: InfirmaryData;
+    healerInfo: HealerInfo;
+}) {
+    const [remaining, setRemaining] = useState(infirmary.remaining_seconds);
+    const [discharging, setDischarging] = useState(false);
+
+    const totalDuration =
+        infirmary.started_at && infirmary.heals_at
+            ? Math.max(
+                  1,
+                  (new Date(infirmary.heals_at).getTime() -
+                      new Date(infirmary.started_at).getTime()) /
+                      1000,
+              )
+            : 600;
+    const progress = Math.max(
+        0,
+        Math.min(100, ((totalDuration - remaining) / totalDuration) * 100),
+    );
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setRemaining((prev) => {
+                const newVal = Math.max(0, prev - 1);
+                if (newVal <= 0 && !discharging) {
+                    setDischarging(true);
+                    const hasHealer = ["village", "barony", "town"].includes(
+                        healerInfo.location_type,
+                    );
+                    router.post(
+                        "/infirmary/discharge",
+                        {},
+                        {
+                            preserveScroll: true,
+                            onFinish: () => {
+                                if (hasHealer) {
+                                    router.reload();
+                                } else {
+                                    router.visit(
+                                        `/${locationPaths[healerInfo.location_type] || "kingdoms"}/${healerInfo.location_id}`,
+                                    );
+                                }
+                            },
+                        },
+                    );
+                }
+                return newVal;
+            });
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [discharging]);
+
+    const LocationIcon = locationIcons[healerInfo.location_type] || Home;
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: "Dashboard", href: "/dashboard" },
+        {
+            title: healerInfo.location_name,
+            href: `/${locationPaths[healerInfo.location_type] || healerInfo.location_type + "s"}/${healerInfo.location_id}`,
+        },
+        { title: "Infirmary", href: "#" },
+    ];
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title={`Infirmary - ${healerInfo.location_name}`} />
+            <div className="flex h-full flex-1 flex-col items-center justify-center p-4">
+                <div className="w-full max-w-md">
+                    <div className="rounded-xl border-2 border-red-600/50 bg-red-950/30 p-8 text-center">
+                        <HeartPulse className="mx-auto mb-4 h-16 w-16 animate-pulse text-red-400" />
+                        <h2 className="mb-2 font-pixel text-xl text-red-300">Recovering</h2>
+                        <div className="mb-1 flex items-center justify-center gap-1 text-stone-400">
+                            <LocationIcon className="h-3 w-3" />
+                            <span className="font-pixel text-xs">
+                                {healerInfo.location_name} Infirmary
+                            </span>
+                        </div>
+                        <p className="mb-6 font-pixel text-xs text-stone-400">
+                            Your wounds are being tended to. You will be fully healed when the timer
+                            expires.
+                        </p>
+
+                        {/* Countdown */}
+                        <div className="mb-4 rounded-lg border border-red-600/30 bg-red-950/50 p-4">
+                            <div className="mb-2 flex items-center justify-center gap-2">
+                                <Clock className="h-5 w-5 text-red-400" />
+                                <span className="font-pixel text-2xl text-red-300">
+                                    {remaining > 0 ? formatTime(remaining) : "Healing..."}
+                                </span>
+                            </div>
+                            <div className="h-3 w-full overflow-hidden rounded-full bg-red-900/50">
+                                <div
+                                    className="h-full rounded-full bg-red-500 transition-all duration-1000"
+                                    style={{ width: `${progress}%` }}
+                                />
+                            </div>
+                            <p className="mt-2 font-pixel text-[10px] text-red-400/60">
+                                HP will be fully restored upon discharge
+                            </p>
+                        </div>
+
+                        {/* Current HP */}
+                        <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
+                            <div className="flex items-center justify-between font-pixel text-xs">
+                                <span className="text-stone-400">Current HP</span>
+                                <span className="text-red-400">
+                                    {healerInfo.hp} / {healerInfo.max_hp}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </AppLayout>
+    );
+}
+
 export default function HealerIndex() {
-    const { healer_info } = usePage<PageProps>().props;
+    const { healer_info, infirmary } = usePage<PageProps>().props;
     const [loading, setLoading] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+
+    // Show infirmary recovery view if player is in the infirmary
+    if (infirmary?.is_in_infirmary) {
+        return <InfirmaryRecovery infirmary={infirmary} healerInfo={healer_info} />;
+    }
 
     const LocationIcon = locationIcons[healer_info.location_type] || Home;
     const isFullHealth = healer_info.missing_hp <= 0;

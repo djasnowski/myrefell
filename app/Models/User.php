@@ -88,6 +88,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'travel_arrives_at',
         'travel_destination_type',
         'travel_destination_id',
+        'is_in_infirmary',
+        'infirmary_started_at',
+        'infirmary_heals_at',
         'referral_code',
         'last_seen_changelog',
     ];
@@ -130,6 +133,9 @@ class User extends Authenticatable implements MustVerifyEmail
             'is_traveling' => 'boolean',
             'travel_started_at' => 'datetime',
             'travel_arrives_at' => 'datetime',
+            'is_in_infirmary' => 'boolean',
+            'infirmary_started_at' => 'datetime',
+            'infirmary_heals_at' => 'datetime',
             'labor_days_owed' => 'integer',
             'labor_days_completed' => 'integer',
             'last_obligation_check' => 'date',
@@ -415,6 +421,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isTraveling(): bool
     {
         return $this->is_traveling && $this->travel_arrives_at?->isFuture();
+    }
+
+    /**
+     * Check if player is currently in the infirmary.
+     */
+    public function isInInfirmary(): bool
+    {
+        return $this->is_in_infirmary && $this->infirmary_heals_at?->isFuture();
     }
 
     /**

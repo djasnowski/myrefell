@@ -41,6 +41,7 @@ use App\Http\Controllers\ForgeController;
 use App\Http\Controllers\GatheringController;
 use App\Http\Controllers\GuildController;
 use App\Http\Controllers\HealerController;
+use App\Http\Controllers\InfirmaryController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\KingdomController;
@@ -258,6 +259,9 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
     Route::post('minigames/collect-rewards', [MinigameController::class, 'collectRewards'])->name('minigames.collect-rewards');
     Route::get('minigames/pending-rewards', [MinigameController::class, 'getPendingRewards'])->name('minigames.pending-rewards');
 
+    // Infirmary
+    Route::post('infirmary/discharge', [InfirmaryController::class, 'discharge'])->name('infirmary.discharge');
+
     // Travel
     Route::get('travel', [MapController::class, 'index'])->name('travel.index');
     Route::get('travel/status', [TravelController::class, 'status'])->name('travel.status');
@@ -290,6 +294,7 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
     Route::get('villages/{village}/market', [MarketController::class, 'villageMarket'])->name('villages.market');
     Route::get('baronies/{barony}/market', [MarketController::class, 'baronyMarket'])->name('baronies.market');
     Route::get('towns/{town}/market', [MarketController::class, 'townMarket'])->name('towns.market');
+    Route::get('kingdoms/{kingdom}/market', [MarketController::class, 'kingdomMarket'])->name('kingdoms.market');
     Route::post('market/buy', [MarketController::class, 'buy'])->name('market.buy');
     Route::post('market/sell', [MarketController::class, 'sell'])->name('market.sell');
     Route::get('market/prices', [MarketController::class, 'prices'])->name('market.prices');
@@ -303,6 +308,7 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
     Route::get('villages/{village}/healer', [HealerController::class, 'villageHealer'])->name('villages.healer');
     Route::get('baronies/{barony}/infirmary', [HealerController::class, 'baronyInfirmary'])->name('baronies.infirmary');
     Route::get('towns/{town}/infirmary', [HealerController::class, 'townInfirmary'])->name('towns.infirmary');
+    Route::get('kingdoms/{kingdom}/infirmary', [HealerController::class, 'kingdomInfirmary'])->name('kingdoms.infirmary');
     Route::post('healer/heal', [HealerController::class, 'heal'])->name('healer.heal');
     Route::post('healer/heal-amount', [HealerController::class, 'healAmount'])->name('healer.heal-amount');
     Route::post('healer/treat-disease', [HealerController::class, 'treatDisease'])->name('healer.treat-disease');

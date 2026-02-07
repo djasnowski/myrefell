@@ -46,6 +46,11 @@ class TravelService
             throw new \InvalidArgumentException('You are already traveling.');
         }
 
+        // Validate not in infirmary
+        if ($user->isInInfirmary()) {
+            throw new \InvalidArgumentException('You cannot travel while recovering in the infirmary.');
+        }
+
         // Validate destination exists
         $destination = $this->getDestination($destinationType, $destinationId);
         if (! $destination) {

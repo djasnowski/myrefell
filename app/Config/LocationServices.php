@@ -234,6 +234,8 @@ class LocationServices
             'crafting',
             'forge',
             'anvil',
+            'market',
+            'infirmary',
             'shrine',
             'jobs',
             'stables',

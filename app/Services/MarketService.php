@@ -18,7 +18,7 @@ class MarketService
      * Valid location types for markets.
      * Note: Hamlets use their parent village's market.
      */
-    public const VALID_LOCATIONS = ['village', 'barony', 'town'];
+    public const VALID_LOCATIONS = ['village', 'barony', 'town', 'kingdom'];
 
     /**
      * Seasonal price modifiers for different item categories.
@@ -77,7 +77,7 @@ class MarketService
      */
     public function canAccessMarket(User $user): bool
     {
-        if ($user->isTraveling()) {
+        if ($user->isTraveling() || $user->isInInfirmary()) {
             return false;
         }
 
@@ -571,6 +571,7 @@ class MarketService
             'village' => \App\Models\Village::class,
             'barony' => \App\Models\Barony::class,
             'town' => \App\Models\Town::class,
+            'kingdom' => \App\Models\Kingdom::class,
             default => null,
         };
 

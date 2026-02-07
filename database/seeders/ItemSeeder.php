@@ -376,6 +376,16 @@ class ItemSeeder extends Seeder
                 'base_value' => 10,
             ],
             [
+                'name' => 'Silver Ore',
+                'description' => 'A lustrous ore with a pale gleam. Silver has been prized since ancient times for its beauty and purity. Smiths value it for jewelry and ceremonial items.',
+                'type' => 'resource',
+                'subtype' => 'ore',
+                'rarity' => 'uncommon',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 50,
+            ],
+            [
                 'name' => 'Gold Ore',
                 'description' => 'The eternal metal. Gold does not tarnish, does not rust, does not yield to time. Kings hoard it, merchants worship it, and jewelers transform it into dreams made solid.',
                 'type' => 'resource',
@@ -446,6 +456,16 @@ class ItemSeeder extends Seeder
                 'stackable' => true,
                 'max_stack' => 100,
                 'base_value' => 100,
+            ],
+            [
+                'name' => 'Silver Bar',
+                'description' => 'Refined silver, bright as moonlight. This precious metal is too soft for weapons but perfect for jewelry, holy symbols, and items of great beauty.',
+                'type' => 'resource',
+                'subtype' => 'bar',
+                'rarity' => 'uncommon',
+                'stackable' => true,
+                'max_stack' => 100,
+                'base_value' => 75,
             ],
             [
                 'name' => 'Gold Bar',

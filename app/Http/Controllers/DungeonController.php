@@ -45,10 +45,16 @@ class DungeonController extends Controller
     {
         $user = $request->user();
 
-        // Check if player is traveling
+        // Check if player is traveling or in infirmary
         if ($user->isTraveling()) {
             return Inertia::render('Dungeons/NotAvailable', [
                 'message' => 'You cannot access dungeons while traveling.',
+            ]);
+        }
+
+        if ($user->isInInfirmary()) {
+            return Inertia::render('Dungeons/NotAvailable', [
+                'message' => 'You cannot access dungeons while recovering in the infirmary.',
             ]);
         }
 

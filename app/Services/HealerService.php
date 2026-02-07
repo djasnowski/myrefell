@@ -29,7 +29,7 @@ class HealerService
      */
     public function canAccessHealer(User $user): bool
     {
-        if ($user->isTraveling()) {
+        if ($user->isTraveling() || $user->isInInfirmary()) {
             return false;
         }
 
@@ -256,7 +256,7 @@ class HealerService
      */
     public function treatDisease(User $user, DiseaseInfection $infection): array
     {
-        if (!$this->canAccessHealer($user)) {
+        if (! $this->canAccessHealer($user)) {
             return [
                 'success' => false,
                 'message' => 'You cannot access a healer here.',
@@ -270,7 +270,7 @@ class HealerService
             ];
         }
 
-        if (!$infection->isActive()) {
+        if (! $infection->isActive()) {
             return [
                 'success' => false,
                 'message' => 'This infection is no longer active.',
@@ -313,7 +313,7 @@ class HealerService
     {
         $infection = $this->getActiveInfection($user);
 
-        if (!$infection) {
+        if (! $infection) {
             return null;
         }
 

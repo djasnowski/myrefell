@@ -1,5 +1,16 @@
 import { Head, router, usePage } from "@inertiajs/react";
-import { ArrowDown, Cookie, Heart, Shield, Skull, Sword, Trophy, X, Zap } from "lucide-react";
+import {
+    ArrowDown,
+    Cookie,
+    Heart,
+    HeartPulse,
+    Shield,
+    Skull,
+    Sword,
+    Trophy,
+    X,
+    Zap,
+} from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import type { BreadcrumbItem } from "@/types";
@@ -87,6 +98,8 @@ export default function DungeonExplore() {
         floor_cleared?: boolean;
     } | null>(null);
     const [showFoodMenu, setShowFoodMenu] = useState(false);
+    const [deathMessage, setDeathMessage] = useState<string | null>(null);
+    const [isDead, setIsDead] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -120,24 +133,23 @@ export default function DungeonExplore() {
 
             const data = await response.json();
 
-            if (data.success) {
+            if (data.data?.status === "failed") {
+                setDeathMessage(data.message || "You died in the dungeon.");
+                setIsDead(true);
+            } else if (data.success) {
                 setLastResult({
                     message: data.message,
                     rewards: data.data?.rewards,
                     floor_cleared: data.data?.floor_cleared,
                 });
 
-                if (data.data?.status === "completed" || data.data?.status === "failed") {
+                if (data.data?.status === "completed") {
                     router.reload({ preserveScroll: true });
                 } else {
                     router.reload({ only: ["session", "player_stats"], preserveScroll: true });
                 }
             } else {
-                if (data.data?.status === "failed") {
-                    router.reload();
-                } else {
-                    setError(data.message);
-                }
+                setError(data.message);
             }
         } catch {
             setError("Failed to fight monster");
@@ -293,14 +305,14 @@ export default function DungeonExplore() {
                                         <Heart className="h-3 w-3" /> HP
                                     </span>
                                     <span className="text-stone-300">
-                                        {player_stats.hp} / {player_stats.max_hp}
+                                        {isDead ? 0 : player_stats.hp} / {player_stats.max_hp}
                                     </span>
                                 </div>
                                 <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
                                     <div
                                         className="h-full bg-gradient-to-r from-red-600 to-red-400"
                                         style={{
-                                            width: `${(player_stats.hp / player_stats.max_hp) * 100}%`,
+                                            width: `${isDead ? 0 : (player_stats.hp / player_stats.max_hp) * 100}%`,
                                         }}
                                     />
                                 </div>
@@ -420,93 +432,128 @@ export default function DungeonExplore() {
                     </div>
                 )}
 
-                {/* Actions */}
-                <div className="mt-auto space-y-3">
-                    {/* Food Menu */}
-                    {showFoodMenu && (
-                        <div className="rounded-lg border border-stone-700 bg-stone-800 p-4">
-                            <h4 className="mb-3 font-pixel text-sm text-amber-300">Select Food</h4>
-                            {food.length === 0 ? (
-                                <p className="font-pixel text-xs text-stone-500">
-                                    No food in inventory
+                {/* Death Screen */}
+                {deathMessage && (
+                    <div className="mb-6 rounded-xl border-2 border-red-500/50 bg-gradient-to-b from-red-900/40 to-red-950/60 p-6">
+                        <div className="mb-4 flex items-center justify-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/20 ring-2 ring-red-500/50">
+                                <Skull className="h-6 w-6 text-red-400" />
+                            </div>
+                            <div>
+                                <h2 className="font-pixel text-xl text-red-400">You Died!</h2>
+                                <p className="font-pixel text-xs text-stone-300">
+                                    {dungeon.name} - Floor {session.current_floor}
                                 </p>
-                            ) : (
-                                <div className="grid gap-2">
-                                    {food.map((item) => (
-                                        <button
-                                            key={item.id}
-                                            onClick={() => eatFood(item.id)}
-                                            disabled={isEating}
-                                            className="flex items-center justify-between rounded-lg border border-stone-600 bg-stone-700/50 px-3 py-2 transition hover:bg-stone-600/50"
-                                        >
-                                            <span className="font-pixel text-xs text-stone-300">
-                                                {item.name} x{item.quantity}
-                                            </span>
-                                            <span className="font-pixel text-xs text-green-400">
-                                                +{item.hp_bonus} HP
-                                            </span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
+                            </div>
+                        </div>
+
+                        <div className="mb-4 rounded-lg border border-red-500/30 bg-red-950/50 p-3 text-center">
+                            <HeartPulse className="mx-auto mb-2 h-6 w-6 animate-pulse text-red-400" />
+                            <p className="font-pixel text-xs text-stone-400">{deathMessage}</p>
+                        </div>
+
+                        <div className="text-center">
                             <button
-                                onClick={() => setShowFoodMenu(false)}
-                                className="mt-3 w-full rounded-lg border border-stone-600 px-3 py-2 font-pixel text-xs text-stone-400 transition hover:bg-stone-700"
+                                onClick={() => router.visit(`/kingdoms/${kingdom.id}/infirmary`)}
+                                className="rounded-lg bg-red-700 px-8 py-2 font-pixel text-sm text-white shadow-lg transition hover:bg-red-600"
                             >
-                                Cancel
+                                Go to Infirmary
                             </button>
                         </div>
-                    )}
+                    </div>
+                )}
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-3">
-                        {/* Eat Food Button */}
-                        <button
-                            onClick={() => setShowFoodMenu(!showFoodMenu)}
-                            disabled={isEating || food.length === 0}
-                            className={`flex-1 rounded-lg border px-4 py-3 font-pixel text-sm transition ${
-                                food.length > 0
-                                    ? "border-green-500/50 bg-green-900/30 text-green-400 hover:bg-green-900/50"
-                                    : "cursor-not-allowed border-stone-600 bg-stone-800 text-stone-500"
-                            }`}
-                        >
-                            <Cookie className="mr-2 inline h-4 w-4" />
-                            Eat Food
-                        </button>
-
-                        {/* Main Action Button */}
-                        {isFloorCleared ? (
-                            isOnFinalFloor ? (
-                                <div className="flex-1 rounded-lg border border-amber-500 bg-amber-900/30 px-4 py-3 text-center font-pixel text-sm text-amber-300">
-                                    <Trophy className="mr-2 inline h-4 w-4" />
-                                    Dungeon Complete!
-                                </div>
-                            ) : (
+                {/* Actions */}
+                {!deathMessage && (
+                    <div className="mt-auto space-y-3">
+                        {/* Food Menu */}
+                        {showFoodMenu && (
+                            <div className="rounded-lg border border-stone-700 bg-stone-800 p-4">
+                                <h4 className="mb-3 font-pixel text-sm text-amber-300">
+                                    Select Food
+                                </h4>
+                                {food.length === 0 ? (
+                                    <p className="font-pixel text-xs text-stone-500">
+                                        No food in inventory
+                                    </p>
+                                ) : (
+                                    <div className="grid gap-2">
+                                        {food.map((item) => (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => eatFood(item.id)}
+                                                disabled={isEating}
+                                                className="flex items-center justify-between rounded-lg border border-stone-600 bg-stone-700/50 px-3 py-2 transition hover:bg-stone-600/50"
+                                            >
+                                                <span className="font-pixel text-xs text-stone-300">
+                                                    {item.name} x{item.quantity}
+                                                </span>
+                                                <span className="font-pixel text-xs text-green-400">
+                                                    +{item.hp_bonus} HP
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                                 <button
-                                    onClick={nextFloor}
-                                    disabled={isAdvancing}
-                                    className="flex-1 rounded-lg bg-amber-600 px-4 py-3 font-pixel text-sm text-white transition hover:bg-amber-500"
+                                    onClick={() => setShowFoodMenu(false)}
+                                    className="mt-3 w-full rounded-lg border border-stone-600 px-3 py-2 font-pixel text-xs text-stone-400 transition hover:bg-stone-700"
                                 >
-                                    <ArrowDown className="mr-2 inline h-4 w-4" />
-                                    {isAdvancing ? "Descending..." : "Next Floor"}
+                                    Cancel
                                 </button>
-                            )
-                        ) : (
+                            </div>
+                        )}
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-3">
+                            {/* Eat Food Button */}
                             <button
-                                onClick={fightMonster}
-                                disabled={isFighting || player_stats.hp <= 0}
-                                className={`flex-1 rounded-lg px-4 py-3 font-pixel text-sm transition ${
-                                    player_stats.hp > 0 && !isFighting
-                                        ? "bg-red-600 text-white hover:bg-red-500"
-                                        : "cursor-not-allowed bg-stone-700 text-stone-500"
+                                onClick={() => setShowFoodMenu(!showFoodMenu)}
+                                disabled={isEating || food.length === 0}
+                                className={`flex-1 rounded-lg border px-4 py-3 font-pixel text-sm transition ${
+                                    food.length > 0
+                                        ? "border-green-500/50 bg-green-900/30 text-green-400 hover:bg-green-900/50"
+                                        : "cursor-not-allowed border-stone-600 bg-stone-800 text-stone-500"
                                 }`}
                             >
-                                <Sword className="mr-2 inline h-4 w-4" />
-                                {isFighting ? "Fighting..." : "Fight Monster"}
+                                <Cookie className="mr-2 inline h-4 w-4" />
+                                Eat Food
                             </button>
-                        )}
+
+                            {/* Main Action Button */}
+                            {isFloorCleared ? (
+                                isOnFinalFloor ? (
+                                    <div className="flex-1 rounded-lg border border-amber-500 bg-amber-900/30 px-4 py-3 text-center font-pixel text-sm text-amber-300">
+                                        <Trophy className="mr-2 inline h-4 w-4" />
+                                        Dungeon Complete!
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={nextFloor}
+                                        disabled={isAdvancing}
+                                        className="flex-1 rounded-lg bg-amber-600 px-4 py-3 font-pixel text-sm text-white transition hover:bg-amber-500"
+                                    >
+                                        <ArrowDown className="mr-2 inline h-4 w-4" />
+                                        {isAdvancing ? "Descending..." : "Next Floor"}
+                                    </button>
+                                )
+                            ) : (
+                                <button
+                                    onClick={fightMonster}
+                                    disabled={isFighting || player_stats.hp <= 0}
+                                    className={`flex-1 rounded-lg px-4 py-3 font-pixel text-sm transition ${
+                                        player_stats.hp > 0 && !isFighting
+                                            ? "bg-red-600 text-white hover:bg-red-500"
+                                            : "cursor-not-allowed bg-stone-700 text-stone-500"
+                                    }`}
+                                >
+                                    <Sword className="mr-2 inline h-4 w-4" />
+                                    {isFighting ? "Fighting..." : "Fight Monster"}
+                                </button>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </AppLayout>
     );

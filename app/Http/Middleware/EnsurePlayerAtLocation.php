@@ -26,7 +26,7 @@ class EnsurePlayerAtLocation
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
@@ -35,11 +35,16 @@ class EnsurePlayerAtLocation
             return back()->with('error', 'You cannot access services while traveling.');
         }
 
+        // Check if player is in the infirmary
+        if ($user->isInInfirmary()) {
+            return back()->with('error', 'You cannot access services while recovering in the infirmary.');
+        }
+
         // Determine the location type from route parameters
         $locationType = $this->getLocationTypeFromRoute($request);
         $location = $this->getLocationFromRoute($request, $locationType);
 
-        if (!$location) {
+        if (! $location) {
             return back()->with('error', 'Location not found.');
         }
 
@@ -73,7 +78,7 @@ class EnsurePlayerAtLocation
      */
     protected function getLocationFromRoute(Request $request, ?string $locationType): ?Model
     {
-        if (!$locationType) {
+        if (! $locationType) {
             return null;
         }
 
@@ -86,7 +91,7 @@ class EnsurePlayerAtLocation
 
         // Otherwise, resolve the model from the ID
         $locationId = is_numeric($locationValue) ? (int) $locationValue : null;
-        if (!$locationId) {
+        if (! $locationId) {
             return null;
         }
 

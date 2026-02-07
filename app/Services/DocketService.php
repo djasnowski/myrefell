@@ -40,7 +40,7 @@ class DocketService
      */
     public function canAccessDocket(User $user): bool
     {
-        if ($user->isTraveling()) {
+        if ($user->isTraveling() || $user->isInInfirmary()) {
             return false;
         }
 

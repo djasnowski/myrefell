@@ -54,7 +54,7 @@ class BankService
      */
     public function canAccessBank(User $user): bool
     {
-        if ($user->isTraveling()) {
+        if ($user->isTraveling() || $user->isInInfirmary()) {
             return false;
         }
 

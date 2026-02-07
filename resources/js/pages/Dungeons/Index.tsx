@@ -16,12 +16,22 @@ import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import type { BreadcrumbItem } from "@/types";
 
+interface FloorMonsterSpawn {
+    id: number;
+    monster: {
+        id: number;
+        name: string;
+        combat_level: number;
+    };
+}
+
 interface DungeonFloor {
     id: number;
     floor_number: number;
     name: string | null;
     monster_count: number;
     is_boss_floor: boolean;
+    monsters: FloorMonsterSpawn[];
 }
 
 interface Monster {
@@ -392,6 +402,52 @@ export default function DungeonsIndex() {
                                                     </span>
                                                 )}
                                             </div>
+
+                                            {/* Monster list from floor spawns */}
+                                            {dungeon.floors &&
+                                                dungeon.floors.length > 0 &&
+                                                (() => {
+                                                    const uniqueMonsters = new Map<
+                                                        number,
+                                                        { name: string; combat_level: number }
+                                                    >();
+                                                    dungeon.floors.forEach((floor) => {
+                                                        floor.monsters?.forEach((spawn) => {
+                                                            if (
+                                                                spawn.monster &&
+                                                                !uniqueMonsters.has(
+                                                                    spawn.monster.id,
+                                                                )
+                                                            ) {
+                                                                uniqueMonsters.set(
+                                                                    spawn.monster.id,
+                                                                    spawn.monster,
+                                                                );
+                                                            }
+                                                        });
+                                                    });
+                                                    const monsterList = Array.from(
+                                                        uniqueMonsters.values(),
+                                                    ).sort(
+                                                        (a, b) => a.combat_level - b.combat_level,
+                                                    );
+                                                    if (monsterList.length === 0) return null;
+                                                    return (
+                                                        <div className="mt-2 border-t border-stone-700/50 pt-2">
+                                                            <span className="font-pixel text-[10px] text-stone-500">
+                                                                Monsters:{" "}
+                                                            </span>
+                                                            <span className="font-pixel text-[10px] text-stone-400">
+                                                                {monsterList
+                                                                    .map(
+                                                                        (m) =>
+                                                                            `${m.name} (Lv${m.combat_level})`,
+                                                                    )
+                                                                    .join(", ")}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })()}
                                         </button>
 
                                         {/* Enter button appears when selected */}

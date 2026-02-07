@@ -189,7 +189,25 @@ export default function CombatArena() {
         }
     };
 
+    const sidebar = usePage().props.sidebar as {
+        location?: { type: string; id: number };
+    } | null;
+
     const returnToCombat = () => {
+        if (isDefeat) {
+            const loc = sidebar?.location;
+            if (loc?.type && loc?.id) {
+                const pathMap: Record<string, string> = {
+                    village: `/villages/${loc.id}/healer`,
+                    town: `/towns/${loc.id}/infirmary`,
+                    barony: `/baronies/${loc.id}/infirmary`,
+                    kingdom: `/kingdoms/${loc.id}/infirmary`,
+                };
+                const path = pathMap[loc.type] || "/dashboard";
+                router.visit(path);
+                return;
+            }
+        }
         router.visit("/combat");
     };
 
@@ -440,7 +458,8 @@ export default function CombatArena() {
                         {/* Info Box */}
                         <div className="mb-4 rounded-lg border border-red-500/30 bg-red-950/50 p-3 text-center">
                             <p className="font-pixel text-xs text-stone-400">
-                                Your energy has been reduced. Rest or eat to recover.
+                                You've been taken to the infirmary. Your wounds will heal
+                                automatically.
                             </p>
                         </div>
 

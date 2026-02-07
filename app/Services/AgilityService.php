@@ -359,7 +359,7 @@ class AgilityService
      */
     public function canTrain(User $user): bool
     {
-        if ($user->isTraveling()) {
+        if ($user->isTraveling() || $user->isInInfirmary()) {
             return false;
         }
 

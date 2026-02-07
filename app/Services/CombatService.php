@@ -26,7 +26,8 @@ class CombatService
         protected LootService $lootService,
         protected InventoryService $inventoryService,
         protected BlessingEffectService $blessingEffectService,
-        protected BeliefEffectService $beliefEffectService
+        protected BeliefEffectService $beliefEffectService,
+        protected InfirmaryService $infirmaryService
     ) {}
 
     /**
@@ -83,6 +84,11 @@ class CombatService
         // Check if player is traveling
         if ($player->isTraveling()) {
             return ['success' => false, 'message' => 'You cannot fight while traveling.'];
+        }
+
+        // Check if player is in the infirmary
+        if ($player->isInInfirmary()) {
+            return ['success' => false, 'message' => 'You cannot fight while recovering in the infirmary.'];
         }
 
         // Check if player is alive
@@ -632,16 +638,20 @@ class CombatService
 
         $this->energyService->setEnergyOnDeath($player);
 
+        // Admit player to infirmary
+        $this->infirmaryService->admitPlayer($player);
+
         // XP was already awarded per hit during combat
         return [
             'success' => false,
-            'message' => "Defeat! You were killed by {$monster->name}.",
+            'message' => "Defeat! You were killed by {$monster->name}. You've been taken to the infirmary.",
             'data' => [
                 'session' => $session,
                 'logs' => $logs,
                 'status' => 'defeat',
                 'xp_earned' => $session->xp_gained,
                 'skill' => $session->training_style,
+                'infirmary' => $this->infirmaryService->getInfirmaryStatus($player->fresh()),
             ],
         ];
     }

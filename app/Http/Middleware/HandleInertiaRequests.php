@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Services\BeliefEffectService;
 use App\Services\BlessingEffectService;
 use App\Services\EnergyService;
+use App\Services\InfirmaryService;
 use App\Services\OnlinePlayersService;
 use App\Services\TravelService;
 use Illuminate\Http\Request;
@@ -26,7 +27,8 @@ class HandleInertiaRequests extends Middleware
         protected TravelService $travelService,
         protected OnlinePlayersService $onlinePlayersService,
         protected BlessingEffectService $blessingEffectService,
-        protected BeliefEffectService $beliefEffectService
+        protected BeliefEffectService $beliefEffectService,
+        protected InfirmaryService $infirmaryService
     ) {}
 
     /**
@@ -92,6 +94,11 @@ class HandleInertiaRequests extends Middleware
     {
         // Refresh to get latest values (e.g., energy updated by scheduler)
         $player->refresh();
+
+        // Lazily discharge from infirmary if timer expired
+        $this->infirmaryService->checkAndDischarge($player);
+        $player->refresh();
+
         $player->load(['skills', 'homeVillage.barony.kingdom']);
 
         // Get active role
@@ -167,6 +174,7 @@ class HandleInertiaRequests extends Middleware
             'farm' => $this->getFarmData($player),
             'favorites' => $this->getServiceFavorites($player),
             'can_play_minigame' => \App\Models\MinigamePlay::canPlayToday($player->id),
+            'infirmary' => $this->infirmaryService->getInfirmaryStatus($player),
         ];
     }
 

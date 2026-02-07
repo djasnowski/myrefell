@@ -21,10 +21,16 @@ class CombatController extends Controller
     {
         $user = $request->user();
 
-        // Check if player is traveling
+        // Check if player is traveling or in infirmary
         if ($user->isTraveling()) {
             return Inertia::render('Combat/NotAvailable', [
                 'message' => 'You cannot access combat while traveling.',
+            ]);
+        }
+
+        if ($user->isInInfirmary()) {
+            return Inertia::render('Combat/NotAvailable', [
+                'message' => 'You cannot access combat while recovering in the infirmary.',
             ]);
         }
 

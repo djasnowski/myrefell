@@ -557,7 +557,7 @@ class ThievingService
      */
     public function canThieve(User $user): bool
     {
-        if ($user->isTraveling()) {
+        if ($user->isTraveling() || $user->isInInfirmary()) {
             return false;
         }
 

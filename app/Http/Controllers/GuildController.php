@@ -22,15 +22,21 @@ class GuildController extends Controller
     {
         $user = $request->user();
 
-        // Check if player is traveling
+        // Check if player is traveling or in infirmary
         if ($user->isTraveling()) {
             return Inertia::render('Guilds/NotAvailable', [
                 'message' => 'You cannot access guild services while traveling.',
             ]);
         }
 
+        if ($user->isInInfirmary()) {
+            return Inertia::render('Guilds/NotAvailable', [
+                'message' => 'You cannot access guild services while recovering in the infirmary.',
+            ]);
+        }
+
         // Check if at a valid location
-        if (!in_array($user->current_location_type, ['town', 'barony'])) {
+        if (! in_array($user->current_location_type, ['town', 'barony'])) {
             return Inertia::render('Guilds/NotAvailable', [
                 'message' => 'Guilds can only be accessed in towns or baronies.',
             ]);
@@ -87,7 +93,7 @@ class GuildController extends Controller
         $request->validate([
             'name' => 'required|string|min:3|max:50',
             'description' => 'nullable|string|max:500',
-            'primary_skill' => 'required|string|in:' . implode(',', Guild::GUILD_SKILLS),
+            'primary_skill' => 'required|string|in:'.implode(',', Guild::GUILD_SKILLS),
         ]);
 
         $user = $request->user();

@@ -65,7 +65,7 @@ class TrainingService
      */
     public function canTrain(User $user): bool
     {
-        if ($user->isTraveling()) {
+        if ($user->isTraveling() || $user->isInInfirmary()) {
             return false;
         }
 
@@ -78,7 +78,7 @@ class TrainingService
      */
     public function getAvailableExercises(User $user): array
     {
-        if (!$this->canTrain($user)) {
+        if (! $this->canTrain($user)) {
             return [];
         }
 
@@ -116,21 +116,21 @@ class TrainingService
     {
         $config = self::EXERCISES[$exercise] ?? null;
 
-        if (!$config) {
+        if (! $config) {
             return [
                 'success' => false,
                 'message' => 'Invalid exercise.',
             ];
         }
 
-        if (!$this->canTrain($user)) {
+        if (! $this->canTrain($user)) {
             return [
                 'success' => false,
                 'message' => 'You cannot train here. Find a training ground in a village, town, or barony.',
             ];
         }
 
-        if (!$user->hasEnergy($config['energy_cost'])) {
+        if (! $user->hasEnergy($config['energy_cost'])) {
             return [
                 'success' => false,
                 'message' => "Not enough energy. Need {$config['energy_cost']} energy.",
@@ -148,7 +148,7 @@ class TrainingService
             // Get or create the skill
             $skill = $user->skills()->where('skill_name', $config['skill'])->first();
 
-            if (!$skill) {
+            if (! $skill) {
                 $skill = $user->skills()->create([
                     'skill_name' => $config['skill'],
                     'level' => 5, // Combat skills start at level 5
@@ -212,7 +212,7 @@ class TrainingService
     public function getExerciseInfo(User $user, string $exercise): ?array
     {
         $config = self::EXERCISES[$exercise] ?? null;
-        if (!$config) {
+        if (! $config) {
             return null;
         }
 

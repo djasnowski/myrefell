@@ -128,9 +128,9 @@ class DungeonSeeder extends Seeder
                 'gold_reward_max' => 180,
                 'energy_cost' => 10,
                 'floors' => [
-                    ['name' => 'Icy Entrance', 'monster_count' => 3, 'monsters' => ['Wolf']],
-                    ['name' => 'Crystal Chambers', 'monster_count' => 4, 'monsters' => ['Wolf', 'Bear']],
-                    ['name' => 'Frost Core', 'monster_count' => 3, 'is_boss' => true, 'monsters' => ['Bear']],
+                    ['name' => 'Icy Entrance', 'monster_count' => 3, 'monsters' => ['Rat', 'Goblin']],
+                    ['name' => 'Crystal Chambers', 'monster_count' => 4, 'monsters' => ['Goblin', 'Wolf']],
+                    ['name' => 'Frost Core', 'monster_count' => 3, 'is_boss' => true, 'monsters' => ['Wolf']],
                 ],
             ],
             [
@@ -174,8 +174,8 @@ class DungeonSeeder extends Seeder
                 'gold_reward_max' => 200,
                 'energy_cost' => 10,
                 'floors' => [
-                    ['name' => 'Beach Entrance', 'monster_count' => 3, 'monsters' => ['Bandit']],
-                    ['name' => 'Storage Caves', 'monster_count' => 4, 'monsters' => ['Bandit']],
+                    ['name' => 'Beach Entrance', 'monster_count' => 3, 'monsters' => ['Rat', 'Goblin']],
+                    ['name' => 'Storage Caves', 'monster_count' => 4, 'monsters' => ['Goblin', 'Bandit']],
                     ['name' => 'Captain\'s Quarters', 'monster_count' => 3, 'is_boss' => true, 'monsters' => ['Bandit']],
                 ],
             ],
@@ -219,10 +219,10 @@ class DungeonSeeder extends Seeder
                 'gold_reward_max' => 500,
                 'energy_cost' => 15,
                 'floors' => [
-                    ['name' => 'Magma Entry', 'monster_count' => 3, 'monsters' => ['Fire Elemental']],
-                    ['name' => 'Sulfur Pits', 'monster_count' => 4, 'monsters' => ['Fire Elemental']],
-                    ['name' => 'Obsidian Halls', 'monster_count' => 4, 'monsters' => ['Fire Elemental']],
-                    ['name' => 'Volcanic Core', 'monster_count' => 3, 'is_boss' => true, 'monsters' => ['Fire Elemental']],
+                    ['name' => 'Magma Entry', 'monster_count' => 3, 'monsters' => ['Skeleton', 'Zombie']],
+                    ['name' => 'Sulfur Pits', 'monster_count' => 4, 'monsters' => ['Zombie']],
+                    ['name' => 'Obsidian Halls', 'monster_count' => 4, 'monsters' => ['Zombie']],
+                    ['name' => 'Volcanic Core', 'monster_count' => 3, 'is_boss' => true, 'monsters' => ['Dark Mage']],
                 ],
             ],
             [
@@ -324,10 +324,12 @@ class DungeonSeeder extends Seeder
                 $dungeonData
             );
 
-            // Only create floors if they don't exist
-            if ($dungeon->floors()->count() === 0) {
-                $this->seedFloors($dungeon, $floorsData);
-            }
+            // Delete existing floors and recreate them to apply rebalance
+            $dungeon->floors()->each(function ($floor) {
+                $floor->monsters()->delete();
+                $floor->delete();
+            });
+            $this->seedFloors($dungeon, $floorsData);
         }
     }
 

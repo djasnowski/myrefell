@@ -40,6 +40,14 @@ class MarketController extends Controller
     }
 
     /**
+     * Show the market page for a kingdom.
+     */
+    public function kingdomMarket(Request $request, int $kingdomId): Response
+    {
+        return $this->showMarket($request, 'kingdom', $kingdomId);
+    }
+
+    /**
      * Show the market page.
      */
     protected function showMarket(Request $request, string $locationType, int $locationId): Response

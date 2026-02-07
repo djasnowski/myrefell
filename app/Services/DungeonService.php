@@ -21,7 +21,8 @@ class DungeonService
     public function __construct(
         protected EnergyService $energyService,
         protected LootService $lootService,
-        protected CombatService $combatService
+        protected CombatService $combatService,
+        protected InfirmaryService $infirmaryService
     ) {}
 
     /**
@@ -41,7 +42,7 @@ class DungeonService
         return Dungeon::query()
             ->where('kingdom_id', $kingdom->id)
             ->where('min_combat_level', '<=', $player->combat_level)
-            ->with(['bossMonster', 'kingdom'])
+            ->with(['bossMonster', 'kingdom', 'floors.monsters.monster'])
             ->orderBy('min_combat_level')
             ->get()
             ->toArray();
@@ -82,6 +83,11 @@ class DungeonService
         // Check if player is traveling
         if ($player->isTraveling()) {
             return ['success' => false, 'message' => 'You cannot enter a dungeon while traveling.'];
+        }
+
+        // Check if player is in the infirmary
+        if ($player->isInInfirmary()) {
+            return ['success' => false, 'message' => 'You cannot enter a dungeon while recovering in the infirmary.'];
         }
 
         // Check if player is alive
@@ -530,12 +536,16 @@ class DungeonService
         // Player loses accumulated rewards
         $this->energyService->setEnergyOnDeath($player);
 
+        // Admit player to infirmary
+        $this->infirmaryService->admitPlayer($player);
+
         return [
             'success' => false,
-            'message' => 'You died in the dungeon. All accumulated rewards are lost.',
+            'message' => "You died in the dungeon. All accumulated rewards are lost. You've been taken to the infirmary.",
             'data' => [
                 'session' => $session,
                 'status' => 'failed',
+                'infirmary' => $this->infirmaryService->getInfirmaryStatus($player->fresh()),
             ],
         ];
     }

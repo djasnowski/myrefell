@@ -33,7 +33,7 @@ class PortService
      */
     public function canAccessPort(User $user): bool
     {
-        if ($user->isTraveling()) {
+        if ($user->isTraveling() || $user->isInInfirmary()) {
             return false;
         }
 
@@ -106,6 +106,7 @@ class PortService
             ->get()
             ->map(function ($port) use ($currentPort) {
                 $travelTime = $this->calculateTravelTime($currentPort, $port);
+
                 return [
                     'id' => $port->id,
                     'name' => $port->name,
@@ -172,7 +173,7 @@ class PortService
         if ($user->gold < $cost) {
             return [
                 'success' => false,
-                'message' => 'Not enough gold. Ship passage costs ' . number_format($cost) . ' gold.',
+                'message' => 'Not enough gold. Ship passage costs '.number_format($cost).' gold.',
             ];
         }
 
@@ -196,7 +197,7 @@ class PortService
 
             return [
                 'success' => true,
-                'message' => 'Bon voyage! Your ship departs for ' . $destination->name . '.',
+                'message' => 'Bon voyage! Your ship departs for '.$destination->name.'.',
                 'destination' => [
                     'type' => 'village',
                     'id' => $destination->id,
