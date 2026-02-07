@@ -132,7 +132,7 @@ class GatheringService
      */
     public function canGather(User $user, string $activity): bool
     {
-        if ($user->isTraveling()) {
+        if ($user->isTraveling() || $user->isInInfirmary()) {
             return false;
         }
 
@@ -496,6 +496,10 @@ class GatheringService
         $biomeInfo = $this->biomeService->getAttunementInfo($user);
         $biomeBonus = $this->biomeService->getBiomeBonusForSkill($user, $config['skill']);
 
+        // Get belief XP bonuses
+        $gatheringXpBonus = $this->beliefEffectService->getEffect($user, 'gathering_xp_bonus');
+        $xpPenalty = $this->beliefEffectService->getEffect($user, 'xp_penalty');
+
         return [
             'id' => $activity,
             'name' => $config['name'],
@@ -520,6 +524,8 @@ class GatheringService
             'contribution_rate_percent' => round($contributionRate * 100),
             'biome_attunement' => $biomeInfo,
             'biome_bonus' => $biomeBonus,
+            'gathering_xp_bonus' => $gatheringXpBonus,
+            'xp_penalty' => $xpPenalty,
         ];
     }
 

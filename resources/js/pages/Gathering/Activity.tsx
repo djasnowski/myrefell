@@ -93,6 +93,8 @@ interface Activity {
     current_season: "spring" | "summer" | "autumn" | "winter";
     biome_attunement: BiomeAttunement | null;
     biome_bonus: number;
+    gathering_xp_bonus: number;
+    xp_penalty: number;
 }
 
 interface GatherResult {
@@ -574,31 +576,49 @@ export default function GatheringActivity() {
                             )}
                         </div>
                         <div className="grid gap-2">
-                            {activity.resources.map((resource) => (
-                                <button
-                                    key={resource.name}
-                                    onClick={() => setSelectedResource(resource.name)}
-                                    className={`flex items-center justify-between rounded-lg px-3 py-2 transition ${
-                                        selectedResource === resource.name
-                                            ? "border-2 border-amber-500 bg-amber-900/30"
-                                            : "border border-transparent bg-stone-900/50 hover:bg-stone-800/50"
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <Package
-                                            className={`h-4 w-4 ${selectedResource === resource.name ? "text-amber-400" : "text-stone-400"}`}
-                                        />
-                                        <span
-                                            className={`font-pixel text-xs ${selectedResource === resource.name ? "text-amber-300" : "text-stone-300"}`}
-                                        >
-                                            {resource.name}
+                            {activity.resources.map((resource) => {
+                                // Calculate XP with all bonuses included (biome, belief, penalty)
+                                let xp = activity.base_xp + resource.xp_bonus;
+                                // Apply belief gathering XP bonus
+                                if (activity.gathering_xp_bonus !== 0) {
+                                    xp = Math.ceil(xp * (1 + activity.gathering_xp_bonus / 100));
+                                }
+                                // Apply XP penalty (negative value)
+                                if (activity.xp_penalty !== 0) {
+                                    xp = Math.ceil(xp * (1 + activity.xp_penalty / 100));
+                                }
+                                // Apply biome bonus
+                                if (activity.biome_bonus > 0) {
+                                    xp = Math.ceil(xp * (1 + activity.biome_bonus / 100));
+                                }
+                                const totalXp = xp;
+
+                                return (
+                                    <button
+                                        key={resource.name}
+                                        onClick={() => setSelectedResource(resource.name)}
+                                        className={`flex items-center justify-between rounded-lg px-3 py-2 transition ${
+                                            selectedResource === resource.name
+                                                ? "border-2 border-amber-500 bg-amber-900/30"
+                                                : "border border-transparent bg-stone-900/50 hover:bg-stone-800/50"
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <Package
+                                                className={`h-4 w-4 ${selectedResource === resource.name ? "text-amber-400" : "text-stone-400"}`}
+                                            />
+                                            <span
+                                                className={`font-pixel text-xs ${selectedResource === resource.name ? "text-amber-300" : "text-stone-300"}`}
+                                            >
+                                                {resource.name}
+                                            </span>
+                                        </div>
+                                        <span className="font-pixel text-[10px] text-amber-400">
+                                            +{totalXp} XP
                                         </span>
-                                    </div>
-                                    <span className="font-pixel text-[10px] text-amber-400">
-                                        +{activity.base_xp + resource.xp_bonus} XP
-                                    </span>
-                                </button>
-                            ))}
+                                    </button>
+                                );
+                            })}
                         </div>
 
                         {/* Next Unlock */}
