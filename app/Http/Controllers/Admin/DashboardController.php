@@ -22,6 +22,7 @@ class DashboardController extends Controller
             'activeUsersTrend' => $this->analytics->getActiveUsersTrend(30),
             'recentActivity' => $this->analytics->getRecentGlobalActivity(20),
             'latestUsers' => $this->analytics->getLatestRegisteredUsers(10),
+            'topByGold' => $this->analytics->getTopPlayersByGold(10),
         ]);
     }
 }

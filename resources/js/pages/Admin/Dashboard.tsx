@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { ActivityFeed } from "@/components/admin/activity-feed";
 import { LatestPlayers } from "@/components/admin/latest-players";
+import { TopByGold } from "@/components/admin/top-by-gold";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import AdminLayout from "@/layouts/admin-layout";
 import type { BreadcrumbItem } from "@/types";
@@ -35,6 +36,13 @@ interface PlayerItem {
     combat_level: number;
 }
 
+interface GoldPlayerItem {
+    id: number;
+    username: string;
+    gold: number;
+    combat_level: number;
+}
+
 interface Props {
     stats: {
         totalUsers: number;
@@ -47,6 +55,7 @@ interface Props {
     activeUsersTrend: Array<{ date: string; count: number }>;
     recentActivity: ActivityItem[];
     latestUsers: PlayerItem[];
+    topByGold: GoldPlayerItem[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -60,6 +69,7 @@ export default function Dashboard({
     activeUsersTrend,
     recentActivity,
     latestUsers,
+    topByGold,
 }: Props) {
     const statCards = [
         {
@@ -156,8 +166,9 @@ export default function Dashboard({
                     <div className="lg:col-span-2">
                         <ActivityFeed activities={recentActivity} />
                     </div>
-                    <div>
+                    <div className="space-y-6">
                         <LatestPlayers players={latestUsers} />
+                        <TopByGold players={topByGold} />
                     </div>
                 </div>
 

@@ -195,4 +195,32 @@ class AdminAnalyticsService
                 'combat_level' => $user->combat_level,
             ]);
     }
+
+    /**
+     * Get top players by gold.
+     *
+     * @return Collection<int, array{
+     *     id: int,
+     *     username: string,
+     *     gold: int,
+     *     combat_level: int
+     * }>
+     */
+    public function getTopPlayersByGold(int $limit = 10): Collection
+    {
+        return User::query()
+            ->select(['id', 'username', 'gold'])
+            ->whereNull('banned_at')
+            ->where('is_admin', false)
+            ->with('skills:player_id,skill_name,level')
+            ->orderByDesc('gold')
+            ->limit($limit)
+            ->get()
+            ->map(fn (User $user) => [
+                'id' => $user->id,
+                'username' => $user->username,
+                'gold' => $user->gold,
+                'combat_level' => $user->combat_level,
+            ]);
+    }
 }
