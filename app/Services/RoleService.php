@@ -19,7 +19,7 @@ class RoleService
      * Minimum population for self-appointment. Below this, anyone can claim.
      * At or above this threshold, an election is required.
      */
-    public const SELF_APPOINT_THRESHOLD = 5;
+    public const SELF_APPOINT_THRESHOLD = 25;
 
     /**
      * Get all roles at a location with their current holders.
