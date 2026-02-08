@@ -266,19 +266,20 @@ export default function CalendarIndex() {
                                 return (
                                     <div
                                         key={season}
-                                        className={`h-2 rounded-full ${
-                                            isCurrentSeason
-                                                ? sConfig.accent
-                                                : isPastSeason
-                                                  ? "bg-stone-500"
-                                                  : "bg-stone-700"
+                                        className={`h-2 rounded-full overflow-hidden ${
+                                            isPastSeason ? "bg-stone-500" : "bg-stone-700"
                                         }`}
-                                        style={
-                                            isCurrentSeason
-                                                ? { width: `${(calendar.week / 13) * 100}%` }
-                                                : undefined
-                                        }
-                                    />
+                                    >
+                                        {isCurrentSeason && (
+                                            <div
+                                                className={`h-full ${sConfig.accent}`}
+                                                style={{ width: `${(calendar.week / 13) * 100}%` }}
+                                            />
+                                        )}
+                                        {isPastSeason && (
+                                            <div className="h-full w-full bg-stone-500" />
+                                        )}
+                                    </div>
                                 );
                             })}
                         </div>
