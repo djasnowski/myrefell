@@ -525,7 +525,7 @@ class RoleSeeder extends Seeder
                 'description' => 'The finest metalworker in town, capable of crafting superior weapons and tools.',
                 'location_type' => 'town',
                 'permissions' => ['access_forge', 'bulk_craft', 'craft_masterwork', 'train_apprentices'],
-                'bonuses' => ['smithing_xp_bonus' => 20, 'crafting_discount' => 20],
+                'bonuses' => ['smithing_xp_bonus' => 10, 'crafting_discount' => 20],
                 'salary' => 120,
                 'tier' => 3,
                 'is_elected' => false,

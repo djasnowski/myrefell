@@ -99,7 +99,7 @@ class PlayerSkill extends Model
 
     /**
      * Add XP to this skill and handle level ups.
-     * Applies blessing and belief XP bonuses automatically.
+     * Applies blessing, belief, and role XP bonuses automatically.
      */
     public function addXp(int $amount): int
     {
@@ -108,6 +108,9 @@ class PlayerSkill extends Model
 
         // Apply belief XP bonuses (from religion membership)
         $amount = $this->applyBeliefXpBonus($amount);
+
+        // Apply role XP bonuses (from town/location roles)
+        $amount = $this->applyRoleXpBonus($amount);
 
         $this->xp += $amount;
         $newLevel = self::levelFromXp($this->xp);
@@ -212,6 +215,44 @@ class PlayerSkill extends Model
             $amount = (int) ceil($amount * (1 + $totalModifier / 100));
             // Ensure at least 1 XP
             $amount = max(1, $amount);
+        }
+
+        return $amount;
+    }
+
+    /**
+     * Apply role XP bonuses from town/location roles.
+     */
+    protected function applyRoleXpBonus(int $amount): int
+    {
+        $user = $this->player;
+        if (! $user) {
+            return $amount;
+        }
+
+        // Get user's active roles
+        $activeRoles = PlayerRole::where('user_id', $user->id)
+            ->active()
+            ->with('role')
+            ->get();
+
+        if ($activeRoles->isEmpty()) {
+            return $amount;
+        }
+
+        // Map skill names to bonus keys
+        $bonusKey = $this->skill_name.'_xp_bonus';
+
+        $totalBonus = 0;
+        foreach ($activeRoles as $playerRole) {
+            $role = $playerRole->role;
+            if ($role && $role->bonuses) {
+                $totalBonus += $role->bonuses[$bonusKey] ?? 0;
+            }
+        }
+
+        if ($totalBonus > 0) {
+            $amount = (int) ceil($amount * (1 + $totalBonus / 100));
         }
 
         return $amount;
