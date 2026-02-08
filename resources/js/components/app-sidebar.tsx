@@ -1,6 +1,7 @@
-import { Link } from "@inertiajs/react";
-import { Sparkles } from "lucide-react";
+import { Link, usePage } from "@inertiajs/react";
+import { Calendar, Sparkles } from "lucide-react";
 import { NavAdminControls } from "@/components/nav-admin-controls";
+import { NavCalendar } from "@/components/nav-calendar";
 import { NavLocation } from "@/components/nav-location";
 import { NavPlayerInfo } from "@/components/nav-player-info";
 import { NavSkills } from "@/components/nav-skills";
@@ -47,6 +48,13 @@ export function AppSidebar() {
                 {/* Player Info Card */}
                 <div className="px-2 py-2">
                     <NavPlayerInfo />
+                </div>
+
+                <SidebarSeparator />
+
+                {/* Calendar / World Time */}
+                <div className="px-2 py-1">
+                    <NavCalendar />
                 </div>
 
                 <SidebarSeparator />

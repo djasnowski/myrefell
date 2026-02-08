@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Services\BeliefEffectService;
 use App\Services\BlessingEffectService;
+use App\Services\CalendarService;
 use App\Services\EnergyService;
 use App\Services\InfirmaryService;
 use App\Services\OnlinePlayersService;
@@ -32,7 +33,8 @@ class HandleInertiaRequests extends Middleware
         protected BeliefEffectService $beliefEffectService,
         protected InfirmaryService $infirmaryService,
         protected PotionBuffService $potionBuffService,
-        protected SkillBonusService $skillBonusService
+        protected SkillBonusService $skillBonusService,
+        protected CalendarService $calendarService
     ) {}
 
     /**
@@ -88,6 +90,7 @@ class HandleInertiaRequests extends Middleware
             'sidebar' => $player ? $this->getSidebarData($player) : null,
             'online_count' => $this->onlinePlayersService->getOnlineCount(),
             'impersonating' => $impersonating,
+            'calendar' => $this->calendarService->getCalendarData(),
         ];
     }
 
