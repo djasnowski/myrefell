@@ -331,7 +331,8 @@ class SkillBonusService
         // XP bonuses and yield bonuses are percentages
         return str_contains($effectKey, '_xp_') ||
                str_contains($effectKey, '_yield_') ||
-               str_contains($effectKey, '_penalty');
+               str_contains($effectKey, '_penalty') ||
+               str_contains($effectKey, '_regen_');
     }
 
     /**

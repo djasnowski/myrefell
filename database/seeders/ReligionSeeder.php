@@ -75,7 +75,7 @@ class ReligionSeeder extends Seeder
                 'icon' => 'clock',
                 'type' => 'virtue',
                 'effects' => [
-                    'energy_regen_bonus' => 5,
+                    'energy_regen_bonus' => 20,
                 ],
             ],
             [
