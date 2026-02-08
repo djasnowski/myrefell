@@ -15,9 +15,9 @@ class CalendarService
     /**
      * Real-time interval between world ticks.
      * Default: 1 day = 1 game week.
-     * This value is in seconds (86400 = 24 hours).
+     * Using 23 hours to allow some buffer for scheduler timing variance.
      */
-    public const TICK_INTERVAL_SECONDS = 86400;
+    public const TICK_INTERVAL_SECONDS = 82800;
 
     /**
      * Get the current world state.
