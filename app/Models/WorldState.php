@@ -35,12 +35,12 @@ class WorldState extends Model
     /**
      * Weeks per season.
      */
-    public const WEEKS_PER_SEASON = 12;
+    public const WEEKS_PER_SEASON = 13;
 
     /**
      * Total weeks per year.
      */
-    public const WEEKS_PER_YEAR = 48;
+    public const WEEKS_PER_YEAR = 52;
 
     /**
      * Travel time modifiers by season.

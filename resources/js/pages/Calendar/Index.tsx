@@ -116,7 +116,7 @@ export default function CalendarIndex() {
                             {calendar.formatted_date}
                         </div>
                         <div className="mt-2 font-pixel text-xs text-stone-500">
-                            Week {calendar.week_of_year} of 48
+                            Week {calendar.week_of_year} of 52
                         </div>
                     </div>
 
@@ -144,13 +144,13 @@ export default function CalendarIndex() {
                                 Season Progress
                             </span>
                             <span className="font-pixel text-xs text-stone-500">
-                                Week {calendar.week} of 12
+                                Week {calendar.week} of 13
                             </span>
                         </div>
                         <div className="h-3 w-full overflow-hidden rounded-full bg-stone-700">
                             <div
                                 className={`h-full ${config.accent} transition-all`}
-                                style={{ width: `${(calendar.week / 12) * 100}%` }}
+                                style={{ width: `${(calendar.week / 13) * 100}%` }}
                             />
                         </div>
                         <div className="flex justify-between mt-2">
@@ -233,7 +233,7 @@ export default function CalendarIndex() {
                                 Year {calendar.year} Progress
                             </span>
                             <span className="font-pixel text-xs text-stone-500">
-                                {calendar.week_of_year} / 48 weeks
+                                {calendar.week_of_year} / 52 weeks
                             </span>
                         </div>
                         <div className="grid grid-cols-4 gap-1 mb-2">
@@ -258,7 +258,7 @@ export default function CalendarIndex() {
                                         }`}
                                         style={
                                             isCurrentSeason
-                                                ? { width: `${(calendar.week / 12) * 100}%` }
+                                                ? { width: `${(calendar.week / 13) * 100}%` }
                                                 : undefined
                                         }
                                     />
@@ -289,7 +289,7 @@ export default function CalendarIndex() {
                             About the Calendar
                         </h3>
                         <ul className="space-y-1 font-pixel text-[10px] text-stone-400">
-                            <li>- Each year has 4 seasons with 12 weeks each (48 weeks total)</li>
+                            <li>- Each year has 4 seasons with 13 weeks each (52 weeks total)</li>
                             <li>- 1 real day = 1 game week</li>
                             <li>- Seasons affect travel speed, gathering yields, and more</li>
                             <li>- Plan your activities around seasonal bonuses</li>
