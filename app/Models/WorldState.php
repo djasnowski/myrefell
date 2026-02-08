@@ -113,11 +113,19 @@ class WorldState extends Model
     }
 
     /**
-     * Get the total week number within the year (1-48).
+     * Get the total week number within the year (1-52).
      */
     public function getTotalWeekOfYear(): int
     {
         return ($this->getSeasonIndex() * self::WEEKS_PER_SEASON) + $this->current_week;
+    }
+
+    /**
+     * Get the total day number within the year (1-364).
+     */
+    public function getTotalDayOfYear(): int
+    {
+        return (($this->getTotalWeekOfYear() - 1) * self::DAYS_PER_WEEK) + $this->current_day;
     }
 
     /**

@@ -10,6 +10,7 @@ interface CalendarData {
     week: number;
     week_of_year: number;
     day: number;
+    day_of_year: number;
     formatted_date: string;
 }
 
@@ -94,7 +95,7 @@ export function NavCalendar() {
             className={`relative block rounded-lg border ${config.border} ${config.bg} px-2 py-1.5 transition hover:opacity-80`}
         >
             <div className={`font-pixel text-[10px] ${config.color}`}>
-                Day {calendar.day}, Wk {calendar.week_of_year}, Year {calendar.year}
+                Day {calendar.day_of_year}, Wk {calendar.week_of_year}, Year {calendar.year}
             </div>
             <div className="font-pixel text-[9px] text-stone-500">Next day: {countdownStr}</div>
             <SeasonIcon

@@ -175,6 +175,7 @@ class CalendarService
             'week' => $state->current_week,
             'week_of_year' => $state->getTotalWeekOfYear(),
             'day' => $state->current_day,
+            'day_of_year' => $state->getTotalDayOfYear(),
             'formatted_date' => $state->getFormattedDate(),
             'season_description' => $state->getSeasonDescription(),
             'travel_modifier' => $state->getTravelModifier(),

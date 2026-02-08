@@ -18,6 +18,7 @@ interface CalendarData {
     week: number;
     week_of_year: number;
     day: number;
+    day_of_year: number;
     formatted_date: string;
     season_description: string;
     travel_modifier: number;
