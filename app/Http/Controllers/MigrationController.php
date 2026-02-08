@@ -241,10 +241,10 @@ class MigrationController extends Controller
 
         return [
             'id' => $request->id,
-            'user' => [
+            'user' => $request->user ? [
                 'id' => $request->user->id,
                 'username' => $request->user->username,
-            ],
+            ] : null,
             'from_location' => [
                 'type' => $request->from_location_type ?? 'village',
                 'id' => $request->from_location_id ?? $request->from_village_id,
