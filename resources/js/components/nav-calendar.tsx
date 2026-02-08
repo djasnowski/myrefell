@@ -96,9 +96,12 @@ export function NavCalendar() {
                 Week {calendar.week_of_year}, Year {calendar.year}
             </div>
             <div className="font-pixel text-[9px] text-stone-500">Next day: {countdownStr}</div>
-            <SeasonIcon
-                className={`absolute right-1.5 bottom-1.5 h-3 w-3 ${config.color} opacity-60`}
-            />
+            <div
+                className={`absolute right-1.5 bottom-1 flex items-center gap-0.5 ${config.color} opacity-60`}
+            >
+                <span className="font-pixel text-[8px] capitalize">{calendar.season}</span>
+                <SeasonIcon className="h-2.5 w-2.5" />
+            </div>
         </Link>
     );
 }
