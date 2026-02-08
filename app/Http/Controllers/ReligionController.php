@@ -94,17 +94,19 @@ class ReligionController extends Controller
 
         $details = $this->religionService->getReligionDetails($religion, $user);
 
-        // Get bones from player inventory for sacrifice
+        // Get bones from player inventory for sacrifice (aggregate by item type)
         $sacrificeBones = PlayerInventory::where('player_id', $user->id)
             ->whereHas('item', fn ($q) => $q->where('subtype', 'remains'))
             ->with('item:id,name,prayer_bonus')
             ->get()
-            ->map(fn ($inv) => [
-                'item_id' => $inv->item_id,
-                'name' => $inv->item->name,
-                'quantity' => $inv->quantity,
-                'prayer_xp' => $inv->item->prayer_bonus,
-            ]);
+            ->groupBy('item_id')
+            ->map(fn ($group) => [
+                'item_id' => $group->first()->item_id,
+                'name' => $group->first()->item->name,
+                'quantity' => $group->sum('quantity'),
+                'prayer_xp' => $group->first()->item->prayer_bonus,
+            ])
+            ->values();
 
         // Get headquarters info if it exists
         $hq = ReligionHeadquarters::where('religion_id', $religion->id)->first();
