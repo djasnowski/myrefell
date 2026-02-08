@@ -11,10 +11,13 @@ class WorldState extends Model
 
     protected $table = 'world_state';
 
+    public const DAYS_PER_WEEK = 7;
+
     protected $fillable = [
         'current_year',
         'current_season',
         'current_week',
+        'current_day',
         'last_tick_at',
     ];
 
@@ -23,6 +26,7 @@ class WorldState extends Model
         return [
             'current_year' => 'integer',
             'current_week' => 'integer',
+            'current_day' => 'integer',
             'last_tick_at' => 'datetime',
         ];
     }
@@ -76,6 +80,7 @@ class WorldState extends Model
                 'current_year' => 1,
                 'current_season' => 'spring',
                 'current_week' => 1,
+                'current_day' => 1,
                 'last_tick_at' => now(),
             ]);
         }
@@ -148,13 +153,13 @@ class WorldState extends Model
     }
 
     /**
-     * Get the formatted date string (e.g., "Week 3 of Spring, Year 1").
+     * Get the formatted date string (e.g., "Day 3, Week 2 of Spring, Year 1").
      */
     public function getFormattedDate(): string
     {
         $seasonName = ucfirst($this->current_season);
 
-        return "Week {$this->current_week} of {$seasonName}, Year {$this->current_year}";
+        return "Day {$this->current_day}, Week {$this->current_week} of {$seasonName}, Year {$this->current_year}";
     }
 
     /**

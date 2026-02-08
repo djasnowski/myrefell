@@ -17,6 +17,7 @@ interface CalendarData {
     season: "spring" | "summer" | "autumn" | "winter";
     week: number;
     week_of_year: number;
+    day: number;
     formatted_date: string;
     season_description: string;
     travel_modifier: number;
@@ -134,6 +135,22 @@ export default function CalendarIndex() {
                                     {calendar.season_description}
                                 </p>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Week Progress */}
+                    <div className="mb-6 rounded-lg border border-stone-700 bg-stone-800/50 p-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="font-pixel text-xs text-stone-400">Week Progress</span>
+                            <span className="font-pixel text-xs text-stone-500">
+                                Day {calendar.day} of 7
+                            </span>
+                        </div>
+                        <div className="h-3 w-full overflow-hidden rounded-full bg-stone-700">
+                            <div
+                                className={`h-full ${config.accent} transition-all`}
+                                style={{ width: `${(calendar.day / 7) * 100}%` }}
+                            />
                         </div>
                     </div>
 
@@ -289,10 +306,11 @@ export default function CalendarIndex() {
                             About the Calendar
                         </h3>
                         <ul className="space-y-1 font-pixel text-[10px] text-stone-400">
-                            <li>- Each year has 4 seasons with 13 weeks each (52 weeks total)</li>
-                            <li>- 1 real day = 1 game week</li>
+                            <li>- Each week has 7 days</li>
+                            <li>- Each season has 13 weeks</li>
+                            <li>- Each year has 4 seasons (52 weeks total)</li>
+                            <li>- 1 real day = 1 game day</li>
                             <li>- Seasons affect travel speed, gathering yields, and more</li>
-                            <li>- Plan your activities around seasonal bonuses</li>
                         </ul>
                     </div>
                 </div>
