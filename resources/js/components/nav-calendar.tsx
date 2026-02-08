@@ -79,8 +79,8 @@ export function NavCalendar() {
     const config = seasonConfig[calendar.season];
     const SeasonIcon = config.icon;
 
-    // Format countdown
-    const countdownStr = `${countdown.hours.toString().padStart(2, "0")}:${countdown.minutes.toString().padStart(2, "0")}:${countdown.seconds.toString().padStart(2, "0")}`;
+    // Format countdown (HH:MM only)
+    const countdownStr = `${countdown.hours.toString().padStart(2, "0")}:${countdown.minutes.toString().padStart(2, "0")}`;
 
     // When collapsed, hide entirely
     if (state === "collapsed") {
@@ -92,13 +92,13 @@ export function NavCalendar() {
             href="/calendar"
             className={`relative block rounded-lg border ${config.border} ${config.bg} px-2 py-1.5 transition hover:opacity-80`}
         >
-            <SeasonIcon
-                className={`absolute right-1.5 top-1.5 h-3 w-3 ${config.color} opacity-60`}
-            />
             <div className={`font-pixel text-[10px] ${config.color}`}>
-                {calendar.formatted_date}
+                Week {calendar.week_of_year}, Year {calendar.year}
             </div>
             <div className="font-pixel text-[9px] text-stone-500">Next day: {countdownStr}</div>
+            <SeasonIcon
+                className={`absolute right-1.5 bottom-1.5 h-3 w-3 ${config.color} opacity-60`}
+            />
         </Link>
     );
 }
