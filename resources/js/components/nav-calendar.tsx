@@ -1,4 +1,6 @@
 import { Link, usePage } from "@inertiajs/react";
+import type { LucideIcon } from "lucide-react";
+import { Cloud, Leaf, Snowflake, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
 
@@ -15,23 +17,30 @@ interface PageProps {
     [key: string]: unknown;
 }
 
-const seasonConfig = {
+const seasonConfig: Record<
+    string,
+    { icon: LucideIcon; color: string; bg: string; border: string }
+> = {
     spring: {
+        icon: Cloud,
         color: "text-green-400",
         bg: "bg-green-900/30",
         border: "border-green-600/30",
     },
     summer: {
+        icon: Sun,
         color: "text-yellow-400",
         bg: "bg-yellow-900/30",
         border: "border-yellow-600/30",
     },
     autumn: {
+        icon: Leaf,
         color: "text-orange-400",
         bg: "bg-orange-900/30",
         border: "border-orange-600/30",
     },
     winter: {
+        icon: Snowflake,
         color: "text-blue-400",
         bg: "bg-blue-900/30",
         border: "border-blue-600/30",
@@ -68,6 +77,7 @@ export function NavCalendar() {
     if (!calendar) return null;
 
     const config = seasonConfig[calendar.season];
+    const SeasonIcon = config.icon;
 
     // Format countdown
     const countdownStr = `${countdown.hours.toString().padStart(2, "0")}:${countdown.minutes.toString().padStart(2, "0")}:${countdown.seconds.toString().padStart(2, "0")}`;
@@ -80,8 +90,11 @@ export function NavCalendar() {
     return (
         <Link
             href="/calendar"
-            className={`block rounded-lg border ${config.border} ${config.bg} px-2 py-1.5 transition hover:opacity-80`}
+            className={`relative block rounded-lg border ${config.border} ${config.bg} px-2 py-1.5 transition hover:opacity-80`}
         >
+            <SeasonIcon
+                className={`absolute right-1.5 top-1.5 h-3 w-3 ${config.color} opacity-60`}
+            />
             <div className={`font-pixel text-[10px] ${config.color}`}>
                 {calendar.formatted_date}
             </div>
