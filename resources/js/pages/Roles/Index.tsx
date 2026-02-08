@@ -280,6 +280,234 @@ const roleConsequences: Record<string, { duties: string[]; ifVacant: string }> =
         duties: ["Care for horses", "Sell mounts", "Provide stabling services"],
         ifVacant: "No horses available, mount services limited.",
     },
+    // Town roles
+    mayor: {
+        duties: ["Govern the town", "Set taxes", "Appoint officials", "Manage treasury"],
+        ifVacant: "No taxes collected, no appointments, town governance halted.",
+    },
+    town_guard_captain: {
+        duties: ["Command the town guard", "Arrest criminals", "Defend the town", "Patrol streets"],
+        ifVacant: "Crime runs rampant, no arrests, town vulnerable to attack.",
+    },
+    guildmaster: {
+        duties: ["Oversee trade guilds", "Set trade standards", "Mediate guild disputes"],
+        ifVacant: "Guild disputes unresolved, trade standards slip, no guild oversight.",
+    },
+    town_clerk: {
+        duties: ["Maintain records", "Process permits", "Manage census", "Handle correspondence"],
+        ifVacant: "Records fall behind, permits delayed, census data outdated.",
+    },
+    market_warden: {
+        duties: ["Regulate market prices", "Inspect goods", "Prevent fraud", "Collect market fees"],
+        ifVacant: "Market prices unstable, counterfeit goods unchecked, no fee collection.",
+    },
+    town_physician: {
+        duties: ["Treat the sick", "Manage the infirmary", "Prevent plagues", "Train healers"],
+        ifVacant: "Disease spreads unchecked, healing costs increase, no plague prevention.",
+    },
+    head_chef: {
+        duties: ["Manage food supply", "Run the kitchen", "Prepare feasts", "Train cooks"],
+        ifVacant: "No feast bonuses, food quality drops, no cooking training.",
+    },
+    town_crier: {
+        duties: ["Announce news", "Deliver proclamations", "Warn of danger"],
+        ifVacant: "News travels slowly, proclamations undelivered.",
+    },
+    master_blacksmith: {
+        duties: ["Oversee all smithing", "Forge masterwork items", "Train apprentices"],
+        ifVacant: "No masterwork crafting, apprentice training halted, smithing quality drops.",
+    },
+    weaponsmith: {
+        duties: ["Forge weapons", "Sharpen blades", "Supply the guard", "Repair arms"],
+        ifVacant: "No weapon forging, guards poorly armed, blade repairs unavailable.",
+    },
+    armorsmith: {
+        duties: ["Forge armor", "Repair shields", "Supply the guard", "Fit plate mail"],
+        ifVacant: "No armor forging, guards poorly protected, repairs unavailable.",
+    },
+    master_jeweler: {
+        duties: ["Craft jewelry", "Appraise gems", "Set precious stones", "Create regalia"],
+        ifVacant: "No jewelry crafting, gem appraisals unavailable.",
+    },
+    master_tailor: {
+        duties: ["Sew garments", "Make uniforms", "Repair clothing", "Craft banners"],
+        ifVacant: "No tailoring, uniforms tattered, banner crafting unavailable.",
+    },
+    master_carpenter: {
+        duties: ["Build structures", "Repair buildings", "Craft furniture", "Maintain walls"],
+        ifVacant: "Buildings fall into disrepair, no new construction, walls weaken.",
+    },
+    alchemist: {
+        duties: ["Brew potions", "Research remedies", "Supply the physician", "Create elixirs"],
+        ifVacant: "No potions available, remedies scarce, no alchemical research.",
+    },
+    tanner: {
+        duties: ["Tan hides", "Produce leather", "Supply armorsmith", "Cure pelts"],
+        ifVacant: "No leather production, hides rot, leather goods unavailable.",
+    },
+    scribe: {
+        duties: ["Copy documents", "Write letters", "Maintain the library", "Record history"],
+        ifVacant: "Records lost, no correspondence, library unmaintained.",
+    },
+    master_miner: {
+        duties: ["Manage the mines", "Ensure miner safety", "Oversee ore production"],
+        ifVacant: "Mining output drops, no safety oversight, ore supply dwindles.",
+    },
+    master_fisher: {
+        duties: ["Manage fishing grounds", "Organize fishing fleet", "Supply the market"],
+        ifVacant: "Fish supply drops, fishing grounds overworked, no fleet coordination.",
+    },
+    brewmaster: {
+        duties: ["Brew ale and mead", "Manage the brewery", "Supply taverns", "Create recipes"],
+        ifVacant: "No ale brewed, taverns run dry, brewery idle.",
+    },
+    magistrate: {
+        duties: ["Preside over court", "Judge disputes", "Sentence criminals", "Interpret law"],
+        ifVacant: "No justice served, disputes fester, criminals go unpunished.",
+    },
+    harbormaster: {
+        duties: ["Manage the port", "Collect dock fees", "Inspect cargo", "Direct ships"],
+        ifVacant: "Port in disarray, no dock fees collected, cargo unchecked.",
+    },
+    stablemaster: {
+        duties: ["Care for horses", "Sell mounts", "Manage stables", "Breed warhorses"],
+        ifVacant: "No horses available, stables neglected, no mount services.",
+    },
+    // Barony roles
+    baron: {
+        duties: ["Rule the barony", "Collect taxes", "Dispense justice", "Defend the realm"],
+        ifVacant: "No law or order, taxes uncollected, barony ungoverned.",
+    },
+    marshal: {
+        duties: ["Command the garrison", "Train soldiers", "Plan defenses", "Lead in battle"],
+        ifVacant: "Garrison leaderless, defenses crumble, no military training.",
+    },
+    steward: {
+        duties: ["Manage the castle", "Oversee supplies", "Handle logistics", "Manage staff"],
+        ifVacant: "Castle supplies mismanaged, logistics in chaos, staff unsupervised.",
+    },
+    castellan: {
+        duties: ["Defend the castle", "Manage fortifications", "Command the watch"],
+        ifVacant: "Castle defenses weakened, walls unmaintained, no night watch.",
+    },
+    treasurer: {
+        duties: ["Manage finances", "Collect taxes", "Pay wages", "Audit accounts"],
+        ifVacant: "Finances in disarray, wages unpaid, taxes uncollected.",
+    },
+    physician: {
+        duties: ["Treat the lord's court", "Manage infirmary", "Research cures"],
+        ifVacant: "Court illnesses untreated, no medical care for garrison.",
+    },
+    court_chaplain: {
+        duties: ["Lead prayers", "Advise on moral matters", "Bless the troops", "Keep records"],
+        ifVacant: "No spiritual guidance, troops unblessed, morale suffers.",
+    },
+    jailsman: {
+        duties: ["Guard prisoners", "Manage the dungeon", "Carry out sentences"],
+        ifVacant: "Prisoners escape, dungeon unguarded, no sentences carried out.",
+    },
+    master_cook: {
+        duties: ["Feed the castle", "Prepare feasts", "Manage the kitchens"],
+        ifVacant: "Castle meals poor, no feasts, kitchen staff unsupervised.",
+    },
+    castle_stablemaster: {
+        duties: ["Manage war horses", "Maintain cavalry mounts", "Breed destriers"],
+        ifVacant: "War horses neglected, cavalry unmounted, no breeding program.",
+    },
+    "stable-master-barony": {
+        duties: ["Care for horses", "Manage stables", "Provide mounts"],
+        ifVacant: "Stables neglected, no mounts available.",
+    },
+    // Duchy roles
+    duke: {
+        duties: ["Rule the duchy", "Command vassals", "Dispense high justice", "Advise the king"],
+        ifVacant: "Duchy ungoverned, vassals unruly, high justice unavailable.",
+    },
+    duchy_chancellor: {
+        duties: ["Advise the duke", "Draft laws", "Handle diplomacy", "Manage court"],
+        ifVacant: "No diplomatic relations, laws unwritten, court in disarray.",
+    },
+    duchy_marshal: {
+        duties: ["Command duchy forces", "Coordinate barons' armies", "Plan campaigns"],
+        ifVacant: "No military coordination, duchy defenses fragmented.",
+    },
+    duchy_treasurer: {
+        duties: ["Manage duchy finances", "Audit baronies", "Fund infrastructure"],
+        ifVacant: "Duchy finances unchecked, baronies unaudited, no infrastructure funding.",
+    },
+    high_priest: {
+        duties: ["Lead the duchy's faith", "Ordain priests", "Consecrate temples"],
+        ifVacant: "Faith wavers, no ordinations, temples unconsecrated.",
+    },
+    duchy_physician: {
+        duties: ["Oversee duchy health", "Combat plagues", "Train physicians"],
+        ifVacant: "Plagues spread unchecked, no physician training, health deteriorates.",
+    },
+    duchy_chef: {
+        duties: ["Manage ducal kitchens", "Host grand feasts", "Train cooks"],
+        ifVacant: "No grand feasts, ducal kitchens idle, cooks untrained.",
+    },
+    master_of_hunts: {
+        duties: ["Organize hunts", "Manage game reserves", "Supply the court with meat"],
+        ifVacant: "No hunts organized, game reserves unmanaged, court meat supply drops.",
+    },
+    ducal_stablemaster: {
+        duties: ["Manage ducal stables", "Breed fine horses", "Supply cavalry"],
+        ifVacant: "Ducal stables neglected, no fine horses bred, cavalry undersupplied.",
+    },
+    // Kingdom roles
+    king: {
+        duties: ["Rule the kingdom", "Command all forces", "Make law", "Protect the realm"],
+        ifVacant: "The realm is without a ruler. Chaos looms.",
+    },
+    chancellor: {
+        duties: ["Chief advisor to the king", "Draft royal decrees", "Handle foreign affairs"],
+        ifVacant: "No royal counsel, decrees unwritten, foreign relations collapse.",
+    },
+    general: {
+        duties: ["Command the royal army", "Plan wars", "Defend the borders"],
+        ifVacant: "Army leaderless, borders undefended, no war planning.",
+    },
+    royal_treasurer: {
+        duties: ["Manage the royal treasury", "Set kingdom taxes", "Fund the army"],
+        ifVacant: "Treasury unmanaged, kingdom taxes uncollected, army unfunded.",
+    },
+    archbishop: {
+        duties: ["Lead the kingdom's faith", "Crown the king", "Advise on spiritual matters"],
+        ifVacant: "No coronations, faith leaderless, spiritual guidance absent.",
+    },
+    royal_steward: {
+        duties: ["Manage royal estates", "Oversee the palace", "Coordinate servants"],
+        ifVacant: "Royal estates mismanaged, palace in disrepair.",
+    },
+    lord_marshal: {
+        duties: ["Oversee all military", "Coordinate generals", "Enforce martial law"],
+        ifVacant: "Military command fractured, no martial coordination.",
+    },
+    master_of_laws: {
+        duties: ["Interpret royal law", "Judge appeals", "Advise on legal matters"],
+        ifVacant: "Laws unenforced, appeals unheard, legal chaos.",
+    },
+    spymaster: {
+        duties: ["Gather intelligence", "Root out traitors", "Manage informants"],
+        ifVacant: "No intelligence gathered, plots go undetected, traitors unchecked.",
+    },
+    royal_herald: {
+        duties: ["Announce royal decrees", "Organize ceremonies", "Maintain heraldry"],
+        ifVacant: "Royal decrees unannounced, ceremonies disorganized.",
+    },
+    royal_physician: {
+        duties: ["Tend to the royal family", "Oversee kingdom health", "Combat epidemics"],
+        ifVacant: "Royal family unattended, epidemics unchecked.",
+    },
+    royal_chef: {
+        duties: ["Prepare royal feasts", "Manage palace kitchens", "Taste for poison"],
+        ifVacant: "No royal feasts, palace kitchens idle, no food tasting.",
+    },
+    royal_stablemaster: {
+        duties: ["Manage royal stables", "Breed champion horses", "Maintain the royal cavalry"],
+        ifVacant: "Royal stables neglected, no champion horses, cavalry weakened.",
+    },
 };
 
 function formatDate(dateString: string): string {
@@ -666,51 +894,34 @@ export default function RolesIndex() {
                                         <button
                                             key={role.id}
                                             onClick={() => setSelectedRole(role)}
-                                            className={`flex items-center gap-4 rounded-lg border p-4 text-left transition ${tierColors[role.tier]} ${isUserRole ? "ring-2 ring-green-500" : ""}`}
+                                            className={`flex items-center gap-3 rounded-lg border p-3 text-left transition ${tierColors[role.tier]} ${isUserRole ? "ring-2 ring-green-500" : ""}`}
                                         >
                                             <div className="flex-shrink-0">
-                                                <Icon className="h-10 w-10 text-amber-300" />
+                                                <Icon className="h-8 w-8 text-amber-300" />
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <div className="flex items-center justify-between gap-2">
-                                                    <span className="font-pixel text-sm text-amber-300 leading-tight truncate">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-pixel text-sm text-amber-300 truncate">
                                                         {role.name}
                                                     </span>
-                                                    <div className="flex items-center gap-2 flex-shrink-0">
-                                                        {role.holder && (
-                                                            <span className="font-pixel text-xs text-stone-300">
-                                                                {role.holder.username}
-                                                                <span className="ml-1 text-stone-500">
-                                                                    Lv.{role.holder.total_level}{" "}
-                                                                    {role.holder.title
-                                                                        .charAt(0)
-                                                                        .toUpperCase() +
-                                                                        role.holder.title.slice(
-                                                                            1,
-                                                                        )}{" "}
-                                                                    (
-                                                                    {role.holder.social_class
-                                                                        .charAt(0)
-                                                                        .toUpperCase() +
-                                                                        role.holder.social_class.slice(
-                                                                            1,
-                                                                        )}
-                                                                    )
-                                                                </span>
-                                                            </span>
-                                                        )}
-                                                        <span
-                                                            className={`h-2.5 w-2.5 rounded-full ${role.is_vacant ? "bg-red-500" : "bg-green-500"}`}
-                                                        />
+                                                    <span
+                                                        className={`h-2 w-2 flex-shrink-0 rounded-full ${role.is_vacant ? "bg-red-500" : "bg-green-500"}`}
+                                                    />
+                                                </div>
+                                                {role.holder ? (
+                                                    <div className="font-pixel text-[10px] text-stone-400 truncate">
+                                                        {role.holder.username}
+                                                        <span className="text-stone-500">
+                                                            {" "}
+                                                            · Lv.{role.holder.total_level} ·{" "}
+                                                            {role.salary}g/day
+                                                        </span>
                                                     </div>
-                                                </div>
-                                                <div className="font-pixel text-xs text-stone-400 leading-snug truncate max-w-[220px] mt-1">
-                                                    {roleShortDesc[role.slug] ||
-                                                        role.description.slice(0, 35)}
-                                                </div>
-                                                <div className="font-pixel text-xs text-stone-500 mt-1">
-                                                    {role.salary}g/day
-                                                </div>
+                                                ) : (
+                                                    <div className="font-pixel text-[10px] text-stone-500">
+                                                        Vacant · {role.salary}g/day
+                                                    </div>
+                                                )}
                                             </div>
                                         </button>
                                     );
