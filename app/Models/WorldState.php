@@ -161,13 +161,13 @@ class WorldState extends Model
     }
 
     /**
-     * Get the formatted date string (e.g., "Day 3, Week 2 of Spring, Year 1").
+     * Get the formatted date string (e.g., "Day 9, Week 2 of Spring, Year 1").
      */
     public function getFormattedDate(): string
     {
         $seasonName = ucfirst($this->current_season);
 
-        return "Day {$this->current_day}, Week {$this->current_week} of {$seasonName}, Year {$this->current_year}";
+        return "Day {$this->getTotalDayOfYear()}, Week {$this->current_week} of {$seasonName}, Year {$this->current_year}";
     }
 
     /**
