@@ -593,6 +593,12 @@ export default function GatheringActivity() {
                                 }
                                 const totalXp = xp;
 
+                                const baseXp = activity.base_xp + resource.xp_bonus;
+                                const hasBonuses =
+                                    activity.gathering_xp_bonus !== 0 ||
+                                    activity.xp_penalty !== 0 ||
+                                    activity.biome_bonus > 0;
+
                                 return (
                                     <button
                                         key={resource.name}
@@ -613,9 +619,34 @@ export default function GatheringActivity() {
                                                 {resource.name}
                                             </span>
                                         </div>
-                                        <span className="font-pixel text-[10px] text-amber-400">
-                                            +{totalXp} XP
-                                        </span>
+                                        <div className="text-right">
+                                            <span className="font-pixel text-[10px] text-amber-400">
+                                                +{totalXp} XP
+                                            </span>
+                                            {hasBonuses && (
+                                                <div className="font-pixel text-[8px] text-stone-500">
+                                                    {baseXp} base
+                                                    {activity.gathering_xp_bonus > 0 && (
+                                                        <span className="text-green-500">
+                                                            {" "}
+                                                            +{activity.gathering_xp_bonus}%
+                                                        </span>
+                                                    )}
+                                                    {activity.xp_penalty !== 0 && (
+                                                        <span className="text-red-500">
+                                                            {" "}
+                                                            {activity.xp_penalty}%
+                                                        </span>
+                                                    )}
+                                                    {activity.biome_bonus > 0 && (
+                                                        <span className="text-blue-400">
+                                                            {" "}
+                                                            +{activity.biome_bonus}% biome
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </button>
                                 );
                             })}
