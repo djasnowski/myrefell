@@ -1,5 +1,5 @@
-import { Link, usePage } from "@inertiajs/react";
-import { Calendar, Sparkles } from "lucide-react";
+import { Link } from "@inertiajs/react";
+import { Sparkles } from "lucide-react";
 import { NavAdminControls } from "@/components/nav-admin-controls";
 import { NavCalendar } from "@/components/nav-calendar";
 import { NavLocation } from "@/components/nav-location";
