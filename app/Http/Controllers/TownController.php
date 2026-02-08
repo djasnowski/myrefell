@@ -243,6 +243,19 @@ class TownController extends Controller
     }
 
     /**
+     * Display the town treasury page (coming soon).
+     */
+    public function treasury(Request $request, Town $town): Response
+    {
+        return Inertia::render('Towns/Treasury', [
+            'town' => [
+                'id' => $town->id,
+                'name' => $town->name,
+            ],
+        ]);
+    }
+
+    /**
      * Display the town hall page.
      */
     public function hall(Request $request, Town $town): Response

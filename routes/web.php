@@ -213,6 +213,7 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
     Route::get('towns', [TownController::class, 'index'])->name('towns.index');
     Route::get('towns/{town}', [TownController::class, 'show'])->name('towns.show');
     Route::get('towns/{town}/hall', [TownController::class, 'hall'])->name('towns.hall');
+    Route::get('towns/{town}/treasury', [TownController::class, 'treasury'])->name('towns.treasury');
 
     Route::get('villages', [VillageController::class, 'index'])->name('villages.index');
     Route::get('villages/{village}', [VillageController::class, 'show'])->name('villages.show');
