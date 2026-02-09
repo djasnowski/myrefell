@@ -298,11 +298,12 @@ export default function CombatArena() {
                 </div>
 
                 {/* Combat Log - Flexible Height */}
-                <div className="mb-4 flex min-h-[100px] flex-1 flex-col rounded-lg border border-stone-700 bg-stone-900/50 p-4">
+                <div className="mb-4 flex min-h-[100px] flex-1 flex-col overflow-hidden rounded-lg border border-stone-700 bg-stone-900/50 p-4">
                     <h3 className="mb-3 font-pixel text-sm text-amber-300">Combat Log</h3>
                     <div
                         id="combat-logs"
-                        className="flex-1 space-y-1 overflow-y-auto scrollbar-thin scrollbar-track-stone-800 scrollbar-thumb-stone-600"
+                        className="flex-1 space-y-1 overflow-y-auto"
+                        style={{ maxHeight: "calc(100vh - 420px)" }}
                     >
                         {combatLogs.map((log) => (
                             <div
