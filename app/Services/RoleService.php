@@ -185,13 +185,63 @@ class RoleService
     {
         return match ($locationType) {
             'village' => \App\Models\Village::find($locationId)?->residents()->count() ?? 0,
-            'barony' => \App\Models\Barony::find($locationId)?->villages()
-                ->withCount('residents')->get()->sum('residents_count') ?? 0,
-            'kingdom' => \App\Models\User::whereHas('homeVillage.barony', function ($q) use ($locationId) {
-                $q->where('kingdom_id', $locationId);
-            })->count(),
+            'town' => \App\Models\User::where('home_location_type', 'town')
+                ->where('home_location_id', $locationId)->count(),
+            'barony' => $this->getBaronyPopulation($locationId),
+            'kingdom' => $this->getKingdomPopulation($locationId),
             default => 0,
         };
+    }
+
+    /**
+     * Get barony population including village and town residents.
+     */
+    protected function getBaronyPopulation(int $baronyId): int
+    {
+        // Village residents (legacy home_village_id)
+        $villageResidents = \App\Models\User::whereHas('homeVillage', function ($q) use ($baronyId) {
+            $q->where('barony_id', $baronyId);
+        })->count();
+
+        // Town residents (home_location_type = town in this barony)
+        $townIds = \App\Models\Town::where('barony_id', $baronyId)->pluck('id');
+        $townResidents = \App\Models\User::where('home_location_type', 'town')
+            ->whereIn('home_location_id', $townIds)->count();
+
+        // Direct barony residents (home_location_type = barony)
+        $directResidents = \App\Models\User::where('home_location_type', 'barony')
+            ->where('home_location_id', $baronyId)->count();
+
+        return $villageResidents + $townResidents + $directResidents;
+    }
+
+    /**
+     * Get kingdom population including village and town residents.
+     */
+    protected function getKingdomPopulation(int $kingdomId): int
+    {
+        // Village residents (legacy home_village_id)
+        $villageResidents = \App\Models\User::whereHas('homeVillage.barony', function ($q) use ($kingdomId) {
+            $q->where('kingdom_id', $kingdomId);
+        })->count();
+
+        // Town residents (home_location_type = town in this kingdom)
+        $townIds = \App\Models\Town::whereHas('barony', function ($q) use ($kingdomId) {
+            $q->where('kingdom_id', $kingdomId);
+        })->pluck('id');
+        $townResidents = \App\Models\User::where('home_location_type', 'town')
+            ->whereIn('home_location_id', $townIds)->count();
+
+        // Barony residents (home_location_type = barony in this kingdom)
+        $baronyIds = \App\Models\Barony::where('kingdom_id', $kingdomId)->pluck('id');
+        $baronyResidents = \App\Models\User::where('home_location_type', 'barony')
+            ->whereIn('home_location_id', $baronyIds)->count();
+
+        // Kingdom residents (home_location_type = kingdom)
+        $directResidents = \App\Models\User::where('home_location_type', 'kingdom')
+            ->where('home_location_id', $kingdomId)->count();
+
+        return $villageResidents + $townResidents + $baronyResidents + $directResidents;
     }
 
     /**
