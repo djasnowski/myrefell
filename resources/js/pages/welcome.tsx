@@ -72,7 +72,7 @@ function FramedCard({
 }
 
 export default function Welcome({ canRegister = true }: { canRegister?: boolean }) {
-    const { auth, online_count } = usePage<SharedData>().props;
+    const { auth, online_count, calendar } = usePage<SharedData>().props;
 
     return (
         <>
@@ -232,9 +232,9 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                             ))}
                         </div>
 
-                        {/* Players Online */}
-                        {online_count !== undefined && online_count > 0 && (
-                            <div className="mt-4 md:mt-6 flex justify-center">
+                        {/* Players Online & World Time */}
+                        <div className="mt-4 md:mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                            {online_count !== undefined && online_count > 0 && (
                                 <div className="inline-flex items-center gap-2 md:gap-3 rounded-xl border border-green-500/30 bg-green-900/20 backdrop-blur-sm px-4 py-2 md:px-6 md:py-3">
                                     <span className="relative flex h-2.5 w-2.5 md:h-3 md:w-3">
                                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
@@ -245,8 +245,17 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                         online
                                     </span>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                            {calendar && (
+                                <div className="inline-flex items-center gap-2 md:gap-3 rounded-xl border border-amber-500/30 bg-amber-900/20 backdrop-blur-sm px-4 py-2 md:px-6 md:py-3">
+                                    <Calendar className="h-4 w-4 md:h-5 md:w-5 text-amber-400" />
+                                    <span className="font-pixel text-sm md:text-lg text-amber-300">
+                                        Day {calendar.day_of_year}, Wk {calendar.week_of_year}, Year{" "}
+                                        {calendar.year}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Scroll Indicator */}

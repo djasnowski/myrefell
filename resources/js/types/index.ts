@@ -13,6 +13,15 @@ export type SharedData = {
         has_unread: boolean;
     };
     online_count?: number;
+    calendar?: {
+        year: number;
+        season: "spring" | "summer" | "autumn" | "winter";
+        week: number;
+        week_of_year: number;
+        day: number;
+        day_of_year: number;
+        formatted_date: string;
+    };
     impersonating?: {
         impersonator_username: string;
         leave_url: string;
