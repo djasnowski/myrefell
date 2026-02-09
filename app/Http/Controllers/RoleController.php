@@ -112,7 +112,7 @@ class RoleController extends Controller
         )->values();
 
         // Get population to determine if self-appointment is allowed
-        $population = $this->getLocationPopulation($locationType, $locationId);
+        $population = $this->roleService->getLocationPopulation($locationType, $locationId);
         $canSelfAppoint = $population < RoleService::SELF_APPOINT_THRESHOLD;
 
         // Check if user resides at this location (required for claiming roles)
@@ -145,24 +145,6 @@ class RoleController extends Controller
     /**
      * Get population count for a location.
      */
-    protected function getLocationPopulation(string $locationType, int $locationId): int
-    {
-        return match ($locationType) {
-            'village' => Village::find($locationId)?->residents()->count() ?? 0,
-            'town' => Town::find($locationId)?->visitors()->count() ?? 0,
-            'barony' => Barony::find($locationId)?->villages()
-                ->withCount('residents')->get()->sum('residents_count') ?? 0,
-            'duchy' => Duchy::find($locationId)?->baronies()
-                ->with('villages')->get()
-                ->flatMap->villages
-                ->sum(fn ($v) => $v->residents()->count()) ?? 0,
-            'kingdom' => \App\Models\User::whereHas('homeVillage.barony', function ($q) use ($locationId) {
-                $q->where('kingdom_id', $locationId);
-            })->count(),
-            default => 0,
-        };
-    }
-
     /**
      * Get user's current roles.
      */
