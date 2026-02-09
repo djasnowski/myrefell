@@ -255,7 +255,6 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                     <span className="font-pixel text-sm md:text-lg text-amber-300">
                                         Day {calendar.day_of_year}, Week {calendar.week_of_year},
                                         Year {calendar.year}
-                                        <span className="ml-2 capitalize">({calendar.season})</span>
                                     </span>
                                 </div>
                             )}
