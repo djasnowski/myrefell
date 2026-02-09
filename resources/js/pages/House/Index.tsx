@@ -1,10 +1,14 @@
 import { Head, router, usePage } from "@inertiajs/react";
 import {
+    AlertTriangle,
     ArrowDownToLine,
     ArrowUpFromLine,
     ArrowUpCircle,
     BookOpen,
+    CheckCircle,
+    ChevronDown,
     Church,
+    Clock,
     Coins,
     Flame,
     Hammer,
@@ -18,8 +22,11 @@ import {
     Search,
     Sparkles,
     Trash2,
+    UserCheck,
+    Users,
     Wrench,
     X,
+    XCircle,
     Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -116,6 +123,47 @@ interface Destination {
     name: string;
 }
 
+interface ServantData {
+    servant_type: string;
+    name: string;
+    on_strike: boolean;
+    tier_config: {
+        name: string;
+        level: number;
+        weekly_wage: number;
+        carry_capacity: number;
+        base_speed: number;
+    };
+    current_task: {
+        id: number;
+        task_type: string;
+        task_data: Record<string, any>;
+        seconds_remaining: number;
+    } | null;
+    queued_tasks: { id: number; task_type: string; task_data: Record<string, any> }[];
+    recent_completed: { id: number; task_type: string; result_message: string }[];
+    available_sawmill: {
+        plank_name: string;
+        log_name: string;
+        logs_in_storage: number;
+        fee: number;
+    }[];
+    available_fetch: { item_name: string; quantity: number }[];
+    has_food: boolean;
+}
+
+interface ServantTierInfo {
+    key: string;
+    name: string;
+    level: number;
+    hire_cost: number;
+    weekly_wage: number;
+    carry_capacity: number;
+    base_speed: number;
+    can_hire: boolean;
+    reason: string | null;
+}
+
 interface PageProps {
     house: House | null;
     canPurchase: { can_purchase: boolean; reason: string | null } | null;
@@ -129,6 +177,8 @@ interface PageProps {
     adjacencyDefinitions: [string, string, string, number, string][];
     portals: PortalSlot[];
     availableDestinations: Destination[];
+    servantData: ServantData | null;
+    servantTiers: ServantTierInfo[];
     flash?: { success?: string; error?: string };
     [key: string]: unknown;
 }
@@ -181,12 +231,14 @@ export default function HouseIndex() {
         adjacencyDefinitions,
         portals,
         availableDestinations,
+        servantData,
+        servantTiers,
         flash,
     } = usePage<PageProps>().props;
     const [loading, setLoading] = useState(false);
     const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
     const [buildingAt, setBuildingAt] = useState<{ x: number; y: number } | null>(null);
-    const [activeTab, setActiveTab] = useState<"rooms" | "storage">("rooms");
+    const [activeTab, setActiveTab] = useState<"rooms" | "storage" | "servant">("rooms");
     const [storageAction, setStorageAction] = useState<{
         type: "deposit" | "withdraw";
         item?: string;
@@ -546,6 +598,19 @@ export default function HouseIndex() {
                     >
                         Storage
                     </button>
+                    <button
+                        onClick={() => {
+                            setActiveTab("servant");
+                            setSelectedRoom(null);
+                            setBuildingAt(null);
+                        }}
+                        className={`rounded-md px-3 py-1.5 font-pixel text-xs transition-colors ${activeTab === "servant" ? "bg-amber-900/50 text-amber-300 border border-amber-600/50" : "text-stone-400 hover:text-stone-300 border border-stone-700/50"}`}
+                    >
+                        Servant
+                        {servantData?.on_strike && (
+                            <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-red-400" />
+                        )}
+                    </button>
                 </div>
 
                 {activeTab === "rooms" && (
@@ -700,6 +765,15 @@ export default function HouseIndex() {
                         onSetStorageItemName={setStorageItemName}
                         onDeposit={handleDeposit}
                         onWithdraw={handleWithdraw}
+                    />
+                )}
+
+                {activeTab === "servant" && (
+                    <ServantPanel
+                        servantData={servantData}
+                        servantTiers={servantTiers}
+                        loading={loading}
+                        setLoading={setLoading}
                     />
                 )}
             </div>
@@ -1263,6 +1337,493 @@ function StoragePanel({
                             </button>
                         </div>
                     ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+const taskTypeLabels: Record<string, string> = {
+    sawmill_run: "Sawmill Run",
+    fetch_materials: "Fetch Materials",
+    serve_food: "Serve Food",
+};
+
+function ServantPanel({
+    servantData,
+    servantTiers,
+    loading,
+    setLoading,
+}: {
+    servantData: ServantData | null;
+    servantTiers: ServantTierInfo[];
+    loading: boolean;
+    setLoading: (v: boolean) => void;
+}) {
+    const [taskType, setTaskType] = useState<string>("");
+    const [plankName, setPlankName] = useState("");
+    const [fetchItem, setFetchItem] = useState("");
+    const [quantity, setQuantity] = useState(1);
+    const [showCompleted, setShowCompleted] = useState(false);
+    const [confirmDismiss, setConfirmDismiss] = useState(false);
+    const [countdown, setCountdown] = useState(0);
+
+    useEffect(() => {
+        if (servantData?.current_task) {
+            setCountdown(servantData.current_task.seconds_remaining);
+            const interval = setInterval(() => {
+                setCountdown((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(interval);
+                        router.reload();
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+            return () => clearInterval(interval);
+        }
+    }, [servantData?.current_task?.id]);
+
+    const handleHire = (tier: string) => {
+        setLoading(true);
+        router.post(
+            "/house/servant/hire",
+            { tier },
+            {
+                preserveScroll: true,
+                onSuccess: () => router.reload(),
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handleDismiss = () => {
+        setLoading(true);
+        router.post(
+            "/house/servant/dismiss",
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                    setConfirmDismiss(false);
+                },
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handleAssignTask = () => {
+        if (!taskType) return;
+        setLoading(true);
+        const data: Record<string, any> = { task_type: taskType };
+        if (taskType === "sawmill_run") {
+            data.plank_name = plankName;
+            data.quantity = quantity;
+        } else if (taskType === "fetch_materials") {
+            data.item_name = fetchItem;
+            data.quantity = quantity;
+        }
+        router.post("/house/servant/assign-task", data, {
+            preserveScroll: true,
+            onSuccess: () => {
+                router.reload();
+                setTaskType("");
+                setPlankName("");
+                setFetchItem("");
+                setQuantity(1);
+            },
+            onFinish: () => setLoading(false),
+        });
+    };
+
+    const handleCancelTask = (taskId: number) => {
+        setLoading(true);
+        router.post(
+            "/house/servant/cancel-task",
+            { task_id: taskId },
+            {
+                preserveScroll: true,
+                onSuccess: () => router.reload(),
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handlePayWages = () => {
+        setLoading(true);
+        router.post(
+            "/house/servant/pay-wages",
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => router.reload(),
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const formatTime = (seconds: number) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return m > 0 ? `${m}m ${s}s` : `${s}s`;
+    };
+
+    const formatTaskDesc = (type: string, data: Record<string, any>) => {
+        switch (type) {
+            case "sawmill_run":
+                return `${data.quantity}x ${data.plank_name}`;
+            case "fetch_materials":
+                return `${data.quantity}x ${data.item_name}`;
+            case "serve_food":
+                return data.item_name || "Food";
+            default:
+                return type;
+        }
+    };
+
+    // No servant hired — show hire UI
+    if (!servantData) {
+        return (
+            <div className="rounded-lg border border-stone-700/50 bg-stone-900/50 p-4">
+                <div className="mb-4 flex items-center gap-2">
+                    <Users className="h-5 w-5 text-amber-400" />
+                    <h2 className="font-pixel text-sm text-amber-200">Hire a Servant</h2>
+                </div>
+                <p className="mb-4 font-pixel text-[10px] text-stone-500">
+                    Servants automate tasks like sawmill runs, fetching materials, and serving food.
+                    You may hire one servant per house.
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                    {servantTiers.map((tier) => (
+                        <div
+                            key={tier.key}
+                            className={`rounded-lg border p-3 ${
+                                tier.can_hire
+                                    ? "border-amber-600/30 bg-amber-900/10"
+                                    : "border-stone-700/30 bg-stone-800/20 opacity-60"
+                            }`}
+                        >
+                            <div className="font-pixel text-xs text-stone-200">{tier.name}</div>
+                            <div className="mt-1 space-y-0.5 font-pixel text-[9px] text-stone-500">
+                                <div>Level {tier.level} Construction</div>
+                                <div className="flex items-center gap-1">
+                                    <Coins className="h-2.5 w-2.5 text-yellow-500" />
+                                    {tier.hire_cost.toLocaleString()}g hire &bull;{" "}
+                                    {tier.weekly_wage}g/week
+                                </div>
+                                <div>
+                                    Capacity: {tier.carry_capacity} &bull; Speed: {tier.base_speed}s
+                                </div>
+                            </div>
+                            {tier.can_hire ? (
+                                <button
+                                    onClick={() => handleHire(tier.key)}
+                                    disabled={loading}
+                                    className="mt-2 w-full rounded border border-amber-600/40 bg-amber-900/30 px-2 py-1 font-pixel text-[10px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                >
+                                    {loading ? (
+                                        <Loader2 className="mx-auto h-3 w-3 animate-spin" />
+                                    ) : (
+                                        "Hire"
+                                    )}
+                                </button>
+                            ) : (
+                                <div className="mt-2 font-pixel text-[8px] text-red-400/70">
+                                    {tier.reason}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    // Servant active
+    return (
+        <div className="rounded-lg border border-stone-700/50 bg-stone-900/50 p-4">
+            {/* Header */}
+            <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <UserCheck className="h-5 w-5 text-amber-400" />
+                    <div>
+                        <div className="font-pixel text-sm text-amber-200">{servantData.name}</div>
+                        <div className="font-pixel text-[9px] text-stone-500">
+                            {servantData.tier_config.name} &bull;{" "}
+                            {servantData.tier_config.weekly_wage}g/week
+                        </div>
+                    </div>
+                </div>
+                {!confirmDismiss ? (
+                    <button
+                        onClick={() => setConfirmDismiss(true)}
+                        className="rounded border border-red-700/30 bg-red-900/20 px-2 py-0.5 font-pixel text-[9px] text-red-400 transition-colors hover:bg-red-900/40"
+                    >
+                        Dismiss
+                    </button>
+                ) : (
+                    <div className="flex items-center gap-1.5">
+                        <span className="font-pixel text-[9px] text-red-400">Sure?</span>
+                        <button
+                            onClick={handleDismiss}
+                            disabled={loading}
+                            className="rounded border border-red-600/40 bg-red-900/30 px-2 py-0.5 font-pixel text-[9px] text-red-300 hover:bg-red-800/30"
+                        >
+                            Yes
+                        </button>
+                        <button
+                            onClick={() => setConfirmDismiss(false)}
+                            className="rounded border border-stone-600/40 bg-stone-800/30 px-2 py-0.5 font-pixel text-[9px] text-stone-400 hover:bg-stone-700/30"
+                        >
+                            No
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* On strike warning */}
+            {servantData.on_strike && (
+                <div className="mb-4 rounded-lg border border-red-700/30 bg-red-900/10 p-3">
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-red-400" />
+                        <span className="font-pixel text-xs text-red-300">
+                            Servant is on strike!
+                        </span>
+                    </div>
+                    <p className="mt-1 font-pixel text-[9px] text-red-400/70">
+                        Pay their weekly wage to resume work.
+                    </p>
+                    <button
+                        onClick={handlePayWages}
+                        disabled={loading}
+                        className="mt-2 flex items-center gap-1.5 rounded border border-yellow-600/40 bg-yellow-900/30 px-3 py-1 font-pixel text-[10px] text-yellow-300 transition-colors hover:bg-yellow-800/30 disabled:opacity-40"
+                    >
+                        <Coins className="h-3 w-3" />
+                        {loading ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                            `Pay Wages (${servantData.tier_config.weekly_wage}g)`
+                        )}
+                    </button>
+                </div>
+            )}
+
+            {/* Current task */}
+            {servantData.current_task && (
+                <div className="mb-3 rounded-md border border-blue-700/30 bg-blue-900/10 p-3">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                            <Loader2 className="h-3 w-3 animate-spin text-blue-400" />
+                            <span className="font-pixel text-[11px] text-blue-200">
+                                {taskTypeLabels[servantData.current_task.task_type] ||
+                                    servantData.current_task.task_type}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-1 font-pixel text-[10px] text-blue-300">
+                            <Clock className="h-3 w-3" />
+                            {formatTime(countdown)}
+                        </div>
+                    </div>
+                    <div className="mt-1 font-pixel text-[9px] text-stone-500">
+                        {formatTaskDesc(
+                            servantData.current_task.task_type,
+                            servantData.current_task.task_data,
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Queued tasks */}
+            {servantData.queued_tasks.length > 0 && (
+                <div className="mb-3">
+                    <div className="mb-1 font-pixel text-[10px] text-stone-400">Queue</div>
+                    <div className="space-y-1">
+                        {servantData.queued_tasks.map((task) => (
+                            <div
+                                key={task.id}
+                                className="flex items-center justify-between rounded border border-stone-700/30 bg-stone-800/20 px-2.5 py-1.5"
+                            >
+                                <div>
+                                    <span className="font-pixel text-[10px] text-stone-300">
+                                        {taskTypeLabels[task.task_type] || task.task_type}
+                                    </span>
+                                    <span className="ml-1.5 font-pixel text-[9px] text-stone-600">
+                                        {formatTaskDesc(task.task_type, task.task_data)}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={() => handleCancelTask(task.id)}
+                                    disabled={loading}
+                                    className="text-stone-600 hover:text-red-400"
+                                    title="Cancel"
+                                >
+                                    <X className="h-3 w-3" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Assign task form */}
+            {!servantData.on_strike && (
+                <div className="mb-3 rounded-md border border-stone-700/30 bg-stone-800/20 p-3">
+                    <div className="mb-2 font-pixel text-[10px] text-stone-400">Assign Task</div>
+
+                    <select
+                        value={taskType}
+                        onChange={(e) => {
+                            setTaskType(e.target.value);
+                            setPlankName("");
+                            setFetchItem("");
+                            setQuantity(1);
+                        }}
+                        className="mb-2 w-full rounded border border-stone-600 bg-stone-800 px-2 py-1 font-pixel text-xs text-stone-200 focus:border-amber-500 focus:outline-none"
+                    >
+                        <option value="">Select task...</option>
+                        {servantData.available_sawmill.length > 0 && (
+                            <option value="sawmill_run">Sawmill Run</option>
+                        )}
+                        {servantData.available_fetch.length > 0 && (
+                            <option value="fetch_materials">Fetch Materials</option>
+                        )}
+                        {servantData.has_food && <option value="serve_food">Serve Food</option>}
+                    </select>
+
+                    {taskType === "sawmill_run" && (
+                        <div className="space-y-2">
+                            <select
+                                value={plankName}
+                                onChange={(e) => setPlankName(e.target.value)}
+                                className="w-full rounded border border-stone-600 bg-stone-800 px-2 py-1 font-pixel text-xs text-stone-200 focus:border-amber-500 focus:outline-none"
+                            >
+                                <option value="">Select plank type...</option>
+                                {servantData.available_sawmill.map((s) => (
+                                    <option key={s.plank_name} value={s.plank_name}>
+                                        {s.plank_name} ({s.logs_in_storage} {s.log_name} available,{" "}
+                                        {s.fee}g/ea)
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="flex gap-2">
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={
+                                        servantData.available_sawmill.find(
+                                            (s) => s.plank_name === plankName,
+                                        )?.logs_in_storage ?? 99
+                                    }
+                                    value={quantity}
+                                    onChange={(e) =>
+                                        setQuantity(Math.max(1, parseInt(e.target.value) || 1))
+                                    }
+                                    className="w-20 rounded border border-stone-600 bg-stone-800 px-2 py-1 font-pixel text-xs text-stone-200 focus:border-amber-500 focus:outline-none"
+                                />
+                                <button
+                                    onClick={handleAssignTask}
+                                    disabled={loading || !plankName || quantity < 1}
+                                    className="flex-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-1 font-pixel text-[10px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                >
+                                    {loading ? (
+                                        <Loader2 className="mx-auto h-3 w-3 animate-spin" />
+                                    ) : (
+                                        `Queue (${((servantData.available_sawmill.find((s) => s.plank_name === plankName)?.fee ?? 0) * quantity).toLocaleString()}g)`
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {taskType === "fetch_materials" && (
+                        <div className="space-y-2">
+                            <select
+                                value={fetchItem}
+                                onChange={(e) => setFetchItem(e.target.value)}
+                                className="w-full rounded border border-stone-600 bg-stone-800 px-2 py-1 font-pixel text-xs text-stone-200 focus:border-amber-500 focus:outline-none"
+                            >
+                                <option value="">Select item...</option>
+                                {servantData.available_fetch.map((f) => (
+                                    <option key={f.item_name} value={f.item_name}>
+                                        {f.item_name} (x{f.quantity})
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="flex gap-2">
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={
+                                        servantData.available_fetch.find(
+                                            (f) => f.item_name === fetchItem,
+                                        )?.quantity ?? 99
+                                    }
+                                    value={quantity}
+                                    onChange={(e) =>
+                                        setQuantity(Math.max(1, parseInt(e.target.value) || 1))
+                                    }
+                                    className="w-20 rounded border border-stone-600 bg-stone-800 px-2 py-1 font-pixel text-xs text-stone-200 focus:border-amber-500 focus:outline-none"
+                                />
+                                <button
+                                    onClick={handleAssignTask}
+                                    disabled={loading || !fetchItem || quantity < 1}
+                                    className="flex-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-1 font-pixel text-[10px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                >
+                                    {loading ? (
+                                        <Loader2 className="mx-auto h-3 w-3 animate-spin" />
+                                    ) : (
+                                        "Queue Fetch"
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {taskType === "serve_food" && (
+                        <button
+                            onClick={handleAssignTask}
+                            disabled={loading}
+                            className="w-full rounded border border-amber-600/40 bg-amber-900/30 px-2 py-1 font-pixel text-[10px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                        >
+                            {loading ? (
+                                <Loader2 className="mx-auto h-3 w-3 animate-spin" />
+                            ) : (
+                                "Queue Serve Food"
+                            )}
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {/* Recent completed */}
+            {servantData.recent_completed.length > 0 && (
+                <div>
+                    <button
+                        onClick={() => setShowCompleted(!showCompleted)}
+                        className="flex items-center gap-1 font-pixel text-[10px] text-stone-500 hover:text-stone-400"
+                    >
+                        <ChevronDown
+                            className={`h-3 w-3 transition-transform ${showCompleted ? "rotate-180" : ""}`}
+                        />
+                        Recent Tasks ({servantData.recent_completed.length})
+                    </button>
+                    {showCompleted && (
+                        <div className="mt-1.5 space-y-1">
+                            {servantData.recent_completed.map((task) => (
+                                <div
+                                    key={task.id}
+                                    className="flex items-start gap-1.5 rounded border border-stone-700/20 bg-stone-800/10 px-2 py-1"
+                                >
+                                    <CheckCircle className="mt-0.5 h-3 w-3 shrink-0 text-green-500/50" />
+                                    <span className="font-pixel text-[9px] text-stone-500">
+                                        {task.result_message}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
         </div>

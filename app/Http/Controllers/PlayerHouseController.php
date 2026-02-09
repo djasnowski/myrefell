@@ -3,9 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Config\ConstructionConfig;
+use App\Models\HouseFurniture;
+use App\Models\HouseRoom;
+use App\Models\PlayerHouse;
+use App\Models\User;
 use App\Services\HouseBuffService;
 use App\Services\HouseService;
 use App\Services\InventoryService;
+use App\Services\ServantService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -16,7 +21,8 @@ class PlayerHouseController extends Controller
     public function __construct(
         protected HouseService $houseService,
         protected InventoryService $inventoryService,
-        protected HouseBuffService $houseBuffService
+        protected HouseBuffService $houseBuffService,
+        protected ServantService $servantService
     ) {}
 
     /**
@@ -73,6 +79,8 @@ class PlayerHouseController extends Controller
             'adjacencyDefinitions' => ConstructionConfig::ADJACENCY_BONUSES,
             'portals' => $portals,
             'availableDestinations' => $availableDestinations,
+            'servantData' => $house ? $this->servantService->getServantData($user) : null,
+            'servantTiers' => $house ? $this->getServantTierInfo($user) : [],
         ];
 
         return Inertia::render('House/Index', $data);
@@ -285,6 +293,134 @@ class PlayerHouseController extends Controller
         }
 
         return back()->with('error', $result['message']);
+    }
+
+    /**
+     * Hire a servant.
+     */
+    public function hireServant(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'tier' => 'required|string',
+        ]);
+
+        $user = $request->user();
+        $user->load('skills');
+
+        $result = $this->servantService->hireServant($user, $request->input('tier'));
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Dismiss the servant.
+     */
+    public function dismissServant(Request $request): RedirectResponse
+    {
+        $result = $this->servantService->dismissServant($request->user());
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Assign a task to the servant.
+     */
+    public function assignServantTask(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'task_type' => 'required|string|in:sawmill_run,fetch_materials,serve_food',
+        ]);
+
+        $result = $this->servantService->assignTask(
+            $request->user(),
+            $request->input('task_type'),
+            $request->only(['plank_name', 'quantity', 'item_name']),
+        );
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Cancel a queued servant task.
+     */
+    public function cancelServantTask(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'task_id' => 'required|integer',
+        ]);
+
+        $result = $this->servantService->cancelTask($request->user(), $request->input('task_id'));
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Pay servant wages to end strike.
+     */
+    public function payServantWages(Request $request): RedirectResponse
+    {
+        $result = $this->servantService->payWages($request->user());
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Get servant tier info for the hire UI.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function getServantTierInfo(User $user): array
+    {
+        $level = $user->skills->where('skill_name', 'construction')->first()?->level ?? 1;
+        $house = PlayerHouse::where('player_id', $user->id)->first();
+
+        $hasQuarters = false;
+        $hasBed = false;
+        if ($house) {
+            $quarters = HouseRoom::where('player_house_id', $house->id)
+                ->where('room_type', 'servant_quarters')
+                ->first();
+            if ($quarters) {
+                $hasQuarters = true;
+                $hasBed = HouseFurniture::where('house_room_id', $quarters->id)
+                    ->where('hotspot_slug', 'bed')
+                    ->exists();
+            }
+        }
+
+        $tiers = [];
+        foreach (ConstructionConfig::SERVANT_TIERS as $key => $config) {
+            $reason = null;
+            $canHire = true;
+
+            if (! $hasQuarters) {
+                $canHire = false;
+                $reason = 'Build a Servant Quarters room first.';
+            } elseif (! $hasBed) {
+                $canHire = false;
+                $reason = 'Build a bed in Servant Quarters first.';
+            } elseif ($level < $config['level']) {
+                $canHire = false;
+                $reason = "Requires Construction level {$config['level']}.";
+            } elseif ($user->gold < $config['hire_cost']) {
+                $canHire = false;
+                $reason = 'Not enough gold.';
+            }
+
+            $tiers[] = [
+                'key' => $key,
+                'name' => $config['name'],
+                'level' => $config['level'],
+                'hire_cost' => $config['hire_cost'],
+                'weekly_wage' => $config['weekly_wage'],
+                'carry_capacity' => $config['carry_capacity'],
+                'base_speed' => $config['base_speed'],
+                'can_hire' => $canHire,
+                'reason' => $reason,
+            ];
+        }
+
+        return $tiers;
     }
 
     /**

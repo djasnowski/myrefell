@@ -935,6 +935,11 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('/withdraw', [PlayerHouseController::class, 'withdraw'])->name('withdraw');
         Route::post('/set-portal', [PlayerHouseController::class, 'setPortal'])->name('set-portal');
         Route::post('/teleport', [PlayerHouseController::class, 'teleport'])->name('teleport');
+        Route::post('/servant/hire', [PlayerHouseController::class, 'hireServant'])->name('servant.hire');
+        Route::post('/servant/dismiss', [PlayerHouseController::class, 'dismissServant'])->name('servant.dismiss');
+        Route::post('/servant/assign-task', [PlayerHouseController::class, 'assignServantTask'])->name('servant.assign-task');
+        Route::post('/servant/cancel-task', [PlayerHouseController::class, 'cancelServantTask'])->name('servant.cancel-task');
+        Route::post('/servant/pay-wages', [PlayerHouseController::class, 'payServantWages'])->name('servant.pay-wages');
     });
 
     // Buildings

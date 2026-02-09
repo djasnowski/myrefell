@@ -948,6 +948,21 @@ class ConstructionConfig
     /**
      * Sawmill plank conversion recipes.
      */
+    /**
+     * Servant tier configuration.
+     *
+     * @var array<string, array{name: string, level: int, hire_cost: int, weekly_wage: int, carry_capacity: int, base_speed: int}>
+     */
+    public const SERVANT_TIERS = [
+        'handyman' => ['name' => 'Handyman', 'level' => 20, 'hire_cost' => 5000, 'weekly_wage' => 100, 'carry_capacity' => 6, 'base_speed' => 60],
+        'maid' => ['name' => 'Maid', 'level' => 30, 'hire_cost' => 15000, 'weekly_wage' => 250, 'carry_capacity' => 10, 'base_speed' => 30],
+        'butler' => ['name' => 'Butler', 'level' => 45, 'hire_cost' => 50000, 'weekly_wage' => 500, 'carry_capacity' => 16, 'base_speed' => 15],
+        'head_butler' => ['name' => 'Head Butler', 'level' => 60, 'hire_cost' => 150000, 'weekly_wage' => 1000, 'carry_capacity' => 24, 'base_speed' => 8],
+    ];
+
+    /**
+     * Sawmill plank conversion recipes.
+     */
     public const PLANK_RECIPES = [
         'Plank' => ['log' => 'Wood', 'fee' => 10],
         'Oak Plank' => ['log' => 'Oak Wood', 'fee' => 40],
