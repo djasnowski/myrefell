@@ -220,6 +220,7 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                 { value: "16", label: "Skills to Master" },
                                 { value: "15", label: "Titles to Earn" },
                                 { value: "5", label: "Social Classes" },
+                                { value: "∞", label: "Possibilities" },
                             ].map((stat) => (
                                 <div
                                     key={stat.label}
