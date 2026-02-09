@@ -64,6 +64,14 @@ class RoleService
      */
     public function selfAppoint(User $user, Role $role, string $locationType, int $locationId): array
     {
+        // King role cannot be self-appointed
+        if ($role->slug === 'king') {
+            return [
+                'success' => false,
+                'message' => 'The King role cannot be claimed through self-appointment.',
+            ];
+        }
+
         // Check if user is physically at this location
         if ($user->current_location_type !== $locationType || $user->current_location_id !== $locationId) {
             return [
