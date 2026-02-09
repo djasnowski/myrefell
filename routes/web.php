@@ -935,6 +935,8 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('/withdraw', [PlayerHouseController::class, 'withdraw'])->name('withdraw');
         Route::post('/set-portal', [PlayerHouseController::class, 'setPortal'])->name('set-portal');
         Route::post('/teleport', [PlayerHouseController::class, 'teleport'])->name('teleport');
+        Route::post('/trophy/mount', [PlayerHouseController::class, 'mountTrophy'])->name('trophy.mount');
+        Route::post('/trophy/remove', [PlayerHouseController::class, 'removeTrophy'])->name('trophy.remove');
         Route::post('/servant/hire', [PlayerHouseController::class, 'hireServant'])->name('servant.hire');
         Route::post('/servant/dismiss', [PlayerHouseController::class, 'dismissServant'])->name('servant.dismiss');
         Route::post('/servant/assign-task', [PlayerHouseController::class, 'assignServantTask'])->name('servant.assign-task');

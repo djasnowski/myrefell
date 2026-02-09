@@ -164,6 +164,23 @@ interface ServantTierInfo {
     reason: string | null;
 }
 
+interface TrophySlotData {
+    has_furniture: boolean;
+    trophy: {
+        id: number;
+        monster_name: string;
+        monster_type: string;
+        is_boss: boolean;
+        bonuses: Record<string, number>;
+    } | null;
+}
+
+interface TrophyData {
+    slots: Record<string, TrophySlotData>;
+    available_trophies: { item_id: number; name: string; is_boss: boolean }[];
+    total_bonuses: Record<string, number>;
+}
+
 interface PageProps {
     house: House | null;
     canPurchase: { can_purchase: boolean; reason: string | null } | null;
@@ -179,6 +196,7 @@ interface PageProps {
     availableDestinations: Destination[];
     servantData: ServantData | null;
     servantTiers: ServantTierInfo[];
+    trophyData: TrophyData | null;
     flash?: { success?: string; error?: string };
     [key: string]: unknown;
 }
@@ -200,6 +218,7 @@ const roomIcons: Record<string, string> = {
     portal_chamber: "🌀",
     dining_room: "🍽️",
     servant_quarters: "🛎️",
+    trophy_hall: "🏆",
 };
 
 const buffLabels: Record<string, string> = {
@@ -215,6 +234,9 @@ const buffLabels: Record<string, string> = {
     smithing_speed_bonus: "Smithing Speed",
     cooking_xp_bonus: "Cooking XP",
     servant_speed_bonus: "Servant Speed",
+    combat_xp_bonus: "Combat XP",
+    defense_bonus: "Defense",
+    strength_bonus: "Strength",
 };
 
 export default function HouseIndex() {
@@ -233,6 +255,7 @@ export default function HouseIndex() {
         availableDestinations,
         servantData,
         servantTiers,
+        trophyData,
         flash,
     } = usePage<PageProps>().props;
     const [loading, setLoading] = useState(false);
@@ -464,6 +487,33 @@ export default function HouseIndex() {
     }
 
     const isPortalChamberSelected = selectedRoom?.room_type === "portal_chamber";
+    const isTrophyHallSelected = selectedRoom?.room_type === "trophy_hall";
+
+    const handleMountTrophy = (slot: string, itemId: number) => {
+        setLoading(true);
+        router.post(
+            "/house/trophy/mount",
+            { slot, item_id: itemId },
+            {
+                preserveScroll: true,
+                onSuccess: () => router.reload(),
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handleRemoveTrophy = (slot: string) => {
+        setLoading(true);
+        router.post(
+            "/house/trophy/remove",
+            { slot },
+            {
+                preserveScroll: true,
+                onSuccess: () => router.reload(),
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -710,13 +760,27 @@ export default function HouseIndex() {
                                 />
                             )}
 
-                            {selectedRoom && !isPortalChamberSelected && (
+                            {selectedRoom && !isPortalChamberSelected && !isTrophyHallSelected && (
                                 <RoomDetailPanel
                                     room={selectedRoom}
                                     constructionLevel={constructionLevel}
                                     loading={loading}
                                     adjacencyDefinitions={adjacencyDefinitions}
                                     adjacencyBonuses={adjacencyBonuses}
+                                    onBuildFurniture={handleBuildFurniture}
+                                    onDemolish={handleDemolish}
+                                    onClose={() => setSelectedRoom(null)}
+                                />
+                            )}
+
+                            {isTrophyHallSelected && (
+                                <TrophyHallPanel
+                                    room={selectedRoom!}
+                                    trophyData={trophyData}
+                                    constructionLevel={constructionLevel}
+                                    loading={loading}
+                                    onMountTrophy={handleMountTrophy}
+                                    onRemoveTrophy={handleRemoveTrophy}
                                     onBuildFurniture={handleBuildFurniture}
                                     onDemolish={handleDemolish}
                                     onClose={() => setSelectedRoom(null)}
@@ -1234,6 +1298,395 @@ function PortalChamberPanel({
                     );
                 })}
             </div>
+        </div>
+    );
+}
+
+const monsterTypeBadgeColors: Record<string, string> = {
+    humanoid: "bg-blue-900/30 text-blue-300 border-blue-700/30",
+    beast: "bg-amber-900/30 text-amber-300 border-amber-700/30",
+    undead: "bg-gray-900/30 text-gray-300 border-gray-700/30",
+    dragon: "bg-red-900/30 text-red-300 border-red-700/30",
+    demon: "bg-purple-900/30 text-purple-300 border-purple-700/30",
+    elemental: "bg-cyan-900/30 text-cyan-300 border-cyan-700/30",
+    giant: "bg-orange-900/30 text-orange-300 border-orange-700/30",
+    goblinoid: "bg-green-900/30 text-green-300 border-green-700/30",
+};
+
+const slotLabels: Record<string, string> = {
+    display_1: "Display Case 1",
+    display_2: "Display Case 2",
+    display_3: "Display Case 3",
+    pedestal: "Boss Pedestal",
+};
+
+function TrophyHallPanel({
+    room,
+    trophyData,
+    constructionLevel,
+    loading,
+    onMountTrophy,
+    onRemoveTrophy,
+    onBuildFurniture,
+    onDemolish,
+    onClose,
+}: {
+    room: Room;
+    trophyData: TrophyData | null;
+    constructionLevel: number;
+    loading: boolean;
+    onMountTrophy: (slot: string, itemId: number) => void;
+    onRemoveTrophy: (slot: string) => void;
+    onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
+    onDemolish: (roomId: number, hotspotSlug: string) => void;
+    onClose: () => void;
+}) {
+    const [expandedHotspot, setExpandedHotspot] = useState<string | null>(null);
+    const [mountingSlot, setMountingSlot] = useState<string | null>(null);
+
+    const trophySlots = ["display_1", "display_2", "display_3", "pedestal"];
+
+    return (
+        <div>
+            <div className="mb-3 flex items-center justify-between">
+                <h3 className="font-pixel text-sm text-amber-300">🏆 Trophy Hall</h3>
+                <button onClick={onClose} className="text-stone-500 hover:text-stone-300">
+                    <X className="h-4 w-4" />
+                </button>
+            </div>
+
+            {/* Total bonus summary */}
+            {trophyData && Object.keys(trophyData.total_bonuses).length > 0 && (
+                <div className="mb-3 rounded-md border border-amber-700/30 bg-amber-900/10 p-2">
+                    <div className="mb-1 flex items-center gap-1 font-pixel text-[9px] text-amber-300">
+                        <Sparkles className="h-3 w-3" /> Trophy Bonuses
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(trophyData.total_bonuses).map(([key, value]) => (
+                            <span
+                                key={key}
+                                className="rounded-md border border-amber-700/30 bg-amber-900/20 px-1.5 py-0.5 font-pixel text-[8px] text-amber-200"
+                            >
+                                +{value} {buffLabels[key] || key.replace(/_/g, " ")}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Trophy Slots */}
+            <div className="space-y-2.5">
+                {trophySlots.map((slot) => {
+                    const hotspot = room.hotspots[slot];
+                    const slotData = trophyData?.slots[slot];
+                    const hasFurniture = slotData?.has_furniture ?? false;
+                    const trophy = slotData?.trophy;
+                    const isPedestal = slot === "pedestal";
+
+                    return (
+                        <div
+                            key={slot}
+                            className={`rounded-md border p-3 ${
+                                isPedestal
+                                    ? "border-yellow-700/30 bg-yellow-900/10"
+                                    : "border-stone-700/30 bg-stone-800/20"
+                            }`}
+                        >
+                            <div className="flex items-center justify-between">
+                                <span
+                                    className={`font-pixel text-[11px] ${isPedestal ? "text-yellow-200" : "text-stone-300"}`}
+                                >
+                                    {slotLabels[slot]}
+                                </span>
+                                {hotspot?.current ? (
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="font-pixel text-[9px] text-green-400">
+                                            {hotspot.current.name}
+                                        </span>
+                                        <button
+                                            onClick={() => onDemolish(room.id, slot)}
+                                            disabled={loading}
+                                            className="text-red-500/50 hover:text-red-400"
+                                            title="Demolish"
+                                        >
+                                            <Trash2 className="h-3 w-3" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <span className="font-pixel text-[9px] text-stone-600">
+                                        No furniture
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Build furniture if not built */}
+                            {!hotspot?.current && hotspot && (
+                                <div className="mt-2">
+                                    <button
+                                        onClick={() =>
+                                            setExpandedHotspot(
+                                                expandedHotspot === slot ? null : slot,
+                                            )
+                                        }
+                                        className="font-pixel text-[9px] text-amber-400/70 hover:text-amber-400"
+                                    >
+                                        {expandedHotspot === slot
+                                            ? "Hide options"
+                                            : "Build options"}
+                                    </button>
+                                    {expandedHotspot === slot && (
+                                        <div className="mt-2 space-y-1.5">
+                                            {hotspot.options.map((opt) => {
+                                                const meetsLevel = constructionLevel >= opt.level;
+                                                return (
+                                                    <div
+                                                        key={opt.key}
+                                                        className="rounded border border-stone-700/30 bg-stone-900/30 p-2"
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="font-pixel text-[10px] text-stone-300">
+                                                                {opt.name}
+                                                            </span>
+                                                            {!meetsLevel && (
+                                                                <span className="flex items-center gap-0.5 font-pixel text-[8px] text-stone-600">
+                                                                    <Lock className="h-2.5 w-2.5" />{" "}
+                                                                    Lv {opt.level}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="mt-0.5 font-pixel text-[8px] text-stone-500">
+                                                            {Object.entries(opt.materials)
+                                                                .map(([m, q]) => `${q} ${m}`)
+                                                                .join(", ")}{" "}
+                                                            &bull; +{opt.xp} XP
+                                                            {opt.effect &&
+                                                                Object.entries(opt.effect).map(
+                                                                    ([k, v]) => (
+                                                                        <span
+                                                                            key={k}
+                                                                            className="text-cyan-400"
+                                                                        >
+                                                                            {" "}
+                                                                            &bull; +{v}%{" "}
+                                                                            {k.replace(/_/g, " ")}
+                                                                        </span>
+                                                                    ),
+                                                                )}
+                                                        </div>
+                                                        {meetsLevel && (
+                                                            <button
+                                                                onClick={() =>
+                                                                    onBuildFurniture(
+                                                                        room.id,
+                                                                        slot,
+                                                                        opt.key,
+                                                                    )
+                                                                }
+                                                                disabled={loading}
+                                                                className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-[9px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                                            >
+                                                                <Hammer className="h-3 w-3" /> Build
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Mounted trophy display */}
+                            {hasFurniture && trophy && (
+                                <div className="mt-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-pixel text-[10px] text-stone-200">
+                                            {trophy.monster_name} Trophy
+                                        </span>
+                                        <span
+                                            className={`rounded border px-1.5 py-0.5 font-pixel text-[7px] ${
+                                                monsterTypeBadgeColors[trophy.monster_type] ||
+                                                "bg-stone-800/30 text-stone-400 border-stone-700/30"
+                                            }`}
+                                        >
+                                            {trophy.monster_type}
+                                        </span>
+                                        {trophy.is_boss && (
+                                            <span className="rounded border border-yellow-600/30 bg-yellow-900/20 px-1.5 py-0.5 font-pixel text-[7px] text-yellow-300">
+                                                BOSS
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="mt-1 flex flex-wrap gap-1">
+                                        {Object.entries(trophy.bonuses).map(([key, value]) => (
+                                            <span
+                                                key={key}
+                                                className="rounded-md border border-cyan-700/30 bg-cyan-900/20 px-1.5 py-0.5 font-pixel text-[8px] text-cyan-200"
+                                            >
+                                                +{value} {buffLabels[key] || key.replace(/_/g, " ")}
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <button
+                                        onClick={() => onRemoveTrophy(slot)}
+                                        disabled={loading}
+                                        className="mt-1.5 flex items-center gap-1 rounded border border-red-700/30 bg-red-900/20 px-2 py-0.5 font-pixel text-[9px] text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
+                                    >
+                                        <Trash2 className="h-3 w-3" /> Remove
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Empty slot - mount trophy */}
+                            {hasFurniture && !trophy && (
+                                <div className="mt-2">
+                                    {mountingSlot === slot ? (
+                                        <div className="rounded-md border border-stone-600/50 bg-stone-800/50 p-2">
+                                            <div className="mb-1.5 flex items-center justify-between">
+                                                <span className="font-pixel text-[9px] text-stone-400">
+                                                    Select trophy
+                                                </span>
+                                                <button
+                                                    onClick={() => setMountingSlot(null)}
+                                                    className="text-stone-500 hover:text-stone-300"
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                            <div className="max-h-32 space-y-0.5 overflow-y-auto">
+                                                {(trophyData?.available_trophies ?? [])
+                                                    .filter((t) => (isPedestal ? t.is_boss : true))
+                                                    .map((t) => (
+                                                        <button
+                                                            key={t.item_id}
+                                                            onClick={() => {
+                                                                onMountTrophy(slot, t.item_id);
+                                                                setMountingSlot(null);
+                                                            }}
+                                                            disabled={loading}
+                                                            className="flex w-full items-center justify-between rounded px-2 py-1 text-left transition-colors hover:bg-stone-700/50 disabled:opacity-40"
+                                                        >
+                                                            <span className="font-pixel text-[10px] text-stone-300">
+                                                                {t.name}
+                                                            </span>
+                                                            {t.is_boss && (
+                                                                <span className="font-pixel text-[7px] text-yellow-400">
+                                                                    BOSS
+                                                                </span>
+                                                            )}
+                                                        </button>
+                                                    ))}
+                                                {(trophyData?.available_trophies ?? []).filter(
+                                                    (t) => (isPedestal ? t.is_boss : true),
+                                                ).length === 0 && (
+                                                    <div className="py-2 text-center font-pixel text-[9px] text-stone-600">
+                                                        {isPedestal
+                                                            ? "No boss trophies in inventory"
+                                                            : "No trophies in inventory"}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => setMountingSlot(slot)}
+                                            disabled={loading}
+                                            className="flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-[9px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                        >
+                                            <Plus className="h-3 w-3" /> Mount Trophy
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Lighting hotspot */}
+            {room.hotspots.lighting && (
+                <div className="mt-3 rounded-md border border-stone-700/50 bg-stone-800/30 p-2.5">
+                    <div className="flex items-center justify-between">
+                        <span className="font-pixel text-[11px] text-stone-300">Lighting</span>
+                        {room.hotspots.lighting.current ? (
+                            <div className="flex items-center gap-1.5">
+                                <span className="font-pixel text-[10px] text-green-400">
+                                    {room.hotspots.lighting.current.name}
+                                </span>
+                                <button
+                                    onClick={() => onDemolish(room.id, "lighting")}
+                                    disabled={loading}
+                                    className="text-red-500/50 hover:text-red-400"
+                                    title="Demolish"
+                                >
+                                    <Trash2 className="h-3 w-3" />
+                                </button>
+                            </div>
+                        ) : (
+                            <span className="font-pixel text-[10px] text-stone-600">Empty</span>
+                        )}
+                    </div>
+                    <button
+                        onClick={() =>
+                            setExpandedHotspot(expandedHotspot === "lighting" ? null : "lighting")
+                        }
+                        className="mt-1 font-pixel text-[9px] text-amber-400/70 hover:text-amber-400"
+                    >
+                        {expandedHotspot === "lighting" ? "Hide options" : "Build options"}
+                    </button>
+                    {expandedHotspot === "lighting" && (
+                        <div className="mt-2 space-y-1.5">
+                            {room.hotspots.lighting.options.map((opt) => {
+                                const isBuilt = room.hotspots.lighting.current?.key === opt.key;
+                                const meetsLevel = constructionLevel >= opt.level;
+                                return (
+                                    <div
+                                        key={opt.key}
+                                        className={`rounded border p-2 ${isBuilt ? "border-green-600/50 bg-green-900/20" : "border-stone-700/30 bg-stone-900/30"}`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span
+                                                className={`font-pixel text-[10px] ${isBuilt ? "text-green-300" : "text-stone-300"}`}
+                                            >
+                                                {opt.name}
+                                            </span>
+                                            {!meetsLevel && (
+                                                <span className="flex items-center gap-0.5 font-pixel text-[8px] text-stone-600">
+                                                    <Lock className="h-2.5 w-2.5" /> Lv {opt.level}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="mt-0.5 font-pixel text-[8px] text-stone-500">
+                                            {Object.entries(opt.materials)
+                                                .map(([m, q]) => `${q} ${m}`)
+                                                .join(", ")}{" "}
+                                            &bull; +{opt.xp} XP
+                                            {opt.effect &&
+                                                Object.entries(opt.effect).map(([k, v]) => (
+                                                    <span key={k} className="text-cyan-400">
+                                                        {" "}
+                                                        &bull; +{v}% {k.replace(/_/g, " ")}
+                                                    </span>
+                                                ))}
+                                        </div>
+                                        {!isBuilt && meetsLevel && (
+                                            <button
+                                                onClick={() =>
+                                                    onBuildFurniture(room.id, "lighting", opt.key)
+                                                }
+                                                disabled={loading}
+                                                className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-[9px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                            >
+                                                <Hammer className="h-3 w-3" /> Build
+                                            </button>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

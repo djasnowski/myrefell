@@ -28,7 +28,7 @@ class HouseBuffService
         }
 
         $house = PlayerHouse::where('player_id', $user->id)
-            ->with('rooms.furniture')
+            ->with(['rooms.furniture', 'trophies'])
             ->first();
 
         if (! $house) {
@@ -67,6 +67,13 @@ class HouseBuffService
             $effects[$key] = ($effects[$key] ?? 0) + $value;
         }
 
+        // Merge trophy bonuses
+        foreach ($house->trophies as $trophy) {
+            foreach ($trophy->getStatBonuses() as $key => $value) {
+                $effects[$key] = ($effects[$key] ?? 0) + $value;
+            }
+        }
+
         $this->cache[$user->id] = $effects;
 
         return $effects;
@@ -80,7 +87,7 @@ class HouseBuffService
     public function getHouseBuffSources(User $user): array
     {
         $house = PlayerHouse::where('player_id', $user->id)
-            ->with('rooms.furniture')
+            ->with(['rooms.furniture', 'trophies'])
             ->first();
 
         if (! $house) {
@@ -127,6 +134,17 @@ class HouseBuffService
                 'effect_key' => $bonus['effect_key'],
                 'value' => $bonus['value'],
             ];
+        }
+
+        // Add trophy bonus sources
+        foreach ($house->trophies as $trophy) {
+            foreach ($trophy->getStatBonuses() as $effectKey => $value) {
+                $sources[] = [
+                    'source' => 'Trophy: '.$trophy->monster_name,
+                    'effect_key' => $effectKey,
+                    'value' => $value,
+                ];
+            }
         }
 
         return $sources;

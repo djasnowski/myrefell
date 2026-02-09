@@ -810,6 +810,132 @@ class ConstructionConfig
                 ],
             ],
         ],
+        'trophy_hall' => [
+            'name' => 'Trophy Hall',
+            'description' => 'Display monster trophies for permanent combat bonuses.',
+            'level' => 55,
+            'cost' => 150000,
+            'hotspots' => [
+                'display_1' => [
+                    'name' => 'Display Case 1',
+                    'options' => [
+                        'wooden_display' => [
+                            'name' => 'Wooden Display',
+                            'level' => 55,
+                            'materials' => ['Willow Plank' => 4],
+                            'xp' => 500,
+                        ],
+                        'oak_display' => [
+                            'name' => 'Oak Display',
+                            'level' => 65,
+                            'materials' => ['Yew Plank' => 4, 'Gold Bar' => 1],
+                            'xp' => 800,
+                        ],
+                        'ornate_display' => [
+                            'name' => 'Ornate Display',
+                            'level' => 80,
+                            'materials' => ['Mahogany Plank' => 4, 'Gold Leaf' => 2],
+                            'xp' => 1400,
+                        ],
+                    ],
+                ],
+                'display_2' => [
+                    'name' => 'Display Case 2',
+                    'options' => [
+                        'wooden_display' => [
+                            'name' => 'Wooden Display',
+                            'level' => 55,
+                            'materials' => ['Willow Plank' => 4],
+                            'xp' => 500,
+                        ],
+                        'oak_display' => [
+                            'name' => 'Oak Display',
+                            'level' => 65,
+                            'materials' => ['Yew Plank' => 4, 'Gold Bar' => 1],
+                            'xp' => 800,
+                        ],
+                        'ornate_display' => [
+                            'name' => 'Ornate Display',
+                            'level' => 80,
+                            'materials' => ['Mahogany Plank' => 4, 'Gold Leaf' => 2],
+                            'xp' => 1400,
+                        ],
+                    ],
+                ],
+                'display_3' => [
+                    'name' => 'Display Case 3',
+                    'options' => [
+                        'wooden_display' => [
+                            'name' => 'Wooden Display',
+                            'level' => 55,
+                            'materials' => ['Willow Plank' => 4],
+                            'xp' => 500,
+                        ],
+                        'oak_display' => [
+                            'name' => 'Oak Display',
+                            'level' => 65,
+                            'materials' => ['Yew Plank' => 4, 'Gold Bar' => 1],
+                            'xp' => 800,
+                        ],
+                        'ornate_display' => [
+                            'name' => 'Ornate Display',
+                            'level' => 80,
+                            'materials' => ['Mahogany Plank' => 4, 'Gold Leaf' => 2],
+                            'xp' => 1400,
+                        ],
+                    ],
+                ],
+                'pedestal' => [
+                    'name' => 'Boss Pedestal',
+                    'options' => [
+                        'stone_pedestal' => [
+                            'name' => 'Stone Pedestal',
+                            'level' => 55,
+                            'materials' => ['Willow Plank' => 3, 'Limestone Brick' => 2],
+                            'xp' => 550,
+                        ],
+                        'marble_pedestal' => [
+                            'name' => 'Marble Pedestal',
+                            'level' => 70,
+                            'materials' => ['Marble Block' => 3],
+                            'xp' => 1000,
+                        ],
+                        'gilded_pedestal' => [
+                            'name' => 'Gilded Pedestal',
+                            'level' => 85,
+                            'materials' => ['Marble Block' => 3, 'Gold Leaf' => 2],
+                            'xp' => 1600,
+                        ],
+                    ],
+                ],
+                'lighting' => [
+                    'name' => 'Lighting',
+                    'options' => [
+                        'torch_sconce' => [
+                            'name' => 'Torch Sconce',
+                            'level' => 55,
+                            'materials' => ['Willow Plank' => 2, 'Steel Bar' => 1],
+                            'xp' => 480,
+                            'effect' => ['combat_xp_bonus' => 2],
+                        ],
+                        'lantern' => [
+                            'name' => 'Lantern',
+                            'level' => 65,
+                            'materials' => ['Yew Plank' => 2, 'Steel Bar' => 2],
+                            'xp' => 780,
+                            'effect' => ['combat_xp_bonus' => 3],
+                        ],
+                        'chandelier' => [
+                            'name' => 'Chandelier',
+                            'level' => 80,
+                            'materials' => ['Mahogany Plank' => 4, 'Gold Bar' => 3],
+                            'xp' => 1300,
+                            'effect' => ['combat_xp_bonus' => 5],
+                        ],
+                    ],
+                ],
+            ],
+        ],
         'portal_chamber' => [
             'name' => 'Portal Chamber',
             'description' => 'A mystical room housing teleportation portals to distant lands.',

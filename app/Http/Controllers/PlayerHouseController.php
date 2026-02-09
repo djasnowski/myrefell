@@ -11,6 +11,7 @@ use App\Services\HouseBuffService;
 use App\Services\HouseService;
 use App\Services\InventoryService;
 use App\Services\ServantService;
+use App\Services\TrophyService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -22,7 +23,8 @@ class PlayerHouseController extends Controller
         protected HouseService $houseService,
         protected InventoryService $inventoryService,
         protected HouseBuffService $houseBuffService,
-        protected ServantService $servantService
+        protected ServantService $servantService,
+        protected TrophyService $trophyService
     ) {}
 
     /**
@@ -81,6 +83,7 @@ class PlayerHouseController extends Controller
             'availableDestinations' => $availableDestinations,
             'servantData' => $house ? $this->servantService->getServantData($user) : null,
             'servantTiers' => $house ? $this->getServantTierInfo($user) : [],
+            'trophyData' => $house ? $this->trophyService->getTrophyData($user) : null,
         ];
 
         return Inertia::render('House/Index', $data);
@@ -360,6 +363,42 @@ class PlayerHouseController extends Controller
     public function payServantWages(Request $request): RedirectResponse
     {
         $result = $this->servantService->payWages($request->user());
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Mount a trophy in the trophy hall.
+     */
+    public function mountTrophy(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'slot' => 'required|string|in:display_1,display_2,display_3,pedestal',
+            'item_id' => 'required|integer',
+        ]);
+
+        $result = $this->trophyService->mountTrophy(
+            $request->user(),
+            $request->input('slot'),
+            $request->input('item_id'),
+        );
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Remove a trophy from the trophy hall.
+     */
+    public function removeTrophy(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'slot' => 'required|string|in:display_1,display_2,display_3,pedestal',
+        ]);
+
+        $result = $this->trophyService->removeTrophy(
+            $request->user(),
+            $request->input('slot'),
+        );
 
         return back()->with($result['success'] ? 'success' : 'error', $result['message']);
     }

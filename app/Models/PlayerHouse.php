@@ -55,6 +55,11 @@ class PlayerHouse extends Model
         return $this->hasOne(HouseServant::class);
     }
 
+    public function trophies(): HasMany
+    {
+        return $this->hasMany(HouseTrophy::class);
+    }
+
     public function getMaxRooms(): int
     {
         return ConstructionConfig::HOUSE_TIERS[$this->tier]['max_rooms'] ?? 3;
