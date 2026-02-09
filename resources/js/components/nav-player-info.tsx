@@ -493,9 +493,20 @@ export function NavPlayerInfo() {
                             const RoleIcon =
                                 getIconComponent(player.role.icon) || LucideIcons.Crown;
                             return (
-                                <div className="relative flex items-center gap-1.5 rounded border border-purple-600/30 bg-purple-900/20 px-2 py-1">
+                                <button
+                                    onClick={() => {
+                                        const t = player.role!.location_type;
+                                        const plural = t.endsWith("y")
+                                            ? t.slice(0, -1) + "ies"
+                                            : t + "s";
+                                        router.visit(
+                                            `/${plural}/${player.role!.location_id}/roles`,
+                                        );
+                                    }}
+                                    className="relative flex w-full items-center gap-1.5 rounded border border-purple-600/30 bg-purple-900/20 px-2 py-1 transition hover:bg-purple-900/40"
+                                >
                                     <RoleIcon className="mr-1 h-5 w-5 flex-shrink-0 text-purple-400" />
-                                    <div className="min-w-0 flex-1">
+                                    <div className="min-w-0 flex-1 text-left">
                                         <div className="truncate font-pixel text-[10px] text-purple-300">
                                             {player.role.name}
                                         </div>
@@ -510,7 +521,7 @@ export function NavPlayerInfo() {
                                                 : player.role.pending_count}
                                         </div>
                                     )}
-                                </div>
+                                </button>
                             );
                         })()}
                     {player.job &&
