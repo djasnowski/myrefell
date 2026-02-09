@@ -30,6 +30,7 @@ class PlayerSkill extends Model
         'thieving',
         'herblore',
         'agility',
+        'construction',
     ];
 
     public const COMBAT_SKILLS = ['attack', 'strength', 'defense', 'range', 'hitpoints', 'prayer'];

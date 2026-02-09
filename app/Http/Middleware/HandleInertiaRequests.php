@@ -6,6 +6,7 @@ use App\Services\BeliefEffectService;
 use App\Services\BlessingEffectService;
 use App\Services\CalendarService;
 use App\Services\EnergyService;
+use App\Services\HouseBuffService;
 use App\Services\InfirmaryService;
 use App\Services\OnlinePlayersService;
 use App\Services\PotionBuffService;
@@ -34,7 +35,8 @@ class HandleInertiaRequests extends Middleware
         protected InfirmaryService $infirmaryService,
         protected PotionBuffService $potionBuffService,
         protected SkillBonusService $skillBonusService,
-        protected CalendarService $calendarService
+        protected CalendarService $calendarService,
+        protected HouseBuffService $houseBuffService
     ) {}
 
     /**
@@ -184,6 +186,7 @@ class HandleInertiaRequests extends Middleware
             'infirmary' => $this->infirmaryService->getInfirmaryStatus($player),
             'active_buffs' => $this->skillBonusService->getAllActiveBuffs($player),
             'skill_bonuses' => $this->skillBonusService->getSkillBonuses($player),
+            'has_house' => \App\Models\PlayerHouse::where('player_id', $player->id)->exists(),
         ];
     }
 
@@ -645,6 +648,14 @@ class HandleInertiaRequests extends Middleware
             $bonuses[] = [
                 'source' => 'Belief',
                 'amount' => $beliefBonus,
+            ];
+        }
+
+        $houseMaxHpBonus = (int) ($this->houseBuffService->getHouseEffects($player)['max_hp_bonus'] ?? 0);
+        if ($houseMaxHpBonus > 0) {
+            $bonuses[] = [
+                'source' => 'House (Hearth)',
+                'amount' => $houseMaxHpBonus,
             ];
         }
 

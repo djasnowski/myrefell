@@ -148,6 +148,18 @@ class LocationServices
             'icon' => 'footprints',
             'route' => 'agility',
         ],
+        'sawmill' => [
+            'name' => 'Sawmill',
+            'description' => 'Convert logs into planks',
+            'icon' => 'axe',
+            'route' => 'sawmill',
+        ],
+        'construction' => [
+            'name' => 'Construction',
+            'description' => 'Take on building contracts',
+            'icon' => 'hammer',
+            'route' => 'construction',
+        ],
     ];
 
     /**
@@ -173,6 +185,8 @@ class LocationServices
             'apothecary',
             'farming',
             'agility',
+            'sawmill',
+            'construction',
         ],
         'town' => [
             'training',
@@ -194,6 +208,8 @@ class LocationServices
             'apothecary',
             'farming',
             'agility',
+            'sawmill',
+            'construction',
         ],
         'barony' => [
             'training',
@@ -214,6 +230,8 @@ class LocationServices
             'taxes',
             'apothecary',
             'agility',
+            'sawmill',
+            'construction',
         ],
         'duchy' => [
             'training',
@@ -228,6 +246,7 @@ class LocationServices
             'thieving',
             'apothecary',
             'agility',
+            'construction',
         ],
         'kingdom' => [
             'training',
@@ -242,6 +261,7 @@ class LocationServices
             'tavern',
             'thieving',
             'apothecary',
+            'construction',
         ],
     ];
 

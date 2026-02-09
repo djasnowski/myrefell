@@ -1,6 +1,7 @@
 import { usePage } from "@inertiajs/react";
 import type { LucideIcon } from "lucide-react";
 import {
+    Anvil,
     Beef,
     BicepsFlexed,
     Fish,
@@ -8,6 +9,7 @@ import {
     Hammer,
     Hand,
     Heart,
+    Home,
     Leaf,
     Pickaxe,
     Scissors,
@@ -35,7 +37,7 @@ interface Skill {
 
 interface BonusSource {
     source: string;
-    type: "blessing" | "hq_prayer" | "belief" | "active_belief" | "potion";
+    type: "blessing" | "hq_prayer" | "belief" | "active_belief" | "potion" | "house";
     value: number;
     is_percent: boolean;
     effect: string;
@@ -71,6 +73,7 @@ const skillOrder = [
     "cooking",
     "smithing",
     "crafting",
+    "construction",
 ];
 
 const skillIcons: Record<string, LucideIcon> = {
@@ -88,8 +91,9 @@ const skillIcons: Record<string, LucideIcon> = {
     fishing: Fish,
     woodcutting: TreeDeciduous,
     cooking: Beef,
-    smithing: Hammer,
+    smithing: Anvil,
     crafting: Scissors,
+    construction: Hammer,
 };
 
 const sourceTypeIcons: Record<string, LucideIcon> = {
@@ -98,6 +102,7 @@ const sourceTypeIcons: Record<string, LucideIcon> = {
     belief: Scroll,
     active_belief: Scroll,
     potion: FlaskConical,
+    house: Home,
 };
 
 const sourceTypeColors: Record<string, string> = {
@@ -106,6 +111,7 @@ const sourceTypeColors: Record<string, string> = {
     belief: "text-blue-400",
     active_belief: "text-orange-400",
     potion: "text-emerald-400",
+    house: "text-amber-400",
 };
 
 function SkillBadge({ skill, bonus }: { skill: Skill; bonus?: SkillBonus }) {

@@ -82,6 +82,7 @@ class GatheringService
                 ['name' => 'Willow Wood', 'weight' => 25, 'min_level' => 20, 'xp_bonus' => 45],
                 ['name' => 'Maple Wood', 'weight' => 15, 'min_level' => 35, 'xp_bonus' => 75],
                 ['name' => 'Yew Wood', 'weight' => 10, 'min_level' => 50, 'xp_bonus' => 135],
+                ['name' => 'Mahogany Wood', 'weight' => 5, 'min_level' => 65, 'xp_bonus' => 200],
             ],
         ],
         'herblore' => [

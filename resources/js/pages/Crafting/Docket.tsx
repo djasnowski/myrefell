@@ -6,6 +6,7 @@ import {
     ClipboardList,
     Clock,
     Coins,
+    Anvil,
     Hammer,
     Loader2,
     Scissors,
@@ -94,9 +95,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const categoryIcons: Record<string, typeof Hammer> = {
-    smithing: Hammer,
+    smithing: Anvil,
     cooking: Beef,
     crafting: Scissors,
+    construction: Hammer,
 };
 
 function NpcRecipeCard({

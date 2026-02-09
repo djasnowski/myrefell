@@ -5,6 +5,7 @@ import {
     Beef,
     BicepsFlexed,
     Crown,
+    Anvil,
     Crosshair,
     Fish,
     Footprints,
@@ -58,11 +59,12 @@ const skillIcons: Record<string, LucideIcon> = {
     fishing: Fish,
     woodcutting: TreeDeciduous,
     cooking: Beef,
-    smithing: Hammer,
+    smithing: Anvil,
     crafting: Scissors,
     thieving: Hand,
     herblore: Leaf,
     agility: Footprints,
+    construction: Hammer,
 };
 
 const skillColors: Record<string, string> = {

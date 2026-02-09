@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from "@inertiajs/react";
 import type { LucideIcon } from "lucide-react";
 import {
+    Anvil,
     ArrowLeft,
     Beef,
     BicepsFlexed,
@@ -61,7 +62,8 @@ const skillIcons: Record<string, LucideIcon> = {
     fishing: Fish,
     woodcutting: TreeDeciduous,
     cooking: Beef,
-    smithing: Hammer,
+    smithing: Anvil,
+    construction: Hammer,
     crafting: Scissors,
     thieving: Hand,
     herblore: Leaf,
@@ -86,6 +88,7 @@ const skillColors: Record<string, string> = {
     thieving: "text-purple-400",
     herblore: "text-emerald-400",
     agility: "text-sky-400",
+    construction: "text-orange-400",
 };
 
 export default function LeaderboardIndex() {
