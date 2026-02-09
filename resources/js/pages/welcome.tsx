@@ -5,6 +5,7 @@ import {
     Calendar,
     Castle,
     Church,
+    Cloud,
     CloudRain,
     Coins,
     Crown,
@@ -17,6 +18,7 @@ import {
     Heart,
     HeartPulse,
     Home,
+    Leaf,
     Mail,
     MapPin,
     Pickaxe,
@@ -25,6 +27,7 @@ import {
     Shield,
     Ship,
     Skull,
+    Snowflake,
     Sparkles,
     Sun,
     Swords,
@@ -232,8 +235,29 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                             ))}
                         </div>
 
-                        {/* Players Online & World Time */}
+                        {/* World Time & Players Online */}
                         <div className="mt-4 md:mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                            {calendar && (
+                                <div className="inline-flex items-center gap-2 md:gap-3 rounded-xl border border-amber-500/30 bg-amber-900/20 backdrop-blur-sm px-4 py-2 md:px-6 md:py-3">
+                                    {calendar.season === "spring" && (
+                                        <Cloud className="h-4 w-4 md:h-5 md:w-5 text-green-400" />
+                                    )}
+                                    {calendar.season === "summer" && (
+                                        <Sun className="h-4 w-4 md:h-5 md:w-5 text-yellow-400" />
+                                    )}
+                                    {calendar.season === "autumn" && (
+                                        <Leaf className="h-4 w-4 md:h-5 md:w-5 text-orange-400" />
+                                    )}
+                                    {calendar.season === "winter" && (
+                                        <Snowflake className="h-4 w-4 md:h-5 md:w-5 text-blue-400" />
+                                    )}
+                                    <span className="font-pixel text-sm md:text-lg text-amber-300">
+                                        Day {calendar.day_of_year}, Week {calendar.week_of_year},
+                                        Year {calendar.year}
+                                        <span className="ml-2 capitalize">({calendar.season})</span>
+                                    </span>
+                                </div>
+                            )}
                             {online_count !== undefined && online_count > 0 && (
                                 <div className="inline-flex items-center gap-2 md:gap-3 rounded-xl border border-green-500/30 bg-green-900/20 backdrop-blur-sm px-4 py-2 md:px-6 md:py-3">
                                     <span className="relative flex h-2.5 w-2.5 md:h-3 md:w-3">
@@ -243,15 +267,6 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                     <span className="font-pixel text-sm md:text-lg text-green-300">
                                         {online_count} {online_count === 1 ? "player" : "players"}{" "}
                                         online
-                                    </span>
-                                </div>
-                            )}
-                            {calendar && (
-                                <div className="inline-flex items-center gap-2 md:gap-3 rounded-xl border border-amber-500/30 bg-amber-900/20 backdrop-blur-sm px-4 py-2 md:px-6 md:py-3">
-                                    <Calendar className="h-4 w-4 md:h-5 md:w-5 text-amber-400" />
-                                    <span className="font-pixel text-sm md:text-lg text-amber-300">
-                                        Day {calendar.day_of_year}, Wk {calendar.week_of_year}, Year{" "}
-                                        {calendar.year}
                                     </span>
                                 </div>
                             )}
