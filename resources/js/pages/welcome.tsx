@@ -214,7 +214,7 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                         </div>
 
                         {/* Quick Stats */}
-                        <div className="mt-8 md:mt-16 grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-4">
+                        <div className="mt-8 md:mt-16 grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-5">
                             {[
                                 { value: "4", label: "Kingdoms" },
                                 { value: "16", label: "Skills to Master" },
