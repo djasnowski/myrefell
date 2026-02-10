@@ -4,10 +4,13 @@ namespace App\Services;
 
 use App\Config\ConstructionConfig;
 use App\Models\Barony;
+use App\Models\GardenPlot;
 use App\Models\HouseFurniture;
 use App\Models\HousePortal;
 use App\Models\HouseRoom;
+use App\Models\HouseServant;
 use App\Models\HouseStorage;
+use App\Models\HouseTrophy;
 use App\Models\Item;
 use App\Models\Kingdom;
 use App\Models\PlayerHouse;
@@ -43,8 +46,8 @@ class HouseService
             return ['can_purchase' => false, 'reason' => 'Not enough gold. You need '.number_format($tier['cost']).' gold.'];
         }
 
-        if (! $user->current_kingdom_id) {
-            return ['can_purchase' => false, 'reason' => 'You must be in a kingdom to purchase a house.'];
+        if (! $user->current_location_type || ! $user->current_location_id) {
+            return ['can_purchase' => false, 'reason' => 'You must be at a location to purchase a house.'];
         }
 
         return ['can_purchase' => true, 'reason' => null];
@@ -73,6 +76,8 @@ class HouseService
                 'condition' => 100,
                 'upkeep_due_at' => now()->addDays(7),
                 'kingdom_id' => $user->current_kingdom_id,
+                'location_type' => $user->current_location_type,
+                'location_id' => $user->current_location_id,
             ]);
 
             return [
@@ -283,6 +288,88 @@ class HouseService
     }
 
     /**
+     * Demolish an entire room, returning 50% of gold cost and 50% of furniture materials.
+     */
+    public function demolishRoom(User $user, int $roomId): array
+    {
+        $house = PlayerHouse::where('player_id', $user->id)->first();
+        if (! $house) {
+            return ['success' => false, 'message' => 'You do not own a house.'];
+        }
+
+        $room = HouseRoom::where('id', $roomId)->where('player_house_id', $house->id)->first();
+        if (! $room) {
+            return ['success' => false, 'message' => 'Room not found.'];
+        }
+
+        // Dependency checks
+        if ($room->room_type === 'servant_quarters' && HouseServant::where('player_house_id', $house->id)->exists()) {
+            return ['success' => false, 'message' => 'Dismiss your servant before demolishing the Servant Quarters.'];
+        }
+
+        if ($room->room_type === 'trophy_hall' && HouseTrophy::where('player_house_id', $house->id)->exists()) {
+            return ['success' => false, 'message' => 'Remove all trophies before demolishing the Trophy Hall.'];
+        }
+
+        if ($room->room_type === 'garden' && GardenPlot::where('player_house_id', $house->id)->where('status', '!=', 'empty')->exists()) {
+            return ['success' => false, 'message' => 'Clear all garden plots before demolishing the Garden.'];
+        }
+
+        if ($room->room_type === 'portal_chamber' && HousePortal::where('player_house_id', $house->id)->exists()) {
+            return ['success' => false, 'message' => 'Remove all portal destinations before demolishing the Portal Chamber.'];
+        }
+
+        $roomConfig = ConstructionConfig::ROOMS[$room->room_type] ?? null;
+        $goldReturned = $roomConfig ? (int) floor($roomConfig['cost'] / 2) : 0;
+
+        return DB::transaction(function () use ($user, $house, $room, $roomConfig, $goldReturned) {
+            $returned = [];
+
+            // Return 50% of each furniture's materials
+            $furniture = HouseFurniture::where('house_room_id', $room->id)->get();
+            foreach ($furniture as $piece) {
+                $hotspot = $roomConfig['hotspots'][$piece->hotspot_slug] ?? null;
+                $furnitureConfig = $hotspot['options'][$piece->furniture_key] ?? null;
+
+                if ($furnitureConfig && isset($furnitureConfig['materials'])) {
+                    foreach ($furnitureConfig['materials'] as $materialName => $qty) {
+                        $returnQty = (int) floor($qty / 2);
+                        if ($returnQty > 0) {
+                            $item = Item::where('name', $materialName)->first();
+                            if ($item) {
+                                $this->inventoryService->addItem($user, $item, $returnQty);
+                                $returned[] = $returnQty.' '.$materialName;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Delete all furniture
+            HouseFurniture::where('house_room_id', $room->id)->delete();
+
+            // Delete any empty garden plots associated with this room
+            if ($room->room_type === 'garden') {
+                GardenPlot::where('player_house_id', $house->id)->where('status', 'empty')->delete();
+            }
+
+            // Return 50% of room gold cost
+            $user->gold += $goldReturned;
+            $user->save();
+
+            // Delete the room
+            $room->delete();
+
+            $message = 'Room demolished. '.number_format($goldReturned).' gold returned.';
+            if (! empty($returned)) {
+                $message .= ' Materials recovered: '.implode(', ', $returned).'.';
+            }
+
+            return ['success' => true, 'message' => $message];
+        });
+    }
+
+    /**
      * Check if a player can upgrade their house to the next tier.
      */
     public function canUpgradeHouse(User $user, string $targetTier): array
@@ -383,22 +470,37 @@ class HouseService
             return ['success' => false, 'message' => 'You do not have enough '.$itemName.'.'];
         }
 
-        $storageUsed = $house->getStorageUsed();
-        $storageCapacity = $house->getStorageCapacity();
-        if ($storageUsed + $quantity > $storageCapacity) {
-            $canStore = $storageCapacity - $storageUsed;
+        // Check if this would use a new slot (only matters if item isn't already stored)
+        $existsInStorage = HouseStorage::where('player_house_id', $house->id)
+            ->where('item_id', $item->id)
+            ->exists();
 
-            return ['success' => false, 'message' => 'Not enough storage space. Can store '.$canStore.' more items.'];
+        if (! $existsInStorage) {
+            $storageUsed = $house->getStorageUsed();
+            $storageCapacity = $house->getStorageCapacity();
+            if ($storageUsed >= $storageCapacity) {
+                return ['success' => false, 'message' => 'No storage slots available. You have used all '.$storageCapacity.' slots.'];
+            }
         }
 
         return DB::transaction(function () use ($user, $house, $item, $quantity, $itemName) {
             $this->inventoryService->removeItem($user, $item, $quantity);
 
-            $storage = HouseStorage::firstOrCreate(
-                ['player_house_id' => $house->id, 'item_id' => $item->id],
-                ['quantity' => 0],
-            );
-            $storage->increment('quantity', $quantity);
+            $storage = HouseStorage::where('player_house_id', $house->id)
+                ->where('item_id', $item->id)
+                ->first();
+
+            if ($storage) {
+                $storage->increment('quantity', $quantity);
+            } else {
+                $slotNumber = $this->findEmptyStorageSlot($house);
+                $storage = HouseStorage::create([
+                    'player_house_id' => $house->id,
+                    'item_id' => $item->id,
+                    'slot_number' => $slotNumber,
+                    'quantity' => $quantity,
+                ]);
+            }
 
             return ['success' => true, 'message' => 'Stored '.$quantity.' '.$itemName.'.'];
         });
@@ -435,17 +537,40 @@ class HouseService
             return ['success' => false, 'message' => 'Not enough '.$itemName.' in storage.'];
         }
 
-        return DB::transaction(function () use ($user, $item, $storage, $quantity, $itemName) {
-            if (! $this->inventoryService->addItem($user, $item, $quantity)) {
-                return ['success' => false, 'message' => 'Not enough inventory space.'];
-            }
+        // Calculate how many items can actually fit in inventory
+        $freeSlots = $this->inventoryService->freeSlots($user);
+        if ($item->stackable) {
+            // Account for space in existing partial stacks
+            $partialStackRoom = $user->inventory()
+                ->where('item_id', $item->id)
+                ->where('quantity', '<', $item->max_stack)
+                ->get()
+                ->sum(fn ($slot) => $item->max_stack - $slot->quantity);
 
-            $storage->decrement('quantity', $quantity);
+            $canFit = $partialStackRoom + ($freeSlots * $item->max_stack);
+        } else {
+            $canFit = $freeSlots;
+        }
+
+        $actualQuantity = min($quantity, $canFit);
+
+        if ($actualQuantity <= 0) {
+            return ['success' => false, 'message' => 'Not enough inventory space.'];
+        }
+
+        return DB::transaction(function () use ($user, $item, $storage, $actualQuantity, $quantity, $itemName) {
+            $this->inventoryService->addItem($user, $item, $actualQuantity);
+
+            $storage->decrement('quantity', $actualQuantity);
             if ($storage->quantity <= 0) {
                 $storage->delete();
             }
 
-            return ['success' => true, 'message' => 'Withdrew '.$quantity.' '.$itemName.'.'];
+            if ($actualQuantity < $quantity) {
+                return ['success' => true, 'message' => 'Withdrew '.$actualQuantity.' '.$itemName.' (inventory full, '.($quantity - $actualQuantity).' left in storage).'];
+            }
+
+            return ['success' => true, 'message' => 'Withdrew '.$actualQuantity.' '.$itemName.'.'];
         });
     }
 
@@ -755,5 +880,22 @@ class HouseService
         }
 
         return $destinations;
+    }
+
+    protected function findEmptyStorageSlot(PlayerHouse $house): int
+    {
+        $usedSlots = HouseStorage::where('player_house_id', $house->id)
+            ->pluck('slot_number')
+            ->toArray();
+
+        $capacity = $house->getStorageCapacity();
+
+        for ($i = 0; $i < $capacity; $i++) {
+            if (! in_array($i, $usedSlots)) {
+                return $i;
+            }
+        }
+
+        return count($usedSlots);
     }
 }

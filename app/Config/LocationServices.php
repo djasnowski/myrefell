@@ -160,6 +160,13 @@ class LocationServices
             'icon' => 'hammer',
             'route' => 'construction',
         ],
+        'house' => [
+            'name' => 'My House',
+            'description' => 'Manage your home',
+            'icon' => 'home',
+            'route' => 'house',
+            'requires_house' => true,
+        ],
     ];
 
     /**
@@ -187,6 +194,7 @@ class LocationServices
             'agility',
             'sawmill',
             'construction',
+            'house',     // Only if player has a house
         ],
         'town' => [
             'training',
@@ -210,6 +218,7 @@ class LocationServices
             'agility',
             'sawmill',
             'construction',
+            'house',     // Only if player has a house
         ],
         'barony' => [
             'training',
@@ -232,6 +241,7 @@ class LocationServices
             'agility',
             'sawmill',
             'construction',
+            'house',
         ],
         'duchy' => [
             'training',
@@ -247,6 +257,7 @@ class LocationServices
             'apothecary',
             'agility',
             'construction',
+            'house',
         ],
         'kingdom' => [
             'training',
@@ -262,6 +273,7 @@ class LocationServices
             'thieving',
             'apothecary',
             'construction',
+            'house',
         ],
     ];
 

@@ -7,6 +7,8 @@ import {
     Crown,
     Flame,
     Gavel,
+    Home,
+    Loader2,
     ScrollText,
     Skull,
     Users,
@@ -38,12 +40,26 @@ interface Election {
     ended_at?: string;
 }
 
+interface Housing {
+    has_house: boolean;
+    house_name?: string;
+    tier_name: string;
+    condition?: number;
+    can_purchase?: boolean;
+    reason?: string | null;
+    cost?: number;
+    grid_size?: number;
+    max_rooms?: number;
+    storage_slots?: number;
+}
+
 interface Props {
     town: Town;
     active_election: Election | null;
     recent_elections: Election[];
     can_start_election: boolean;
     is_mayor: boolean;
+    housing: Housing;
 }
 
 export default function TownHall({
@@ -52,8 +68,23 @@ export default function TownHall({
     recent_elections,
     can_start_election,
     is_mayor,
+    housing,
 }: Props) {
     const [starting, setStarting] = useState(false);
+    const [purchasing, setPurchasing] = useState(false);
+
+    const handlePurchaseHouse = () => {
+        setPurchasing(true);
+        router.post(
+            "/house/purchase",
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => router.reload(),
+                onFinish: () => setPurchasing(false),
+            },
+        );
+    };
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -302,6 +333,88 @@ export default function TownHall({
                                 </div>
                             )}
                         </div>
+                    </div>
+
+                    {/* Housing */}
+                    <div className="mt-4 rounded-xl border-2 border-stone-700 bg-stone-800/50 p-4">
+                        <h2 className="mb-4 flex items-center gap-2 font-pixel text-sm text-stone-300">
+                            <Home className="h-4 w-4 text-amber-400" />
+                            Housing
+                        </h2>
+
+                        {housing.has_house ? (
+                            <div className="rounded-lg border border-stone-700 bg-stone-800/30 p-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <div className="font-pixel text-sm text-stone-200">
+                                            {housing.house_name}
+                                        </div>
+                                        <div className="mt-1 font-pixel text-[10px] text-stone-500">
+                                            {housing.tier_name} &bull; Condition:{" "}
+                                            {housing.condition}%
+                                        </div>
+                                    </div>
+                                    <Link
+                                        href={`/towns/${town.id}/house`}
+                                        className="rounded-lg bg-amber-900/50 px-4 py-2 font-pixel text-xs text-amber-300 transition hover:bg-amber-800/50"
+                                    >
+                                        Manage House
+                                    </Link>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="rounded-lg border border-stone-700 bg-stone-800/30 p-4">
+                                <div className="mb-3 text-center">
+                                    <Home className="mx-auto mb-2 h-8 w-8 text-amber-400/50" />
+                                    <div className="font-pixel text-sm text-stone-300">
+                                        Purchase a Housing Plot
+                                    </div>
+                                    <div className="mt-1 font-pixel text-[10px] text-stone-500">
+                                        Acquire land to build a {housing.tier_name}. Build rooms,
+                                        craft furniture, and store your valuables.
+                                    </div>
+                                </div>
+
+                                <div className="mb-3 rounded-md border border-stone-600/50 bg-stone-900/50 p-3">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <div className="font-pixel text-xs text-stone-300">
+                                                {housing.tier_name}
+                                            </div>
+                                            <div className="font-pixel text-[10px] text-stone-500">
+                                                {housing.grid_size}x{housing.grid_size} grid &bull;{" "}
+                                                {housing.max_rooms} rooms &bull;{" "}
+                                                {housing.storage_slots} storage
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <Coins className="h-4 w-4 text-yellow-400" />
+                                            <span className="font-pixel text-sm text-yellow-300">
+                                                {housing.cost?.toLocaleString()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {housing.reason && (
+                                    <div className="mb-3 font-pixel text-[10px] text-red-400 text-center">
+                                        {housing.reason}
+                                    </div>
+                                )}
+
+                                <button
+                                    onClick={handlePurchaseHouse}
+                                    disabled={purchasing || !housing.can_purchase}
+                                    className="w-full rounded-lg border border-amber-600/50 bg-amber-900/50 py-2 font-pixel text-xs text-amber-300 transition hover:bg-amber-800/50 disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                    {purchasing ? (
+                                        <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+                                    ) : (
+                                        "Purchase Housing Plot"
+                                    )}
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Town Decrees / Laws - Future Feature */}

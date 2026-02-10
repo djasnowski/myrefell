@@ -12,12 +12,14 @@ class HouseStorage extends Model
     protected $fillable = [
         'player_house_id',
         'item_id',
+        'slot_number',
         'quantity',
     ];
 
     protected function casts(): array
     {
         return [
+            'slot_number' => 'integer',
             'quantity' => 'integer',
         ];
     }

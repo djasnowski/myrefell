@@ -924,14 +924,21 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
     Route::put('dynasty/succession', [SuccessionController::class, 'update'])->name('dynasty.succession.update');
     Route::post('dynasty/succession/disinherit/{member}', [SuccessionController::class, 'disinherit'])->name('dynasty.succession.disinherit');
 
-    // Player House
+    // Player House (view routes are location-scoped)
+    Route::get('villages/{village}/house', [PlayerHouseController::class, 'index'])->name('villages.house');
+    Route::get('towns/{town}/house', [PlayerHouseController::class, 'index'])->name('towns.house');
+    Route::get('baronies/{barony}/house', [PlayerHouseController::class, 'index'])->name('baronies.house');
+    Route::get('duchies/{duchy}/house', [PlayerHouseController::class, 'index'])->name('duchies.house');
+    Route::get('kingdoms/{kingdom}/house', [PlayerHouseController::class, 'index'])->name('kingdoms.house');
+
+    // Player House (actions are not location-scoped — they operate on the player's house)
     Route::prefix('house')->name('house.')->group(function () {
-        Route::get('/', [PlayerHouseController::class, 'index'])->name('index');
         Route::post('/purchase', [PlayerHouseController::class, 'purchase'])->name('purchase');
         Route::post('/upgrade', [PlayerHouseController::class, 'upgrade'])->name('upgrade');
         Route::post('/build-room', [PlayerHouseController::class, 'buildRoom'])->name('build-room');
         Route::post('/build-furniture', [PlayerHouseController::class, 'buildFurniture'])->name('build-furniture');
         Route::post('/demolish-furniture', [PlayerHouseController::class, 'demolishFurniture'])->name('demolish-furniture');
+        Route::post('/demolish-room', [PlayerHouseController::class, 'demolishRoom'])->name('demolish-room');
         Route::post('/pay-upkeep', [PlayerHouseController::class, 'payUpkeep'])->name('pay-upkeep');
         Route::post('/repair', [PlayerHouseController::class, 'repairHouse'])->name('repair');
         Route::post('/deposit', [PlayerHouseController::class, 'deposit'])->name('deposit');
@@ -950,6 +957,7 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('/garden/tend', [PlayerHouseController::class, 'gardenTend'])->name('garden.tend');
         Route::post('/garden/harvest', [PlayerHouseController::class, 'gardenHarvest'])->name('garden.harvest');
         Route::post('/garden/clear', [PlayerHouseController::class, 'gardenClear'])->name('garden.clear');
+        Route::post('/move-storage-slot', [PlayerHouseController::class, 'moveStorageSlot'])->name('move-storage-slot');
         Route::post('/garden/compost', [PlayerHouseController::class, 'gardenCompost'])->name('garden.compost');
         Route::post('/garden/use-compost', [PlayerHouseController::class, 'gardenUseCompost'])->name('garden.use-compost');
     });

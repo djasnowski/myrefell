@@ -187,6 +187,7 @@ class HandleInertiaRequests extends Middleware
             'active_buffs' => $this->skillBonusService->getAllActiveBuffs($player),
             'skill_bonuses' => $this->skillBonusService->getSkillBonuses($player),
             'has_house' => \App\Models\PlayerHouse::where('player_id', $player->id)->exists(),
+            'house_url' => \App\Models\PlayerHouse::where('player_id', $player->id)->first()?->getHouseUrl(),
         ];
     }
 

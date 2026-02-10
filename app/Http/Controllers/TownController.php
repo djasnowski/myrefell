@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Config\ConstructionConfig;
 use App\Config\LocationServices;
 use App\Models\LocationActivityLog;
 use App\Models\MigrationRequest;
+use App\Models\PlayerHouse;
 use App\Models\PlayerRole;
 use App\Models\Role;
 use App\Models\Town;
+use App\Models\User;
+use App\Services\HouseService;
 use App\Services\MigrationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -16,7 +20,8 @@ use Inertia\Response;
 class TownController extends Controller
 {
     public function __construct(
-        protected MigrationService $migrationService
+        protected MigrationService $migrationService,
+        protected HouseService $houseService
     ) {}
 
     /**
@@ -339,6 +344,37 @@ class TownController extends Controller
             'recent_elections' => $recentElections,
             'can_start_election' => ! $activeElection && ! $isMayor,
             'is_mayor' => $isMayor,
+            'housing' => $this->getHousingData($user),
         ]);
+    }
+
+    private function getHousingData(User $user): array
+    {
+        $house = PlayerHouse::where('player_id', $user->id)->first();
+
+        if ($house) {
+            $tierConfig = ConstructionConfig::HOUSE_TIERS[$house->tier] ?? null;
+
+            return [
+                'has_house' => true,
+                'house_name' => $house->name,
+                'tier_name' => $tierConfig['name'] ?? ucfirst($house->tier),
+                'condition' => $house->condition,
+            ];
+        }
+
+        $purchaseCheck = $this->houseService->canPurchaseHouse($user);
+        $cottageTier = ConstructionConfig::HOUSE_TIERS['cottage'];
+
+        return [
+            'has_house' => false,
+            'can_purchase' => $purchaseCheck['can_purchase'],
+            'reason' => $purchaseCheck['reason'],
+            'cost' => $cottageTier['cost'],
+            'tier_name' => $cottageTier['name'],
+            'grid_size' => $cottageTier['grid'],
+            'max_rooms' => $cottageTier['max_rooms'],
+            'storage_slots' => $cottageTier['storage'],
+        ];
     }
 }

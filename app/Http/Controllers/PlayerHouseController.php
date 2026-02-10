@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Config\ConstructionConfig;
 use App\Models\HouseFurniture;
 use App\Models\HouseRoom;
+use App\Models\HouseStorage;
 use App\Models\PlayerHouse;
 use App\Models\User;
 use App\Services\GardenService;
@@ -15,6 +16,7 @@ use App\Services\ServantService;
 use App\Services\TrophyService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -31,12 +33,22 @@ class PlayerHouseController extends Controller
 
     /**
      * Show the player's house page.
+     * Accepts any location model parameter (village, town, barony, duchy, kingdom) for URL context.
      */
     public function index(Request $request): Response
     {
         $user = $request->user();
         $user->load('skills');
         $house = $this->houseService->getHouse($user);
+
+        // Verify the house belongs to this location
+        if ($house) {
+            $routeParams = $request->route()->parameters();
+            $locationParam = array_values($routeParams)[0] ?? null;
+            if ($locationParam && is_object($locationParam) && $locationParam->id !== $house->location_id) {
+                abort(404);
+            }
+        }
 
         $purchaseCheck = $house ? null : $this->houseService->canPurchaseHouse($user);
 
@@ -72,6 +84,7 @@ class PlayerHouseController extends Controller
 
         $data = [
             'house' => $house ? $this->formatHouse($house) : null,
+            'houseUrl' => $house?->getHouseUrl(),
             'canPurchase' => $purchaseCheck,
             'purchaseCost' => ConstructionConfig::HOUSE_TIERS['cottage']['cost'],
             'roomTypes' => $this->getAvailableRoomTypes($user),
@@ -90,6 +103,8 @@ class PlayerHouseController extends Controller
             'upkeepDueAt' => $house?->upkeep_due_at?->toISOString(),
             'upkeepCost' => $house?->getUpkeepCost(),
             'repairCost' => $house && $house->condition < 100 ? $house->getRepairCost() : null,
+            'playerInventory' => $house ? $this->getPlayerInventory($user) : [],
+            'inventoryMaxSlots' => \App\Models\PlayerInventory::MAX_SLOTS,
         ];
 
         return Inertia::render('House/Index', $data);
@@ -203,7 +218,9 @@ class PlayerHouseController extends Controller
         $result = $this->houseService->purchaseHouse($request->user());
 
         if ($result['success']) {
-            return back()->with('success', $result['message']);
+            $house = $result['house'];
+
+            return redirect($house->getHouseUrl())->with('success', $result['message']);
         }
 
         return back()->with('error', $result['message']);
@@ -286,6 +303,23 @@ class PlayerHouseController extends Controller
         }
 
         return back()->with('error', $result['message']);
+    }
+
+    /**
+     * Demolish an entire room.
+     */
+    public function demolishRoom(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'room_id' => 'required|integer',
+        ]);
+
+        $result = $this->houseService->demolishRoom(
+            $request->user(),
+            $request->input('room_id'),
+        );
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
     }
 
     /**
@@ -587,6 +621,57 @@ class PlayerHouseController extends Controller
     }
 
     /**
+     * Move a storage item to a different slot (drag-and-drop reordering).
+     */
+    public function moveStorageSlot(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'from_slot' => 'required|integer|min:0',
+            'to_slot' => 'required|integer|min:0',
+        ]);
+
+        $player = $request->user();
+        $house = PlayerHouse::where('player_id', $player->id)->first();
+
+        if (! $house) {
+            return back();
+        }
+
+        $fromSlot = $request->from_slot;
+        $toSlot = $request->to_slot;
+
+        if ($fromSlot === $toSlot) {
+            return back();
+        }
+
+        $maxSlot = $house->getStorageCapacity() - 1;
+        if ($fromSlot > $maxSlot || $toSlot > $maxSlot) {
+            return back();
+        }
+
+        DB::transaction(function () use ($house, $fromSlot, $toSlot) {
+            $fromItem = HouseStorage::where('player_house_id', $house->id)
+                ->where('slot_number', $fromSlot)->lockForUpdate()->first();
+            $toItem = HouseStorage::where('player_house_id', $house->id)
+                ->where('slot_number', $toSlot)->lockForUpdate()->first();
+
+            if (! $fromItem) {
+                return;
+            }
+
+            if ($toItem) {
+                $toItem->update(['slot_number' => -1]);
+                $fromItem->update(['slot_number' => $toSlot]);
+                $toItem->update(['slot_number' => $fromSlot]);
+            } else {
+                $fromItem->update(['slot_number' => $toSlot]);
+            }
+        });
+
+        return back();
+    }
+
+    /**
      * Add compost charges.
      */
     public function gardenCompost(Request $request): RedirectResponse
@@ -686,6 +771,8 @@ class PlayerHouseController extends Controller
             'max_rooms' => $house->getMaxRooms(),
             'storage_capacity' => $house->getStorageCapacity(),
             'storage_used' => $house->getStorageUsed(),
+            'location_type' => $house->location_type,
+            'location_id' => $house->location_id,
             'kingdom' => $house->kingdom ? [
                 'id' => $house->kingdom->id,
                 'name' => $house->kingdom->name,
@@ -698,11 +785,15 @@ class PlayerHouseController extends Controller
                 'grid_y' => $room->grid_y,
                 'hotspots' => $this->getHotspotData($room),
             ])->toArray(),
-            'storage' => $house->storage->map(fn ($s) => [
+            'storage' => $house->storage->sortBy('slot_number')->map(fn ($s) => [
                 'item_name' => $s->item->name,
                 'item_type' => $s->item->type,
+                'item_subtype' => $s->item->subtype,
+                'item_rarity' => $s->item->rarity ?? 'common',
+                'item_description' => $s->item->description,
                 'quantity' => $s->quantity,
-            ])->toArray(),
+                'slot_number' => $s->slot_number,
+            ])->values()->toArray(),
         ];
     }
 
@@ -821,5 +912,25 @@ class PlayerHouseController extends Controller
         }
 
         return $rooms;
+    }
+
+    protected function getPlayerInventory(User $user): array
+    {
+        return $user->inventory()
+            ->where('quantity', '>', 0)
+            ->with('item:id,name,type,subtype,rarity,description')
+            ->orderBy('slot_number')
+            ->get()
+            ->map(fn ($inv) => [
+                'item_name' => $inv->item->name,
+                'quantity' => $inv->quantity,
+                'type' => $inv->item->type,
+                'subtype' => $inv->item->subtype,
+                'rarity' => $inv->item->rarity ?? 'common',
+                'description' => $inv->item->description,
+                'slot_number' => $inv->slot_number,
+            ])
+            ->values()
+            ->all();
     }
 }

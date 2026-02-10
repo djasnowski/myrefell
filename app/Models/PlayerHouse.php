@@ -17,6 +17,8 @@ class PlayerHouse extends Model
         'condition',
         'upkeep_due_at',
         'kingdom_id',
+        'location_type',
+        'location_id',
         'compost_charges',
     ];
 
@@ -86,7 +88,7 @@ class PlayerHouse extends Model
 
     public function getStorageUsed(): int
     {
-        return $this->storage()->sum('quantity');
+        return $this->storage()->count();
     }
 
     public function isUpkeepOverdue(): bool
@@ -117,5 +119,28 @@ class PlayerHouse extends Model
     public function areStorageDisabled(): bool
     {
         return $this->condition <= 25;
+    }
+
+    /**
+     * Get the pluralized location path segment (e.g. "towns", "villages").
+     */
+    public function getLocationPathPrefix(): string
+    {
+        return match ($this->location_type) {
+            'village' => 'villages',
+            'town' => 'towns',
+            'barony' => 'baronies',
+            'duchy' => 'duchies',
+            'kingdom' => 'kingdoms',
+            default => $this->location_type.'s',
+        };
+    }
+
+    /**
+     * Get the full house URL path (e.g. "/towns/3/house").
+     */
+    public function getHouseUrl(): string
+    {
+        return '/'.$this->getLocationPathPrefix().'/'.$this->location_id.'/house';
     }
 }

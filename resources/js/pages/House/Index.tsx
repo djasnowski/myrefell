@@ -1,18 +1,23 @@
 import { Head, router, usePage } from "@inertiajs/react";
 import {
     AlertTriangle,
+    Anvil,
     ArrowDownToLine,
     ArrowUpFromLine,
     ArrowUpCircle,
+    Bed,
     BookOpen,
     CheckCircle,
     ChevronDown,
     Church,
     Clock,
     Coins,
+    CookingPot,
+    Eye,
     Flame,
     Hammer,
     Home,
+    Leaf,
     Link2,
     Loader2,
     Lock,
@@ -20,18 +25,23 @@ import {
     Package,
     Plus,
     Search,
+    Sofa,
     Sparkles,
     Trash2,
+    Trophy,
     UserCheck,
     Users,
+    UtensilsCrossed,
     Wrench,
     X,
     XCircle,
     Zap,
+    type LucideIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { gameToast } from "@/components/ui/game-toast";
+import { getItemIcon } from "@/lib/item-icons";
 import type { BreadcrumbItem } from "@/types";
 
 interface FurnitureOption {
@@ -61,7 +71,11 @@ interface Room {
 interface StorageItem {
     item_name: string;
     item_type: string;
+    item_subtype: string;
+    item_rarity: string;
+    item_description: string | null;
     quantity: number;
+    slot_number: number;
 }
 
 interface House {
@@ -74,6 +88,8 @@ interface House {
     max_rooms: number;
     storage_capacity: number;
     storage_used: number;
+    location_type: string;
+    location_id: number;
     kingdom: { id: number; name: string } | null;
     rooms: Room[];
     storage: StorageItem[];
@@ -211,6 +227,16 @@ interface GardenData {
     total_bonuses: Record<string, number>;
 }
 
+interface InventoryItem {
+    item_name: string;
+    quantity: number;
+    type: string;
+    subtype: string;
+    rarity: string;
+    description: string | null;
+    slot_number: number;
+}
+
 interface PageProps {
     house: House | null;
     canPurchase: { can_purchase: boolean; reason: string | null } | null;
@@ -228,6 +254,9 @@ interface PageProps {
     servantTiers: ServantTierInfo[];
     trophyData: TrophyData | null;
     gardenData: GardenData | null;
+    playerInventory: InventoryItem[];
+    inventoryMaxSlots: number;
+    houseUrl?: string;
     isVisiting?: boolean;
     visitingPlayer?: string;
     upkeepDueAt?: string | null;
@@ -249,20 +278,20 @@ const getConditionTextColor = (condition: number) => {
     return "text-red-400";
 };
 
-const roomIcons: Record<string, string> = {
-    parlour: "🪑",
-    kitchen: "🍳",
-    bedroom: "🛏️",
-    workshop: "🔧",
-    study: "📖",
-    hearth_room: "🔥",
-    forge: "⚒️",
-    chapel: "⛪",
-    portal_chamber: "🌀",
-    dining_room: "🍽️",
-    servant_quarters: "🛎️",
-    trophy_hall: "🏆",
-    garden: "🌿",
+const roomIcons: Record<string, LucideIcon> = {
+    parlour: Sofa,
+    kitchen: CookingPot,
+    bedroom: Bed,
+    workshop: Wrench,
+    study: BookOpen,
+    hearth_room: Flame,
+    forge: Anvil,
+    chapel: Church,
+    portal_chamber: Sparkles,
+    dining_room: UtensilsCrossed,
+    servant_quarters: Users,
+    trophy_hall: Trophy,
+    garden: Leaf,
 };
 
 const buffLabels: Record<string, string> = {
@@ -304,24 +333,21 @@ export default function HouseIndex() {
         servantTiers,
         trophyData,
         gardenData,
+        houseUrl,
         isVisiting,
         visitingPlayer,
         upkeepDueAt,
         upkeepCost,
         repairCost,
+        playerInventory,
+        inventoryMaxSlots,
         flash,
     } = usePage<PageProps>().props;
     const canAct = !isVisiting;
     const [loading, setLoading] = useState(false);
     const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
     const [buildingAt, setBuildingAt] = useState<{ x: number; y: number } | null>(null);
-    const [activeTab, setActiveTab] = useState<"rooms" | "storage" | "servant">("rooms");
-    const [storageAction, setStorageAction] = useState<{
-        type: "deposit" | "withdraw";
-        item?: string;
-    } | null>(null);
-    const [storageQty, setStorageQty] = useState(1);
-    const [storageItemName, setStorageItemName] = useState("");
+    const [activeTab, setActiveTab] = useState<"rooms" | "storage" | "servant">("storage");
 
     useEffect(() => {
         if (flash?.success) {
@@ -396,6 +422,28 @@ export default function HouseIndex() {
         );
     };
 
+    const handleDemolishRoom = (roomId: number) => {
+        if (
+            !window.confirm(
+                "Are you sure you want to demolish this entire room? You will receive 50% of the gold cost and 50% of furniture materials back.",
+            )
+        )
+            return;
+        setLoading(true);
+        router.post(
+            "/house/demolish-room",
+            { room_id: roomId },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                    setSelectedRoom(null);
+                },
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
     const handleUpgrade = () => {
         if (!upgradeInfo) return;
         setLoading(true);
@@ -405,41 +453,6 @@ export default function HouseIndex() {
             {
                 preserveScroll: true,
                 onSuccess: () => router.reload(),
-                onFinish: () => setLoading(false),
-            },
-        );
-    };
-
-    const handleDeposit = () => {
-        if (!storageItemName) return;
-        setLoading(true);
-        router.post(
-            "/house/deposit",
-            { item_name: storageItemName, quantity: storageQty },
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    router.reload();
-                    setStorageAction(null);
-                    setStorageItemName("");
-                    setStorageQty(1);
-                },
-                onFinish: () => setLoading(false),
-            },
-        );
-    };
-
-    const handleWithdraw = (itemName: string) => {
-        setLoading(true);
-        router.post(
-            "/house/withdraw",
-            { item_name: itemName, quantity: storageQty },
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    router.reload();
-                    setStorageQty(1);
-                },
                 onFinish: () => setLoading(false),
             },
         );
@@ -497,21 +510,21 @@ export default function HouseIndex() {
         );
     };
 
-    const visitorBreadcrumbs: BreadcrumbItem[] = isVisiting
+    const breadcrumbs: BreadcrumbItem[] = isVisiting
         ? [
               { title: "Highscores", href: "/leaderboard" },
               { title: `${visitingPlayer}'s House`, href: `/players/${visitingPlayer}/house` },
           ]
         : [
               { title: "Dashboard", href: "/dashboard" },
-              { title: "My House", href: "/house" },
+              { title: "My House", href: houseUrl || "/dashboard" },
           ];
 
     // No house - show purchase UI or visitor empty state
     if (!house) {
         if (isVisiting) {
             return (
-                <AppLayout breadcrumbs={visitorBreadcrumbs}>
+                <AppLayout breadcrumbs={breadcrumbs}>
                     <Head title={`${visitingPlayer}'s House`} />
                     <div className="mx-auto max-w-2xl p-4">
                         <div className="rounded-lg border border-stone-700/50 bg-gradient-to-br from-stone-800/80 to-stone-900 p-8 text-center">
@@ -527,47 +540,16 @@ export default function HouseIndex() {
         }
 
         return (
-            <AppLayout breadcrumbs={visitorBreadcrumbs}>
+            <AppLayout breadcrumbs={breadcrumbs}>
                 <Head title="My House" />
                 <div className="mx-auto max-w-2xl p-4">
                     <div className="rounded-lg border border-stone-700/50 bg-gradient-to-br from-stone-800/80 to-stone-900 p-8 text-center">
-                        <Home className="mx-auto mb-4 h-12 w-12 text-amber-400/50" />
-                        <h1 className="font-pixel text-xl text-amber-100">Purchase a House</h1>
-                        <p className="mt-2 font-pixel text-xs text-stone-400">
-                            A cottage in the kingdom. Build rooms, craft furniture, and store your
-                            valuables.
+                        <Home className="mx-auto mb-4 h-12 w-12 text-stone-600" />
+                        <h1 className="font-pixel text-xl text-stone-400">No House</h1>
+                        <p className="mt-2 font-pixel text-xs text-stone-500">
+                            You don't own a house yet. Visit the Town Hall to purchase a housing
+                            plot.
                         </p>
-
-                        <div className="mt-6 rounded-md border border-stone-600/50 bg-stone-800/50 p-4">
-                            <div className="font-pixel text-sm text-stone-300">Cottage</div>
-                            <div className="mt-1 font-pixel text-[10px] text-stone-500">
-                                3x3 grid &bull; 3 rooms &bull; 100 storage
-                            </div>
-                            <div className="mt-2 flex items-center justify-center gap-1.5">
-                                <Coins className="h-4 w-4 text-yellow-400" />
-                                <span className="font-pixel text-sm text-yellow-300">
-                                    {purchaseCost.toLocaleString()} gold
-                                </span>
-                            </div>
-                        </div>
-
-                        {canPurchase && !canPurchase.can_purchase && (
-                            <div className="mt-4 font-pixel text-xs text-red-400">
-                                {canPurchase.reason}
-                            </div>
-                        )}
-
-                        <button
-                            onClick={handlePurchase}
-                            disabled={loading || !canPurchase?.can_purchase}
-                            className="mt-6 rounded-md border border-amber-600/50 bg-amber-900/50 px-6 py-2.5 font-pixel text-sm text-amber-300 transition-colors hover:bg-amber-800/50 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                            {loading ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                "Purchase Cottage"
-                            )}
-                        </button>
                     </div>
                 </div>
             </AppLayout>
@@ -624,9 +606,9 @@ export default function HouseIndex() {
     };
 
     return (
-        <AppLayout breadcrumbs={visitorBreadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={isVisiting ? `${visitingPlayer}'s House` : "My House"} />
-            <div className="mx-auto max-w-6xl p-4">
+            <div className="p-4">
                 {/* Visitor Banner */}
                 {isVisiting && (
                     <div className="mb-4 rounded-lg border border-blue-700/30 bg-blue-900/10 p-2.5">
@@ -638,30 +620,30 @@ export default function HouseIndex() {
                 )}
 
                 {/* Header */}
-                <div className="mb-4 flex flex-wrap items-center gap-3">
-                    <div className="rounded-lg bg-amber-900/50 p-2">
-                        <Home className="h-6 w-6 text-amber-400" />
+                <div className="mb-6 flex flex-wrap items-center gap-4">
+                    <div className="rounded-lg bg-amber-900/50 p-3">
+                        <Home className="h-8 w-8 text-amber-400" />
                     </div>
                     <div>
-                        <h1 className="font-pixel text-lg text-amber-100">
+                        <h1 className="font-pixel text-2xl text-amber-100">
                             {isVisiting ? `${visitingPlayer}'s ${house.tier_name}` : house.name}
                         </h1>
-                        <p className="font-pixel text-[10px] text-stone-500">
+                        <p className="font-pixel text-xs text-stone-500">
                             {house.tier_name} &bull; {house.kingdom?.name}
                             {!isVisiting && <> &bull; Construction Lv. {constructionLevel}</>}
                         </p>
                     </div>
                     {canAct && (
-                        <div className="ml-auto flex items-center gap-3">
-                            <div className="flex items-center gap-1.5 rounded-md bg-stone-800/50 px-2 py-1">
-                                <Package className="h-3.5 w-3.5 text-stone-400" />
-                                <span className="font-pixel text-[10px] text-stone-400">
+                        <div className="ml-auto flex items-center gap-4">
+                            <div className="flex items-center gap-2 rounded-md bg-stone-800/50 px-3 py-1.5">
+                                <Package className="h-4 w-4 text-stone-400" />
+                                <span className="font-pixel text-xs text-stone-400">
                                     {house.storage_used}/{house.storage_capacity}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-1.5 rounded-md bg-yellow-900/30 px-2 py-1">
-                                <Coins className="h-3.5 w-3.5 text-yellow-400" />
-                                <span className="font-pixel text-[10px] text-yellow-300">
+                            <div className="flex items-center gap-2 rounded-md bg-yellow-900/30 px-3 py-1.5">
+                                <Coins className="h-4 w-4 text-yellow-400" />
+                                <span className="font-pixel text-xs text-yellow-300">
                                     {playerGold.toLocaleString()}
                                 </span>
                             </div>
@@ -671,21 +653,21 @@ export default function HouseIndex() {
 
                 {/* Upkeep & Condition Panel (owner only) */}
                 {canAct && (
-                    <div className="mb-4 rounded-lg border border-stone-700/50 bg-stone-900/50 p-3">
-                        <div className="flex flex-wrap items-center gap-4">
+                    <div className="mb-6 rounded-lg border border-stone-700/50 bg-stone-900/50 p-4">
+                        <div className="flex flex-wrap items-center gap-6">
                             {/* Condition Bar */}
-                            <div className="flex-1 min-w-[140px]">
-                                <div className="flex items-center justify-between mb-1">
-                                    <span className="font-pixel text-[10px] text-stone-400">
+                            <div className="flex-1 min-w-[200px]">
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <span className="font-pixel text-xs text-stone-400">
                                         Condition
                                     </span>
                                     <span
-                                        className={`font-pixel text-[10px] ${getConditionTextColor(house.condition)}`}
+                                        className={`font-pixel text-xs ${getConditionTextColor(house.condition)}`}
                                     >
                                         {house.condition}%
                                     </span>
                                 </div>
-                                <div className="h-2 rounded-full bg-stone-700/50 overflow-hidden">
+                                <div className="h-2.5 rounded-full bg-stone-700/50 overflow-hidden">
                                     <div
                                         className={`h-full rounded-full transition-all ${getConditionColor(house.condition)}`}
                                         style={{ width: `${house.condition}%` }}
@@ -695,9 +677,9 @@ export default function HouseIndex() {
 
                             {/* Upkeep Due */}
                             {upkeepDueAt && (
-                                <div className="flex items-center gap-1.5">
-                                    <Clock className="h-3.5 w-3.5 text-stone-400" />
-                                    <span className="font-pixel text-[10px] text-stone-400">
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-stone-400" />
+                                    <span className="font-pixel text-xs text-stone-400">
                                         Due: {new Date(upkeepDueAt).toLocaleDateString()}
                                     </span>
                                 </div>
@@ -708,10 +690,10 @@ export default function HouseIndex() {
                                 <button
                                     onClick={handlePayUpkeep}
                                     disabled={loading || playerGold < upkeepCost}
-                                    className="rounded-md border border-green-600/50 bg-green-900/30 px-3 py-1.5 font-pixel text-[10px] text-green-300 transition-colors hover:bg-green-800/30 disabled:cursor-not-allowed disabled:opacity-40"
+                                    className="rounded-md border border-green-600/50 bg-green-900/30 px-4 py-2 font-pixel text-xs text-green-300 transition-colors hover:bg-green-800/30 disabled:cursor-not-allowed disabled:opacity-40"
                                 >
                                     {loading ? (
-                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                        <Loader2 className="h-4 w-4 animate-spin" />
                                     ) : (
                                         <>Pay Upkeep ({upkeepCost.toLocaleString()}g)</>
                                     )}
@@ -725,10 +707,10 @@ export default function HouseIndex() {
                                     <button
                                         onClick={handleRepair}
                                         disabled={loading || playerGold < repairCost}
-                                        className="rounded-md border border-orange-600/50 bg-orange-900/30 px-3 py-1.5 font-pixel text-[10px] text-orange-300 transition-colors hover:bg-orange-800/30 disabled:cursor-not-allowed disabled:opacity-40"
+                                        className="rounded-md border border-orange-600/50 bg-orange-900/30 px-4 py-2 font-pixel text-xs text-orange-300 transition-colors hover:bg-orange-800/30 disabled:cursor-not-allowed disabled:opacity-40"
                                     >
                                         {loading ? (
-                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                            <Loader2 className="h-4 w-4 animate-spin" />
                                         ) : (
                                             <>Repair ({repairCost.toLocaleString()}g)</>
                                         )}
@@ -738,17 +720,17 @@ export default function HouseIndex() {
 
                         {/* Condition Warnings */}
                         {house.condition <= 50 && (
-                            <div className="mt-2 flex items-center gap-1.5 rounded-md border border-yellow-700/30 bg-yellow-900/10 px-2 py-1">
-                                <AlertTriangle className="h-3.5 w-3.5 text-yellow-400 shrink-0" />
-                                <span className="font-pixel text-[9px] text-yellow-300">
+                            <div className="mt-3 flex items-center gap-2 rounded-md border border-yellow-700/30 bg-yellow-900/10 px-3 py-2">
+                                <AlertTriangle className="h-4 w-4 text-yellow-400 shrink-0" />
+                                <span className="font-pixel text-xs text-yellow-300">
                                     House buffs disabled due to poor condition!
                                 </span>
                             </div>
                         )}
                         {house.condition <= 25 && (
-                            <div className="mt-1.5 flex items-center gap-1.5 rounded-md border border-red-700/30 bg-red-900/10 px-2 py-1">
-                                <XCircle className="h-3.5 w-3.5 text-red-400 shrink-0" />
-                                <span className="font-pixel text-[9px] text-red-300">
+                            <div className="mt-2 flex items-center gap-2 rounded-md border border-red-700/30 bg-red-900/10 px-3 py-2">
+                                <XCircle className="h-4 w-4 text-red-400 shrink-0" />
+                                <span className="font-pixel text-xs text-red-300">
                                     Portals and storage disabled! House at risk of abandonment.
                                 </span>
                             </div>
@@ -758,9 +740,9 @@ export default function HouseIndex() {
 
                 {/* House Buffs Summary */}
                 {houseBuffs && Object.keys(houseBuffs).length > 0 && (
-                    <div className="mb-4 rounded-lg border border-cyan-800/30 bg-cyan-900/10 p-3">
-                        <div className="mb-1.5 flex items-center gap-1.5 font-pixel text-[10px] text-cyan-300">
-                            <Sparkles className="h-3.5 w-3.5" />
+                    <div className="mb-6 rounded-lg border border-cyan-800/30 bg-cyan-900/10 p-4">
+                        <div className="mb-2 flex items-center gap-2 font-pixel text-xs text-cyan-300">
+                            <Sparkles className="h-4 w-4" />
                             Active House Buffs
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -774,7 +756,7 @@ export default function HouseIndex() {
                                 return (
                                     <span
                                         key={key}
-                                        className={`rounded-md border px-2 py-0.5 font-pixel text-[9px] ${
+                                        className={`rounded-md border px-2.5 py-1 font-pixel text-xs ${
                                             isAdjacency
                                                 ? "border-emerald-700/30 bg-emerald-900/20 text-emerald-200"
                                                 : "border-cyan-700/30 bg-cyan-900/20 text-cyan-200"
@@ -793,14 +775,14 @@ export default function HouseIndex() {
 
                 {/* Upgrade Panel */}
                 {canAct && upgradeInfo && (
-                    <div className="mb-4 rounded-lg border border-purple-700/30 bg-purple-900/10 p-3">
+                    <div className="mb-6 rounded-lg border border-purple-700/30 bg-purple-900/10 p-4">
                         <div className="flex items-center justify-between">
                             <div>
-                                <div className="flex items-center gap-1.5 font-pixel text-xs text-purple-200">
-                                    <ArrowUpCircle className="h-4 w-4 text-purple-400" />
+                                <div className="flex items-center gap-2 font-pixel text-sm text-purple-200">
+                                    <ArrowUpCircle className="h-5 w-5 text-purple-400" />
                                     Upgrade to {upgradeInfo.target_name}
                                 </div>
-                                <div className="mt-1 font-pixel text-[9px] text-stone-500">
+                                <div className="mt-1 font-pixel text-xs text-stone-500">
                                     {upgradeInfo.target_config.grid}x
                                     {upgradeInfo.target_config.grid} grid &bull;{" "}
                                     {upgradeInfo.target_config.max_rooms} rooms &bull;{" "}
@@ -808,20 +790,20 @@ export default function HouseIndex() {
                                     {upgradeInfo.target_config.level} Construction
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-1">
-                                    <Coins className="h-3.5 w-3.5 text-yellow-400" />
-                                    <span className="font-pixel text-[10px] text-yellow-300">
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1.5">
+                                    <Coins className="h-4 w-4 text-yellow-400" />
+                                    <span className="font-pixel text-xs text-yellow-300">
                                         {upgradeInfo.check.cost?.toLocaleString()}g
                                     </span>
                                 </div>
                                 <button
                                     onClick={handleUpgrade}
                                     disabled={loading || !upgradeInfo.check.can_upgrade}
-                                    className="rounded-md border border-purple-600/50 bg-purple-900/40 px-3 py-1.5 font-pixel text-[10px] text-purple-200 transition-colors hover:bg-purple-800/40 disabled:cursor-not-allowed disabled:opacity-40"
+                                    className="rounded-md border border-purple-600/50 bg-purple-900/40 px-4 py-2 font-pixel text-xs text-purple-200 transition-colors hover:bg-purple-800/40 disabled:cursor-not-allowed disabled:opacity-40"
                                 >
                                     {loading ? (
-                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                        <Loader2 className="h-4 w-4 animate-spin" />
                                     ) : (
                                         "Upgrade"
                                     )}
@@ -829,7 +811,7 @@ export default function HouseIndex() {
                             </div>
                         </div>
                         {!upgradeInfo.check.can_upgrade && upgradeInfo.check.reason && (
-                            <div className="mt-1.5 font-pixel text-[9px] text-red-400">
+                            <div className="mt-2 font-pixel text-xs text-red-400">
                                 {upgradeInfo.check.reason}
                             </div>
                         )}
@@ -837,13 +819,12 @@ export default function HouseIndex() {
                 )}
 
                 {/* Tabs */}
-                <div className="mb-4 flex gap-2">
+                <div className="mb-6 flex gap-3">
                     <button
                         onClick={() => {
                             setActiveTab("rooms");
-                            setStorageAction(null);
                         }}
-                        className={`rounded-md px-3 py-1.5 font-pixel text-xs transition-colors ${activeTab === "rooms" ? "bg-amber-900/50 text-amber-300 border border-amber-600/50" : "text-stone-400 hover:text-stone-300 border border-stone-700/50"}`}
+                        className={`rounded-md px-4 py-2 font-pixel text-sm transition-colors ${activeTab === "rooms" ? "bg-amber-900/50 text-amber-300 border border-amber-600/50" : "text-stone-400 hover:text-stone-300 border border-stone-700/50"}`}
                     >
                         Rooms
                     </button>
@@ -855,7 +836,7 @@ export default function HouseIndex() {
                                     setSelectedRoom(null);
                                     setBuildingAt(null);
                                 }}
-                                className={`rounded-md px-3 py-1.5 font-pixel text-xs transition-colors ${activeTab === "storage" ? "bg-amber-900/50 text-amber-300 border border-amber-600/50" : "text-stone-400 hover:text-stone-300 border border-stone-700/50"}`}
+                                className={`rounded-md px-4 py-2 font-pixel text-sm transition-colors ${activeTab === "storage" ? "bg-amber-900/50 text-amber-300 border border-amber-600/50" : "text-stone-400 hover:text-stone-300 border border-stone-700/50"}`}
                             >
                                 Storage
                             </button>
@@ -865,26 +846,38 @@ export default function HouseIndex() {
                                     setSelectedRoom(null);
                                     setBuildingAt(null);
                                 }}
-                                className={`rounded-md px-3 py-1.5 font-pixel text-xs transition-colors ${activeTab === "servant" ? "bg-amber-900/50 text-amber-300 border border-amber-600/50" : "text-stone-400 hover:text-stone-300 border border-stone-700/50"}`}
+                                className={`rounded-md px-4 py-2 font-pixel text-sm transition-colors ${activeTab === "servant" ? "bg-amber-900/50 text-amber-300 border border-amber-600/50" : "text-stone-400 hover:text-stone-300 border border-stone-700/50"}`}
                             >
                                 Servant
                                 {servantData?.on_strike && (
-                                    <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-red-400" />
+                                    <span className="ml-1.5 inline-block h-2 w-2 rounded-full bg-red-400" />
                                 )}
                             </button>
                         </>
                     )}
                 </div>
 
+                {/* Build Room Modal */}
+                {buildingAt && (
+                    <BuildRoomModal
+                        roomTypes={roomTypes}
+                        position={buildingAt}
+                        loading={loading}
+                        playerGold={playerGold}
+                        onBuild={handleBuildRoom}
+                        onCancel={() => setBuildingAt(null)}
+                    />
+                )}
+
                 {activeTab === "rooms" && (
-                    <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+                    <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
                         {/* Grid */}
-                        <div className="rounded-lg border border-stone-700/50 bg-stone-900/50 p-4">
+                        <div className="rounded-lg border border-stone-700/50 bg-stone-900/50 p-6">
                             <div
-                                className="mx-auto grid gap-2"
+                                className="mx-auto grid gap-3"
                                 style={{
                                     gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
-                                    maxWidth: `${gridSize * 120}px`,
+                                    maxWidth: `${gridSize * 140}px`,
                                 }}
                             >
                                 {Array.from({ length: gridSize * gridSize }, (_, i) => {
@@ -911,15 +904,19 @@ export default function HouseIndex() {
                                                         : "border-stone-600 bg-stone-800/80 hover:border-stone-500 hover:bg-stone-700/50"
                                                 }`}
                                             >
-                                                <span className="text-2xl">
-                                                    {roomIcons[room.room_type] || "🏠"}
-                                                </span>
-                                                <span className="mt-1 font-pixel text-[9px] text-stone-300">
+                                                {(() => {
+                                                    const RoomIcon =
+                                                        roomIcons[room.room_type] || Home;
+                                                    return (
+                                                        <RoomIcon className="h-8 w-8 text-amber-300" />
+                                                    );
+                                                })()}
+                                                <span className="mt-1.5 font-pixel text-xs text-stone-300">
                                                     {room.room_name}
                                                 </span>
                                                 {hasAdjacency && (
                                                     <span
-                                                        className="absolute top-1 right-1 text-[8px] text-emerald-400"
+                                                        className="absolute top-1 right-1 text-xs text-emerald-400"
                                                         title="Adjacency bonus active"
                                                     >
                                                         ✦
@@ -953,31 +950,20 @@ export default function HouseIndex() {
                                             <Plus
                                                 className={`h-5 w-5 ${isBuildTarget ? "text-green-400" : "text-stone-600"}`}
                                             />
-                                            <span className="mt-1 font-pixel text-[8px] text-stone-600">
+                                            <span className="mt-1 font-pixel text-xs text-stone-600">
                                                 Empty
                                             </span>
                                         </button>
                                     );
                                 })}
                             </div>
-                            <div className="mt-3 text-center font-pixel text-[10px] text-stone-600">
+                            <div className="mt-4 text-center font-pixel text-sm text-stone-600">
                                 {house.rooms.length}/{house.max_rooms} rooms built
                             </div>
                         </div>
 
                         {/* Side Panel */}
-                        <div className="rounded-lg border border-stone-700/50 bg-stone-900/50 p-4">
-                            {buildingAt && (
-                                <BuildRoomPanel
-                                    roomTypes={roomTypes}
-                                    position={buildingAt}
-                                    loading={loading}
-                                    playerGold={playerGold}
-                                    onBuild={handleBuildRoom}
-                                    onCancel={() => setBuildingAt(null)}
-                                />
-                            )}
-
+                        <div className="rounded-lg border border-stone-700/50 bg-stone-900/50 p-5">
                             {selectedRoom &&
                                 !isPortalChamberSelected &&
                                 !isTrophyHallSelected &&
@@ -990,6 +976,7 @@ export default function HouseIndex() {
                                         adjacencyBonuses={adjacencyBonuses}
                                         onBuildFurniture={handleBuildFurniture}
                                         onDemolish={handleDemolish}
+                                        onDemolishRoom={handleDemolishRoom}
                                         onClose={() => setSelectedRoom(null)}
                                     />
                                 )}
@@ -1004,6 +991,7 @@ export default function HouseIndex() {
                                     onRemoveTrophy={handleRemoveTrophy}
                                     onBuildFurniture={handleBuildFurniture}
                                     onDemolish={handleDemolish}
+                                    onDemolishRoom={handleDemolishRoom}
                                     onClose={() => setSelectedRoom(null)}
                                 />
                             )}
@@ -1019,6 +1007,7 @@ export default function HouseIndex() {
                                     onTeleport={handleTeleport}
                                     onBuildFurniture={handleBuildFurniture}
                                     onDemolish={handleDemolish}
+                                    onDemolishRoom={handleDemolishRoom}
                                     onClose={() => setSelectedRoom(null)}
                                 />
                             )}
@@ -1032,14 +1021,15 @@ export default function HouseIndex() {
                                     setLoading={setLoading}
                                     onBuildFurniture={handleBuildFurniture}
                                     onDemolish={handleDemolish}
+                                    onDemolishRoom={handleDemolishRoom}
                                     onClose={() => setSelectedRoom(null)}
                                 />
                             )}
 
                             {!buildingAt && !selectedRoom && (
-                                <div className="py-8 text-center">
-                                    <Home className="mx-auto h-8 w-8 text-stone-600" />
-                                    <p className="mt-2 font-pixel text-xs text-stone-500">
+                                <div className="py-12 text-center">
+                                    <Home className="mx-auto h-10 w-10 text-stone-600" />
+                                    <p className="mt-3 font-pixel text-sm text-stone-500">
                                         {isVisiting
                                             ? "Click a room to view its furnishings."
                                             : "Click a room to view details, or click an empty cell to build."}
@@ -1055,15 +1045,11 @@ export default function HouseIndex() {
                         storage={house.storage}
                         storageUsed={house.storage_used}
                         storageCapacity={house.storage_capacity}
+                        inventory={playerInventory || []}
+                        inventoryMaxSlots={inventoryMaxSlots || 50}
                         loading={loading}
-                        storageAction={storageAction}
-                        storageQty={storageQty}
-                        storageItemName={storageItemName}
-                        onSetStorageAction={setStorageAction}
-                        onSetStorageQty={setStorageQty}
-                        onSetStorageItemName={setStorageItemName}
-                        onDeposit={handleDeposit}
-                        onWithdraw={handleWithdraw}
+                        setLoading={setLoading}
+                        canAct={canAct}
                     />
                 )}
 
@@ -1080,7 +1066,7 @@ export default function HouseIndex() {
     );
 }
 
-function BuildRoomPanel({
+function BuildRoomModal({
     roomTypes,
     position,
     loading,
@@ -1095,44 +1081,102 @@ function BuildRoomPanel({
     onBuild: (roomType: string) => void;
     onCancel: () => void;
 }) {
+    const [search, setSearch] = useState("");
+
+    const filtered = roomTypes.filter((rt) => {
+        if (!search.trim()) return true;
+        const q = search.toLowerCase();
+        return rt.name.toLowerCase().includes(q) || rt.description.toLowerCase().includes(q);
+    });
+
     return (
-        <div>
-            <div className="mb-3 flex items-center justify-between">
-                <h3 className="font-pixel text-sm text-green-300">Build Room</h3>
-                <button onClick={onCancel} className="text-stone-500 hover:text-stone-300">
-                    <X className="h-4 w-4" />
-                </button>
-            </div>
-            <p className="mb-3 font-pixel text-[10px] text-stone-500">
-                Position ({position.x}, {position.y})
-            </p>
-            <div className="space-y-2">
-                {roomTypes.map((rt) => (
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+            onClick={onCancel}
+        >
+            <div
+                className="mx-4 w-full max-w-lg rounded-xl border-2 border-stone-600 bg-stone-900 shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-stone-700 p-5">
+                    <div>
+                        <h3 className="font-pixel text-lg text-green-300">Build Room</h3>
+                        <p className="mt-1 font-pixel text-xs text-stone-500">
+                            Position ({position.x}, {position.y})
+                        </p>
+                    </div>
                     <button
-                        key={rt.key}
-                        onClick={() => onBuild(rt.key)}
-                        disabled={loading || !rt.is_unlocked || playerGold < rt.cost}
-                        className="w-full rounded-md border border-stone-600/50 bg-stone-800/50 p-3 text-left transition-colors hover:bg-stone-700/50 disabled:cursor-not-allowed disabled:opacity-40"
+                        onClick={onCancel}
+                        className="rounded-md p-1 text-stone-500 transition-colors hover:bg-stone-800 hover:text-stone-300"
                     >
-                        <div className="flex items-center justify-between">
-                            <span className="font-pixel text-xs text-stone-200">
-                                {roomIcons[rt.key] || "🏠"} {rt.name}
-                            </span>
-                            {!rt.is_unlocked && (
-                                <span className="flex items-center gap-1 font-pixel text-[9px] text-stone-500">
-                                    <Lock className="h-3 w-3" /> Lv {rt.level}
-                                </span>
-                            )}
-                        </div>
-                        <div className="mt-1 font-pixel text-[9px] text-stone-500">
-                            {rt.description}
-                        </div>
-                        <div className="mt-1 flex items-center gap-2 font-pixel text-[9px]">
-                            <span className="text-yellow-400">{rt.cost.toLocaleString()}g</span>
-                            <span className="text-stone-500">{rt.hotspot_count} hotspots</span>
-                        </div>
+                        <X className="h-5 w-5" />
                     </button>
-                ))}
+                </div>
+
+                {/* Search */}
+                <div className="border-b border-stone-700/50 p-4">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
+                        <input
+                            type="text"
+                            placeholder="Search rooms..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            autoFocus
+                            className="w-full rounded-lg border border-stone-600 bg-stone-800 py-2.5 pl-10 pr-4 font-pixel text-sm text-stone-200 placeholder-stone-600 focus:border-green-500 focus:outline-none"
+                        />
+                    </div>
+                </div>
+
+                {/* Room List */}
+                <div className="max-h-[400px] overflow-y-auto p-4">
+                    {filtered.length === 0 ? (
+                        <div className="py-8 text-center font-pixel text-sm text-stone-600">
+                            No rooms match your search.
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {filtered.map((rt) => (
+                                <button
+                                    key={rt.key}
+                                    onClick={() => onBuild(rt.key)}
+                                    disabled={loading || !rt.is_unlocked || playerGold < rt.cost}
+                                    className="w-full rounded-lg border border-stone-600/50 bg-stone-800/50 p-4 text-left transition-colors hover:border-green-600/30 hover:bg-stone-700/50 disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <span className="flex items-center gap-2 font-pixel text-sm text-stone-200">
+                                            {(() => {
+                                                const RoomIcon = roomIcons[rt.key] || Home;
+                                                return (
+                                                    <RoomIcon className="h-4 w-4 text-amber-300" />
+                                                );
+                                            })()}
+                                            {rt.name}
+                                        </span>
+                                        {!rt.is_unlocked && (
+                                            <span className="flex items-center gap-1 font-pixel text-xs text-stone-500">
+                                                <Lock className="h-3.5 w-3.5" /> Lv {rt.level}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="mt-1.5 font-pixel text-xs text-stone-500">
+                                        {rt.description}
+                                    </div>
+                                    <div className="mt-2 flex items-center gap-3 font-pixel text-xs">
+                                        <span className="flex items-center gap-1 text-yellow-400">
+                                            <Coins className="h-3.5 w-3.5" />
+                                            {rt.cost.toLocaleString()}g
+                                        </span>
+                                        <span className="text-stone-500">
+                                            {rt.hotspot_count} hotspots
+                                        </span>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -1146,6 +1190,7 @@ function RoomDetailPanel({
     adjacencyBonuses,
     onBuildFurniture,
     onDemolish,
+    onDemolishRoom,
     onClose,
 }: {
     room: Room;
@@ -1155,6 +1200,7 @@ function RoomDetailPanel({
     adjacencyBonuses: Record<string, number>;
     onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
     onDemolish: (roomId: number, hotspotSlug: string) => void;
+    onDemolishRoom: (roomId: number) => void;
     onClose: () => void;
 }) {
     const [expandedHotspot, setExpandedHotspot] = useState<string | null>(null);
@@ -1169,22 +1215,26 @@ function RoomDetailPanel({
 
     return (
         <div>
-            <div className="mb-3 flex items-center justify-between">
-                <h3 className="font-pixel text-sm text-amber-300">
-                    {roomIcons[room.room_type] || "🏠"} {room.room_name}
+            <div className="mb-4 flex items-center justify-between">
+                <h3 className="flex items-center gap-2 font-pixel text-base text-amber-300">
+                    {(() => {
+                        const RoomIcon = roomIcons[room.room_type] || Home;
+                        return <RoomIcon className="h-5 w-5" />;
+                    })()}
+                    {room.room_name}
                 </h3>
                 <button onClick={onClose} className="text-stone-500 hover:text-stone-300">
-                    <X className="h-4 w-4" />
+                    <X className="h-5 w-5" />
                 </button>
             </div>
 
             {roomAdjacencies.length > 0 && (
                 <div className="mb-3 rounded-md border border-emerald-700/30 bg-emerald-900/10 p-2">
-                    <div className="flex items-center gap-1 font-pixel text-[9px] text-emerald-300">
+                    <div className="flex items-center gap-1 font-pixel text-xs text-emerald-300">
                         <Link2 className="h-3 w-3" /> Adjacency Bonuses
                     </div>
                     {roomAdjacencies.map(([, , , , desc], i) => (
-                        <div key={i} className="mt-1 font-pixel text-[8px] text-emerald-400/80">
+                        <div key={i} className="mt-1 font-pixel text-xs text-emerald-400/80">
                             ✦ {desc}
                         </div>
                     ))}
@@ -1198,12 +1248,12 @@ function RoomDetailPanel({
                         className="rounded-md border border-stone-700/50 bg-stone-800/30 p-2.5"
                     >
                         <div className="flex items-center justify-between">
-                            <span className="font-pixel text-[11px] text-stone-300">
+                            <span className="font-pixel text-xs text-stone-300">
                                 {hotspot.name}
                             </span>
                             {hotspot.current ? (
                                 <div className="flex items-center gap-1.5">
-                                    <span className="font-pixel text-[10px] text-green-400">
+                                    <span className="font-pixel text-xs text-green-400">
                                         {hotspot.current.name}
                                     </span>
                                     <button
@@ -1216,7 +1266,7 @@ function RoomDetailPanel({
                                     </button>
                                 </div>
                             ) : (
-                                <span className="font-pixel text-[10px] text-stone-600">Empty</span>
+                                <span className="font-pixel text-xs text-stone-600">Empty</span>
                             )}
                         </div>
 
@@ -1224,7 +1274,7 @@ function RoomDetailPanel({
                             onClick={() =>
                                 setExpandedHotspot(expandedHotspot === slug ? null : slug)
                             }
-                            className="mt-1 font-pixel text-[9px] text-amber-400/70 hover:text-amber-400"
+                            className="mt-1 font-pixel text-xs text-amber-400/70 hover:text-amber-400"
                         >
                             {expandedHotspot === slug ? "Hide options" : "Build options"}
                         </button>
@@ -1242,18 +1292,18 @@ function RoomDetailPanel({
                                         >
                                             <div className="flex items-center justify-between">
                                                 <span
-                                                    className={`font-pixel text-[10px] ${isCurrentlyBuilt ? "text-green-300" : "text-stone-300"}`}
+                                                    className={`font-pixel text-xs ${isCurrentlyBuilt ? "text-green-300" : "text-stone-300"}`}
                                                 >
                                                     {opt.name}
                                                 </span>
                                                 {!meetsLevel && (
-                                                    <span className="flex items-center gap-0.5 font-pixel text-[8px] text-stone-600">
+                                                    <span className="flex items-center gap-0.5 font-pixel text-xs text-stone-600">
                                                         <Lock className="h-2.5 w-2.5" /> Lv{" "}
                                                         {opt.level}
                                                     </span>
                                                 )}
                                             </div>
-                                            <div className="mt-0.5 font-pixel text-[8px] text-stone-500">
+                                            <div className="mt-0.5 font-pixel text-xs text-stone-500">
                                                 {Object.entries(opt.materials)
                                                     .map(([m, q]) => `${q} ${m}`)
                                                     .join(", ")}{" "}
@@ -1272,7 +1322,7 @@ function RoomDetailPanel({
                                                         onBuildFurniture(room.id, slug, opt.key)
                                                     }
                                                     disabled={loading}
-                                                    className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-[9px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                                    className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-xs text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
                                                 >
                                                     <Hammer className="h-3 w-3" /> Build
                                                 </button>
@@ -1284,6 +1334,16 @@ function RoomDetailPanel({
                         )}
                     </div>
                 ))}
+            </div>
+
+            <div className="mt-4 border-t border-stone-700/30 pt-3">
+                <button
+                    onClick={() => onDemolishRoom(room.id)}
+                    disabled={loading}
+                    className="flex w-full items-center justify-center gap-1.5 rounded border border-red-700/40 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
+                >
+                    <Trash2 className="h-3.5 w-3.5" /> Demolish Room
+                </button>
             </div>
         </div>
     );
@@ -1299,6 +1359,7 @@ function PortalChamberPanel({
     onTeleport,
     onBuildFurniture,
     onDemolish,
+    onDemolishRoom,
     onClose,
 }: {
     room: Room;
@@ -1309,6 +1370,7 @@ function PortalChamberPanel({
     onSetPortal: (slot: number, destType: string, destId: number) => void;
     onTeleport: (slot: number) => void;
     onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
+    onDemolishRoom: (roomId: number) => void;
     onDemolish: (roomId: number, hotspotSlug: string) => void;
     onClose: () => void;
 }) {
@@ -1323,7 +1385,7 @@ function PortalChamberPanel({
     return (
         <div>
             <div className="mb-3 flex items-center justify-between">
-                <h3 className="font-pixel text-sm text-purple-300">🌀 Portal Chamber</h3>
+                <h3 className="font-pixel text-base text-purple-300">🌀 Portal Chamber</h3>
                 <button onClick={onClose} className="text-stone-500 hover:text-stone-300">
                     <X className="h-4 w-4" />
                 </button>
@@ -1341,15 +1403,15 @@ function PortalChamberPanel({
                             className="rounded-md border border-purple-700/30 bg-purple-900/10 p-3"
                         >
                             <div className="flex items-center justify-between">
-                                <span className="font-pixel text-[11px] text-purple-200">
+                                <span className="font-pixel text-xs text-purple-200">
                                     Portal {portal.slot}
                                 </span>
                                 {portal.furniture_key ? (
-                                    <span className="font-pixel text-[9px] text-purple-400">
+                                    <span className="font-pixel text-xs text-purple-400">
                                         {portal.furniture_name}
                                     </span>
                                 ) : (
-                                    <span className="font-pixel text-[9px] text-stone-600">
+                                    <span className="font-pixel text-xs text-stone-600">
                                         No portal built
                                     </span>
                                 )}
@@ -1361,10 +1423,10 @@ function PortalChamberPanel({
                                         <div className="mt-2">
                                             <div className="flex items-center gap-1.5">
                                                 <MapPin className="h-3 w-3 text-purple-400" />
-                                                <span className="font-pixel text-[10px] text-stone-300">
+                                                <span className="font-pixel text-xs text-stone-300">
                                                     {portal.destination.name}
                                                 </span>
-                                                <span className="font-pixel text-[8px] text-stone-600">
+                                                <span className="font-pixel text-xs text-stone-600">
                                                     ({portal.destination.type})
                                                 </span>
                                             </div>
@@ -1372,7 +1434,7 @@ function PortalChamberPanel({
                                                 <button
                                                     onClick={() => onTeleport(portal.slot)}
                                                     disabled={loading}
-                                                    className="flex items-center gap-1 rounded border border-purple-600/40 bg-purple-900/30 px-2 py-0.5 font-pixel text-[9px] text-purple-200 transition-colors hover:bg-purple-800/30 disabled:opacity-40"
+                                                    className="flex items-center gap-1 rounded border border-purple-600/40 bg-purple-900/30 px-2 py-0.5 font-pixel text-xs text-purple-200 transition-colors hover:bg-purple-800/30 disabled:opacity-40"
                                                 >
                                                     <Zap className="h-3 w-3" /> Teleport
                                                 </button>
@@ -1382,7 +1444,7 @@ function PortalChamberPanel({
                                                         setSearchTerm("");
                                                     }}
                                                     disabled={loading}
-                                                    className="rounded border border-stone-600/40 bg-stone-800/30 px-2 py-0.5 font-pixel text-[9px] text-stone-400 transition-colors hover:bg-stone-700/30 disabled:opacity-40"
+                                                    className="rounded border border-stone-600/40 bg-stone-800/30 px-2 py-0.5 font-pixel text-xs text-stone-400 transition-colors hover:bg-stone-700/30 disabled:opacity-40"
                                                 >
                                                     Change
                                                 </button>
@@ -1396,12 +1458,12 @@ function PortalChamberPanel({
                                                     setSearchTerm("");
                                                 }}
                                                 disabled={loading}
-                                                className="flex items-center gap-1 rounded border border-purple-600/40 bg-purple-900/30 px-2 py-0.5 font-pixel text-[9px] text-purple-200 transition-colors hover:bg-purple-800/30 disabled:opacity-40"
+                                                className="flex items-center gap-1 rounded border border-purple-600/40 bg-purple-900/30 px-2 py-0.5 font-pixel text-xs text-purple-200 transition-colors hover:bg-purple-800/30 disabled:opacity-40"
                                             >
                                                 <MapPin className="h-3 w-3" /> Configure Destination
                                             </button>
                                             {portal.set_cost && (
-                                                <div className="mt-1 flex items-center gap-1 font-pixel text-[8px] text-stone-500">
+                                                <div className="mt-1 flex items-center gap-1 font-pixel text-xs text-stone-500">
                                                     <Coins className="h-2.5 w-2.5 text-yellow-500" />
                                                     {portal.set_cost.toLocaleString()}g to set
                                                 </div>
@@ -1421,7 +1483,7 @@ function PortalChamberPanel({
                                                     : hotspotSlug,
                                             )
                                         }
-                                        className="font-pixel text-[9px] text-amber-400/70 hover:text-amber-400"
+                                        className="font-pixel text-xs text-amber-400/70 hover:text-amber-400"
                                     >
                                         {expandedHotspot === hotspotSlug
                                             ? "Hide options"
@@ -1437,17 +1499,17 @@ function PortalChamberPanel({
                                                         className="rounded border border-stone-700/30 bg-stone-900/30 p-2"
                                                     >
                                                         <div className="flex items-center justify-between">
-                                                            <span className="font-pixel text-[10px] text-stone-300">
+                                                            <span className="font-pixel text-xs text-stone-300">
                                                                 {opt.name}
                                                             </span>
                                                             {!meetsLevel && (
-                                                                <span className="flex items-center gap-0.5 font-pixel text-[8px] text-stone-600">
+                                                                <span className="flex items-center gap-0.5 font-pixel text-xs text-stone-600">
                                                                     <Lock className="h-2.5 w-2.5" />{" "}
                                                                     Lv {opt.level}
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <div className="mt-0.5 font-pixel text-[8px] text-stone-500">
+                                                        <div className="mt-0.5 font-pixel text-xs text-stone-500">
                                                             {Object.entries(opt.materials)
                                                                 .map(([m, q]) => `${q} ${m}`)
                                                                 .join(", ")}{" "}
@@ -1463,7 +1525,7 @@ function PortalChamberPanel({
                                                                     )
                                                                 }
                                                                 disabled={loading}
-                                                                className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-[9px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                                                className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-xs text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
                                                             >
                                                                 <Hammer className="h-3 w-3" /> Build
                                                             </button>
@@ -1486,7 +1548,7 @@ function PortalChamberPanel({
                                             placeholder="Search destinations..."
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
-                                            className="flex-1 bg-transparent font-pixel text-[10px] text-stone-200 placeholder-stone-600 focus:outline-none"
+                                            className="flex-1 bg-transparent font-pixel text-xs text-stone-200 placeholder-stone-600 focus:outline-none"
                                             autoFocus
                                         />
                                         <button
@@ -1507,22 +1569,22 @@ function PortalChamberPanel({
                                                 disabled={loading}
                                                 className="flex w-full items-center justify-between rounded px-2 py-1 text-left transition-colors hover:bg-stone-700/50 disabled:opacity-40"
                                             >
-                                                <span className="font-pixel text-[10px] text-stone-300">
+                                                <span className="font-pixel text-xs text-stone-300">
                                                     {dest.name}
                                                 </span>
-                                                <span className="font-pixel text-[8px] text-stone-600">
+                                                <span className="font-pixel text-xs text-stone-600">
                                                     {dest.type}
                                                 </span>
                                             </button>
                                         ))}
                                         {filteredDestinations.length === 0 && (
-                                            <div className="py-2 text-center font-pixel text-[9px] text-stone-600">
+                                            <div className="py-2 text-center font-pixel text-xs text-stone-600">
                                                 No results
                                             </div>
                                         )}
                                     </div>
                                     {portal.set_cost && (
-                                        <div className="mt-1.5 flex items-center gap-1 border-t border-stone-700/30 pt-1.5 font-pixel text-[8px] text-stone-500">
+                                        <div className="mt-1.5 flex items-center gap-1 border-t border-stone-700/30 pt-1.5 font-pixel text-xs text-stone-500">
                                             <Coins className="h-2.5 w-2.5 text-yellow-500" />
                                             Setting costs {portal.set_cost.toLocaleString()}g
                                         </div>
@@ -1532,6 +1594,16 @@ function PortalChamberPanel({
                         </div>
                     );
                 })}
+            </div>
+
+            <div className="mt-4 border-t border-stone-700/30 pt-3">
+                <button
+                    onClick={() => onDemolishRoom(room.id)}
+                    disabled={loading}
+                    className="flex w-full items-center justify-center gap-1.5 rounded border border-red-700/40 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
+                >
+                    <Trash2 className="h-3.5 w-3.5" /> Demolish Room
+                </button>
             </div>
         </div>
     );
@@ -1564,6 +1636,7 @@ function TrophyHallPanel({
     onRemoveTrophy,
     onBuildFurniture,
     onDemolish,
+    onDemolishRoom,
     onClose,
 }: {
     room: Room;
@@ -1574,6 +1647,7 @@ function TrophyHallPanel({
     onRemoveTrophy: (slot: string) => void;
     onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
     onDemolish: (roomId: number, hotspotSlug: string) => void;
+    onDemolishRoom: (roomId: number) => void;
     onClose: () => void;
 }) {
     const [expandedHotspot, setExpandedHotspot] = useState<string | null>(null);
@@ -1584,7 +1658,7 @@ function TrophyHallPanel({
     return (
         <div>
             <div className="mb-3 flex items-center justify-between">
-                <h3 className="font-pixel text-sm text-amber-300">🏆 Trophy Hall</h3>
+                <h3 className="font-pixel text-base text-amber-300">🏆 Trophy Hall</h3>
                 <button onClick={onClose} className="text-stone-500 hover:text-stone-300">
                     <X className="h-4 w-4" />
                 </button>
@@ -1593,14 +1667,14 @@ function TrophyHallPanel({
             {/* Total bonus summary */}
             {trophyData && Object.keys(trophyData.total_bonuses).length > 0 && (
                 <div className="mb-3 rounded-md border border-amber-700/30 bg-amber-900/10 p-2">
-                    <div className="mb-1 flex items-center gap-1 font-pixel text-[9px] text-amber-300">
+                    <div className="mb-1 flex items-center gap-1 font-pixel text-xs text-amber-300">
                         <Sparkles className="h-3 w-3" /> Trophy Bonuses
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                         {Object.entries(trophyData.total_bonuses).map(([key, value]) => (
                             <span
                                 key={key}
-                                className="rounded-md border border-amber-700/30 bg-amber-900/20 px-1.5 py-0.5 font-pixel text-[8px] text-amber-200"
+                                className="rounded-md border border-amber-700/30 bg-amber-900/20 px-1.5 py-0.5 font-pixel text-xs text-amber-200"
                             >
                                 +{value} {buffLabels[key] || key.replace(/_/g, " ")}
                             </span>
@@ -1629,13 +1703,13 @@ function TrophyHallPanel({
                         >
                             <div className="flex items-center justify-between">
                                 <span
-                                    className={`font-pixel text-[11px] ${isPedestal ? "text-yellow-200" : "text-stone-300"}`}
+                                    className={`font-pixel text-xs ${isPedestal ? "text-yellow-200" : "text-stone-300"}`}
                                 >
                                     {slotLabels[slot]}
                                 </span>
                                 {hotspot?.current ? (
                                     <div className="flex items-center gap-1.5">
-                                        <span className="font-pixel text-[9px] text-green-400">
+                                        <span className="font-pixel text-xs text-green-400">
                                             {hotspot.current.name}
                                         </span>
                                         <button
@@ -1648,7 +1722,7 @@ function TrophyHallPanel({
                                         </button>
                                     </div>
                                 ) : (
-                                    <span className="font-pixel text-[9px] text-stone-600">
+                                    <span className="font-pixel text-xs text-stone-600">
                                         No furniture
                                     </span>
                                 )}
@@ -1663,7 +1737,7 @@ function TrophyHallPanel({
                                                 expandedHotspot === slot ? null : slot,
                                             )
                                         }
-                                        className="font-pixel text-[9px] text-amber-400/70 hover:text-amber-400"
+                                        className="font-pixel text-xs text-amber-400/70 hover:text-amber-400"
                                     >
                                         {expandedHotspot === slot
                                             ? "Hide options"
@@ -1679,17 +1753,17 @@ function TrophyHallPanel({
                                                         className="rounded border border-stone-700/30 bg-stone-900/30 p-2"
                                                     >
                                                         <div className="flex items-center justify-between">
-                                                            <span className="font-pixel text-[10px] text-stone-300">
+                                                            <span className="font-pixel text-xs text-stone-300">
                                                                 {opt.name}
                                                             </span>
                                                             {!meetsLevel && (
-                                                                <span className="flex items-center gap-0.5 font-pixel text-[8px] text-stone-600">
+                                                                <span className="flex items-center gap-0.5 font-pixel text-xs text-stone-600">
                                                                     <Lock className="h-2.5 w-2.5" />{" "}
                                                                     Lv {opt.level}
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <div className="mt-0.5 font-pixel text-[8px] text-stone-500">
+                                                        <div className="mt-0.5 font-pixel text-xs text-stone-500">
                                                             {Object.entries(opt.materials)
                                                                 .map(([m, q]) => `${q} ${m}`)
                                                                 .join(", ")}{" "}
@@ -1718,7 +1792,7 @@ function TrophyHallPanel({
                                                                     )
                                                                 }
                                                                 disabled={loading}
-                                                                className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-[9px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                                                className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-xs text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
                                                             >
                                                                 <Hammer className="h-3 w-3" /> Build
                                                             </button>
@@ -1735,7 +1809,7 @@ function TrophyHallPanel({
                             {hasFurniture && trophy && (
                                 <div className="mt-2">
                                     <div className="flex items-center gap-2">
-                                        <span className="font-pixel text-[10px] text-stone-200">
+                                        <span className="font-pixel text-xs text-stone-200">
                                             {trophy.monster_name} Trophy
                                         </span>
                                         <span
@@ -1756,7 +1830,7 @@ function TrophyHallPanel({
                                         {Object.entries(trophy.bonuses).map(([key, value]) => (
                                             <span
                                                 key={key}
-                                                className="rounded-md border border-cyan-700/30 bg-cyan-900/20 px-1.5 py-0.5 font-pixel text-[8px] text-cyan-200"
+                                                className="rounded-md border border-cyan-700/30 bg-cyan-900/20 px-1.5 py-0.5 font-pixel text-xs text-cyan-200"
                                             >
                                                 +{value} {buffLabels[key] || key.replace(/_/g, " ")}
                                             </span>
@@ -1765,7 +1839,7 @@ function TrophyHallPanel({
                                     <button
                                         onClick={() => onRemoveTrophy(slot)}
                                         disabled={loading}
-                                        className="mt-1.5 flex items-center gap-1 rounded border border-red-700/30 bg-red-900/20 px-2 py-0.5 font-pixel text-[9px] text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
+                                        className="mt-1.5 flex items-center gap-1 rounded border border-red-700/30 bg-red-900/20 px-2 py-0.5 font-pixel text-xs text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
                                     >
                                         <Trash2 className="h-3 w-3" /> Remove
                                     </button>
@@ -1778,7 +1852,7 @@ function TrophyHallPanel({
                                     {mountingSlot === slot ? (
                                         <div className="rounded-md border border-stone-600/50 bg-stone-800/50 p-2">
                                             <div className="mb-1.5 flex items-center justify-between">
-                                                <span className="font-pixel text-[9px] text-stone-400">
+                                                <span className="font-pixel text-xs text-stone-400">
                                                     Select trophy
                                                 </span>
                                                 <button
@@ -1801,7 +1875,7 @@ function TrophyHallPanel({
                                                             disabled={loading}
                                                             className="flex w-full items-center justify-between rounded px-2 py-1 text-left transition-colors hover:bg-stone-700/50 disabled:opacity-40"
                                                         >
-                                                            <span className="font-pixel text-[10px] text-stone-300">
+                                                            <span className="font-pixel text-xs text-stone-300">
                                                                 {t.name}
                                                             </span>
                                                             {t.is_boss && (
@@ -1814,7 +1888,7 @@ function TrophyHallPanel({
                                                 {(trophyData?.available_trophies ?? []).filter(
                                                     (t) => (isPedestal ? t.is_boss : true),
                                                 ).length === 0 && (
-                                                    <div className="py-2 text-center font-pixel text-[9px] text-stone-600">
+                                                    <div className="py-2 text-center font-pixel text-xs text-stone-600">
                                                         {isPedestal
                                                             ? "No boss trophies in inventory"
                                                             : "No trophies in inventory"}
@@ -1826,7 +1900,7 @@ function TrophyHallPanel({
                                         <button
                                             onClick={() => setMountingSlot(slot)}
                                             disabled={loading}
-                                            className="flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-[9px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                            className="flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-xs text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
                                         >
                                             <Plus className="h-3 w-3" /> Mount Trophy
                                         </button>
@@ -1842,10 +1916,10 @@ function TrophyHallPanel({
             {room.hotspots.lighting && (
                 <div className="mt-3 rounded-md border border-stone-700/50 bg-stone-800/30 p-2.5">
                     <div className="flex items-center justify-between">
-                        <span className="font-pixel text-[11px] text-stone-300">Lighting</span>
+                        <span className="font-pixel text-xs text-stone-300">Lighting</span>
                         {room.hotspots.lighting.current ? (
                             <div className="flex items-center gap-1.5">
-                                <span className="font-pixel text-[10px] text-green-400">
+                                <span className="font-pixel text-xs text-green-400">
                                     {room.hotspots.lighting.current.name}
                                 </span>
                                 <button
@@ -1858,14 +1932,14 @@ function TrophyHallPanel({
                                 </button>
                             </div>
                         ) : (
-                            <span className="font-pixel text-[10px] text-stone-600">Empty</span>
+                            <span className="font-pixel text-xs text-stone-600">Empty</span>
                         )}
                     </div>
                     <button
                         onClick={() =>
                             setExpandedHotspot(expandedHotspot === "lighting" ? null : "lighting")
                         }
-                        className="mt-1 font-pixel text-[9px] text-amber-400/70 hover:text-amber-400"
+                        className="mt-1 font-pixel text-xs text-amber-400/70 hover:text-amber-400"
                     >
                         {expandedHotspot === "lighting" ? "Hide options" : "Build options"}
                     </button>
@@ -1881,17 +1955,17 @@ function TrophyHallPanel({
                                     >
                                         <div className="flex items-center justify-between">
                                             <span
-                                                className={`font-pixel text-[10px] ${isBuilt ? "text-green-300" : "text-stone-300"}`}
+                                                className={`font-pixel text-xs ${isBuilt ? "text-green-300" : "text-stone-300"}`}
                                             >
                                                 {opt.name}
                                             </span>
                                             {!meetsLevel && (
-                                                <span className="flex items-center gap-0.5 font-pixel text-[8px] text-stone-600">
+                                                <span className="flex items-center gap-0.5 font-pixel text-xs text-stone-600">
                                                     <Lock className="h-2.5 w-2.5" /> Lv {opt.level}
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="mt-0.5 font-pixel text-[8px] text-stone-500">
+                                        <div className="mt-0.5 font-pixel text-xs text-stone-500">
                                             {Object.entries(opt.materials)
                                                 .map(([m, q]) => `${q} ${m}`)
                                                 .join(", ")}{" "}
@@ -1910,7 +1984,7 @@ function TrophyHallPanel({
                                                     onBuildFurniture(room.id, "lighting", opt.key)
                                                 }
                                                 disabled={loading}
-                                                className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-[9px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                                className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-xs text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
                                             >
                                                 <Hammer className="h-3 w-3" /> Build
                                             </button>
@@ -1922,6 +1996,16 @@ function TrophyHallPanel({
                     )}
                 </div>
             )}
+
+            <div className="mt-4 border-t border-stone-700/30 pt-3">
+                <button
+                    onClick={() => onDemolishRoom(room.id)}
+                    disabled={loading}
+                    className="flex w-full items-center justify-center gap-1.5 rounded border border-red-700/40 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
+                >
+                    <Trash2 className="h-3.5 w-3.5" /> Demolish Room
+                </button>
+            </div>
         </div>
     );
 }
@@ -1949,6 +2033,7 @@ function GardenPanel({
     setLoading,
     onBuildFurniture,
     onDemolish,
+    onDemolishRoom,
     onClose,
 }: {
     room: Room;
@@ -1958,6 +2043,7 @@ function GardenPanel({
     setLoading: (v: boolean) => void;
     onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
     onDemolish: (roomId: number, hotspotSlug: string) => void;
+    onDemolishRoom: (roomId: number) => void;
     onClose: () => void;
 }) {
     const [expandedHotspot, setExpandedHotspot] = useState<string | null>(null);
@@ -2066,7 +2152,7 @@ function GardenPanel({
     return (
         <div>
             <div className="mb-3 flex items-center justify-between">
-                <h3 className="font-pixel text-sm text-green-300">🌿 Garden</h3>
+                <h3 className="font-pixel text-base text-green-300">🌿 Garden</h3>
                 <button onClick={onClose} className="text-stone-500 hover:text-stone-300">
                     <X className="h-4 w-4" />
                 </button>
@@ -2075,14 +2161,14 @@ function GardenPanel({
             {/* Bonus summary */}
             {gardenData && Object.keys(gardenData.total_bonuses).length > 0 && (
                 <div className="mb-3 rounded-md border border-green-700/30 bg-green-900/10 p-2">
-                    <div className="mb-1 flex items-center gap-1 font-pixel text-[9px] text-green-300">
+                    <div className="mb-1 flex items-center gap-1 font-pixel text-xs text-green-300">
                         <Sparkles className="h-3 w-3" /> Garden Bonuses
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                         {Object.entries(gardenData.total_bonuses).map(([key, value]) => (
                             <span
                                 key={key}
-                                className="rounded-md border border-green-700/30 bg-green-900/20 px-1.5 py-0.5 font-pixel text-[8px] text-green-200"
+                                className="rounded-md border border-green-700/30 bg-green-900/20 px-1.5 py-0.5 font-pixel text-xs text-green-200"
                             >
                                 +{value}
                                 {key !== "auto_water" ? "%" : ""}{" "}
@@ -2090,7 +2176,7 @@ function GardenPanel({
                             </span>
                         ))}
                         {gardenData.auto_water && (
-                            <span className="rounded-md border border-blue-700/30 bg-blue-900/20 px-1.5 py-0.5 font-pixel text-[8px] text-blue-200">
+                            <span className="rounded-md border border-blue-700/30 bg-blue-900/20 px-1.5 py-0.5 font-pixel text-xs text-blue-200">
                                 Auto-Water Active
                             </span>
                         )}
@@ -2102,15 +2188,15 @@ function GardenPanel({
             {gardenData && (
                 <div className="mb-3 flex items-center justify-between rounded-md border border-amber-700/30 bg-amber-900/10 px-2.5 py-1.5">
                     <div className="flex items-center gap-1.5">
-                        <span className="font-pixel text-[10px] text-amber-300">Compost</span>
-                        <span className="font-pixel text-[9px] text-amber-200">
+                        <span className="font-pixel text-xs text-amber-300">Compost</span>
+                        <span className="font-pixel text-xs text-amber-200">
                             {gardenData.compost_charges}/{gardenData.max_compost}
                         </span>
                     </div>
                     <button
                         onClick={handleCompost}
                         disabled={loading || gardenData.compost_charges >= gardenData.max_compost}
-                        className="rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-[9px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                        className="rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-xs text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
                         title="Requires 5 Bones"
                     >
                         Make (+3)
@@ -2131,12 +2217,12 @@ function GardenPanel({
                             className="rounded-md border border-stone-700/30 bg-stone-800/20 p-3"
                         >
                             <div className="flex items-center justify-between">
-                                <span className="font-pixel text-[11px] text-stone-300">
+                                <span className="font-pixel text-xs text-stone-300">
                                     {plotSlotLabels[slot]}
                                 </span>
                                 {hotspot?.current ? (
                                     <div className="flex items-center gap-1.5">
-                                        <span className="font-pixel text-[9px] text-green-400">
+                                        <span className="font-pixel text-xs text-green-400">
                                             {hotspot.current.name}
                                         </span>
                                         <button
@@ -2149,7 +2235,7 @@ function GardenPanel({
                                         </button>
                                     </div>
                                 ) : (
-                                    <span className="font-pixel text-[9px] text-stone-600">
+                                    <span className="font-pixel text-xs text-stone-600">
                                         No planter
                                     </span>
                                 )}
@@ -2164,7 +2250,7 @@ function GardenPanel({
                                                 expandedHotspot === slot ? null : slot,
                                             )
                                         }
-                                        className="font-pixel text-[9px] text-amber-400/70 hover:text-amber-400"
+                                        className="font-pixel text-xs text-amber-400/70 hover:text-amber-400"
                                     >
                                         {expandedHotspot === slot
                                             ? "Hide options"
@@ -2180,17 +2266,17 @@ function GardenPanel({
                                                         className="rounded border border-stone-700/30 bg-stone-900/30 p-2"
                                                     >
                                                         <div className="flex items-center justify-between">
-                                                            <span className="font-pixel text-[10px] text-stone-300">
+                                                            <span className="font-pixel text-xs text-stone-300">
                                                                 {opt.name}
                                                             </span>
                                                             {!meetsLevel && (
-                                                                <span className="flex items-center gap-0.5 font-pixel text-[8px] text-stone-600">
+                                                                <span className="flex items-center gap-0.5 font-pixel text-xs text-stone-600">
                                                                     <Lock className="h-2.5 w-2.5" />{" "}
                                                                     Lv {opt.level}
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <div className="mt-0.5 font-pixel text-[8px] text-stone-500">
+                                                        <div className="mt-0.5 font-pixel text-xs text-stone-500">
                                                             {Object.entries(opt.materials)
                                                                 .map(([m, q]) => `${q} ${m}`)
                                                                 .join(", ")}{" "}
@@ -2206,7 +2292,7 @@ function GardenPanel({
                                                                     )
                                                                 }
                                                                 disabled={loading}
-                                                                className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-[9px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                                                className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-xs text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
                                                             >
                                                                 <Hammer className="h-3 w-3" /> Build
                                                             </button>
@@ -2225,7 +2311,7 @@ function GardenPanel({
                                     {plotData.status === "empty" && (
                                         <div>
                                             {plotData.is_composted && (
-                                                <span className="mb-1 inline-block rounded border border-amber-600/30 bg-amber-900/20 px-1.5 py-0.5 font-pixel text-[8px] text-amber-300">
+                                                <span className="mb-1 inline-block rounded border border-amber-600/30 bg-amber-900/20 px-1.5 py-0.5 font-pixel text-xs text-amber-300">
                                                     Composted (+15 quality)
                                                 </span>
                                             )}
@@ -2233,7 +2319,7 @@ function GardenPanel({
                                                 {plantingSlot === slot ? (
                                                     <div className="w-full rounded-md border border-stone-600/50 bg-stone-800/50 p-2">
                                                         <div className="mb-1.5 flex items-center justify-between">
-                                                            <span className="font-pixel text-[9px] text-stone-400">
+                                                            <span className="font-pixel text-xs text-stone-400">
                                                                 Select herb seed
                                                             </span>
                                                             <button
@@ -2260,17 +2346,17 @@ function GardenPanel({
                                                                     disabled={loading}
                                                                     className="flex w-full items-center justify-between rounded px-2 py-1 text-left transition-colors hover:bg-stone-700/50 disabled:opacity-40"
                                                                 >
-                                                                    <span className="font-pixel text-[10px] text-stone-300">
+                                                                    <span className="font-pixel text-xs text-stone-300">
                                                                         {seed.crop_name}
                                                                     </span>
-                                                                    <span className="font-pixel text-[8px] text-stone-500">
+                                                                    <span className="font-pixel text-xs text-stone-500">
                                                                         Lv {seed.farming_level}
                                                                     </span>
                                                                 </button>
                                                             ))}
                                                             {(gardenData?.available_seeds ?? [])
                                                                 .length === 0 && (
-                                                                <div className="py-2 text-center font-pixel text-[9px] text-stone-600">
+                                                                <div className="py-2 text-center font-pixel text-xs text-stone-600">
                                                                     No herb seeds in inventory
                                                                 </div>
                                                             )}
@@ -2281,7 +2367,7 @@ function GardenPanel({
                                                         <button
                                                             onClick={() => setPlantingSlot(slot)}
                                                             disabled={loading}
-                                                            className="flex items-center gap-1 rounded border border-green-600/40 bg-green-900/30 px-2 py-0.5 font-pixel text-[9px] text-green-300 transition-colors hover:bg-green-800/30 disabled:opacity-40"
+                                                            className="flex items-center gap-1 rounded border border-green-600/40 bg-green-900/30 px-2 py-0.5 font-pixel text-xs text-green-300 transition-colors hover:bg-green-800/30 disabled:opacity-40"
                                                         >
                                                             <Plus className="h-3 w-3" /> Plant
                                                         </button>
@@ -2293,7 +2379,7 @@ function GardenPanel({
                                                                         handleUseCompost(slot)
                                                                     }
                                                                     disabled={loading}
-                                                                    className="flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-[9px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                                                    className="flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-xs text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
                                                                 >
                                                                     Compost
                                                                 </button>
@@ -2308,11 +2394,11 @@ function GardenPanel({
                                         plotData.status === "growing") && (
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <span className="font-pixel text-[10px] text-stone-200">
+                                                <span className="font-pixel text-xs text-stone-200">
                                                     {plotData.crop_name}
                                                 </span>
                                                 <span
-                                                    className={`font-pixel text-[8px] ${statusColors[plotData.status]}`}
+                                                    className={`font-pixel text-xs ${statusColors[plotData.status]}`}
                                                 >
                                                     {plotData.status}
                                                 </span>
@@ -2324,7 +2410,7 @@ function GardenPanel({
                                             </div>
                                             {/* Progress bar */}
                                             <div className="mt-1.5">
-                                                <div className="flex items-center justify-between font-pixel text-[8px] text-stone-500">
+                                                <div className="flex items-center justify-between font-pixel text-xs text-stone-500">
                                                     <span>Growth: {plotData.growth_progress}%</span>
                                                     <span>{plotData.time_remaining}</span>
                                                 </div>
@@ -2338,7 +2424,7 @@ function GardenPanel({
                                                 </div>
                                             </div>
                                             {/* Quality */}
-                                            <div className="mt-1 flex items-center justify-between font-pixel text-[8px]">
+                                            <div className="mt-1 flex items-center justify-between font-pixel text-xs">
                                                 <span className="text-stone-500">
                                                     Quality: {plotData.quality}
                                                     {plotData.quality >= 80 && (
@@ -2357,20 +2443,20 @@ function GardenPanel({
                                                     <button
                                                         onClick={() => handleWater(slot)}
                                                         disabled={loading}
-                                                        className="flex items-center gap-1 rounded border border-blue-600/40 bg-blue-900/30 px-2 py-0.5 font-pixel text-[9px] text-blue-300 transition-colors hover:bg-blue-800/30 disabled:opacity-40"
+                                                        className="flex items-center gap-1 rounded border border-blue-600/40 bg-blue-900/30 px-2 py-0.5 font-pixel text-xs text-blue-300 transition-colors hover:bg-blue-800/30 disabled:opacity-40"
                                                     >
                                                         Water
                                                     </button>
                                                 )}
                                                 {plotData.is_watered && (
-                                                    <span className="flex items-center gap-1 rounded border border-blue-700/30 bg-blue-900/10 px-2 py-0.5 font-pixel text-[9px] text-blue-400/60">
+                                                    <span className="flex items-center gap-1 rounded border border-blue-700/30 bg-blue-900/10 px-2 py-0.5 font-pixel text-xs text-blue-400/60">
                                                         <CheckCircle className="h-3 w-3" /> Watered
                                                     </span>
                                                 )}
                                                 <button
                                                     onClick={() => handleTend(slot)}
                                                     disabled={loading}
-                                                    className="flex items-center gap-1 rounded border border-green-600/40 bg-green-900/30 px-2 py-0.5 font-pixel text-[9px] text-green-300 transition-colors hover:bg-green-800/30 disabled:opacity-40"
+                                                    className="flex items-center gap-1 rounded border border-green-600/40 bg-green-900/30 px-2 py-0.5 font-pixel text-xs text-green-300 transition-colors hover:bg-green-800/30 disabled:opacity-40"
                                                     title="Costs 2 energy"
                                                 >
                                                     Tend
@@ -2381,7 +2467,7 @@ function GardenPanel({
                                                         <button
                                                             onClick={() => handleUseCompost(slot)}
                                                             disabled={loading}
-                                                            className="flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-[9px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                                            className="flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-xs text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
                                                         >
                                                             Compost
                                                         </button>
@@ -2393,14 +2479,14 @@ function GardenPanel({
                                     {plotData.status === "ready" && (
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <span className="font-pixel text-[10px] text-stone-200">
+                                                <span className="font-pixel text-xs text-stone-200">
                                                     {plotData.crop_name}
                                                 </span>
-                                                <span className="font-pixel text-[8px] text-amber-400">
+                                                <span className="font-pixel text-xs text-amber-400">
                                                     Ready to harvest!
                                                 </span>
                                             </div>
-                                            <div className="mt-1 font-pixel text-[8px] text-stone-500">
+                                            <div className="mt-1 font-pixel text-xs text-stone-500">
                                                 Quality: {plotData.quality}
                                                 {plotData.quality >= 80 && (
                                                     <span className="ml-1 text-yellow-400">
@@ -2411,7 +2497,7 @@ function GardenPanel({
                                             <button
                                                 onClick={() => handleHarvest(slot)}
                                                 disabled={loading}
-                                                className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/40 px-3 py-1 font-pixel text-[10px] text-amber-200 transition-colors hover:bg-amber-800/40 disabled:opacity-40"
+                                                className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/40 px-3 py-1 font-pixel text-xs text-amber-200 transition-colors hover:bg-amber-800/40 disabled:opacity-40"
                                             >
                                                 <Sparkles className="h-3 w-3" /> Harvest
                                             </button>
@@ -2421,17 +2507,17 @@ function GardenPanel({
                                     {plotData.status === "withered" && (
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <span className="font-pixel text-[10px] text-stone-200">
+                                                <span className="font-pixel text-xs text-stone-200">
                                                     {plotData.crop_name}
                                                 </span>
-                                                <span className="font-pixel text-[8px] text-red-400">
+                                                <span className="font-pixel text-xs text-red-400">
                                                     Withered
                                                 </span>
                                             </div>
                                             <button
                                                 onClick={() => handleClear(slot)}
                                                 disabled={loading}
-                                                className="mt-1.5 flex items-center gap-1 rounded border border-red-700/30 bg-red-900/20 px-2 py-0.5 font-pixel text-[9px] text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
+                                                className="mt-1.5 flex items-center gap-1 rounded border border-red-700/30 bg-red-900/20 px-2 py-0.5 font-pixel text-xs text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
                                             >
                                                 <Trash2 className="h-3 w-3" /> Clear
                                             </button>
@@ -2456,12 +2542,12 @@ function GardenPanel({
                             className="rounded-md border border-stone-700/50 bg-stone-800/30 p-2.5"
                         >
                             <div className="flex items-center justify-between">
-                                <span className="font-pixel text-[11px] text-stone-300">
+                                <span className="font-pixel text-xs text-stone-300">
                                     {hotspot.name}
                                 </span>
                                 {hotspot.current ? (
                                     <div className="flex items-center gap-1.5">
-                                        <span className="font-pixel text-[10px] text-green-400">
+                                        <span className="font-pixel text-xs text-green-400">
                                             {hotspot.current.name}
                                         </span>
                                         <button
@@ -2474,9 +2560,7 @@ function GardenPanel({
                                         </button>
                                     </div>
                                 ) : (
-                                    <span className="font-pixel text-[10px] text-stone-600">
-                                        Empty
-                                    </span>
+                                    <span className="font-pixel text-xs text-stone-600">Empty</span>
                                 )}
                             </div>
                             <button
@@ -2485,7 +2569,7 @@ function GardenPanel({
                                         expandedHotspot === hotspotSlug ? null : hotspotSlug,
                                     )
                                 }
-                                className="mt-1 font-pixel text-[9px] text-amber-400/70 hover:text-amber-400"
+                                className="mt-1 font-pixel text-xs text-amber-400/70 hover:text-amber-400"
                             >
                                 {expandedHotspot === hotspotSlug ? "Hide options" : "Build options"}
                             </button>
@@ -2501,18 +2585,18 @@ function GardenPanel({
                                             >
                                                 <div className="flex items-center justify-between">
                                                     <span
-                                                        className={`font-pixel text-[10px] ${isBuilt ? "text-green-300" : "text-stone-300"}`}
+                                                        className={`font-pixel text-xs ${isBuilt ? "text-green-300" : "text-stone-300"}`}
                                                     >
                                                         {opt.name}
                                                     </span>
                                                     {!meetsLevel && (
-                                                        <span className="flex items-center gap-0.5 font-pixel text-[8px] text-stone-600">
+                                                        <span className="flex items-center gap-0.5 font-pixel text-xs text-stone-600">
                                                             <Lock className="h-2.5 w-2.5" /> Lv{" "}
                                                             {opt.level}
                                                         </span>
                                                     )}
                                                 </div>
-                                                <div className="mt-0.5 font-pixel text-[8px] text-stone-500">
+                                                <div className="mt-0.5 font-pixel text-xs text-stone-500">
                                                     {Object.entries(opt.materials)
                                                         .map(([m, q]) => `${q} ${m}`)
                                                         .join(", ")}{" "}
@@ -2537,7 +2621,7 @@ function GardenPanel({
                                                             )
                                                         }
                                                         disabled={loading}
-                                                        className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-[9px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                                        className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-xs text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
                                                     >
                                                         <Hammer className="h-3 w-3" /> Build
                                                     </button>
@@ -2551,109 +2635,577 @@ function GardenPanel({
                     );
                 })}
             </div>
+
+            <div className="mt-4 border-t border-stone-700/30 pt-3">
+                <button
+                    onClick={() => onDemolishRoom(room.id)}
+                    disabled={loading}
+                    className="flex w-full items-center justify-center gap-1.5 rounded border border-red-700/40 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
+                >
+                    <Trash2 className="h-3.5 w-3.5" /> Demolish Room
+                </button>
+            </div>
         </div>
     );
 }
+
+const storageRarityColors: Record<string, string> = {
+    common: "border-stone-500 bg-stone-800/50",
+    uncommon: "border-green-500 bg-green-900/30",
+    rare: "border-blue-500 bg-blue-900/30",
+    epic: "border-purple-500 bg-purple-900/30",
+    legendary: "border-amber-500 bg-amber-900/30",
+};
 
 function StoragePanel({
     storage,
     storageUsed,
     storageCapacity,
+    inventory,
+    inventoryMaxSlots,
     loading,
-    storageAction,
-    storageQty,
-    storageItemName,
-    onSetStorageAction,
-    onSetStorageQty,
-    onSetStorageItemName,
-    onDeposit,
-    onWithdraw,
+    setLoading,
+    canAct,
 }: {
     storage: StorageItem[];
     storageUsed: number;
     storageCapacity: number;
+    inventory: InventoryItem[];
+    inventoryMaxSlots: number;
     loading: boolean;
-    storageAction: { type: "deposit" | "withdraw"; item?: string } | null;
-    storageQty: number;
-    storageItemName: string;
-    onSetStorageAction: (action: { type: "deposit" | "withdraw"; item?: string } | null) => void;
-    onSetStorageQty: (qty: number) => void;
-    onSetStorageItemName: (name: string) => void;
-    onDeposit: () => void;
-    onWithdraw: (itemName: string) => void;
+    setLoading: (v: boolean) => void;
+    canAct: boolean;
 }) {
-    return (
-        <div className="rounded-lg border border-stone-700/50 bg-stone-900/50 p-4">
-            <div className="mb-4 flex items-center justify-between">
-                <h2 className="font-pixel text-sm text-amber-200">
-                    <Package className="mr-2 inline h-4 w-4" />
-                    Home Storage
-                </h2>
-                <span className="font-pixel text-[10px] text-stone-500">
-                    {storageUsed}/{storageCapacity} items
-                </span>
-            </div>
+    const [contextMenu, setContextMenu] = useState<{
+        visible: boolean;
+        x: number;
+        y: number;
+        item: {
+            name: string;
+            quantity: number;
+            type: string;
+            subtype: string;
+            rarity: string;
+            description: string | null;
+        };
+        source: "inventory" | "storage";
+    } | null>(null);
+    const [qty, setQty] = useState(1);
+    const [showQtyInput, setShowQtyInput] = useState(false);
+    const contextMenuRef = useRef<HTMLDivElement>(null);
 
-            {/* Deposit form */}
-            <div className="mb-4 rounded-md border border-stone-700/30 bg-stone-800/30 p-3">
-                <div className="font-pixel text-[10px] text-stone-400 mb-2">Deposit Item</div>
-                <div className="flex gap-2">
-                    <input
-                        type="text"
-                        placeholder="Item name"
-                        value={storageItemName}
-                        onChange={(e) => onSetStorageItemName(e.target.value)}
-                        className="flex-1 rounded border border-stone-600 bg-stone-800 px-2 py-1 font-pixel text-xs text-stone-200 placeholder-stone-600 focus:border-amber-500 focus:outline-none"
-                    />
-                    <input
-                        type="number"
-                        min={1}
-                        value={storageQty}
-                        onChange={(e) =>
-                            onSetStorageQty(Math.max(1, parseInt(e.target.value) || 1))
-                        }
-                        className="w-16 rounded border border-stone-600 bg-stone-800 px-2 py-1 font-pixel text-xs text-stone-200 focus:border-amber-500 focus:outline-none"
-                    />
-                    <button
-                        onClick={onDeposit}
-                        disabled={loading || !storageItemName}
-                        className="flex items-center gap-1 rounded border border-green-600/40 bg-green-900/30 px-2 py-1 font-pixel text-[10px] text-green-300 hover:bg-green-800/30 disabled:opacity-40"
+    const spaceLeft = storageCapacity - storageUsed;
+
+    const openContextMenu = useCallback(
+        (
+            e: React.MouseEvent,
+            item: {
+                name: string;
+                quantity: number;
+                type: string;
+                subtype: string;
+                rarity: string;
+                description: string | null;
+            },
+            source: "inventory" | "storage",
+        ) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setContextMenu({ visible: true, x: e.clientX, y: e.clientY, item, source });
+            setQty(1);
+            setShowQtyInput(false);
+        },
+        [],
+    );
+
+    const closeContextMenu = useCallback(() => {
+        setContextMenu(null);
+        setShowQtyInput(false);
+    }, []);
+
+    // Close context menu on outside click
+    useEffect(() => {
+        if (!contextMenu?.visible) return;
+        const handler = (e: MouseEvent) => {
+            if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
+                closeContextMenu();
+            }
+        };
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, [contextMenu?.visible, closeContextMenu]);
+
+    const handleDeposit = (itemName: string, amount: number) => {
+        setLoading(true);
+        closeContextMenu();
+        router.post(
+            "/house/deposit",
+            { item_name: itemName, quantity: amount },
+            {
+                preserveScroll: true,
+                onSuccess: () => router.reload(),
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handleWithdraw = (itemName: string, amount: number) => {
+        setLoading(true);
+        closeContextMenu();
+        router.post(
+            "/house/withdraw",
+            { item_name: itemName, quantity: amount },
+            {
+                preserveScroll: true,
+                onSuccess: () => router.reload(),
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    // Drag state for inventory and storage grids
+    const [invDragState, setInvDragState] = useState<{
+        sourceSlot: number | null;
+        targetSlot: number | null;
+    }>({ sourceSlot: null, targetSlot: null });
+    const [storageDragState, setStorageDragState] = useState<{
+        sourceSlot: number | null;
+        targetSlot: number | null;
+    }>({ sourceSlot: null, targetSlot: null });
+    const dragImageRef = useRef<HTMLDivElement>(null);
+
+    const handleInventoryMove = (fromSlot: number, toSlot: number) => {
+        setLoading(true);
+        router.post(
+            "/inventory/move",
+            { from_slot: fromSlot, to_slot: toSlot },
+            {
+                preserveScroll: true,
+                onSuccess: () => router.reload(),
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handleStorageMove = (fromSlot: number, toSlot: number) => {
+        setLoading(true);
+        router.post(
+            "/house/move-storage-slot",
+            { from_slot: fromSlot, to_slot: toSlot },
+            {
+                preserveScroll: true,
+                onSuccess: () => router.reload(),
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    // Build slot maps for fixed-position rendering
+    const inventorySlotMap = useMemo(() => {
+        const map = new Map<number, InventoryItem>();
+        inventory.forEach((item) => map.set(item.slot_number, item));
+        return map;
+    }, [inventory]);
+
+    const storageSlotMap = useMemo(() => {
+        const map = new Map<number, StorageItem>();
+        storage.forEach((item) => map.set(item.slot_number, item));
+        return map;
+    }, [storage]);
+
+    const renderItemSlot = (
+        item: {
+            name: string;
+            quantity: number;
+            type: string;
+            subtype: string;
+            rarity: string;
+            description: string | null;
+        },
+        source: "inventory" | "storage",
+        slotIndex: number,
+    ) => {
+        const Icon = getItemIcon(item.type, item.subtype);
+        const colors = storageRarityColors[item.rarity] || storageRarityColors.common;
+        const dragState = source === "inventory" ? invDragState : storageDragState;
+        const setDragState = source === "inventory" ? setInvDragState : setStorageDragState;
+        const moveHandler = source === "inventory" ? handleInventoryMove : handleStorageMove;
+        const isBeingDragged = dragState.sourceSlot === slotIndex;
+        const isDragTarget = dragState.targetSlot === slotIndex;
+
+        // Show ghost of the item being dragged over this slot
+        const draggedItem =
+            dragState.sourceSlot !== null
+                ? source === "inventory"
+                    ? inventorySlotMap.get(dragState.sourceSlot)
+                    : storageSlotMap.get(dragState.sourceSlot)
+                : null;
+        const showGhost = isDragTarget && draggedItem && !isBeingDragged;
+
+        return (
+            <div key={`${source}-${slotIndex}`} className="relative">
+                {/* Hidden drag image */}
+                {isBeingDragged && (
+                    <div
+                        ref={dragImageRef}
+                        className={`pointer-events-none fixed -left-[9999px] flex h-14 w-14 items-center justify-center rounded border-2 ${colors}`}
                     >
-                        <ArrowDownToLine className="h-3 w-3" /> Store
-                    </button>
+                        <Icon className="h-7 w-7 text-stone-300" />
+                        {item.quantity > 1 && (
+                            <div className="absolute bottom-0.5 right-1 font-pixel text-[10px] text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
+                                {item.quantity}
+                            </div>
+                        )}
+                    </div>
+                )}
+                <div
+                    className={`relative h-14 w-14 cursor-pointer rounded border-2 transition-all ${colors} hover:brightness-110 ${isBeingDragged ? "opacity-50" : ""}`}
+                    onContextMenu={(e) => canAct && openContextMenu(e, item, source)}
+                    onClick={(e) => canAct && !isBeingDragged && openContextMenu(e, item, source)}
+                    title={`${item.name} x${item.quantity}`}
+                    draggable={canAct}
+                    onDragStart={(e) => {
+                        e.dataTransfer.setData("source", source);
+                        e.dataTransfer.setData("slotIndex", String(slotIndex));
+                        if (dragImageRef.current) {
+                            e.dataTransfer.setDragImage(dragImageRef.current, 28, 28);
+                        }
+                        setDragState({ sourceSlot: slotIndex, targetSlot: null });
+                    }}
+                    onDragEnd={() => setDragState({ sourceSlot: null, targetSlot: null })}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDragEnter={() => setDragState((prev) => ({ ...prev, targetSlot: slotIndex }))}
+                    onDragLeave={() => setDragState((prev) => ({ ...prev, targetSlot: null }))}
+                    onDrop={(e) => {
+                        e.preventDefault();
+                        const fromSource = e.dataTransfer.getData("source");
+                        const fromSlot = parseInt(e.dataTransfer.getData("slotIndex"), 10);
+                        if (fromSource === source && !isNaN(fromSlot) && fromSlot !== slotIndex) {
+                            moveHandler(fromSlot, slotIndex);
+                        }
+                        setDragState({ sourceSlot: null, targetSlot: null });
+                    }}
+                >
+                    {/* Ghost preview of dragged item */}
+                    {showGhost && (
+                        <div className="absolute inset-0 flex items-center justify-center opacity-50">
+                            {(() => {
+                                const draggedType =
+                                    source === "inventory"
+                                        ? (draggedItem as InventoryItem)?.type
+                                        : (draggedItem as StorageItem)?.item_type;
+                                const draggedSubtype =
+                                    source === "inventory"
+                                        ? (draggedItem as InventoryItem)?.subtype
+                                        : (draggedItem as StorageItem)?.item_subtype;
+                                const GhostIcon = getItemIcon(draggedType, draggedSubtype);
+                                return <GhostIcon className="h-7 w-7 text-stone-300" />;
+                            })()}
+                        </div>
+                    )}
+                    <div className="flex h-full items-center justify-center">
+                        <Icon className="h-7 w-7 text-stone-300" />
+                    </div>
+                    {item.quantity > 1 && (
+                        <div className="absolute bottom-0.5 right-1 font-pixel text-[10px] text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
+                            {item.quantity}
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
+    const renderEmptySlot = (source: "inventory" | "storage", slotIndex: number) => {
+        const dragState = source === "inventory" ? invDragState : storageDragState;
+        const setDragState = source === "inventory" ? setInvDragState : setStorageDragState;
+        const moveHandler = source === "inventory" ? handleInventoryMove : handleStorageMove;
+        const isDragTarget = dragState.targetSlot === slotIndex;
+
+        // Show ghost of the item being dragged over this empty slot
+        const draggedItem =
+            dragState.sourceSlot !== null
+                ? source === "inventory"
+                    ? inventorySlotMap.get(dragState.sourceSlot)
+                    : storageSlotMap.get(dragState.sourceSlot)
+                : null;
+        const showGhost = isDragTarget && draggedItem;
+
+        return (
+            <div
+                key={`${source}-empty-${slotIndex}`}
+                className={`flex h-14 w-14 items-center justify-center rounded border-2 transition-all ${
+                    isDragTarget
+                        ? "border-amber-500 bg-amber-900/30"
+                        : "border-stone-700 bg-stone-800/30"
+                }`}
+                onDragOver={(e) => e.preventDefault()}
+                onDragEnter={() => setDragState((prev) => ({ ...prev, targetSlot: slotIndex }))}
+                onDragLeave={() => setDragState((prev) => ({ ...prev, targetSlot: null }))}
+                onDrop={(e) => {
+                    e.preventDefault();
+                    const fromSource = e.dataTransfer.getData("source");
+                    const fromSlot = parseInt(e.dataTransfer.getData("slotIndex"), 10);
+                    if (fromSource === source && !isNaN(fromSlot) && fromSlot !== slotIndex) {
+                        moveHandler(fromSlot, slotIndex);
+                    }
+                    setDragState({ sourceSlot: null, targetSlot: null });
+                }}
+            >
+                {showGhost ? (
+                    <div className="flex items-center justify-center opacity-50">
+                        {(() => {
+                            const draggedType =
+                                source === "inventory"
+                                    ? (draggedItem as InventoryItem)?.type
+                                    : (draggedItem as StorageItem)?.item_type;
+                            const draggedSubtype =
+                                source === "inventory"
+                                    ? (draggedItem as InventoryItem)?.subtype
+                                    : (draggedItem as StorageItem)?.item_subtype;
+                            const GhostIcon = getItemIcon(draggedType, draggedSubtype);
+                            return <GhostIcon className="h-7 w-7 text-stone-300" />;
+                        })()}
+                    </div>
+                ) : (
+                    <span className="font-pixel text-[10px] text-stone-700">{slotIndex + 1}</span>
+                )}
+            </div>
+        );
+    };
+
+    return (
+        <div className="space-y-5">
+            {/* Inventory Section */}
+            <div className="rounded-lg border-2 border-stone-600 bg-stone-800/80 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                    <h2 className="font-pixel text-sm text-stone-300">
+                        <Package className="mr-1.5 inline h-4 w-4" />
+                        Inventory
+                    </h2>
+                    <span className="font-pixel text-xs text-stone-500">
+                        {inventory.length} / {inventoryMaxSlots} slots
+                    </span>
+                </div>
+
+                <div className="flex flex-wrap gap-1">
+                    {Array.from({ length: inventoryMaxSlots }, (_, i) => {
+                        const item = inventorySlotMap.get(i);
+                        if (item) {
+                            return renderItemSlot(
+                                {
+                                    name: item.item_name,
+                                    quantity: item.quantity,
+                                    type: item.type,
+                                    subtype: item.subtype,
+                                    rarity: item.rarity,
+                                    description: item.description,
+                                },
+                                "inventory",
+                                i,
+                            );
+                        }
+                        return renderEmptySlot("inventory", i);
+                    })}
                 </div>
             </div>
 
-            {/* Stored items */}
-            {storage.length === 0 ? (
-                <div className="py-8 text-center">
-                    <Package className="mx-auto h-8 w-8 text-stone-700" />
-                    <p className="mt-2 font-pixel text-xs text-stone-600">Storage is empty</p>
+            {/* Storage Section */}
+            <div className="rounded-lg border-2 border-stone-600 bg-stone-800/80 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                    <h2 className="font-pixel text-sm text-amber-200">
+                        <Package className="mr-1.5 inline h-4 w-4" />
+                        Home Storage
+                    </h2>
+                    <span className="font-pixel text-xs text-stone-500">
+                        {storageUsed}/{storageCapacity}
+                    </span>
                 </div>
-            ) : (
-                <div className="space-y-1">
-                    {storage.map((item) => (
-                        <div
-                            key={item.item_name}
-                            className="flex items-center justify-between rounded-md border border-stone-700/30 bg-stone-800/20 px-3 py-2"
-                        >
-                            <div>
-                                <span className="font-pixel text-xs text-stone-300">
-                                    {item.item_name}
-                                </span>
-                                <span className="ml-2 font-pixel text-[10px] text-stone-500">
-                                    x{item.quantity}
-                                </span>
-                            </div>
+
+                {/* Capacity bar */}
+                <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-stone-700">
+                    <div
+                        className={`h-full transition-all ${storageUsed >= storageCapacity ? "bg-red-500" : storageUsed > storageCapacity * 0.75 ? "bg-yellow-500" : "bg-green-500"}`}
+                        style={{
+                            width: `${Math.min(100, (storageUsed / storageCapacity) * 100)}%`,
+                        }}
+                    />
+                </div>
+
+                <div className="flex flex-wrap gap-1">
+                    {Array.from({ length: storageCapacity }, (_, i) => {
+                        const item = storageSlotMap.get(i);
+                        if (item) {
+                            return renderItemSlot(
+                                {
+                                    name: item.item_name,
+                                    quantity: item.quantity,
+                                    type: item.item_type,
+                                    subtype: item.item_subtype,
+                                    rarity: item.item_rarity,
+                                    description: item.item_description,
+                                },
+                                "storage",
+                                i,
+                            );
+                        }
+                        return renderEmptySlot("storage", i);
+                    })}
+                </div>
+            </div>
+
+            {/* Context Menu */}
+            {contextMenu?.visible && (
+                <div
+                    ref={contextMenuRef}
+                    className="fixed z-[200] min-w-40 rounded-lg border-2 border-stone-600 bg-stone-900 p-1 shadow-xl"
+                    style={{ left: contextMenu.x, top: contextMenu.y }}
+                >
+                    {/* Item name header */}
+                    <div className="px-3 py-1.5 font-pixel text-xs text-amber-300">
+                        {contextMenu.item.name}{" "}
+                        <span className="text-stone-500">x{contextMenu.item.quantity}</span>
+                    </div>
+                    <div className="my-1 h-px bg-stone-700" />
+
+                    {!showQtyInput ? (
+                        <>
+                            {contextMenu.source === "inventory" && spaceLeft > 0 && (
+                                <>
+                                    <button
+                                        onClick={() => handleDeposit(contextMenu.item.name, 1)}
+                                        disabled={loading}
+                                        className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-300 hover:bg-stone-800"
+                                    >
+                                        <ArrowDownToLine className="h-3.5 w-3.5 text-green-400" />
+                                        Deposit 1
+                                    </button>
+                                    {contextMenu.item.quantity > 1 && (
+                                        <button
+                                            onClick={() =>
+                                                handleDeposit(
+                                                    contextMenu.item.name,
+                                                    Math.min(contextMenu.item.quantity, spaceLeft),
+                                                )
+                                            }
+                                            disabled={loading}
+                                            className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-300 hover:bg-stone-800"
+                                        >
+                                            <ArrowDownToLine className="h-3.5 w-3.5 text-green-400" />
+                                            Deposit All (
+                                            {Math.min(contextMenu.item.quantity, spaceLeft)})
+                                        </button>
+                                    )}
+                                    {contextMenu.item.quantity > 1 && (
+                                        <button
+                                            onClick={() => setShowQtyInput(true)}
+                                            className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-300 hover:bg-stone-800"
+                                        >
+                                            <ArrowDownToLine className="h-3.5 w-3.5 text-amber-400" />
+                                            Deposit X...
+                                        </button>
+                                    )}
+                                </>
+                            )}
+                            {contextMenu.source === "storage" && (
+                                <>
+                                    <button
+                                        onClick={() => handleWithdraw(contextMenu.item.name, 1)}
+                                        disabled={loading}
+                                        className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-300 hover:bg-stone-800"
+                                    >
+                                        <ArrowUpFromLine className="h-3.5 w-3.5 text-blue-400" />
+                                        Withdraw 1
+                                    </button>
+                                    {contextMenu.item.quantity > 1 && (
+                                        <button
+                                            onClick={() =>
+                                                handleWithdraw(
+                                                    contextMenu.item.name,
+                                                    contextMenu.item.quantity,
+                                                )
+                                            }
+                                            disabled={loading}
+                                            className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-300 hover:bg-stone-800"
+                                        >
+                                            <ArrowUpFromLine className="h-3.5 w-3.5 text-blue-400" />
+                                            Withdraw All ({contextMenu.item.quantity})
+                                        </button>
+                                    )}
+                                    {contextMenu.item.quantity > 1 && (
+                                        <button
+                                            onClick={() => setShowQtyInput(true)}
+                                            className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-300 hover:bg-stone-800"
+                                        >
+                                            <ArrowUpFromLine className="h-3.5 w-3.5 text-amber-400" />
+                                            Withdraw X...
+                                        </button>
+                                    )}
+                                </>
+                            )}
+                            <div className="my-1 h-px bg-stone-700" />
                             <button
-                                onClick={() => onWithdraw(item.item_name)}
-                                disabled={loading}
-                                className="flex items-center gap-1 rounded border border-blue-600/40 bg-blue-900/30 px-2 py-0.5 font-pixel text-[9px] text-blue-300 hover:bg-blue-800/30 disabled:opacity-40"
+                                onClick={() => {
+                                    closeContextMenu();
+                                    gameToast.info(contextMenu.item.name, {
+                                        description:
+                                            contextMenu.item.description || "Nothing interesting.",
+                                        duration: 5000,
+                                    });
+                                }}
+                                className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-300 hover:bg-stone-800"
                             >
-                                <ArrowUpFromLine className="h-3 w-3" /> Take
+                                <Eye className="h-3.5 w-3.5 text-blue-400" />
+                                Examine
+                            </button>
+                            <div className="my-1 h-px bg-stone-700" />
+                            <button
+                                onClick={closeContextMenu}
+                                className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-400 hover:bg-stone-800"
+                            >
+                                Cancel
+                            </button>
+                        </>
+                    ) : (
+                        <div className="flex items-center gap-2 px-3 py-1.5">
+                            <input
+                                type="number"
+                                min={1}
+                                max={
+                                    contextMenu.source === "inventory"
+                                        ? Math.min(contextMenu.item.quantity, spaceLeft)
+                                        : contextMenu.item.quantity
+                                }
+                                value={qty}
+                                onChange={(e) =>
+                                    setQty(
+                                        Math.max(
+                                            1,
+                                            Math.min(
+                                                contextMenu.source === "inventory"
+                                                    ? Math.min(contextMenu.item.quantity, spaceLeft)
+                                                    : contextMenu.item.quantity,
+                                                parseInt(e.target.value) || 1,
+                                            ),
+                                        ),
+                                    )
+                                }
+                                autoFocus
+                                className="w-16 rounded border border-stone-600 bg-stone-800 px-2 py-1 text-center font-pixel text-xs text-stone-200 focus:border-amber-500 focus:outline-none"
+                            />
+                            <button
+                                onClick={() =>
+                                    contextMenu.source === "inventory"
+                                        ? handleDeposit(contextMenu.item.name, qty)
+                                        : handleWithdraw(contextMenu.item.name, qty)
+                                }
+                                disabled={loading}
+                                className="rounded bg-amber-900/50 px-3 py-1 font-pixel text-xs text-amber-300 hover:bg-amber-800/50 disabled:opacity-40"
+                            >
+                                OK
                             </button>
                         </div>
-                    ))}
+                    )}
                 </div>
             )}
         </div>
@@ -2803,16 +3355,16 @@ function ServantPanel({
     // No servant hired — show hire UI
     if (!servantData) {
         return (
-            <div className="rounded-lg border border-stone-700/50 bg-stone-900/50 p-4">
+            <div className="rounded-lg border border-stone-700/50 bg-stone-900/50 p-5">
                 <div className="mb-4 flex items-center gap-2">
-                    <Users className="h-5 w-5 text-amber-400" />
-                    <h2 className="font-pixel text-sm text-amber-200">Hire a Servant</h2>
+                    <Users className="h-6 w-6 text-amber-400" />
+                    <h2 className="font-pixel text-base text-amber-200">Hire a Servant</h2>
                 </div>
-                <p className="mb-4 font-pixel text-[10px] text-stone-500">
+                <p className="mb-4 font-pixel text-sm text-stone-500">
                     Servants automate tasks like sawmill runs, fetching materials, and serving food.
                     You may hire one servant per house.
                 </p>
-                <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-3 sm:grid-cols-2">
                     {servantTiers.map((tier) => (
                         <div
                             key={tier.key}
@@ -2822,11 +3374,11 @@ function ServantPanel({
                                     : "border-stone-700/30 bg-stone-800/20 opacity-60"
                             }`}
                         >
-                            <div className="font-pixel text-xs text-stone-200">{tier.name}</div>
-                            <div className="mt-1 space-y-0.5 font-pixel text-[9px] text-stone-500">
+                            <div className="font-pixel text-sm text-stone-200">{tier.name}</div>
+                            <div className="mt-1.5 space-y-1 font-pixel text-xs text-stone-500">
                                 <div>Level {tier.level} Construction</div>
                                 <div className="flex items-center gap-1">
-                                    <Coins className="h-2.5 w-2.5 text-yellow-500" />
+                                    <Coins className="h-3 w-3 text-yellow-500" />
                                     {tier.hire_cost.toLocaleString()}g hire &bull;{" "}
                                     {tier.weekly_wage}g/week
                                 </div>
@@ -2838,7 +3390,7 @@ function ServantPanel({
                                 <button
                                     onClick={() => handleHire(tier.key)}
                                     disabled={loading}
-                                    className="mt-2 w-full rounded border border-amber-600/40 bg-amber-900/30 px-2 py-1 font-pixel text-[10px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                    className="mt-2 w-full rounded border border-amber-600/40 bg-amber-900/30 px-2 py-1 font-pixel text-xs text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
                                 >
                                     {loading ? (
                                         <Loader2 className="mx-auto h-3 w-3 animate-spin" />
@@ -2847,7 +3399,7 @@ function ServantPanel({
                                     )}
                                 </button>
                             ) : (
-                                <div className="mt-2 font-pixel text-[8px] text-red-400/70">
+                                <div className="mt-2 font-pixel text-xs text-red-400/70">
                                     {tier.reason}
                                 </div>
                             )}
@@ -2860,14 +3412,16 @@ function ServantPanel({
 
     // Servant active
     return (
-        <div className="rounded-lg border border-stone-700/50 bg-stone-900/50 p-4">
+        <div className="rounded-lg border border-stone-700/50 bg-stone-900/50 p-5">
             {/* Header */}
             <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <UserCheck className="h-5 w-5 text-amber-400" />
+                <div className="flex items-center gap-3">
+                    <UserCheck className="h-6 w-6 text-amber-400" />
                     <div>
-                        <div className="font-pixel text-sm text-amber-200">{servantData.name}</div>
-                        <div className="font-pixel text-[9px] text-stone-500">
+                        <div className="font-pixel text-base text-amber-200">
+                            {servantData.name}
+                        </div>
+                        <div className="font-pixel text-sm text-stone-500">
                             {servantData.tier_config.name} &bull;{" "}
                             {servantData.tier_config.weekly_wage}g/week
                         </div>
@@ -2876,23 +3430,23 @@ function ServantPanel({
                 {!confirmDismiss ? (
                     <button
                         onClick={() => setConfirmDismiss(true)}
-                        className="rounded border border-red-700/30 bg-red-900/20 px-2 py-0.5 font-pixel text-[9px] text-red-400 transition-colors hover:bg-red-900/40"
+                        className="rounded border border-red-700/30 bg-red-900/20 px-2 py-0.5 font-pixel text-xs text-red-400 transition-colors hover:bg-red-900/40"
                     >
                         Dismiss
                     </button>
                 ) : (
                     <div className="flex items-center gap-1.5">
-                        <span className="font-pixel text-[9px] text-red-400">Sure?</span>
+                        <span className="font-pixel text-xs text-red-400">Sure?</span>
                         <button
                             onClick={handleDismiss}
                             disabled={loading}
-                            className="rounded border border-red-600/40 bg-red-900/30 px-2 py-0.5 font-pixel text-[9px] text-red-300 hover:bg-red-800/30"
+                            className="rounded border border-red-600/40 bg-red-900/30 px-2 py-0.5 font-pixel text-xs text-red-300 hover:bg-red-800/30"
                         >
                             Yes
                         </button>
                         <button
                             onClick={() => setConfirmDismiss(false)}
-                            className="rounded border border-stone-600/40 bg-stone-800/30 px-2 py-0.5 font-pixel text-[9px] text-stone-400 hover:bg-stone-700/30"
+                            className="rounded border border-stone-600/40 bg-stone-800/30 px-2 py-0.5 font-pixel text-xs text-stone-400 hover:bg-stone-700/30"
                         >
                             No
                         </button>
@@ -2909,13 +3463,13 @@ function ServantPanel({
                             Servant is on strike!
                         </span>
                     </div>
-                    <p className="mt-1 font-pixel text-[9px] text-red-400/70">
+                    <p className="mt-1 font-pixel text-xs text-red-400/70">
                         Pay their weekly wage to resume work.
                     </p>
                     <button
                         onClick={handlePayWages}
                         disabled={loading}
-                        className="mt-2 flex items-center gap-1.5 rounded border border-yellow-600/40 bg-yellow-900/30 px-3 py-1 font-pixel text-[10px] text-yellow-300 transition-colors hover:bg-yellow-800/30 disabled:opacity-40"
+                        className="mt-2 flex items-center gap-1.5 rounded border border-yellow-600/40 bg-yellow-900/30 px-3 py-1 font-pixel text-xs text-yellow-300 transition-colors hover:bg-yellow-800/30 disabled:opacity-40"
                     >
                         <Coins className="h-3 w-3" />
                         {loading ? (
@@ -2933,17 +3487,17 @@ function ServantPanel({
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
                             <Loader2 className="h-3 w-3 animate-spin text-blue-400" />
-                            <span className="font-pixel text-[11px] text-blue-200">
+                            <span className="font-pixel text-xs text-blue-200">
                                 {taskTypeLabels[servantData.current_task.task_type] ||
                                     servantData.current_task.task_type}
                             </span>
                         </div>
-                        <div className="flex items-center gap-1 font-pixel text-[10px] text-blue-300">
+                        <div className="flex items-center gap-1 font-pixel text-xs text-blue-300">
                             <Clock className="h-3 w-3" />
                             {formatTime(countdown)}
                         </div>
                     </div>
-                    <div className="mt-1 font-pixel text-[9px] text-stone-500">
+                    <div className="mt-1 font-pixel text-xs text-stone-500">
                         {formatTaskDesc(
                             servantData.current_task.task_type,
                             servantData.current_task.task_data,
@@ -2955,7 +3509,7 @@ function ServantPanel({
             {/* Queued tasks */}
             {servantData.queued_tasks.length > 0 && (
                 <div className="mb-3">
-                    <div className="mb-1 font-pixel text-[10px] text-stone-400">Queue</div>
+                    <div className="mb-1 font-pixel text-xs text-stone-400">Queue</div>
                     <div className="space-y-1">
                         {servantData.queued_tasks.map((task) => (
                             <div
@@ -2963,10 +3517,10 @@ function ServantPanel({
                                 className="flex items-center justify-between rounded border border-stone-700/30 bg-stone-800/20 px-2.5 py-1.5"
                             >
                                 <div>
-                                    <span className="font-pixel text-[10px] text-stone-300">
+                                    <span className="font-pixel text-xs text-stone-300">
                                         {taskTypeLabels[task.task_type] || task.task_type}
                                     </span>
-                                    <span className="ml-1.5 font-pixel text-[9px] text-stone-600">
+                                    <span className="ml-1.5 font-pixel text-xs text-stone-600">
                                         {formatTaskDesc(task.task_type, task.task_data)}
                                     </span>
                                 </div>
@@ -2987,7 +3541,7 @@ function ServantPanel({
             {/* Assign task form */}
             {!servantData.on_strike && (
                 <div className="mb-3 rounded-md border border-stone-700/30 bg-stone-800/20 p-3">
-                    <div className="mb-2 font-pixel text-[10px] text-stone-400">Assign Task</div>
+                    <div className="mb-2 font-pixel text-xs text-stone-400">Assign Task</div>
 
                     <select
                         value={taskType}
@@ -3042,7 +3596,7 @@ function ServantPanel({
                                 <button
                                     onClick={handleAssignTask}
                                     disabled={loading || !plankName || quantity < 1}
-                                    className="flex-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-1 font-pixel text-[10px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                    className="flex-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-1 font-pixel text-xs text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
                                 >
                                     {loading ? (
                                         <Loader2 className="mx-auto h-3 w-3 animate-spin" />
@@ -3064,7 +3618,7 @@ function ServantPanel({
                                 <option value="">Select item...</option>
                                 {servantData.available_fetch.map((f) => (
                                     <option key={f.item_name} value={f.item_name}>
-                                        {f.item_name} (x{f.quantity})
+                                        {f.item_name} ({f.quantity.toLocaleString()} in storage)
                                     </option>
                                 ))}
                             </select>
@@ -3086,7 +3640,7 @@ function ServantPanel({
                                 <button
                                     onClick={handleAssignTask}
                                     disabled={loading || !fetchItem || quantity < 1}
-                                    className="flex-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-1 font-pixel text-[10px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                    className="flex-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-1 font-pixel text-xs text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
                                 >
                                     {loading ? (
                                         <Loader2 className="mx-auto h-3 w-3 animate-spin" />
@@ -3102,7 +3656,7 @@ function ServantPanel({
                         <button
                             onClick={handleAssignTask}
                             disabled={loading}
-                            className="w-full rounded border border-amber-600/40 bg-amber-900/30 px-2 py-1 font-pixel text-[10px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                            className="w-full rounded border border-amber-600/40 bg-amber-900/30 px-2 py-1 font-pixel text-xs text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
                         >
                             {loading ? (
                                 <Loader2 className="mx-auto h-3 w-3 animate-spin" />
@@ -3119,7 +3673,7 @@ function ServantPanel({
                 <div>
                     <button
                         onClick={() => setShowCompleted(!showCompleted)}
-                        className="flex items-center gap-1 font-pixel text-[10px] text-stone-500 hover:text-stone-400"
+                        className="flex items-center gap-1 font-pixel text-xs text-stone-500 hover:text-stone-400"
                     >
                         <ChevronDown
                             className={`h-3 w-3 transition-transform ${showCompleted ? "rotate-180" : ""}`}
@@ -3134,7 +3688,7 @@ function ServantPanel({
                                     className="flex items-start gap-1.5 rounded border border-stone-700/20 bg-stone-800/10 px-2 py-1"
                                 >
                                     <CheckCircle className="mt-0.5 h-3 w-3 shrink-0 text-green-500/50" />
-                                    <span className="font-pixel text-[9px] text-stone-500">
+                                    <span className="font-pixel text-xs text-stone-500">
                                         {task.result_message}
                                     </span>
                                 </div>
