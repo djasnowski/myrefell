@@ -228,14 +228,26 @@ interface PageProps {
     servantTiers: ServantTierInfo[];
     trophyData: TrophyData | null;
     gardenData: GardenData | null;
+    isVisiting?: boolean;
+    visitingPlayer?: string;
+    upkeepDueAt?: string | null;
+    upkeepCost?: number | null;
+    repairCost?: number | null;
     flash?: { success?: string; error?: string };
     [key: string]: unknown;
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: "Dashboard", href: "/dashboard" },
-    { title: "My House", href: "/house" },
-];
+const getConditionColor = (condition: number) => {
+    if (condition > 50) return "bg-green-500";
+    if (condition > 25) return "bg-yellow-500";
+    return "bg-red-500";
+};
+
+const getConditionTextColor = (condition: number) => {
+    if (condition > 50) return "text-green-400";
+    if (condition > 25) return "text-yellow-400";
+    return "text-red-400";
+};
 
 const roomIcons: Record<string, string> = {
     parlour: "🪑",
@@ -292,8 +304,14 @@ export default function HouseIndex() {
         servantTiers,
         trophyData,
         gardenData,
+        isVisiting,
+        visitingPlayer,
+        upkeepDueAt,
+        upkeepCost,
+        repairCost,
         flash,
     } = usePage<PageProps>().props;
+    const canAct = !isVisiting;
     const [loading, setLoading] = useState(false);
     const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
     const [buildingAt, setBuildingAt] = useState<{ x: number; y: number } | null>(null);
@@ -453,10 +471,63 @@ export default function HouseIndex() {
         );
     };
 
-    // No house - show purchase UI
+    const handlePayUpkeep = () => {
+        setLoading(true);
+        router.post(
+            "/house/pay-upkeep",
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => router.reload(),
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handleRepair = () => {
+        setLoading(true);
+        router.post(
+            "/house/repair",
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => router.reload(),
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const visitorBreadcrumbs: BreadcrumbItem[] = isVisiting
+        ? [
+              { title: "Highscores", href: "/leaderboard" },
+              { title: `${visitingPlayer}'s House`, href: `/players/${visitingPlayer}/house` },
+          ]
+        : [
+              { title: "Dashboard", href: "/dashboard" },
+              { title: "My House", href: "/house" },
+          ];
+
+    // No house - show purchase UI or visitor empty state
     if (!house) {
+        if (isVisiting) {
+            return (
+                <AppLayout breadcrumbs={visitorBreadcrumbs}>
+                    <Head title={`${visitingPlayer}'s House`} />
+                    <div className="mx-auto max-w-2xl p-4">
+                        <div className="rounded-lg border border-stone-700/50 bg-gradient-to-br from-stone-800/80 to-stone-900 p-8 text-center">
+                            <Home className="mx-auto mb-4 h-12 w-12 text-stone-600" />
+                            <h1 className="font-pixel text-xl text-stone-400">No House</h1>
+                            <p className="mt-2 font-pixel text-xs text-stone-500">
+                                {visitingPlayer} does not own a house yet.
+                            </p>
+                        </div>
+                    </div>
+                </AppLayout>
+            );
+        }
+
         return (
-            <AppLayout breadcrumbs={breadcrumbs}>
+            <AppLayout breadcrumbs={visitorBreadcrumbs}>
                 <Head title="My House" />
                 <div className="mx-auto max-w-2xl p-4">
                     <div className="rounded-lg border border-stone-700/50 bg-gradient-to-br from-stone-800/80 to-stone-900 p-8 text-center">
@@ -553,36 +624,137 @@ export default function HouseIndex() {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="My House" />
+        <AppLayout breadcrumbs={visitorBreadcrumbs}>
+            <Head title={isVisiting ? `${visitingPlayer}'s House` : "My House"} />
             <div className="mx-auto max-w-6xl p-4">
+                {/* Visitor Banner */}
+                {isVisiting && (
+                    <div className="mb-4 rounded-lg border border-blue-700/30 bg-blue-900/10 p-2.5">
+                        <div className="flex items-center gap-2 font-pixel text-xs text-blue-300">
+                            <Users className="h-4 w-4" />
+                            Visiting {visitingPlayer}&apos;s house (read-only)
+                        </div>
+                    </div>
+                )}
+
                 {/* Header */}
                 <div className="mb-4 flex flex-wrap items-center gap-3">
                     <div className="rounded-lg bg-amber-900/50 p-2">
                         <Home className="h-6 w-6 text-amber-400" />
                     </div>
                     <div>
-                        <h1 className="font-pixel text-lg text-amber-100">{house.name}</h1>
+                        <h1 className="font-pixel text-lg text-amber-100">
+                            {isVisiting ? `${visitingPlayer}'s ${house.tier_name}` : house.name}
+                        </h1>
                         <p className="font-pixel text-[10px] text-stone-500">
-                            {house.tier_name} &bull; {house.kingdom?.name} &bull; Construction Lv.{" "}
-                            {constructionLevel}
+                            {house.tier_name} &bull; {house.kingdom?.name}
+                            {!isVisiting && <> &bull; Construction Lv. {constructionLevel}</>}
                         </p>
                     </div>
-                    <div className="ml-auto flex items-center gap-3">
-                        <div className="flex items-center gap-1.5 rounded-md bg-stone-800/50 px-2 py-1">
-                            <Package className="h-3.5 w-3.5 text-stone-400" />
-                            <span className="font-pixel text-[10px] text-stone-400">
-                                {house.storage_used}/{house.storage_capacity}
-                            </span>
+                    {canAct && (
+                        <div className="ml-auto flex items-center gap-3">
+                            <div className="flex items-center gap-1.5 rounded-md bg-stone-800/50 px-2 py-1">
+                                <Package className="h-3.5 w-3.5 text-stone-400" />
+                                <span className="font-pixel text-[10px] text-stone-400">
+                                    {house.storage_used}/{house.storage_capacity}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 rounded-md bg-yellow-900/30 px-2 py-1">
+                                <Coins className="h-3.5 w-3.5 text-yellow-400" />
+                                <span className="font-pixel text-[10px] text-yellow-300">
+                                    {playerGold.toLocaleString()}
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-1.5 rounded-md bg-yellow-900/30 px-2 py-1">
-                            <Coins className="h-3.5 w-3.5 text-yellow-400" />
-                            <span className="font-pixel text-[10px] text-yellow-300">
-                                {playerGold.toLocaleString()}
-                            </span>
-                        </div>
-                    </div>
+                    )}
                 </div>
+
+                {/* Upkeep & Condition Panel (owner only) */}
+                {canAct && (
+                    <div className="mb-4 rounded-lg border border-stone-700/50 bg-stone-900/50 p-3">
+                        <div className="flex flex-wrap items-center gap-4">
+                            {/* Condition Bar */}
+                            <div className="flex-1 min-w-[140px]">
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="font-pixel text-[10px] text-stone-400">
+                                        Condition
+                                    </span>
+                                    <span
+                                        className={`font-pixel text-[10px] ${getConditionTextColor(house.condition)}`}
+                                    >
+                                        {house.condition}%
+                                    </span>
+                                </div>
+                                <div className="h-2 rounded-full bg-stone-700/50 overflow-hidden">
+                                    <div
+                                        className={`h-full rounded-full transition-all ${getConditionColor(house.condition)}`}
+                                        style={{ width: `${house.condition}%` }}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Upkeep Due */}
+                            {upkeepDueAt && (
+                                <div className="flex items-center gap-1.5">
+                                    <Clock className="h-3.5 w-3.5 text-stone-400" />
+                                    <span className="font-pixel text-[10px] text-stone-400">
+                                        Due: {new Date(upkeepDueAt).toLocaleDateString()}
+                                    </span>
+                                </div>
+                            )}
+
+                            {/* Pay Upkeep Button */}
+                            {upkeepCost && (
+                                <button
+                                    onClick={handlePayUpkeep}
+                                    disabled={loading || playerGold < upkeepCost}
+                                    className="rounded-md border border-green-600/50 bg-green-900/30 px-3 py-1.5 font-pixel text-[10px] text-green-300 transition-colors hover:bg-green-800/30 disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                    {loading ? (
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                        <>Pay Upkeep ({upkeepCost.toLocaleString()}g)</>
+                                    )}
+                                </button>
+                            )}
+
+                            {/* Repair Button */}
+                            {repairCost !== null &&
+                                repairCost !== undefined &&
+                                house.condition < 100 && (
+                                    <button
+                                        onClick={handleRepair}
+                                        disabled={loading || playerGold < repairCost}
+                                        className="rounded-md border border-orange-600/50 bg-orange-900/30 px-3 py-1.5 font-pixel text-[10px] text-orange-300 transition-colors hover:bg-orange-800/30 disabled:cursor-not-allowed disabled:opacity-40"
+                                    >
+                                        {loading ? (
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                        ) : (
+                                            <>Repair ({repairCost.toLocaleString()}g)</>
+                                        )}
+                                    </button>
+                                )}
+                        </div>
+
+                        {/* Condition Warnings */}
+                        {house.condition <= 50 && (
+                            <div className="mt-2 flex items-center gap-1.5 rounded-md border border-yellow-700/30 bg-yellow-900/10 px-2 py-1">
+                                <AlertTriangle className="h-3.5 w-3.5 text-yellow-400 shrink-0" />
+                                <span className="font-pixel text-[9px] text-yellow-300">
+                                    House buffs disabled due to poor condition!
+                                </span>
+                            </div>
+                        )}
+                        {house.condition <= 25 && (
+                            <div className="mt-1.5 flex items-center gap-1.5 rounded-md border border-red-700/30 bg-red-900/10 px-2 py-1">
+                                <XCircle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                                <span className="font-pixel text-[9px] text-red-300">
+                                    Portals and storage disabled! House at risk of abandonment.
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* House Buffs Summary */}
                 {houseBuffs && Object.keys(houseBuffs).length > 0 && (
@@ -620,7 +792,7 @@ export default function HouseIndex() {
                 )}
 
                 {/* Upgrade Panel */}
-                {upgradeInfo && (
+                {canAct && upgradeInfo && (
                     <div className="mb-4 rounded-lg border border-purple-700/30 bg-purple-900/10 p-3">
                         <div className="flex items-center justify-between">
                             <div>
@@ -675,29 +847,33 @@ export default function HouseIndex() {
                     >
                         Rooms
                     </button>
-                    <button
-                        onClick={() => {
-                            setActiveTab("storage");
-                            setSelectedRoom(null);
-                            setBuildingAt(null);
-                        }}
-                        className={`rounded-md px-3 py-1.5 font-pixel text-xs transition-colors ${activeTab === "storage" ? "bg-amber-900/50 text-amber-300 border border-amber-600/50" : "text-stone-400 hover:text-stone-300 border border-stone-700/50"}`}
-                    >
-                        Storage
-                    </button>
-                    <button
-                        onClick={() => {
-                            setActiveTab("servant");
-                            setSelectedRoom(null);
-                            setBuildingAt(null);
-                        }}
-                        className={`rounded-md px-3 py-1.5 font-pixel text-xs transition-colors ${activeTab === "servant" ? "bg-amber-900/50 text-amber-300 border border-amber-600/50" : "text-stone-400 hover:text-stone-300 border border-stone-700/50"}`}
-                    >
-                        Servant
-                        {servantData?.on_strike && (
-                            <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-red-400" />
-                        )}
-                    </button>
+                    {canAct && (
+                        <>
+                            <button
+                                onClick={() => {
+                                    setActiveTab("storage");
+                                    setSelectedRoom(null);
+                                    setBuildingAt(null);
+                                }}
+                                className={`rounded-md px-3 py-1.5 font-pixel text-xs transition-colors ${activeTab === "storage" ? "bg-amber-900/50 text-amber-300 border border-amber-600/50" : "text-stone-400 hover:text-stone-300 border border-stone-700/50"}`}
+                            >
+                                Storage
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setActiveTab("servant");
+                                    setSelectedRoom(null);
+                                    setBuildingAt(null);
+                                }}
+                                className={`rounded-md px-3 py-1.5 font-pixel text-xs transition-colors ${activeTab === "servant" ? "bg-amber-900/50 text-amber-300 border border-amber-600/50" : "text-stone-400 hover:text-stone-300 border border-stone-700/50"}`}
+                            >
+                                Servant
+                                {servantData?.on_strike && (
+                                    <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-red-400" />
+                                )}
+                            </button>
+                        </>
+                    )}
                 </div>
 
                 {activeTab === "rooms" && (
@@ -757,12 +933,17 @@ export default function HouseIndex() {
                                         <button
                                             key={`${x},${y}`}
                                             onClick={() => {
-                                                if (house.rooms.length < house.max_rooms) {
+                                                if (
+                                                    canAct &&
+                                                    house.rooms.length < house.max_rooms
+                                                ) {
                                                     setBuildingAt({ x, y });
                                                     setSelectedRoom(null);
                                                 }
                                             }}
-                                            disabled={house.rooms.length >= house.max_rooms}
+                                            disabled={
+                                                !canAct || house.rooms.length >= house.max_rooms
+                                            }
                                             className={`flex aspect-square flex-col items-center justify-center rounded-lg border-2 border-dashed p-2 transition-all ${
                                                 isBuildTarget
                                                     ? "border-green-400 bg-green-900/20"
@@ -859,8 +1040,9 @@ export default function HouseIndex() {
                                 <div className="py-8 text-center">
                                     <Home className="mx-auto h-8 w-8 text-stone-600" />
                                     <p className="mt-2 font-pixel text-xs text-stone-500">
-                                        Click a room to view details, or click an empty cell to
-                                        build.
+                                        {isVisiting
+                                            ? "Click a room to view its furnishings."
+                                            : "Click a room to view details, or click an empty cell to build."}
                                     </p>
                                 </div>
                             )}

@@ -15,6 +15,7 @@ class PlayerHouse extends Model
         'name',
         'tier',
         'condition',
+        'upkeep_due_at',
         'kingdom_id',
         'compost_charges',
     ];
@@ -24,6 +25,7 @@ class PlayerHouse extends Model
         return [
             'condition' => 'integer',
             'compost_charges' => 'integer',
+            'upkeep_due_at' => 'datetime',
         ];
     }
 
@@ -85,5 +87,35 @@ class PlayerHouse extends Model
     public function getStorageUsed(): int
     {
         return $this->storage()->sum('quantity');
+    }
+
+    public function isUpkeepOverdue(): bool
+    {
+        return $this->upkeep_due_at && $this->upkeep_due_at->isPast();
+    }
+
+    public function getUpkeepCost(): int
+    {
+        return ConstructionConfig::HOUSE_TIERS[$this->tier]['upkeep'] ?? 100;
+    }
+
+    public function getRepairCost(): int
+    {
+        return (int) ceil($this->getUpkeepCost() * (100 - $this->condition) * 0.5);
+    }
+
+    public function areBuffsDisabled(): bool
+    {
+        return $this->condition <= 50;
+    }
+
+    public function arePortalsDisabled(): bool
+    {
+        return $this->condition <= 25;
+    }
+
+    public function areStorageDisabled(): bool
+    {
+        return $this->condition <= 25;
     }
 }

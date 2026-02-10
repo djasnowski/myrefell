@@ -145,6 +145,7 @@ Route::post('forgot-username', [ForgotUsernameController::class, 'store'])
 
 // Public player profiles
 Route::get('players/{username}', [PlayerProfileController::class, 'show'])->name('players.show');
+Route::get('players/{username}/house', [PlayerHouseController::class, 'visitHouse'])->name('players.house');
 
 // Public leaderboard
 Route::get('leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
@@ -931,6 +932,8 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('/build-room', [PlayerHouseController::class, 'buildRoom'])->name('build-room');
         Route::post('/build-furniture', [PlayerHouseController::class, 'buildFurniture'])->name('build-furniture');
         Route::post('/demolish-furniture', [PlayerHouseController::class, 'demolishFurniture'])->name('demolish-furniture');
+        Route::post('/pay-upkeep', [PlayerHouseController::class, 'payUpkeep'])->name('pay-upkeep');
+        Route::post('/repair', [PlayerHouseController::class, 'repairHouse'])->name('repair');
         Route::post('/deposit', [PlayerHouseController::class, 'deposit'])->name('deposit');
         Route::post('/withdraw', [PlayerHouseController::class, 'withdraw'])->name('withdraw');
         Route::post('/set-portal', [PlayerHouseController::class, 'setPortal'])->name('set-portal');

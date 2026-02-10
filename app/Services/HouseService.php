@@ -71,6 +71,7 @@ class HouseService
                 'name' => 'My House',
                 'tier' => 'cottage',
                 'condition' => 100,
+                'upkeep_due_at' => now()->addDays(7),
                 'kingdom_id' => $user->current_kingdom_id,
             ]);
 
@@ -365,6 +366,10 @@ class HouseService
             return ['success' => false, 'message' => 'You do not own a house.'];
         }
 
+        if ($house->areStorageDisabled()) {
+            return ['success' => false, 'message' => 'House storage is disabled due to poor condition. Repair your house first.'];
+        }
+
         if ($quantity < 1) {
             return ['success' => false, 'message' => 'Invalid quantity.'];
         }
@@ -407,6 +412,10 @@ class HouseService
         $house = PlayerHouse::where('player_id', $user->id)->first();
         if (! $house) {
             return ['success' => false, 'message' => 'You do not own a house.'];
+        }
+
+        if ($house->areStorageDisabled()) {
+            return ['success' => false, 'message' => 'House storage is disabled due to poor condition. Repair your house first.'];
         }
 
         if ($quantity < 1) {
@@ -548,6 +557,11 @@ class HouseService
             return ['success' => false, 'message' => 'Invalid portal slot.'];
         }
 
+        $houseForCheck = PlayerHouse::where('player_id', $user->id)->first();
+        if ($houseForCheck && $houseForCheck->arePortalsDisabled()) {
+            return ['success' => false, 'message' => 'Portals are disabled due to poor house condition. Repair your house first.'];
+        }
+
         if ($user->isTraveling()) {
             return ['success' => false, 'message' => 'You cannot teleport while traveling.'];
         }
@@ -620,6 +634,103 @@ class HouseService
             'kingdom' => Kingdom::find($id),
             default => null,
         };
+    }
+
+    /**
+     * Pay house upkeep to extend the due date by 7 days.
+     */
+    public function payUpkeep(User $user): array
+    {
+        $house = PlayerHouse::where('player_id', $user->id)->first();
+        if (! $house) {
+            return ['success' => false, 'message' => 'You do not own a house.'];
+        }
+
+        $cost = $house->getUpkeepCost();
+
+        if ($user->gold < $cost) {
+            return ['success' => false, 'message' => 'Not enough gold. Upkeep costs '.number_format($cost).' gold.'];
+        }
+
+        return DB::transaction(function () use ($user, $house, $cost) {
+            $user->gold -= $cost;
+            $user->save();
+
+            $house->upkeep_due_at = now()->addDays(7);
+            $house->save();
+
+            return [
+                'success' => true,
+                'message' => 'Upkeep paid! Next payment due in 7 days.',
+            ];
+        });
+    }
+
+    /**
+     * Repair a house back to full condition.
+     */
+    public function repairHouse(User $user): array
+    {
+        $house = PlayerHouse::where('player_id', $user->id)->first();
+        if (! $house) {
+            return ['success' => false, 'message' => 'You do not own a house.'];
+        }
+
+        if ($house->condition >= 100) {
+            return ['success' => false, 'message' => 'Your house is already in perfect condition.'];
+        }
+
+        $cost = $house->getRepairCost();
+
+        if ($user->gold < $cost) {
+            return ['success' => false, 'message' => 'Not enough gold. Repairs cost '.number_format($cost).' gold.'];
+        }
+
+        return DB::transaction(function () use ($user, $house, $cost) {
+            $user->gold -= $cost;
+            $user->save();
+
+            $house->condition = 100;
+            $house->save();
+
+            return [
+                'success' => true,
+                'message' => 'House repaired to full condition for '.number_format($cost).' gold!',
+            ];
+        });
+    }
+
+    /**
+     * Process upkeep degradation for all overdue houses.
+     *
+     * @return array{processed: int, degraded: int, abandoned: int}
+     */
+    public function processUpkeepDegradation(): array
+    {
+        $houses = PlayerHouse::where('upkeep_due_at', '<', now())
+            ->where('condition', '>', 0)
+            ->get();
+
+        $degraded = 0;
+        $abandoned = 0;
+
+        foreach ($houses as $house) {
+            $newCondition = max(0, $house->condition - 10);
+            $house->condition = $newCondition;
+            $house->save();
+            $degraded++;
+
+            if ($newCondition <= 0) {
+                $house->delete();
+                $abandoned++;
+            }
+        }
+
+        return [
+            'processed' => $houses->count(),
+            'degraded' => $degraded,
+            'abandoned' => $abandoned,
+        ];
     }
 
     /**

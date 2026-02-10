@@ -12,6 +12,7 @@ import {
     Hammer,
     Hand,
     Heart,
+    Home,
     Leaf,
     Pickaxe,
     Scissors,
@@ -32,6 +33,7 @@ interface PlayerProfile {
     total_level: number;
     total_xp: number;
     total_rank: number | null;
+    has_house: boolean;
 }
 
 interface SkillData {
@@ -295,6 +297,17 @@ export default function PlayerShow() {
                                             </div>
                                         )}
                                     </div>
+                                    {player.has_house && (
+                                        <div className="mt-3">
+                                            <Link
+                                                href={`/players/${player.username}/house`}
+                                                className="inline-flex items-center gap-2 rounded-lg bg-card/50 border border-border/30 px-3 py-1.5 text-sm text-muted-foreground transition hover:border-primary/50 hover:text-primary"
+                                            >
+                                                <Home className="h-4 w-4" />
+                                                Visit House
+                                            </Link>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

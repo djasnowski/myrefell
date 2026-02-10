@@ -37,6 +37,12 @@ class HouseBuffService
             return [];
         }
 
+        if ($house->areBuffsDisabled()) {
+            $this->cache[$user->id] = [];
+
+            return [];
+        }
+
         $effects = [];
 
         foreach ($house->rooms as $room) {
@@ -91,6 +97,10 @@ class HouseBuffService
             ->first();
 
         if (! $house) {
+            return [];
+        }
+
+        if ($house->areBuffsDisabled()) {
             return [];
         }
 

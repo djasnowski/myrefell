@@ -15,6 +15,7 @@ import {
     Hammer,
     Hand,
     Heart,
+    Home,
     Leaf,
     Pickaxe,
     Scissors,
@@ -36,14 +37,23 @@ interface LeaderboardEntry {
     xp: number;
 }
 
+interface HouseLeaderboardEntry {
+    rank: number;
+    username: string;
+    tier_name: string;
+    room_count: number;
+    house_value: number;
+}
+
 interface LeaderboardData {
-    entries: LeaderboardEntry[];
+    entries: (LeaderboardEntry | HouseLeaderboardEntry)[];
     current_page: number;
     last_page: number;
     total: number;
 }
 
 interface PageProps extends SharedData {
+    tab?: string;
     leaderboard: LeaderboardData;
     selectedSkill: string;
     skills: string[];
@@ -92,11 +102,27 @@ const skillColors: Record<string, string> = {
 };
 
 export default function LeaderboardIndex() {
-    const { leaderboard, selectedSkill, skills, auth } = usePage<PageProps>().props;
+    const { leaderboard, selectedSkill, skills, auth, tab = "skills" } = usePage<PageProps>().props;
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
     const Icon = skillIcons[selectedSkill] || Sword;
     const iconColor = skillColors[selectedSkill] || "text-amber-400";
+
+    const handleTabChange = (newTab: string) => {
+        if (newTab === "houses") {
+            router.get(
+                "/leaderboard",
+                { tab: "houses" },
+                { preserveState: true, preserveScroll: false },
+            );
+        } else {
+            router.get(
+                "/leaderboard",
+                { skill: "total" },
+                { preserveState: true, preserveScroll: false },
+            );
+        }
+    };
 
     const handleSkillChange = (skill: string) => {
         setDropdownOpen(false);
@@ -104,11 +130,19 @@ export default function LeaderboardIndex() {
     };
 
     const handlePageChange = (page: number) => {
-        router.get(
-            "/leaderboard",
-            { skill: selectedSkill, page },
-            { preserveState: true, preserveScroll: true },
-        );
+        if (tab === "houses") {
+            router.get(
+                "/leaderboard",
+                { tab: "houses", page },
+                { preserveState: true, preserveScroll: true },
+            );
+        } else {
+            router.get(
+                "/leaderboard",
+                { skill: selectedSkill, page },
+                { preserveState: true, preserveScroll: true },
+            );
+        }
     };
 
     return (
@@ -190,88 +224,123 @@ export default function LeaderboardIndex() {
                     </div>
                 </section>
 
-                {/* Skill Tabs - Desktop */}
-                <section className="relative pb-6 hidden sm:block">
+                {/* Main Tab Toggle */}
+                <section className="relative pb-4">
                     <div className="mx-auto max-w-7xl px-6">
-                        <div className="flex flex-wrap justify-center gap-2">
-                            {skills.map((skill) => {
-                                const SkillIcon = skillIcons[skill] || Sword;
-                                const color = skillColors[skill] || "text-amber-400";
-                                const isSelected = selectedSkill === skill;
-
-                                return (
-                                    <button
-                                        key={skill}
-                                        onClick={() => handleSkillChange(skill)}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors capitalize ${
-                                            isSelected
-                                                ? "bg-primary/20 border-2 border-primary/50 text-primary"
-                                                : "bg-card/50 border-2 border-border/50 text-muted-foreground hover:text-foreground hover:border-border"
-                                        }`}
-                                    >
-                                        <SkillIcon className={`h-4 w-4 ${color}`} />
-                                        {skill === "total" ? "Total" : skill}
-                                    </button>
-                                );
-                            })}
+                        <div className="flex justify-center gap-2">
+                            <button
+                                onClick={() => handleTabChange("skills")}
+                                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                                    tab === "skills"
+                                        ? "bg-primary/20 border-2 border-primary/50 text-primary"
+                                        : "bg-card/50 border-2 border-border/50 text-muted-foreground hover:text-foreground hover:border-border"
+                                }`}
+                            >
+                                <Trophy className="h-4 w-4" />
+                                Skills
+                            </button>
+                            <button
+                                onClick={() => handleTabChange("houses")}
+                                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                                    tab === "houses"
+                                        ? "bg-primary/20 border-2 border-primary/50 text-primary"
+                                        : "bg-card/50 border-2 border-border/50 text-muted-foreground hover:text-foreground hover:border-border"
+                                }`}
+                            >
+                                <Home className="h-4 w-4" />
+                                Houses
+                            </button>
                         </div>
                     </div>
                 </section>
+
+                {/* Skill Tabs - Desktop */}
+                {tab === "skills" && (
+                    <section className="relative pb-6 hidden sm:block">
+                        <div className="mx-auto max-w-7xl px-6">
+                            <div className="flex flex-wrap justify-center gap-2">
+                                {skills.map((skill) => {
+                                    const SkillIcon = skillIcons[skill] || Sword;
+                                    const color = skillColors[skill] || "text-amber-400";
+                                    const isSelected = selectedSkill === skill;
+
+                                    return (
+                                        <button
+                                            key={skill}
+                                            onClick={() => handleSkillChange(skill)}
+                                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors capitalize ${
+                                                isSelected
+                                                    ? "bg-primary/20 border-2 border-primary/50 text-primary"
+                                                    : "bg-card/50 border-2 border-border/50 text-muted-foreground hover:text-foreground hover:border-border"
+                                            }`}
+                                        >
+                                            <SkillIcon className={`h-4 w-4 ${color}`} />
+                                            {skill === "total" ? "Total" : skill}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </section>
+                )}
 
                 {/* Skill Dropdown - Mobile */}
-                <section className="relative pb-6 sm:hidden">
-                    <div className="mx-auto max-w-7xl px-6">
-                        <div className="relative">
-                            <button
-                                onClick={() => setDropdownOpen(!dropdownOpen)}
-                                className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-lg bg-card/50 border-2 border-primary/50 text-primary"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Icon className={`h-5 w-5 ${iconColor}`} />
-                                    <span className="font-medium capitalize">
-                                        {selectedSkill === "total" ? "Total" : selectedSkill}
-                                    </span>
-                                </div>
-                                <ChevronDown
-                                    className={`h-5 w-5 transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
-                                />
-                            </button>
-
-                            {dropdownOpen && (
-                                <>
-                                    <div
-                                        className="fixed inset-0 z-10"
-                                        onClick={() => setDropdownOpen(false)}
-                                    />
-                                    <div className="absolute top-full left-0 right-0 mt-2 z-20 rounded-lg border-2 border-border/50 bg-card/95 backdrop-blur-sm shadow-xl max-h-80 overflow-y-auto">
-                                        {skills.map((skill) => {
-                                            const SkillIcon = skillIcons[skill] || Sword;
-                                            const color = skillColors[skill] || "text-amber-400";
-                                            const isSelected = selectedSkill === skill;
-
-                                            return (
-                                                <button
-                                                    key={skill}
-                                                    onClick={() => handleSkillChange(skill)}
-                                                    className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors capitalize border-b border-border/30 last:border-b-0 ${
-                                                        isSelected
-                                                            ? "bg-primary/20 text-primary"
-                                                            : "text-muted-foreground hover:bg-card hover:text-foreground"
-                                                    }`}
-                                                >
-                                                    <SkillIcon className={`h-5 w-5 ${color}`} />
-                                                    <span className="font-medium">
-                                                        {skill === "total" ? "Total" : skill}
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
+                {tab === "skills" && (
+                    <section className="relative pb-6 sm:hidden">
+                        <div className="mx-auto max-w-7xl px-6">
+                            <div className="relative">
+                                <button
+                                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                                    className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-lg bg-card/50 border-2 border-primary/50 text-primary"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <Icon className={`h-5 w-5 ${iconColor}`} />
+                                        <span className="font-medium capitalize">
+                                            {selectedSkill === "total" ? "Total" : selectedSkill}
+                                        </span>
                                     </div>
-                                </>
-                            )}
+                                    <ChevronDown
+                                        className={`h-5 w-5 transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
+                                    />
+                                </button>
+
+                                {dropdownOpen && (
+                                    <>
+                                        <div
+                                            className="fixed inset-0 z-10"
+                                            onClick={() => setDropdownOpen(false)}
+                                        />
+                                        <div className="absolute top-full left-0 right-0 mt-2 z-20 rounded-lg border-2 border-border/50 bg-card/95 backdrop-blur-sm shadow-xl max-h-80 overflow-y-auto">
+                                            {skills.map((skill) => {
+                                                const SkillIcon = skillIcons[skill] || Sword;
+                                                const color =
+                                                    skillColors[skill] || "text-amber-400";
+                                                const isSelected = selectedSkill === skill;
+
+                                                return (
+                                                    <button
+                                                        key={skill}
+                                                        onClick={() => handleSkillChange(skill)}
+                                                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors capitalize border-b border-border/30 last:border-b-0 ${
+                                                            isSelected
+                                                                ? "bg-primary/20 text-primary"
+                                                                : "text-muted-foreground hover:bg-card hover:text-foreground"
+                                                        }`}
+                                                    >
+                                                        <SkillIcon className={`h-5 w-5 ${color}`} />
+                                                        <span className="font-medium">
+                                                            {skill === "total" ? "Total" : skill}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
+                )}
 
                 {/* Leaderboard Content */}
                 <section className="relative pb-24">
@@ -279,97 +348,213 @@ export default function LeaderboardIndex() {
                         <div className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-6">
                             <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/50">
                                 <div className="flex items-center gap-2">
-                                    <Icon className={`h-6 w-6 ${iconColor}`} />
+                                    {tab === "houses" ? (
+                                        <Home className="h-6 w-6 text-amber-400" />
+                                    ) : (
+                                        <Icon className={`h-6 w-6 ${iconColor}`} />
+                                    )}
                                     <h2 className="font-[Cinzel] text-xl font-bold text-foreground">
-                                        Rankings
+                                        {tab === "houses" ? "House Rankings" : "Rankings"}
                                     </h2>
                                 </div>
                                 <span className="text-sm text-muted-foreground">
-                                    {leaderboard.total.toLocaleString()} players
+                                    {leaderboard.total.toLocaleString()}{" "}
+                                    {tab === "houses" ? "houses" : "players"}
                                 </span>
                             </div>
 
                             {leaderboard.entries.length === 0 ? (
                                 <p className="text-center text-muted-foreground py-12">
-                                    {selectedSkill === "total"
-                                        ? "No players with 250+ total XP yet"
-                                        : `No players meeting requirements yet`}
+                                    {tab === "houses"
+                                        ? "No houses built yet"
+                                        : selectedSkill === "total"
+                                          ? "No players with 250+ total XP yet"
+                                          : "No players meeting requirements yet"}
                                 </p>
+                            ) : tab === "houses" ? (
+                                <>
+                                    <div className="space-y-2">
+                                        {(leaderboard.entries as HouseLeaderboardEntry[]).map(
+                                            (entry) => (
+                                                <div
+                                                    key={entry.rank}
+                                                    className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border transition-all ${
+                                                        entry.rank === 1
+                                                            ? "bg-amber-500/10 border-amber-500/30"
+                                                            : entry.rank === 2
+                                                              ? "bg-slate-400/10 border-slate-400/30"
+                                                              : entry.rank === 3
+                                                                ? "bg-orange-500/10 border-orange-500/30"
+                                                                : "bg-card/30 border-border/30"
+                                                    }`}
+                                                >
+                                                    <div className="w-8 sm:w-10 text-center shrink-0">
+                                                        {entry.rank === 1 ? (
+                                                            <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-amber-400 mx-auto" />
+                                                        ) : entry.rank === 2 ? (
+                                                            <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-slate-300 mx-auto" />
+                                                        ) : entry.rank === 3 ? (
+                                                            <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-orange-500 mx-auto" />
+                                                        ) : (
+                                                            <span className="text-sm text-muted-foreground">
+                                                                #{entry.rank}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex-1 min-w-0">
+                                                        <Link
+                                                            href={`/players/${entry.username}/house`}
+                                                            className={`truncate block hover:underline font-medium ${
+                                                                entry.rank === 1
+                                                                    ? "text-amber-300 hover:text-amber-200"
+                                                                    : entry.rank === 2
+                                                                      ? "text-slate-200 hover:text-slate-100"
+                                                                      : entry.rank === 3
+                                                                        ? "text-orange-300 hover:text-orange-200"
+                                                                        : "text-foreground/80 hover:text-foreground"
+                                                            }`}
+                                                        >
+                                                            {entry.username}
+                                                        </Link>
+                                                        <p className="font-pixel text-xs text-muted-foreground mt-0.5">
+                                                            {entry.tier_name} &middot;{" "}
+                                                            {entry.room_count} rooms
+                                                        </p>
+                                                    </div>
+
+                                                    <div
+                                                        className={`shrink-0 rounded-lg px-2.5 sm:px-3 py-1 sm:py-1.5 text-center ${
+                                                            entry.rank === 1
+                                                                ? "bg-amber-500/20 text-amber-300"
+                                                                : entry.rank === 2
+                                                                  ? "bg-slate-400/20 text-slate-200"
+                                                                  : entry.rank === 3
+                                                                    ? "bg-orange-500/20 text-orange-300"
+                                                                    : "bg-primary/10 text-primary"
+                                                        }`}
+                                                    >
+                                                        <p className="text-[8px] sm:text-[9px] uppercase tracking-wide opacity-70">
+                                                            value
+                                                        </p>
+                                                        <p className="text-lg sm:text-xl font-bold">
+                                                            {entry.house_value.toLocaleString()}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ),
+                                        )}
+                                    </div>
+
+                                    {leaderboard.last_page > 1 && (
+                                        <div className="mt-6 flex items-center justify-center gap-2 border-t border-border/50 pt-4">
+                                            <button
+                                                onClick={() =>
+                                                    handlePageChange(leaderboard.current_page - 1)
+                                                }
+                                                disabled={leaderboard.current_page === 1}
+                                                className="flex items-center gap-1 rounded-lg border border-border/50 bg-card/50 px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-border hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                <ChevronLeft className="h-4 w-4" />
+                                                Prev
+                                            </button>
+                                            <span className="px-4 text-sm text-muted-foreground">
+                                                Page {leaderboard.current_page} of{" "}
+                                                {leaderboard.last_page}
+                                            </span>
+                                            <button
+                                                onClick={() =>
+                                                    handlePageChange(leaderboard.current_page + 1)
+                                                }
+                                                disabled={
+                                                    leaderboard.current_page ===
+                                                    leaderboard.last_page
+                                                }
+                                                className="flex items-center gap-1 rounded-lg border border-border/50 bg-card/50 px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-border hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                Next
+                                                <ChevronRight className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
                             ) : (
                                 <>
                                     <div className="space-y-2">
-                                        {leaderboard.entries.map((entry) => (
-                                            <div
-                                                key={entry.rank}
-                                                className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border transition-all ${
-                                                    entry.rank === 1
-                                                        ? "bg-amber-500/10 border-amber-500/30"
-                                                        : entry.rank === 2
-                                                          ? "bg-slate-400/10 border-slate-400/30"
-                                                          : entry.rank === 3
-                                                            ? "bg-orange-500/10 border-orange-500/30"
-                                                            : "bg-card/30 border-border/30"
-                                                }`}
-                                            >
-                                                {/* Rank */}
-                                                <div className="w-8 sm:w-10 text-center shrink-0">
-                                                    {entry.rank === 1 ? (
-                                                        <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-amber-400 mx-auto" />
-                                                    ) : entry.rank === 2 ? (
-                                                        <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-slate-300 mx-auto" />
-                                                    ) : entry.rank === 3 ? (
-                                                        <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-orange-500 mx-auto" />
-                                                    ) : (
-                                                        <span className="text-sm text-muted-foreground">
-                                                            #{entry.rank}
-                                                        </span>
-                                                    )}
-                                                </div>
-
-                                                {/* Username & XP */}
-                                                <div className="flex-1 min-w-0">
-                                                    <Link
-                                                        href={`/players/${entry.username}`}
-                                                        className={`truncate block hover:underline font-medium ${
-                                                            entry.rank === 1
-                                                                ? "text-amber-300 hover:text-amber-200"
-                                                                : entry.rank === 2
-                                                                  ? "text-slate-200 hover:text-slate-100"
-                                                                  : entry.rank === 3
-                                                                    ? "text-orange-300 hover:text-orange-200"
-                                                                    : "text-foreground/80 hover:text-foreground"
-                                                        }`}
-                                                    >
-                                                        {entry.username}
-                                                    </Link>
-                                                    <p className="font-pixel text-xs text-muted-foreground mt-0.5">
-                                                        {entry.xp.toLocaleString()} xp
-                                                    </p>
-                                                </div>
-
-                                                {/* Level Box */}
+                                        {(leaderboard.entries as LeaderboardEntry[]).map(
+                                            (entry) => (
                                                 <div
-                                                    className={`shrink-0 rounded-lg px-2.5 sm:px-3 py-1 sm:py-1.5 text-center ${
+                                                    key={entry.rank}
+                                                    className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border transition-all ${
                                                         entry.rank === 1
-                                                            ? "bg-amber-500/20 text-amber-300"
+                                                            ? "bg-amber-500/10 border-amber-500/30"
                                                             : entry.rank === 2
-                                                              ? "bg-slate-400/20 text-slate-200"
+                                                              ? "bg-slate-400/10 border-slate-400/30"
                                                               : entry.rank === 3
-                                                                ? "bg-orange-500/20 text-orange-300"
-                                                                : "bg-primary/10 text-primary"
+                                                                ? "bg-orange-500/10 border-orange-500/30"
+                                                                : "bg-card/30 border-border/30"
                                                     }`}
                                                 >
-                                                    <p className="text-[8px] sm:text-[9px] uppercase tracking-wide opacity-70">
-                                                        {selectedSkill === "total"
-                                                            ? "total"
-                                                            : "lvl"}
-                                                    </p>
-                                                    <p className="text-lg sm:text-xl font-bold">
-                                                        {entry.level}
-                                                    </p>
+                                                    {/* Rank */}
+                                                    <div className="w-8 sm:w-10 text-center shrink-0">
+                                                        {entry.rank === 1 ? (
+                                                            <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-amber-400 mx-auto" />
+                                                        ) : entry.rank === 2 ? (
+                                                            <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-slate-300 mx-auto" />
+                                                        ) : entry.rank === 3 ? (
+                                                            <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-orange-500 mx-auto" />
+                                                        ) : (
+                                                            <span className="text-sm text-muted-foreground">
+                                                                #{entry.rank}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Username & XP */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <Link
+                                                            href={`/players/${entry.username}`}
+                                                            className={`truncate block hover:underline font-medium ${
+                                                                entry.rank === 1
+                                                                    ? "text-amber-300 hover:text-amber-200"
+                                                                    : entry.rank === 2
+                                                                      ? "text-slate-200 hover:text-slate-100"
+                                                                      : entry.rank === 3
+                                                                        ? "text-orange-300 hover:text-orange-200"
+                                                                        : "text-foreground/80 hover:text-foreground"
+                                                            }`}
+                                                        >
+                                                            {entry.username}
+                                                        </Link>
+                                                        <p className="font-pixel text-xs text-muted-foreground mt-0.5">
+                                                            {entry.xp.toLocaleString()} xp
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Level Box */}
+                                                    <div
+                                                        className={`shrink-0 rounded-lg px-2.5 sm:px-3 py-1 sm:py-1.5 text-center ${
+                                                            entry.rank === 1
+                                                                ? "bg-amber-500/20 text-amber-300"
+                                                                : entry.rank === 2
+                                                                  ? "bg-slate-400/20 text-slate-200"
+                                                                  : entry.rank === 3
+                                                                    ? "bg-orange-500/20 text-orange-300"
+                                                                    : "bg-primary/10 text-primary"
+                                                        }`}
+                                                    >
+                                                        <p className="text-[8px] sm:text-[9px] uppercase tracking-wide opacity-70">
+                                                            {selectedSkill === "total"
+                                                                ? "total"
+                                                                : "lvl"}
+                                                        </p>
+                                                        <p className="text-lg sm:text-xl font-bold">
+                                                            {entry.level}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            ),
+                                        )}
                                     </div>
 
                                     {/* Pagination */}

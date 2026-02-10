@@ -87,9 +87,112 @@ class PlayerHouseController extends Controller
             'servantTiers' => $house ? $this->getServantTierInfo($user) : [],
             'trophyData' => $house ? $this->trophyService->getTrophyData($user) : null,
             'gardenData' => $house ? $this->gardenService->getGardenData($user) : null,
+            'upkeepDueAt' => $house?->upkeep_due_at?->toISOString(),
+            'upkeepCost' => $house?->getUpkeepCost(),
+            'repairCost' => $house && $house->condition < 100 ? $house->getRepairCost() : null,
         ];
 
         return Inertia::render('House/Index', $data);
+    }
+
+    /**
+     * Visit another player's house (read-only).
+     */
+    public function visitHouse(string $username): Response
+    {
+        $player = User::whereRaw('LOWER(username) = ?', [strtolower($username)])->first();
+
+        if (! $player) {
+            abort(404);
+        }
+
+        $house = PlayerHouse::where('player_id', $player->id)
+            ->with(['rooms.furniture', 'kingdom'])
+            ->first();
+
+        if (! $house) {
+            return Inertia::render('House/Index', [
+                'house' => null,
+                'isVisiting' => true,
+                'visitingPlayer' => $player->username,
+                'canPurchase' => null,
+                'purchaseCost' => 0,
+                'roomTypes' => [],
+                'constructionLevel' => 0,
+                'playerGold' => 0,
+                'upgradeInfo' => null,
+                'houseBuffs' => [],
+                'adjacencyBonuses' => [],
+                'adjacencyDefinitions' => ConstructionConfig::ADJACENCY_BONUSES,
+                'portals' => [],
+                'availableDestinations' => [],
+                'servantData' => null,
+                'servantTiers' => [],
+                'trophyData' => null,
+                'gardenData' => null,
+                'upkeepDueAt' => null,
+                'upkeepCost' => null,
+                'repairCost' => null,
+            ]);
+        }
+
+        $houseBuffs = $this->houseBuffService->getHouseEffects($player);
+
+        $house->load('rooms');
+        $adjacencyBonuses = $this->houseBuffService->getAdjacencyBonuses($house);
+
+        $house->load('trophies');
+        $trophyData = $this->trophyService->getTrophyData($player);
+
+        $gardenData = $this->gardenService->getGardenData($player);
+        // Strip available_seeds for visitors
+        if ($gardenData) {
+            $gardenData['available_seeds'] = [];
+        }
+
+        return Inertia::render('House/Index', [
+            'house' => $this->formatHouseForVisitor($house),
+            'isVisiting' => true,
+            'visitingPlayer' => $player->username,
+            'canPurchase' => null,
+            'purchaseCost' => 0,
+            'roomTypes' => [],
+            'constructionLevel' => 0,
+            'playerGold' => 0,
+            'upgradeInfo' => null,
+            'houseBuffs' => $houseBuffs,
+            'adjacencyBonuses' => $adjacencyBonuses,
+            'adjacencyDefinitions' => ConstructionConfig::ADJACENCY_BONUSES,
+            'portals' => [],
+            'availableDestinations' => [],
+            'servantData' => null,
+            'servantTiers' => [],
+            'trophyData' => $trophyData,
+            'gardenData' => $gardenData,
+            'upkeepDueAt' => null,
+            'upkeepCost' => null,
+            'repairCost' => null,
+        ]);
+    }
+
+    /**
+     * Pay house upkeep.
+     */
+    public function payUpkeep(Request $request): RedirectResponse
+    {
+        $result = $this->houseService->payUpkeep($request->user());
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Repair house condition.
+     */
+    public function repairHouse(Request $request): RedirectResponse
+    {
+        $result = $this->houseService->repairHouse($request->user());
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
     }
 
     /**
@@ -601,6 +704,66 @@ class PlayerHouseController extends Controller
                 'quantity' => $s->quantity,
             ])->toArray(),
         ];
+    }
+
+    /**
+     * Format house data for visitors (omits storage and hotspot options).
+     */
+    protected function formatHouseForVisitor($house): array
+    {
+        $tierConfig = ConstructionConfig::HOUSE_TIERS[$house->tier] ?? [];
+
+        return [
+            'id' => $house->id,
+            'name' => $house->name,
+            'tier' => $house->tier,
+            'tier_name' => $tierConfig['name'] ?? ucfirst($house->tier),
+            'condition' => $house->condition,
+            'grid_size' => $house->getGridSize(),
+            'max_rooms' => $house->getMaxRooms(),
+            'storage_capacity' => $house->getStorageCapacity(),
+            'storage_used' => $house->getStorageUsed(),
+            'kingdom' => $house->kingdom ? [
+                'id' => $house->kingdom->id,
+                'name' => $house->kingdom->name,
+            ] : null,
+            'rooms' => $house->rooms->map(fn ($room) => [
+                'id' => $room->id,
+                'room_type' => $room->room_type,
+                'room_name' => ConstructionConfig::ROOMS[$room->room_type]['name'] ?? ucfirst($room->room_type),
+                'grid_x' => $room->grid_x,
+                'grid_y' => $room->grid_y,
+                'hotspots' => $this->getHotspotDataForVisitor($room),
+            ])->toArray(),
+            'storage' => [],
+        ];
+    }
+
+    /**
+     * Get hotspot data for visitors (current furniture only, no options).
+     */
+    protected function getHotspotDataForVisitor($room): array
+    {
+        $roomConfig = ConstructionConfig::ROOMS[$room->room_type] ?? null;
+        if (! $roomConfig) {
+            return [];
+        }
+
+        $hotspots = [];
+        foreach ($roomConfig['hotspots'] as $slug => $hotspot) {
+            $currentFurniture = $room->furniture->where('hotspot_slug', $slug)->first();
+
+            $hotspots[$slug] = [
+                'name' => $hotspot['name'],
+                'current' => $currentFurniture ? [
+                    'key' => $currentFurniture->furniture_key,
+                    'name' => $hotspot['options'][$currentFurniture->furniture_key]['name'] ?? 'Unknown',
+                ] : null,
+                'options' => [],
+            ];
+        }
+
+        return $hotspots;
     }
 
     /**
