@@ -16,12 +16,14 @@ class PlayerHouse extends Model
         'tier',
         'condition',
         'kingdom_id',
+        'compost_charges',
     ];
 
     protected function casts(): array
     {
         return [
             'condition' => 'integer',
+            'compost_charges' => 'integer',
         ];
     }
 
@@ -58,6 +60,11 @@ class PlayerHouse extends Model
     public function trophies(): HasMany
     {
         return $this->hasMany(HouseTrophy::class);
+    }
+
+    public function gardenPlots(): HasMany
+    {
+        return $this->hasMany(GardenPlot::class);
     }
 
     public function getMaxRooms(): int

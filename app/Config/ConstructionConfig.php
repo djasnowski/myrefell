@@ -936,6 +936,69 @@ class ConstructionConfig
                 ],
             ],
         ],
+        'garden' => [
+            'name' => 'Garden',
+            'description' => 'An indoor garden for growing herbs year-round.',
+            'level' => 25,
+            'cost' => 40000,
+            'hotspots' => [
+                'planter_1' => [
+                    'name' => 'Planter Bed 1',
+                    'options' => [
+                        'wooden_planter' => ['name' => 'Wooden Planter', 'level' => 25, 'materials' => ['Plank' => 4, 'Steel Nails' => 5], 'xp' => 300],
+                        'stone_planter' => ['name' => 'Stone Planter', 'level' => 40, 'materials' => ['Limestone Brick' => 3, 'Willow Plank' => 2], 'xp' => 600],
+                        'marble_planter' => ['name' => 'Marble Planter', 'level' => 60, 'materials' => ['Marble Block' => 2, 'Yew Plank' => 2], 'xp' => 1000],
+                    ],
+                ],
+                'planter_2' => [
+                    'name' => 'Planter Bed 2',
+                    'options' => [
+                        'wooden_planter' => ['name' => 'Wooden Planter', 'level' => 25, 'materials' => ['Plank' => 4, 'Steel Nails' => 5], 'xp' => 300],
+                        'stone_planter' => ['name' => 'Stone Planter', 'level' => 40, 'materials' => ['Limestone Brick' => 3, 'Willow Plank' => 2], 'xp' => 600],
+                        'marble_planter' => ['name' => 'Marble Planter', 'level' => 60, 'materials' => ['Marble Block' => 2, 'Yew Plank' => 2], 'xp' => 1000],
+                    ],
+                ],
+                'planter_3' => [
+                    'name' => 'Planter Bed 3',
+                    'options' => [
+                        'wooden_planter' => ['name' => 'Wooden Planter', 'level' => 25, 'materials' => ['Plank' => 4, 'Steel Nails' => 5], 'xp' => 300],
+                        'stone_planter' => ['name' => 'Stone Planter', 'level' => 40, 'materials' => ['Limestone Brick' => 3, 'Willow Plank' => 2], 'xp' => 600],
+                        'marble_planter' => ['name' => 'Marble Planter', 'level' => 60, 'materials' => ['Marble Block' => 2, 'Yew Plank' => 2], 'xp' => 1000],
+                    ],
+                ],
+                'planter_4' => [
+                    'name' => 'Planter Bed 4',
+                    'options' => [
+                        'wooden_planter' => ['name' => 'Wooden Planter', 'level' => 25, 'materials' => ['Plank' => 4, 'Steel Nails' => 5], 'xp' => 300],
+                        'stone_planter' => ['name' => 'Stone Planter', 'level' => 40, 'materials' => ['Limestone Brick' => 3, 'Willow Plank' => 2], 'xp' => 600],
+                        'marble_planter' => ['name' => 'Marble Planter', 'level' => 60, 'materials' => ['Marble Block' => 2, 'Yew Plank' => 2], 'xp' => 1000],
+                    ],
+                ],
+                'compost_bin' => [
+                    'name' => 'Compost Bin',
+                    'options' => [
+                        'basic_compost' => ['name' => 'Basic Compost Bin', 'level' => 25, 'materials' => ['Plank' => 3, 'Steel Nails' => 3], 'xp' => 250],
+                        'advanced_compost' => ['name' => 'Advanced Compost Bin', 'level' => 45, 'materials' => ['Willow Plank' => 4, 'Steel Bar' => 2], 'xp' => 700],
+                    ],
+                ],
+                'irrigation' => [
+                    'name' => 'Irrigation',
+                    'options' => [
+                        'basic_watering' => ['name' => 'Watering Can Stand', 'level' => 25, 'materials' => ['Plank' => 2, 'Bronze Bar' => 2], 'xp' => 200, 'effect' => ['herblore_xp_bonus' => 2]],
+                        'drip_system' => ['name' => 'Drip System', 'level' => 45, 'materials' => ['Willow Plank' => 3, 'Steel Bar' => 3], 'xp' => 650, 'effect' => ['herblore_xp_bonus' => 3, 'auto_water' => 1]],
+                        'sprinkler' => ['name' => 'Sprinkler System', 'level' => 65, 'materials' => ['Yew Plank' => 3, 'Gold Bar' => 2], 'xp' => 1100, 'effect' => ['herblore_xp_bonus' => 5, 'auto_water' => 1]],
+                    ],
+                ],
+                'lighting' => [
+                    'name' => 'Grow Lights',
+                    'options' => [
+                        'candle_rack' => ['name' => 'Candle Rack', 'level' => 25, 'materials' => ['Plank' => 2, 'Bronze Bar' => 1], 'xp' => 200, 'effect' => ['farming_xp_bonus' => 2]],
+                        'lantern_array' => ['name' => 'Lantern Array', 'level' => 40, 'materials' => ['Willow Plank' => 3, 'Steel Bar' => 2], 'xp' => 550, 'effect' => ['farming_xp_bonus' => 3]],
+                        'crystal_lights' => ['name' => 'Crystal Grow Lights', 'level' => 60, 'materials' => ['Yew Plank' => 3, 'Gold Bar' => 2], 'xp' => 1000, 'effect' => ['farming_xp_bonus' => 5]],
+                    ],
+                ],
+            ],
+        ],
         'portal_chamber' => [
             'name' => 'Portal Chamber',
             'description' => 'A mystical room housing teleportation portals to distant lands.',
@@ -1008,6 +1071,7 @@ class ConstructionConfig
         ['forge', 'workshop', 'smithing_xp_bonus', 3, 'Forge + Workshop: +3% Smithing XP'],
         ['chapel', 'study', 'prayer_xp_bonus', 3, 'Chapel + Study: +3% Prayer XP'],
         ['bedroom', 'hearth_room', 'energy_regen_bonus', 5, 'Bedroom + Hearth Room: +5% Energy Regen'],
+        ['garden', 'kitchen', 'herblore_xp_bonus', 3, 'Garden + Kitchen: +3% Herblore XP'],
     ];
 
     /**

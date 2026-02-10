@@ -181,6 +181,36 @@ interface TrophyData {
     total_bonuses: Record<string, number>;
 }
 
+interface GardenPlotData {
+    plot_slot: string;
+    has_furniture: boolean;
+    status: "empty" | "planted" | "growing" | "ready" | "withered";
+    crop_name: string | null;
+    growth_progress: number;
+    time_remaining: string | null;
+    quality: number;
+    is_watered: boolean;
+    is_composted: boolean;
+    times_tended: number;
+}
+
+interface GardenSeed {
+    item_id: number;
+    name: string;
+    crop_type_id: number;
+    crop_name: string;
+    farming_level: number;
+}
+
+interface GardenData {
+    plots: Record<string, GardenPlotData>;
+    available_seeds: GardenSeed[];
+    compost_charges: number;
+    max_compost: number;
+    auto_water: boolean;
+    total_bonuses: Record<string, number>;
+}
+
 interface PageProps {
     house: House | null;
     canPurchase: { can_purchase: boolean; reason: string | null } | null;
@@ -197,6 +227,7 @@ interface PageProps {
     servantData: ServantData | null;
     servantTiers: ServantTierInfo[];
     trophyData: TrophyData | null;
+    gardenData: GardenData | null;
     flash?: { success?: string; error?: string };
     [key: string]: unknown;
 }
@@ -219,6 +250,7 @@ const roomIcons: Record<string, string> = {
     dining_room: "🍽️",
     servant_quarters: "🛎️",
     trophy_hall: "🏆",
+    garden: "🌿",
 };
 
 const buffLabels: Record<string, string> = {
@@ -237,6 +269,9 @@ const buffLabels: Record<string, string> = {
     combat_xp_bonus: "Combat XP",
     defense_bonus: "Defense",
     strength_bonus: "Strength",
+    herblore_xp_bonus: "Herblore XP",
+    farming_xp_bonus: "Farming XP",
+    auto_water: "Auto-Water",
 };
 
 export default function HouseIndex() {
@@ -256,6 +291,7 @@ export default function HouseIndex() {
         servantData,
         servantTiers,
         trophyData,
+        gardenData,
         flash,
     } = usePage<PageProps>().props;
     const [loading, setLoading] = useState(false);
@@ -488,6 +524,7 @@ export default function HouseIndex() {
 
     const isPortalChamberSelected = selectedRoom?.room_type === "portal_chamber";
     const isTrophyHallSelected = selectedRoom?.room_type === "trophy_hall";
+    const isGardenSelected = selectedRoom?.room_type === "garden";
 
     const handleMountTrophy = (slot: string, itemId: number) => {
         setLoading(true);
@@ -760,18 +797,21 @@ export default function HouseIndex() {
                                 />
                             )}
 
-                            {selectedRoom && !isPortalChamberSelected && !isTrophyHallSelected && (
-                                <RoomDetailPanel
-                                    room={selectedRoom}
-                                    constructionLevel={constructionLevel}
-                                    loading={loading}
-                                    adjacencyDefinitions={adjacencyDefinitions}
-                                    adjacencyBonuses={adjacencyBonuses}
-                                    onBuildFurniture={handleBuildFurniture}
-                                    onDemolish={handleDemolish}
-                                    onClose={() => setSelectedRoom(null)}
-                                />
-                            )}
+                            {selectedRoom &&
+                                !isPortalChamberSelected &&
+                                !isTrophyHallSelected &&
+                                !isGardenSelected && (
+                                    <RoomDetailPanel
+                                        room={selectedRoom}
+                                        constructionLevel={constructionLevel}
+                                        loading={loading}
+                                        adjacencyDefinitions={adjacencyDefinitions}
+                                        adjacencyBonuses={adjacencyBonuses}
+                                        onBuildFurniture={handleBuildFurniture}
+                                        onDemolish={handleDemolish}
+                                        onClose={() => setSelectedRoom(null)}
+                                    />
+                                )}
 
                             {isTrophyHallSelected && (
                                 <TrophyHallPanel
@@ -796,6 +836,19 @@ export default function HouseIndex() {
                                     loading={loading}
                                     onSetPortal={handleSetPortal}
                                     onTeleport={handleTeleport}
+                                    onBuildFurniture={handleBuildFurniture}
+                                    onDemolish={handleDemolish}
+                                    onClose={() => setSelectedRoom(null)}
+                                />
+                            )}
+
+                            {isGardenSelected && (
+                                <GardenPanel
+                                    room={selectedRoom!}
+                                    gardenData={gardenData}
+                                    constructionLevel={constructionLevel}
+                                    loading={loading}
+                                    setLoading={setLoading}
                                     onBuildFurniture={handleBuildFurniture}
                                     onDemolish={handleDemolish}
                                     onClose={() => setSelectedRoom(null)}
@@ -1687,6 +1740,635 @@ function TrophyHallPanel({
                     )}
                 </div>
             )}
+        </div>
+    );
+}
+
+const plotSlotLabels: Record<string, string> = {
+    planter_1: "Planter Bed 1",
+    planter_2: "Planter Bed 2",
+    planter_3: "Planter Bed 3",
+    planter_4: "Planter Bed 4",
+};
+
+const statusColors: Record<string, string> = {
+    empty: "text-stone-500",
+    planted: "text-blue-400",
+    growing: "text-green-400",
+    ready: "text-amber-400",
+    withered: "text-red-400",
+};
+
+function GardenPanel({
+    room,
+    gardenData,
+    constructionLevel,
+    loading,
+    setLoading,
+    onBuildFurniture,
+    onDemolish,
+    onClose,
+}: {
+    room: Room;
+    gardenData: GardenData | null;
+    constructionLevel: number;
+    loading: boolean;
+    setLoading: (v: boolean) => void;
+    onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
+    onDemolish: (roomId: number, hotspotSlug: string) => void;
+    onClose: () => void;
+}) {
+    const [expandedHotspot, setExpandedHotspot] = useState<string | null>(null);
+    const [plantingSlot, setPlantingSlot] = useState<string | null>(null);
+    const [compostSlot, setCompostSlot] = useState<string | null>(null);
+
+    const handlePlant = (plotSlot: string, cropTypeId: number) => {
+        setLoading(true);
+        router.post(
+            "/house/garden/plant",
+            { plot_slot: plotSlot, crop_type_id: cropTypeId },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                    setPlantingSlot(null);
+                },
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handleWater = (plotSlot: string) => {
+        setLoading(true);
+        router.post(
+            "/house/garden/water",
+            { plot_slot: plotSlot },
+            {
+                preserveScroll: true,
+                onSuccess: () => router.reload(),
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handleTend = (plotSlot: string) => {
+        setLoading(true);
+        router.post(
+            "/house/garden/tend",
+            { plot_slot: plotSlot },
+            {
+                preserveScroll: true,
+                onSuccess: () => router.reload(),
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handleHarvest = (plotSlot: string) => {
+        setLoading(true);
+        router.post(
+            "/house/garden/harvest",
+            { plot_slot: plotSlot },
+            {
+                preserveScroll: true,
+                onSuccess: () => router.reload(),
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handleClear = (plotSlot: string) => {
+        setLoading(true);
+        router.post(
+            "/house/garden/clear",
+            { plot_slot: plotSlot },
+            {
+                preserveScroll: true,
+                onSuccess: () => router.reload(),
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handleCompost = () => {
+        setLoading(true);
+        router.post(
+            "/house/garden/compost",
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => router.reload(),
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const handleUseCompost = (plotSlot: string) => {
+        setLoading(true);
+        router.post(
+            "/house/garden/use-compost",
+            { plot_slot: plotSlot },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                    setCompostSlot(null);
+                },
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const nonPlotHotspots = ["compost_bin", "irrigation", "lighting"];
+
+    return (
+        <div>
+            <div className="mb-3 flex items-center justify-between">
+                <h3 className="font-pixel text-sm text-green-300">🌿 Garden</h3>
+                <button onClick={onClose} className="text-stone-500 hover:text-stone-300">
+                    <X className="h-4 w-4" />
+                </button>
+            </div>
+
+            {/* Bonus summary */}
+            {gardenData && Object.keys(gardenData.total_bonuses).length > 0 && (
+                <div className="mb-3 rounded-md border border-green-700/30 bg-green-900/10 p-2">
+                    <div className="mb-1 flex items-center gap-1 font-pixel text-[9px] text-green-300">
+                        <Sparkles className="h-3 w-3" /> Garden Bonuses
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(gardenData.total_bonuses).map(([key, value]) => (
+                            <span
+                                key={key}
+                                className="rounded-md border border-green-700/30 bg-green-900/20 px-1.5 py-0.5 font-pixel text-[8px] text-green-200"
+                            >
+                                +{value}
+                                {key !== "auto_water" ? "%" : ""}{" "}
+                                {buffLabels[key] || key.replace(/_/g, " ")}
+                            </span>
+                        ))}
+                        {gardenData.auto_water && (
+                            <span className="rounded-md border border-blue-700/30 bg-blue-900/20 px-1.5 py-0.5 font-pixel text-[8px] text-blue-200">
+                                Auto-Water Active
+                            </span>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Compost charges */}
+            {gardenData && (
+                <div className="mb-3 flex items-center justify-between rounded-md border border-amber-700/30 bg-amber-900/10 px-2.5 py-1.5">
+                    <div className="flex items-center gap-1.5">
+                        <span className="font-pixel text-[10px] text-amber-300">Compost</span>
+                        <span className="font-pixel text-[9px] text-amber-200">
+                            {gardenData.compost_charges}/{gardenData.max_compost}
+                        </span>
+                    </div>
+                    <button
+                        onClick={handleCompost}
+                        disabled={loading || gardenData.compost_charges >= gardenData.max_compost}
+                        className="rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-[9px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                        title="Requires 5 Bones"
+                    >
+                        Make (+3)
+                    </button>
+                </div>
+            )}
+
+            {/* Plot cards */}
+            <div className="space-y-2.5">
+                {["planter_1", "planter_2", "planter_3", "planter_4"].map((slot) => {
+                    const hotspot = room.hotspots[slot];
+                    const plotData = gardenData?.plots[slot];
+                    const hasFurniture = plotData?.has_furniture ?? false;
+
+                    return (
+                        <div
+                            key={slot}
+                            className="rounded-md border border-stone-700/30 bg-stone-800/20 p-3"
+                        >
+                            <div className="flex items-center justify-between">
+                                <span className="font-pixel text-[11px] text-stone-300">
+                                    {plotSlotLabels[slot]}
+                                </span>
+                                {hotspot?.current ? (
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="font-pixel text-[9px] text-green-400">
+                                            {hotspot.current.name}
+                                        </span>
+                                        <button
+                                            onClick={() => onDemolish(room.id, slot)}
+                                            disabled={loading}
+                                            className="text-red-500/50 hover:text-red-400"
+                                            title="Demolish"
+                                        >
+                                            <Trash2 className="h-3 w-3" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <span className="font-pixel text-[9px] text-stone-600">
+                                        No planter
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Build planter if not built */}
+                            {!hotspot?.current && hotspot && (
+                                <div className="mt-2">
+                                    <button
+                                        onClick={() =>
+                                            setExpandedHotspot(
+                                                expandedHotspot === slot ? null : slot,
+                                            )
+                                        }
+                                        className="font-pixel text-[9px] text-amber-400/70 hover:text-amber-400"
+                                    >
+                                        {expandedHotspot === slot
+                                            ? "Hide options"
+                                            : "Build planter"}
+                                    </button>
+                                    {expandedHotspot === slot && (
+                                        <div className="mt-2 space-y-1.5">
+                                            {hotspot.options.map((opt) => {
+                                                const meetsLevel = constructionLevel >= opt.level;
+                                                return (
+                                                    <div
+                                                        key={opt.key}
+                                                        className="rounded border border-stone-700/30 bg-stone-900/30 p-2"
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="font-pixel text-[10px] text-stone-300">
+                                                                {opt.name}
+                                                            </span>
+                                                            {!meetsLevel && (
+                                                                <span className="flex items-center gap-0.5 font-pixel text-[8px] text-stone-600">
+                                                                    <Lock className="h-2.5 w-2.5" />{" "}
+                                                                    Lv {opt.level}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="mt-0.5 font-pixel text-[8px] text-stone-500">
+                                                            {Object.entries(opt.materials)
+                                                                .map(([m, q]) => `${q} ${m}`)
+                                                                .join(", ")}{" "}
+                                                            &bull; +{opt.xp} XP
+                                                        </div>
+                                                        {meetsLevel && (
+                                                            <button
+                                                                onClick={() =>
+                                                                    onBuildFurniture(
+                                                                        room.id,
+                                                                        slot,
+                                                                        opt.key,
+                                                                    )
+                                                                }
+                                                                disabled={loading}
+                                                                className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-[9px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                                            >
+                                                                <Hammer className="h-3 w-3" /> Build
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Active plot content */}
+                            {hasFurniture && plotData && (
+                                <div className="mt-2">
+                                    {plotData.status === "empty" && (
+                                        <div>
+                                            {plotData.is_composted && (
+                                                <span className="mb-1 inline-block rounded border border-amber-600/30 bg-amber-900/20 px-1.5 py-0.5 font-pixel text-[8px] text-amber-300">
+                                                    Composted (+15 quality)
+                                                </span>
+                                            )}
+                                            <div className="flex gap-1.5">
+                                                {plantingSlot === slot ? (
+                                                    <div className="w-full rounded-md border border-stone-600/50 bg-stone-800/50 p-2">
+                                                        <div className="mb-1.5 flex items-center justify-between">
+                                                            <span className="font-pixel text-[9px] text-stone-400">
+                                                                Select herb seed
+                                                            </span>
+                                                            <button
+                                                                onClick={() =>
+                                                                    setPlantingSlot(null)
+                                                                }
+                                                                className="text-stone-500 hover:text-stone-300"
+                                                            >
+                                                                <X className="h-3 w-3" />
+                                                            </button>
+                                                        </div>
+                                                        <div className="max-h-32 space-y-0.5 overflow-y-auto">
+                                                            {(
+                                                                gardenData?.available_seeds ?? []
+                                                            ).map((seed) => (
+                                                                <button
+                                                                    key={seed.crop_type_id}
+                                                                    onClick={() =>
+                                                                        handlePlant(
+                                                                            slot,
+                                                                            seed.crop_type_id,
+                                                                        )
+                                                                    }
+                                                                    disabled={loading}
+                                                                    className="flex w-full items-center justify-between rounded px-2 py-1 text-left transition-colors hover:bg-stone-700/50 disabled:opacity-40"
+                                                                >
+                                                                    <span className="font-pixel text-[10px] text-stone-300">
+                                                                        {seed.crop_name}
+                                                                    </span>
+                                                                    <span className="font-pixel text-[8px] text-stone-500">
+                                                                        Lv {seed.farming_level}
+                                                                    </span>
+                                                                </button>
+                                                            ))}
+                                                            {(gardenData?.available_seeds ?? [])
+                                                                .length === 0 && (
+                                                                <div className="py-2 text-center font-pixel text-[9px] text-stone-600">
+                                                                    No herb seeds in inventory
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <button
+                                                            onClick={() => setPlantingSlot(slot)}
+                                                            disabled={loading}
+                                                            className="flex items-center gap-1 rounded border border-green-600/40 bg-green-900/30 px-2 py-0.5 font-pixel text-[9px] text-green-300 transition-colors hover:bg-green-800/30 disabled:opacity-40"
+                                                        >
+                                                            <Plus className="h-3 w-3" /> Plant
+                                                        </button>
+                                                        {!plotData.is_composted &&
+                                                            gardenData &&
+                                                            gardenData.compost_charges > 0 && (
+                                                                <button
+                                                                    onClick={() =>
+                                                                        handleUseCompost(slot)
+                                                                    }
+                                                                    disabled={loading}
+                                                                    className="flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-[9px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                                                >
+                                                                    Compost
+                                                                </button>
+                                                            )}
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {(plotData.status === "planted" ||
+                                        plotData.status === "growing") && (
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-pixel text-[10px] text-stone-200">
+                                                    {plotData.crop_name}
+                                                </span>
+                                                <span
+                                                    className={`font-pixel text-[8px] ${statusColors[plotData.status]}`}
+                                                >
+                                                    {plotData.status}
+                                                </span>
+                                                {plotData.is_composted && (
+                                                    <span className="rounded border border-amber-600/30 bg-amber-900/20 px-1 py-0.5 font-pixel text-[7px] text-amber-300">
+                                                        Composted
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {/* Progress bar */}
+                                            <div className="mt-1.5">
+                                                <div className="flex items-center justify-between font-pixel text-[8px] text-stone-500">
+                                                    <span>Growth: {plotData.growth_progress}%</span>
+                                                    <span>{plotData.time_remaining}</span>
+                                                </div>
+                                                <div className="mt-0.5 h-1.5 rounded-full bg-stone-700">
+                                                    <div
+                                                        className="h-full rounded-full bg-green-500 transition-all"
+                                                        style={{
+                                                            width: `${plotData.growth_progress}%`,
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                            {/* Quality */}
+                                            <div className="mt-1 flex items-center justify-between font-pixel text-[8px]">
+                                                <span className="text-stone-500">
+                                                    Quality: {plotData.quality}
+                                                    {plotData.quality >= 80 && (
+                                                        <span className="ml-1 text-yellow-400">
+                                                            (+50% XP)
+                                                        </span>
+                                                    )}
+                                                </span>
+                                                <span className="text-stone-600">
+                                                    Tended: {plotData.times_tended}x
+                                                </span>
+                                            </div>
+                                            {/* Actions */}
+                                            <div className="mt-1.5 flex gap-1.5">
+                                                {!plotData.is_watered && (
+                                                    <button
+                                                        onClick={() => handleWater(slot)}
+                                                        disabled={loading}
+                                                        className="flex items-center gap-1 rounded border border-blue-600/40 bg-blue-900/30 px-2 py-0.5 font-pixel text-[9px] text-blue-300 transition-colors hover:bg-blue-800/30 disabled:opacity-40"
+                                                    >
+                                                        Water
+                                                    </button>
+                                                )}
+                                                {plotData.is_watered && (
+                                                    <span className="flex items-center gap-1 rounded border border-blue-700/30 bg-blue-900/10 px-2 py-0.5 font-pixel text-[9px] text-blue-400/60">
+                                                        <CheckCircle className="h-3 w-3" /> Watered
+                                                    </span>
+                                                )}
+                                                <button
+                                                    onClick={() => handleTend(slot)}
+                                                    disabled={loading}
+                                                    className="flex items-center gap-1 rounded border border-green-600/40 bg-green-900/30 px-2 py-0.5 font-pixel text-[9px] text-green-300 transition-colors hover:bg-green-800/30 disabled:opacity-40"
+                                                    title="Costs 2 energy"
+                                                >
+                                                    Tend
+                                                </button>
+                                                {!plotData.is_composted &&
+                                                    gardenData &&
+                                                    gardenData.compost_charges > 0 && (
+                                                        <button
+                                                            onClick={() => handleUseCompost(slot)}
+                                                            disabled={loading}
+                                                            className="flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-[9px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                                        >
+                                                            Compost
+                                                        </button>
+                                                    )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {plotData.status === "ready" && (
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-pixel text-[10px] text-stone-200">
+                                                    {plotData.crop_name}
+                                                </span>
+                                                <span className="font-pixel text-[8px] text-amber-400">
+                                                    Ready to harvest!
+                                                </span>
+                                            </div>
+                                            <div className="mt-1 font-pixel text-[8px] text-stone-500">
+                                                Quality: {plotData.quality}
+                                                {plotData.quality >= 80 && (
+                                                    <span className="ml-1 text-yellow-400">
+                                                        (+50% XP)
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <button
+                                                onClick={() => handleHarvest(slot)}
+                                                disabled={loading}
+                                                className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/40 px-3 py-1 font-pixel text-[10px] text-amber-200 transition-colors hover:bg-amber-800/40 disabled:opacity-40"
+                                            >
+                                                <Sparkles className="h-3 w-3" /> Harvest
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {plotData.status === "withered" && (
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-pixel text-[10px] text-stone-200">
+                                                    {plotData.crop_name}
+                                                </span>
+                                                <span className="font-pixel text-[8px] text-red-400">
+                                                    Withered
+                                                </span>
+                                            </div>
+                                            <button
+                                                onClick={() => handleClear(slot)}
+                                                disabled={loading}
+                                                className="mt-1.5 flex items-center gap-1 rounded border border-red-700/30 bg-red-900/20 px-2 py-0.5 font-pixel text-[9px] text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
+                                            >
+                                                <Trash2 className="h-3 w-3" /> Clear
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Non-plot hotspots: compost bin, irrigation, lighting */}
+            <div className="mt-3 space-y-2">
+                {nonPlotHotspots.map((hotspotSlug) => {
+                    const hotspot = room.hotspots[hotspotSlug];
+                    if (!hotspot) return null;
+
+                    return (
+                        <div
+                            key={hotspotSlug}
+                            className="rounded-md border border-stone-700/50 bg-stone-800/30 p-2.5"
+                        >
+                            <div className="flex items-center justify-between">
+                                <span className="font-pixel text-[11px] text-stone-300">
+                                    {hotspot.name}
+                                </span>
+                                {hotspot.current ? (
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="font-pixel text-[10px] text-green-400">
+                                            {hotspot.current.name}
+                                        </span>
+                                        <button
+                                            onClick={() => onDemolish(room.id, hotspotSlug)}
+                                            disabled={loading}
+                                            className="text-red-500/50 hover:text-red-400"
+                                            title="Demolish"
+                                        >
+                                            <Trash2 className="h-3 w-3" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <span className="font-pixel text-[10px] text-stone-600">
+                                        Empty
+                                    </span>
+                                )}
+                            </div>
+                            <button
+                                onClick={() =>
+                                    setExpandedHotspot(
+                                        expandedHotspot === hotspotSlug ? null : hotspotSlug,
+                                    )
+                                }
+                                className="mt-1 font-pixel text-[9px] text-amber-400/70 hover:text-amber-400"
+                            >
+                                {expandedHotspot === hotspotSlug ? "Hide options" : "Build options"}
+                            </button>
+                            {expandedHotspot === hotspotSlug && (
+                                <div className="mt-2 space-y-1.5">
+                                    {hotspot.options.map((opt) => {
+                                        const isBuilt = hotspot.current?.key === opt.key;
+                                        const meetsLevel = constructionLevel >= opt.level;
+                                        return (
+                                            <div
+                                                key={opt.key}
+                                                className={`rounded border p-2 ${isBuilt ? "border-green-600/50 bg-green-900/20" : "border-stone-700/30 bg-stone-900/30"}`}
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <span
+                                                        className={`font-pixel text-[10px] ${isBuilt ? "text-green-300" : "text-stone-300"}`}
+                                                    >
+                                                        {opt.name}
+                                                    </span>
+                                                    {!meetsLevel && (
+                                                        <span className="flex items-center gap-0.5 font-pixel text-[8px] text-stone-600">
+                                                            <Lock className="h-2.5 w-2.5" /> Lv{" "}
+                                                            {opt.level}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="mt-0.5 font-pixel text-[8px] text-stone-500">
+                                                    {Object.entries(opt.materials)
+                                                        .map(([m, q]) => `${q} ${m}`)
+                                                        .join(", ")}{" "}
+                                                    &bull; +{opt.xp} XP
+                                                    {opt.effect &&
+                                                        Object.entries(opt.effect).map(([k, v]) => (
+                                                            <span key={k} className="text-cyan-400">
+                                                                {" "}
+                                                                &bull; +{v}
+                                                                {k !== "auto_water" ? "%" : ""}{" "}
+                                                                {k.replace(/_/g, " ")}
+                                                            </span>
+                                                        ))}
+                                                </div>
+                                                {!isBuilt && meetsLevel && (
+                                                    <button
+                                                        onClick={() =>
+                                                            onBuildFurniture(
+                                                                room.id,
+                                                                hotspotSlug,
+                                                                opt.key,
+                                                            )
+                                                        }
+                                                        disabled={loading}
+                                                        className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-[9px] text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                                    >
+                                                        <Hammer className="h-3 w-3" /> Build
+                                                    </button>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
         </div>
     );
 }

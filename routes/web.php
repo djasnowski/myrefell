@@ -942,6 +942,13 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('/servant/assign-task', [PlayerHouseController::class, 'assignServantTask'])->name('servant.assign-task');
         Route::post('/servant/cancel-task', [PlayerHouseController::class, 'cancelServantTask'])->name('servant.cancel-task');
         Route::post('/servant/pay-wages', [PlayerHouseController::class, 'payServantWages'])->name('servant.pay-wages');
+        Route::post('/garden/plant', [PlayerHouseController::class, 'gardenPlant'])->name('garden.plant');
+        Route::post('/garden/water', [PlayerHouseController::class, 'gardenWater'])->name('garden.water');
+        Route::post('/garden/tend', [PlayerHouseController::class, 'gardenTend'])->name('garden.tend');
+        Route::post('/garden/harvest', [PlayerHouseController::class, 'gardenHarvest'])->name('garden.harvest');
+        Route::post('/garden/clear', [PlayerHouseController::class, 'gardenClear'])->name('garden.clear');
+        Route::post('/garden/compost', [PlayerHouseController::class, 'gardenCompost'])->name('garden.compost');
+        Route::post('/garden/use-compost', [PlayerHouseController::class, 'gardenUseCompost'])->name('garden.use-compost');
     });
 
     // Buildings

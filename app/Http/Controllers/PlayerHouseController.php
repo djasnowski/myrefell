@@ -7,6 +7,7 @@ use App\Models\HouseFurniture;
 use App\Models\HouseRoom;
 use App\Models\PlayerHouse;
 use App\Models\User;
+use App\Services\GardenService;
 use App\Services\HouseBuffService;
 use App\Services\HouseService;
 use App\Services\InventoryService;
@@ -24,7 +25,8 @@ class PlayerHouseController extends Controller
         protected InventoryService $inventoryService,
         protected HouseBuffService $houseBuffService,
         protected ServantService $servantService,
-        protected TrophyService $trophyService
+        protected TrophyService $trophyService,
+        protected GardenService $gardenService
     ) {}
 
     /**
@@ -84,6 +86,7 @@ class PlayerHouseController extends Controller
             'servantData' => $house ? $this->servantService->getServantData($user) : null,
             'servantTiers' => $house ? $this->getServantTierInfo($user) : [],
             'trophyData' => $house ? $this->trophyService->getTrophyData($user) : null,
+            'gardenData' => $house ? $this->gardenService->getGardenData($user) : null,
         ];
 
         return Inertia::render('House/Index', $data);
@@ -399,6 +402,107 @@ class PlayerHouseController extends Controller
             $request->user(),
             $request->input('slot'),
         );
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Plant a herb in a garden plot.
+     */
+    public function gardenPlant(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'plot_slot' => 'required|string',
+            'crop_type_id' => 'required|integer',
+        ]);
+
+        $user = $request->user();
+        $user->load('skills');
+
+        $result = $this->gardenService->plantHerb($user, $request->input('plot_slot'), $request->input('crop_type_id'));
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Water a garden plot.
+     */
+    public function gardenWater(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'plot_slot' => 'required|string',
+        ]);
+
+        $result = $this->gardenService->waterPlot($request->user(), $request->input('plot_slot'));
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Tend a garden plot.
+     */
+    public function gardenTend(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'plot_slot' => 'required|string',
+        ]);
+
+        $result = $this->gardenService->tendPlot($request->user(), $request->input('plot_slot'));
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Harvest a garden plot.
+     */
+    public function gardenHarvest(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'plot_slot' => 'required|string',
+        ]);
+
+        $user = $request->user();
+        $user->load('skills');
+
+        $result = $this->gardenService->harvestPlot($user, $request->input('plot_slot'));
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Clear a garden plot.
+     */
+    public function gardenClear(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'plot_slot' => 'required|string',
+        ]);
+
+        $result = $this->gardenService->clearPlot($request->user(), $request->input('plot_slot'));
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Add compost charges.
+     */
+    public function gardenCompost(Request $request): RedirectResponse
+    {
+        $result = $this->gardenService->addCompost($request->user());
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Use compost on a garden plot.
+     */
+    public function gardenUseCompost(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'plot_slot' => 'required|string',
+        ]);
+
+        $result = $this->gardenService->useCompost($request->user(), $request->input('plot_slot'));
 
         return back()->with($result['success'] ? 'success' : 'error', $result['message']);
     }
