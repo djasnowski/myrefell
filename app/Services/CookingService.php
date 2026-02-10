@@ -198,7 +198,7 @@ class CookingService
     /**
      * Cook a recipe.
      */
-    public function cook(User $user, string $recipeId, ?string $locationType = null, ?int $locationId = null): array
+    public function cook(User $user, string $recipeId, ?string $locationType = null, ?int $locationId = null, float $burnChance = 0.0): array
     {
         $recipe = self::RECIPES[$recipeId] ?? null;
 
@@ -255,7 +255,7 @@ class CookingService
         $locationType = $locationType ?? $user->current_location_type;
         $locationId = $locationId ?? $user->current_location_id;
 
-        return DB::transaction(function () use ($user, $recipe, $outputItem, $recipeId, $locationType, $locationId) {
+        return DB::transaction(function () use ($user, $recipe, $outputItem, $recipeId, $locationType, $locationId, $burnChance) {
             // Consume energy
             $user->consumeEnergy($recipe['energy_cost']);
 
@@ -263,6 +263,32 @@ class CookingService
             foreach ($recipe['materials'] as $material) {
                 $item = Item::where('name', $material['name'])->first();
                 $this->inventoryService->removeItem($user, $item, $material['quantity']);
+            }
+
+            // Check for burn
+            if ($burnChance > 0 && random_int(1, 100) <= (int) $burnChance) {
+                $halfXp = (int) floor($recipe['xp_reward'] / 2);
+
+                $skill = $user->skills()->where('skill_name', 'cooking')->first();
+                if (! $skill) {
+                    $skill = $user->skills()->create([
+                        'skill_name' => 'cooking',
+                        'level' => 1,
+                        'xp' => 0,
+                    ]);
+                }
+                $skill->addXp($halfXp);
+
+                $this->dailyTaskService->recordProgress($user, 'cook', $recipe['output']['name'], 0);
+
+                return [
+                    'success' => true,
+                    'burned' => true,
+                    'message' => 'You burned the food! Materials lost, but you learned a little.',
+                    'xp_awarded' => $halfXp,
+                    'leveled_up' => false,
+                    'energy_remaining' => $user->fresh()->energy,
+                ];
             }
 
             $quantity = $recipe['output']['quantity'];

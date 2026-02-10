@@ -960,6 +960,11 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('/move-storage-slot', [PlayerHouseController::class, 'moveStorageSlot'])->name('move-storage-slot');
         Route::post('/garden/compost', [PlayerHouseController::class, 'gardenCompost'])->name('garden.compost');
         Route::post('/garden/use-compost', [PlayerHouseController::class, 'gardenUseCompost'])->name('garden.use-compost');
+        Route::post('/cook', [PlayerHouseController::class, 'cookAtHome'])->name('cook');
+        Route::post('/rest', [PlayerHouseController::class, 'restAtHome'])->name('rest');
+        Route::post('/workshop/craft', [PlayerHouseController::class, 'craftAtWorkshop'])->name('workshop.craft');
+        Route::post('/forge/craft', [PlayerHouseController::class, 'craftAtForge'])->name('forge.craft');
+        Route::post('/pray', [PlayerHouseController::class, 'prayAtHome'])->name('pray');
     });
 
     // Buildings

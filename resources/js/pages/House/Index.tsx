@@ -2,6 +2,7 @@ import { Head, router, usePage } from "@inertiajs/react";
 import {
     AlertTriangle,
     Anvil,
+    Armchair,
     ArrowDownToLine,
     ArrowUpFromLine,
     ArrowUpCircle,
@@ -237,6 +238,88 @@ interface InventoryItem {
     slot_number: number;
 }
 
+interface KitchenRecipe {
+    id: string;
+    name: string;
+    required_level: number;
+    xp_reward: number;
+    energy_cost: number;
+    materials: { name: string; required: number; have: number; has_enough: boolean }[];
+    output: { name: string; quantity: number };
+    can_make: boolean;
+    is_locked: boolean;
+    current_level: number;
+}
+
+interface KitchenData {
+    burn_chance: number;
+    stove_name: string;
+    recipes: KitchenRecipe[];
+    cooking_level: number;
+}
+
+interface BedroomData {
+    bed_name: string;
+    energy_restored: number;
+}
+
+interface CraftingRecipe {
+    id: string;
+    name: string;
+    category: string;
+    skill: string;
+    required_level: number;
+    xp_reward: number;
+    energy_cost: number;
+    materials: { name: string; required: number; have: number; has_enough: boolean }[];
+    output: { name: string; quantity: number };
+    can_make: boolean;
+    is_locked: boolean;
+    current_level: number;
+}
+
+interface WorkshopData {
+    workbench_name: string;
+    xp_bonus: number;
+    recipes: Record<string, CraftingRecipe[]>;
+    crafting_level: number;
+}
+
+interface ForgeData {
+    anvil_name: string;
+    xp_bonus: number;
+    recipes: Record<string, CraftingRecipe[]>;
+    smithing_level: number;
+}
+
+interface ChapelData {
+    altar_name: string;
+    prayer_xp_bonus: number;
+    religion: string | null;
+    religion_id: number | null;
+    prayer_level: number;
+    energy_cost: number;
+    can_pray: boolean;
+    cooldown_remaining: number;
+}
+
+interface HearthData {
+    fireplace_name: string;
+    hp_restore_percent: number;
+    hp_restore_amount: number;
+    max_hp_bonus: number;
+}
+
+interface CookResult {
+    success: boolean;
+    message: string;
+    burned?: boolean;
+    item?: { name: string; quantity: number };
+    xp_awarded?: number;
+    leveled_up?: boolean;
+    energy_remaining?: number;
+}
+
 interface PageProps {
     house: House | null;
     canPurchase: { can_purchase: boolean; reason: string | null } | null;
@@ -254,6 +337,12 @@ interface PageProps {
     servantTiers: ServantTierInfo[];
     trophyData: TrophyData | null;
     gardenData: GardenData | null;
+    kitchen: KitchenData | null;
+    bedroom: BedroomData | null;
+    workshop: WorkshopData | null;
+    forge: ForgeData | null;
+    chapel: ChapelData | null;
+    hearth: HearthData | null;
     playerInventory: InventoryItem[];
     inventoryMaxSlots: number;
     houseUrl?: string;
@@ -333,6 +422,12 @@ export default function HouseIndex() {
         servantTiers,
         trophyData,
         gardenData,
+        kitchen,
+        bedroom,
+        workshop,
+        forge,
+        chapel,
+        hearth,
         houseUrl,
         isVisiting,
         visitingPlayer,
@@ -578,6 +673,12 @@ export default function HouseIndex() {
     const isPortalChamberSelected = selectedRoom?.room_type === "portal_chamber";
     const isTrophyHallSelected = selectedRoom?.room_type === "trophy_hall";
     const isGardenSelected = selectedRoom?.room_type === "garden";
+    const isKitchenSelected = selectedRoom?.room_type === "kitchen";
+    const isBedroomSelected = selectedRoom?.room_type === "bedroom";
+    const isWorkshopSelected = selectedRoom?.room_type === "workshop";
+    const isForgeSelected = selectedRoom?.room_type === "forge";
+    const isChapelSelected = selectedRoom?.room_type === "chapel";
+    const isHearthSelected = selectedRoom?.room_type === "hearth_room";
 
     const handleMountTrophy = (slot: string, itemId: number) => {
         setLoading(true);
@@ -870,14 +971,13 @@ export default function HouseIndex() {
                 )}
 
                 {activeTab === "rooms" && (
-                    <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
+                    <div className="grid gap-6 lg:grid-cols-[auto_1fr]">
                         {/* Grid */}
-                        <div className="rounded-lg border border-stone-700/50 bg-stone-900/50 p-6">
+                        <div className="w-fit rounded-lg border border-stone-700/50 bg-stone-900/50 p-6">
                             <div
-                                className="mx-auto grid gap-3"
+                                className="grid gap-3"
                                 style={{
-                                    gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
-                                    maxWidth: `${gridSize * 140}px`,
+                                    gridTemplateColumns: `repeat(${gridSize}, 120px)`,
                                 }}
                             >
                                 {Array.from({ length: gridSize * gridSize }, (_, i) => {
@@ -967,7 +1067,13 @@ export default function HouseIndex() {
                             {selectedRoom &&
                                 !isPortalChamberSelected &&
                                 !isTrophyHallSelected &&
-                                !isGardenSelected && (
+                                !isGardenSelected &&
+                                !isKitchenSelected &&
+                                !isBedroomSelected &&
+                                !isWorkshopSelected &&
+                                !isForgeSelected &&
+                                !isChapelSelected &&
+                                !isHearthSelected && (
                                     <RoomDetailPanel
                                         room={selectedRoom}
                                         constructionLevel={constructionLevel}
@@ -1019,6 +1125,96 @@ export default function HouseIndex() {
                                     constructionLevel={constructionLevel}
                                     loading={loading}
                                     setLoading={setLoading}
+                                    onBuildFurniture={handleBuildFurniture}
+                                    onDemolish={handleDemolish}
+                                    onDemolishRoom={handleDemolishRoom}
+                                    onClose={() => setSelectedRoom(null)}
+                                />
+                            )}
+
+                            {isKitchenSelected && (
+                                <KitchenPanel
+                                    room={selectedRoom!}
+                                    kitchen={kitchen}
+                                    constructionLevel={constructionLevel}
+                                    loading={loading}
+                                    setLoading={setLoading}
+                                    canAct={canAct}
+                                    onBuildFurniture={handleBuildFurniture}
+                                    onDemolish={handleDemolish}
+                                    onDemolishRoom={handleDemolishRoom}
+                                    onClose={() => setSelectedRoom(null)}
+                                />
+                            )}
+
+                            {isBedroomSelected && (
+                                <BedroomPanel
+                                    room={selectedRoom!}
+                                    bedroom={bedroom}
+                                    hearth={hearth}
+                                    constructionLevel={constructionLevel}
+                                    loading={loading}
+                                    setLoading={setLoading}
+                                    canAct={canAct}
+                                    onBuildFurniture={handleBuildFurniture}
+                                    onDemolish={handleDemolish}
+                                    onDemolishRoom={handleDemolishRoom}
+                                    onClose={() => setSelectedRoom(null)}
+                                />
+                            )}
+
+                            {isWorkshopSelected && (
+                                <WorkshopPanel
+                                    room={selectedRoom!}
+                                    workshop={workshop}
+                                    constructionLevel={constructionLevel}
+                                    loading={loading}
+                                    setLoading={setLoading}
+                                    canAct={canAct}
+                                    onBuildFurniture={handleBuildFurniture}
+                                    onDemolish={handleDemolish}
+                                    onDemolishRoom={handleDemolishRoom}
+                                    onClose={() => setSelectedRoom(null)}
+                                />
+                            )}
+
+                            {isForgeSelected && (
+                                <ForgePanel
+                                    room={selectedRoom!}
+                                    forge={forge}
+                                    constructionLevel={constructionLevel}
+                                    loading={loading}
+                                    setLoading={setLoading}
+                                    canAct={canAct}
+                                    onBuildFurniture={handleBuildFurniture}
+                                    onDemolish={handleDemolish}
+                                    onDemolishRoom={handleDemolishRoom}
+                                    onClose={() => setSelectedRoom(null)}
+                                />
+                            )}
+
+                            {isChapelSelected && (
+                                <ChapelPanel
+                                    room={selectedRoom!}
+                                    chapel={chapel}
+                                    constructionLevel={constructionLevel}
+                                    loading={loading}
+                                    setLoading={setLoading}
+                                    canAct={canAct}
+                                    onBuildFurniture={handleBuildFurniture}
+                                    onDemolish={handleDemolish}
+                                    onDemolishRoom={handleDemolishRoom}
+                                    onClose={() => setSelectedRoom(null)}
+                                />
+                            )}
+
+                            {isHearthSelected && (
+                                <HearthPanel
+                                    room={selectedRoom!}
+                                    hearth={hearth}
+                                    constructionLevel={constructionLevel}
+                                    loading={loading}
+                                    canAct={canAct}
                                     onBuildFurniture={handleBuildFurniture}
                                     onDemolish={handleDemolish}
                                     onDemolishRoom={handleDemolishRoom}
@@ -1082,12 +1278,142 @@ function BuildRoomModal({
     onCancel: () => void;
 }) {
     const [search, setSearch] = useState("");
+    const [confirming, setConfirming] = useState<RoomType | null>(null);
+    const [activeCategory, setActiveCategory] = useState("living");
+    const [highlightedIndex, setHighlightedIndex] = useState(-1);
+    const listRef = useRef<HTMLDivElement>(null);
+
+    const roomCategories: Record<string, string> = {
+        parlour: "living",
+        bedroom: "living",
+        dining_room: "living",
+        hearth_room: "living",
+        kitchen: "production",
+        workshop: "production",
+        forge: "production",
+        garden: "production",
+        study: "knowledge",
+        chapel: "knowledge",
+        trophy_hall: "special",
+        servant_quarters: "special",
+        portal_chamber: "special",
+    };
+
+    const categoryOrder = ["living", "production", "knowledge", "special"] as const;
+    const categoryConfig: Record<string, { label: string; icon: LucideIcon }> = {
+        living: { label: "Living", icon: Armchair },
+        production: { label: "Production", icon: Hammer },
+        knowledge: { label: "Knowledge", icon: BookOpen },
+        special: { label: "Special", icon: Sparkles },
+    };
+
+    const isSearching = search.trim().length > 0;
 
     const filtered = roomTypes.filter((rt) => {
-        if (!search.trim()) return true;
-        const q = search.toLowerCase();
-        return rt.name.toLowerCase().includes(q) || rt.description.toLowerCase().includes(q);
+        if (isSearching) {
+            const q = search.toLowerCase();
+            return rt.name.toLowerCase().includes(q) || rt.description.toLowerCase().includes(q);
+        }
+        return (roomCategories[rt.key] || "special") === activeCategory;
     });
+
+    const handleBack = () => {
+        if (confirming) {
+            const idx = filtered.findIndex((rt) => rt.key === confirming.key);
+            setHighlightedIndex(idx >= 0 ? idx : -1);
+            setConfirming(null);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (confirming) return;
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setHighlightedIndex((prev) => (prev < 0 ? 0 : Math.min(prev + 1, filtered.length - 1)));
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setHighlightedIndex((prev) => (prev < 0 ? filtered.length - 1 : Math.max(prev - 1, 0)));
+        } else if (e.key === "ArrowLeft" && !isSearching) {
+            e.preventDefault();
+            const idx = categoryOrder.indexOf(activeCategory as (typeof categoryOrder)[number]);
+            const prev = idx <= 0 ? categoryOrder.length - 1 : idx - 1;
+            setActiveCategory(categoryOrder[prev]);
+            setHighlightedIndex(-1);
+        } else if (e.key === "ArrowRight" && !isSearching) {
+            e.preventDefault();
+            const idx = categoryOrder.indexOf(activeCategory as (typeof categoryOrder)[number]);
+            const next = idx >= categoryOrder.length - 1 ? 0 : idx + 1;
+            setActiveCategory(categoryOrder[next]);
+            setHighlightedIndex(-1);
+        } else if (
+            e.key === "Enter" &&
+            highlightedIndex >= 0 &&
+            highlightedIndex < filtered.length
+        ) {
+            e.preventDefault();
+            const rt = filtered[highlightedIndex];
+            if (rt.is_unlocked && playerGold >= rt.cost) {
+                setConfirming(rt);
+            }
+        }
+    };
+
+    useEffect(() => {
+        if (highlightedIndex >= 0 && listRef.current) {
+            const items = listRef.current.querySelectorAll("[data-room-item]");
+            items[highlightedIndex]?.scrollIntoView({ block: "nearest" });
+        }
+    }, [highlightedIndex]);
+
+    const renderRoomButton = (rt: RoomType, index: number) => {
+        const isHighlighted = index === highlightedIndex;
+        return (
+            <button
+                key={rt.key}
+                data-room-item
+                onClick={() => setConfirming(rt)}
+                onMouseEnter={() => setHighlightedIndex(index)}
+                disabled={loading || !rt.is_unlocked || playerGold < rt.cost}
+                className={`w-full rounded-lg border p-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                    isHighlighted
+                        ? "border-green-500/50 bg-stone-700/60"
+                        : "border-stone-600/50 bg-stone-800/50 hover:border-green-600/30 hover:bg-stone-700/50"
+                }`}
+            >
+                <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 font-pixel text-sm text-stone-200">
+                        {(() => {
+                            const RoomIcon = roomIcons[rt.key] || Home;
+                            return <RoomIcon className="h-4 w-4 text-amber-300" />;
+                        })()}
+                        {rt.name}
+                    </span>
+                    {!rt.is_unlocked && (
+                        <span className="flex items-center gap-1 font-pixel text-xs text-stone-500">
+                            <Lock className="h-3.5 w-3.5" /> Lv {rt.level}
+                        </span>
+                    )}
+                </div>
+                <div className="mt-1.5 font-pixel text-xs text-stone-500">{rt.description}</div>
+                <div className="mt-2 flex items-center gap-3 font-pixel text-xs">
+                    <span className="flex items-center gap-1 text-yellow-400">
+                        <Coins className="h-3.5 w-3.5" />
+                        {rt.cost.toLocaleString()}g
+                    </span>
+                    <span className="text-stone-500">{rt.hotspot_count} hotspots</span>
+                </div>
+            </button>
+        );
+    };
+
+    const modalRef = useRef<HTMLDivElement>(null);
+
+    // Focus the modal container when list view is shown so keyboard events work
+    useEffect(() => {
+        if (!confirming && modalRef.current) {
+            modalRef.current.focus();
+        }
+    }, [confirming, activeCategory]);
 
     return (
         <div
@@ -1095,13 +1421,18 @@ function BuildRoomModal({
             onClick={onCancel}
         >
             <div
-                className="mx-4 w-full max-w-lg rounded-xl border-2 border-stone-600 bg-stone-900 shadow-2xl"
+                ref={modalRef}
+                tabIndex={-1}
+                className="mx-4 w-full max-w-2xl rounded-xl border-2 border-stone-600 bg-stone-900 shadow-2xl outline-none"
                 onClick={(e) => e.stopPropagation()}
+                onKeyDown={handleKeyDown}
             >
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-stone-700 p-5">
                     <div>
-                        <h3 className="font-pixel text-lg text-green-300">Build Room</h3>
+                        <h3 className="font-pixel text-lg text-green-300">
+                            {confirming ? "Confirm Build" : "Build Room"}
+                        </h3>
                         <p className="mt-1 font-pixel text-xs text-stone-500">
                             Position ({position.x}, {position.y})
                         </p>
@@ -1114,69 +1445,114 @@ function BuildRoomModal({
                     </button>
                 </div>
 
-                {/* Search */}
-                <div className="border-b border-stone-700/50 p-4">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
-                        <input
-                            type="text"
-                            placeholder="Search rooms..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            autoFocus
-                            className="w-full rounded-lg border border-stone-600 bg-stone-800 py-2.5 pl-10 pr-4 font-pixel text-sm text-stone-200 placeholder-stone-600 focus:border-green-500 focus:outline-none"
-                        />
+                {confirming ? (
+                    /* Confirmation View */
+                    <div className="p-5">
+                        <div className="rounded-lg border border-stone-600/50 bg-stone-800/50 p-4">
+                            <div className="flex items-center gap-3">
+                                {(() => {
+                                    const RoomIcon = roomIcons[confirming.key] || Home;
+                                    return <RoomIcon className="h-6 w-6 text-amber-300" />;
+                                })()}
+                                <div>
+                                    <span className="font-pixel text-sm text-stone-200">
+                                        {confirming.name}
+                                    </span>
+                                    <p className="font-pixel text-xs text-stone-500">
+                                        {confirming.description}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="mt-3 flex items-center gap-3 font-pixel text-xs">
+                                <span className="flex items-center gap-1 text-yellow-400">
+                                    <Coins className="h-3.5 w-3.5" />
+                                    {confirming.cost.toLocaleString()}g
+                                </span>
+                                <span className="text-stone-500">
+                                    {confirming.hotspot_count} hotspots
+                                </span>
+                            </div>
+                        </div>
+                        <p className="mt-4 font-pixel text-xs text-stone-400">
+                            Build a {confirming.name} at position ({position.x}, {position.y}) for{" "}
+                            {confirming.cost.toLocaleString()} gold?
+                        </p>
+                        <div className="mt-4 flex gap-3">
+                            <button
+                                onClick={handleBack}
+                                className="flex-1 rounded-lg border border-stone-600 bg-stone-800 px-4 py-2.5 font-pixel text-sm text-stone-300 transition-colors hover:bg-stone-700"
+                            >
+                                Back
+                            </button>
+                            <button
+                                onClick={() => onBuild(confirming.key)}
+                                disabled={loading}
+                                className="flex-1 rounded-lg border border-green-700 bg-green-800/50 px-4 py-2.5 font-pixel text-sm text-green-300 transition-colors hover:bg-green-700/50 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                {loading ? "Building..." : "Confirm"}
+                            </button>
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    <>
+                        {/* Search */}
+                        <div className="border-b border-stone-700/50 p-4">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
+                                <input
+                                    type="text"
+                                    placeholder="Search rooms..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    autoFocus
+                                    className="w-full rounded-lg border border-stone-600 bg-stone-800 py-2.5 pl-10 pr-4 font-pixel text-sm text-stone-200 placeholder-stone-600 focus:border-green-500 focus:outline-none"
+                                />
+                            </div>
+                        </div>
 
-                {/* Room List */}
-                <div className="max-h-[400px] overflow-y-auto p-4">
-                    {filtered.length === 0 ? (
-                        <div className="py-8 text-center font-pixel text-sm text-stone-600">
-                            No rooms match your search.
+                        {/* Category Tabs */}
+                        {!isSearching && (
+                            <div className="flex border-b border-stone-700/50">
+                                {categoryOrder.map((cat) => {
+                                    const conf = categoryConfig[cat];
+                                    const CatIcon = conf.icon;
+                                    return (
+                                        <button
+                                            key={cat}
+                                            onClick={() => {
+                                                setActiveCategory(cat);
+                                                setHighlightedIndex(-1);
+                                            }}
+                                            className={`flex flex-1 items-center justify-center gap-1.5 py-2.5 font-pixel text-xs transition-colors ${
+                                                activeCategory === cat
+                                                    ? "border-b-2 border-green-400 text-green-300"
+                                                    : "text-stone-500 hover:text-stone-300"
+                                            }`}
+                                        >
+                                            <CatIcon className="h-3.5 w-3.5" />
+                                            {conf.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {/* Room List */}
+                        <div ref={listRef} className="max-h-[400px] overflow-y-auto p-4">
+                            {filtered.length === 0 ? (
+                                <div className="py-8 text-center font-pixel text-sm text-stone-600">
+                                    {isSearching
+                                        ? "No rooms match your search."
+                                        : "No rooms in this category."}
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {filtered.map((rt, i) => renderRoomButton(rt, i))}
+                                </div>
+                            )}
                         </div>
-                    ) : (
-                        <div className="space-y-2">
-                            {filtered.map((rt) => (
-                                <button
-                                    key={rt.key}
-                                    onClick={() => onBuild(rt.key)}
-                                    disabled={loading || !rt.is_unlocked || playerGold < rt.cost}
-                                    className="w-full rounded-lg border border-stone-600/50 bg-stone-800/50 p-4 text-left transition-colors hover:border-green-600/30 hover:bg-stone-700/50 disabled:cursor-not-allowed disabled:opacity-40"
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <span className="flex items-center gap-2 font-pixel text-sm text-stone-200">
-                                            {(() => {
-                                                const RoomIcon = roomIcons[rt.key] || Home;
-                                                return (
-                                                    <RoomIcon className="h-4 w-4 text-amber-300" />
-                                                );
-                                            })()}
-                                            {rt.name}
-                                        </span>
-                                        {!rt.is_unlocked && (
-                                            <span className="flex items-center gap-1 font-pixel text-xs text-stone-500">
-                                                <Lock className="h-3.5 w-3.5" /> Lv {rt.level}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="mt-1.5 font-pixel text-xs text-stone-500">
-                                        {rt.description}
-                                    </div>
-                                    <div className="mt-2 flex items-center gap-3 font-pixel text-xs">
-                                        <span className="flex items-center gap-1 text-yellow-400">
-                                            <Coins className="h-3.5 w-3.5" />
-                                            {rt.cost.toLocaleString()}g
-                                        </span>
-                                        <span className="text-stone-500">
-                                            {rt.hotspot_count} hotspots
-                                        </span>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                    </>
+                )}
             </div>
         </div>
     );
@@ -2656,6 +3032,1412 @@ const storageRarityColors: Record<string, string> = {
     epic: "border-purple-500 bg-purple-900/30",
     legendary: "border-amber-500 bg-amber-900/30",
 };
+
+function KitchenPanel({
+    room,
+    kitchen,
+    constructionLevel,
+    loading,
+    setLoading,
+    canAct,
+    onBuildFurniture,
+    onDemolish,
+    onDemolishRoom,
+    onClose,
+}: {
+    room: Room;
+    kitchen: KitchenData | null;
+    constructionLevel: number;
+    loading: boolean;
+    setLoading: (v: boolean) => void;
+    canAct: boolean;
+    onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
+    onDemolish: (roomId: number, hotspotSlug: string) => void;
+    onDemolishRoom: (roomId: number) => void;
+    onClose: () => void;
+}) {
+    const [cookingLoading, setCookingLoading] = useState<string | null>(null);
+    const [cookingCooldown, setCookingCooldown] = useState(0);
+
+    const handleCook = async (recipeId: string) => {
+        if (cookingCooldown > 0) return;
+        setCookingLoading(recipeId);
+
+        try {
+            const response = await fetch("/house/cook", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
+                },
+                body: JSON.stringify({ recipe: recipeId }),
+            });
+
+            const data: CookResult = await response.json();
+
+            if (data.success && data.burned) {
+                gameToast.error(data.message, {
+                    xp: data.xp_awarded,
+                });
+            } else if (data.success && data.item) {
+                gameToast.success(`Cooked ${data.item.quantity}x ${data.item.name}`, {
+                    xp: data.xp_awarded,
+                });
+            } else if (!data.success) {
+                gameToast.error(data.message);
+            }
+
+            router.reload({ only: ["kitchen", "playerInventory", "sidebar"] });
+
+            setCookingCooldown(3);
+            const interval = setInterval(() => {
+                setCookingCooldown((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(interval);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        } catch {
+            gameToast.error("An error occurred");
+        } finally {
+            setCookingLoading(null);
+        }
+    };
+
+    const RoomIcon = roomIcons[room.room_type] || Home;
+
+    return (
+        <div>
+            {/* Header */}
+            <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-orange-900/30 p-2">
+                        <RoomIcon className="h-5 w-5 text-orange-400" />
+                    </div>
+                    <div>
+                        <h3 className="font-pixel text-base text-amber-100">{room.room_name}</h3>
+                        <p className="font-pixel text-[10px] text-stone-500">
+                            Position ({room.grid_x}, {room.grid_y})
+                        </p>
+                    </div>
+                </div>
+                <button onClick={onClose} className="rounded p-1 hover:bg-stone-700/50">
+                    <X className="h-4 w-4 text-stone-500" />
+                </button>
+            </div>
+
+            {/* Furniture Hotspots */}
+            <div className="mb-4 space-y-2">
+                {Object.entries(room.hotspots).map(([slug, hotspot]) => (
+                    <div
+                        key={slug}
+                        className="rounded-md border border-stone-700/50 bg-stone-800/30 p-2.5"
+                    >
+                        <div className="flex items-center justify-between">
+                            <span className="font-pixel text-xs text-stone-400">
+                                {hotspot.name}
+                            </span>
+                            {hotspot.current ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="font-pixel text-xs text-green-400">
+                                        {hotspot.current.name}
+                                    </span>
+                                    {canAct && (
+                                        <button
+                                            onClick={() => onDemolish(room.id, slug)}
+                                            disabled={loading}
+                                            className="rounded p-0.5 text-red-400/60 hover:bg-red-900/20 hover:text-red-400"
+                                        >
+                                            <Trash2 className="h-3 w-3" />
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <span className="font-pixel text-[10px] text-stone-600">Empty</span>
+                            )}
+                        </div>
+                        {canAct && !hotspot.current && hotspot.options.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                                {hotspot.options.map((opt) => {
+                                    const canBuild = constructionLevel >= opt.level;
+                                    return (
+                                        <button
+                                            key={opt.key}
+                                            onClick={() => onBuildFurniture(room.id, slug, opt.key)}
+                                            disabled={loading || !canBuild}
+                                            className={`flex w-full items-center justify-between rounded px-2 py-1 font-pixel text-[10px] transition ${
+                                                canBuild
+                                                    ? "bg-stone-700/30 text-stone-300 hover:bg-stone-700/60"
+                                                    : "cursor-not-allowed text-stone-600"
+                                            }`}
+                                        >
+                                            <span>
+                                                {opt.name} (Lv.{opt.level})
+                                            </span>
+                                            <span className="text-stone-500">
+                                                {Object.entries(opt.materials)
+                                                    .map(([m, q]) => `${q} ${m}`)
+                                                    .join(", ")}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* Cooking Section */}
+            {kitchen ? (
+                <div>
+                    <div className="mb-3 rounded-lg border border-orange-700/30 bg-orange-900/10 p-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Flame className="h-4 w-4 text-orange-400" />
+                                <span className="font-pixel text-xs text-orange-300">
+                                    {kitchen.stove_name}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <span className="font-pixel text-[10px] text-stone-400">
+                                    Cooking Lv.{kitchen.cooking_level}
+                                </span>
+                                <span className="font-pixel text-[10px] text-red-400">
+                                    {kitchen.burn_chance}% burn
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {canAct && (
+                        <div className="grid grid-cols-1 gap-2">
+                            {kitchen.recipes.map((recipe) => (
+                                <div
+                                    key={recipe.id}
+                                    className={`rounded-lg border p-2.5 transition ${
+                                        recipe.is_locked
+                                            ? "border-stone-700 bg-stone-800/30 opacity-60"
+                                            : recipe.can_make
+                                              ? "border-orange-600/50 bg-orange-900/20"
+                                              : "border-stone-700 bg-stone-800/50"
+                                    }`}
+                                >
+                                    <div className="mb-1.5 flex items-center justify-between">
+                                        <span className="font-pixel text-xs text-amber-300">
+                                            {recipe.name}
+                                        </span>
+                                        {recipe.is_locked && (
+                                            <Lock className="h-3 w-3 text-stone-500" />
+                                        )}
+                                    </div>
+
+                                    {/* Materials */}
+                                    <div className="mb-1.5 space-y-0.5">
+                                        {recipe.materials.map((mat, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="flex items-center justify-between"
+                                            >
+                                                <span className="font-pixel text-[10px] text-stone-400">
+                                                    {mat.name}
+                                                </span>
+                                                <span
+                                                    className={`font-pixel text-[10px] ${
+                                                        mat.has_enough
+                                                            ? "text-green-400"
+                                                            : "text-red-400"
+                                                    }`}
+                                                >
+                                                    {mat.have}/{mat.required}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Output + Stats */}
+                                    <div className="mb-1.5 flex items-center justify-between text-stone-500">
+                                        <span className="font-pixel text-[10px] text-stone-300">
+                                            → {recipe.output.quantity}x {recipe.output.name}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="flex items-center gap-0.5 font-pixel text-[10px]">
+                                                <Zap className="h-2.5 w-2.5 text-yellow-500" />
+                                                {recipe.energy_cost}
+                                            </span>
+                                            <span className="font-pixel text-[10px] text-amber-400">
+                                                +{recipe.xp_reward} XP
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Cook Button */}
+                                    {recipe.is_locked ? (
+                                        <div className="rounded-md bg-stone-900/50 px-2 py-1 text-center">
+                                            <span className="font-pixel text-[10px] text-stone-500">
+                                                Lv.{recipe.required_level}
+                                            </span>
+                                        </div>
+                                    ) : cookingCooldown > 0 ? (
+                                        <div className="relative h-6 w-full overflow-hidden rounded-md bg-stone-700">
+                                            <div
+                                                className="absolute inset-y-0 right-0 bg-orange-600/50 transition-all duration-1000 ease-linear"
+                                                style={{
+                                                    width: `${(cookingCooldown / 3) * 100}%`,
+                                                }}
+                                            />
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <span className="font-pixel text-[10px] text-stone-300">
+                                                    {cookingCooldown}s
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleCook(recipe.id)}
+                                            disabled={!recipe.can_make || cookingLoading !== null}
+                                            className={`flex w-full items-center justify-center gap-1.5 rounded-md px-2 py-1 font-pixel text-[10px] transition ${
+                                                recipe.can_make && cookingLoading === null
+                                                    ? "bg-orange-600 text-stone-900 hover:bg-orange-500"
+                                                    : "cursor-not-allowed bg-stone-700 text-stone-500"
+                                            }`}
+                                        >
+                                            {cookingLoading === recipe.id ? (
+                                                <>
+                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                    Cooking...
+                                                </>
+                                            ) : recipe.can_make ? (
+                                                <>
+                                                    <CookingPot className="h-3 w-3" />
+                                                    Cook
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <X className="h-3 w-3" />
+                                                    Missing
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <div className="rounded-lg border border-stone-700/30 bg-stone-800/20 p-4 text-center">
+                    <CookingPot className="mx-auto h-6 w-6 text-stone-600" />
+                    <p className="mt-2 font-pixel text-xs text-stone-500">
+                        Build a stove to cook at home.
+                    </p>
+                </div>
+            )}
+
+            {/* Demolish Room */}
+            {canAct && (
+                <div className="mt-4 border-t border-stone-700/30 pt-3">
+                    <button
+                        onClick={() => onDemolishRoom(room.id)}
+                        disabled={loading}
+                        className="flex w-full items-center justify-center gap-2 rounded-md bg-red-900/30 px-3 py-1.5 font-pixel text-xs text-red-400 transition hover:bg-red-900/50"
+                    >
+                        <Trash2 className="h-3 w-3" />
+                        Demolish Room
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function BedroomPanel({
+    room,
+    bedroom,
+    hearth,
+    constructionLevel,
+    loading,
+    setLoading,
+    canAct,
+    onBuildFurniture,
+    onDemolish,
+    onDemolishRoom,
+    onClose,
+}: {
+    room: Room;
+    bedroom: BedroomData | null;
+    hearth: HearthData | null;
+    constructionLevel: number;
+    loading: boolean;
+    setLoading: (v: boolean) => void;
+    canAct: boolean;
+    onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
+    onDemolish: (roomId: number, hotspotSlug: string) => void;
+    onDemolishRoom: (roomId: number) => void;
+    onClose: () => void;
+}) {
+    const [restCooldown, setRestCooldown] = useState(0);
+
+    useEffect(() => {
+        if (restCooldown <= 0) return;
+        const timer = setTimeout(() => setRestCooldown((c) => c - 1), 1000);
+        return () => clearTimeout(timer);
+    }, [restCooldown]);
+
+    const handleRest = () => {
+        if (restCooldown > 0) return;
+        setLoading(true);
+        router.post(
+            "/house/rest",
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setRestCooldown(3);
+                    router.reload();
+                },
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const RoomIcon = roomIcons[room.room_type] || Home;
+
+    return (
+        <div>
+            {/* Header */}
+            <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-indigo-900/30 p-2">
+                        <RoomIcon className="h-5 w-5 text-indigo-400" />
+                    </div>
+                    <div>
+                        <h3 className="font-pixel text-base text-amber-100">{room.room_name}</h3>
+                        <p className="font-pixel text-[10px] text-stone-500">
+                            Position ({room.grid_x}, {room.grid_y})
+                        </p>
+                    </div>
+                </div>
+                <button onClick={onClose} className="rounded p-1 hover:bg-stone-700/50">
+                    <X className="h-4 w-4 text-stone-500" />
+                </button>
+            </div>
+
+            {/* Furniture Hotspots */}
+            <div className="mb-4 space-y-2">
+                {Object.entries(room.hotspots).map(([slug, hotspot]) => (
+                    <div
+                        key={slug}
+                        className="rounded-md border border-stone-700/50 bg-stone-800/30 p-2.5"
+                    >
+                        <div className="flex items-center justify-between">
+                            <span className="font-pixel text-xs text-stone-400">
+                                {hotspot.name}
+                            </span>
+                            {hotspot.current ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="font-pixel text-xs text-green-400">
+                                        {hotspot.current.name}
+                                    </span>
+                                    {canAct && (
+                                        <button
+                                            onClick={() => onDemolish(room.id, slug)}
+                                            disabled={loading}
+                                            className="rounded p-0.5 text-red-400/60 hover:bg-red-900/20 hover:text-red-400"
+                                        >
+                                            <Trash2 className="h-3 w-3" />
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <span className="font-pixel text-[10px] text-stone-600">Empty</span>
+                            )}
+                        </div>
+                        {canAct && !hotspot.current && hotspot.options.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                                {hotspot.options.map((opt) => {
+                                    const canBuild = constructionLevel >= opt.level;
+                                    return (
+                                        <button
+                                            key={opt.key}
+                                            onClick={() => onBuildFurniture(room.id, slug, opt.key)}
+                                            disabled={loading || !canBuild}
+                                            className={`flex w-full items-center justify-between rounded px-2 py-1 font-pixel text-[10px] transition ${
+                                                canBuild
+                                                    ? "bg-stone-700/30 text-stone-300 hover:bg-stone-700/60"
+                                                    : "cursor-not-allowed text-stone-600"
+                                            }`}
+                                        >
+                                            <span>
+                                                {opt.name} (Lv.{opt.level})
+                                            </span>
+                                            <span className="text-stone-500">
+                                                {Object.entries(opt.materials)
+                                                    .map(([m, q]) => `${q} ${m}`)
+                                                    .join(", ")}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* Rest Section */}
+            {bedroom ? (
+                <div className="rounded-lg border border-indigo-700/30 bg-indigo-900/10 p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Bed className="h-4 w-4 text-indigo-400" />
+                            <span className="font-pixel text-xs text-indigo-300">
+                                {bedroom.bed_name}
+                            </span>
+                        </div>
+                        <span className="font-pixel text-xs text-green-400">Free</span>
+                    </div>
+
+                    <div className="mb-3 flex items-center gap-2 rounded bg-stone-900/50 px-3 py-2">
+                        <Zap className="h-4 w-4 text-yellow-400" />
+                        <span className="font-pixel text-xs text-stone-300">
+                            Restores up to {bedroom.energy_restored} energy
+                        </span>
+                    </div>
+
+                    {hearth && (
+                        <div className="mb-3 flex items-center gap-2 rounded bg-red-900/20 px-3 py-2">
+                            <Flame className="h-4 w-4 text-orange-400" />
+                            <span className="font-pixel text-xs text-stone-300">
+                                Hearth bonus: +{hearth.hp_restore_amount} HP per rest
+                            </span>
+                        </div>
+                    )}
+
+                    {canAct && (
+                        <>
+                            {restCooldown > 0 ? (
+                                <div className="relative h-8 w-full overflow-hidden rounded-md bg-stone-700">
+                                    <div
+                                        className="absolute inset-y-0 right-0 bg-indigo-600/50 transition-all duration-1000 ease-linear"
+                                        style={{
+                                            width: `${(restCooldown / 3) * 100}%`,
+                                        }}
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <span className="font-pixel text-xs text-stone-300">
+                                            {restCooldown}s
+                                        </span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={handleRest}
+                                    disabled={loading}
+                                    className="flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-2 font-pixel text-xs text-white transition hover:bg-indigo-500"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                            Resting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Bed className="h-3 w-3" />
+                                            Rest
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                        </>
+                    )}
+                </div>
+            ) : (
+                <div className="rounded-lg border border-stone-700/30 bg-stone-800/20 p-4 text-center">
+                    <Bed className="mx-auto h-6 w-6 text-stone-600" />
+                    <p className="mt-2 font-pixel text-xs text-stone-500">
+                        Build a bed to rest at home.
+                    </p>
+                </div>
+            )}
+
+            {/* Demolish Room */}
+            {canAct && (
+                <div className="mt-4 border-t border-stone-700/30 pt-3">
+                    <button
+                        onClick={() => onDemolishRoom(room.id)}
+                        disabled={loading}
+                        className="flex w-full items-center justify-center gap-2 rounded-md bg-red-900/30 px-3 py-1.5 font-pixel text-xs text-red-400 transition hover:bg-red-900/50"
+                    >
+                        <Trash2 className="h-3 w-3" />
+                        Demolish Room
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function CraftingStationPanel({
+    room,
+    stationName,
+    xpBonus,
+    recipes,
+    craftEndpoint,
+    themeColor,
+    StationIcon,
+    craftLabel,
+    constructionLevel,
+    loading,
+    setLoading,
+    canAct,
+    onBuildFurniture,
+    onDemolish,
+    onDemolishRoom,
+    onClose,
+}: {
+    room: Room;
+    stationName: string;
+    xpBonus: number;
+    recipes: Record<string, CraftingRecipe[]>;
+    craftEndpoint: string;
+    themeColor: string;
+    StationIcon: LucideIcon;
+    craftLabel: string;
+    constructionLevel: number;
+    loading: boolean;
+    setLoading: (v: boolean) => void;
+    canAct: boolean;
+    onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
+    onDemolish: (roomId: number, hotspotSlug: string) => void;
+    onDemolishRoom: (roomId: number) => void;
+    onClose: () => void;
+}) {
+    const [craftingLoading, setCraftingLoading] = useState<string | null>(null);
+    const [craftingCooldown, setCraftingCooldown] = useState(0);
+    const allCategories = Object.keys(recipes);
+    const [activeCategory, setActiveCategory] = useState(allCategories[0] || "");
+
+    const categoryLabels: Record<string, string> = {
+        crafting: "Crafting",
+        fletching: "Fletching",
+        gem_cutting: "Gem Cutting",
+        jewelry: "Jewelry",
+        smelting: "Smelting",
+        smithing: "Smithing",
+    };
+
+    const handleCraft = async (recipeId: string) => {
+        if (craftingCooldown > 0) return;
+        setCraftingLoading(recipeId);
+
+        try {
+            const response = await fetch(craftEndpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
+                },
+                body: JSON.stringify({ recipe: recipeId }),
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.item) {
+                gameToast.success(`${craftLabel} ${data.item.quantity}x ${data.item.name}`, {
+                    xp: data.xp_awarded,
+                });
+            } else if (!data.success) {
+                gameToast.error(data.message);
+            }
+
+            router.reload({ only: ["workshop", "forge", "playerInventory", "sidebar"] });
+
+            setCraftingCooldown(3);
+            const interval = setInterval(() => {
+                setCraftingCooldown((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(interval);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        } catch {
+            gameToast.error("An error occurred");
+        } finally {
+            setCraftingLoading(null);
+        }
+    };
+
+    const bgClass = themeColor === "orange" ? "bg-orange-900/30" : "bg-red-900/30";
+    const iconClass = themeColor === "orange" ? "text-orange-400" : "text-red-400";
+    const borderClass = themeColor === "orange" ? "border-orange-600/50" : "border-red-600/50";
+    const activeBgClass = themeColor === "orange" ? "bg-orange-900/20" : "bg-red-900/20";
+    const buttonBgClass =
+        themeColor === "orange"
+            ? "bg-orange-600 text-stone-900 hover:bg-orange-500"
+            : "bg-red-600 text-stone-100 hover:bg-red-500";
+    const cooldownBgClass = themeColor === "orange" ? "bg-orange-600/50" : "bg-red-600/50";
+    const tabActiveClass =
+        themeColor === "orange" ? "bg-orange-600 text-stone-900" : "bg-red-600 text-stone-100";
+
+    const RoomIcon = roomIcons[room.room_type] || Home;
+
+    return (
+        <div>
+            {/* Header */}
+            <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className={`rounded-lg ${bgClass} p-2`}>
+                        <RoomIcon className={`h-5 w-5 ${iconClass}`} />
+                    </div>
+                    <div>
+                        <h3 className="font-pixel text-base text-amber-100">{room.room_name}</h3>
+                        <p className="font-pixel text-[10px] text-stone-500">
+                            Position ({room.grid_x}, {room.grid_y})
+                        </p>
+                    </div>
+                </div>
+                <button onClick={onClose} className="rounded p-1 hover:bg-stone-700/50">
+                    <X className="h-4 w-4 text-stone-500" />
+                </button>
+            </div>
+
+            {/* Furniture Hotspots */}
+            <div className="mb-4 space-y-2">
+                {Object.entries(room.hotspots).map(([slug, hotspot]) => (
+                    <div
+                        key={slug}
+                        className="rounded-md border border-stone-700/50 bg-stone-800/30 p-2.5"
+                    >
+                        <div className="flex items-center justify-between">
+                            <span className="font-pixel text-xs text-stone-400">
+                                {hotspot.name}
+                            </span>
+                            {hotspot.current ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="font-pixel text-xs text-green-400">
+                                        {hotspot.current.name}
+                                    </span>
+                                    {canAct && (
+                                        <button
+                                            onClick={() => onDemolish(room.id, slug)}
+                                            disabled={loading}
+                                            className="rounded p-0.5 text-red-400/60 hover:bg-red-900/20 hover:text-red-400"
+                                        >
+                                            <Trash2 className="h-3 w-3" />
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <span className="font-pixel text-[10px] text-stone-600">Empty</span>
+                            )}
+                        </div>
+                        {canAct && !hotspot.current && hotspot.options.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                                {hotspot.options.map((opt) => {
+                                    const canBuild = constructionLevel >= opt.level;
+                                    return (
+                                        <button
+                                            key={opt.key}
+                                            onClick={() => onBuildFurniture(room.id, slug, opt.key)}
+                                            disabled={loading || !canBuild}
+                                            className={`flex w-full items-center justify-between rounded px-2 py-1 font-pixel text-[10px] transition ${
+                                                canBuild
+                                                    ? "bg-stone-700/30 text-stone-300 hover:bg-stone-700/60"
+                                                    : "cursor-not-allowed text-stone-600"
+                                            }`}
+                                        >
+                                            <span>
+                                                {opt.name} (Lv.{opt.level})
+                                            </span>
+                                            <span className="text-stone-500">
+                                                {Object.entries(opt.materials)
+                                                    .map(([m, q]) => `${q} ${m}`)
+                                                    .join(", ")}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* Station Info */}
+            {Object.keys(recipes).length > 0 ? (
+                <div className={`rounded-lg border ${borderClass} ${activeBgClass} p-4`}>
+                    <div className="mb-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <StationIcon className={`h-4 w-4 ${iconClass}`} />
+                            <span className={`font-pixel text-xs ${iconClass}`}>{stationName}</span>
+                        </div>
+                        {xpBonus > 0 && (
+                            <span className="font-pixel text-[10px] text-green-400">
+                                +{xpBonus}% XP
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Category Tabs */}
+                    {allCategories.length > 1 && (
+                        <div className="mb-3 flex flex-wrap gap-1">
+                            {allCategories.map((cat) => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setActiveCategory(cat)}
+                                    className={`rounded-md px-2 py-1 font-pixel text-[10px] transition ${
+                                        activeCategory === cat
+                                            ? tabActiveClass
+                                            : "bg-stone-700/50 text-stone-400 hover:bg-stone-700"
+                                    }`}
+                                >
+                                    {categoryLabels[cat] || cat}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {canAct && (
+                        <div className="grid grid-cols-1 gap-2">
+                            {(recipes[activeCategory] || []).map((recipe) => (
+                                <div
+                                    key={recipe.id}
+                                    className={`rounded-lg border p-2.5 transition ${
+                                        recipe.can_make
+                                            ? `${borderClass} ${activeBgClass}`
+                                            : "border-stone-700 bg-stone-800/50"
+                                    }`}
+                                >
+                                    <div className="mb-1.5 flex items-center justify-between">
+                                        <span className="font-pixel text-xs text-amber-300">
+                                            {recipe.name}
+                                        </span>
+                                    </div>
+
+                                    {/* Materials */}
+                                    <div className="mb-1.5 space-y-0.5">
+                                        {recipe.materials.map((mat, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="flex items-center justify-between"
+                                            >
+                                                <span className="font-pixel text-[10px] text-stone-400">
+                                                    {mat.name}
+                                                </span>
+                                                <span
+                                                    className={`font-pixel text-[10px] ${
+                                                        mat.has_enough
+                                                            ? "text-green-400"
+                                                            : "text-red-400"
+                                                    }`}
+                                                >
+                                                    {mat.have}/{mat.required}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Output + Stats */}
+                                    <div className="mb-1.5 flex items-center justify-between text-stone-500">
+                                        <span className="font-pixel text-[10px] text-stone-300">
+                                            → {recipe.output.quantity}x {recipe.output.name}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="flex items-center gap-0.5 font-pixel text-[10px]">
+                                                <Zap className="h-2.5 w-2.5 text-yellow-500" />
+                                                {recipe.energy_cost}
+                                            </span>
+                                            <span className="font-pixel text-[10px] text-amber-400">
+                                                +{recipe.xp_reward} XP
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Craft Button */}
+                                    {craftingCooldown > 0 ? (
+                                        <div className="relative h-6 w-full overflow-hidden rounded-md bg-stone-700">
+                                            <div
+                                                className={`absolute inset-y-0 right-0 ${cooldownBgClass} transition-all duration-1000 ease-linear`}
+                                                style={{
+                                                    width: `${(craftingCooldown / 3) * 100}%`,
+                                                }}
+                                            />
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <span className="font-pixel text-[10px] text-stone-300">
+                                                    {craftingCooldown}s
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleCraft(recipe.id)}
+                                            disabled={!recipe.can_make || craftingLoading !== null}
+                                            className={`flex w-full items-center justify-center gap-1.5 rounded-md px-2 py-1 font-pixel text-[10px] transition ${
+                                                recipe.can_make && craftingLoading === null
+                                                    ? buttonBgClass
+                                                    : "cursor-not-allowed bg-stone-700 text-stone-500"
+                                            }`}
+                                        >
+                                            {craftingLoading === recipe.id ? (
+                                                <>
+                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                    Working...
+                                                </>
+                                            ) : recipe.can_make ? (
+                                                <>
+                                                    <StationIcon className="h-3 w-3" />
+                                                    {craftLabel}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <X className="h-3 w-3" />
+                                                    Missing
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <div className="rounded-lg border border-stone-700/30 bg-stone-800/20 p-4 text-center">
+                    <StationIcon className="mx-auto h-6 w-6 text-stone-600" />
+                    <p className="mt-2 font-pixel text-xs text-stone-500">
+                        Build the required furniture to use this station.
+                    </p>
+                </div>
+            )}
+
+            {/* Demolish Room */}
+            {canAct && (
+                <div className="mt-4 border-t border-stone-700/30 pt-3">
+                    <button
+                        onClick={() => onDemolishRoom(room.id)}
+                        disabled={loading}
+                        className="flex w-full items-center justify-center gap-2 rounded-md bg-red-900/30 px-3 py-1.5 font-pixel text-xs text-red-400 transition hover:bg-red-900/50"
+                    >
+                        <Trash2 className="h-3 w-3" />
+                        Demolish Room
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function WorkshopPanel(props: {
+    room: Room;
+    workshop: WorkshopData | null;
+    constructionLevel: number;
+    loading: boolean;
+    setLoading: (v: boolean) => void;
+    canAct: boolean;
+    onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
+    onDemolish: (roomId: number, hotspotSlug: string) => void;
+    onDemolishRoom: (roomId: number) => void;
+    onClose: () => void;
+}) {
+    return (
+        <CraftingStationPanel
+            room={props.room}
+            stationName={props.workshop?.workbench_name || "Workbench"}
+            xpBonus={props.workshop?.xp_bonus || 0}
+            recipes={props.workshop?.recipes || {}}
+            craftEndpoint="/house/workshop/craft"
+            themeColor="orange"
+            StationIcon={Wrench}
+            craftLabel="Craft"
+            constructionLevel={props.constructionLevel}
+            loading={props.loading}
+            setLoading={props.setLoading}
+            canAct={props.canAct}
+            onBuildFurniture={props.onBuildFurniture}
+            onDemolish={props.onDemolish}
+            onDemolishRoom={props.onDemolishRoom}
+            onClose={props.onClose}
+        />
+    );
+}
+
+function ForgePanel(props: {
+    room: Room;
+    forge: ForgeData | null;
+    constructionLevel: number;
+    loading: boolean;
+    setLoading: (v: boolean) => void;
+    canAct: boolean;
+    onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
+    onDemolish: (roomId: number, hotspotSlug: string) => void;
+    onDemolishRoom: (roomId: number) => void;
+    onClose: () => void;
+}) {
+    return (
+        <CraftingStationPanel
+            room={props.room}
+            stationName={props.forge?.anvil_name || "Anvil"}
+            xpBonus={props.forge?.xp_bonus || 0}
+            recipes={props.forge?.recipes || {}}
+            craftEndpoint="/house/forge/craft"
+            themeColor="red"
+            StationIcon={Anvil}
+            craftLabel="Smith"
+            constructionLevel={props.constructionLevel}
+            loading={props.loading}
+            setLoading={props.setLoading}
+            canAct={props.canAct}
+            onBuildFurniture={props.onBuildFurniture}
+            onDemolish={props.onDemolish}
+            onDemolishRoom={props.onDemolishRoom}
+            onClose={props.onClose}
+        />
+    );
+}
+
+function ChapelPanel({
+    room,
+    chapel,
+    constructionLevel,
+    loading,
+    setLoading,
+    canAct,
+    onBuildFurniture,
+    onDemolish,
+    onDemolishRoom,
+    onClose,
+}: {
+    room: Room;
+    chapel: ChapelData | null;
+    constructionLevel: number;
+    loading: boolean;
+    setLoading: (v: boolean) => void;
+    canAct: boolean;
+    onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
+    onDemolish: (roomId: number, hotspotSlug: string) => void;
+    onDemolishRoom: (roomId: number) => void;
+    onClose: () => void;
+}) {
+    const [prayLoading, setPrayLoading] = useState(false);
+    const [cooldown, setCooldown] = useState(chapel?.cooldown_remaining || 0);
+
+    useEffect(() => {
+        if (cooldown <= 0) return;
+        const interval = setInterval(() => {
+            setCooldown((prev) => {
+                if (prev <= 1) {
+                    clearInterval(interval);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [cooldown]);
+
+    const handlePray = async () => {
+        if (cooldown > 0 || prayLoading) return;
+        setPrayLoading(true);
+
+        try {
+            const response = await fetch("/house/pray", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
+                },
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                gameToast.success(data.message, { xp: data.prayer_xp_gained });
+                setCooldown(300); // 5 minutes
+                router.reload({ only: ["chapel", "sidebar"] });
+            } else {
+                gameToast.error(data.message);
+            }
+        } catch {
+            gameToast.error("An error occurred");
+        } finally {
+            setPrayLoading(false);
+        }
+    };
+
+    const formatCooldown = (seconds: number) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}:${s.toString().padStart(2, "0")}`;
+    };
+
+    const RoomIcon = roomIcons[room.room_type] || Home;
+
+    return (
+        <div>
+            {/* Header */}
+            <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-purple-900/30 p-2">
+                        <RoomIcon className="h-5 w-5 text-purple-400" />
+                    </div>
+                    <div>
+                        <h3 className="font-pixel text-base text-amber-100">{room.room_name}</h3>
+                        <p className="font-pixel text-[10px] text-stone-500">
+                            Position ({room.grid_x}, {room.grid_y})
+                        </p>
+                    </div>
+                </div>
+                <button onClick={onClose} className="rounded p-1 hover:bg-stone-700/50">
+                    <X className="h-4 w-4 text-stone-500" />
+                </button>
+            </div>
+
+            {/* Furniture Hotspots */}
+            <div className="mb-4 space-y-2">
+                {Object.entries(room.hotspots).map(([slug, hotspot]) => (
+                    <div
+                        key={slug}
+                        className="rounded-md border border-stone-700/50 bg-stone-800/30 p-2.5"
+                    >
+                        <div className="flex items-center justify-between">
+                            <span className="font-pixel text-xs text-stone-400">
+                                {hotspot.name}
+                            </span>
+                            {hotspot.current ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="font-pixel text-xs text-green-400">
+                                        {hotspot.current.name}
+                                    </span>
+                                    {canAct && (
+                                        <button
+                                            onClick={() => onDemolish(room.id, slug)}
+                                            disabled={loading}
+                                            className="rounded p-0.5 text-red-400/60 hover:bg-red-900/20 hover:text-red-400"
+                                        >
+                                            <Trash2 className="h-3 w-3" />
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <span className="font-pixel text-[10px] text-stone-600">Empty</span>
+                            )}
+                        </div>
+                        {canAct && !hotspot.current && hotspot.options.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                                {hotspot.options.map((opt) => {
+                                    const canBuild = constructionLevel >= opt.level;
+                                    return (
+                                        <button
+                                            key={opt.key}
+                                            onClick={() => onBuildFurniture(room.id, slug, opt.key)}
+                                            disabled={loading || !canBuild}
+                                            className={`flex w-full items-center justify-between rounded px-2 py-1 font-pixel text-[10px] transition ${
+                                                canBuild
+                                                    ? "bg-stone-700/30 text-stone-300 hover:bg-stone-700/60"
+                                                    : "cursor-not-allowed text-stone-600"
+                                            }`}
+                                        >
+                                            <span>
+                                                {opt.name} (Lv.{opt.level})
+                                            </span>
+                                            <span className="text-stone-500">
+                                                {Object.entries(opt.materials)
+                                                    .map(([m, q]) => `${q} ${m}`)
+                                                    .join(", ")}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* Prayer Section */}
+            {chapel ? (
+                <div className="rounded-lg border border-purple-700/30 bg-purple-900/10 p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Church className="h-4 w-4 text-purple-400" />
+                            <span className="font-pixel text-xs text-purple-300">
+                                {chapel.altar_name}
+                            </span>
+                        </div>
+                        {chapel.prayer_xp_bonus > 0 && (
+                            <span className="font-pixel text-[10px] text-green-400">
+                                +{chapel.prayer_xp_bonus}% Prayer XP
+                            </span>
+                        )}
+                    </div>
+
+                    {chapel.religion ? (
+                        <>
+                            <div className="mb-3 space-y-1.5">
+                                <div className="flex items-center gap-2 rounded bg-stone-900/50 px-3 py-2">
+                                    <Sparkles className="h-4 w-4 text-purple-400" />
+                                    <span className="font-pixel text-xs text-stone-300">
+                                        {chapel.religion}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 rounded bg-stone-900/50 px-3 py-2">
+                                    <Zap className="h-4 w-4 text-yellow-400" />
+                                    <span className="font-pixel text-xs text-stone-300">
+                                        Cost: {chapel.energy_cost} energy
+                                    </span>
+                                </div>
+                            </div>
+
+                            {canAct && (
+                                <>
+                                    {cooldown > 0 ? (
+                                        <div className="relative h-8 w-full overflow-hidden rounded-md bg-stone-700">
+                                            <div
+                                                className="absolute inset-y-0 right-0 bg-purple-600/50 transition-all duration-1000 ease-linear"
+                                                style={{
+                                                    width: `${(cooldown / 300) * 100}%`,
+                                                }}
+                                            />
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <span className="font-pixel text-xs text-stone-300">
+                                                    <Clock className="mr-1 inline h-3 w-3" />
+                                                    {formatCooldown(cooldown)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={handlePray}
+                                            disabled={prayLoading || !chapel.can_pray}
+                                            className={`flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 font-pixel text-xs transition ${
+                                                chapel.can_pray && !prayLoading
+                                                    ? "bg-purple-600 text-white hover:bg-purple-500"
+                                                    : "cursor-not-allowed bg-stone-700 text-stone-500"
+                                            }`}
+                                        >
+                                            {prayLoading ? (
+                                                <>
+                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                    Praying...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Church className="h-3 w-3" />
+                                                    Pray ({chapel.energy_cost} Energy)
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </>
+                            )}
+                        </>
+                    ) : (
+                        <div className="rounded bg-stone-900/50 p-3 text-center">
+                            <p className="font-pixel text-xs text-stone-500">
+                                You must join a religion to pray here.
+                            </p>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <div className="rounded-lg border border-stone-700/30 bg-stone-800/20 p-4 text-center">
+                    <Church className="mx-auto h-6 w-6 text-stone-600" />
+                    <p className="mt-2 font-pixel text-xs text-stone-500">
+                        Build an altar to pray at home.
+                    </p>
+                </div>
+            )}
+
+            {/* Demolish Room */}
+            {canAct && (
+                <div className="mt-4 border-t border-stone-700/30 pt-3">
+                    <button
+                        onClick={() => onDemolishRoom(room.id)}
+                        disabled={loading}
+                        className="flex w-full items-center justify-center gap-2 rounded-md bg-red-900/30 px-3 py-1.5 font-pixel text-xs text-red-400 transition hover:bg-red-900/50"
+                    >
+                        <Trash2 className="h-3 w-3" />
+                        Demolish Room
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function HearthPanel({
+    room,
+    hearth,
+    constructionLevel,
+    loading,
+    canAct,
+    onBuildFurniture,
+    onDemolish,
+    onDemolishRoom,
+    onClose,
+}: {
+    room: Room;
+    hearth: HearthData | null;
+    constructionLevel: number;
+    loading: boolean;
+    canAct: boolean;
+    onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
+    onDemolish: (roomId: number, hotspotSlug: string) => void;
+    onDemolishRoom: (roomId: number) => void;
+    onClose: () => void;
+}) {
+    const RoomIcon = roomIcons[room.room_type] || Home;
+
+    return (
+        <div>
+            {/* Header */}
+            <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-orange-900/30 p-2">
+                        <RoomIcon className="h-5 w-5 text-orange-400" />
+                    </div>
+                    <div>
+                        <h3 className="font-pixel text-base text-amber-100">{room.room_name}</h3>
+                        <p className="font-pixel text-[10px] text-stone-500">
+                            Position ({room.grid_x}, {room.grid_y})
+                        </p>
+                    </div>
+                </div>
+                <button onClick={onClose} className="rounded p-1 hover:bg-stone-700/50">
+                    <X className="h-4 w-4 text-stone-500" />
+                </button>
+            </div>
+
+            {/* Furniture Hotspots */}
+            <div className="mb-4 space-y-2">
+                {Object.entries(room.hotspots).map(([slug, hotspot]) => (
+                    <div
+                        key={slug}
+                        className="rounded-md border border-stone-700/50 bg-stone-800/30 p-2.5"
+                    >
+                        <div className="flex items-center justify-between">
+                            <span className="font-pixel text-xs text-stone-400">
+                                {hotspot.name}
+                            </span>
+                            {hotspot.current ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="font-pixel text-xs text-green-400">
+                                        {hotspot.current.name}
+                                    </span>
+                                    {canAct && (
+                                        <button
+                                            onClick={() => onDemolish(room.id, slug)}
+                                            disabled={loading}
+                                            className="rounded p-0.5 text-red-400/60 hover:bg-red-900/20 hover:text-red-400"
+                                        >
+                                            <Trash2 className="h-3 w-3" />
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <span className="font-pixel text-[10px] text-stone-600">Empty</span>
+                            )}
+                        </div>
+                        {canAct && !hotspot.current && hotspot.options.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                                {hotspot.options.map((opt) => {
+                                    const canBuild = constructionLevel >= opt.level;
+                                    return (
+                                        <button
+                                            key={opt.key}
+                                            onClick={() => onBuildFurniture(room.id, slug, opt.key)}
+                                            disabled={loading || !canBuild}
+                                            className={`flex w-full items-center justify-between rounded px-2 py-1 font-pixel text-[10px] transition ${
+                                                canBuild
+                                                    ? "bg-stone-700/30 text-stone-300 hover:bg-stone-700/60"
+                                                    : "cursor-not-allowed text-stone-600"
+                                            }`}
+                                        >
+                                            <span>
+                                                {opt.name} (Lv.{opt.level})
+                                            </span>
+                                            <span className="text-stone-500">
+                                                {Object.entries(opt.materials)
+                                                    .map(([m, q]) => `${q} ${m}`)
+                                                    .join(", ")}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* Hearth Info */}
+            {hearth ? (
+                <div className="rounded-lg border border-orange-700/30 bg-orange-900/10 p-4">
+                    <div className="mb-3 flex items-center gap-2">
+                        <Flame className="h-4 w-4 text-orange-400" />
+                        <span className="font-pixel text-xs text-orange-300">
+                            {hearth.fireplace_name}
+                        </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 rounded bg-stone-900/50 px-3 py-2">
+                            <Sparkles className="h-4 w-4 text-red-400" />
+                            <span className="font-pixel text-xs text-stone-300">
+                                +{hearth.max_hp_bonus} Max HP bonus
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 rounded bg-stone-900/50 px-3 py-2">
+                            <Flame className="h-4 w-4 text-orange-400" />
+                            <span className="font-pixel text-xs text-stone-300">
+                                Restores {hearth.hp_restore_amount} HP when resting in bed
+                            </span>
+                        </div>
+                    </div>
+
+                    <p className="mt-3 font-pixel text-[10px] text-stone-500 italic">
+                        Your hearth warms the house, restoring HP when you rest in bed.
+                    </p>
+                </div>
+            ) : (
+                <div className="rounded-lg border border-stone-700/30 bg-stone-800/20 p-4 text-center">
+                    <Flame className="mx-auto h-6 w-6 text-stone-600" />
+                    <p className="mt-2 font-pixel text-xs text-stone-500">
+                        Build a fireplace to warm your home.
+                    </p>
+                </div>
+            )}
+
+            {/* Demolish Room */}
+            {canAct && (
+                <div className="mt-4 border-t border-stone-700/30 pt-3">
+                    <button
+                        onClick={() => onDemolishRoom(room.id)}
+                        disabled={loading}
+                        className="flex w-full items-center justify-center gap-2 rounded-md bg-red-900/30 px-3 py-1.5 font-pixel text-xs text-red-400 transition hover:bg-red-900/50"
+                    >
+                        <Trash2 className="h-3 w-3" />
+                        Demolish Room
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
 
 function StoragePanel({
     storage,

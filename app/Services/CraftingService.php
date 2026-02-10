@@ -289,7 +289,8 @@ class CraftingService
         protected DailyTaskService $dailyTaskService,
         protected TownBonusService $townBonusService,
         protected BeliefEffectService $beliefEffectService,
-        protected BiomeService $biomeService
+        protected BiomeService $biomeService,
+        protected HouseBuffService $houseBuffService
     ) {}
 
     /**
@@ -846,6 +847,215 @@ class CraftingService
                 'energy_remaining' => $user->fresh()->energy,
                 'role_bonus' => $bonusQuantity > 0,
                 'stockpile_contribution' => $contribution,
+            ];
+        });
+    }
+
+    /**
+     * Get recipes available for home crafting (skips location check).
+     *
+     * @param  array  $allowedCategories  Only include these categories
+     */
+    public function getHomeRecipes(User $user, array $allowedCategories): array
+    {
+        $categories = [];
+
+        foreach (self::getAllRecipeDefinitions() as $id => $recipe) {
+            $category = $recipe['category'];
+
+            if (! in_array($category, $allowedCategories)) {
+                continue;
+            }
+
+            $skillLevel = $user->getSkillLevel($recipe['skill']);
+
+            if ($skillLevel < $recipe['required_level']) {
+                continue;
+            }
+
+            if (! isset($categories[$category])) {
+                $categories[$category] = [];
+            }
+
+            $categories[$category][] = $this->formatHomeRecipe($id, $recipe, $user);
+        }
+
+        foreach ($categories as &$recipes) {
+            usort($recipes, function ($a, $b) {
+                if ($a['required_level'] !== $b['required_level']) {
+                    return $a['required_level'] <=> $b['required_level'];
+                }
+
+                return strcmp($a['name'], $b['name']);
+            });
+        }
+
+        return $categories;
+    }
+
+    /**
+     * Format a recipe for home crafting display (no town bonuses).
+     */
+    protected function formatHomeRecipe(string $id, array $recipe, User $user): array
+    {
+        $skillLevel = $user->getSkillLevel($recipe['skill']);
+        $canMake = $this->canMakeRecipe($user, $id);
+
+        $materials = [];
+        foreach ($recipe['materials'] as $material) {
+            $item = Item::where('name', $material['name'])->first();
+            $playerHas = $item ? $this->inventoryService->countItem($user, $item) : 0;
+
+            $materials[] = [
+                'name' => $material['name'],
+                'required' => $material['quantity'],
+                'have' => $playerHas,
+                'has_enough' => $playerHas >= $material['quantity'],
+            ];
+        }
+
+        return [
+            'id' => $id,
+            'name' => $recipe['name'],
+            'category' => $recipe['category'],
+            'skill' => $recipe['skill'],
+            'required_level' => $recipe['required_level'],
+            'xp_reward' => $recipe['xp_reward'],
+            'energy_cost' => $recipe['energy_cost'],
+            'materials' => $materials,
+            'output' => $recipe['output'],
+            'can_make' => $canMake,
+            'is_locked' => false,
+            'current_level' => $skillLevel,
+        ];
+    }
+
+    /**
+     * Craft an item at home (bypasses location check, no town bonuses).
+     *
+     * @param  array  $allowedCategories  Categories allowed for this home station
+     * @param  int  $xpBonusPercent  Additional XP bonus from house furniture
+     */
+    public function craftAtHome(User $user, string $recipeId, array $allowedCategories, int $xpBonusPercent = 0): array
+    {
+        if ($user->isTraveling()) {
+            return ['success' => false, 'message' => 'You cannot craft while traveling.'];
+        }
+
+        if ($user->isInInfirmary()) {
+            return ['success' => false, 'message' => 'You cannot craft while in the infirmary.'];
+        }
+
+        $allRecipes = self::getAllRecipeDefinitions();
+        $recipe = $allRecipes[$recipeId] ?? null;
+
+        if (! $recipe) {
+            return ['success' => false, 'message' => 'Invalid recipe.'];
+        }
+
+        if (! in_array($recipe['category'], $allowedCategories)) {
+            return ['success' => false, 'message' => 'This recipe cannot be crafted at this station.'];
+        }
+
+        $skillLevel = $user->getSkillLevel($recipe['skill']);
+        if ($skillLevel < $recipe['required_level']) {
+            return ['success' => false, 'message' => "You need level {$recipe['required_level']} {$recipe['skill']} to craft this."];
+        }
+
+        if (! $user->hasEnergy($recipe['energy_cost'])) {
+            return ['success' => false, 'message' => "Not enough energy. Need {$recipe['energy_cost']} energy."];
+        }
+
+        foreach ($recipe['materials'] as $material) {
+            $item = Item::where('name', $material['name'])->first();
+            if (! $item || ! $this->inventoryService->hasItem($user, $item, $material['quantity'])) {
+                return ['success' => false, 'message' => "You don't have enough {$material['name']}."];
+            }
+        }
+
+        $outputItem = Item::where('name', $recipe['output']['name'])->first();
+        if (! $outputItem) {
+            return ['success' => false, 'message' => 'Output item not found in database.'];
+        }
+
+        if (! $this->inventoryService->hasEmptySlot($user)) {
+            return ['success' => false, 'message' => 'Your inventory is full.'];
+        }
+
+        return DB::transaction(function () use ($user, $recipe, $outputItem, $xpBonusPercent) {
+            $user->consumeEnergy($recipe['energy_cost']);
+
+            foreach ($recipe['materials'] as $material) {
+                $item = Item::where('name', $material['name'])->first();
+                $this->inventoryService->removeItem($user, $item, $material['quantity']);
+            }
+
+            $totalQuantity = $recipe['output']['quantity'];
+            $this->inventoryService->addItem($user, $outputItem, $totalQuantity);
+
+            $xpAwarded = $recipe['xp_reward'];
+
+            // Apply house furniture XP bonus
+            if ($xpBonusPercent > 0) {
+                $xpAwarded = (int) ceil($xpAwarded * (1 + $xpBonusPercent / 100));
+            }
+
+            // Apply belief crafting XP bonus/penalty
+            $craftingXpBonus = $this->beliefEffectService->getEffect($user, 'crafting_xp_bonus');
+            $craftingXpPenalty = $this->beliefEffectService->getEffect($user, 'crafting_xp_penalty');
+            $totalBonus = $craftingXpBonus + $craftingXpPenalty;
+            if ($totalBonus != 0) {
+                $xpAwarded = (int) ceil($xpAwarded * (1 + $totalBonus / 100));
+            }
+
+            // Apply general XP penalty (Sloth belief)
+            $xpPenalty = $this->beliefEffectService->getEffect($user, 'xp_penalty');
+            if ($xpPenalty != 0) {
+                $xpAwarded = (int) ceil($xpAwarded * (1 + $xpPenalty / 100));
+            }
+
+            // Apply biome attunement bonus
+            $biomeBonus = $this->biomeService->getBiomeBonusForSkill($user, $recipe['skill']);
+            if ($biomeBonus > 0) {
+                $xpAwarded = (int) ceil($xpAwarded * (1 + $biomeBonus / 100));
+            }
+
+            $skill = $user->skills()->where('skill_name', $recipe['skill'])->first();
+
+            if (! $skill) {
+                $skill = $user->skills()->create([
+                    'skill_name' => $recipe['skill'],
+                    'level' => 1,
+                    'xp' => 0,
+                ]);
+            }
+
+            $oldLevel = $skill->level;
+            $skill->addXp($xpAwarded);
+            $newLevel = $skill->fresh()->level;
+            $leveledUp = $newLevel > $oldLevel;
+
+            if (isset($recipe['task_type'])) {
+                $this->dailyTaskService->recordProgress(
+                    $user,
+                    $recipe['task_type'],
+                    $outputItem->name,
+                    $totalQuantity
+                );
+            }
+
+            return [
+                'success' => true,
+                'message' => "Crafted {$totalQuantity}x {$recipe['output']['name']}!",
+                'item' => [
+                    'name' => $outputItem->name,
+                    'quantity' => $totalQuantity,
+                ],
+                'xp_awarded' => $xpAwarded,
+                'skill' => $recipe['skill'],
+                'leveled_up' => $leveledUp,
+                'new_level' => $leveledUp ? $newLevel : null,
+                'energy_remaining' => $user->fresh()->energy,
             ];
         });
     }

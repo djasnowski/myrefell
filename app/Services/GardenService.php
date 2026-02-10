@@ -263,10 +263,10 @@ class GardenService
             return ['success' => false, 'message' => 'No compost charges available.'];
         }
 
-        $plot = $this->getPlot($user, $plotSlot);
-        if (! $plot) {
-            return ['success' => false, 'message' => 'Garden plot not found.'];
-        }
+        $plot = GardenPlot::firstOrCreate(
+            ['player_house_id' => $house->id, 'plot_slot' => $plotSlot],
+            ['status' => 'empty', 'quality' => 60]
+        );
 
         if ($plot->is_composted) {
             return ['success' => false, 'message' => 'This plot is already composted.'];

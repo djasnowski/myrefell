@@ -12,32 +12,32 @@ class ConstructionConfig
             'name' => 'Cottage',
             'level' => 1,
             'title_level' => 2,
-            'cost' => 25000,
+            'cost' => 50000,
             'grid' => 3,
             'max_rooms' => 3,
             'storage' => 100,
-            'upkeep' => 100,
+            'upkeep' => 250,
         ],
         // Future tiers (not purchasable in Phase 1)
         'house' => [
             'name' => 'House',
             'level' => 20,
             'title_level' => 3,
-            'cost' => 100000,
+            'cost' => 250000,
             'grid' => 4,
             'max_rooms' => 6,
             'storage' => 250,
-            'upkeep' => 300,
+            'upkeep' => 750,
         ],
         'manor' => [
             'name' => 'Manor',
             'level' => 40,
             'title_level' => 4,
-            'cost' => 500000,
+            'cost' => 1000000,
             'grid' => 5,
             'max_rooms' => 10,
             'storage' => 500,
-            'upkeep' => 750,
+            'upkeep' => 1500,
         ],
     ];
 
@@ -49,7 +49,7 @@ class ConstructionConfig
             'name' => 'Parlour',
             'description' => 'A welcoming room for greeting visitors.',
             'level' => 1,
-            'cost' => 5000,
+            'cost' => 15000,
             'hotspots' => [
                 'chair' => [
                     'name' => 'Chair',
@@ -125,7 +125,7 @@ class ConstructionConfig
             'name' => 'Kitchen',
             'description' => 'A place to prepare food and store provisions.',
             'level' => 5,
-            'cost' => 15000,
+            'cost' => 50000,
             'hotspots' => [
                 'stove' => [
                     'name' => 'Stove',
@@ -135,12 +135,14 @@ class ConstructionConfig
                             'level' => 5,
                             'materials' => ['Plank' => 5, 'Nails' => 3],
                             'xp' => 50,
+                            'effect' => ['burn_reduction' => 25],
                         ],
                         'iron_stove' => [
                             'name' => 'Iron Stove',
                             'level' => 20,
                             'materials' => ['Oak Plank' => 3, 'Steel Bar' => 2],
                             'xp' => 150,
+                            'effect' => ['burn_reduction' => 45],
                         ],
                     ],
                 ],
@@ -212,7 +214,7 @@ class ConstructionConfig
             'name' => 'Bedroom',
             'description' => 'A restful chamber for recovery and contemplation.',
             'level' => 10,
-            'cost' => 15000,
+            'cost' => 50000,
             'hotspots' => [
                 'bed' => [
                     'name' => 'Bed',
@@ -272,7 +274,7 @@ class ConstructionConfig
             'name' => 'Workshop',
             'description' => 'A practical space for crafting and tool maintenance.',
             'level' => 20,
-            'cost' => 50000,
+            'cost' => 150000,
             'hotspots' => [
                 'workbench' => [
                     'name' => 'Workbench',
@@ -363,7 +365,7 @@ class ConstructionConfig
             'name' => 'Study',
             'description' => 'A quiet room for learning and contemplation.',
             'level' => 30,
-            'cost' => 75000,
+            'cost' => 200000,
             'hotspots' => [
                 'lectern' => [
                     'name' => 'Lectern',
@@ -437,7 +439,7 @@ class ConstructionConfig
             'name' => 'Hearth Room',
             'description' => 'A warm gathering place centered around a grand fireplace.',
             'level' => 30,
-            'cost' => 50000,
+            'cost' => 150000,
             'hotspots' => [
                 'fireplace' => [
                     'name' => 'Fireplace',
@@ -498,7 +500,7 @@ class ConstructionConfig
             'name' => 'Forge',
             'description' => 'A blazing hot forge for working metal and crafting weapons.',
             'level' => 35,
-            'cost' => 100000,
+            'cost' => 300000,
             'hotspots' => [
                 'anvil' => [
                     'name' => 'Anvil',
@@ -589,7 +591,7 @@ class ConstructionConfig
             'name' => 'Dining Room',
             'description' => 'A spacious room for meals and entertaining guests.',
             'level' => 15,
-            'cost' => 25000,
+            'cost' => 75000,
             'hotspots' => [
                 'table' => [
                     'name' => 'Table',
@@ -672,7 +674,7 @@ class ConstructionConfig
             'name' => 'Chapel',
             'description' => 'A sacred space for prayer and spiritual reflection.',
             'level' => 40,
-            'cost' => 150000,
+            'cost' => 400000,
             'hotspots' => [
                 'altar' => [
                     'name' => 'Altar',
@@ -754,7 +756,7 @@ class ConstructionConfig
             'name' => 'Servant Quarters',
             'description' => 'Living quarters for household servants.',
             'level' => 40,
-            'cost' => 75000,
+            'cost' => 250000,
             'hotspots' => [
                 'bed' => [
                     'name' => 'Bed',
@@ -814,7 +816,7 @@ class ConstructionConfig
             'name' => 'Trophy Hall',
             'description' => 'Display monster trophies for permanent combat bonuses.',
             'level' => 55,
-            'cost' => 150000,
+            'cost' => 500000,
             'hotspots' => [
                 'display_1' => [
                     'name' => 'Display Case 1',
@@ -940,7 +942,7 @@ class ConstructionConfig
             'name' => 'Garden',
             'description' => 'An indoor garden for growing herbs year-round.',
             'level' => 25,
-            'cost' => 40000,
+            'cost' => 125000,
             'hotspots' => [
                 'planter_1' => [
                     'name' => 'Planter Bed 1',
@@ -1003,7 +1005,7 @@ class ConstructionConfig
             'name' => 'Portal Chamber',
             'description' => 'A mystical room housing teleportation portals to distant lands.',
             'level' => 45,
-            'cost' => 200000,
+            'cost' => 750000,
             'hotspots' => [
                 'portal_1' => [
                     'name' => 'Portal 1',

@@ -14,6 +14,7 @@ use App\Services\HouseService;
 use App\Services\InventoryService;
 use App\Services\ServantService;
 use App\Services\TrophyService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -100,6 +101,12 @@ class PlayerHouseController extends Controller
             'servantTiers' => $house ? $this->getServantTierInfo($user) : [],
             'trophyData' => $house ? $this->trophyService->getTrophyData($user) : null,
             'gardenData' => $house ? $this->gardenService->getGardenData($user) : null,
+            'kitchen' => $house ? $this->houseService->getKitchenData($user) : null,
+            'bedroom' => $house ? $this->houseService->getBedroomData($user) : null,
+            'workshop' => $house ? $this->houseService->getWorkshopData($user) : null,
+            'forge' => $house ? $this->houseService->getForgeData($user) : null,
+            'chapel' => $house ? $this->houseService->getChapelData($user) : null,
+            'hearth' => $house ? $this->houseService->getHearthData($user) : null,
             'upkeepDueAt' => $house?->upkeep_due_at?->toISOString(),
             'upkeepCost' => $house?->getUpkeepCost(),
             'repairCost' => $house && $house->condition < 100 ? $house->getRepairCost() : null,
@@ -145,6 +152,12 @@ class PlayerHouseController extends Controller
                 'servantTiers' => [],
                 'trophyData' => null,
                 'gardenData' => null,
+                'kitchen' => null,
+                'bedroom' => null,
+                'workshop' => null,
+                'forge' => null,
+                'chapel' => null,
+                'hearth' => null,
                 'upkeepDueAt' => null,
                 'upkeepCost' => null,
                 'repairCost' => null,
@@ -184,6 +197,12 @@ class PlayerHouseController extends Controller
             'servantTiers' => [],
             'trophyData' => $trophyData,
             'gardenData' => $gardenData,
+            'kitchen' => null,
+            'bedroom' => null,
+            'workshop' => null,
+            'forge' => null,
+            'chapel' => null,
+            'hearth' => null,
             'upkeepDueAt' => null,
             'upkeepCost' => null,
             'repairCost' => null,
@@ -693,6 +712,77 @@ class PlayerHouseController extends Controller
         $result = $this->gardenService->useCompost($request->user(), $request->input('plot_slot'));
 
         return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Cook a recipe at home.
+     */
+    public function cookAtHome(Request $request): JsonResponse
+    {
+        $request->validate([
+            'recipe' => 'required|string',
+        ]);
+
+        $result = $this->houseService->cookAtHome(
+            $request->user(),
+            $request->input('recipe'),
+        );
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Rest at home in the bedroom.
+     */
+    public function restAtHome(Request $request): RedirectResponse
+    {
+        $result = $this->houseService->restAtHome($request->user());
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Craft at home workshop.
+     */
+    public function craftAtWorkshop(Request $request): JsonResponse
+    {
+        $request->validate([
+            'recipe' => 'required|string',
+        ]);
+
+        $result = $this->houseService->craftAtWorkshop(
+            $request->user(),
+            $request->input('recipe'),
+        );
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Craft at home forge.
+     */
+    public function craftAtForge(Request $request): JsonResponse
+    {
+        $request->validate([
+            'recipe' => 'required|string',
+        ]);
+
+        $result = $this->houseService->craftAtForge(
+            $request->user(),
+            $request->input('recipe'),
+        );
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Pray at home chapel.
+     */
+    public function prayAtHome(Request $request): JsonResponse
+    {
+        $result = $this->houseService->prayAtHome($request->user());
+
+        return response()->json($result, $result['success'] ? 200 : 422);
     }
 
     /**

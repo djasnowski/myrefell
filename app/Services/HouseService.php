@@ -13,7 +13,11 @@ use App\Models\HouseStorage;
 use App\Models\HouseTrophy;
 use App\Models\Item;
 use App\Models\Kingdom;
+use App\Models\LocationActivityLog;
 use App\Models\PlayerHouse;
+use App\Models\PlayerSkill;
+use App\Models\ReligionMember;
+use App\Models\ReligiousAction;
 use App\Models\Town;
 use App\Models\User;
 use App\Models\Village;
@@ -24,7 +28,10 @@ class HouseService
     public function __construct(
         protected InventoryService $inventoryService,
         protected BiomeService $biomeService,
-        protected EnergyService $energyService
+        protected EnergyService $energyService,
+        protected CookingService $cookingService,
+        protected CraftingService $craftingService,
+        protected DailyTaskService $dailyTaskService
     ) {}
 
     /**
@@ -879,7 +886,530 @@ class HouseService
             $destinations[] = ['type' => 'town', 'id' => $t->id, 'name' => $t->name];
         }
 
+        foreach (Kingdom::orderBy('name')->get(['id', 'name']) as $k) {
+            $destinations[] = ['type' => 'kingdom', 'id' => $k->id, 'name' => $k->name];
+        }
+
         return $destinations;
+    }
+
+    /**
+     * Get kitchen cooking data for a player's house.
+     */
+    public function getKitchenData(User $user): ?array
+    {
+        $house = PlayerHouse::where('player_id', $user->id)
+            ->with('rooms.furniture')
+            ->first();
+
+        if (! $house) {
+            return null;
+        }
+
+        $kitchenRoom = $house->rooms->where('room_type', 'kitchen')->first();
+        if (! $kitchenRoom) {
+            return null;
+        }
+
+        $stoveFurniture = $kitchenRoom->furniture->where('hotspot_slug', 'stove')->first();
+        if (! $stoveFurniture) {
+            return null;
+        }
+
+        $stoveConfig = ConstructionConfig::ROOMS['kitchen']['hotspots']['stove']['options'][$stoveFurniture->furniture_key] ?? null;
+        if (! $stoveConfig) {
+            return null;
+        }
+
+        $burnReduction = $stoveConfig['effect']['burn_reduction'] ?? 0;
+        $cookingLevel = $user->getSkillLevel('cooking');
+        $baseBurn = max(5, 50 - $burnReduction);
+        $burnChance = round($baseBurn * max(0.2, 1 - $cookingLevel / 99));
+
+        $cookingInfo = $this->cookingService->getCookingInfo($user);
+
+        return [
+            'burn_chance' => $burnChance,
+            'stove_name' => $stoveConfig['name'],
+            'recipes' => $cookingInfo['recipes'],
+            'cooking_level' => $cookingInfo['cooking_level'],
+        ];
+    }
+
+    /**
+     * Cook a recipe at the player's home kitchen.
+     */
+    public function cookAtHome(User $user, string $recipeId): array
+    {
+        $kitchenData = $this->getKitchenData($user);
+        if (! $kitchenData) {
+            return ['success' => false, 'message' => 'You need a kitchen with a stove to cook at home.'];
+        }
+
+        $house = PlayerHouse::where('player_id', $user->id)->first();
+
+        return $this->cookingService->cook(
+            $user,
+            $recipeId,
+            'house',
+            $house->id,
+            $kitchenData['burn_chance']
+        );
+    }
+
+    /**
+     * Get bedroom rest data for a player's house.
+     */
+    public function getBedroomData(User $user): ?array
+    {
+        $house = PlayerHouse::where('player_id', $user->id)
+            ->with('rooms.furniture')
+            ->first();
+
+        if (! $house) {
+            return null;
+        }
+
+        $bedroomRoom = $house->rooms->where('room_type', 'bedroom')->first();
+        if (! $bedroomRoom) {
+            return null;
+        }
+
+        $bedFurniture = $bedroomRoom->furniture->where('hotspot_slug', 'bed')->first();
+        if (! $bedFurniture) {
+            return null;
+        }
+
+        $bedConfig = ConstructionConfig::ROOMS['bedroom']['hotspots']['bed']['options'][$bedFurniture->furniture_key] ?? null;
+        if (! $bedConfig) {
+            return null;
+        }
+
+        $bonus = $bedConfig['effect']['energy_regen_bonus'] ?? 5;
+        $energyRestored = $bonus * 6;
+
+        return [
+            'bed_name' => $bedConfig['name'],
+            'energy_restored' => $energyRestored,
+        ];
+    }
+
+    /**
+     * Rest at the player's home bedroom (free, no gold cost).
+     */
+    public function restAtHome(User $user): array
+    {
+        $bedroomData = $this->getBedroomData($user);
+        if (! $bedroomData) {
+            return ['success' => false, 'message' => 'You need a bedroom with a bed to rest at home.'];
+        }
+
+        // Check cooldown (3 seconds, same as tavern)
+        if ($user->last_rested_at) {
+            $cooldownEnds = $user->last_rested_at->addSeconds(3);
+            if ($cooldownEnds->isFuture()) {
+                return ['success' => false, 'message' => 'You need to wait before resting again.'];
+            }
+        }
+
+        // Check for hearth room HP bonus
+        $hearthData = $this->getHearthData($user);
+        $canRestoreHp = $hearthData && $user->hp < $user->max_hp;
+
+        if ($user->energy >= $user->max_energy && ! $canRestoreHp) {
+            return ['success' => false, 'message' => 'You are already fully rested.'];
+        }
+
+        $energyRestored = min($bedroomData['energy_restored'], $user->max_energy - $user->energy);
+
+        $user->energy += $energyRestored;
+        $user->last_rested_at = now();
+
+        $hpRestored = 0;
+        if ($canRestoreHp) {
+            $hpRestored = min($hearthData['hp_restore_amount'], $user->max_hp - $user->hp);
+            $user->hp += $hpRestored;
+        }
+
+        $user->save();
+
+        // Log activity
+        $house = PlayerHouse::where('player_id', $user->id)->first();
+        if ($house) {
+            try {
+                LocationActivityLog::log(
+                    userId: $user->id,
+                    locationType: $house->location_type,
+                    locationId: $house->location_id,
+                    activityType: LocationActivityLog::TYPE_REST,
+                    description: "{$user->username} rested at home",
+                    metadata: ['energy_restored' => $energyRestored, 'hp_restored' => $hpRestored]
+                );
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Table may not exist
+            }
+        }
+
+        $message = "You rest in your {$bedroomData['bed_name']} and recover {$energyRestored} energy.";
+        if ($hpRestored > 0) {
+            $message .= " The warm fire restores {$hpRestored} HP.";
+        }
+
+        return [
+            'success' => true,
+            'message' => $message,
+            'hp_restored' => $hpRestored,
+        ];
+    }
+
+    /**
+     * Get workshop crafting data for a player's house.
+     */
+    public function getWorkshopData(User $user): ?array
+    {
+        $house = PlayerHouse::where('player_id', $user->id)
+            ->with('rooms.furniture')
+            ->first();
+
+        if (! $house) {
+            return null;
+        }
+
+        $workshopRoom = $house->rooms->where('room_type', 'workshop')->first();
+        if (! $workshopRoom) {
+            return null;
+        }
+
+        $workbenchFurniture = $workshopRoom->furniture->where('hotspot_slug', 'workbench')->first();
+        if (! $workbenchFurniture) {
+            return null;
+        }
+
+        $workbenchConfig = ConstructionConfig::ROOMS['workshop']['hotspots']['workbench']['options'][$workbenchFurniture->furniture_key] ?? null;
+        if (! $workbenchConfig) {
+            return null;
+        }
+
+        $xpBonus = $workbenchConfig['effect']['crafting_xp_bonus'] ?? 0;
+        $categories = ['crafting', 'fletching', 'gem_cutting', 'jewelry'];
+        $recipes = $this->craftingService->getHomeRecipes($user, $categories);
+
+        return [
+            'workbench_name' => $workbenchConfig['name'],
+            'xp_bonus' => $xpBonus,
+            'recipes' => $recipes,
+            'crafting_level' => $user->getSkillLevel('crafting'),
+        ];
+    }
+
+    /**
+     * Craft at the player's workshop.
+     */
+    public function craftAtWorkshop(User $user, string $recipeId): array
+    {
+        $workshopData = $this->getWorkshopData($user);
+        if (! $workshopData) {
+            return ['success' => false, 'message' => 'You need a workshop with a workbench to craft at home.'];
+        }
+
+        return $this->craftingService->craftAtHome(
+            $user,
+            $recipeId,
+            ['crafting', 'fletching', 'gem_cutting', 'jewelry'],
+            $workshopData['xp_bonus']
+        );
+    }
+
+    /**
+     * Get forge smelting/smithing data for a player's house.
+     */
+    public function getForgeData(User $user): ?array
+    {
+        $house = PlayerHouse::where('player_id', $user->id)
+            ->with('rooms.furniture')
+            ->first();
+
+        if (! $house) {
+            return null;
+        }
+
+        $forgeRoom = $house->rooms->where('room_type', 'forge')->first();
+        if (! $forgeRoom) {
+            return null;
+        }
+
+        $anvilFurniture = $forgeRoom->furniture->where('hotspot_slug', 'anvil')->first();
+        if (! $anvilFurniture) {
+            return null;
+        }
+
+        $anvilConfig = ConstructionConfig::ROOMS['forge']['hotspots']['anvil']['options'][$anvilFurniture->furniture_key] ?? null;
+        if (! $anvilConfig) {
+            return null;
+        }
+
+        $xpBonus = $anvilConfig['effect']['smithing_xp_bonus'] ?? 0;
+        $categories = ['smelting', 'smithing'];
+        $recipes = $this->craftingService->getHomeRecipes($user, $categories);
+
+        return [
+            'anvil_name' => $anvilConfig['name'],
+            'xp_bonus' => $xpBonus,
+            'recipes' => $recipes,
+            'smithing_level' => $user->getSkillLevel('smithing'),
+        ];
+    }
+
+    /**
+     * Craft at the player's forge.
+     */
+    public function craftAtForge(User $user, string $recipeId): array
+    {
+        $forgeData = $this->getForgeData($user);
+        if (! $forgeData) {
+            return ['success' => false, 'message' => 'You need a forge with an anvil to smelt or smith at home.'];
+        }
+
+        return $this->craftingService->craftAtHome(
+            $user,
+            $recipeId,
+            ['smelting', 'smithing'],
+            $forgeData['xp_bonus']
+        );
+    }
+
+    /**
+     * Get chapel prayer data for a player's house.
+     */
+    public function getChapelData(User $user): ?array
+    {
+        $house = PlayerHouse::where('player_id', $user->id)
+            ->with('rooms.furniture')
+            ->first();
+
+        if (! $house) {
+            return null;
+        }
+
+        $chapelRoom = $house->rooms->where('room_type', 'chapel')->first();
+        if (! $chapelRoom) {
+            return null;
+        }
+
+        $altarFurniture = $chapelRoom->furniture->where('hotspot_slug', 'altar')->first();
+        if (! $altarFurniture) {
+            return null;
+        }
+
+        $altarConfig = ConstructionConfig::ROOMS['chapel']['hotspots']['altar']['options'][$altarFurniture->furniture_key] ?? null;
+        if (! $altarConfig) {
+            return null;
+        }
+
+        // Sum prayer_xp_bonus from all chapel furniture
+        $totalPrayerXpBonus = 0;
+        foreach ($chapelRoom->furniture as $furniture) {
+            $hotspot = ConstructionConfig::ROOMS['chapel']['hotspots'][$furniture->hotspot_slug] ?? null;
+            if (! $hotspot) {
+                continue;
+            }
+            $config = $hotspot['options'][$furniture->furniture_key] ?? null;
+            if ($config && isset($config['effect']['prayer_xp_bonus'])) {
+                $totalPrayerXpBonus += $config['effect']['prayer_xp_bonus'];
+            }
+        }
+
+        // Check religion membership
+        $membership = ReligionMember::where('user_id', $user->id)->first();
+
+        // Check cooldown
+        $canPray = true;
+        $cooldownRemaining = 0;
+        $energyCost = 5;
+
+        if (! $membership) {
+            $canPray = false;
+        } else {
+            if (! $user->hasEnergy($energyCost)) {
+                $canPray = false;
+            }
+
+            $lastPrayer = ReligiousAction::where('user_id', $user->id)
+                ->where('religion_id', $membership->religion_id)
+                ->where('action_type', ReligiousAction::ACTION_PRAYER)
+                ->latest()
+                ->first();
+
+            if ($lastPrayer) {
+                $availableAt = $lastPrayer->created_at->addMinutes(5);
+                if ($availableAt->isFuture()) {
+                    $canPray = false;
+                    $cooldownRemaining = (int) now()->diffInSeconds($availableAt);
+                }
+            }
+        }
+
+        return [
+            'altar_name' => $altarConfig['name'],
+            'prayer_xp_bonus' => $totalPrayerXpBonus,
+            'religion' => $membership ? $membership->religion->name : null,
+            'religion_id' => $membership?->religion_id,
+            'prayer_level' => $user->getSkillLevel('prayer'),
+            'energy_cost' => $energyCost,
+            'can_pray' => $canPray,
+            'cooldown_remaining' => $cooldownRemaining,
+        ];
+    }
+
+    /**
+     * Pray at the player's home chapel.
+     */
+    public function prayAtHome(User $user): array
+    {
+        if ($user->isTraveling()) {
+            return ['success' => false, 'message' => 'You cannot pray while traveling.'];
+        }
+
+        if ($user->isInInfirmary()) {
+            return ['success' => false, 'message' => 'You cannot pray while in the infirmary.'];
+        }
+
+        $house = PlayerHouse::where('player_id', $user->id)
+            ->with('rooms.furniture')
+            ->first();
+
+        if (! $house) {
+            return ['success' => false, 'message' => 'You do not own a house.'];
+        }
+
+        $chapelRoom = $house->rooms->where('room_type', 'chapel')->first();
+        if (! $chapelRoom) {
+            return ['success' => false, 'message' => 'You need a chapel to pray at home.'];
+        }
+
+        $altarFurniture = $chapelRoom->furniture->where('hotspot_slug', 'altar')->first();
+        if (! $altarFurniture) {
+            return ['success' => false, 'message' => 'You need an altar in your chapel to pray.'];
+        }
+
+        $membership = ReligionMember::where('user_id', $user->id)->first();
+        if (! $membership) {
+            return ['success' => false, 'message' => 'You must join a religion to pray.'];
+        }
+
+        $energyCost = 5;
+        if (! $user->hasEnergy($energyCost)) {
+            return ['success' => false, 'message' => "Not enough energy. Need {$energyCost} energy."];
+        }
+
+        // Check cooldown (5 minutes)
+        $lastPrayer = ReligiousAction::where('user_id', $user->id)
+            ->where('religion_id', $membership->religion_id)
+            ->where('action_type', ReligiousAction::ACTION_PRAYER)
+            ->latest()
+            ->first();
+
+        if ($lastPrayer) {
+            $availableAt = $lastPrayer->created_at->addMinutes(5);
+            if ($availableAt->isFuture()) {
+                $remaining = $availableAt->diffForHumans();
+
+                return ['success' => false, 'message' => "You can pray again {$remaining}."];
+            }
+        }
+
+        // Sum prayer_xp_bonus from chapel furniture
+        $totalPrayerXpBonus = 0;
+        foreach ($chapelRoom->furniture as $furniture) {
+            $hotspot = ConstructionConfig::ROOMS['chapel']['hotspots'][$furniture->hotspot_slug] ?? null;
+            if (! $hotspot) {
+                continue;
+            }
+            $config = $hotspot['options'][$furniture->furniture_key] ?? null;
+            if ($config && isset($config['effect']['prayer_xp_bonus'])) {
+                $totalPrayerXpBonus += $config['effect']['prayer_xp_bonus'];
+            }
+        }
+
+        return DB::transaction(function () use ($user, $membership, $energyCost, $totalPrayerXpBonus) {
+            $user->consumeEnergy($energyCost);
+
+            // Base rewards (same as shrine prayer)
+            $devotionGained = 10;
+            $basePrayerXp = 5;
+
+            // Apply chapel furniture prayer XP bonus
+            $prayerXpGained = (int) ceil($basePrayerXp * (1 + $totalPrayerXpBonus / 100));
+
+            // Create action record (for cooldown tracking)
+            ReligiousAction::create([
+                'user_id' => $user->id,
+                'religion_id' => $membership->religion_id,
+                'action_type' => ReligiousAction::ACTION_PRAYER,
+                'devotion_gained' => $devotionGained,
+                'gold_spent' => 0,
+            ]);
+
+            // Add devotion to membership
+            $membership->addDevotion($devotionGained);
+
+            // Award prayer XP
+            $prayerSkill = PlayerSkill::firstOrCreate(
+                ['player_id' => $user->id, 'skill_name' => 'prayer'],
+                ['level' => 1, 'xp' => 0]
+            );
+            $prayerSkill->addXp($prayerXpGained);
+
+            // Record daily task progress
+            $this->dailyTaskService->recordProgress($user, 'pray');
+
+            return [
+                'success' => true,
+                'message' => "You pray at your altar and gain {$devotionGained} devotion. (+{$prayerXpGained} Prayer XP)",
+                'devotion_gained' => $devotionGained,
+                'prayer_xp_gained' => $prayerXpGained,
+            ];
+        });
+    }
+
+    /**
+     * Get hearth room data for a player's house.
+     */
+    public function getHearthData(User $user): ?array
+    {
+        $house = PlayerHouse::where('player_id', $user->id)
+            ->with('rooms.furniture')
+            ->first();
+
+        if (! $house) {
+            return null;
+        }
+
+        $hearthRoom = $house->rooms->where('room_type', 'hearth_room')->first();
+        if (! $hearthRoom) {
+            return null;
+        }
+
+        $fireplaceFurniture = $hearthRoom->furniture->where('hotspot_slug', 'fireplace')->first();
+        if (! $fireplaceFurniture) {
+            return null;
+        }
+
+        $fireplaceConfig = ConstructionConfig::ROOMS['hearth_room']['hotspots']['fireplace']['options'][$fireplaceFurniture->furniture_key] ?? null;
+        if (! $fireplaceConfig) {
+            return null;
+        }
+
+        // Stone fireplace: 15% HP restore, Marble fireplace: 35% HP restore
+        $hpRestorePercent = $fireplaceFurniture->furniture_key === 'marble_fireplace' ? 35 : 15;
+        $hpRestoreAmount = (int) floor($user->max_hp * $hpRestorePercent / 100);
+
+        return [
+            'fireplace_name' => $fireplaceConfig['name'],
+            'hp_restore_percent' => $hpRestorePercent,
+            'hp_restore_amount' => $hpRestoreAmount,
+            'max_hp_bonus' => $fireplaceConfig['effect']['max_hp_bonus'] ?? 0,
+        ];
     }
 
     protected function findEmptyStorageSlot(PlayerHouse $house): int
