@@ -42,6 +42,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { gameToast } from "@/components/ui/game-toast";
+import { useNotifications } from "@/hooks/use-notifications";
 import { getItemIcon } from "@/lib/item-icons";
 import type { BreadcrumbItem } from "@/types";
 
@@ -452,6 +453,46 @@ export default function HouseIndex() {
             gameToast.error(flash.error);
         }
     }, [flash]);
+
+    // Visitor notifications (requires parlour)
+    const { sendNotification } = useNotifications();
+    const seenVisitors = useRef<Set<string>>(new Set());
+    const hasParlour = house?.rooms.some((r) => r.room_type === "parlour") ?? false;
+
+    useEffect(() => {
+        if (isVisiting || !house || !hasParlour) return;
+
+        const poll = async () => {
+            try {
+                const res = await fetch("/house/visitors");
+                const data = await res.json();
+                const visitors: { username: string; at: number }[] = data.visitors || [];
+
+                for (const v of visitors) {
+                    const key = `${v.username}:${v.at}`;
+                    if (!seenVisitors.current.has(key)) {
+                        seenVisitors.current.add(key);
+                        sendNotification("House Visitor", {
+                            body: `${v.username} is looking at your house!`,
+                            tag: `visitor-${v.username}`,
+                        });
+                        gameToast.success(`${v.username} is visiting your house!`);
+                    }
+                }
+            } catch {
+                // Silently ignore polling errors
+            }
+        };
+
+        // Initial poll after a short delay
+        const initial = setTimeout(poll, 3000);
+        const interval = setInterval(poll, 30000);
+
+        return () => {
+            clearTimeout(initial);
+            clearInterval(interval);
+        };
+    }, [isVisiting, house, hasParlour, sendNotification]);
 
     // Reset selected room when house data changes (after rebuild)
     useEffect(() => {
@@ -1603,6 +1644,17 @@ function RoomDetailPanel({
                     <X className="h-5 w-5" />
                 </button>
             </div>
+
+            {room.room_type === "parlour" && (
+                <div className="mb-3 rounded-md border border-blue-700/30 bg-blue-900/10 p-2">
+                    <div className="flex items-center gap-1 font-pixel text-xs text-blue-300">
+                        <Eye className="h-3 w-3" /> Visitor Notifications
+                    </div>
+                    <div className="mt-1 font-pixel text-xs text-blue-400/70">
+                        You'll be notified when someone visits your house.
+                    </div>
+                </div>
+            )}
 
             {roomAdjacencies.length > 0 && (
                 <div className="mb-3 rounded-md border border-emerald-700/30 bg-emerald-900/10 p-2">

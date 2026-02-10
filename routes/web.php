@@ -965,6 +965,7 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('/workshop/craft', [PlayerHouseController::class, 'craftAtWorkshop'])->name('workshop.craft');
         Route::post('/forge/craft', [PlayerHouseController::class, 'craftAtForge'])->name('forge.craft');
         Route::post('/pray', [PlayerHouseController::class, 'prayAtHome'])->name('pray');
+        Route::get('/visitors', [PlayerHouseController::class, 'getVisitors'])->name('visitors');
     });
 
     // Buildings

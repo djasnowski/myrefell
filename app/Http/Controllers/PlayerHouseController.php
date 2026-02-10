@@ -17,6 +17,7 @@ use App\Services\TrophyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -164,6 +165,21 @@ class PlayerHouseController extends Controller
             ]);
         }
 
+        // Record visitor if owner has a parlour
+        $visitor = request()->user();
+        if ($visitor && $visitor->id !== $player->id && $house->rooms->where('room_type', 'parlour')->isNotEmpty()) {
+            $cacheKey = "house_visitors:{$player->id}";
+            $visitors = Cache::get($cacheKey, []);
+            $visitors[$visitor->id] = [
+                'username' => $visitor->username,
+                'at' => now()->timestamp,
+            ];
+            // Keep only last 5 minutes of visitors
+            $cutoff = now()->subMinutes(5)->timestamp;
+            $visitors = array_filter($visitors, fn ($v) => $v['at'] >= $cutoff);
+            Cache::put($cacheKey, $visitors, 300);
+        }
+
         $houseBuffs = $this->houseBuffService->getHouseEffects($player);
 
         $house->load('rooms');
@@ -207,6 +223,30 @@ class PlayerHouseController extends Controller
             'upkeepCost' => null,
             'repairCost' => null,
         ]);
+    }
+
+    /**
+     * Poll for recent visitors (requires parlour).
+     */
+    public function getVisitors(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $house = PlayerHouse::where('player_id', $user->id)->with('rooms')->first();
+
+        if (! $house || $house->rooms->where('room_type', 'parlour')->isEmpty()) {
+            return response()->json(['visitors' => []]);
+        }
+
+        $cacheKey = "house_visitors:{$user->id}";
+        $visitors = Cache::get($cacheKey, []);
+
+        // Filter to last 5 minutes
+        $cutoff = now()->subMinutes(5)->timestamp;
+        $visitors = array_filter($visitors, fn ($v) => $v['at'] >= $cutoff);
+
+        $list = array_map(fn ($v) => ['username' => $v['username'], 'at' => $v['at']], array_values($visitors));
+
+        return response()->json(['visitors' => $list]);
     }
 
     /**

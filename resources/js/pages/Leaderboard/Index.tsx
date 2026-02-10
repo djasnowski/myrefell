@@ -404,7 +404,7 @@ export default function LeaderboardIndex() {
 
                                                     <div className="flex-1 min-w-0">
                                                         <Link
-                                                            href={`/players/${entry.username}/house`}
+                                                            href={`/players/${entry.username}`}
                                                             className={`truncate block hover:underline font-medium ${
                                                                 entry.rank === 1
                                                                     ? "text-amber-300 hover:text-amber-200"
