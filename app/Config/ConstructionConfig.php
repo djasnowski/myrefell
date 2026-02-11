@@ -12,32 +12,51 @@ class ConstructionConfig
             'name' => 'Cottage',
             'level' => 1,
             'title_level' => 2,
-            'cost' => 50000,
+            'cost' => 25000,
             'grid' => 3,
             'max_rooms' => 3,
             'storage' => 100,
-            'upkeep' => 250,
+            'upkeep' => 100,
         ],
-        // Future tiers (not purchasable in Phase 1)
         'house' => [
             'name' => 'House',
             'level' => 20,
-            'title_level' => 3,
-            'cost' => 250000,
+            'title_level' => 4,
+            'cost' => 100000,
             'grid' => 4,
-            'max_rooms' => 6,
-            'storage' => 250,
-            'upkeep' => 750,
+            'max_rooms' => 5,
+            'storage' => 200,
+            'upkeep' => 350,
         ],
         'manor' => [
             'name' => 'Manor',
             'level' => 40,
-            'title_level' => 4,
-            'cost' => 1000000,
+            'title_level' => 5,
+            'cost' => 500000,
             'grid' => 5,
-            'max_rooms' => 10,
+            'max_rooms' => 8,
+            'storage' => 300,
+            'upkeep' => 1000,
+        ],
+        'estate' => [
+            'name' => 'Estate',
+            'level' => 60,
+            'title_level' => 7,
+            'cost' => 1500000,
+            'grid' => 6,
+            'max_rooms' => 11,
+            'storage' => 400,
+            'upkeep' => 3000,
+        ],
+        'noble_estate' => [
+            'name' => 'Noble Estate',
+            'level' => 80,
+            'title_level' => 8,
+            'cost' => 5000000,
+            'grid' => 7,
+            'max_rooms' => 15,
             'storage' => 500,
-            'upkeep' => 1500,
+            'upkeep' => 8000,
         ],
     ];
 
@@ -815,7 +834,7 @@ class ConstructionConfig
         'trophy_hall' => [
             'name' => 'Trophy Hall',
             'description' => 'Display monster trophies for permanent combat bonuses.',
-            'level' => 55,
+            'level' => 70,
             'cost' => 500000,
             'hotspots' => [
                 'display_1' => [
@@ -1004,7 +1023,7 @@ class ConstructionConfig
         'portal_chamber' => [
             'name' => 'Portal Chamber',
             'description' => 'A mystical room housing teleportation portals to distant lands.',
-            'level' => 45,
+            'level' => 60,
             'cost' => 750000,
             'hotspots' => [
                 'portal_1' => [

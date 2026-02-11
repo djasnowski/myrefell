@@ -155,7 +155,7 @@ test('can build a room', function () {
     expect($result['message'])->toContain('Parlour');
 
     $user->refresh();
-    expect($user->gold)->toBe(45000);
+    expect($user->gold)->toBe(35000);
     expect(HouseRoom::where('player_house_id', $house->id)->count())->toBe(1);
 });
 
@@ -457,7 +457,7 @@ test('can upgrade cottage to house', function () {
     $kingdom = Kingdom::factory()->create();
     $user = User::factory()->create([
         'gold' => 200000,
-        'title_tier' => 3,
+        'title_tier' => 4,
         'current_kingdom_id' => $kingdom->id,
     ]);
     PlayerSkill::create(['player_id' => $user->id, 'skill_name' => 'construction', 'level' => 20, 'xp' => 0]);
@@ -478,7 +478,7 @@ test('can upgrade cottage to house', function () {
     expect($result['message'])->toContain('House');
 
     $user->refresh();
-    // Cost is 100000 - 25000 = 75000
+    // Cost is 100,000 - 25,000 = 75,000
     expect($user->gold)->toBe(125000);
 
     $house->refresh();
@@ -489,7 +489,7 @@ test('upgrade fails with insufficient gold', function () {
     $kingdom = Kingdom::factory()->create();
     $user = User::factory()->create([
         'gold' => 10000,
-        'title_tier' => 3,
+        'title_tier' => 4,
         'current_kingdom_id' => $kingdom->id,
     ]);
     PlayerSkill::create(['player_id' => $user->id, 'skill_name' => 'construction', 'level' => 20, 'xp' => 0]);
@@ -514,7 +514,7 @@ test('upgrade fails with insufficient construction level', function () {
     $kingdom = Kingdom::factory()->create();
     $user = User::factory()->create([
         'gold' => 200000,
-        'title_tier' => 3,
+        'title_tier' => 4,
         'current_kingdom_id' => $kingdom->id,
     ]);
     PlayerSkill::create(['player_id' => $user->id, 'skill_name' => 'construction', 'level' => 5, 'xp' => 0]);
@@ -589,7 +589,7 @@ test('upgrade preserves existing rooms and furniture', function () {
     $kingdom = Kingdom::factory()->create();
     $user = User::factory()->create([
         'gold' => 200000,
-        'title_tier' => 3,
+        'title_tier' => 4,
         'current_kingdom_id' => $kingdom->id,
     ]);
     PlayerSkill::create(['player_id' => $user->id, 'skill_name' => 'construction', 'level' => 20, 'xp' => 0]);
@@ -630,7 +630,7 @@ test('post upgrade route works', function () {
     $kingdom = Kingdom::factory()->create();
     $user = User::factory()->create([
         'gold' => 200000,
-        'title_tier' => 3,
+        'title_tier' => 4,
         'current_kingdom_id' => $kingdom->id,
     ]);
     PlayerSkill::create(['player_id' => $user->id, 'skill_name' => 'construction', 'level' => 20, 'xp' => 0]);
@@ -679,8 +679,8 @@ test('can build a dining room', function () {
 test('can build servant quarters', function () {
     $kingdom = Kingdom::factory()->create();
     $user = User::factory()->create([
-        'gold' => 200000,
-        'title_tier' => 4,
+        'gold' => 300000,
+        'title_tier' => 5,
         'current_kingdom_id' => $kingdom->id,
     ]);
     PlayerSkill::create(['player_id' => $user->id, 'skill_name' => 'construction', 'level' => 40, 'xp' => 0]);
@@ -705,17 +705,17 @@ test('can build servant quarters', function () {
 test('can build portal chamber', function () {
     $kingdom = Kingdom::factory()->create();
     $user = User::factory()->create([
-        'gold' => 500000,
-        'title_tier' => 4,
+        'gold' => 1000000,
+        'title_tier' => 7,
         'current_kingdom_id' => $kingdom->id,
     ]);
-    PlayerSkill::create(['player_id' => $user->id, 'skill_name' => 'construction', 'level' => 45, 'xp' => 0]);
+    PlayerSkill::create(['player_id' => $user->id, 'skill_name' => 'construction', 'level' => 60, 'xp' => 0]);
     $user->load('skills');
 
     $house = PlayerHouse::create([
         'player_id' => $user->id,
         'name' => 'My House',
-        'tier' => 'manor',
+        'tier' => 'estate',
         'condition' => 100,
         'kingdom_id' => $kingdom->id,
     ]);
@@ -1007,14 +1007,14 @@ test('can demolish empty room and get gold back', function () {
 
     $room = HouseRoom::where('player_house_id', $house->id)->first();
 
-    // Demolish — should get 50% back (2,500 gold)
+    // Demolish — should get 50% back (7,500 gold)
     $result = $service->demolishRoom($user, $room->id);
 
     expect($result['success'])->toBeTrue();
-    expect($result['message'])->toContain('2,500');
+    expect($result['message'])->toContain('7,500');
 
     $user->refresh();
-    expect($user->gold)->toBe($goldAfterBuild + 2500);
+    expect($user->gold)->toBe($goldAfterBuild + 7500);
     expect(HouseRoom::where('player_house_id', $house->id)->count())->toBe(0);
 });
 
@@ -1058,8 +1058,8 @@ test('can demolish room with furniture and get gold plus materials back', functi
     expect($result['message'])->toContain('Materials recovered');
 
     $user->refresh();
-    // Should get 50% of parlour cost (2,500 gold)
-    expect($user->gold)->toBe($goldBeforeDemolish + 2500);
+    // Should get 50% of parlour cost (7,500 gold)
+    expect($user->gold)->toBe($goldBeforeDemolish + 7500);
 
     // Should get 50% of materials (1 Plank, 1 Nail)
     expect($inventoryService->countItem($user, Item::where('name', 'Plank')->first()))->toBe(1);
@@ -1073,8 +1073,8 @@ test('can demolish room with furniture and get gold plus materials back', functi
 test('cannot demolish servant quarters with active servant', function () {
     $kingdom = Kingdom::factory()->create();
     $user = User::factory()->create([
-        'gold' => 200000,
-        'title_tier' => 4,
+        'gold' => 300000,
+        'title_tier' => 5,
         'current_kingdom_id' => $kingdom->id,
     ]);
     PlayerSkill::create(['player_id' => $user->id, 'skill_name' => 'construction', 'level' => 40, 'xp' => 0]);
@@ -1111,17 +1111,17 @@ test('cannot demolish servant quarters with active servant', function () {
 test('cannot demolish trophy hall with mounted trophies', function () {
     $kingdom = Kingdom::factory()->create();
     $user = User::factory()->create([
-        'gold' => 500000,
-        'title_tier' => 4,
+        'gold' => 1000000,
+        'title_tier' => 8,
         'current_kingdom_id' => $kingdom->id,
     ]);
-    PlayerSkill::create(['player_id' => $user->id, 'skill_name' => 'construction', 'level' => 55, 'xp' => 0]);
+    PlayerSkill::create(['player_id' => $user->id, 'skill_name' => 'construction', 'level' => 70, 'xp' => 0]);
     $user->load('skills');
 
     $house = PlayerHouse::create([
         'player_id' => $user->id,
         'name' => 'My House',
-        'tier' => 'manor',
+        'tier' => 'noble_estate',
         'condition' => 100,
         'kingdom_id' => $kingdom->id,
     ]);
@@ -1197,17 +1197,17 @@ test('cannot demolish garden with active plots', function () {
 test('cannot demolish portal chamber with configured portals', function () {
     $kingdom = Kingdom::factory()->create();
     $user = User::factory()->create([
-        'gold' => 500000,
-        'title_tier' => 4,
+        'gold' => 1000000,
+        'title_tier' => 7,
         'current_kingdom_id' => $kingdom->id,
     ]);
-    PlayerSkill::create(['player_id' => $user->id, 'skill_name' => 'construction', 'level' => 45, 'xp' => 0]);
+    PlayerSkill::create(['player_id' => $user->id, 'skill_name' => 'construction', 'level' => 60, 'xp' => 0]);
     $user->load('skills');
 
     $house = PlayerHouse::create([
         'player_id' => $user->id,
         'name' => 'My House',
-        'tier' => 'manor',
+        'tier' => 'estate',
         'condition' => 100,
         'kingdom_id' => $kingdom->id,
     ]);
