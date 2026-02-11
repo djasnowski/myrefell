@@ -199,7 +199,7 @@ test('lifecycle service processes yearly aging', function () {
     $youngNpc = LocationNpc::factory()->create(['birth_year' => 30]); // Age 30
     $elderlyNpc = LocationNpc::factory()->create(['birth_year' => 1]); // Age 59
 
-    $service = new NpcLifecycleService();
+    $service = new NpcLifecycleService;
     $results = $service->processYearlyAging();
 
     expect($results)->toBeArray();
@@ -216,7 +216,7 @@ test('lifecycle service can create npc for role', function () {
 
     $role = Role::factory()->create();
 
-    $service = new NpcLifecycleService();
+    $service = new NpcLifecycleService;
     $npc = $service->createNpcForRole($role, 'village', 1);
 
     expect($npc)->toBeInstanceOf(LocationNpc::class);
@@ -240,7 +240,7 @@ test('lifecycle service returns statistics', function () {
     LocationNpc::factory()->create(['death_year' => null, 'is_active' => false, 'birth_year' => 20]);
     LocationNpc::factory()->create(['death_year' => 55, 'is_active' => false, 'birth_year' => 5]);
 
-    $service = new NpcLifecycleService();
+    $service = new NpcLifecycleService;
     $stats = $service->getNpcStatistics();
 
     expect($stats['living'])->toBe(3);
@@ -254,18 +254,22 @@ test('calendar service dispatches age npcs job on new year', function () {
     WorldState::factory()->create([
         'current_year' => 1,
         'current_season' => 'winter',
-        'current_week' => 12,
+        'current_week' => WorldState::WEEKS_PER_SEASON,
     ]);
 
-    // The job should be dispatched when advancing from winter week 12 to spring week 1
-    $service = new CalendarService();
+    // The job should be dispatched when advancing from winter's last day to spring
+    $service = new CalendarService;
+
+    // Set to last day of the week so advanceDay triggers week+season+year rollover
+    $state = WorldState::current();
+    $state->update(['current_day' => WorldState::DAYS_PER_WEEK]);
 
     // Use queue fake to catch dispatched jobs
     \Illuminate\Support\Facades\Queue::fake();
 
-    $service->advanceWeek();
+    $service->advanceDay();
 
-    $state = WorldState::current();
+    $state->refresh();
     expect($state->current_year)->toBe(2);
     expect($state->current_season)->toBe('spring');
     expect($state->current_week)->toBe(1);
@@ -278,13 +282,14 @@ test('calendar service does not dispatch age npcs job on regular week advance', 
         'current_year' => 1,
         'current_season' => 'spring',
         'current_week' => 5,
+        'current_day' => WorldState::DAYS_PER_WEEK,
     ]);
 
-    $service = new CalendarService();
+    $service = new CalendarService;
 
     \Illuminate\Support\Facades\Queue::fake();
 
-    $service->advanceWeek();
+    $service->advanceDay();
 
     $state = WorldState::current();
     expect($state->current_year)->toBe(1);

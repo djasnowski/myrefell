@@ -15,6 +15,9 @@ beforeEach(function () {
 });
 
 test('distributes daily rewards for top 10 players', function () {
+    // Pin to a Wednesday (not Monday, not 1st) to only get daily rewards
+    Carbon::setTestNow(Carbon::parse('2026-02-04 10:00:00'));
+
     $village = Village::factory()->create();
 
     // Create 12 users with scores from yesterday
@@ -72,6 +75,8 @@ test('distributes daily rewards for top 10 players', function () {
     // Check 11th and 12th place get no rewards
     expect(MinigameReward::where('user_id', $users->get(10)->id)->exists())->toBeFalse();
     expect(MinigameReward::where('user_id', $users->get(11)->id)->exists())->toBeFalse();
+
+    Carbon::setTestNow();
 });
 
 test('rewards use location of highest score', function () {
@@ -202,6 +207,9 @@ test('does not distribute monthly rewards on other days', function () {
 });
 
 test('does not create duplicate rewards', function () {
+    // Pin to a Wednesday (not Monday, not 1st) to avoid weekly/monthly rewards
+    Carbon::setTestNow(Carbon::parse('2026-02-04 10:00:00'));
+
     $village = Village::factory()->create();
     $user = User::factory()->create();
 
@@ -221,6 +229,8 @@ test('does not create duplicate rewards', function () {
 
     // Should only have 1 reward
     expect(MinigameReward::where('user_id', $user->id)->count())->toBe(1);
+
+    Carbon::setTestNow();
 });
 
 test('filters rewards by minigame option', function () {
