@@ -966,6 +966,8 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('/forge/craft', [PlayerHouseController::class, 'craftAtForge'])->name('forge.craft');
         Route::post('/pray', [PlayerHouseController::class, 'prayAtHome'])->name('pray');
         Route::get('/visitors', [PlayerHouseController::class, 'getVisitors'])->name('visitors');
+        Route::post('/respond-entry', [PlayerHouseController::class, 'respondToEntry'])->name('respond-entry');
+        Route::get('/entry-status/{username}', [PlayerHouseController::class, 'getEntryStatus'])->name('entry-status');
     });
 
     // Buildings

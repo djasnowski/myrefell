@@ -349,6 +349,7 @@ interface PageProps {
     houseUrl?: string;
     isVisiting?: boolean;
     visitingPlayer?: string;
+    awaitingEntry?: boolean;
     upkeepDueAt?: string | null;
     upkeepCost?: number | null;
     repairCost?: number | null;
@@ -432,6 +433,7 @@ export default function HouseIndex() {
         houseUrl,
         isVisiting,
         visitingPlayer,
+        awaitingEntry,
         upkeepDueAt,
         upkeepCost,
         repairCost,
@@ -454,10 +456,49 @@ export default function HouseIndex() {
         }
     }, [flash]);
 
-    // Visitor notifications (requires parlour)
+    // Entry request polling (visitor awaiting entry)
+    const [entryStatus, setEntryStatus] = useState<"pending" | "approved" | "denied" | "expired">(
+        awaitingEntry ? "pending" : "approved",
+    );
+
+    useEffect(() => {
+        if (!awaitingEntry || !visitingPlayer) return;
+
+        const poll = async () => {
+            try {
+                const res = await fetch(`/house/entry-status/${visitingPlayer}`);
+                const data = await res.json();
+                const status = data.status as "pending" | "approved" | "denied" | "expired";
+                setEntryStatus(status);
+
+                if (status === "approved") {
+                    router.visit(`/players/${visitingPlayer}/house`);
+                }
+            } catch {
+                // Silently ignore polling errors
+            }
+        };
+
+        const interval = setInterval(poll, 3000);
+
+        // Client-side 2 minute timeout fallback
+        const timeout = setTimeout(() => {
+            setEntryStatus("expired");
+        }, 120000);
+
+        return () => {
+            clearInterval(interval);
+            clearTimeout(timeout);
+        };
+    }, [awaitingEntry, visitingPlayer]);
+
+    // Visitor notifications & entry requests (requires parlour)
     const { sendNotification } = useNotifications();
     const seenVisitors = useRef<Set<string>>(new Set());
     const hasParlour = house?.rooms.some((r) => r.room_type === "parlour") ?? false;
+    const [pendingRequests, setPendingRequests] = useState<
+        { visitor_id: number; username: string; requested_at: number }[]
+    >([]);
 
     useEffect(() => {
         if (isVisiting || !house || !hasParlour) return;
@@ -479,14 +520,30 @@ export default function HouseIndex() {
                         gameToast.success(`${v.username} is visiting your house!`);
                     }
                 }
+
+                // Update pending entry requests
+                const requests = data.pending_requests || [];
+                setPendingRequests(requests);
+
+                for (const req of requests) {
+                    const reqKey = `entry-${req.visitor_id}`;
+                    if (!seenVisitors.current.has(reqKey)) {
+                        seenVisitors.current.add(reqKey);
+                        sendNotification("Entry Request", {
+                            body: `${req.username} is requesting entry to your house!`,
+                            tag: `entry-${req.username}`,
+                        });
+                        gameToast.success(`${req.username} is requesting entry!`);
+                    }
+                }
             } catch {
                 // Silently ignore polling errors
             }
         };
 
-        // Initial poll after a short delay
-        const initial = setTimeout(poll, 3000);
-        const interval = setInterval(poll, 30000);
+        // Initial poll after a short delay, then every 10s for responsive entry handling
+        const initial = setTimeout(poll, 2000);
+        const interval = setInterval(poll, 10000);
 
         return () => {
             clearTimeout(initial);
@@ -501,6 +558,20 @@ export default function HouseIndex() {
             setSelectedRoom(updated || null);
         }
     }, [house]);
+
+    const handleEntryResponse = (visitorId: number, action: "accept" | "deny") => {
+        router.post(
+            "/house/respond-entry",
+            { visitor_id: visitorId, action },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setPendingRequests((prev) => prev.filter((r) => r.visitor_id !== visitorId));
+                    router.reload();
+                },
+            },
+        );
+    };
 
     const handlePurchase = () => {
         setLoading(true);
@@ -656,6 +727,66 @@ export default function HouseIndex() {
               { title: "My House", href: houseUrl || "/dashboard" },
           ];
 
+    // Awaiting entry - show waiting/denied/expired screen
+    if (awaitingEntry && isVisiting) {
+        return (
+            <AppLayout breadcrumbs={breadcrumbs}>
+                <Head title={`${visitingPlayer}'s House`} />
+                <div className="mx-auto max-w-2xl p-4">
+                    <div className="rounded-lg border border-stone-700/50 bg-gradient-to-br from-stone-800/80 to-stone-900 p-8 text-center">
+                        {entryStatus === "pending" && (
+                            <>
+                                <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-amber-400" />
+                                <h1 className="font-pixel text-xl text-amber-100">
+                                    Requesting Entry...
+                                </h1>
+                                <p className="mt-2 font-pixel text-xs text-stone-400">
+                                    Waiting for {visitingPlayer} to grant you entry.
+                                </p>
+                                <p className="mt-1 font-pixel text-xs text-stone-600">
+                                    Request expires in 2 minutes.
+                                </p>
+                            </>
+                        )}
+                        {entryStatus === "denied" && (
+                            <>
+                                <XCircle className="mx-auto mb-4 h-12 w-12 text-red-400" />
+                                <h1 className="font-pixel text-xl text-red-300">Entry Denied</h1>
+                                <p className="mt-2 font-pixel text-xs text-stone-400">
+                                    {visitingPlayer} has denied your entry request.
+                                </p>
+                                <a
+                                    href={`/players/${visitingPlayer}`}
+                                    className="mt-4 inline-block rounded-md bg-stone-700 px-4 py-2 font-pixel text-xs text-stone-300 hover:bg-stone-600"
+                                >
+                                    Back to Profile
+                                </a>
+                            </>
+                        )}
+                        {entryStatus === "expired" && (
+                            <>
+                                <Clock className="mx-auto mb-4 h-12 w-12 text-stone-500" />
+                                <h1 className="font-pixel text-xl text-stone-400">
+                                    Request Expired
+                                </h1>
+                                <p className="mt-2 font-pixel text-xs text-stone-500">
+                                    Your entry request has expired. {visitingPlayer} did not respond
+                                    in time.
+                                </p>
+                                <a
+                                    href={`/players/${visitingPlayer}`}
+                                    className="mt-4 inline-block rounded-md bg-stone-700 px-4 py-2 font-pixel text-xs text-stone-300 hover:bg-stone-600"
+                                >
+                                    Back to Profile
+                                </a>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </AppLayout>
+        );
+    }
+
     // No house - show purchase UI or visitor empty state
     if (!house) {
         if (isVisiting) {
@@ -758,6 +889,39 @@ export default function HouseIndex() {
                             <Users className="h-4 w-4" />
                             Visiting {visitingPlayer}&apos;s house (read-only)
                         </div>
+                    </div>
+                )}
+
+                {/* Pending Entry Requests (owner) */}
+                {!isVisiting && pendingRequests.length > 0 && (
+                    <div className="mb-4 space-y-2">
+                        {pendingRequests.map((req) => (
+                            <div
+                                key={req.visitor_id}
+                                className="flex items-center justify-between rounded-lg border border-amber-700/30 bg-amber-900/10 p-2.5"
+                            >
+                                <div className="flex items-center gap-2 font-pixel text-xs text-amber-300">
+                                    <UserCheck className="h-4 w-4" />
+                                    {req.username} is requesting entry to your house
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() =>
+                                            handleEntryResponse(req.visitor_id, "accept")
+                                        }
+                                        className="rounded bg-green-700/50 px-3 py-1 font-pixel text-xs text-green-300 hover:bg-green-700/80"
+                                    >
+                                        Accept
+                                    </button>
+                                    <button
+                                        onClick={() => handleEntryResponse(req.visitor_id, "deny")}
+                                        className="rounded bg-red-700/50 px-3 py-1 font-pixel text-xs text-red-300 hover:bg-red-700/80"
+                                    >
+                                        Deny
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
 

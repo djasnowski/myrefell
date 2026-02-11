@@ -133,41 +133,79 @@ class PlayerHouseController extends Controller
             ->with(['rooms.furniture', 'kingdom'])
             ->first();
 
+        $emptyVisitorProps = [
+            'canPurchase' => null,
+            'purchaseCost' => 0,
+            'roomTypes' => [],
+            'constructionLevel' => 0,
+            'playerGold' => 0,
+            'upgradeInfo' => null,
+            'adjacencyDefinitions' => ConstructionConfig::ADJACENCY_BONUSES,
+            'portals' => [],
+            'availableDestinations' => [],
+            'servantData' => null,
+            'servantTiers' => [],
+            'kitchen' => null,
+            'bedroom' => null,
+            'workshop' => null,
+            'forge' => null,
+            'chapel' => null,
+            'hearth' => null,
+            'upkeepDueAt' => null,
+            'upkeepCost' => null,
+            'repairCost' => null,
+        ];
+
         if (! $house) {
-            return Inertia::render('House/Index', [
+            return Inertia::render('House/Index', array_merge($emptyVisitorProps, [
                 'house' => null,
                 'isVisiting' => true,
                 'visitingPlayer' => $player->username,
-                'canPurchase' => null,
-                'purchaseCost' => 0,
-                'roomTypes' => [],
-                'constructionLevel' => 0,
-                'playerGold' => 0,
-                'upgradeInfo' => null,
                 'houseBuffs' => [],
                 'adjacencyBonuses' => [],
-                'adjacencyDefinitions' => ConstructionConfig::ADJACENCY_BONUSES,
-                'portals' => [],
-                'availableDestinations' => [],
-                'servantData' => null,
-                'servantTiers' => [],
                 'trophyData' => null,
                 'gardenData' => null,
-                'kitchen' => null,
-                'bedroom' => null,
-                'workshop' => null,
-                'forge' => null,
-                'chapel' => null,
-                'hearth' => null,
-                'upkeepDueAt' => null,
-                'upkeepCost' => null,
-                'repairCost' => null,
-            ]);
+            ]));
+        }
+
+        $visitor = request()->user();
+        $hasParlour = $house->rooms->where('room_type', 'parlour')->isNotEmpty();
+
+        // Parlour entry gate: require approval before viewing
+        if ($hasParlour && $visitor && $visitor->id !== $player->id) {
+            $entryCacheKey = "house_entry:{$player->id}:{$visitor->id}";
+            $entryStatus = Cache::get($entryCacheKey);
+
+            if ($entryStatus !== 'approved') {
+                // Create or maintain pending request
+                if ($entryStatus !== 'pending') {
+                    Cache::put($entryCacheKey, 'pending', 120);
+                }
+
+                // Add to owner's pending requests list
+                $requestsKey = "house_entry_requests:{$player->id}";
+                $requests = Cache::get($requestsKey, []);
+                $requests[$visitor->id] = [
+                    'username' => $visitor->username,
+                    'requested_at' => now()->timestamp,
+                ];
+                Cache::put($requestsKey, $requests, 120);
+
+                return Inertia::render('House/Index', array_merge($emptyVisitorProps, [
+                    'house' => null,
+                    'isVisiting' => true,
+                    'visitingPlayer' => $player->username,
+                    'awaitingEntry' => true,
+                    'houseBuffs' => [],
+                    'adjacencyBonuses' => [],
+                    'trophyData' => null,
+                    'gardenData' => null,
+                ]));
+            }
         }
 
         // Record visitor if owner has a parlour
-        $visitor = request()->user();
-        if ($visitor && $visitor->id !== $player->id && $house->rooms->where('room_type', 'parlour')->isNotEmpty()) {
+        if ($visitor && $visitor->id !== $player->id && $hasParlour) {
             $cacheKey = "house_visitors:{$player->id}";
             $visitors = Cache::get($cacheKey, []);
             $visitors[$visitor->id] = [
@@ -194,39 +232,19 @@ class PlayerHouseController extends Controller
             $gardenData['available_seeds'] = [];
         }
 
-        return Inertia::render('House/Index', [
+        return Inertia::render('House/Index', array_merge($emptyVisitorProps, [
             'house' => $this->formatHouseForVisitor($house),
             'isVisiting' => true,
             'visitingPlayer' => $player->username,
-            'canPurchase' => null,
-            'purchaseCost' => 0,
-            'roomTypes' => [],
-            'constructionLevel' => 0,
-            'playerGold' => 0,
-            'upgradeInfo' => null,
             'houseBuffs' => $houseBuffs,
             'adjacencyBonuses' => $adjacencyBonuses,
-            'adjacencyDefinitions' => ConstructionConfig::ADJACENCY_BONUSES,
-            'portals' => [],
-            'availableDestinations' => [],
-            'servantData' => null,
-            'servantTiers' => [],
             'trophyData' => $trophyData,
             'gardenData' => $gardenData,
-            'kitchen' => null,
-            'bedroom' => null,
-            'workshop' => null,
-            'forge' => null,
-            'chapel' => null,
-            'hearth' => null,
-            'upkeepDueAt' => null,
-            'upkeepCost' => null,
-            'repairCost' => null,
-        ]);
+        ]));
     }
 
     /**
-     * Poll for recent visitors (requires parlour).
+     * Poll for recent visitors (requires parlour). Includes pending entry requests.
      */
     public function getVisitors(Request $request): JsonResponse
     {
@@ -234,7 +252,7 @@ class PlayerHouseController extends Controller
         $house = PlayerHouse::where('player_id', $user->id)->with('rooms')->first();
 
         if (! $house || $house->rooms->where('room_type', 'parlour')->isEmpty()) {
-            return response()->json(['visitors' => []]);
+            return response()->json(['visitors' => [], 'pending_requests' => []]);
         }
 
         $cacheKey = "house_visitors:{$user->id}";
@@ -246,7 +264,87 @@ class PlayerHouseController extends Controller
 
         $list = array_map(fn ($v) => ['username' => $v['username'], 'at' => $v['at']], array_values($visitors));
 
-        return response()->json(['visitors' => $list]);
+        // Include pending entry requests
+        $requestsKey = "house_entry_requests:{$user->id}";
+        $pendingRequests = Cache::get($requestsKey, []);
+        $pendingList = [];
+        foreach ($pendingRequests as $visitorId => $req) {
+            // Only include if still pending in cache
+            $entryStatus = Cache::get("house_entry:{$user->id}:{$visitorId}");
+            if ($entryStatus === 'pending') {
+                $pendingList[] = [
+                    'visitor_id' => $visitorId,
+                    'username' => $req['username'],
+                    'requested_at' => $req['requested_at'],
+                ];
+            }
+        }
+
+        return response()->json(['visitors' => $list, 'pending_requests' => $pendingList]);
+    }
+
+    /**
+     * Respond to an entry request (accept/deny).
+     */
+    public function respondToEntry(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'visitor_id' => 'required|integer',
+            'action' => 'required|string|in:accept,deny',
+        ]);
+
+        $user = $request->user();
+        $visitorId = $request->input('visitor_id');
+        $action = $request->input('action');
+
+        $entryCacheKey = "house_entry:{$user->id}:{$visitorId}";
+
+        if ($action === 'accept') {
+            Cache::put($entryCacheKey, 'approved', 300);
+        } else {
+            Cache::put($entryCacheKey, 'denied', 30);
+        }
+
+        // Remove from pending requests list
+        $requestsKey = "house_entry_requests:{$user->id}";
+        $requests = Cache::get($requestsKey, []);
+        unset($requests[$visitorId]);
+        if (empty($requests)) {
+            Cache::forget($requestsKey);
+        } else {
+            Cache::put($requestsKey, $requests, 120);
+        }
+
+        $visitor = User::find($visitorId);
+        $name = $visitor?->username ?? 'Unknown';
+
+        if ($action === 'accept') {
+            return back()->with('success', "Granted entry to {$name}.");
+        }
+
+        return back()->with('success', "Denied entry to {$name}.");
+    }
+
+    /**
+     * Check entry request status (visitor polling endpoint).
+     */
+    public function getEntryStatus(string $username): JsonResponse
+    {
+        $visitor = request()->user();
+
+        if (! $visitor) {
+            return response()->json(['status' => 'expired']);
+        }
+
+        $owner = User::whereRaw('LOWER(username) = ?', [strtolower($username)])->first();
+
+        if (! $owner) {
+            return response()->json(['status' => 'expired']);
+        }
+
+        $status = Cache::get("house_entry:{$owner->id}:{$visitor->id}");
+
+        return response()->json(['status' => $status ?? 'expired']);
     }
 
     /**
