@@ -126,6 +126,12 @@ interface PendingMigration {
     created_at: string;
 }
 
+interface HouseEntry {
+    name: string;
+    tier_name: string;
+    owner_username: string;
+}
+
 interface Props {
     town: Town;
     services: ServiceInfo[];
@@ -142,6 +148,7 @@ interface Props {
     current_user_id: number;
     disasters?: Disaster[];
     pending_migrations?: PendingMigration[];
+    houses?: HouseEntry[];
 }
 
 const biomeConfig: Record<string, { icon: LucideIcon; color: string; bg: string; border: string }> =
@@ -217,6 +224,7 @@ export default function TownShow({
     current_user_id,
     disasters = [],
     pending_migrations = [],
+    houses = [],
 }: Props) {
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
     const [loading, setLoading] = useState(false);
@@ -709,6 +717,34 @@ export default function TownShow({
                                 +{town.visitor_count - 12} more visitors
                             </p>
                         )}
+                    </div>
+                )}
+
+                {/* Houses */}
+                {houses.length > 0 && (
+                    <div>
+                        <h2 className="mb-3 font-pixel text-sm text-stone-400">
+                            Houses ({houses.length})
+                        </h2>
+                        <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                            {houses.map((house, i) => (
+                                <Link
+                                    key={i}
+                                    href={`/players/${house.owner_username}/house`}
+                                    className="flex items-center gap-3 rounded-lg border border-stone-700 bg-stone-800/30 p-3 transition hover:bg-stone-800/50"
+                                >
+                                    <Home className="h-5 w-5 shrink-0 text-amber-400" />
+                                    <div className="min-w-0">
+                                        <div className="truncate font-pixel text-sm text-stone-200">
+                                            {house.name}
+                                        </div>
+                                        <div className="text-xs text-stone-500">
+                                            {house.tier_name} · {house.owner_username}
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
                     </div>
                 )}
 

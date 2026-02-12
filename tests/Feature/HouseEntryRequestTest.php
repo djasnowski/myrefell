@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\HouseFurniture;
 use App\Models\HouseRoom;
 use App\Models\Kingdom;
 use App\Models\PlayerHouse;
@@ -223,16 +224,179 @@ test('respond-entry validates action parameter', function () {
         ->assertSessionHasErrors('action');
 });
 
-test('unauthenticated visitor visiting house with parlour sees house directly', function () {
+test('unauthenticated visitor is redirected to login', function () {
     $kingdom = Kingdom::factory()->create();
     $owner = User::factory()->create();
     createHouseWithParlour($owner, $kingdom);
 
     $this->get("/players/{$owner->username}/house")
+        ->assertRedirect('/login');
+});
+
+// --- Kick All Visitors ---
+
+test('owner can kick all visitors', function () {
+    $owner = User::factory()->create();
+    $visitor1 = User::factory()->create();
+    $visitor2 = User::factory()->create();
+
+    // Set up approved visitors and pending requests
+    Cache::put("house_entry:{$owner->id}:{$visitor1->id}", 'approved', 300);
+    Cache::put("house_visitors:{$owner->id}", [
+        $visitor1->id => ['username' => $visitor1->username, 'at' => now()->timestamp],
+    ], 300);
+    Cache::put("house_entry:{$owner->id}:{$visitor2->id}", 'pending', 120);
+    Cache::put("house_entry_requests:{$owner->id}", [
+        $visitor2->id => ['username' => $visitor2->username, 'requested_at' => now()->timestamp],
+    ], 120);
+
+    $this->actingAs($owner)
+        ->post('/house/kick-all')
+        ->assertRedirect()
+        ->assertSessionHas('success');
+
+    expect(Cache::get("house_entry:{$owner->id}:{$visitor1->id}"))->toBe('kicked');
+    expect(Cache::get("house_entry:{$owner->id}:{$visitor2->id}"))->toBe('kicked');
+    expect(Cache::get("house_visitors:{$owner->id}"))->toBeNull();
+    expect(Cache::get("house_entry_requests:{$owner->id}"))->toBeNull();
+});
+
+test('entry status returns kicked after owner kicks', function () {
+    $owner = User::factory()->create();
+    $visitor = User::factory()->create();
+
+    Cache::put("house_entry:{$owner->id}:{$visitor->id}", 'kicked', 30);
+
+    $this->actingAs($visitor)
+        ->getJson("/house/entry-status/{$owner->username}")
+        ->assertSuccessful()
+        ->assertJson(['status' => 'kicked']);
+});
+
+test('kick all with no visitors returns success message', function () {
+    $owner = User::factory()->create();
+
+    $this->actingAs($owner)
+        ->post('/house/kick-all')
+        ->assertRedirect()
+        ->assertSessionHas('success', 'No visitors to kick.');
+});
+
+// --- Visitor Amenity Access ---
+
+test('approved visitor sees amenity data on house visit', function () {
+    $kingdom = Kingdom::factory()->create();
+    $owner = User::factory()->create();
+    $visitor = User::factory()->create();
+    $house = createHouseWithParlour($owner, $kingdom);
+
+    // Add a kitchen with stove
+    $kitchen = HouseRoom::create([
+        'player_house_id' => $house->id,
+        'room_type' => 'kitchen',
+        'grid_x' => 1,
+        'grid_y' => 0,
+    ]);
+    HouseFurniture::create([
+        'house_room_id' => $kitchen->id,
+        'hotspot_slug' => 'stove',
+        'furniture_key' => 'firepit',
+    ]);
+
+    Cache::put("house_entry:{$owner->id}:{$visitor->id}", 'approved', 300);
+
+    $this->actingAs($visitor)
+        ->get("/players/{$owner->username}/house")
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('House/Index')
             ->where('isVisiting', true)
             ->has('house')
+            ->has('visitingHouseId')
+            ->has('kitchen')
         );
+});
+
+test('visitor without parlour sees amenity data', function () {
+    $kingdom = Kingdom::factory()->create();
+    $owner = User::factory()->create();
+    $visitor = User::factory()->create();
+    $house = createHouseWithoutParlour($owner, $kingdom);
+
+    // Add a bedroom with bed
+    $bedroom = HouseRoom::create([
+        'player_house_id' => $house->id,
+        'room_type' => 'bedroom',
+        'grid_x' => 0,
+        'grid_y' => 0,
+    ]);
+    HouseFurniture::create([
+        'house_room_id' => $bedroom->id,
+        'hotspot_slug' => 'bed',
+        'furniture_key' => 'straw_bed',
+    ]);
+
+    $this->actingAs($visitor)
+        ->get("/players/{$owner->username}/house")
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->component('House/Index')
+            ->where('isVisiting', true)
+            ->has('visitingHouseId')
+            ->has('bedroom')
+        );
+});
+
+test('visitor can rest at visited house bedroom', function () {
+    $kingdom = Kingdom::factory()->create();
+    $owner = User::factory()->create();
+    $visitor = User::factory()->create(['energy' => 50, 'max_energy' => 100]);
+    $house = createHouseWithoutParlour($owner, $kingdom);
+
+    $bedroom = HouseRoom::create([
+        'player_house_id' => $house->id,
+        'room_type' => 'bedroom',
+        'grid_x' => 0,
+        'grid_y' => 0,
+    ]);
+    HouseFurniture::create([
+        'house_room_id' => $bedroom->id,
+        'hotspot_slug' => 'bed',
+        'furniture_key' => 'straw_bed',
+    ]);
+
+    $this->actingAs($visitor)
+        ->post('/house/rest', ['house_id' => $house->id])
+        ->assertRedirect()
+        ->assertSessionHas('success');
+
+    $visitor->refresh();
+    expect($visitor->energy)->toBeGreaterThan(50);
+});
+
+test('visitor cannot rest at house they have no access to', function () {
+    $kingdom = Kingdom::factory()->create();
+    $owner = User::factory()->create();
+    $visitor = User::factory()->create();
+    $house = createHouseWithParlour($owner, $kingdom);
+
+    // No approved entry
+    $this->actingAs($visitor)
+        ->post('/house/rest', ['house_id' => $house->id])
+        ->assertRedirect()
+        ->assertSessionHas('error', 'You do not have access to this house.');
+});
+
+test('kicked visitor cannot use amenities', function () {
+    $kingdom = Kingdom::factory()->create();
+    $owner = User::factory()->create();
+    $visitor = User::factory()->create();
+    $house = createHouseWithParlour($owner, $kingdom);
+
+    Cache::put("house_entry:{$owner->id}:{$visitor->id}", 'kicked', 30);
+
+    $this->actingAs($visitor)
+        ->post('/house/rest', ['house_id' => $house->id])
+        ->assertRedirect()
+        ->assertSessionHas('error', 'You do not have access to this house.');
 });

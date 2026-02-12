@@ -33,6 +33,7 @@ import {
     UserCheck,
     Users,
     UtensilsCrossed,
+    Waves,
     Wrench,
     X,
     XCircle,
@@ -311,6 +312,15 @@ interface HearthData {
     max_hp_bonus: number;
 }
 
+interface PoolData {
+    pool_name: string;
+    restore_hp: boolean;
+    restore_energy: boolean;
+    cure_disease: boolean;
+    restore_all: boolean;
+    cooldown_remaining: number;
+}
+
 interface CookResult {
     success: boolean;
     message: string;
@@ -344,11 +354,13 @@ interface PageProps {
     forge: ForgeData | null;
     chapel: ChapelData | null;
     hearth: HearthData | null;
+    pool: PoolData | null;
     playerInventory: InventoryItem[];
     inventoryMaxSlots: number;
     houseUrl?: string;
     isVisiting?: boolean;
     visitingPlayer?: string;
+    visitingHouseId?: number;
     awaitingEntry?: boolean;
     upkeepDueAt?: string | null;
     upkeepCost?: number | null;
@@ -383,6 +395,8 @@ const roomIcons: Record<string, LucideIcon> = {
     servant_quarters: Users,
     trophy_hall: Trophy,
     garden: Leaf,
+    cellar: Package,
+    superior_garden: Waves,
 };
 
 const buffLabels: Record<string, string> = {
@@ -404,6 +418,8 @@ const buffLabels: Record<string, string> = {
     herblore_xp_bonus: "Herblore XP",
     farming_xp_bonus: "Farming XP",
     auto_water: "Auto-Water",
+    storage_bonus: "Storage",
+    food_preservation_bonus: "Food Preservation",
 };
 
 export default function HouseIndex() {
@@ -430,9 +446,11 @@ export default function HouseIndex() {
         forge,
         chapel,
         hearth,
+        pool,
         houseUrl,
         isVisiting,
         visitingPlayer,
+        visitingHouseId,
         awaitingEntry,
         upkeepDueAt,
         upkeepCost,
@@ -442,10 +460,14 @@ export default function HouseIndex() {
         flash,
     } = usePage<PageProps>().props;
     const canAct = !isVisiting;
+    const canUseAmenities = !isVisiting || !!visitingHouseId;
     const [loading, setLoading] = useState(false);
     const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
     const [buildingAt, setBuildingAt] = useState<{ x: number; y: number } | null>(null);
-    const [activeTab, setActiveTab] = useState<"rooms" | "storage" | "servant">("storage");
+    const [demolishingRoomId, setDemolishingRoomId] = useState<number | null>(null);
+    const [activeTab, setActiveTab] = useState<"rooms" | "storage" | "servant">(
+        isVisiting ? "rooms" : "storage",
+    );
 
     useEffect(() => {
         if (flash?.success) {
@@ -457,9 +479,9 @@ export default function HouseIndex() {
     }, [flash]);
 
     // Entry request polling (visitor awaiting entry)
-    const [entryStatus, setEntryStatus] = useState<"pending" | "approved" | "denied" | "expired">(
-        awaitingEntry ? "pending" : "approved",
-    );
+    const [entryStatus, setEntryStatus] = useState<
+        "pending" | "approved" | "denied" | "expired" | "kicked"
+    >(awaitingEntry ? "pending" : "approved");
 
     useEffect(() => {
         if (!awaitingEntry || !visitingPlayer) return;
@@ -468,11 +490,19 @@ export default function HouseIndex() {
             try {
                 const res = await fetch(`/house/entry-status/${visitingPlayer}`);
                 const data = await res.json();
-                const status = data.status as "pending" | "approved" | "denied" | "expired";
+                const status = data.status as
+                    | "pending"
+                    | "approved"
+                    | "denied"
+                    | "expired"
+                    | "kicked";
                 setEntryStatus(status);
 
                 if (status === "approved") {
                     router.visit(`/players/${visitingPlayer}/house`);
+                } else if (status === "kicked") {
+                    gameToast.error("You have been removed from this house.");
+                    setTimeout(() => router.visit(`/players/${visitingPlayer}`), 2000);
                 }
             } catch {
                 // Silently ignore polling errors
@@ -492,6 +522,29 @@ export default function HouseIndex() {
         };
     }, [awaitingEntry, visitingPlayer]);
 
+    // Kick detection polling (approved visitor viewing house)
+    useEffect(() => {
+        if (!isVisiting || !visitingPlayer || !visitingHouseId || awaitingEntry) return;
+
+        const poll = async () => {
+            try {
+                const res = await fetch(`/house/entry-status/${visitingPlayer}`);
+                const data = await res.json();
+                const status = data.status;
+
+                if (status === "kicked" || status === "expired" || status === "denied") {
+                    gameToast.error("You have been removed from this house.");
+                    setTimeout(() => router.visit(`/players/${visitingPlayer}`), 2000);
+                }
+            } catch {
+                // Silently ignore
+            }
+        };
+
+        const interval = setInterval(poll, 10000);
+        return () => clearInterval(interval);
+    }, [isVisiting, visitingPlayer, visitingHouseId, awaitingEntry]);
+
     // Visitor notifications & entry requests (requires parlour)
     const { sendNotification } = useNotifications();
     const seenVisitors = useRef<Set<string>>(new Set());
@@ -499,6 +552,25 @@ export default function HouseIndex() {
     const [pendingRequests, setPendingRequests] = useState<
         { visitor_id: number; username: string; requested_at: number }[]
     >([]);
+    const [activeVisitorCount, setActiveVisitorCount] = useState(0);
+    const [kickAllLoading, setKickAllLoading] = useState(false);
+
+    const handleKickAll = () => {
+        setKickAllLoading(true);
+        router.post(
+            "/house/kick-all",
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setActiveVisitorCount(0);
+                    setPendingRequests([]);
+                    router.reload();
+                },
+                onFinish: () => setKickAllLoading(false),
+            },
+        );
+    };
 
     useEffect(() => {
         if (isVisiting || !house || !hasParlour) return;
@@ -508,6 +580,7 @@ export default function HouseIndex() {
                 const res = await fetch("/house/visitors");
                 const data = await res.json();
                 const visitors: { username: string; at: number }[] = data.visitors || [];
+                setActiveVisitorCount(visitors.length);
 
                 for (const v of visitors) {
                     const key = `${v.username}:${v.at}`;
@@ -630,21 +703,21 @@ export default function HouseIndex() {
     };
 
     const handleDemolishRoom = (roomId: number) => {
-        if (
-            !window.confirm(
-                "Are you sure you want to demolish this entire room? You will receive 50% of the gold cost and 50% of furniture materials back.",
-            )
-        )
-            return;
+        setDemolishingRoomId(roomId);
+    };
+
+    const confirmDemolishRoom = () => {
+        if (!demolishingRoomId) return;
         setLoading(true);
         router.post(
             "/house/demolish-room",
-            { room_id: roomId },
+            { room_id: demolishingRoomId },
             {
                 preserveScroll: true,
                 onSuccess: () => {
                     router.reload();
                     setSelectedRoom(null);
+                    setDemolishingRoomId(null);
                 },
                 onFinish: () => setLoading(false),
             },
@@ -682,7 +755,7 @@ export default function HouseIndex() {
         setLoading(true);
         router.post(
             "/house/teleport",
-            { slot },
+            { slot, ...(visitingHouseId ? { house_id: visitingHouseId } : {}) },
             {
                 preserveScroll: true,
                 onSuccess: () => router.reload(),
@@ -781,6 +854,21 @@ export default function HouseIndex() {
                                 </a>
                             </>
                         )}
+                        {entryStatus === "kicked" && (
+                            <>
+                                <XCircle className="mx-auto mb-4 h-12 w-12 text-red-400" />
+                                <h1 className="font-pixel text-xl text-red-300">Removed</h1>
+                                <p className="mt-2 font-pixel text-xs text-stone-400">
+                                    You have been removed from this house.
+                                </p>
+                                <a
+                                    href={`/players/${visitingPlayer}`}
+                                    className="mt-4 inline-block rounded-md bg-stone-700 px-4 py-2 font-pixel text-xs text-stone-300 hover:bg-stone-600"
+                                >
+                                    Back to Profile
+                                </a>
+                            </>
+                        )}
                     </div>
                 </div>
             </AppLayout>
@@ -851,6 +939,7 @@ export default function HouseIndex() {
     const isForgeSelected = selectedRoom?.room_type === "forge";
     const isChapelSelected = selectedRoom?.room_type === "chapel";
     const isHearthSelected = selectedRoom?.room_type === "hearth_room";
+    const isSuperiorGardenSelected = selectedRoom?.room_type === "superior_garden";
 
     const handleMountTrophy = (slot: string, itemId: number) => {
         setLoading(true);
@@ -887,7 +976,8 @@ export default function HouseIndex() {
                     <div className="mb-4 rounded-lg border border-blue-700/30 bg-blue-900/10 p-2.5">
                         <div className="flex items-center gap-2 font-pixel text-xs text-blue-300">
                             <Users className="h-4 w-4" />
-                            Visiting {visitingPlayer}&apos;s house (read-only)
+                            Visiting {visitingPlayer}&apos;s house
+                            {visitingHouseId ? "" : " (read-only)"}
                         </div>
                     </div>
                 )}
@@ -924,6 +1014,32 @@ export default function HouseIndex() {
                         ))}
                     </div>
                 )}
+
+                {/* Kick All Visitors (owner with active visitors/pending requests) */}
+                {!isVisiting &&
+                    hasParlour &&
+                    (activeVisitorCount > 0 || pendingRequests.length > 0) && (
+                        <div className="mb-4">
+                            <button
+                                onClick={handleKickAll}
+                                disabled={kickAllLoading}
+                                className="flex items-center gap-2 rounded-md bg-red-900/30 px-3 py-1.5 font-pixel text-xs text-red-400 transition hover:bg-red-900/50"
+                            >
+                                {kickAllLoading ? (
+                                    <>
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                        Kicking...
+                                    </>
+                                ) : (
+                                    <>
+                                        <XCircle className="h-3 w-3" />
+                                        Kick All Visitors (
+                                        {activeVisitorCount + pendingRequests.length})
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    )}
 
                 {/* Header */}
                 <div className="mb-6 flex flex-wrap items-center gap-4">
@@ -1175,6 +1291,39 @@ export default function HouseIndex() {
                     />
                 )}
 
+                {/* Demolish Room Modal */}
+                {demolishingRoomId && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+                        <div className="mx-4 w-full max-w-sm rounded-lg border border-red-700/50 bg-stone-900 p-5 shadow-xl">
+                            <div className="mb-3 flex items-center gap-2">
+                                <Trash2 className="h-5 w-5 text-red-400" />
+                                <h3 className="font-pixel text-base text-red-300">Demolish Room</h3>
+                            </div>
+                            <p className="font-pixel text-sm text-stone-400">
+                                Are you sure you want to demolish this room? You will receive{" "}
+                                <span className="text-amber-300">50% of the gold cost</span> and{" "}
+                                <span className="text-amber-300">50% of furniture materials</span>{" "}
+                                back.
+                            </p>
+                            <div className="mt-4 flex justify-end gap-2">
+                                <button
+                                    onClick={() => setDemolishingRoomId(null)}
+                                    className="rounded border border-stone-600/50 bg-stone-800/50 px-4 py-1.5 font-pixel text-xs text-stone-400 transition-colors hover:bg-stone-700/50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDemolishRoom}
+                                    disabled={loading}
+                                    className="rounded border border-red-600/50 bg-red-900/40 px-4 py-1.5 font-pixel text-xs text-red-300 transition-colors hover:bg-red-800/40 disabled:opacity-40"
+                                >
+                                    {loading ? "Demolishing..." : "Demolish"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {activeTab === "rooms" && (
                     <div className="grid gap-6 lg:grid-cols-[auto_1fr]">
                         {/* Grid */}
@@ -1231,6 +1380,15 @@ export default function HouseIndex() {
                                         );
                                     }
 
+                                    if (isVisiting) {
+                                        return (
+                                            <div
+                                                key={`${x},${y}`}
+                                                className="flex aspect-square flex-col items-center justify-center rounded-lg border-2 border-dashed border-stone-800/30 p-2"
+                                            />
+                                        );
+                                    }
+
                                     return (
                                         <button
                                             key={`${x},${y}`}
@@ -1278,7 +1436,8 @@ export default function HouseIndex() {
                                 !isWorkshopSelected &&
                                 !isForgeSelected &&
                                 !isChapelSelected &&
-                                !isHearthSelected && (
+                                !isHearthSelected &&
+                                !isSuperiorGardenSelected && (
                                     <RoomDetailPanel
                                         room={selectedRoom}
                                         constructionLevel={constructionLevel}
@@ -1289,6 +1448,7 @@ export default function HouseIndex() {
                                         onDemolish={handleDemolish}
                                         onDemolishRoom={handleDemolishRoom}
                                         onClose={() => setSelectedRoom(null)}
+                                        canAct={canAct}
                                     />
                                 )}
 
@@ -1304,6 +1464,7 @@ export default function HouseIndex() {
                                     onDemolish={handleDemolish}
                                     onDemolishRoom={handleDemolishRoom}
                                     onClose={() => setSelectedRoom(null)}
+                                    canAct={canAct}
                                 />
                             )}
 
@@ -1320,6 +1481,8 @@ export default function HouseIndex() {
                                     onDemolish={handleDemolish}
                                     onDemolishRoom={handleDemolishRoom}
                                     onClose={() => setSelectedRoom(null)}
+                                    canAct={canAct}
+                                    canUseAmenities={canUseAmenities}
                                 />
                             )}
 
@@ -1334,6 +1497,7 @@ export default function HouseIndex() {
                                     onDemolish={handleDemolish}
                                     onDemolishRoom={handleDemolishRoom}
                                     onClose={() => setSelectedRoom(null)}
+                                    canAct={canAct}
                                 />
                             )}
 
@@ -1345,6 +1509,8 @@ export default function HouseIndex() {
                                     loading={loading}
                                     setLoading={setLoading}
                                     canAct={canAct}
+                                    canUseAmenities={canUseAmenities}
+                                    visitingHouseId={visitingHouseId}
                                     onBuildFurniture={handleBuildFurniture}
                                     onDemolish={handleDemolish}
                                     onDemolishRoom={handleDemolishRoom}
@@ -1361,6 +1527,8 @@ export default function HouseIndex() {
                                     loading={loading}
                                     setLoading={setLoading}
                                     canAct={canAct}
+                                    canUseAmenities={canUseAmenities}
+                                    visitingHouseId={visitingHouseId}
                                     onBuildFurniture={handleBuildFurniture}
                                     onDemolish={handleDemolish}
                                     onDemolishRoom={handleDemolishRoom}
@@ -1376,6 +1544,8 @@ export default function HouseIndex() {
                                     loading={loading}
                                     setLoading={setLoading}
                                     canAct={canAct}
+                                    canUseAmenities={canUseAmenities}
+                                    visitingHouseId={visitingHouseId}
                                     onBuildFurniture={handleBuildFurniture}
                                     onDemolish={handleDemolish}
                                     onDemolishRoom={handleDemolishRoom}
@@ -1391,6 +1561,8 @@ export default function HouseIndex() {
                                     loading={loading}
                                     setLoading={setLoading}
                                     canAct={canAct}
+                                    canUseAmenities={canUseAmenities}
+                                    visitingHouseId={visitingHouseId}
                                     onBuildFurniture={handleBuildFurniture}
                                     onDemolish={handleDemolish}
                                     onDemolishRoom={handleDemolishRoom}
@@ -1406,6 +1578,8 @@ export default function HouseIndex() {
                                     loading={loading}
                                     setLoading={setLoading}
                                     canAct={canAct}
+                                    canUseAmenities={canUseAmenities}
+                                    visitingHouseId={visitingHouseId}
                                     onBuildFurniture={handleBuildFurniture}
                                     onDemolish={handleDemolish}
                                     onDemolishRoom={handleDemolishRoom}
@@ -1420,6 +1594,23 @@ export default function HouseIndex() {
                                     constructionLevel={constructionLevel}
                                     loading={loading}
                                     canAct={canAct}
+                                    onBuildFurniture={handleBuildFurniture}
+                                    onDemolish={handleDemolish}
+                                    onDemolishRoom={handleDemolishRoom}
+                                    onClose={() => setSelectedRoom(null)}
+                                />
+                            )}
+
+                            {isSuperiorGardenSelected && (
+                                <SuperiorGardenPanel
+                                    room={selectedRoom!}
+                                    pool={pool}
+                                    constructionLevel={constructionLevel}
+                                    loading={loading}
+                                    setLoading={setLoading}
+                                    canAct={canAct}
+                                    canUseAmenities={canUseAmenities}
+                                    visitingHouseId={visitingHouseId}
                                     onBuildFurniture={handleBuildFurniture}
                                     onDemolish={handleDemolish}
                                     onDemolishRoom={handleDemolishRoom}
@@ -1773,6 +1964,7 @@ function RoomDetailPanel({
     onDemolish,
     onDemolishRoom,
     onClose,
+    canAct = true,
 }: {
     room: Room;
     constructionLevel: number;
@@ -1783,6 +1975,7 @@ function RoomDetailPanel({
     onDemolish: (roomId: number, hotspotSlug: string) => void;
     onDemolishRoom: (roomId: number) => void;
     onClose: () => void;
+    canAct?: boolean;
 }) {
     const [expandedHotspot, setExpandedHotspot] = useState<string | null>(null);
 
@@ -1848,28 +2041,32 @@ function RoomDetailPanel({
                                     <span className="font-pixel text-xs text-green-400">
                                         {hotspot.current.name}
                                     </span>
-                                    <button
-                                        onClick={() => onDemolish(room.id, slug)}
-                                        disabled={loading}
-                                        className="text-red-500/50 hover:text-red-400"
-                                        title="Demolish"
-                                    >
-                                        <Trash2 className="h-3 w-3" />
-                                    </button>
+                                    {canAct && (
+                                        <button
+                                            onClick={() => onDemolish(room.id, slug)}
+                                            disabled={loading}
+                                            className="text-red-500/50 hover:text-red-400"
+                                            title="Demolish"
+                                        >
+                                            <Trash2 className="h-3 w-3" />
+                                        </button>
+                                    )}
                                 </div>
                             ) : (
                                 <span className="font-pixel text-xs text-stone-600">Empty</span>
                             )}
                         </div>
 
-                        <button
-                            onClick={() =>
-                                setExpandedHotspot(expandedHotspot === slug ? null : slug)
-                            }
-                            className="mt-1 font-pixel text-xs text-amber-400/70 hover:text-amber-400"
-                        >
-                            {expandedHotspot === slug ? "Hide options" : "Build options"}
-                        </button>
+                        {canAct && (
+                            <button
+                                onClick={() =>
+                                    setExpandedHotspot(expandedHotspot === slug ? null : slug)
+                                }
+                                className="mt-1 font-pixel text-xs text-amber-400/70 hover:text-amber-400"
+                            >
+                                {expandedHotspot === slug ? "Hide options" : "Build options"}
+                            </button>
+                        )}
 
                         {expandedHotspot === slug && (
                             <div className="mt-2 space-y-1.5">
@@ -1928,15 +2125,17 @@ function RoomDetailPanel({
                 ))}
             </div>
 
-            <div className="mt-4 border-t border-stone-700/30 pt-3">
-                <button
-                    onClick={() => onDemolishRoom(room.id)}
-                    disabled={loading}
-                    className="flex w-full items-center justify-center gap-1.5 rounded border border-red-700/40 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
-                >
-                    <Trash2 className="h-3.5 w-3.5" /> Demolish Room
-                </button>
-            </div>
+            {canAct && (
+                <div className="mt-4 border-t border-stone-700/30 pt-3">
+                    <button
+                        onClick={() => onDemolishRoom(room.id)}
+                        disabled={loading}
+                        className="flex w-full items-center justify-center gap-1.5 rounded border border-red-700/40 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
+                    >
+                        <Trash2 className="h-3.5 w-3.5" /> Demolish Room
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
@@ -1953,6 +2152,7 @@ function PortalChamberPanel({
     onDemolish,
     onDemolishRoom,
     onClose,
+    canAct = true,
 }: {
     room: Room;
     portals: PortalSlot[];
@@ -1965,6 +2165,8 @@ function PortalChamberPanel({
     onDemolishRoom: (roomId: number) => void;
     onDemolish: (roomId: number, hotspotSlug: string) => void;
     onClose: () => void;
+    canAct?: boolean;
+    canUseAmenities?: boolean;
 }) {
     const [configuringSlot, setConfiguringSlot] = useState<number | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
@@ -2022,27 +2224,33 @@ function PortalChamberPanel({
                                                     ({portal.destination.type})
                                                 </span>
                                             </div>
-                                            <div className="mt-1.5 flex gap-1.5">
-                                                <button
-                                                    onClick={() => onTeleport(portal.slot)}
-                                                    disabled={loading}
-                                                    className="flex items-center gap-1 rounded border border-purple-600/40 bg-purple-900/30 px-2 py-0.5 font-pixel text-xs text-purple-200 transition-colors hover:bg-purple-800/30 disabled:opacity-40"
-                                                >
-                                                    <Zap className="h-3 w-3" /> Teleport
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setConfiguringSlot(portal.slot);
-                                                        setSearchTerm("");
-                                                    }}
-                                                    disabled={loading}
-                                                    className="rounded border border-stone-600/40 bg-stone-800/30 px-2 py-0.5 font-pixel text-xs text-stone-400 transition-colors hover:bg-stone-700/30 disabled:opacity-40"
-                                                >
-                                                    Change
-                                                </button>
-                                            </div>
+                                            {(canUseAmenities || canAct) && (
+                                                <div className="mt-1.5 flex gap-1.5">
+                                                    {canUseAmenities && (
+                                                        <button
+                                                            onClick={() => onTeleport(portal.slot)}
+                                                            disabled={loading}
+                                                            className="flex items-center gap-1 rounded border border-purple-600/40 bg-purple-900/30 px-2 py-0.5 font-pixel text-xs text-purple-200 transition-colors hover:bg-purple-800/30 disabled:opacity-40"
+                                                        >
+                                                            <Zap className="h-3 w-3" /> Teleport
+                                                        </button>
+                                                    )}
+                                                    {canAct && (
+                                                        <button
+                                                            onClick={() => {
+                                                                setConfiguringSlot(portal.slot);
+                                                                setSearchTerm("");
+                                                            }}
+                                                            disabled={loading}
+                                                            className="rounded border border-stone-600/40 bg-stone-800/30 px-2 py-0.5 font-pixel text-xs text-stone-400 transition-colors hover:bg-stone-700/30 disabled:opacity-40"
+                                                        >
+                                                            Change
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
-                                    ) : (
+                                    ) : canAct ? (
                                         <div className="mt-2">
                                             <button
                                                 onClick={() => {
@@ -2061,11 +2269,11 @@ function PortalChamberPanel({
                                                 </div>
                                             )}
                                         </div>
-                                    )}
+                                    ) : null}
                                 </>
                             )}
 
-                            {!portal.furniture_key && hotspot && (
+                            {!portal.furniture_key && hotspot && canAct && (
                                 <div className="mt-2">
                                     <button
                                         onClick={() =>
@@ -2188,15 +2396,17 @@ function PortalChamberPanel({
                 })}
             </div>
 
-            <div className="mt-4 border-t border-stone-700/30 pt-3">
-                <button
-                    onClick={() => onDemolishRoom(room.id)}
-                    disabled={loading}
-                    className="flex w-full items-center justify-center gap-1.5 rounded border border-red-700/40 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
-                >
-                    <Trash2 className="h-3.5 w-3.5" /> Demolish Room
-                </button>
-            </div>
+            {canAct && (
+                <div className="mt-4 border-t border-stone-700/30 pt-3">
+                    <button
+                        onClick={() => onDemolishRoom(room.id)}
+                        disabled={loading}
+                        className="flex w-full items-center justify-center gap-1.5 rounded border border-red-700/40 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
+                    >
+                        <Trash2 className="h-3.5 w-3.5" /> Demolish Room
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
@@ -2230,6 +2440,7 @@ function TrophyHallPanel({
     onDemolish,
     onDemolishRoom,
     onClose,
+    canAct = true,
 }: {
     room: Room;
     trophyData: TrophyData | null;
@@ -2241,6 +2452,7 @@ function TrophyHallPanel({
     onDemolish: (roomId: number, hotspotSlug: string) => void;
     onDemolishRoom: (roomId: number) => void;
     onClose: () => void;
+    canAct?: boolean;
 }) {
     const [expandedHotspot, setExpandedHotspot] = useState<string | null>(null);
     const [mountingSlot, setMountingSlot] = useState<string | null>(null);
@@ -2304,14 +2516,16 @@ function TrophyHallPanel({
                                         <span className="font-pixel text-xs text-green-400">
                                             {hotspot.current.name}
                                         </span>
-                                        <button
-                                            onClick={() => onDemolish(room.id, slot)}
-                                            disabled={loading}
-                                            className="text-red-500/50 hover:text-red-400"
-                                            title="Demolish"
-                                        >
-                                            <Trash2 className="h-3 w-3" />
-                                        </button>
+                                        {canAct && (
+                                            <button
+                                                onClick={() => onDemolish(room.id, slot)}
+                                                disabled={loading}
+                                                className="text-red-500/50 hover:text-red-400"
+                                                title="Demolish"
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                            </button>
+                                        )}
                                     </div>
                                 ) : (
                                     <span className="font-pixel text-xs text-stone-600">
@@ -2321,7 +2535,7 @@ function TrophyHallPanel({
                             </div>
 
                             {/* Build furniture if not built */}
-                            {!hotspot?.current && hotspot && (
+                            {!hotspot?.current && hotspot && canAct && (
                                 <div className="mt-2">
                                     <button
                                         onClick={() =>
@@ -2428,18 +2642,20 @@ function TrophyHallPanel({
                                             </span>
                                         ))}
                                     </div>
-                                    <button
-                                        onClick={() => onRemoveTrophy(slot)}
-                                        disabled={loading}
-                                        className="mt-1.5 flex items-center gap-1 rounded border border-red-700/30 bg-red-900/20 px-2 py-0.5 font-pixel text-xs text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
-                                    >
-                                        <Trash2 className="h-3 w-3" /> Remove
-                                    </button>
+                                    {canAct && (
+                                        <button
+                                            onClick={() => onRemoveTrophy(slot)}
+                                            disabled={loading}
+                                            className="mt-1.5 flex items-center gap-1 rounded border border-red-700/30 bg-red-900/20 px-2 py-0.5 font-pixel text-xs text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
+                                        >
+                                            <Trash2 className="h-3 w-3" /> Remove
+                                        </button>
+                                    )}
                                 </div>
                             )}
 
                             {/* Empty slot - mount trophy */}
-                            {hasFurniture && !trophy && (
+                            {hasFurniture && !trophy && canAct && (
                                 <div className="mt-2">
                                     {mountingSlot === slot ? (
                                         <div className="rounded-md border border-stone-600/50 bg-stone-800/50 p-2">
@@ -2514,27 +2730,33 @@ function TrophyHallPanel({
                                 <span className="font-pixel text-xs text-green-400">
                                     {room.hotspots.lighting.current.name}
                                 </span>
-                                <button
-                                    onClick={() => onDemolish(room.id, "lighting")}
-                                    disabled={loading}
-                                    className="text-red-500/50 hover:text-red-400"
-                                    title="Demolish"
-                                >
-                                    <Trash2 className="h-3 w-3" />
-                                </button>
+                                {canAct && (
+                                    <button
+                                        onClick={() => onDemolish(room.id, "lighting")}
+                                        disabled={loading}
+                                        className="text-red-500/50 hover:text-red-400"
+                                        title="Demolish"
+                                    >
+                                        <Trash2 className="h-3 w-3" />
+                                    </button>
+                                )}
                             </div>
                         ) : (
                             <span className="font-pixel text-xs text-stone-600">Empty</span>
                         )}
                     </div>
-                    <button
-                        onClick={() =>
-                            setExpandedHotspot(expandedHotspot === "lighting" ? null : "lighting")
-                        }
-                        className="mt-1 font-pixel text-xs text-amber-400/70 hover:text-amber-400"
-                    >
-                        {expandedHotspot === "lighting" ? "Hide options" : "Build options"}
-                    </button>
+                    {canAct && (
+                        <button
+                            onClick={() =>
+                                setExpandedHotspot(
+                                    expandedHotspot === "lighting" ? null : "lighting",
+                                )
+                            }
+                            className="mt-1 font-pixel text-xs text-amber-400/70 hover:text-amber-400"
+                        >
+                            {expandedHotspot === "lighting" ? "Hide options" : "Build options"}
+                        </button>
+                    )}
                     {expandedHotspot === "lighting" && (
                         <div className="mt-2 space-y-1.5">
                             {room.hotspots.lighting.options.map((opt) => {
@@ -2589,15 +2811,17 @@ function TrophyHallPanel({
                 </div>
             )}
 
-            <div className="mt-4 border-t border-stone-700/30 pt-3">
-                <button
-                    onClick={() => onDemolishRoom(room.id)}
-                    disabled={loading}
-                    className="flex w-full items-center justify-center gap-1.5 rounded border border-red-700/40 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
-                >
-                    <Trash2 className="h-3.5 w-3.5" /> Demolish Room
-                </button>
-            </div>
+            {canAct && (
+                <div className="mt-4 border-t border-stone-700/30 pt-3">
+                    <button
+                        onClick={() => onDemolishRoom(room.id)}
+                        disabled={loading}
+                        className="flex w-full items-center justify-center gap-1.5 rounded border border-red-700/40 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
+                    >
+                        <Trash2 className="h-3.5 w-3.5" /> Demolish Room
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
@@ -2627,6 +2851,7 @@ function GardenPanel({
     onDemolish,
     onDemolishRoom,
     onClose,
+    canAct = true,
 }: {
     room: Room;
     gardenData: GardenData | null;
@@ -2637,6 +2862,7 @@ function GardenPanel({
     onDemolish: (roomId: number, hotspotSlug: string) => void;
     onDemolishRoom: (roomId: number) => void;
     onClose: () => void;
+    canAct?: boolean;
 }) {
     const [expandedHotspot, setExpandedHotspot] = useState<string | null>(null);
     const [plantingSlot, setPlantingSlot] = useState<string | null>(null);
@@ -2817,14 +3043,16 @@ function GardenPanel({
                                         <span className="font-pixel text-xs text-green-400">
                                             {hotspot.current.name}
                                         </span>
-                                        <button
-                                            onClick={() => onDemolish(room.id, slot)}
-                                            disabled={loading}
-                                            className="text-red-500/50 hover:text-red-400"
-                                            title="Demolish"
-                                        >
-                                            <Trash2 className="h-3 w-3" />
-                                        </button>
+                                        {canAct && (
+                                            <button
+                                                onClick={() => onDemolish(room.id, slot)}
+                                                disabled={loading}
+                                                className="text-red-500/50 hover:text-red-400"
+                                                title="Demolish"
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                            </button>
+                                        )}
                                     </div>
                                 ) : (
                                     <span className="font-pixel text-xs text-stone-600">
@@ -2834,7 +3062,7 @@ function GardenPanel({
                             </div>
 
                             {/* Build planter if not built */}
-                            {!hotspot?.current && hotspot && (
+                            {!hotspot?.current && hotspot && canAct && (
                                 <div className="mt-2">
                                     <button
                                         onClick={() =>
@@ -3142,29 +3370,35 @@ function GardenPanel({
                                         <span className="font-pixel text-xs text-green-400">
                                             {hotspot.current.name}
                                         </span>
-                                        <button
-                                            onClick={() => onDemolish(room.id, hotspotSlug)}
-                                            disabled={loading}
-                                            className="text-red-500/50 hover:text-red-400"
-                                            title="Demolish"
-                                        >
-                                            <Trash2 className="h-3 w-3" />
-                                        </button>
+                                        {canAct && (
+                                            <button
+                                                onClick={() => onDemolish(room.id, hotspotSlug)}
+                                                disabled={loading}
+                                                className="text-red-500/50 hover:text-red-400"
+                                                title="Demolish"
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                            </button>
+                                        )}
                                     </div>
                                 ) : (
                                     <span className="font-pixel text-xs text-stone-600">Empty</span>
                                 )}
                             </div>
-                            <button
-                                onClick={() =>
-                                    setExpandedHotspot(
-                                        expandedHotspot === hotspotSlug ? null : hotspotSlug,
-                                    )
-                                }
-                                className="mt-1 font-pixel text-xs text-amber-400/70 hover:text-amber-400"
-                            >
-                                {expandedHotspot === hotspotSlug ? "Hide options" : "Build options"}
-                            </button>
+                            {canAct && (
+                                <button
+                                    onClick={() =>
+                                        setExpandedHotspot(
+                                            expandedHotspot === hotspotSlug ? null : hotspotSlug,
+                                        )
+                                    }
+                                    className="mt-1 font-pixel text-xs text-amber-400/70 hover:text-amber-400"
+                                >
+                                    {expandedHotspot === hotspotSlug
+                                        ? "Hide options"
+                                        : "Build options"}
+                                </button>
+                            )}
                             {expandedHotspot === hotspotSlug && (
                                 <div className="mt-2 space-y-1.5">
                                     {hotspot.options.map((opt) => {
@@ -3228,15 +3462,17 @@ function GardenPanel({
                 })}
             </div>
 
-            <div className="mt-4 border-t border-stone-700/30 pt-3">
-                <button
-                    onClick={() => onDemolishRoom(room.id)}
-                    disabled={loading}
-                    className="flex w-full items-center justify-center gap-1.5 rounded border border-red-700/40 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
-                >
-                    <Trash2 className="h-3.5 w-3.5" /> Demolish Room
-                </button>
-            </div>
+            {canAct && (
+                <div className="mt-4 border-t border-stone-700/30 pt-3">
+                    <button
+                        onClick={() => onDemolishRoom(room.id)}
+                        disabled={loading}
+                        className="flex w-full items-center justify-center gap-1.5 rounded border border-red-700/40 bg-red-900/20 px-3 py-1.5 font-pixel text-xs text-red-400 transition-colors hover:bg-red-900/40 disabled:opacity-40"
+                    >
+                        <Trash2 className="h-3.5 w-3.5" /> Demolish Room
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
@@ -3256,6 +3492,8 @@ function KitchenPanel({
     loading,
     setLoading,
     canAct,
+    canUseAmenities = true,
+    visitingHouseId,
     onBuildFurniture,
     onDemolish,
     onDemolishRoom,
@@ -3267,6 +3505,8 @@ function KitchenPanel({
     loading: boolean;
     setLoading: (v: boolean) => void;
     canAct: boolean;
+    canUseAmenities?: boolean;
+    visitingHouseId?: number;
     onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
     onDemolish: (roomId: number, hotspotSlug: string) => void;
     onDemolishRoom: (roomId: number) => void;
@@ -3289,7 +3529,10 @@ function KitchenPanel({
                             .querySelector('meta[name="csrf-token"]')
                             ?.getAttribute("content") || "",
                 },
-                body: JSON.stringify({ recipe: recipeId }),
+                body: JSON.stringify({
+                    recipe: recipeId,
+                    ...(visitingHouseId ? { house_id: visitingHouseId } : {}),
+                }),
             });
 
             const data: CookResult = await response.json();
@@ -3431,7 +3674,7 @@ function KitchenPanel({
                         </div>
                     </div>
 
-                    {canAct && (
+                    {canUseAmenities && (
                         <div className="grid grid-cols-1 gap-2">
                             {kitchen.recipes.map((recipe) => (
                                 <div
@@ -3580,6 +3823,8 @@ function BedroomPanel({
     loading,
     setLoading,
     canAct,
+    canUseAmenities = true,
+    visitingHouseId,
     onBuildFurniture,
     onDemolish,
     onDemolishRoom,
@@ -3592,6 +3837,8 @@ function BedroomPanel({
     loading: boolean;
     setLoading: (v: boolean) => void;
     canAct: boolean;
+    canUseAmenities?: boolean;
+    visitingHouseId?: number;
     onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
     onDemolish: (roomId: number, hotspotSlug: string) => void;
     onDemolishRoom: (roomId: number) => void;
@@ -3610,7 +3857,7 @@ function BedroomPanel({
         setLoading(true);
         router.post(
             "/house/rest",
-            {},
+            { ...(visitingHouseId ? { house_id: visitingHouseId } : {}) },
             {
                 preserveScroll: true,
                 onSuccess: () => {
@@ -3735,7 +3982,7 @@ function BedroomPanel({
                         </div>
                     )}
 
-                    {canAct && (
+                    {canUseAmenities && (
                         <>
                             {restCooldown > 0 ? (
                                 <div className="relative h-8 w-full overflow-hidden rounded-md bg-stone-700">
@@ -3799,6 +4046,258 @@ function BedroomPanel({
     );
 }
 
+function SuperiorGardenPanel({
+    room,
+    pool,
+    constructionLevel,
+    loading,
+    setLoading,
+    canAct,
+    canUseAmenities = true,
+    visitingHouseId,
+    onBuildFurniture,
+    onDemolish,
+    onDemolishRoom,
+    onClose,
+}: {
+    room: Room;
+    pool: PoolData | null;
+    constructionLevel: number;
+    loading: boolean;
+    setLoading: (v: boolean) => void;
+    canAct: boolean;
+    canUseAmenities?: boolean;
+    visitingHouseId?: number;
+    onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
+    onDemolish: (roomId: number, hotspotSlug: string) => void;
+    onDemolishRoom: (roomId: number) => void;
+    onClose: () => void;
+}) {
+    const [poolCooldown, setPoolCooldown] = useState(pool?.cooldown_remaining ?? 0);
+
+    useEffect(() => {
+        setPoolCooldown(pool?.cooldown_remaining ?? 0);
+    }, [pool?.cooldown_remaining]);
+
+    useEffect(() => {
+        if (poolCooldown <= 0) return;
+        const timer = setTimeout(() => setPoolCooldown((c) => c - 1), 1000);
+        return () => clearTimeout(timer);
+    }, [poolCooldown]);
+
+    const handleUsePool = () => {
+        if (poolCooldown > 0) return;
+        setLoading(true);
+        router.post(
+            "/house/pool",
+            { ...(visitingHouseId ? { house_id: visitingHouseId } : {}) },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setPoolCooldown(60);
+                    router.reload();
+                },
+                onFinish: () => setLoading(false),
+            },
+        );
+    };
+
+    const RoomIcon = roomIcons[room.room_type] || Home;
+
+    return (
+        <div>
+            {/* Header */}
+            <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-cyan-900/30 p-2">
+                        <RoomIcon className="h-5 w-5 text-cyan-400" />
+                    </div>
+                    <div>
+                        <h3 className="font-pixel text-base text-amber-100">{room.room_name}</h3>
+                        <p className="font-pixel text-[10px] text-stone-500">
+                            Position ({room.grid_x}, {room.grid_y})
+                        </p>
+                    </div>
+                </div>
+                <button onClick={onClose} className="rounded p-1 hover:bg-stone-700/50">
+                    <X className="h-4 w-4 text-stone-500" />
+                </button>
+            </div>
+
+            {/* Furniture Hotspots */}
+            <div className="mb-4 space-y-2">
+                {Object.entries(room.hotspots).map(([slug, hotspot]) => (
+                    <div
+                        key={slug}
+                        className="rounded-md border border-stone-700/50 bg-stone-800/30 p-2.5"
+                    >
+                        <div className="flex items-center justify-between">
+                            <span className="font-pixel text-xs text-stone-400">
+                                {hotspot.name}
+                            </span>
+                            {hotspot.current ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="font-pixel text-xs text-green-400">
+                                        {hotspot.current.name}
+                                    </span>
+                                    {canAct && (
+                                        <button
+                                            onClick={() => onDemolish(room.id, slug)}
+                                            disabled={loading}
+                                            className="rounded p-0.5 text-red-400/60 hover:bg-red-900/20 hover:text-red-400"
+                                        >
+                                            <Trash2 className="h-3 w-3" />
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <span className="font-pixel text-[10px] text-stone-600">Empty</span>
+                            )}
+                        </div>
+                        {canAct && !hotspot.current && hotspot.options.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                                {hotspot.options.map((opt) => {
+                                    const canBuild = constructionLevel >= opt.level;
+                                    return (
+                                        <button
+                                            key={opt.key}
+                                            onClick={() => onBuildFurniture(room.id, slug, opt.key)}
+                                            disabled={loading || !canBuild}
+                                            className={`flex w-full items-center justify-between rounded px-2 py-1 font-pixel text-[10px] transition ${
+                                                canBuild
+                                                    ? "bg-stone-700/30 text-stone-300 hover:bg-stone-700/60"
+                                                    : "cursor-not-allowed text-stone-600"
+                                            }`}
+                                        >
+                                            <span>
+                                                {opt.name} (Lv.{opt.level})
+                                            </span>
+                                            <span className="text-stone-500">
+                                                {Object.entries(opt.materials)
+                                                    .map(([m, q]) => `${q} ${m}`)
+                                                    .join(", ")}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* Pool Section */}
+            {pool ? (
+                <div className="rounded-lg border border-cyan-700/30 bg-cyan-900/10 p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Waves className="h-4 w-4 text-cyan-400" />
+                            <span className="font-pixel text-xs text-cyan-300">
+                                {pool.pool_name}
+                            </span>
+                        </div>
+                        <span className="font-pixel text-xs text-green-400">Free</span>
+                    </div>
+
+                    <div className="mb-3 space-y-1.5">
+                        {pool.restore_hp && (
+                            <div className="flex items-center gap-2 rounded bg-stone-900/50 px-3 py-1.5">
+                                <Flame className="h-3.5 w-3.5 text-red-400" />
+                                <span className="font-pixel text-[10px] text-stone-300">
+                                    Restores HP to full
+                                </span>
+                            </div>
+                        )}
+                        {pool.restore_energy && (
+                            <div className="flex items-center gap-2 rounded bg-stone-900/50 px-3 py-1.5">
+                                <Zap className="h-3.5 w-3.5 text-yellow-400" />
+                                <span className="font-pixel text-[10px] text-stone-300">
+                                    Restores energy to full
+                                </span>
+                            </div>
+                        )}
+                        {pool.cure_disease && (
+                            <div className="flex items-center gap-2 rounded bg-stone-900/50 px-3 py-1.5">
+                                <Sparkles className="h-3.5 w-3.5 text-green-400" />
+                                <span className="font-pixel text-[10px] text-stone-300">
+                                    Cures all infections
+                                </span>
+                            </div>
+                        )}
+                        {pool.restore_all && (
+                            <div className="flex items-center gap-2 rounded bg-stone-900/50 px-3 py-1.5">
+                                <CheckCircle className="h-3.5 w-3.5 text-purple-400" />
+                                <span className="font-pixel text-[10px] text-stone-300">
+                                    Full restoration
+                                </span>
+                            </div>
+                        )}
+                    </div>
+
+                    {canUseAmenities && (
+                        <>
+                            {poolCooldown > 0 ? (
+                                <div className="relative h-8 w-full overflow-hidden rounded-md bg-stone-700">
+                                    <div
+                                        className="absolute inset-y-0 right-0 bg-cyan-600/50 transition-all duration-1000 ease-linear"
+                                        style={{
+                                            width: `${(poolCooldown / 60) * 100}%`,
+                                        }}
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <span className="font-pixel text-xs text-stone-300">
+                                            {poolCooldown}s
+                                        </span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={handleUsePool}
+                                    disabled={loading}
+                                    className="flex w-full items-center justify-center gap-2 rounded-md bg-cyan-600 px-3 py-2 font-pixel text-xs text-white transition hover:bg-cyan-500"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                            Entering Pool...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Waves className="h-3 w-3" />
+                                            Enter Pool
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                        </>
+                    )}
+                </div>
+            ) : (
+                <div className="rounded-lg border border-stone-700/30 bg-stone-800/20 p-4 text-center">
+                    <Waves className="mx-auto h-6 w-6 text-stone-600" />
+                    <p className="mt-2 font-pixel text-xs text-stone-500">
+                        Build a pool to use restoration.
+                    </p>
+                </div>
+            )}
+
+            {/* Demolish Room */}
+            {canAct && (
+                <div className="mt-4 border-t border-stone-700/30 pt-3">
+                    <button
+                        onClick={() => onDemolishRoom(room.id)}
+                        disabled={loading}
+                        className="flex w-full items-center justify-center gap-2 rounded-md bg-red-900/30 px-3 py-1.5 font-pixel text-xs text-red-400 transition hover:bg-red-900/50"
+                    >
+                        <Trash2 className="h-3 w-3" />
+                        Demolish Room
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
 function CraftingStationPanel({
     room,
     stationName,
@@ -3812,6 +4311,8 @@ function CraftingStationPanel({
     loading,
     setLoading,
     canAct,
+    canUseAmenities = true,
+    visitingHouseId,
     onBuildFurniture,
     onDemolish,
     onDemolishRoom,
@@ -3829,6 +4330,8 @@ function CraftingStationPanel({
     loading: boolean;
     setLoading: (v: boolean) => void;
     canAct: boolean;
+    canUseAmenities?: boolean;
+    visitingHouseId?: number;
     onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
     onDemolish: (roomId: number, hotspotSlug: string) => void;
     onDemolishRoom: (roomId: number) => void;
@@ -3862,7 +4365,10 @@ function CraftingStationPanel({
                             .querySelector('meta[name="csrf-token"]')
                             ?.getAttribute("content") || "",
                 },
-                body: JSON.stringify({ recipe: recipeId }),
+                body: JSON.stringify({
+                    recipe: recipeId,
+                    ...(visitingHouseId ? { house_id: visitingHouseId } : {}),
+                }),
             });
 
             const data = await response.json();
@@ -4024,7 +4530,7 @@ function CraftingStationPanel({
                         </div>
                     )}
 
-                    {canAct && (
+                    {canUseAmenities && (
                         <div className="grid grid-cols-1 gap-2">
                             {(recipes[activeCategory] || []).map((recipe) => (
                                 <div
@@ -4161,6 +4667,8 @@ function WorkshopPanel(props: {
     loading: boolean;
     setLoading: (v: boolean) => void;
     canAct: boolean;
+    canUseAmenities?: boolean;
+    visitingHouseId?: number;
     onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
     onDemolish: (roomId: number, hotspotSlug: string) => void;
     onDemolishRoom: (roomId: number) => void;
@@ -4180,6 +4688,8 @@ function WorkshopPanel(props: {
             loading={props.loading}
             setLoading={props.setLoading}
             canAct={props.canAct}
+            canUseAmenities={props.canUseAmenities}
+            visitingHouseId={props.visitingHouseId}
             onBuildFurniture={props.onBuildFurniture}
             onDemolish={props.onDemolish}
             onDemolishRoom={props.onDemolishRoom}
@@ -4195,6 +4705,8 @@ function ForgePanel(props: {
     loading: boolean;
     setLoading: (v: boolean) => void;
     canAct: boolean;
+    canUseAmenities?: boolean;
+    visitingHouseId?: number;
     onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
     onDemolish: (roomId: number, hotspotSlug: string) => void;
     onDemolishRoom: (roomId: number) => void;
@@ -4214,6 +4726,8 @@ function ForgePanel(props: {
             loading={props.loading}
             setLoading={props.setLoading}
             canAct={props.canAct}
+            canUseAmenities={props.canUseAmenities}
+            visitingHouseId={props.visitingHouseId}
             onBuildFurniture={props.onBuildFurniture}
             onDemolish={props.onDemolish}
             onDemolishRoom={props.onDemolishRoom}
@@ -4229,6 +4743,8 @@ function ChapelPanel({
     loading,
     setLoading,
     canAct,
+    canUseAmenities = true,
+    visitingHouseId,
     onBuildFurniture,
     onDemolish,
     onDemolishRoom,
@@ -4240,6 +4756,8 @@ function ChapelPanel({
     loading: boolean;
     setLoading: (v: boolean) => void;
     canAct: boolean;
+    canUseAmenities?: boolean;
+    visitingHouseId?: number;
     onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
     onDemolish: (roomId: number, hotspotSlug: string) => void;
     onDemolishRoom: (roomId: number) => void;
@@ -4276,6 +4794,7 @@ function ChapelPanel({
                             .querySelector('meta[name="csrf-token"]')
                             ?.getAttribute("content") || "",
                 },
+                body: JSON.stringify(visitingHouseId ? { house_id: visitingHouseId } : {}),
             });
 
             const data = await response.json();
@@ -4418,7 +4937,7 @@ function ChapelPanel({
                                 </div>
                             </div>
 
-                            {canAct && (
+                            {canUseAmenities && (
                                 <>
                                     {cooldown > 0 ? (
                                         <div className="relative h-8 w-full overflow-hidden rounded-md bg-stone-700">

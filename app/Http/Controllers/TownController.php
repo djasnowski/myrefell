@@ -110,6 +110,17 @@ class TownController extends Controller
                 'casualties' => $disaster->casualties ?? 0,
             ]);
 
+        // Get houses at this location
+        $houses = PlayerHouse::where('location_type', 'town')
+            ->where('location_id', $town->id)
+            ->with('player:id,username')
+            ->get()
+            ->map(fn ($house) => [
+                'name' => $house->name,
+                'tier_name' => ConstructionConfig::HOUSE_TIERS[$house->tier]['name'] ?? ucfirst($house->tier),
+                'owner_username' => $house->player->username,
+            ]);
+
         // Get available services for this town
         $services = LocationServices::getServicesForLocation('town', $town->is_port ?? false);
 
@@ -181,6 +192,7 @@ class TownController extends Controller
             'current_user_id' => $user->id,
             'disasters' => $disasters,
             'pending_migrations' => $pendingMigrations,
+            'houses' => $houses,
         ]);
     }
 

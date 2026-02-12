@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Config\ConstructionConfig;
 use App\Models\Barony;
+use App\Models\DiseaseInfection;
 use App\Models\GardenPlot;
 use App\Models\HouseFurniture;
 use App\Models\HousePortal;
@@ -31,8 +32,44 @@ class HouseService
         protected EnergyService $energyService,
         protected CookingService $cookingService,
         protected CraftingService $craftingService,
-        protected DailyTaskService $dailyTaskService
+        protected DailyTaskService $dailyTaskService,
+        protected DiseaseService $diseaseService
     ) {}
+
+    /**
+     * Resolve a house for a visitor (or owner). Returns null if access denied.
+     */
+    public function resolveHouseForVisitor(User $visitor, int $houseId): ?PlayerHouse
+    {
+        $house = PlayerHouse::find($houseId);
+
+        if (! $house) {
+            return null;
+        }
+
+        // Owner always has access
+        if ($house->player_id === $visitor->id) {
+            return $house;
+        }
+
+        // Check cache for approved entry
+        $status = \Illuminate\Support\Facades\Cache::get("house_entry:{$house->player_id}:{$visitor->id}");
+
+        if ($status === 'approved') {
+            return $house;
+        }
+
+        // If house has no parlour, visitors can access freely
+        $hasParlour = HouseRoom::where('player_house_id', $house->id)
+            ->where('room_type', 'parlour')
+            ->exists();
+
+        if (! $hasParlour) {
+            return $house;
+        }
+
+        return null;
+    }
 
     /**
      * Check if a player can purchase a house.
@@ -586,11 +623,15 @@ class HouseService
      *
      * @return array<int, array{slot: int, furniture_key: string|null, destination: array|null}>
      */
-    public function getPortals(User $user): array
+    public function getPortals(User $user, ?PlayerHouse $house = null): array
     {
-        $house = PlayerHouse::where('player_id', $user->id)
-            ->with(['rooms.furniture', 'portals'])
-            ->first();
+        if (! $house) {
+            $house = PlayerHouse::where('player_id', $user->id)
+                ->with(['rooms.furniture', 'portals'])
+                ->first();
+        } else {
+            $house->load(['rooms.furniture', 'portals']);
+        }
 
         if (! $house) {
             return [];
@@ -683,15 +724,21 @@ class HouseService
     /**
      * Teleport via a configured portal.
      */
-    public function teleportFromPortal(User $user, int $slot): array
+    public function teleportFromPortal(User $user, int $slot, ?PlayerHouse $house = null): array
     {
         if ($slot < 1 || $slot > 3) {
             return ['success' => false, 'message' => 'Invalid portal slot.'];
         }
 
-        $houseForCheck = PlayerHouse::where('player_id', $user->id)->first();
-        if ($houseForCheck && $houseForCheck->arePortalsDisabled()) {
-            return ['success' => false, 'message' => 'Portals are disabled due to poor house condition. Repair your house first.'];
+        if (! $house) {
+            $houseForCheck = PlayerHouse::where('player_id', $user->id)->first();
+            if ($houseForCheck && $houseForCheck->arePortalsDisabled()) {
+                return ['success' => false, 'message' => 'Portals are disabled due to poor house condition. Repair your house first.'];
+            }
+        } else {
+            if ($house->arePortalsDisabled()) {
+                return ['success' => false, 'message' => 'Portals are disabled due to poor house condition.'];
+            }
         }
 
         if ($user->isTraveling()) {
@@ -702,9 +749,13 @@ class HouseService
             return ['success' => false, 'message' => 'You cannot teleport while in the infirmary.'];
         }
 
-        $house = PlayerHouse::where('player_id', $user->id)
-            ->with(['rooms.furniture', 'portals'])
-            ->first();
+        if (! $house) {
+            $house = PlayerHouse::where('player_id', $user->id)
+                ->with(['rooms.furniture', 'portals'])
+                ->first();
+        } else {
+            $house->load(['rooms.furniture', 'portals']);
+        }
 
         if (! $house) {
             return ['success' => false, 'message' => 'You do not own a house.'];
@@ -896,11 +947,15 @@ class HouseService
     /**
      * Get kitchen cooking data for a player's house.
      */
-    public function getKitchenData(User $user): ?array
+    public function getKitchenData(User $user, ?PlayerHouse $house = null): ?array
     {
-        $house = PlayerHouse::where('player_id', $user->id)
-            ->with('rooms.furniture')
-            ->first();
+        if (! $house) {
+            $house = PlayerHouse::where('player_id', $user->id)
+                ->with('rooms.furniture')
+                ->first();
+        } else {
+            $house->load('rooms.furniture');
+        }
 
         if (! $house) {
             return null;
@@ -939,14 +994,16 @@ class HouseService
     /**
      * Cook a recipe at the player's home kitchen.
      */
-    public function cookAtHome(User $user, string $recipeId): array
+    public function cookAtHome(User $user, string $recipeId, ?PlayerHouse $house = null): array
     {
-        $kitchenData = $this->getKitchenData($user);
+        $kitchenData = $this->getKitchenData($user, $house);
         if (! $kitchenData) {
             return ['success' => false, 'message' => 'You need a kitchen with a stove to cook at home.'];
         }
 
-        $house = PlayerHouse::where('player_id', $user->id)->first();
+        if (! $house) {
+            $house = PlayerHouse::where('player_id', $user->id)->first();
+        }
 
         return $this->cookingService->cook(
             $user,
@@ -960,11 +1017,15 @@ class HouseService
     /**
      * Get bedroom rest data for a player's house.
      */
-    public function getBedroomData(User $user): ?array
+    public function getBedroomData(User $user, ?PlayerHouse $house = null): ?array
     {
-        $house = PlayerHouse::where('player_id', $user->id)
-            ->with('rooms.furniture')
-            ->first();
+        if (! $house) {
+            $house = PlayerHouse::where('player_id', $user->id)
+                ->with('rooms.furniture')
+                ->first();
+        } else {
+            $house->load('rooms.furniture');
+        }
 
         if (! $house) {
             return null;
@@ -997,9 +1058,9 @@ class HouseService
     /**
      * Rest at the player's home bedroom (free, no gold cost).
      */
-    public function restAtHome(User $user): array
+    public function restAtHome(User $user, ?PlayerHouse $house = null): array
     {
-        $bedroomData = $this->getBedroomData($user);
+        $bedroomData = $this->getBedroomData($user, $house);
         if (! $bedroomData) {
             return ['success' => false, 'message' => 'You need a bedroom with a bed to rest at home.'];
         }
@@ -1013,7 +1074,7 @@ class HouseService
         }
 
         // Check for hearth room HP bonus
-        $hearthData = $this->getHearthData($user);
+        $hearthData = $this->getHearthData($user, $house);
         $canRestoreHp = $hearthData && $user->hp < $user->max_hp;
 
         if ($user->energy >= $user->max_energy && ! $canRestoreHp) {
@@ -1033,8 +1094,10 @@ class HouseService
 
         $user->save();
 
-        // Log activity
-        $house = PlayerHouse::where('player_id', $user->id)->first();
+        // Log activity - use the passed house for location context
+        if (! $house) {
+            $house = PlayerHouse::where('player_id', $user->id)->first();
+        }
         if ($house) {
             try {
                 LocationActivityLog::log(
@@ -1065,11 +1128,15 @@ class HouseService
     /**
      * Get workshop crafting data for a player's house.
      */
-    public function getWorkshopData(User $user): ?array
+    public function getWorkshopData(User $user, ?PlayerHouse $house = null): ?array
     {
-        $house = PlayerHouse::where('player_id', $user->id)
-            ->with('rooms.furniture')
-            ->first();
+        if (! $house) {
+            $house = PlayerHouse::where('player_id', $user->id)
+                ->with('rooms.furniture')
+                ->first();
+        } else {
+            $house->load('rooms.furniture');
+        }
 
         if (! $house) {
             return null;
@@ -1105,9 +1172,9 @@ class HouseService
     /**
      * Craft at the player's workshop.
      */
-    public function craftAtWorkshop(User $user, string $recipeId): array
+    public function craftAtWorkshop(User $user, string $recipeId, ?PlayerHouse $house = null): array
     {
-        $workshopData = $this->getWorkshopData($user);
+        $workshopData = $this->getWorkshopData($user, $house);
         if (! $workshopData) {
             return ['success' => false, 'message' => 'You need a workshop with a workbench to craft at home.'];
         }
@@ -1123,11 +1190,15 @@ class HouseService
     /**
      * Get forge smelting/smithing data for a player's house.
      */
-    public function getForgeData(User $user): ?array
+    public function getForgeData(User $user, ?PlayerHouse $house = null): ?array
     {
-        $house = PlayerHouse::where('player_id', $user->id)
-            ->with('rooms.furniture')
-            ->first();
+        if (! $house) {
+            $house = PlayerHouse::where('player_id', $user->id)
+                ->with('rooms.furniture')
+                ->first();
+        } else {
+            $house->load('rooms.furniture');
+        }
 
         if (! $house) {
             return null;
@@ -1163,9 +1234,9 @@ class HouseService
     /**
      * Craft at the player's forge.
      */
-    public function craftAtForge(User $user, string $recipeId): array
+    public function craftAtForge(User $user, string $recipeId, ?PlayerHouse $house = null): array
     {
-        $forgeData = $this->getForgeData($user);
+        $forgeData = $this->getForgeData($user, $house);
         if (! $forgeData) {
             return ['success' => false, 'message' => 'You need a forge with an anvil to smelt or smith at home.'];
         }
@@ -1181,11 +1252,15 @@ class HouseService
     /**
      * Get chapel prayer data for a player's house.
      */
-    public function getChapelData(User $user): ?array
+    public function getChapelData(User $user, ?PlayerHouse $house = null): ?array
     {
-        $house = PlayerHouse::where('player_id', $user->id)
-            ->with('rooms.furniture')
-            ->first();
+        if (! $house) {
+            $house = PlayerHouse::where('player_id', $user->id)
+                ->with('rooms.furniture')
+                ->first();
+        } else {
+            $house->load('rooms.furniture');
+        }
 
         if (! $house) {
             return null;
@@ -1264,7 +1339,7 @@ class HouseService
     /**
      * Pray at the player's home chapel.
      */
-    public function prayAtHome(User $user): array
+    public function prayAtHome(User $user, ?PlayerHouse $house = null): array
     {
         if ($user->isTraveling()) {
             return ['success' => false, 'message' => 'You cannot pray while traveling.'];
@@ -1274,9 +1349,13 @@ class HouseService
             return ['success' => false, 'message' => 'You cannot pray while in the infirmary.'];
         }
 
-        $house = PlayerHouse::where('player_id', $user->id)
-            ->with('rooms.furniture')
-            ->first();
+        if (! $house) {
+            $house = PlayerHouse::where('player_id', $user->id)
+                ->with('rooms.furniture')
+                ->first();
+        } else {
+            $house->load('rooms.furniture');
+        }
 
         if (! $house) {
             return ['success' => false, 'message' => 'You do not own a house.'];
@@ -1375,11 +1454,15 @@ class HouseService
     /**
      * Get hearth room data for a player's house.
      */
-    public function getHearthData(User $user): ?array
+    public function getHearthData(User $user, ?PlayerHouse $house = null): ?array
     {
-        $house = PlayerHouse::where('player_id', $user->id)
-            ->with('rooms.furniture')
-            ->first();
+        if (! $house) {
+            $house = PlayerHouse::where('player_id', $user->id)
+                ->with('rooms.furniture')
+                ->first();
+        } else {
+            $house->load('rooms.furniture');
+        }
 
         if (! $house) {
             return null;
@@ -1410,6 +1493,172 @@ class HouseService
             'hp_restore_amount' => $hpRestoreAmount,
             'max_hp_bonus' => $fireplaceConfig['effect']['max_hp_bonus'] ?? 0,
         ];
+    }
+
+    /**
+     * Get pool data for a player's superior garden.
+     */
+    public function getPoolData(User $user, ?PlayerHouse $house = null): ?array
+    {
+        if (! $house) {
+            $house = PlayerHouse::where('player_id', $user->id)
+                ->with('rooms.furniture')
+                ->first();
+        } else {
+            $house->load('rooms.furniture');
+        }
+
+        if (! $house) {
+            return null;
+        }
+
+        $gardenRoom = $house->rooms->where('room_type', 'superior_garden')->first();
+        if (! $gardenRoom) {
+            return null;
+        }
+
+        $poolFurniture = $gardenRoom->furniture->where('hotspot_slug', 'pool')->first();
+        if (! $poolFurniture) {
+            return null;
+        }
+
+        $poolConfig = ConstructionConfig::ROOMS['superior_garden']['hotspots']['pool']['options'][$poolFurniture->furniture_key] ?? null;
+        if (! $poolConfig) {
+            return null;
+        }
+
+        $effect = $poolConfig['effect'] ?? [];
+        $cooldownRemaining = 0;
+
+        if ($user->last_pool_used_at) {
+            $cooldownEnds = $user->last_pool_used_at->addSeconds(60);
+            if ($cooldownEnds->isFuture()) {
+                $cooldownRemaining = (int) now()->diffInSeconds($cooldownEnds);
+            }
+        }
+
+        return [
+            'pool_name' => $poolConfig['name'],
+            'restore_hp' => ! empty($effect['restore_hp']),
+            'restore_energy' => ! empty($effect['restore_energy']),
+            'cure_disease' => ! empty($effect['cure_disease']),
+            'restore_all' => ! empty($effect['restore_all']),
+            'cooldown_remaining' => $cooldownRemaining,
+        ];
+    }
+
+    /**
+     * Use the restoration pool in the superior garden.
+     */
+    public function usePool(User $user, ?PlayerHouse $house = null): array
+    {
+        if ($user->isTraveling()) {
+            return ['success' => false, 'message' => 'You cannot use the pool while traveling.'];
+        }
+
+        if ($user->isInInfirmary()) {
+            return ['success' => false, 'message' => 'You cannot use the pool while in the infirmary.'];
+        }
+
+        if (! $house) {
+            $house = PlayerHouse::where('player_id', $user->id)
+                ->with('rooms.furniture')
+                ->first();
+        } else {
+            $house->load('rooms.furniture');
+        }
+
+        if (! $house) {
+            return ['success' => false, 'message' => 'You do not own a house.'];
+        }
+
+        if ($house->areBuffsDisabled()) {
+            return ['success' => false, 'message' => 'House amenities are disabled due to poor condition. Repair your house first.'];
+        }
+
+        $gardenRoom = $house->rooms->where('room_type', 'superior_garden')->first();
+        if (! $gardenRoom) {
+            return ['success' => false, 'message' => 'You need a Superior Garden with a pool.'];
+        }
+
+        $poolFurniture = $gardenRoom->furniture->where('hotspot_slug', 'pool')->first();
+        if (! $poolFurniture) {
+            return ['success' => false, 'message' => 'You need to build a pool in your Superior Garden.'];
+        }
+
+        $poolConfig = ConstructionConfig::ROOMS['superior_garden']['hotspots']['pool']['options'][$poolFurniture->furniture_key] ?? null;
+        if (! $poolConfig) {
+            return ['success' => false, 'message' => 'Invalid pool configuration.'];
+        }
+
+        // Check cooldown
+        if ($user->last_pool_used_at) {
+            $cooldownEnds = $user->last_pool_used_at->addSeconds(60);
+            if ($cooldownEnds->isFuture()) {
+                $remaining = (int) now()->diffInSeconds($cooldownEnds);
+
+                return ['success' => false, 'message' => "You must wait {$remaining} seconds before using the pool again."];
+            }
+        }
+
+        $effect = $poolConfig['effect'] ?? [];
+        $restoreHp = ! empty($effect['restore_hp']);
+        $restoreEnergy = ! empty($effect['restore_energy']);
+        $cureDisease = ! empty($effect['cure_disease']);
+
+        // Check if user actually needs restoration
+        $needsHp = $restoreHp && $user->hp < $user->max_hp;
+        $needsEnergy = $restoreEnergy && $user->energy < $user->max_energy;
+        $hasActiveInfections = $cureDisease && DiseaseInfection::where('user_id', $user->id)->active()->exists();
+
+        if (! $needsHp && ! $needsEnergy && ! $hasActiveInfections) {
+            return ['success' => false, 'message' => 'You are already at full health.'];
+        }
+
+        $restoredParts = [];
+
+        if ($needsHp) {
+            $hpRestored = $user->max_hp - $user->hp;
+            $user->hp = $user->max_hp;
+            $restoredParts[] = "restored {$hpRestored} HP";
+        }
+
+        if ($needsEnergy) {
+            $energyRestored = $user->max_energy - $user->energy;
+            $user->energy = $user->max_energy;
+            $restoredParts[] = "restored {$energyRestored} energy";
+        }
+
+        if ($hasActiveInfections) {
+            DiseaseInfection::where('user_id', $user->id)
+                ->active()
+                ->update([
+                    'status' => DiseaseInfection::STATUS_RECOVERED,
+                    'recovered_at' => now(),
+                ]);
+            $restoredParts[] = 'cured all infections';
+        }
+
+        $user->last_pool_used_at = now();
+        $user->save();
+
+        // Log activity
+        try {
+            LocationActivityLog::log(
+                userId: $user->id,
+                locationType: $house->location_type,
+                locationId: $house->location_id,
+                activityType: LocationActivityLog::TYPE_REST,
+                description: "{$user->username} used the restoration pool",
+                metadata: ['pool_name' => $poolConfig['name']]
+            );
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Table may not exist
+        }
+
+        $message = "You enter the {$poolConfig['name']} and feel rejuvenated. ".ucfirst(implode(', ', $restoredParts)).'.';
+
+        return ['success' => true, 'message' => $message];
     }
 
     protected function findEmptyStorageSlot(PlayerHouse $house): int

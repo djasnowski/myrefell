@@ -83,7 +83,20 @@ class PlayerHouse extends Model
 
     public function getStorageCapacity(): int
     {
-        return ConstructionConfig::HOUSE_TIERS[$this->tier]['storage'] ?? 100;
+        $base = ConstructionConfig::HOUSE_TIERS[$this->tier]['storage'] ?? 100;
+
+        $cellarRoom = $this->rooms()->where('room_type', 'cellar')->first();
+        if ($cellarRoom) {
+            $crates = $cellarRoom->furniture()->where('hotspot_slug', 'storage_crates')->first();
+            if ($crates) {
+                $config = ConstructionConfig::ROOMS['cellar']['hotspots']['storage_crates']['options'][$crates->furniture_key] ?? null;
+                if ($config && isset($config['effect']['storage_bonus'])) {
+                    $base += $config['effect']['storage_bonus'];
+                }
+            }
+        }
+
+        return $base;
     }
 
     public function getStorageUsed(): int

@@ -1020,6 +1020,87 @@ class ConstructionConfig
                 ],
             ],
         ],
+        'cellar' => [
+            'name' => 'Cellar',
+            'description' => 'A cool underground room for storing goods and provisions.',
+            'level' => 25,
+            'cost' => 40000,
+            'hotspots' => [
+                'storage_crates' => [
+                    'name' => 'Storage Crates',
+                    'options' => [
+                        'wooden_crates' => [
+                            'name' => 'Wooden Crates',
+                            'level' => 25,
+                            'materials' => ['Plank' => 6, 'Nails' => 4],
+                            'xp' => 200,
+                            'effect' => ['storage_bonus' => 50],
+                        ],
+                        'oak_crates' => [
+                            'name' => 'Oak Crates',
+                            'level' => 35,
+                            'materials' => ['Oak Plank' => 5, 'Steel Bar' => 2],
+                            'xp' => 350,
+                            'effect' => ['storage_bonus' => 100],
+                        ],
+                        'reinforced_crates' => [
+                            'name' => 'Reinforced Crates',
+                            'level' => 50,
+                            'materials' => ['Willow Plank' => 5, 'Steel Bar' => 3],
+                            'xp' => 550,
+                            'effect' => ['storage_bonus' => 150],
+                        ],
+                        'fortified_crates' => [
+                            'name' => 'Fortified Crates',
+                            'level' => 65,
+                            'materials' => ['Yew Plank' => 5, 'Mithril Bar' => 2],
+                            'xp' => 850,
+                            'effect' => ['storage_bonus' => 200],
+                        ],
+                    ],
+                ],
+                'shelving' => [
+                    'name' => 'Shelving',
+                    'options' => [
+                        'wooden_shelving' => [
+                            'name' => 'Wooden Shelving',
+                            'level' => 25,
+                            'materials' => ['Plank' => 4, 'Nails' => 3],
+                            'xp' => 180,
+                        ],
+                        'oak_shelving' => [
+                            'name' => 'Oak Shelving',
+                            'level' => 40,
+                            'materials' => ['Oak Plank' => 4],
+                            'xp' => 400,
+                        ],
+                    ],
+                ],
+                'lighting' => [
+                    'name' => 'Lighting',
+                    'options' => [
+                        'torch_holder' => [
+                            'name' => 'Torch Holder',
+                            'level' => 25,
+                            'materials' => ['Plank' => 2, 'Steel Bar' => 1],
+                            'xp' => 150,
+                        ],
+                        'iron_lantern' => [
+                            'name' => 'Iron Lantern',
+                            'level' => 40,
+                            'materials' => ['Willow Plank' => 2, 'Steel Bar' => 2],
+                            'xp' => 380,
+                        ],
+                        'chandelier' => [
+                            'name' => 'Chandelier',
+                            'level' => 60,
+                            'materials' => ['Yew Plank' => 3, 'Gold Bar' => 2],
+                            'xp' => 700,
+                        ],
+                    ],
+                ],
+            ],
+        ],
         'portal_chamber' => [
             'name' => 'Portal Chamber',
             'description' => 'A mystical room housing teleportation portals to distant lands.',
@@ -1079,6 +1160,98 @@ class ConstructionConfig
                 ],
             ],
         ],
+        'superior_garden' => [
+            'name' => 'Superior Garden',
+            'description' => 'A grand garden with a magical restoration pool.',
+            'level' => 60,
+            'cost' => 300000,
+            'hotspots' => [
+                'pool' => [
+                    'name' => 'Pool',
+                    'options' => [
+                        'restoration_pool' => [
+                            'name' => 'Restoration Pool',
+                            'level' => 60,
+                            'materials' => ['Limestone Brick' => 5, 'Marble Block' => 3],
+                            'xp' => 800,
+                            'effect' => ['restore_hp' => true],
+                        ],
+                        'revitalisation_pool' => [
+                            'name' => 'Revitalisation Pool',
+                            'level' => 70,
+                            'materials' => ['Marble Block' => 5, 'Gold Leaf' => 2],
+                            'xp' => 1200,
+                            'effect' => ['restore_hp' => true, 'restore_energy' => true],
+                        ],
+                        'rejuvenation_pool' => [
+                            'name' => 'Rejuvenation Pool',
+                            'level' => 80,
+                            'materials' => ['Marble Block' => 8, 'Gold Leaf' => 3],
+                            'xp' => 1800,
+                            'effect' => ['restore_hp' => true, 'restore_energy' => true, 'cure_disease' => true],
+                        ],
+                        'ornate_rejuvenation_pool' => [
+                            'name' => 'Ornate Rejuvenation Pool',
+                            'level' => 90,
+                            'materials' => ['Marble Block' => 10, 'Gold Leaf' => 5, 'Magic Stone' => 2],
+                            'xp' => 3000,
+                            'effect' => ['restore_hp' => true, 'restore_energy' => true, 'cure_disease' => true, 'restore_all' => true],
+                        ],
+                    ],
+                ],
+                'fence' => [
+                    'name' => 'Fence',
+                    'options' => [
+                        'wooden_fence' => [
+                            'name' => 'Wooden Fence',
+                            'level' => 60,
+                            'materials' => ['Yew Plank' => 4],
+                            'xp' => 600,
+                        ],
+                        'iron_fence' => [
+                            'name' => 'Iron Fence',
+                            'level' => 75,
+                            'materials' => ['Mithril Bar' => 3, 'Yew Plank' => 2],
+                            'xp' => 1000,
+                        ],
+                    ],
+                ],
+                'tree' => [
+                    'name' => 'Tree',
+                    'options' => [
+                        'oak_tree' => [
+                            'name' => 'Oak Tree',
+                            'level' => 60,
+                            'materials' => ['Oak Plank' => 3, 'Marble Block' => 1],
+                            'xp' => 650,
+                        ],
+                        'spirit_tree' => [
+                            'name' => 'Spirit Tree',
+                            'level' => 75,
+                            'materials' => ['Yew Plank' => 4, 'Marble Block' => 2],
+                            'xp' => 1100,
+                        ],
+                    ],
+                ],
+                'fountain' => [
+                    'name' => 'Fountain',
+                    'options' => [
+                        'stone_fountain' => [
+                            'name' => 'Stone Fountain',
+                            'level' => 62,
+                            'materials' => ['Limestone Brick' => 4, 'Marble Block' => 2],
+                            'xp' => 700,
+                        ],
+                        'marble_fountain' => [
+                            'name' => 'Marble Fountain',
+                            'level' => 78,
+                            'materials' => ['Marble Block' => 5, 'Gold Leaf' => 1],
+                            'xp' => 1200,
+                        ],
+                    ],
+                ],
+            ],
+        ],
     ];
 
     /**
@@ -1093,6 +1266,7 @@ class ConstructionConfig
         ['chapel', 'study', 'prayer_xp_bonus', 3, 'Chapel + Study: +3% Prayer XP'],
         ['bedroom', 'hearth_room', 'energy_regen_bonus', 5, 'Bedroom + Hearth Room: +5% Energy Regen'],
         ['garden', 'kitchen', 'herblore_xp_bonus', 3, 'Garden + Kitchen: +3% Herblore XP'],
+        ['cellar', 'kitchen', 'food_preservation_bonus', 3, 'Cellar + Kitchen: +3% Food Preservation'],
     ];
 
     /**

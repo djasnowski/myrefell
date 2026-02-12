@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Config\ConstructionConfig;
 use App\Config\LocationServices;
 use App\Models\Barony;
 use App\Models\MigrationRequest;
+use App\Models\PlayerHouse;
 use App\Models\PlayerRole;
 use App\Models\Role;
 use App\Models\TradeRoute;
@@ -91,6 +93,17 @@ class BaronyController extends Controller
         // Calculate aggregated stats
         $totalPopulation = $barony->villages->sum('population') + $barony->towns->sum('population');
         $totalWealth = $barony->villages->sum('wealth') + $barony->towns->sum('wealth');
+
+        // Get houses at this location
+        $houses = PlayerHouse::where('location_type', 'barony')
+            ->where('location_id', $barony->id)
+            ->with('player:id,username')
+            ->get()
+            ->map(fn ($house) => [
+                'name' => $house->name,
+                'tier_name' => ConstructionConfig::HOUSE_TIERS[$house->tier]['name'] ?? ucfirst($house->tier),
+                'owner_username' => $house->player->username,
+            ]);
 
         // Get services available at barony level
         $services = LocationServices::getServicesForLocation('barony');
@@ -183,6 +196,7 @@ class BaronyController extends Controller
             'is_resident' => $isResident,
             ...$migrationService->getMigrationCooldownInfo($user),
             'has_pending_request' => $hasPendingRequest,
+            'houses' => $houses,
         ]);
     }
 

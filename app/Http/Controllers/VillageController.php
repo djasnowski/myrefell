@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Config\ConstructionConfig;
 use App\Config\LocationServices;
 use App\Models\Disaster;
 use App\Models\LocationActivityLog;
 use App\Models\MigrationRequest;
+use App\Models\PlayerHouse;
 use App\Models\PlayerRole;
 use App\Models\Role;
 use App\Models\Village;
@@ -75,6 +77,17 @@ class VillageController extends Controller
             }
         }
 
+        // Get houses at this location
+        $houses = PlayerHouse::where('location_type', 'village')
+            ->where('location_id', $village->id)
+            ->with('player:id,username')
+            ->get()
+            ->map(fn ($house) => [
+                'name' => $house->name,
+                'tier_name' => ConstructionConfig::HOUSE_TIERS[$house->tier]['name'] ?? ucfirst($house->tier),
+                'owner_username' => $house->player->username,
+            ]);
+
         // Get available services for this village
         $services = LocationServices::getServicesForLocation('village', $village->is_port ?? false);
 
@@ -129,6 +142,7 @@ class VillageController extends Controller
             'current_user_id' => $user->id,
             'disasters' => $this->getActiveDisasters($village),
             'pending_migration_requests' => $pendingMigrationRequests,
+            'houses' => $houses,
         ]);
     }
 

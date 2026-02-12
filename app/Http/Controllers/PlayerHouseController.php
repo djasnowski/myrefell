@@ -108,6 +108,7 @@ class PlayerHouseController extends Controller
             'forge' => $house ? $this->houseService->getForgeData($user) : null,
             'chapel' => $house ? $this->houseService->getChapelData($user) : null,
             'hearth' => $house ? $this->houseService->getHearthData($user) : null,
+            'pool' => $house ? $this->houseService->getPoolData($user) : null,
             'upkeepDueAt' => $house?->upkeep_due_at?->toISOString(),
             'upkeepCost' => $house?->getUpkeepCost(),
             'repairCost' => $house && $house->condition < 100 ? $house->getRepairCost() : null,
@@ -151,6 +152,7 @@ class PlayerHouseController extends Controller
             'forge' => null,
             'chapel' => null,
             'hearth' => null,
+            'pool' => null,
             'upkeepDueAt' => null,
             'upkeepCost' => null,
             'repairCost' => null,
@@ -172,7 +174,7 @@ class PlayerHouseController extends Controller
         $hasParlour = $house->rooms->where('room_type', 'parlour')->isNotEmpty();
 
         // Parlour entry gate: require approval before viewing
-        if ($hasParlour && $visitor && $visitor->id !== $player->id) {
+        if ($hasParlour && $visitor->id !== $player->id) {
             $entryCacheKey = "house_entry:{$player->id}:{$visitor->id}";
             $entryStatus = Cache::get($entryCacheKey);
 
@@ -205,7 +207,7 @@ class PlayerHouseController extends Controller
         }
 
         // Record visitor if owner has a parlour
-        if ($visitor && $visitor->id !== $player->id && $hasParlour) {
+        if ($visitor->id !== $player->id && $hasParlour) {
             $cacheKey = "house_visitors:{$player->id}";
             $visitors = Cache::get($cacheKey, []);
             $visitors[$visitor->id] = [
@@ -232,7 +234,21 @@ class PlayerHouseController extends Controller
             $gardenData['available_seeds'] = [];
         }
 
-        return Inertia::render('House/Index', array_merge($emptyVisitorProps, [
+        // Approved visitors get amenity data (using owner's house but visitor's user for recipes/cooldowns)
+        $visitorAmenityProps = [
+            'kitchen' => $this->houseService->getKitchenData($visitor, $house),
+            'bedroom' => $this->houseService->getBedroomData($visitor, $house),
+            'workshop' => $this->houseService->getWorkshopData($visitor, $house),
+            'forge' => $this->houseService->getForgeData($visitor, $house),
+            'chapel' => $this->houseService->getChapelData($visitor, $house),
+            'hearth' => $this->houseService->getHearthData($visitor, $house),
+            'pool' => $this->houseService->getPoolData($visitor, $house),
+            'portals' => $this->houseService->getPortals($player, $house),
+            'availableDestinations' => [],
+            'visitingHouseId' => $house->id,
+        ];
+
+        return Inertia::render('House/Index', array_merge($emptyVisitorProps, $visitorAmenityProps, [
             'house' => $this->formatHouseForVisitor($house),
             'isVisiting' => true,
             'visitingPlayer' => $player->username,
@@ -323,6 +339,36 @@ class PlayerHouseController extends Controller
         }
 
         return back()->with('success', "Denied entry to {$name}.");
+    }
+
+    /**
+     * Kick all visitors from the owner's house.
+     */
+    public function kickAllVisitors(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        // Kick approved visitors
+        $visitorsKey = "house_visitors:{$user->id}";
+        $visitors = Cache::get($visitorsKey, []);
+        foreach ($visitors as $visitorId => $info) {
+            Cache::put("house_entry:{$user->id}:{$visitorId}", 'kicked', 30);
+        }
+
+        // Kick pending requests
+        $requestsKey = "house_entry_requests:{$user->id}";
+        $requests = Cache::get($requestsKey, []);
+        foreach ($requests as $visitorId => $req) {
+            Cache::put("house_entry:{$user->id}:{$visitorId}", 'kicked', 30);
+        }
+
+        // Clear visitor and request lists
+        Cache::forget($visitorsKey);
+        Cache::forget($requestsKey);
+
+        $count = count($visitors) + count($requests);
+
+        return back()->with('success', $count > 0 ? "Kicked {$count} visitor(s) from your house." : 'No visitors to kick.');
     }
 
     /**
@@ -581,11 +627,21 @@ class PlayerHouseController extends Controller
     {
         $request->validate([
             'slot' => 'required|integer|min:1|max:3',
+            'house_id' => 'nullable|integer',
         ]);
+
+        $house = null;
+        if ($request->filled('house_id')) {
+            $house = $this->houseService->resolveHouseForVisitor($request->user(), $request->input('house_id'));
+            if (! $house) {
+                return back()->with('error', 'You do not have access to this house.');
+            }
+        }
 
         $result = $this->houseService->teleportFromPortal(
             $request->user(),
             $request->input('slot'),
+            $house,
         );
 
         if ($result['success']) {
@@ -859,11 +915,21 @@ class PlayerHouseController extends Controller
     {
         $request->validate([
             'recipe' => 'required|string',
+            'house_id' => 'nullable|integer',
         ]);
+
+        $house = null;
+        if ($request->filled('house_id')) {
+            $house = $this->houseService->resolveHouseForVisitor($request->user(), $request->input('house_id'));
+            if (! $house) {
+                return response()->json(['success' => false, 'message' => 'You do not have access to this house.'], 403);
+            }
+        }
 
         $result = $this->houseService->cookAtHome(
             $request->user(),
             $request->input('recipe'),
+            $house,
         );
 
         return response()->json($result, $result['success'] ? 200 : 422);
@@ -874,7 +940,19 @@ class PlayerHouseController extends Controller
      */
     public function restAtHome(Request $request): RedirectResponse
     {
-        $result = $this->houseService->restAtHome($request->user());
+        $request->validate([
+            'house_id' => 'nullable|integer',
+        ]);
+
+        $house = null;
+        if ($request->filled('house_id')) {
+            $house = $this->houseService->resolveHouseForVisitor($request->user(), $request->input('house_id'));
+            if (! $house) {
+                return back()->with('error', 'You do not have access to this house.');
+            }
+        }
+
+        $result = $this->houseService->restAtHome($request->user(), $house);
 
         return back()->with($result['success'] ? 'success' : 'error', $result['message']);
     }
@@ -886,11 +964,21 @@ class PlayerHouseController extends Controller
     {
         $request->validate([
             'recipe' => 'required|string',
+            'house_id' => 'nullable|integer',
         ]);
+
+        $house = null;
+        if ($request->filled('house_id')) {
+            $house = $this->houseService->resolveHouseForVisitor($request->user(), $request->input('house_id'));
+            if (! $house) {
+                return response()->json(['success' => false, 'message' => 'You do not have access to this house.'], 403);
+            }
+        }
 
         $result = $this->houseService->craftAtWorkshop(
             $request->user(),
             $request->input('recipe'),
+            $house,
         );
 
         return response()->json($result, $result['success'] ? 200 : 422);
@@ -903,11 +991,21 @@ class PlayerHouseController extends Controller
     {
         $request->validate([
             'recipe' => 'required|string',
+            'house_id' => 'nullable|integer',
         ]);
+
+        $house = null;
+        if ($request->filled('house_id')) {
+            $house = $this->houseService->resolveHouseForVisitor($request->user(), $request->input('house_id'));
+            if (! $house) {
+                return response()->json(['success' => false, 'message' => 'You do not have access to this house.'], 403);
+            }
+        }
 
         $result = $this->houseService->craftAtForge(
             $request->user(),
             $request->input('recipe'),
+            $house,
         );
 
         return response()->json($result, $result['success'] ? 200 : 422);
@@ -918,9 +1016,43 @@ class PlayerHouseController extends Controller
      */
     public function prayAtHome(Request $request): JsonResponse
     {
-        $result = $this->houseService->prayAtHome($request->user());
+        $request->validate([
+            'house_id' => 'nullable|integer',
+        ]);
+
+        $house = null;
+        if ($request->filled('house_id')) {
+            $house = $this->houseService->resolveHouseForVisitor($request->user(), $request->input('house_id'));
+            if (! $house) {
+                return response()->json(['success' => false, 'message' => 'You do not have access to this house.'], 403);
+            }
+        }
+
+        $result = $this->houseService->prayAtHome($request->user(), $house);
 
         return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Use the restoration pool.
+     */
+    public function usePool(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'house_id' => 'nullable|integer',
+        ]);
+
+        $house = null;
+        if ($request->filled('house_id')) {
+            $house = $this->houseService->resolveHouseForVisitor($request->user(), $request->input('house_id'));
+            if (! $house) {
+                return back()->with('error', 'You do not have access to this house.');
+            }
+        }
+
+        $result = $this->houseService->usePool($request->user(), $house);
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
     }
 
     /**

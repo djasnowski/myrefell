@@ -145,7 +145,6 @@ Route::post('forgot-username', [ForgotUsernameController::class, 'store'])
 
 // Public player profiles
 Route::get('players/{username}', [PlayerProfileController::class, 'show'])->name('players.show');
-Route::get('players/{username}/house', [PlayerHouseController::class, 'visitHouse'])->name('players.house');
 
 // Public leaderboard
 Route::get('leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
@@ -159,6 +158,9 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::class])->group(function () {
     // Impersonation routes
     Route::impersonate();
+
+    // Visit another player's house (requires auth)
+    Route::get('players/{username}/house', [PlayerHouseController::class, 'visitHouse'])->name('players.house');
 
     Route::get('dashboard', fn () => Inertia::render('dashboard', [
         'showTutorial' => auth()->user()->show_tutorial ?? false,
@@ -965,8 +967,10 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('/workshop/craft', [PlayerHouseController::class, 'craftAtWorkshop'])->name('workshop.craft');
         Route::post('/forge/craft', [PlayerHouseController::class, 'craftAtForge'])->name('forge.craft');
         Route::post('/pray', [PlayerHouseController::class, 'prayAtHome'])->name('pray');
+        Route::post('/pool', [PlayerHouseController::class, 'usePool'])->name('pool');
         Route::get('/visitors', [PlayerHouseController::class, 'getVisitors'])->name('visitors');
         Route::post('/respond-entry', [PlayerHouseController::class, 'respondToEntry'])->name('respond-entry');
+        Route::post('/kick-all', [PlayerHouseController::class, 'kickAllVisitors'])->name('kick-all');
         Route::get('/entry-status/{username}', [PlayerHouseController::class, 'getEntryStatus'])->name('entry-status');
     });
 
