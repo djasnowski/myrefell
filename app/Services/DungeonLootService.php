@@ -54,22 +54,38 @@ class DungeonLootService
             return ['success' => false, 'message' => 'Invalid quantity.'];
         }
 
-        // Check if inventory has space
-        if (! $this->inventoryService->hasEmptySlot($player)) {
-            // Check if item can stack with existing
-            $existingSlot = $player->inventory()
-                ->where('item_id', $storage->item_id)
-                ->where('quantity', '<', $storage->item->max_stack ?? 1)
-                ->first();
+        // Calculate how many items can actually fit in inventory
+        $item = $storage->item;
+        $freeSlots = $this->inventoryService->freeSlots($player);
+        $canFit = 0;
 
-            if (! $existingSlot) {
-                return ['success' => false, 'message' => 'Your inventory is full. Free up some space first.'];
+        if ($item->stackable) {
+            // Space in existing partial stacks
+            $existingSlots = $player->inventory()
+                ->where('item_id', $item->id)
+                ->where('quantity', '<', $item->max_stack)
+                ->get();
+
+            foreach ($existingSlots as $slot) {
+                $canFit += $item->max_stack - $slot->quantity;
             }
+
+            // Space in new slots
+            $canFit += $freeSlots * $item->max_stack;
+        } else {
+            $canFit = $freeSlots;
         }
 
-        return DB::transaction(function () use ($player, $storage, $claimQuantity) {
+        if ($canFit <= 0) {
+            return ['success' => false, 'message' => 'Your inventory is full. Free up some space first.'];
+        }
+
+        // Cap to what actually fits
+        $claimQuantity = min($claimQuantity, $canFit);
+
+        return DB::transaction(function () use ($player, $storage, $claimQuantity, $item) {
             // Add to inventory
-            $added = $this->inventoryService->addItem($player, $storage->item, $claimQuantity);
+            $added = $this->inventoryService->addItem($player, $item, $claimQuantity);
 
             if (! $added) {
                 return ['success' => false, 'message' => 'Could not add items to inventory. It may be full.'];
@@ -82,9 +98,15 @@ class DungeonLootService
                 $storage->decrement('quantity', $claimQuantity);
             }
 
+            $message = "Claimed {$claimQuantity}x {$item->name}.";
+            if ($claimQuantity < $storage->quantity) {
+                $remaining = $storage->quantity - $claimQuantity;
+                $message .= " {$remaining}x left in storage (inventory full).";
+            }
+
             return [
                 'success' => true,
-                'message' => "Claimed {$claimQuantity}x {$storage->item->name}.",
+                'message' => $message,
                 'quantity' => $claimQuantity,
             ];
         });
@@ -119,13 +141,47 @@ class DungeonLootService
             $failed = [];
 
             foreach ($lootEntries as $storage) {
-                $added = $this->inventoryService->addItem($player, $storage->item, $storage->quantity);
+                $item = $storage->item;
+
+                // Calculate how many can fit
+                $freeSlots = $this->inventoryService->freeSlots($player);
+                $canFit = 0;
+
+                if ($item->stackable) {
+                    $existingSlots = $player->inventory()
+                        ->where('item_id', $item->id)
+                        ->where('quantity', '<', $item->max_stack)
+                        ->get();
+
+                    foreach ($existingSlots as $slot) {
+                        $canFit += $item->max_stack - $slot->quantity;
+                    }
+
+                    $canFit += $freeSlots * $item->max_stack;
+                } else {
+                    $canFit = $freeSlots;
+                }
+
+                if ($canFit <= 0) {
+                    $failed[$item->name] = $storage->quantity;
+
+                    continue;
+                }
+
+                $claimQty = min($storage->quantity, $canFit);
+                $added = $this->inventoryService->addItem($player, $item, $claimQty);
 
                 if ($added) {
-                    $claimed[$storage->item->name] = $storage->quantity;
-                    $storage->delete();
+                    $claimed[$item->name] = ($claimed[$item->name] ?? 0) + $claimQty;
+
+                    if ($claimQty >= $storage->quantity) {
+                        $storage->delete();
+                    } else {
+                        $storage->decrement('quantity', $claimQty);
+                        $failed[$item->name] = ($failed[$item->name] ?? 0) + ($storage->quantity - $claimQty);
+                    }
                 } else {
-                    $failed[$storage->item->name] = $storage->quantity;
+                    $failed[$item->name] = ($failed[$item->name] ?? 0) + $storage->quantity;
                 }
             }
 

@@ -3,6 +3,7 @@
 use App\Models\DungeonLootStorage;
 use App\Models\Item;
 use App\Models\Kingdom;
+use App\Models\PlayerInventory;
 use App\Models\User;
 use App\Services\DungeonLootService;
 
@@ -271,6 +272,65 @@ test('cleanup removes expired loot', function () {
 
     expect($deleted)->toBe(1);
     expect(DungeonLootStorage::count())->toBe(1);
+});
+
+test('partial claim of non-stackable items decrements storage correctly', function () {
+    $kingdom = Kingdom::create([
+        'name' => 'Test Kingdom',
+        'description' => 'A test kingdom',
+        'biome' => 'plains',
+        'tax_rate' => 10.00,
+        'coordinates_x' => 100,
+        'coordinates_y' => 100,
+    ]);
+
+    $user = User::factory()->create();
+
+    $item = Item::create([
+        'name' => 'Leather Vest',
+        'description' => 'A leather vest',
+        'type' => 'armor',
+        'stackable' => false,
+        'max_stack' => 1,
+        'base_value' => 50,
+    ]);
+
+    // Fill inventory to leave only 3 free slots
+    $filler = Item::create([
+        'name' => 'Filler',
+        'description' => 'Filler item',
+        'type' => 'armor',
+        'stackable' => false,
+        'max_stack' => 1,
+        'base_value' => 1,
+    ]);
+
+    for ($i = 0; $i < PlayerInventory::MAX_SLOTS - 3; $i++) {
+        PlayerInventory::create([
+            'player_id' => $user->id,
+            'item_id' => $filler->id,
+            'slot_number' => $i,
+            'quantity' => 1,
+            'is_equipped' => false,
+        ]);
+    }
+
+    // Store 41 leather vests in loot storage
+    $storage = DungeonLootStorage::addLoot($user->id, $kingdom->id, $item->id, 41);
+
+    $service = app(DungeonLootService::class);
+    $result = $service->claimLoot($user, $storage->id);
+
+    // Should claim only 3 (the free slots), not fail entirely
+    expect($result['success'])->toBeTrue();
+    expect($result['quantity'])->toBe(3);
+
+    // Storage should be decremented to 38
+    $storage->refresh();
+    expect($storage->quantity)->toBe(38);
+
+    // Inventory should now be full
+    expect($user->inventory()->count())->toBe(PlayerInventory::MAX_SLOTS);
 });
 
 test('days until expiry is calculated correctly', function () {
