@@ -84,6 +84,8 @@ class DungeonLootService
         $claimQuantity = min($claimQuantity, $canFit);
 
         return DB::transaction(function () use ($player, $storage, $claimQuantity, $item) {
+            $originalQuantity = $storage->quantity;
+
             // Add to inventory
             $added = $this->inventoryService->addItem($player, $item, $claimQuantity);
 
@@ -92,15 +94,15 @@ class DungeonLootService
             }
 
             // Update or remove storage record
-            if ($claimQuantity >= $storage->quantity) {
+            if ($claimQuantity >= $originalQuantity) {
                 $storage->delete();
             } else {
                 $storage->decrement('quantity', $claimQuantity);
             }
 
             $message = "Claimed {$claimQuantity}x {$item->name}.";
-            if ($claimQuantity < $storage->quantity) {
-                $remaining = $storage->quantity - $claimQuantity;
+            if ($claimQuantity < $originalQuantity) {
+                $remaining = $originalQuantity - $claimQuantity;
                 $message .= " {$remaining}x left in storage (inventory full).";
             }
 
