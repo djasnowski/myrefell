@@ -394,6 +394,35 @@ class PlayerHouseController extends Controller
     }
 
     /**
+     * Cancel a pending entry request (visitor side).
+     */
+    public function cancelEntry(Request $request): RedirectResponse
+    {
+        $visitor = $request->user();
+        $username = $request->input('username');
+
+        $owner = User::whereRaw('LOWER(username) = ?', [strtolower($username)])->first();
+
+        if (! $owner) {
+            return back();
+        }
+
+        Cache::forget("house_entry:{$owner->id}:{$visitor->id}");
+
+        $requestsKey = "house_entry_requests:{$owner->id}";
+        $requests = Cache::get($requestsKey, []);
+        unset($requests[$visitor->id]);
+
+        if (empty($requests)) {
+            Cache::forget($requestsKey);
+        } else {
+            Cache::put($requestsKey, $requests, 120);
+        }
+
+        return back();
+    }
+
+    /**
      * Pay house upkeep.
      */
     public function payUpkeep(Request $request): RedirectResponse

@@ -482,6 +482,8 @@ export default function HouseIndex() {
     const [entryStatus, setEntryStatus] = useState<
         "pending" | "approved" | "denied" | "expired" | "kicked"
     >(awaitingEntry ? "pending" : "approved");
+    const [entrySecondsLeft, setEntrySecondsLeft] = useState(120);
+    const entryStartRef = useRef(Date.now());
 
     useEffect(() => {
         if (!awaitingEntry || !visitingPlayer) return;
@@ -502,7 +504,7 @@ export default function HouseIndex() {
                     router.visit(`/players/${visitingPlayer}/house`);
                 } else if (status === "kicked") {
                     gameToast.error("You have been removed from this house.");
-                    setTimeout(() => router.visit(`/players/${visitingPlayer}`), 2000);
+                    setTimeout(() => router.visit("/dashboard"), 2000);
                 }
             } catch {
                 // Silently ignore polling errors
@@ -511,14 +513,19 @@ export default function HouseIndex() {
 
         const interval = setInterval(poll, 3000);
 
-        // Client-side 2 minute timeout fallback
-        const timeout = setTimeout(() => {
-            setEntryStatus("expired");
-        }, 120000);
+        // Countdown timer - update every second
+        const countdown = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - entryStartRef.current) / 1000);
+            const remaining = Math.max(0, 120 - elapsed);
+            setEntrySecondsLeft(remaining);
+            if (remaining <= 0) {
+                setEntryStatus("expired");
+            }
+        }, 1000);
 
         return () => {
             clearInterval(interval);
-            clearTimeout(timeout);
+            clearInterval(countdown);
         };
     }, [awaitingEntry, visitingPlayer]);
 
@@ -534,7 +541,7 @@ export default function HouseIndex() {
 
                 if (status === "kicked" || status === "expired" || status === "denied") {
                     gameToast.error("You have been removed from this house.");
-                    setTimeout(() => router.visit(`/players/${visitingPlayer}`), 2000);
+                    setTimeout(() => router.visit("/dashboard"), 2000);
                 }
             } catch {
                 // Silently ignore
@@ -816,9 +823,33 @@ export default function HouseIndex() {
                                 <p className="mt-2 font-pixel text-xs text-stone-400">
                                     Waiting for {visitingPlayer} to grant you entry.
                                 </p>
-                                <p className="mt-1 font-pixel text-xs text-stone-600">
-                                    Request expires in 2 minutes.
+
+                                {/* Countdown timer */}
+                                <p className="mt-3 font-pixel text-sm text-amber-300">
+                                    {Math.floor(entrySecondsLeft / 60)}:
+                                    {String(entrySecondsLeft % 60).padStart(2, "0")}
                                 </p>
+
+                                {/* Progress bar */}
+                                <div className="mx-auto mt-3 h-2 w-64 max-w-full overflow-hidden rounded-full bg-stone-700">
+                                    <div
+                                        className="h-full rounded-full bg-amber-500 transition-all duration-1000 ease-linear"
+                                        style={{ width: `${(entrySecondsLeft / 120) * 100}%` }}
+                                    />
+                                </div>
+
+                                {/* Cancel link */}
+                                <button
+                                    type="button"
+                                    className="mt-4 font-pixel text-xs text-stone-500 underline hover:text-stone-300"
+                                    onClick={() => {
+                                        router.post("/house/cancel-entry", {
+                                            username: visitingPlayer,
+                                        });
+                                    }}
+                                >
+                                    Cancel Request
+                                </button>
                             </>
                         )}
                         {entryStatus === "denied" && (

@@ -736,10 +736,10 @@ export default function TownShow({
                                     <Home className="h-5 w-5 shrink-0 text-amber-400" />
                                     <div className="min-w-0">
                                         <div className="truncate font-pixel text-sm text-stone-200">
-                                            {house.name}
+                                            {house.tier_name}
                                         </div>
                                         <div className="text-xs text-stone-500">
-                                            {house.tier_name} · {house.owner_username}
+                                            {house.owner_username}
                                         </div>
                                     </div>
                                 </Link>

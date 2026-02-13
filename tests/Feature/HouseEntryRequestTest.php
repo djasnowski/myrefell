@@ -282,6 +282,46 @@ test('kick all with no visitors returns success message', function () {
         ->assertSessionHas('success', 'No visitors to kick.');
 });
 
+// --- Cancel Entry Request ---
+
+test('visitor can cancel their own pending entry request', function () {
+    $owner = User::factory()->create();
+    $visitor = User::factory()->create();
+
+    Cache::put("house_entry:{$owner->id}:{$visitor->id}", 'pending', 120);
+    Cache::put("house_entry_requests:{$owner->id}", [
+        $visitor->id => ['username' => $visitor->username, 'requested_at' => now()->timestamp],
+    ], 120);
+
+    $this->actingAs($visitor)
+        ->post('/house/cancel-entry', ['username' => $owner->username])
+        ->assertRedirect();
+
+    expect(Cache::get("house_entry:{$owner->id}:{$visitor->id}"))->toBeNull();
+    expect(Cache::get("house_entry_requests:{$owner->id}"))->toBeNull();
+});
+
+test('cancelling entry preserves other visitors requests', function () {
+    $owner = User::factory()->create();
+    $visitor1 = User::factory()->create();
+    $visitor2 = User::factory()->create();
+
+    Cache::put("house_entry:{$owner->id}:{$visitor1->id}", 'pending', 120);
+    Cache::put("house_entry:{$owner->id}:{$visitor2->id}", 'pending', 120);
+    Cache::put("house_entry_requests:{$owner->id}", [
+        $visitor1->id => ['username' => $visitor1->username, 'requested_at' => now()->timestamp],
+        $visitor2->id => ['username' => $visitor2->username, 'requested_at' => now()->timestamp],
+    ], 120);
+
+    $this->actingAs($visitor1)
+        ->post('/house/cancel-entry', ['username' => $owner->username])
+        ->assertRedirect();
+
+    expect(Cache::get("house_entry:{$owner->id}:{$visitor1->id}"))->toBeNull();
+    expect(Cache::get("house_entry:{$owner->id}:{$visitor2->id}"))->toBe('pending');
+    expect(Cache::get("house_entry_requests:{$owner->id}"))->toHaveKey($visitor2->id);
+});
+
 // --- Visitor Amenity Access ---
 
 test('approved visitor sees amenity data on house visit', function () {

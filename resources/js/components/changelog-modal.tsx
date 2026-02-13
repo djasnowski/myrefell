@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 // Update this when adding new changelog entries
-export const CURRENT_CHANGELOG_VERSION = "0.8.3";
+export const CURRENT_CHANGELOG_VERSION = "0.8.4";
 
 interface ChangelogEntry {
     version: string;
@@ -38,6 +38,32 @@ interface ChangelogEntry {
 }
 
 const changelog: ChangelogEntry[] = [
+    {
+        version: "0.8.4",
+        date: "February 12, 2026",
+        title: "Construction Expansion",
+        description:
+            "Your house is about to become much more than four walls. Skilled builders can now unlock powerful new rooms — some that expand what you can store, others that may restore what the world has taken from you. Construction won't come cheap, but for those willing to invest, the rewards speak for themselves.",
+        icon: <Hammer className="h-8 w-8 text-amber-500" />,
+        changes: [
+            {
+                type: "added",
+                text: "New rooms available for high-level constructors to discover and build",
+            },
+            {
+                type: "added",
+                text: "Certain rooms now offer functional benefits beyond decoration",
+            },
+            {
+                type: "added",
+                text: "Expanded home storage for those who find the right room",
+            },
+            {
+                type: "added",
+                text: "A hidden amenity for the most dedicated homeowners — worth seeking out",
+            },
+        ],
+    },
     {
         version: "0.8.3",
         date: "February 5, 2026",

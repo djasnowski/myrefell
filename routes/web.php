@@ -972,6 +972,7 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('/respond-entry', [PlayerHouseController::class, 'respondToEntry'])->name('respond-entry');
         Route::post('/kick-all', [PlayerHouseController::class, 'kickAllVisitors'])->name('kick-all');
         Route::get('/entry-status/{username}', [PlayerHouseController::class, 'getEntryStatus'])->name('entry-status');
+        Route::post('/cancel-entry', [PlayerHouseController::class, 'cancelEntry'])->name('cancel-entry');
     });
 
     // Buildings

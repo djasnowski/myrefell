@@ -91,6 +91,7 @@ interface SidebarData {
     infirmary: InfirmaryStatus | null;
     has_house?: boolean;
     house_url?: string;
+    house_entry_requests_count?: number;
 }
 
 interface NavItem {
@@ -134,6 +135,7 @@ function getPlayerActions(
     canPlayMinigame?: boolean,
     hasHouse?: boolean,
     houseUrl?: string,
+    houseEntryRequestsCount?: number,
 ): NavItem[] {
     const actions: NavItem[] = [
         {
@@ -181,6 +183,7 @@ function getPlayerActions(
             href: houseUrl,
             icon: Home,
             description: "Manage your home",
+            showDot: (houseEntryRequestsCount ?? 0) > 0,
         });
     }
 
@@ -369,8 +372,14 @@ export function NavLocation() {
         infirmary,
         has_house,
         house_url,
+        house_entry_requests_count,
     } = sidebar;
-    const playerActions = getPlayerActions(can_play_minigame, has_house, house_url);
+    const playerActions = getPlayerActions(
+        can_play_minigame,
+        has_house,
+        house_url,
+        house_entry_requests_count,
+    );
     const travelDestinations = nearby_destinations || [];
 
     const LocationIcon = location ? locationIcons[location.type] || MapPin : MapPin;

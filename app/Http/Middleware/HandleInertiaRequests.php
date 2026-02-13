@@ -188,7 +188,26 @@ class HandleInertiaRequests extends Middleware
             'skill_bonuses' => $this->skillBonusService->getSkillBonuses($player),
             'has_house' => \App\Models\PlayerHouse::where('player_id', $player->id)->exists(),
             'house_url' => \App\Models\PlayerHouse::where('player_id', $player->id)->first()?->getHouseUrl(),
+            'house_entry_requests_count' => $this->getHouseEntryRequestsCount($player),
         ];
+    }
+
+    /**
+     * Get the count of pending house entry requests for the player.
+     */
+    protected function getHouseEntryRequestsCount($player): int
+    {
+        $requests = \Illuminate\Support\Facades\Cache::get("house_entry_requests:{$player->id}", []);
+        $count = 0;
+
+        foreach ($requests as $visitorId => $req) {
+            $status = \Illuminate\Support\Facades\Cache::get("house_entry:{$player->id}:{$visitorId}");
+            if ($status === 'pending') {
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     /**
