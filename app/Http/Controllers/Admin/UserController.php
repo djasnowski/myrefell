@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\BanUserRequest;
 use App\Http\Requests\Admin\SetUserPasswordRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\LocationActivityLog;
+use App\Models\PlayerRole;
 use App\Models\PlayerSkill;
 use App\Models\ReligionMember;
 use App\Models\TabActivityLog;
@@ -381,6 +382,9 @@ class UserController extends Controller
 
         // Update user's banned_at
         $user->update(['banned_at' => now()]);
+
+        // Remove all roles from banned user
+        PlayerRole::where('user_id', $user->id)->delete();
 
         return back()->with('success', "User {$user->username} has been banned.");
     }
