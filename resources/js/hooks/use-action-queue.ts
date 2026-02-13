@@ -333,10 +333,14 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
         }
     }, [serverQueue, finishQueue]);
 
-    // On mount, check if there's already an active server queue (page reload scenario)
+    // On mount, check if there's already a server queue (page reload scenario)
     useEffect(() => {
-        if (serverQueue && serverQueue.status === "active" && !isQueueActiveRef.current) {
-            // Resume tracking this queue
+        if (!serverQueue || isQueueActiveRef.current) {
+            return;
+        }
+
+        if (serverQueue.status === "active") {
+            // Resume tracking this active queue
             globalQueueOwner = ownerRef.current;
             isServerModeRef.current = true;
             isQueueActiveRef.current = true;
@@ -361,6 +365,18 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
                 cancelled: false,
             };
             startPolling();
+        } else {
+            // Stale completed/failed/cancelled queue — auto-dismiss it
+            fetch("/action-queue/dismiss", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": getCsrfToken(),
+                },
+                body: JSON.stringify({ queue_id: serverQueue.id }),
+            }).then(() => {
+                router.reload({ only: ["sidebar"] });
+            });
         }
         // Only run on mount
         // eslint-disable-next-line react-hooks/exhaustive-deps
