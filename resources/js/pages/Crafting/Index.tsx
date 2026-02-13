@@ -211,6 +211,7 @@ export default function CraftingIndex() {
         isActionLoading,
         cooldown,
         performSingleAction,
+        isGloballyLocked,
     } = useActionQueue({
         url: craftUrl,
         buildBody,
@@ -328,7 +329,7 @@ export default function CraftingIndex() {
                             onStart={startQueue}
                             onCancel={cancelQueue}
                             onSingle={performSingleAction}
-                            disabled={!effectiveSelected.can_make}
+                            disabled={!effectiveSelected.can_make || isGloballyLocked}
                             actionLabel="Craft"
                             activeLabel="Crafting"
                             totalXp={queueXp}

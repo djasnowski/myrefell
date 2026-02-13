@@ -156,6 +156,7 @@ export default function TrainingIndex() {
         isActionLoading,
         cooldown,
         performSingleAction,
+        isGloballyLocked,
     } = useActionQueue({
         url: "/training/train",
         buildBody,
@@ -374,7 +375,7 @@ export default function TrainingIndex() {
                                                         onStart={startQueue}
                                                         onCancel={cancelQueue}
                                                         onSingle={performSingleAction}
-                                                        disabled={!canTrain}
+                                                        disabled={!canTrain || isGloballyLocked}
                                                         actionLabel="Train"
                                                         activeLabel="Training"
                                                         totalXp={queueXp}

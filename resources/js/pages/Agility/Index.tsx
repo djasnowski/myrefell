@@ -169,6 +169,7 @@ export default function AgilityIndex() {
         isActionLoading,
         cooldown,
         performSingleAction,
+        isGloballyLocked,
     } = useActionQueue({
         url: trainUrl,
         buildBody,
@@ -351,7 +352,7 @@ export default function AgilityIndex() {
                                                         onStart={startQueue}
                                                         onCancel={cancelQueue}
                                                         onSingle={performSingleAction}
-                                                        disabled={!canTrain}
+                                                        disabled={!canTrain || isGloballyLocked}
                                                         actionLabel="Attempt"
                                                         activeLabel="Attempting"
                                                         totalXp={queueXp}

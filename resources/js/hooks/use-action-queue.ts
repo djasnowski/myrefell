@@ -44,7 +44,11 @@ export interface UseActionQueueReturn {
     isActionLoading: boolean;
     cooldown: number;
     performSingleAction: () => void;
+    isGloballyLocked: boolean;
 }
+
+// Global lock — only one queue can run at a time across all pages
+let globalQueueOwner: symbol | null = null;
 
 function getCsrfToken(): string {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
@@ -72,6 +76,9 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
         shouldContinue = (data) => data.success,
         reloadProps = ["sidebar"],
     } = options;
+
+    // Unique identity for this hook instance (stable across renders)
+    const ownerRef = useRef(Symbol());
 
     const [isQueueActive, setIsQueueActive] = useState(false);
     const [queueProgress, setQueueProgress] = useState({ completed: 0, total: 0 });
@@ -134,10 +141,14 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
     }, []);
 
     useEffect(() => {
+        const owner = ownerRef.current;
         return () => {
             cleanup();
             cancelledRef.current = true;
             isQueueActiveRef.current = false;
+            if (globalQueueOwner === owner) {
+                globalQueueOwner = null;
+            }
         };
     }, [cleanup]);
 
@@ -164,6 +175,9 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
             setIsQueueActive(false);
             isQueueActiveRef.current = false;
             setIsActionLoading(false);
+            if (globalQueueOwner === ownerRef.current) {
+                globalQueueOwner = null;
+            }
             cleanup();
 
             // Send browser notification if queue had multiple actions
@@ -285,9 +299,14 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
 
     const startQueue = useCallback(
         (count: number) => {
+            // Prevent running multiple queues at the same time
+            if (globalQueueOwner && globalQueueOwner !== ownerRef.current) {
+                return;
+            }
             if (count > 1 || count === Infinity) {
                 requestNotificationPermission();
             }
+            globalQueueOwner = ownerRef.current;
             cancelledRef.current = false;
             isQueueActiveRef.current = true;
             statsRef.current = {
@@ -323,5 +342,6 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
         isActionLoading,
         cooldown,
         performSingleAction,
+        isGloballyLocked: !!globalQueueOwner && globalQueueOwner !== ownerRef.current,
     };
 }

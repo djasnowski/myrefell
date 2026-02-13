@@ -320,6 +320,7 @@ export default function ForgeIndex() {
         isActionLoading,
         cooldown,
         performSingleAction,
+        isGloballyLocked,
     } = useActionQueue({
         url: smeltUrl,
         buildBody,
@@ -647,7 +648,7 @@ export default function ForgeIndex() {
                             onStart={startQueue}
                             onCancel={cancelQueue}
                             onSingle={performSingleAction}
-                            disabled={!effectiveSelected.can_make}
+                            disabled={!effectiveSelected.can_make || isGloballyLocked}
                             actionLabel="Smelt"
                             activeLabel="Smelting"
                             totalXp={queueXp}

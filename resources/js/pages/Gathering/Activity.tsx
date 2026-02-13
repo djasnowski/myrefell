@@ -228,6 +228,7 @@ export default function GatheringActivity() {
         isActionLoading,
         cooldown,
         performSingleAction,
+        isGloballyLocked,
     } = useActionQueue({
         url: gatherUrl,
         buildBody,
@@ -514,7 +515,7 @@ export default function GatheringActivity() {
                             onStart={startQueue}
                             onCancel={cancelQueue}
                             onSingle={performSingleAction}
-                            disabled={!canGather}
+                            disabled={!canGather || isGloballyLocked}
                             actionLabel={selectedResource ? `Gather ${selectedResource}` : "Gather"}
                             activeLabel="Gathering"
                             totalXp={queueXp}
