@@ -8,6 +8,7 @@ import {
     Hammer,
     Link2,
     MessageCircle,
+    Repeat,
     Shield,
     Sparkles,
     Sprout,
@@ -22,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 // Update this when adding new changelog entries
-export const CURRENT_CHANGELOG_VERSION = "0.8.4";
+export const CURRENT_CHANGELOG_VERSION = "0.8.5";
 
 interface ChangelogEntry {
     version: string;
@@ -38,6 +39,40 @@ interface ChangelogEntry {
 }
 
 const changelog: ChangelogEntry[] = [
+    {
+        version: "0.8.5",
+        date: "February 12, 2026",
+        title: "Action Queues",
+        description:
+            "Tired of clicking one action at a time? Now you can queue up multiple actions and let them run automatically. Set a quantity or repeat until your energy or materials run out — your character handles the rest while you sit back.",
+        icon: <Repeat className="h-8 w-8 text-cyan-500" />,
+        changes: [
+            {
+                type: "added",
+                text: "Queue actions for Crafting, Smelting, Gathering, Training, and Agility",
+            },
+            {
+                type: "added",
+                text: "Choose x5, x10, x25, or repeat until resources are depleted",
+            },
+            {
+                type: "added",
+                text: "Live progress bar and XP tracker while queue is running",
+            },
+            {
+                type: "added",
+                text: "Cancel anytime — you keep everything earned so far",
+            },
+            {
+                type: "added",
+                text: "Browser notifications when your queue finishes (if tab is in background)",
+            },
+            {
+                type: "changed",
+                text: "Sidebar energy bar now updates in real-time during queued actions",
+            },
+        ],
+    },
     {
         version: "0.8.4",
         date: "February 12, 2026",
