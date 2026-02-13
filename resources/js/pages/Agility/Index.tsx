@@ -1,8 +1,10 @@
-import { Head, router, usePage } from "@inertiajs/react";
-import { Footprints, Loader2, Lock, Sparkles, Zap } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Head, usePage } from "@inertiajs/react";
+import { Footprints, Lock, Sparkles, Zap } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { ActionQueueControls } from "@/components/action-queue-controls";
 import { gameToast } from "@/components/ui/game-toast";
+import { useActionQueue, type ActionResult, type QueueStats } from "@/hooks/use-action-queue";
 import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
@@ -106,35 +108,15 @@ const getObstacleColors = (minLevel: number, isLegendary: boolean) => {
 
 export default function AgilityIndex() {
     const { agility_info, location } = usePage<PageProps>().props;
-    const [loading, setLoading] = useState<string | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(agility_info.player_energy);
     const [currentLevel, setCurrentLevel] = useState(agility_info.agility_level);
     const [currentXpProgress, setCurrentXpProgress] = useState(agility_info.agility_xp_progress);
     const [currentXpToNext, setCurrentXpToNext] = useState(agility_info.agility_xp_to_next);
-    const [cooldown, setCooldown] = useState(0);
-    const cooldownInterval = useRef<NodeJS.Timeout | null>(null);
-
-    const startCooldown = () => {
-        setCooldown(AGILITY_COOLDOWN_MS);
-        if (cooldownInterval.current) clearInterval(cooldownInterval.current);
-        const startTime = Date.now();
-        cooldownInterval.current = setInterval(() => {
-            const remaining = Math.max(0, AGILITY_COOLDOWN_MS - (Date.now() - startTime));
-            setCooldown(remaining);
-            if (remaining <= 0 && cooldownInterval.current) {
-                clearInterval(cooldownInterval.current);
-                cooldownInterval.current = null;
-            }
-        }, 50);
-    };
-
-    useEffect(() => {
-        return () => {
-            if (cooldownInterval.current) clearInterval(cooldownInterval.current);
-        };
-    }, []);
+    const [selectedObstacle, setSelectedObstacle] = useState<string | null>(null);
+    const [queueXp, setQueueXp] = useState(0);
 
     const baseLocationUrl = location ? locationPath(location.type, location.id) : null;
+    const trainUrl = baseLocationUrl ? `${baseLocationUrl}/agility/train` : "/agility/train";
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -142,65 +124,74 @@ export default function AgilityIndex() {
         { title: "Agility Course", href: "#" },
     ];
 
-    const handleTrain = async (obstacle: string) => {
-        if (loading || cooldown > 0) return;
+    const buildBody = useCallback(() => ({ obstacle: selectedObstacle }), [selectedObstacle]);
 
-        const obstacleData = agility_info.obstacles.find((o) => o.id === obstacle);
-        if (!obstacleData || !obstacleData.can_attempt) return;
+    const onActionComplete = useCallback((data: ActionResult) => {
+        if (data.energy_remaining !== undefined) {
+            setCurrentEnergy(data.energy_remaining);
+        }
+        if (data.leveled_up && data.new_level) {
+            setCurrentLevel(data.new_level);
+        }
+    }, []);
 
-        setLoading(obstacle);
+    const onQueueComplete = useCallback((stats: QueueStats) => {
+        setQueueXp(0);
+        if (stats.completed === 0) return;
 
-        // Build the URL based on location
-        const baseUrl = baseLocationUrl ? `${baseLocationUrl}/agility/train` : "/agility/train";
-
-        try {
-            const response = await fetch(baseUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN":
-                        document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute("content") || "",
-                },
-                body: JSON.stringify({ obstacle }),
-            });
-
-            const data: TrainResult = await response.json();
-
-            // Show toast notification
+        if (stats.completed === 1) {
             gameToast.training({
-                ...data,
+                success: true,
+                message: `Trained Agility!`,
+                xp_awarded: stats.totalXp,
+                leveled_up: !!stats.lastLevelUp,
+                new_level: stats.lastLevelUp?.level,
                 skill: "Agility",
             });
-
-            startCooldown();
-
-            if (data.energy_remaining !== undefined) {
-                setCurrentEnergy(data.energy_remaining);
-            }
-
-            if (data.leveled_up && data.new_level) {
-                setCurrentLevel(data.new_level);
-            }
-
-            // Reload sidebar data
-            router.reload({
-                only: ["sidebar", "agility_info"],
-                onSuccess: (page) => {
-                    const props = page.props as PageProps;
-                    if (props.agility_info) {
-                        setCurrentXpProgress(props.agility_info.agility_xp_progress);
-                        setCurrentXpToNext(props.agility_info.agility_xp_to_next);
-                    }
-                },
+        } else {
+            gameToast.success(`Completed ${stats.completed} agility attempts`, {
+                xp: stats.totalXp,
+                levelUp: stats.lastLevelUp,
             });
-        } catch {
-            gameToast.error("An error occurred");
-        } finally {
-            setLoading(null);
         }
-    };
+    }, []);
+
+    // Agility: partial fail (failed=true but still got XP) should continue queue
+    const shouldContinue = useCallback((data: ActionResult) => {
+        return data.success || data.failed === true;
+    }, []);
+
+    const {
+        startQueue,
+        cancelQueue,
+        isQueueActive,
+        queueProgress,
+        isActionLoading,
+        cooldown,
+        performSingleAction,
+    } = useActionQueue({
+        url: trainUrl,
+        buildBody,
+        cooldownMs: AGILITY_COOLDOWN_MS,
+        onActionComplete: useCallback(
+            (data: ActionResult) => {
+                onActionComplete(data);
+                setQueueXp((prev) => prev + (data.xp_awarded ?? 0));
+            },
+            [onActionComplete],
+        ),
+        onQueueComplete,
+        shouldContinue,
+        reloadProps: ["sidebar", "agility_info"],
+    });
+
+    // Sync state from props
+    useEffect(() => {
+        setCurrentEnergy(agility_info.player_energy);
+        setCurrentLevel(agility_info.agility_level);
+        setCurrentXpProgress(agility_info.agility_xp_progress);
+        setCurrentXpToNext(agility_info.agility_xp_to_next);
+    }, [agility_info]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -283,12 +274,22 @@ export default function AgilityIndex() {
                             );
                             const canTrain =
                                 obstacle.is_unlocked && currentEnergy >= obstacle.energy_cost;
+                            const isSelected = selectedObstacle === obstacle.id;
 
                             return (
                                 <div
                                     key={obstacle.id}
-                                    className={`rounded-xl border-2 bg-gradient-to-br ${colors.bg} ${colors.border} px-4 py-4 ${
-                                        !obstacle.is_unlocked ? "opacity-60" : ""
+                                    onClick={() =>
+                                        obstacle.is_unlocked &&
+                                        !isQueueActive &&
+                                        setSelectedObstacle(obstacle.id)
+                                    }
+                                    className={`rounded-xl border-2 bg-gradient-to-br ${colors.bg} ${
+                                        isSelected
+                                            ? "border-amber-400 ring-1 ring-amber-400/50"
+                                            : colors.border
+                                    } px-4 py-4 ${
+                                        !obstacle.is_unlocked ? "opacity-60" : "cursor-pointer"
                                     }`}
                                 >
                                     <div className="flex items-start gap-3 sm:gap-4">
@@ -325,8 +326,8 @@ export default function AgilityIndex() {
                                                 </div>
                                             </div>
 
-                                            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                                                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                                            <div className="mt-3">
+                                                <div className="mb-2 flex flex-wrap items-center gap-2 sm:gap-3">
                                                     <span className="font-pixel text-[10px] text-stone-400">
                                                         <Zap className="mr-1 inline h-3 w-3 text-yellow-400" />
                                                         {obstacle.energy_cost}
@@ -340,48 +341,27 @@ export default function AgilityIndex() {
                                                         </span>
                                                     )}
                                                 </div>
-                                                {obstacle.is_unlocked ? (
-                                                    <button
-                                                        onClick={() => handleTrain(obstacle.id)}
-                                                        disabled={
-                                                            !canTrain ||
-                                                            loading !== null ||
-                                                            cooldown > 0
-                                                        }
-                                                        className={`relative shrink-0 overflow-hidden rounded-lg px-3 py-1.5 font-pixel text-xs transition sm:px-4 sm:py-2 ${
-                                                            canTrain &&
-                                                            loading === null &&
-                                                            cooldown <= 0
-                                                                ? `${colors.button} bg-stone-800/80 hover:bg-stone-700/80`
-                                                                : "cursor-not-allowed border-stone-700 bg-stone-800/50 text-stone-500"
-                                                        } border`}
-                                                    >
-                                                        {cooldown > 0 && (
-                                                            <div
-                                                                className="absolute inset-0 bg-stone-600/30"
-                                                                style={{
-                                                                    width: `${(cooldown / AGILITY_COOLDOWN_MS) * 100}%`,
-                                                                }}
-                                                            />
-                                                        )}
-                                                        <span className="relative">
-                                                            {loading === obstacle.id ? (
-                                                                <span className="flex items-center gap-1">
-                                                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                                                    Attempting...
-                                                                </span>
-                                                            ) : cooldown > 0 ? (
-                                                                `${(cooldown / 1000).toFixed(1)}s`
-                                                            ) : (
-                                                                "Attempt"
-                                                            )}
-                                                        </span>
-                                                    </button>
-                                                ) : (
+                                                {obstacle.is_unlocked && isSelected ? (
+                                                    <ActionQueueControls
+                                                        isQueueActive={isQueueActive}
+                                                        queueProgress={queueProgress}
+                                                        isActionLoading={isActionLoading}
+                                                        cooldown={cooldown}
+                                                        cooldownMs={AGILITY_COOLDOWN_MS}
+                                                        onStart={startQueue}
+                                                        onCancel={cancelQueue}
+                                                        onSingle={performSingleAction}
+                                                        disabled={!canTrain}
+                                                        actionLabel="Attempt"
+                                                        activeLabel="Attempting"
+                                                        totalXp={queueXp}
+                                                        buttonClassName={`${colors.button} bg-stone-800/80 hover:bg-stone-700/80`}
+                                                    />
+                                                ) : !obstacle.is_unlocked ? (
                                                     <span className="font-pixel text-[10px] text-stone-500">
                                                         Requires Level {obstacle.min_level}
                                                     </span>
-                                                )}
+                                                ) : null}
                                             </div>
                                         </div>
                                     </div>

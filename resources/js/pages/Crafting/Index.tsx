@@ -1,10 +1,12 @@
 import { Head, router, usePage } from "@inertiajs/react";
-import { ArrowRight, Backpack, Check, Loader2, Lock, Scissors, X, Zap } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Backpack, Lock, Scissors, X, Zap } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
 const CRAFT_COOLDOWN_MS = 3000;
 import AppLayout from "@/layouts/app-layout";
+import { ActionQueueControls } from "@/components/action-queue-controls";
 import { gameToast } from "@/components/ui/game-toast";
+import { useActionQueue, type ActionResult, type QueueStats } from "@/hooks/use-action-queue";
 import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
@@ -80,25 +82,24 @@ const getBreadcrumbs = (location?: Location): BreadcrumbItem[] => {
 
 function RecipeCard({
     recipe,
-    onCraft,
-    loading,
-    cooldown,
+    isSelected,
+    onSelect,
 }: {
     recipe: Recipe;
-    onCraft: (id: string) => void;
-    loading: string | null;
-    cooldown: number;
+    isSelected: boolean;
+    onSelect: (id: string) => void;
 }) {
-    const isLoading = loading === recipe.id;
-
     return (
-        <div
-            className={`rounded-lg border p-3 transition ${
+        <button
+            onClick={() => !recipe.is_locked && onSelect(recipe.id)}
+            className={`w-full rounded-lg border p-3 text-left transition ${
                 recipe.is_locked
-                    ? "border-stone-700 bg-stone-800/30 opacity-60"
-                    : recipe.can_make
-                      ? "border-amber-600/50 bg-stone-800/50"
-                      : "border-stone-700 bg-stone-800/50"
+                    ? "cursor-not-allowed border-stone-700 bg-stone-800/30 opacity-60"
+                    : isSelected
+                      ? "border-amber-400 bg-amber-900/30 ring-1 ring-amber-400/50"
+                      : recipe.can_make
+                        ? "border-amber-600/50 bg-stone-800/50 hover:border-amber-500/70"
+                        : "border-stone-700 bg-stone-800/50 hover:border-stone-600"
             }`}
         >
             <div className="mb-3 flex items-center justify-between">
@@ -132,7 +133,7 @@ function RecipeCard({
             </div>
 
             {/* Stats Row */}
-            <div className="mb-3 flex items-center justify-between text-stone-500">
+            <div className="flex items-center justify-between text-stone-500">
                 <span className="flex items-center gap-1 font-pixel text-[10px]">
                     <Zap className="h-3 w-3 text-yellow-500" />
                     {recipe.energy_cost}
@@ -142,140 +143,105 @@ function RecipeCard({
                 </span>
             </div>
 
-            {/* Craft Button */}
-            {recipe.is_locked ? (
-                <div className="rounded-md bg-stone-900/50 px-3 py-2 text-center">
+            {/* Locked message */}
+            {recipe.is_locked && (
+                <div className="mt-3 rounded-md bg-stone-900/50 px-3 py-2 text-center">
                     <span className="font-pixel text-[10px] text-stone-500">
                         Requires Level {recipe.required_level} {recipe.skill}
                     </span>
                 </div>
-            ) : (
-                <button
-                    onClick={() => onCraft(recipe.id)}
-                    disabled={!recipe.can_make || loading !== null || cooldown > 0}
-                    className={`relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-md px-3 py-2 font-pixel text-xs transition ${
-                        recipe.can_make && !loading && cooldown <= 0
-                            ? "bg-amber-600 text-stone-900 hover:bg-amber-500"
-                            : "cursor-not-allowed bg-stone-700 text-stone-500"
-                    }`}
-                >
-                    {cooldown > 0 && (
-                        <div
-                            className="absolute inset-0 bg-stone-600/30"
-                            style={{ width: `${(cooldown / CRAFT_COOLDOWN_MS) * 100}%` }}
-                        />
-                    )}
-                    <span className="relative">
-                        {isLoading ? (
-                            <span className="flex items-center gap-1">
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                                Crafting...
-                            </span>
-                        ) : cooldown > 0 ? (
-                            `${(cooldown / 1000).toFixed(1)}s`
-                        ) : recipe.can_make ? (
-                            <span className="flex items-center gap-1">
-                                <Check className="h-3 w-3" />
-                                Craft
-                            </span>
-                        ) : (
-                            <span className="flex items-center gap-1">
-                                <X className="h-3 w-3" />
-                                Missing Materials
-                            </span>
-                        )}
-                    </span>
-                </button>
             )}
-        </div>
+
+            {/* Can't make message */}
+            {!recipe.is_locked && !recipe.can_make && (
+                <div className="mt-3 flex items-center justify-center gap-1 font-pixel text-[10px] text-stone-500">
+                    <X className="h-3 w-3" />
+                    Missing Materials
+                </div>
+            )}
+        </button>
     );
 }
 
 export default function CraftingIndex() {
     const { crafting_info, location } = usePage<PageProps>().props;
-    const [loading, setLoading] = useState<string | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(crafting_info.player_energy);
-    const [cooldown, setCooldown] = useState(0);
-    const cooldownInterval = useRef<NodeJS.Timeout | null>(null);
-
-    const startCooldown = () => {
-        setCooldown(CRAFT_COOLDOWN_MS);
-        if (cooldownInterval.current) clearInterval(cooldownInterval.current);
-        const startTime = Date.now();
-        cooldownInterval.current = setInterval(() => {
-            const remaining = Math.max(0, CRAFT_COOLDOWN_MS - (Date.now() - startTime));
-            setCooldown(remaining);
-            if (remaining <= 0 && cooldownInterval.current) {
-                clearInterval(cooldownInterval.current);
-                cooldownInterval.current = null;
-            }
-        }, 50);
-    };
-
-    useEffect(() => {
-        // Reload fresh data on mount to avoid stale cache from Inertia navigation
-        router.reload({ only: ["crafting_info"] });
-
-        return () => {
-            if (cooldownInterval.current) clearInterval(cooldownInterval.current);
-        };
-    }, []);
+    const [selectedRecipe, setSelectedRecipe] = useState<string | null>(null);
+    const [queueXp, setQueueXp] = useState(0);
 
     // Build the craft URL based on location
     const craftUrl = location
         ? `${locationPath(location.type, location.id)}/crafting/craft`
         : "/crafting/craft";
 
-    const handleCraft = async (recipeId: string) => {
-        if (loading || cooldown > 0) return;
-        setLoading(recipeId);
+    const buildBody = useCallback(() => ({ recipe: selectedRecipe }), [selectedRecipe]);
 
-        try {
-            const response = await fetch(craftUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN":
-                        document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute("content") || "",
-                },
-                body: JSON.stringify({ recipe: recipeId }),
-            });
-
-            const data: CraftResult = await response.json();
-
-            if (data.success && data.item) {
-                gameToast.success(`Crafted ${data.item.quantity}x ${data.item.name}`, {
-                    xp: data.xp_awarded,
-                    levelUp:
-                        data.leveled_up && data.new_level
-                            ? {
-                                  skill: data.skill || "Crafting",
-                                  level: data.new_level,
-                              }
-                            : undefined,
-                });
-                startCooldown();
-            } else if (!data.success) {
-                gameToast.error(data.message);
-            }
-
-            if (data.success && data.energy_remaining !== undefined) {
-                setCurrentEnergy(data.energy_remaining);
-            }
-
-            // Reload to update materials
-            router.reload({ only: ["crafting_info", "sidebar"] });
-        } catch {
-            gameToast.error("An error occurred");
-        } finally {
-            setLoading(null);
+    const onActionComplete = useCallback((data: ActionResult) => {
+        if (data.success && data.energy_remaining !== undefined) {
+            setCurrentEnergy(data.energy_remaining);
         }
-    };
+    }, []);
+
+    const onQueueComplete = useCallback((stats: QueueStats) => {
+        setQueueXp(0);
+        if (stats.completed === 0) return;
+
+        if (stats.completed === 1 && stats.itemName) {
+            gameToast.success(`Crafted ${stats.totalQuantity}x ${stats.itemName}`, {
+                xp: stats.totalXp,
+                levelUp: stats.lastLevelUp,
+            });
+        } else if (stats.completed > 1) {
+            const qty = stats.totalQuantity > 0 ? `${stats.totalQuantity}x ` : "";
+            gameToast.success(
+                `Crafted ${qty}${stats.itemName ?? "items"} (${stats.completed} actions)`,
+                {
+                    xp: stats.totalXp,
+                    levelUp: stats.lastLevelUp,
+                },
+            );
+        }
+    }, []);
+
+    const {
+        startQueue,
+        cancelQueue,
+        isQueueActive,
+        queueProgress,
+        isActionLoading,
+        cooldown,
+        performSingleAction,
+    } = useActionQueue({
+        url: craftUrl,
+        buildBody,
+        cooldownMs: CRAFT_COOLDOWN_MS,
+        onActionComplete: useCallback(
+            (data: ActionResult) => {
+                onActionComplete(data);
+                if (data.success) {
+                    setQueueXp((prev) => prev + (data.xp_awarded ?? 0));
+                }
+                if (!data.success) {
+                    // Show error for single actions, queue will stop automatically
+                }
+            },
+            [onActionComplete],
+        ),
+        onQueueComplete,
+        reloadProps: ["crafting_info", "sidebar"],
+    });
+
+    useEffect(() => {
+        // Reload fresh data on mount to avoid stale cache from Inertia navigation
+        router.reload({ only: ["crafting_info"] });
+    }, []);
 
     // Combine all recipes for display
     const allRecipes = Object.entries(crafting_info.all_recipes).flatMap(([, recipes]) => recipes);
+
+    // Auto-select first craftable recipe if none selected
+    const selected = allRecipes.find((r) => r.id === selectedRecipe);
+    const effectiveSelected = selected && !selected.is_locked ? selected : null;
 
     return (
         <AppLayout breadcrumbs={getBreadcrumbs(location)}>
@@ -347,15 +313,43 @@ export default function CraftingIndex() {
                     </div>
                 </div>
 
+                {/* Queue Controls */}
+                {effectiveSelected && (
+                    <div className="mb-4 rounded-lg border border-amber-600/50 bg-stone-800/50 p-3">
+                        <div className="mb-2 font-pixel text-xs text-amber-300">
+                            {effectiveSelected.name}
+                        </div>
+                        <ActionQueueControls
+                            isQueueActive={isQueueActive}
+                            queueProgress={queueProgress}
+                            isActionLoading={isActionLoading}
+                            cooldown={cooldown}
+                            cooldownMs={CRAFT_COOLDOWN_MS}
+                            onStart={startQueue}
+                            onCancel={cancelQueue}
+                            onSingle={performSingleAction}
+                            disabled={!effectiveSelected.can_make}
+                            actionLabel="Craft"
+                            activeLabel="Crafting"
+                            totalXp={queueXp}
+                        />
+                    </div>
+                )}
+
+                {!selectedRecipe && allRecipes.length > 0 && (
+                    <div className="mb-4 rounded-lg border border-stone-600 bg-stone-800/30 p-3 text-center font-pixel text-xs text-stone-400">
+                        Select a recipe below to craft
+                    </div>
+                )}
+
                 {/* Recipe Grid */}
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {allRecipes.map((recipe) => (
                         <RecipeCard
                             key={recipe.id}
                             recipe={recipe}
-                            onCraft={handleCraft}
-                            loading={loading}
-                            cooldown={cooldown}
+                            isSelected={selectedRecipe === recipe.id}
+                            onSelect={setSelectedRecipe}
                         />
                     ))}
                 </div>

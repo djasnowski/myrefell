@@ -1,8 +1,10 @@
-import { Head, router, usePage } from "@inertiajs/react";
-import { Crosshair, Dumbbell, Heart, Loader2, Shield, Sword, Zap } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Head, usePage } from "@inertiajs/react";
+import { Crosshair, Dumbbell, Heart, Shield, Sword, Zap } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { ActionQueueControls } from "@/components/action-queue-controls";
 import { gameToast } from "@/components/ui/game-toast";
+import { useActionQueue, type ActionResult, type QueueStats } from "@/hooks/use-action-queue";
 import type { BreadcrumbItem } from "@/types";
 
 const TRAIN_COOLDOWN_MS = 3000;
@@ -100,128 +102,89 @@ const exerciseColors: Record<string, { bg: string; border: string; text: string 
 export default function TrainingIndex() {
     const { exercises, combat_stats, player_energy, max_energy, player_hp, max_hp } =
         usePage<PageProps>().props;
-    const [loading, setLoading] = useState<string | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(player_energy);
     const [currentStats, setCurrentStats] = useState(combat_stats);
     const [currentHp, setCurrentHp] = useState(player_hp);
-    const [cooldown, setCooldown] = useState(0);
-    const cooldownInterval = useRef<NodeJS.Timeout | null>(null);
-
-    const startCooldown = () => {
-        setCooldown(TRAIN_COOLDOWN_MS);
-        if (cooldownInterval.current) clearInterval(cooldownInterval.current);
-        const startTime = Date.now();
-        cooldownInterval.current = setInterval(() => {
-            const remaining = Math.max(0, TRAIN_COOLDOWN_MS - (Date.now() - startTime));
-            setCooldown(remaining);
-            if (remaining <= 0 && cooldownInterval.current) {
-                clearInterval(cooldownInterval.current);
-                cooldownInterval.current = null;
-            }
-        }, 50);
-    };
-
-    useEffect(() => {
-        return () => {
-            if (cooldownInterval.current) clearInterval(cooldownInterval.current);
-        };
-    }, []);
+    const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
+    const [queueXp, setQueueXp] = useState(0);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
         { title: "Training Grounds", href: "/training" },
     ];
 
-    const handleTrain = async (exercise: string) => {
-        if (loading || cooldown > 0) return;
+    const buildBody = useCallback(() => ({ exercise: selectedExercise }), [selectedExercise]);
 
-        const exerciseData = exercises.find((e) => e.id === exercise);
-        if (!exerciseData || currentEnergy < exerciseData.energy_cost) return;
-
-        setLoading(exercise);
-
-        try {
-            const response = await fetch("/training/train", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN":
-                        document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute("content") || "",
-                },
-                body: JSON.stringify({ exercise }),
-            });
-
-            const data: TrainResult = await response.json();
-
-            // Show toast notification
-            const skillName = data.skill
-                ? data.skill.charAt(0).toUpperCase() + data.skill.slice(1)
-                : "Combat";
-            gameToast.training({ ...data, skill: skillName });
-
-            if (data.success) {
-                startCooldown();
-                if (data.energy_remaining !== undefined) {
-                    setCurrentEnergy(data.energy_remaining);
-                }
-
-                // Update HP if training caused any HP change
-                if (player_hp > 0) {
-                    setCurrentHp(player_hp);
-                }
-
-                // Update the stat that was trained
-                if (
-                    data.skill &&
-                    data.skill_progress !== undefined &&
-                    data.xp_to_next_level !== undefined
-                ) {
-                    const skillKey = data.skill as "attack" | "strength" | "defense";
-                    setCurrentStats((prev) => {
-                        const updatedStat = {
-                            ...prev[skillKey],
-                            level: data.new_level || prev[skillKey].level,
-                            progress: data.skill_progress!,
-                            xp_to_next_level: data.xp_to_next_level!,
-                        };
-
-                        const newStats = {
-                            ...prev,
-                            [skillKey]: updatedStat,
-                        };
-
-                        newStats.combat_level = Math.floor(
-                            ((skillKey === "attack" ? updatedStat.level : prev.attack.level) +
-                                (skillKey === "strength"
-                                    ? updatedStat.level
-                                    : prev.strength.level) +
-                                (skillKey === "defense" ? updatedStat.level : prev.defense.level)) /
-                                3,
-                        );
-
-                        return newStats;
-                    });
-                }
-            }
-
-            // Reload sidebar data and sync HP
-            router.reload({
-                only: ["sidebar", "player_hp"],
-                onSuccess: (page) => {
-                    const props = page.props as PageProps;
-                    if (props.player_hp !== undefined) {
-                        setCurrentHp(props.player_hp);
-                    }
-                },
-            });
-        } catch {
-            gameToast.error("An error occurred");
-        } finally {
-            setLoading(null);
+    const onActionComplete = useCallback((data: ActionResult) => {
+        if (data.success && data.energy_remaining !== undefined) {
+            setCurrentEnergy(data.energy_remaining);
         }
-    };
+    }, []);
+
+    const onQueueComplete = useCallback(
+        (stats: QueueStats) => {
+            setQueueXp(0);
+            if (stats.completed === 0) return;
+
+            const skillName = stats.lastLevelUp?.skill ?? selectedExercise ?? "Combat";
+            const displaySkill = skillName.charAt(0).toUpperCase() + skillName.slice(1);
+
+            if (stats.completed === 1) {
+                gameToast.training({
+                    success: true,
+                    message: `Trained ${displaySkill}!`,
+                    xp_awarded: stats.totalXp,
+                    leveled_up: !!stats.lastLevelUp,
+                    new_level: stats.lastLevelUp?.level,
+                    skill: displaySkill,
+                });
+            } else {
+                gameToast.success(`Trained ${displaySkill} ${stats.completed} times`, {
+                    xp: stats.totalXp,
+                    levelUp: stats.lastLevelUp,
+                });
+            }
+        },
+        [selectedExercise],
+    );
+
+    const {
+        startQueue,
+        cancelQueue,
+        isQueueActive,
+        queueProgress,
+        isActionLoading,
+        cooldown,
+        performSingleAction,
+    } = useActionQueue({
+        url: "/training/train",
+        buildBody,
+        cooldownMs: TRAIN_COOLDOWN_MS,
+        onActionComplete: useCallback(
+            (data: ActionResult) => {
+                onActionComplete(data);
+                if (data.success) {
+                    setQueueXp((prev) => prev + (data.xp_awarded ?? 0));
+                }
+            },
+            [onActionComplete],
+        ),
+        onQueueComplete,
+        reloadProps: ["sidebar", "player_hp", "exercises", "combat_stats"],
+    });
+
+    // Sync state when props change
+    useEffect(() => {
+        setCurrentStats(combat_stats);
+    }, [combat_stats]);
+
+    useEffect(() => {
+        setCurrentHp(player_hp);
+    }, [player_hp]);
+
+    useEffect(() => {
+        setCurrentEnergy(player_energy);
+    }, [player_energy]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -330,11 +293,19 @@ export default function TrainingIndex() {
                                 xp_to_next_level: number;
                             };
                             const canTrain = currentEnergy >= exercise.energy_cost;
+                            const isSelected = selectedExercise === exercise.id;
 
                             return (
                                 <div
                                     key={exercise.id}
-                                    className={`rounded-xl border-2 bg-gradient-to-br ${colors.bg} ${colors.border} px-3 py-4 sm:px-4 sm:py-6`}
+                                    onClick={() =>
+                                        !isQueueActive && setSelectedExercise(exercise.id)
+                                    }
+                                    className={`cursor-pointer rounded-xl border-2 bg-gradient-to-br ${colors.bg} ${
+                                        isSelected
+                                            ? "border-amber-400 ring-1 ring-amber-400/50"
+                                            : colors.border
+                                    } px-3 py-4 sm:px-4 sm:py-6`}
                                 >
                                     <div className="flex items-start gap-3 sm:gap-4">
                                         <div className="hidden rounded-lg bg-stone-800/50 p-3 sm:block">
@@ -383,8 +354,8 @@ export default function TrainingIndex() {
                                                 </div>
                                             </div>
 
-                                            <div className="mt-2 flex items-center justify-between sm:mt-3">
-                                                <div className="flex items-center gap-2 sm:gap-3">
+                                            <div className="mt-2 sm:mt-3">
+                                                <div className="mb-2 flex items-center gap-2 sm:gap-3">
                                                     <span className="font-pixel text-[10px] text-stone-400">
                                                         <Zap className="mr-0.5 inline h-3 w-3 text-yellow-400 sm:mr-1" />
                                                         {exercise.energy_cost}
@@ -393,42 +364,23 @@ export default function TrainingIndex() {
                                                         +{exercise.base_xp} XP
                                                     </span>
                                                 </div>
-                                                <button
-                                                    onClick={() => handleTrain(exercise.id)}
-                                                    disabled={
-                                                        !canTrain ||
-                                                        loading !== null ||
-                                                        cooldown > 0
-                                                    }
-                                                    className={`relative overflow-hidden rounded-lg px-3 py-1.5 font-pixel text-xs transition sm:px-4 sm:py-2 ${
-                                                        canTrain &&
-                                                        loading === null &&
-                                                        cooldown <= 0
-                                                            ? `${colors.border} bg-stone-800/80 hover:bg-stone-700/80 ${colors.text}`
-                                                            : "cursor-not-allowed border-stone-700 bg-stone-800/50 text-stone-500"
-                                                    } border`}
-                                                >
-                                                    {cooldown > 0 && (
-                                                        <div
-                                                            className="absolute inset-0 bg-stone-600/30"
-                                                            style={{
-                                                                width: `${(cooldown / TRAIN_COOLDOWN_MS) * 100}%`,
-                                                            }}
-                                                        />
-                                                    )}
-                                                    <span className="relative">
-                                                        {loading === exercise.id ? (
-                                                            <span className="flex items-center gap-1">
-                                                                <Loader2 className="h-3 w-3 animate-spin" />
-                                                                Training...
-                                                            </span>
-                                                        ) : cooldown > 0 ? (
-                                                            `${(cooldown / 1000).toFixed(1)}s`
-                                                        ) : (
-                                                            "Train"
-                                                        )}
-                                                    </span>
-                                                </button>
+                                                {isSelected && (
+                                                    <ActionQueueControls
+                                                        isQueueActive={isQueueActive}
+                                                        queueProgress={queueProgress}
+                                                        isActionLoading={isActionLoading}
+                                                        cooldown={cooldown}
+                                                        cooldownMs={TRAIN_COOLDOWN_MS}
+                                                        onStart={startQueue}
+                                                        onCancel={cancelQueue}
+                                                        onSingle={performSingleAction}
+                                                        disabled={!canTrain}
+                                                        actionLabel="Train"
+                                                        activeLabel="Training"
+                                                        totalXp={queueXp}
+                                                        buttonClassName={`${colors.border} bg-stone-800/80 hover:bg-stone-700/80 ${colors.text}`}
+                                                    />
+                                                )}
                                             </div>
                                         </div>
                                     </div>

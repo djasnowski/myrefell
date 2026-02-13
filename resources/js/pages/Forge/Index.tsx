@@ -2,11 +2,8 @@ import { Head, router, usePage } from "@inertiajs/react";
 import {
     ArrowUp,
     Backpack,
-    ChevronDown,
-    ChevronRight,
     Flame,
     Info,
-    Loader2,
     Lock,
     Mountain,
     Package,
@@ -22,7 +19,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const SMELT_COOLDOWN_MS = 3000;
 
@@ -40,6 +37,9 @@ const formatTimeRemaining = (hours: number): string => {
 };
 
 import AppLayout from "@/layouts/app-layout";
+import { ActionQueueControls } from "@/components/action-queue-controls";
+import { gameToast } from "@/components/ui/game-toast";
+import { useActionQueue, type ActionResult, type QueueStats } from "@/hooks/use-action-queue";
 import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
@@ -190,52 +190,30 @@ const metalColors: Record<string, { bg: string; border: string; text: string; gl
 
 function SmeltingRecipeCard({
     recipe,
-    onSmelt,
-    loading,
+    isSelected,
+    onSelect,
     metalColor,
-    cooldown,
 }: {
     recipe: Recipe;
-    onSmelt: (id: string) => void;
-    loading: string | null;
+    isSelected: boolean;
+    onSelect: (id: string) => void;
     metalColor: { bg: string; border: string; text: string; glow: string };
-    cooldown: number;
 }) {
-    const isLoading = loading === recipe.id;
     const colors = metalColor;
-    const canSmelt = recipe.can_make && !recipe.is_locked && loading === null && cooldown <= 0;
-
-    // Check if all materials are available
-    const hasAllMaterials = recipe.materials.every((m) => m.has_enough);
 
     return (
         <button
-            onClick={() => canSmelt && onSmelt(recipe.id)}
-            disabled={!canSmelt}
+            onClick={() => !recipe.is_locked && onSelect(recipe.id)}
             className={`group relative w-full overflow-hidden rounded-xl border-2 p-4 text-left transition-all ${
                 recipe.is_locked
                     ? "cursor-not-allowed border-stone-700/50 bg-stone-900/50 opacity-60"
-                    : recipe.can_make
-                      ? `${colors.border} bg-gradient-to-br from-stone-800/80 to-stone-900/80 hover:scale-[1.02] hover:shadow-xl ${colors.glow} cursor-pointer`
-                      : "cursor-not-allowed border-stone-700 bg-stone-900/50"
+                    : isSelected
+                      ? `border-amber-400 bg-gradient-to-br from-stone-800/80 to-stone-900/80 ring-1 ring-amber-400/50 ${colors.glow}`
+                      : recipe.can_make
+                        ? `${colors.border} bg-gradient-to-br from-stone-800/80 to-stone-900/80 hover:scale-[1.02] hover:shadow-xl ${colors.glow} cursor-pointer`
+                        : "cursor-not-allowed border-stone-700 bg-stone-900/50"
             }`}
         >
-            {/* Loading overlay */}
-            {isLoading && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-stone-900/80">
-                    <Loader2 className="h-8 w-8 animate-spin text-amber-400" />
-                </div>
-            )}
-
-            {/* Cooldown overlay */}
-            {cooldown > 0 && !isLoading && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-stone-900/60">
-                    <span className="font-pixel text-lg text-stone-300">
-                        {(cooldown / 1000).toFixed(1)}s
-                    </span>
-                </div>
-            )}
-
             {/* Item name */}
             <div className="mb-3 flex items-center justify-between">
                 <h4
@@ -243,17 +221,12 @@ function SmeltingRecipeCard({
                 >
                     {recipe.name}
                 </h4>
-                {recipe.is_locked ? (
+                {recipe.is_locked && (
                     <div className="flex items-center gap-1.5 rounded-lg bg-stone-800 px-2 py-1">
                         <Lock className="h-4 w-4 text-stone-500" />
                         <span className="text-sm text-stone-500">Lvl {recipe.required_level}</span>
                     </div>
-                ) : canSmelt ? (
-                    <div className="flex items-center gap-1.5 rounded-lg bg-orange-600/20 px-3 py-1 transition-colors group-hover:bg-orange-600/40">
-                        <Flame className="h-4 w-4 text-orange-400" />
-                        <span className="text-sm font-medium text-orange-400">Smelt</span>
-                    </div>
-                ) : null}
+                )}
             </div>
 
             {/* Materials needed */}
@@ -302,65 +275,77 @@ function SmeltingRecipeCard({
 
 export default function ForgeIndex() {
     const { forge_info, location } = usePage<PageProps>().props;
-    const [loading, setLoading] = useState<string | null>(null);
-    const [result, setResult] = useState<{
-        success: boolean;
-        message: string;
-        item?: { name: string; quantity: number };
-        xp_awarded?: number;
-        leveled_up?: boolean;
-    } | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(forge_info.player_energy);
-    const [cooldown, setCooldown] = useState(0);
-    const cooldownInterval = useRef<NodeJS.Timeout | null>(null);
-
-    const startCooldown = () => {
-        setCooldown(SMELT_COOLDOWN_MS);
-        if (cooldownInterval.current) clearInterval(cooldownInterval.current);
-        const startTime = Date.now();
-        cooldownInterval.current = setInterval(() => {
-            const remaining = Math.max(0, SMELT_COOLDOWN_MS - (Date.now() - startTime));
-            setCooldown(remaining);
-            if (remaining <= 0 && cooldownInterval.current) {
-                clearInterval(cooldownInterval.current);
-                cooldownInterval.current = null;
-            }
-        }, 50);
-    };
-
-    useEffect(() => {
-        // Reload fresh data on mount to avoid stale cache from Inertia navigation
-        router.reload({ only: ["forge_info"] });
-
-        return () => {
-            if (cooldownInterval.current) clearInterval(cooldownInterval.current);
-        };
-    }, []);
+    const [selectedRecipe, setSelectedRecipe] = useState<string | null>(null);
+    const [queueXp, setQueueXp] = useState(0);
 
     const smeltUrl = location
         ? `${locationPath(location.type, location.id)}/forge/smelt`
         : "/forge/smelt";
 
-    const handleSmelt = (recipeId: string) => {
-        if (loading || cooldown > 0) return;
-        setLoading(recipeId);
-        setResult(null);
+    const buildBody = useCallback(() => ({ recipe: selectedRecipe }), [selectedRecipe]);
 
-        router.post(
-            smeltUrl,
-            { recipe: recipeId },
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    startCooldown();
-                    router.reload({ only: ["forge_info", "sidebar"] });
+    const onActionComplete = useCallback((data: ActionResult) => {
+        if (data.success && data.energy_remaining !== undefined) {
+            setCurrentEnergy(data.energy_remaining);
+        }
+    }, []);
+
+    const onQueueComplete = useCallback((stats: QueueStats) => {
+        setQueueXp(0);
+        if (stats.completed === 0) return;
+
+        if (stats.completed === 1 && stats.itemName) {
+            gameToast.success(`Smelted ${stats.totalQuantity}x ${stats.itemName}`, {
+                xp: stats.totalXp,
+                levelUp: stats.lastLevelUp,
+            });
+        } else if (stats.completed > 1) {
+            const qty = stats.totalQuantity > 0 ? `${stats.totalQuantity}x ` : "";
+            gameToast.success(
+                `Smelted ${qty}${stats.itemName ?? "bars"} (${stats.completed} actions)`,
+                {
+                    xp: stats.totalXp,
+                    levelUp: stats.lastLevelUp,
                 },
-                onFinish: () => {
-                    setLoading(null);
-                },
+            );
+        }
+    }, []);
+
+    const {
+        startQueue,
+        cancelQueue,
+        isQueueActive,
+        queueProgress,
+        isActionLoading,
+        cooldown,
+        performSingleAction,
+    } = useActionQueue({
+        url: smeltUrl,
+        buildBody,
+        cooldownMs: SMELT_COOLDOWN_MS,
+        onActionComplete: useCallback(
+            (data: ActionResult) => {
+                onActionComplete(data);
+                if (data.success) {
+                    setQueueXp((prev) => prev + (data.xp_awarded ?? 0));
+                }
             },
-        );
-    };
+            [onActionComplete],
+        ),
+        onQueueComplete,
+        reloadProps: ["forge_info", "sidebar"],
+    });
+
+    useEffect(() => {
+        // Reload fresh data on mount to avoid stale cache from Inertia navigation
+        router.reload({ only: ["forge_info"] });
+    }, []);
+
+    // Find the selected recipe object
+    const allRecipes = forge_info.smelting_recipes || [];
+    const selected = allRecipes.find((r) => r.id === selectedRecipe);
+    const effectiveSelected = selected && !selected.is_locked ? selected : null;
 
     // Group recipes by metal tier
     const recipesByMetal: Record<string, Recipe[]> = {};
@@ -647,6 +632,36 @@ export default function ForgeIndex() {
                     </div>
                 )}
 
+                {/* Queue Controls */}
+                {effectiveSelected && (
+                    <div className="mb-4 rounded-lg border border-orange-600/50 bg-stone-800/50 p-3">
+                        <div className="mb-2 font-pixel text-xs text-orange-300">
+                            {effectiveSelected.name}
+                        </div>
+                        <ActionQueueControls
+                            isQueueActive={isQueueActive}
+                            queueProgress={queueProgress}
+                            isActionLoading={isActionLoading}
+                            cooldown={cooldown}
+                            cooldownMs={SMELT_COOLDOWN_MS}
+                            onStart={startQueue}
+                            onCancel={cancelQueue}
+                            onSingle={performSingleAction}
+                            disabled={!effectiveSelected.can_make}
+                            actionLabel="Smelt"
+                            activeLabel="Smelting"
+                            totalXp={queueXp}
+                            buttonClassName="bg-orange-600 text-stone-900 hover:bg-orange-500"
+                        />
+                    </div>
+                )}
+
+                {!selectedRecipe && allRecipes.length > 0 && (
+                    <div className="mb-4 rounded-lg border border-stone-600 bg-stone-800/30 p-3 text-center font-pixel text-xs text-stone-400">
+                        Select a recipe below to smelt
+                    </div>
+                )}
+
                 {/* Smelting Recipes Grid */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {metalOrder.map((metal) => {
@@ -660,10 +675,9 @@ export default function ForgeIndex() {
                             <SmeltingRecipeCard
                                 key={recipe.id}
                                 recipe={recipe}
-                                onSmelt={handleSmelt}
-                                loading={loading}
+                                isSelected={selectedRecipe === recipe.id}
+                                onSelect={setSelectedRecipe}
                                 metalColor={colors}
-                                cooldown={cooldown}
                             />
                         ));
                     })}

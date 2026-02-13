@@ -1,4 +1,4 @@
-import { Head, router, usePage } from "@inertiajs/react";
+import { Head, usePage } from "@inertiajs/react";
 import {
     AlertTriangle,
     Axe,
@@ -7,7 +7,6 @@ import {
     Flame,
     Info,
     Leaf,
-    Loader2,
     Mountain,
     Package,
     Pickaxe,
@@ -27,9 +26,11 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { ActionQueueControls } from "@/components/action-queue-controls";
 import { gameToast } from "@/components/ui/game-toast";
+import { useActionQueue, type ActionResult, type QueueStats } from "@/hooks/use-action-queue";
 import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
@@ -157,11 +158,9 @@ const seasonColors: Record<string, string> = {
 
 export default function GatheringActivity() {
     const { activity, player_energy, max_energy, location } = usePage<PageProps>().props;
-    const [loading, setLoading] = useState(false);
     const [currentEnergy, setCurrentEnergy] = useState(player_energy);
-    const [cooldown, setCooldown] = useState(0);
     const [selectedResource, setSelectedResource] = useState<string | null>(null);
-    const cooldownInterval = useRef<NodeJS.Timeout | null>(null);
+    const [queueXp, setQueueXp] = useState(0);
 
     const Icon = activityIcons[activity.id] || Pickaxe;
     const bgColor = activityBgColors[activity.id] || "from-stone-800 to-stone-900 border-stone-600";
@@ -183,92 +182,75 @@ export default function GatheringActivity() {
         },
     ];
 
-    const canGather =
-        currentEnergy >= activity.energy_cost && !activity.inventory_full && cooldown <= 0;
+    const gatherUrl = `${baseLocationUrl}/gathering/gather`;
 
-    const startCooldown = () => {
-        setCooldown(GATHER_COOLDOWN_MS);
-        if (cooldownInterval.current) {
-            clearInterval(cooldownInterval.current);
+    const buildBody = useCallback(
+        () => ({
+            activity: activity.id,
+            resource: selectedResource,
+        }),
+        [activity.id, selectedResource],
+    );
+
+    const onActionComplete = useCallback((data: ActionResult) => {
+        if (data.success && data.energy_remaining !== undefined) {
+            setCurrentEnergy(data.energy_remaining);
         }
-        const startTime = Date.now();
-        cooldownInterval.current = setInterval(() => {
-            const elapsed = Date.now() - startTime;
-            const remaining = Math.max(0, GATHER_COOLDOWN_MS - elapsed);
-            setCooldown(remaining);
-            if (remaining <= 0 && cooldownInterval.current) {
-                clearInterval(cooldownInterval.current);
-                cooldownInterval.current = null;
-            }
-        }, 50);
-    };
+    }, []);
+
+    const onQueueComplete = useCallback((stats: QueueStats) => {
+        setQueueXp(0);
+        if (stats.completed === 0) return;
+
+        if (stats.completed === 1 && stats.itemName) {
+            const qty = stats.totalQuantity > 1 ? `${stats.totalQuantity}x ` : "";
+            gameToast.success(`${qty}${stats.itemName}`, {
+                xp: stats.totalXp,
+                levelUp: stats.lastLevelUp,
+            });
+        } else if (stats.completed > 1) {
+            const qty = stats.totalQuantity > 0 ? `${stats.totalQuantity}x ` : "";
+            gameToast.success(
+                `Gathered ${qty}${stats.itemName ?? "resources"} (${stats.completed} actions)`,
+                {
+                    xp: stats.totalXp,
+                    levelUp: stats.lastLevelUp,
+                },
+            );
+        }
+    }, []);
+
+    const {
+        startQueue,
+        cancelQueue,
+        isQueueActive,
+        queueProgress,
+        isActionLoading,
+        cooldown,
+        performSingleAction,
+    } = useActionQueue({
+        url: gatherUrl,
+        buildBody,
+        cooldownMs: GATHER_COOLDOWN_MS,
+        onActionComplete: useCallback(
+            (data: ActionResult) => {
+                onActionComplete(data);
+                if (data.success) {
+                    setQueueXp((prev) => prev + (data.xp_awarded ?? 0));
+                }
+            },
+            [onActionComplete],
+        ),
+        onQueueComplete,
+        reloadProps: ["sidebar", "activity"],
+    });
 
     // Sync energy state when props change (from router.reload)
     useEffect(() => {
         setCurrentEnergy(player_energy);
     }, [player_energy]);
 
-    useEffect(() => {
-        return () => {
-            if (cooldownInterval.current) {
-                clearInterval(cooldownInterval.current);
-            }
-        };
-    }, []);
-
-    const handleGather = async () => {
-        if (!canGather || loading || cooldown > 0) return;
-
-        setLoading(true);
-
-        try {
-            const response = await fetch(`${baseLocationUrl}/gathering/gather`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN":
-                        document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute("content") || "",
-                },
-                body: JSON.stringify({
-                    activity: activity.id,
-                    resource: selectedResource,
-                }),
-            });
-
-            const data: GatherResult = await response.json();
-
-            // Show toast notification
-            if (data.success && data.resource) {
-                const quantity = data.quantity && data.quantity > 1 ? `${data.quantity}x ` : "";
-                const bonus = data.seasonal_bonus ? " (Seasonal Bonus!)" : "";
-                gameToast.success(`${quantity}${data.resource.name}${bonus}`, {
-                    xp: data.xp_awarded,
-                    levelUp:
-                        data.leveled_up && data.new_level
-                            ? { skill: activity.skill, level: data.new_level }
-                            : undefined,
-                });
-
-                // Start cooldown timer
-                startCooldown();
-            } else if (!data.success) {
-                gameToast.error(data.message);
-            }
-
-            if (data.success && data.energy_remaining !== undefined) {
-                setCurrentEnergy(data.energy_remaining);
-            }
-
-            // Reload sidebar and activity data
-            router.reload({ only: ["sidebar", "activity"] });
-        } catch {
-            gameToast.error("An error occurred");
-        } finally {
-            setLoading(false);
-        }
-    };
+    const canGather = currentEnergy >= activity.energy_cost && !activity.inventory_full;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -521,45 +503,23 @@ export default function GatheringActivity() {
                         </div>
                     </div>
 
-                    {/* Gather Button */}
-                    <div className="relative mb-6">
-                        <button
-                            onClick={handleGather}
-                            disabled={!canGather || loading || cooldown > 0}
-                            className={`relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-xl border-2 px-6 py-4 font-pixel text-lg transition ${
-                                canGather && !loading && cooldown <= 0
-                                    ? "border-amber-600 bg-amber-900/30 text-amber-300 hover:bg-amber-800/50"
-                                    : "cursor-not-allowed border-stone-700 bg-stone-800/50 text-stone-500"
-                            }`}
-                        >
-                            {/* Cooldown progress bar */}
-                            {cooldown > 0 && (
-                                <div
-                                    className="absolute inset-0 bg-amber-600/20 transition-all"
-                                    style={{ width: `${(cooldown / GATHER_COOLDOWN_MS) * 100}%` }}
-                                />
-                            )}
-                            <span className="relative z-10 flex items-center gap-3">
-                                {loading ? (
-                                    <>
-                                        <Loader2 className="h-6 w-6 animate-spin" />
-                                        Gathering...
-                                    </>
-                                ) : cooldown > 0 ? (
-                                    <>
-                                        <Icon className="h-6 w-6" />
-                                        {(cooldown / 1000).toFixed(1)}s
-                                    </>
-                                ) : (
-                                    <>
-                                        <Icon className="h-6 w-6" />
-                                        {selectedResource
-                                            ? `Gather ${selectedResource}`
-                                            : "Gather (Random)"}
-                                    </>
-                                )}
-                            </span>
-                        </button>
+                    {/* Gather Controls */}
+                    <div className="mb-6 rounded-xl border-2 border-amber-600/50 bg-stone-800/50 p-4">
+                        <ActionQueueControls
+                            isQueueActive={isQueueActive}
+                            queueProgress={queueProgress}
+                            isActionLoading={isActionLoading}
+                            cooldown={cooldown}
+                            cooldownMs={GATHER_COOLDOWN_MS}
+                            onStart={startQueue}
+                            onCancel={cancelQueue}
+                            onSingle={performSingleAction}
+                            disabled={!canGather}
+                            actionLabel={selectedResource ? `Gather ${selectedResource}` : "Gather"}
+                            activeLabel="Gathering"
+                            totalXp={queueXp}
+                            buttonClassName="bg-amber-600 text-stone-900 hover:bg-amber-500"
+                        />
                     </div>
 
                     {/* Available Resources */}

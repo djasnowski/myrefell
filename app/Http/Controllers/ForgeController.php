@@ -10,7 +10,7 @@ use App\Models\Town;
 use App\Models\Village;
 use App\Services\BiomeService;
 use App\Services\CraftingService;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -110,7 +110,7 @@ class ForgeController extends Controller
     /**
      * Smelt a bar at the forge.
      */
-    public function forge(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null): RedirectResponse
+    public function forge(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null): JsonResponse
     {
         $request->validate([
             'recipe' => 'required|string',
@@ -127,11 +127,7 @@ class ForgeController extends Controller
             $location?->id ?? $user->current_location_id
         );
 
-        if ($result['success']) {
-            return back()->with('success', $result['message']);
-        }
-
-        return back()->with('error', $result['message']);
+        return response()->json($result);
     }
 
     /**
