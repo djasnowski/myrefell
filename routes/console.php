@@ -7,6 +7,8 @@ use App\Jobs\ExpireMarriageProposals;
 use App\Jobs\FinalizeElections;
 use App\Jobs\ProcessDisasters;
 use App\Jobs\ProcessDiseases;
+use App\Jobs\ProcessHouseUpkeep;
+use App\Jobs\ProcessServantWages;
 use App\Jobs\RegenerateEnergy;
 use App\Jobs\RegenerateHp;
 use App\Services\DungeonLootService;
@@ -58,6 +60,15 @@ Schedule::command('hq:complete-construction')->everyMinute();
 
 // Cult hideout construction completion - every minute (check for timer expirations)
 Schedule::command('hideout:complete-construction')->everyMinute();
+
+// Servant task completion - every minute
+Schedule::command('servant:complete-tasks')->everyMinute();
+
+// Servant wage processing - daily at 00:30
+Schedule::job(new ProcessServantWages)->dailyAt('00:30');
+
+// House upkeep degradation - daily at 01:00
+Schedule::job(new ProcessHouseUpkeep)->dailyAt('01:00');
 
 // Prune old tab activity logs - daily at 03:00
 Schedule::command('tab-activity:prune')->dailyAt('03:00');

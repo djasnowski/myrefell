@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Item;
 use App\Models\Monster;
 use App\Models\User;
 
@@ -69,6 +70,24 @@ class LootService
                     $rewards['items'][] = [
                         'name' => $item->name,
                         'quantity' => $quantity,
+                    ];
+                }
+            }
+        }
+
+        // Trophy drop roll for eligible monsters
+        if ($monster->combat_level >= 10) {
+            $trophyChance = $monster->is_boss ? 5.0 : 1.0;
+            $trophyChance = min(100, $trophyChance * (1 + $rareDropBonus / 100));
+            $roll = mt_rand(0, 10000) / 100;
+
+            if ($roll <= $trophyChance) {
+                $trophyItem = Item::where('name', $monster->name.' Trophy')->first();
+
+                if ($trophyItem && $this->inventoryService->addItem($player, $trophyItem, 1)) {
+                    $rewards['items'][] = [
+                        'name' => $trophyItem->name,
+                        'quantity' => 1,
                     ];
                 }
             }

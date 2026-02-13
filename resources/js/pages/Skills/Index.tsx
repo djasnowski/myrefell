@@ -1,6 +1,7 @@
 import { Head, usePage } from "@inertiajs/react";
 import type { LucideIcon } from "lucide-react";
 import {
+    Anvil,
     Beef,
     BicepsFlexed,
     Church,
@@ -71,7 +72,8 @@ const skillIcons: Record<string, LucideIcon> = {
     fishing: Fish,
     woodcutting: TreeDeciduous,
     cooking: Beef,
-    smithing: Hammer,
+    smithing: Anvil,
+    construction: Hammer,
     crafting: Scissors,
     thieving: Hand,
     herblore: Leaf,

@@ -14,6 +14,7 @@ import {
     Hammer,
     Hand,
     HeartPulse,
+    Home,
     Landmark,
     MessageSquare,
     Pickaxe,
@@ -40,6 +41,8 @@ interface Favorite {
 
 interface SidebarData {
     favorites: Favorite[];
+    has_house?: boolean;
+    house_url?: string;
 }
 
 interface ServiceCardProps {
@@ -78,6 +81,7 @@ const iconMap: Record<string, LucideIcon> = {
     "flask-conical": FlaskConical,
     footprints: Footprints,
     target: Target,
+    home: Home,
 };
 
 export function ServiceCard({
@@ -202,6 +206,7 @@ interface ServicesGridProps {
         description: string;
         icon: string;
         route: string;
+        requires_house?: boolean;
     }>;
     locationType: string;
     locationId: number;
@@ -232,10 +237,17 @@ export function ServicesGrid({
 
     const basePath = locationPaths[locationType] || locationType + "s";
 
-    // Filter services by search query
+    const hasHouse = sidebar?.has_house ?? false;
+
+    // Filter services by search query and requirements
     const filteredServices = services.filter((service) => {
         // Skip port services if location is not a port
         if (service.id === "port" && !isPort) {
+            return false;
+        }
+
+        // Skip house service if player doesn't have a house
+        if (service.requires_house && !hasHouse) {
             return false;
         }
 
@@ -286,7 +298,11 @@ export function ServicesGrid({
                             serviceId={service.id}
                             name={service.name}
                             description={service.description}
-                            href={`/${basePath}/${locationId}/${service.route}`}
+                            href={
+                                service.requires_house && sidebar?.house_url
+                                    ? sidebar.house_url
+                                    : `/${basePath}/${locationId}/${service.route}`
+                            }
                             icon={service.icon}
                         />
                     ))}

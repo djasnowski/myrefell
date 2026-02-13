@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Config\ConstructionConfig;
 use App\Models\Kingdom;
 use App\Models\MigrationRequest;
+use App\Models\PlayerHouse;
 use App\Models\PlayerRole;
 use App\Models\Role;
 use App\Services\MigrationService;
@@ -139,6 +141,17 @@ class KingdomController extends Controller
         // Count players living in this kingdom
         $playerCount = \App\Models\User::whereIn('home_village_id', $villageIds)->count();
 
+        // Get houses at this location
+        $houses = PlayerHouse::where('location_type', 'kingdom')
+            ->where('location_id', $kingdom->id)
+            ->with('player:id,username')
+            ->get()
+            ->map(fn ($house) => [
+                'name' => $house->name,
+                'tier_name' => ConstructionConfig::HOUSE_TIERS[$house->tier]['name'] ?? ucfirst($house->tier),
+                'owner_username' => $house->player->username,
+            ]);
+
         // Check if user is a resident of this kingdom (settled directly in kingdom)
         $isResident = $user->home_location_type === 'kingdom' && $user->home_location_id === $kingdom->id;
 
@@ -177,6 +190,7 @@ class KingdomController extends Controller
             'is_resident' => $isResident,
             ...$migrationService->getMigrationCooldownInfo($user),
             'has_pending_request' => $hasPendingRequest,
+            'houses' => $houses,
         ]);
     }
 
@@ -205,5 +219,4 @@ class KingdomController extends Controller
             'count' => $baronies->count(),
         ]);
     }
-
 }

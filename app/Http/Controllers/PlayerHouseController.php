@@ -1,0 +1,1325 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Config\ConstructionConfig;
+use App\Models\HouseFurniture;
+use App\Models\HouseRoom;
+use App\Models\HouseStorage;
+use App\Models\PlayerHouse;
+use App\Models\User;
+use App\Services\GardenService;
+use App\Services\HouseBuffService;
+use App\Services\HouseService;
+use App\Services\InventoryService;
+use App\Services\ServantService;
+use App\Services\TrophyService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class PlayerHouseController extends Controller
+{
+    public function __construct(
+        protected HouseService $houseService,
+        protected InventoryService $inventoryService,
+        protected HouseBuffService $houseBuffService,
+        protected ServantService $servantService,
+        protected TrophyService $trophyService,
+        protected GardenService $gardenService
+    ) {}
+
+    /**
+     * Show the player's house page.
+     * Accepts any location model parameter (village, town, barony, duchy, kingdom) for URL context.
+     */
+    public function index(Request $request): Response
+    {
+        $user = $request->user();
+        $user->load('skills');
+        $house = $this->houseService->getHouse($user);
+
+        // Verify the house belongs to this location
+        if ($house) {
+            $routeParams = $request->route()->parameters();
+            $locationParam = array_values($routeParams)[0] ?? null;
+            if ($locationParam && is_object($locationParam) && $locationParam->id !== $house->location_id) {
+                abort(404);
+            }
+        }
+
+        $purchaseCheck = $house ? null : $this->houseService->canPurchaseHouse($user);
+
+        $upgradeInfo = null;
+        if ($house) {
+            $tierOrder = array_keys(ConstructionConfig::HOUSE_TIERS);
+            $currentIndex = array_search($house->tier, $tierOrder);
+            $nextTier = $tierOrder[$currentIndex + 1] ?? null;
+
+            if ($nextTier) {
+                $upgradeInfo = [
+                    'target_tier' => $nextTier,
+                    'target_name' => ConstructionConfig::HOUSE_TIERS[$nextTier]['name'],
+                    'target_config' => ConstructionConfig::HOUSE_TIERS[$nextTier],
+                    'check' => $this->houseService->canUpgradeHouse($user, $nextTier),
+                ];
+            }
+        }
+
+        $houseBuffs = $house ? $this->houseBuffService->getHouseEffects($user) : [];
+
+        // Adjacency bonus data
+        $adjacencyBonuses = [];
+        if ($house) {
+            $house->load('rooms');
+            $adjacencyBonuses = $this->houseBuffService->getAdjacencyBonuses($house);
+        }
+
+        // Portal data
+        $portals = $house ? $this->houseService->getPortals($user) : [];
+        $hasPortalChamber = $house && $house->rooms->where('room_type', 'portal_chamber')->isNotEmpty();
+        $availableDestinations = $hasPortalChamber ? $this->houseService->getAvailableDestinations() : [];
+
+        $data = [
+            'house' => $house ? $this->formatHouse($house) : null,
+            'houseUrl' => $house?->getHouseUrl(),
+            'canPurchase' => $purchaseCheck,
+            'purchaseCost' => ConstructionConfig::HOUSE_TIERS['cottage']['cost'],
+            'roomTypes' => $this->getAvailableRoomTypes($user),
+            'constructionLevel' => $user->skills->where('skill_name', 'construction')->first()?->level ?? 1,
+            'playerGold' => $user->gold,
+            'upgradeInfo' => $upgradeInfo,
+            'houseBuffs' => $houseBuffs,
+            'adjacencyBonuses' => $adjacencyBonuses,
+            'adjacencyDefinitions' => ConstructionConfig::ADJACENCY_BONUSES,
+            'portals' => $portals,
+            'availableDestinations' => $availableDestinations,
+            'servantData' => $house ? $this->servantService->getServantData($user) : null,
+            'servantTiers' => $house ? $this->getServantTierInfo($user) : [],
+            'trophyData' => $house ? $this->trophyService->getTrophyData($user) : null,
+            'gardenData' => $house ? $this->gardenService->getGardenData($user) : null,
+            'kitchen' => $house ? $this->houseService->getKitchenData($user) : null,
+            'bedroom' => $house ? $this->houseService->getBedroomData($user) : null,
+            'workshop' => $house ? $this->houseService->getWorkshopData($user) : null,
+            'forge' => $house ? $this->houseService->getForgeData($user) : null,
+            'chapel' => $house ? $this->houseService->getChapelData($user) : null,
+            'hearth' => $house ? $this->houseService->getHearthData($user) : null,
+            'pool' => $house ? $this->houseService->getPoolData($user) : null,
+            'upkeepDueAt' => $house?->upkeep_due_at?->toISOString(),
+            'upkeepCost' => $house?->getUpkeepCost(),
+            'repairCost' => $house && $house->condition < 100 ? $house->getRepairCost() : null,
+            'playerInventory' => $house ? $this->getPlayerInventory($user) : [],
+            'inventoryMaxSlots' => \App\Models\PlayerInventory::MAX_SLOTS,
+        ];
+
+        return Inertia::render('House/Index', $data);
+    }
+
+    /**
+     * Visit another player's house (read-only).
+     */
+    public function visitHouse(string $username): Response
+    {
+        $player = User::whereRaw('LOWER(username) = ?', [strtolower($username)])->first();
+
+        if (! $player) {
+            abort(404);
+        }
+
+        $house = PlayerHouse::where('player_id', $player->id)
+            ->with(['rooms.furniture', 'kingdom'])
+            ->first();
+
+        $emptyVisitorProps = [
+            'canPurchase' => null,
+            'purchaseCost' => 0,
+            'roomTypes' => [],
+            'constructionLevel' => 0,
+            'playerGold' => 0,
+            'upgradeInfo' => null,
+            'adjacencyDefinitions' => ConstructionConfig::ADJACENCY_BONUSES,
+            'portals' => [],
+            'availableDestinations' => [],
+            'servantData' => null,
+            'servantTiers' => [],
+            'kitchen' => null,
+            'bedroom' => null,
+            'workshop' => null,
+            'forge' => null,
+            'chapel' => null,
+            'hearth' => null,
+            'pool' => null,
+            'upkeepDueAt' => null,
+            'upkeepCost' => null,
+            'repairCost' => null,
+        ];
+
+        if (! $house) {
+            return Inertia::render('House/Index', array_merge($emptyVisitorProps, [
+                'house' => null,
+                'isVisiting' => true,
+                'visitingPlayer' => $player->username,
+                'houseBuffs' => [],
+                'adjacencyBonuses' => [],
+                'trophyData' => null,
+                'gardenData' => null,
+            ]));
+        }
+
+        $visitor = request()->user();
+        $hasParlour = $house->rooms->where('room_type', 'parlour')->isNotEmpty();
+
+        // Parlour entry gate: require approval before viewing
+        if ($hasParlour && $visitor->id !== $player->id) {
+            $entryCacheKey = "house_entry:{$player->id}:{$visitor->id}";
+            $entryStatus = Cache::get($entryCacheKey);
+
+            if ($entryStatus !== 'approved') {
+                // Create or maintain pending request
+                if ($entryStatus !== 'pending') {
+                    Cache::put($entryCacheKey, 'pending', 120);
+                }
+
+                // Add to owner's pending requests list
+                $requestsKey = "house_entry_requests:{$player->id}";
+                $requests = Cache::get($requestsKey, []);
+                $requests[$visitor->id] = [
+                    'username' => $visitor->username,
+                    'requested_at' => now()->timestamp,
+                ];
+                Cache::put($requestsKey, $requests, 120);
+
+                return Inertia::render('House/Index', array_merge($emptyVisitorProps, [
+                    'house' => null,
+                    'isVisiting' => true,
+                    'visitingPlayer' => $player->username,
+                    'awaitingEntry' => true,
+                    'houseBuffs' => [],
+                    'adjacencyBonuses' => [],
+                    'trophyData' => null,
+                    'gardenData' => null,
+                ]));
+            }
+        }
+
+        // Record visitor if owner has a parlour
+        if ($visitor->id !== $player->id && $hasParlour) {
+            $cacheKey = "house_visitors:{$player->id}";
+            $visitors = Cache::get($cacheKey, []);
+            $visitors[$visitor->id] = [
+                'username' => $visitor->username,
+                'at' => now()->timestamp,
+            ];
+            // Keep only last 5 minutes of visitors
+            $cutoff = now()->subMinutes(5)->timestamp;
+            $visitors = array_filter($visitors, fn ($v) => $v['at'] >= $cutoff);
+            Cache::put($cacheKey, $visitors, 300);
+        }
+
+        $houseBuffs = $this->houseBuffService->getHouseEffects($player);
+
+        $house->load('rooms');
+        $adjacencyBonuses = $this->houseBuffService->getAdjacencyBonuses($house);
+
+        $house->load('trophies');
+        $trophyData = $this->trophyService->getTrophyData($player);
+
+        $gardenData = $this->gardenService->getGardenData($player);
+        // Strip available_seeds for visitors
+        if ($gardenData) {
+            $gardenData['available_seeds'] = [];
+        }
+
+        // Approved visitors get amenity data (using owner's house but visitor's user for recipes/cooldowns)
+        $visitorAmenityProps = [
+            'kitchen' => $this->houseService->getKitchenData($visitor, $house),
+            'bedroom' => $this->houseService->getBedroomData($visitor, $house),
+            'workshop' => $this->houseService->getWorkshopData($visitor, $house),
+            'forge' => $this->houseService->getForgeData($visitor, $house),
+            'chapel' => $this->houseService->getChapelData($visitor, $house),
+            'hearth' => $this->houseService->getHearthData($visitor, $house),
+            'pool' => $this->houseService->getPoolData($visitor, $house),
+            'portals' => $this->houseService->getPortals($player, $house),
+            'availableDestinations' => [],
+            'visitingHouseId' => $house->id,
+        ];
+
+        return Inertia::render('House/Index', array_merge($emptyVisitorProps, $visitorAmenityProps, [
+            'house' => $this->formatHouseForVisitor($house),
+            'isVisiting' => true,
+            'visitingPlayer' => $player->username,
+            'houseBuffs' => $houseBuffs,
+            'adjacencyBonuses' => $adjacencyBonuses,
+            'trophyData' => $trophyData,
+            'gardenData' => $gardenData,
+        ]));
+    }
+
+    /**
+     * Poll for recent visitors (requires parlour). Includes pending entry requests.
+     */
+    public function getVisitors(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $house = PlayerHouse::where('player_id', $user->id)->with('rooms')->first();
+
+        if (! $house || $house->rooms->where('room_type', 'parlour')->isEmpty()) {
+            return response()->json(['visitors' => [], 'pending_requests' => []]);
+        }
+
+        $cacheKey = "house_visitors:{$user->id}";
+        $visitors = Cache::get($cacheKey, []);
+
+        // Filter to last 5 minutes
+        $cutoff = now()->subMinutes(5)->timestamp;
+        $visitors = array_filter($visitors, fn ($v) => $v['at'] >= $cutoff);
+
+        $list = array_map(fn ($v) => ['username' => $v['username'], 'at' => $v['at']], array_values($visitors));
+
+        // Include pending entry requests
+        $requestsKey = "house_entry_requests:{$user->id}";
+        $pendingRequests = Cache::get($requestsKey, []);
+        $pendingList = [];
+        foreach ($pendingRequests as $visitorId => $req) {
+            // Only include if still pending in cache
+            $entryStatus = Cache::get("house_entry:{$user->id}:{$visitorId}");
+            if ($entryStatus === 'pending') {
+                $pendingList[] = [
+                    'visitor_id' => $visitorId,
+                    'username' => $req['username'],
+                    'requested_at' => $req['requested_at'],
+                ];
+            }
+        }
+
+        return response()->json(['visitors' => $list, 'pending_requests' => $pendingList]);
+    }
+
+    /**
+     * Respond to an entry request (accept/deny).
+     */
+    public function respondToEntry(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'visitor_id' => 'required|integer',
+            'action' => 'required|string|in:accept,deny',
+        ]);
+
+        $user = $request->user();
+        $visitorId = $request->input('visitor_id');
+        $action = $request->input('action');
+
+        $entryCacheKey = "house_entry:{$user->id}:{$visitorId}";
+
+        if ($action === 'accept') {
+            Cache::put($entryCacheKey, 'approved', 300);
+        } else {
+            Cache::put($entryCacheKey, 'denied', 30);
+        }
+
+        // Remove from pending requests list
+        $requestsKey = "house_entry_requests:{$user->id}";
+        $requests = Cache::get($requestsKey, []);
+        unset($requests[$visitorId]);
+        if (empty($requests)) {
+            Cache::forget($requestsKey);
+        } else {
+            Cache::put($requestsKey, $requests, 120);
+        }
+
+        $visitor = User::find($visitorId);
+        $name = $visitor?->username ?? 'Unknown';
+
+        if ($action === 'accept') {
+            return back()->with('success', "Granted entry to {$name}.");
+        }
+
+        return back()->with('success', "Denied entry to {$name}.");
+    }
+
+    /**
+     * Kick all visitors from the owner's house.
+     */
+    public function kickAllVisitors(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        // Kick approved visitors
+        $visitorsKey = "house_visitors:{$user->id}";
+        $visitors = Cache::get($visitorsKey, []);
+        foreach ($visitors as $visitorId => $info) {
+            Cache::put("house_entry:{$user->id}:{$visitorId}", 'kicked', 30);
+        }
+
+        // Kick pending requests
+        $requestsKey = "house_entry_requests:{$user->id}";
+        $requests = Cache::get($requestsKey, []);
+        foreach ($requests as $visitorId => $req) {
+            Cache::put("house_entry:{$user->id}:{$visitorId}", 'kicked', 30);
+        }
+
+        // Clear visitor and request lists
+        Cache::forget($visitorsKey);
+        Cache::forget($requestsKey);
+
+        $count = count($visitors) + count($requests);
+
+        return back()->with('success', $count > 0 ? "Kicked {$count} visitor(s) from your house." : 'No visitors to kick.');
+    }
+
+    /**
+     * Check entry request status (visitor polling endpoint).
+     */
+    public function getEntryStatus(string $username): JsonResponse
+    {
+        $visitor = request()->user();
+
+        if (! $visitor) {
+            return response()->json(['status' => 'expired']);
+        }
+
+        $owner = User::whereRaw('LOWER(username) = ?', [strtolower($username)])->first();
+
+        if (! $owner) {
+            return response()->json(['status' => 'expired']);
+        }
+
+        $status = Cache::get("house_entry:{$owner->id}:{$visitor->id}");
+
+        return response()->json(['status' => $status ?? 'expired']);
+    }
+
+    /**
+     * Cancel a pending entry request (visitor side).
+     */
+    public function cancelEntry(Request $request): RedirectResponse
+    {
+        $visitor = $request->user();
+        $username = $request->input('username');
+
+        $owner = User::whereRaw('LOWER(username) = ?', [strtolower($username)])->first();
+
+        if (! $owner) {
+            return back();
+        }
+
+        Cache::forget("house_entry:{$owner->id}:{$visitor->id}");
+
+        $requestsKey = "house_entry_requests:{$owner->id}";
+        $requests = Cache::get($requestsKey, []);
+        unset($requests[$visitor->id]);
+
+        if (empty($requests)) {
+            Cache::forget($requestsKey);
+        } else {
+            Cache::put($requestsKey, $requests, 120);
+        }
+
+        return back();
+    }
+
+    /**
+     * Pay house upkeep.
+     */
+    public function payUpkeep(Request $request): RedirectResponse
+    {
+        $result = $this->houseService->payUpkeep($request->user());
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Repair house condition.
+     */
+    public function repairHouse(Request $request): RedirectResponse
+    {
+        $result = $this->houseService->repairHouse($request->user());
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Purchase a house.
+     */
+    public function purchase(Request $request): RedirectResponse
+    {
+        $result = $this->houseService->purchaseHouse($request->user());
+
+        if ($result['success']) {
+            $house = $result['house'];
+
+            return redirect($house->getHouseUrl())->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
+    }
+
+    /**
+     * Build a room.
+     */
+    public function buildRoom(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'room_type' => 'required|string',
+            'grid_x' => 'required|integer|min:0',
+            'grid_y' => 'required|integer|min:0',
+        ]);
+
+        $user = $request->user();
+        $user->load('skills');
+
+        $result = $this->houseService->buildRoom(
+            $user,
+            $request->input('room_type'),
+            $request->input('grid_x'),
+            $request->input('grid_y'),
+        );
+
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
+    }
+
+    /**
+     * Build furniture at a hotspot.
+     */
+    public function buildFurniture(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'room_id' => 'required|integer',
+            'hotspot_slug' => 'required|string',
+            'furniture_key' => 'required|string',
+        ]);
+
+        $user = $request->user();
+        $user->load('skills');
+
+        $result = $this->houseService->buildFurniture(
+            $user,
+            $request->input('room_id'),
+            $request->input('hotspot_slug'),
+            $request->input('furniture_key'),
+        );
+
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
+    }
+
+    /**
+     * Demolish furniture.
+     */
+    public function demolishFurniture(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'room_id' => 'required|integer',
+            'hotspot_slug' => 'required|string',
+        ]);
+
+        $result = $this->houseService->demolishFurniture(
+            $request->user(),
+            $request->input('room_id'),
+            $request->input('hotspot_slug'),
+        );
+
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
+    }
+
+    /**
+     * Demolish an entire room.
+     */
+    public function demolishRoom(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'room_id' => 'required|integer',
+        ]);
+
+        $result = $this->houseService->demolishRoom(
+            $request->user(),
+            $request->input('room_id'),
+        );
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Upgrade the house to the next tier.
+     */
+    public function upgrade(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'target_tier' => 'required|string',
+        ]);
+
+        $user = $request->user();
+        $user->load('skills');
+
+        $result = $this->houseService->upgradeHouse(
+            $user,
+            $request->input('target_tier'),
+        );
+
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
+    }
+
+    /**
+     * Deposit item into house storage.
+     */
+    public function deposit(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'item_name' => 'required|string',
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        $result = $this->houseService->depositItem(
+            $request->user(),
+            $request->input('item_name'),
+            $request->input('quantity'),
+        );
+
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
+    }
+
+    /**
+     * Withdraw item from house storage.
+     */
+    public function withdraw(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'item_name' => 'required|string',
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        $result = $this->houseService->withdrawItem(
+            $request->user(),
+            $request->input('item_name'),
+            $request->input('quantity'),
+        );
+
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
+    }
+
+    /**
+     * Set a portal destination.
+     */
+    public function setPortal(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'slot' => 'required|integer|min:1|max:3',
+            'destination_type' => 'required|string|in:village,barony,town,kingdom',
+            'destination_id' => 'required|integer',
+        ]);
+
+        $result = $this->houseService->setPortalDestination(
+            $request->user(),
+            $request->input('slot'),
+            $request->input('destination_type'),
+            $request->input('destination_id'),
+        );
+
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
+    }
+
+    /**
+     * Teleport via a portal.
+     */
+    public function teleport(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'slot' => 'required|integer|min:1|max:3',
+            'house_id' => 'nullable|integer',
+        ]);
+
+        $house = null;
+        if ($request->filled('house_id')) {
+            $house = $this->houseService->resolveHouseForVisitor($request->user(), $request->input('house_id'));
+            if (! $house) {
+                return back()->with('error', 'You do not have access to this house.');
+            }
+        }
+
+        $result = $this->houseService->teleportFromPortal(
+            $request->user(),
+            $request->input('slot'),
+            $house,
+        );
+
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
+    }
+
+    /**
+     * Hire a servant.
+     */
+    public function hireServant(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'tier' => 'required|string',
+        ]);
+
+        $user = $request->user();
+        $user->load('skills');
+
+        $result = $this->servantService->hireServant($user, $request->input('tier'));
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Dismiss the servant.
+     */
+    public function dismissServant(Request $request): RedirectResponse
+    {
+        $result = $this->servantService->dismissServant($request->user());
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Assign a task to the servant.
+     */
+    public function assignServantTask(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'task_type' => 'required|string|in:sawmill_run,fetch_materials,serve_food',
+        ]);
+
+        $result = $this->servantService->assignTask(
+            $request->user(),
+            $request->input('task_type'),
+            $request->only(['plank_name', 'quantity', 'item_name']),
+        );
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Cancel a queued servant task.
+     */
+    public function cancelServantTask(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'task_id' => 'required|integer',
+        ]);
+
+        $result = $this->servantService->cancelTask($request->user(), $request->input('task_id'));
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Pay servant wages to end strike.
+     */
+    public function payServantWages(Request $request): RedirectResponse
+    {
+        $result = $this->servantService->payWages($request->user());
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Mount a trophy in the trophy hall.
+     */
+    public function mountTrophy(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'slot' => 'required|string|in:display_1,display_2,display_3,pedestal',
+            'item_id' => 'required|integer',
+        ]);
+
+        $result = $this->trophyService->mountTrophy(
+            $request->user(),
+            $request->input('slot'),
+            $request->input('item_id'),
+        );
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Remove a trophy from the trophy hall.
+     */
+    public function removeTrophy(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'slot' => 'required|string|in:display_1,display_2,display_3,pedestal',
+        ]);
+
+        $result = $this->trophyService->removeTrophy(
+            $request->user(),
+            $request->input('slot'),
+        );
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Plant a herb in a garden plot.
+     */
+    public function gardenPlant(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'plot_slot' => 'required|string',
+            'crop_type_id' => 'required|integer',
+        ]);
+
+        $user = $request->user();
+        $user->load('skills');
+
+        $result = $this->gardenService->plantHerb($user, $request->input('plot_slot'), $request->input('crop_type_id'));
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Water a garden plot.
+     */
+    public function gardenWater(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'plot_slot' => 'required|string',
+        ]);
+
+        $result = $this->gardenService->waterPlot($request->user(), $request->input('plot_slot'));
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Tend a garden plot.
+     */
+    public function gardenTend(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'plot_slot' => 'required|string',
+        ]);
+
+        $result = $this->gardenService->tendPlot($request->user(), $request->input('plot_slot'));
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Harvest a garden plot.
+     */
+    public function gardenHarvest(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'plot_slot' => 'required|string',
+        ]);
+
+        $user = $request->user();
+        $user->load('skills');
+
+        $result = $this->gardenService->harvestPlot($user, $request->input('plot_slot'));
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Clear a garden plot.
+     */
+    public function gardenClear(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'plot_slot' => 'required|string',
+        ]);
+
+        $result = $this->gardenService->clearPlot($request->user(), $request->input('plot_slot'));
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Move a storage item to a different slot (drag-and-drop reordering).
+     */
+    public function moveStorageSlot(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'from_slot' => 'required|integer|min:0',
+            'to_slot' => 'required|integer|min:0',
+        ]);
+
+        $player = $request->user();
+        $house = PlayerHouse::where('player_id', $player->id)->first();
+
+        if (! $house) {
+            return back();
+        }
+
+        $fromSlot = $request->from_slot;
+        $toSlot = $request->to_slot;
+
+        if ($fromSlot === $toSlot) {
+            return back();
+        }
+
+        $maxSlot = $house->getStorageCapacity() - 1;
+        if ($fromSlot > $maxSlot || $toSlot > $maxSlot) {
+            return back();
+        }
+
+        DB::transaction(function () use ($house, $fromSlot, $toSlot) {
+            $fromItem = HouseStorage::where('player_house_id', $house->id)
+                ->where('slot_number', $fromSlot)->lockForUpdate()->first();
+            $toItem = HouseStorage::where('player_house_id', $house->id)
+                ->where('slot_number', $toSlot)->lockForUpdate()->first();
+
+            if (! $fromItem) {
+                return;
+            }
+
+            if ($toItem) {
+                $toItem->update(['slot_number' => -1]);
+                $fromItem->update(['slot_number' => $toSlot]);
+                $toItem->update(['slot_number' => $fromSlot]);
+            } else {
+                $fromItem->update(['slot_number' => $toSlot]);
+            }
+        });
+
+        return back();
+    }
+
+    /**
+     * Add compost charges.
+     */
+    public function gardenCompost(Request $request): RedirectResponse
+    {
+        $result = $this->gardenService->addCompost($request->user());
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Use compost on a garden plot.
+     */
+    public function gardenUseCompost(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'plot_slot' => 'required|string',
+        ]);
+
+        $result = $this->gardenService->useCompost($request->user(), $request->input('plot_slot'));
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Cook a recipe at home.
+     */
+    public function cookAtHome(Request $request): JsonResponse
+    {
+        $request->validate([
+            'recipe' => 'required|string',
+            'house_id' => 'nullable|integer',
+        ]);
+
+        $house = null;
+        if ($request->filled('house_id')) {
+            $house = $this->houseService->resolveHouseForVisitor($request->user(), $request->input('house_id'));
+            if (! $house) {
+                return response()->json(['success' => false, 'message' => 'You do not have access to this house.'], 403);
+            }
+        }
+
+        $result = $this->houseService->cookAtHome(
+            $request->user(),
+            $request->input('recipe'),
+            $house,
+        );
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Rest at home in the bedroom.
+     */
+    public function restAtHome(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'house_id' => 'nullable|integer',
+        ]);
+
+        $house = null;
+        if ($request->filled('house_id')) {
+            $house = $this->houseService->resolveHouseForVisitor($request->user(), $request->input('house_id'));
+            if (! $house) {
+                return back()->with('error', 'You do not have access to this house.');
+            }
+        }
+
+        $result = $this->houseService->restAtHome($request->user(), $house);
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Craft at home workshop.
+     */
+    public function craftAtWorkshop(Request $request): JsonResponse
+    {
+        $request->validate([
+            'recipe' => 'required|string',
+            'house_id' => 'nullable|integer',
+        ]);
+
+        $house = null;
+        if ($request->filled('house_id')) {
+            $house = $this->houseService->resolveHouseForVisitor($request->user(), $request->input('house_id'));
+            if (! $house) {
+                return response()->json(['success' => false, 'message' => 'You do not have access to this house.'], 403);
+            }
+        }
+
+        $result = $this->houseService->craftAtWorkshop(
+            $request->user(),
+            $request->input('recipe'),
+            $house,
+        );
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Craft at home forge.
+     */
+    public function craftAtForge(Request $request): JsonResponse
+    {
+        $request->validate([
+            'recipe' => 'required|string',
+            'house_id' => 'nullable|integer',
+        ]);
+
+        $house = null;
+        if ($request->filled('house_id')) {
+            $house = $this->houseService->resolveHouseForVisitor($request->user(), $request->input('house_id'));
+            if (! $house) {
+                return response()->json(['success' => false, 'message' => 'You do not have access to this house.'], 403);
+            }
+        }
+
+        $result = $this->houseService->craftAtForge(
+            $request->user(),
+            $request->input('recipe'),
+            $house,
+        );
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Pray at home chapel.
+     */
+    public function prayAtHome(Request $request): JsonResponse
+    {
+        $request->validate([
+            'house_id' => 'nullable|integer',
+        ]);
+
+        $house = null;
+        if ($request->filled('house_id')) {
+            $house = $this->houseService->resolveHouseForVisitor($request->user(), $request->input('house_id'));
+            if (! $house) {
+                return response()->json(['success' => false, 'message' => 'You do not have access to this house.'], 403);
+            }
+        }
+
+        $result = $this->houseService->prayAtHome($request->user(), $house);
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Use the restoration pool.
+     */
+    public function usePool(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'house_id' => 'nullable|integer',
+        ]);
+
+        $house = null;
+        if ($request->filled('house_id')) {
+            $house = $this->houseService->resolveHouseForVisitor($request->user(), $request->input('house_id'));
+            if (! $house) {
+                return back()->with('error', 'You do not have access to this house.');
+            }
+        }
+
+        $result = $this->houseService->usePool($request->user(), $house);
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Get servant tier info for the hire UI.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function getServantTierInfo(User $user): array
+    {
+        $level = $user->skills->where('skill_name', 'construction')->first()?->level ?? 1;
+        $house = PlayerHouse::where('player_id', $user->id)->first();
+
+        $hasQuarters = false;
+        $hasBed = false;
+        if ($house) {
+            $quarters = HouseRoom::where('player_house_id', $house->id)
+                ->where('room_type', 'servant_quarters')
+                ->first();
+            if ($quarters) {
+                $hasQuarters = true;
+                $hasBed = HouseFurniture::where('house_room_id', $quarters->id)
+                    ->where('hotspot_slug', 'bed')
+                    ->exists();
+            }
+        }
+
+        $tiers = [];
+        foreach (ConstructionConfig::SERVANT_TIERS as $key => $config) {
+            $reason = null;
+            $canHire = true;
+
+            if (! $hasQuarters) {
+                $canHire = false;
+                $reason = 'Build a Servant Quarters room first.';
+            } elseif (! $hasBed) {
+                $canHire = false;
+                $reason = 'Build a bed in Servant Quarters first.';
+            } elseif ($level < $config['level']) {
+                $canHire = false;
+                $reason = "Requires Construction level {$config['level']}.";
+            } elseif ($user->gold < $config['hire_cost']) {
+                $canHire = false;
+                $reason = 'Not enough gold.';
+            }
+
+            $tiers[] = [
+                'key' => $key,
+                'name' => $config['name'],
+                'level' => $config['level'],
+                'hire_cost' => $config['hire_cost'],
+                'weekly_wage' => $config['weekly_wage'],
+                'carry_capacity' => $config['carry_capacity'],
+                'base_speed' => $config['base_speed'],
+                'can_hire' => $canHire,
+                'reason' => $reason,
+            ];
+        }
+
+        return $tiers;
+    }
+
+    /**
+     * Format house data for the frontend.
+     */
+    protected function formatHouse($house): array
+    {
+        $tierConfig = ConstructionConfig::HOUSE_TIERS[$house->tier] ?? [];
+
+        return [
+            'id' => $house->id,
+            'name' => $house->name,
+            'tier' => $house->tier,
+            'tier_name' => $tierConfig['name'] ?? ucfirst($house->tier),
+            'condition' => $house->condition,
+            'grid_size' => $house->getGridSize(),
+            'max_rooms' => $house->getMaxRooms(),
+            'storage_capacity' => $house->getStorageCapacity(),
+            'storage_used' => $house->getStorageUsed(),
+            'location_type' => $house->location_type,
+            'location_id' => $house->location_id,
+            'kingdom' => $house->kingdom ? [
+                'id' => $house->kingdom->id,
+                'name' => $house->kingdom->name,
+            ] : null,
+            'rooms' => $house->rooms->map(fn ($room) => [
+                'id' => $room->id,
+                'room_type' => $room->room_type,
+                'room_name' => ConstructionConfig::ROOMS[$room->room_type]['name'] ?? ucfirst($room->room_type),
+                'grid_x' => $room->grid_x,
+                'grid_y' => $room->grid_y,
+                'hotspots' => $this->getHotspotData($room),
+            ])->toArray(),
+            'storage' => $house->storage->sortBy('slot_number')->map(fn ($s) => [
+                'item_name' => $s->item->name,
+                'item_type' => $s->item->type,
+                'item_subtype' => $s->item->subtype,
+                'item_rarity' => $s->item->rarity ?? 'common',
+                'item_description' => $s->item->description,
+                'quantity' => $s->quantity,
+                'slot_number' => $s->slot_number,
+            ])->values()->toArray(),
+        ];
+    }
+
+    /**
+     * Format house data for visitors (omits storage and hotspot options).
+     */
+    protected function formatHouseForVisitor($house): array
+    {
+        $tierConfig = ConstructionConfig::HOUSE_TIERS[$house->tier] ?? [];
+
+        return [
+            'id' => $house->id,
+            'name' => $house->name,
+            'tier' => $house->tier,
+            'tier_name' => $tierConfig['name'] ?? ucfirst($house->tier),
+            'condition' => $house->condition,
+            'grid_size' => $house->getGridSize(),
+            'max_rooms' => $house->getMaxRooms(),
+            'storage_capacity' => $house->getStorageCapacity(),
+            'storage_used' => $house->getStorageUsed(),
+            'kingdom' => $house->kingdom ? [
+                'id' => $house->kingdom->id,
+                'name' => $house->kingdom->name,
+            ] : null,
+            'rooms' => $house->rooms->map(fn ($room) => [
+                'id' => $room->id,
+                'room_type' => $room->room_type,
+                'room_name' => ConstructionConfig::ROOMS[$room->room_type]['name'] ?? ucfirst($room->room_type),
+                'grid_x' => $room->grid_x,
+                'grid_y' => $room->grid_y,
+                'hotspots' => $this->getHotspotDataForVisitor($room),
+            ])->toArray(),
+            'storage' => [],
+        ];
+    }
+
+    /**
+     * Get hotspot data for visitors (current furniture only, no options).
+     */
+    protected function getHotspotDataForVisitor($room): array
+    {
+        $roomConfig = ConstructionConfig::ROOMS[$room->room_type] ?? null;
+        if (! $roomConfig) {
+            return [];
+        }
+
+        $hotspots = [];
+        foreach ($roomConfig['hotspots'] as $slug => $hotspot) {
+            $currentFurniture = $room->furniture->where('hotspot_slug', $slug)->first();
+
+            $hotspots[$slug] = [
+                'name' => $hotspot['name'],
+                'current' => $currentFurniture ? [
+                    'key' => $currentFurniture->furniture_key,
+                    'name' => $hotspot['options'][$currentFurniture->furniture_key]['name'] ?? 'Unknown',
+                ] : null,
+                'options' => [],
+            ];
+        }
+
+        return $hotspots;
+    }
+
+    /**
+     * Get hotspot data for a room (with current furniture and available options).
+     */
+    protected function getHotspotData($room): array
+    {
+        $roomConfig = ConstructionConfig::ROOMS[$room->room_type] ?? null;
+        if (! $roomConfig) {
+            return [];
+        }
+
+        $hotspots = [];
+        foreach ($roomConfig['hotspots'] as $slug => $hotspot) {
+            $currentFurniture = $room->furniture->where('hotspot_slug', $slug)->first();
+
+            $hotspots[$slug] = [
+                'name' => $hotspot['name'],
+                'current' => $currentFurniture ? [
+                    'key' => $currentFurniture->furniture_key,
+                    'name' => $hotspot['options'][$currentFurniture->furniture_key]['name'] ?? 'Unknown',
+                ] : null,
+                'options' => collect($hotspot['options'])->map(fn ($opt, $key) => [
+                    'key' => $key,
+                    'name' => $opt['name'],
+                    'level' => $opt['level'],
+                    'materials' => $opt['materials'],
+                    'xp' => $opt['xp'],
+                    'effect' => $opt['effect'] ?? null,
+                ])->values()->toArray(),
+            ];
+        }
+
+        return $hotspots;
+    }
+
+    /**
+     * Get available room types the player can build.
+     */
+    protected function getAvailableRoomTypes($user): array
+    {
+        $level = $user->skills->where('skill_name', 'construction')->first()?->level ?? 1;
+        $rooms = [];
+
+        foreach (ConstructionConfig::ROOMS as $key => $config) {
+            $rooms[] = [
+                'key' => $key,
+                'name' => $config['name'],
+                'description' => $config['description'],
+                'level' => $config['level'],
+                'cost' => $config['cost'],
+                'is_unlocked' => $level >= $config['level'],
+                'hotspot_count' => count($config['hotspots']),
+            ];
+        }
+
+        return $rooms;
+    }
+
+    protected function getPlayerInventory(User $user): array
+    {
+        return $user->inventory()
+            ->where('quantity', '>', 0)
+            ->with('item:id,name,type,subtype,rarity,description')
+            ->orderBy('slot_number')
+            ->get()
+            ->map(fn ($inv) => [
+                'item_name' => $inv->item->name,
+                'quantity' => $inv->quantity,
+                'type' => $inv->item->type,
+                'subtype' => $inv->item->subtype,
+                'rarity' => $inv->item->rarity ?? 'common',
+                'description' => $inv->item->description,
+                'slot_number' => $inv->slot_number,
+            ])
+            ->values()
+            ->all();
+    }
+}

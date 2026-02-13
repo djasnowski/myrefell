@@ -193,7 +193,7 @@ test('reproduction service processes marriages', function () {
         'location_id' => 1,
     ]);
 
-    $service = new NpcReproductionService();
+    $service = new NpcReproductionService;
     $results = $service->processYearlyReproduction();
 
     expect($results['marriages'])->toBe(1);
@@ -213,7 +213,7 @@ test('reproduction service does not marry npcs from different locations', functi
         'location_id' => 2,
     ]);
 
-    $service = new NpcReproductionService();
+    $service = new NpcReproductionService;
     $results = $service->processYearlyReproduction();
 
     expect($results['marriages'])->toBe(0);
@@ -235,7 +235,7 @@ test('reproduction service creates children for married couples', function () {
     $husband->marry($wife);
 
     // Run reproduction multiple times to statistically get a child
-    $service = new NpcReproductionService();
+    $service = new NpcReproductionService;
     $totalBirths = 0;
     for ($i = 0; $i < 20; $i++) {
         // Reset cooldowns between iterations
@@ -279,7 +279,7 @@ test('child inherits family name from father', function () {
     ]);
     $husband->marry($wife);
 
-    $service = new NpcReproductionService();
+    $service = new NpcReproductionService;
 
     // Force a birth by calling the protected method via reflection
     $reflection = new ReflectionClass($service);
@@ -305,7 +305,7 @@ test('reproduction updates last birth year for both parents', function () {
     ]);
     $husband->marry($wife);
 
-    $service = new NpcReproductionService();
+    $service = new NpcReproductionService;
 
     // Force a birth
     $reflection = new ReflectionClass($service);
@@ -318,7 +318,7 @@ test('reproduction updates last birth year for both parents', function () {
 });
 
 test('reproduction service returns statistics', function () {
-    $service = new NpcReproductionService();
+    $service = new NpcReproductionService;
     $stats = $service->getReproductionStatistics();
 
     expect($stats)->toBeArray();
@@ -330,14 +330,15 @@ test('calendar service dispatches reproduction job on new year', function () {
     WorldState::factory()->create([
         'current_year' => 1,
         'current_season' => 'winter',
-        'current_week' => 12,
+        'current_week' => WorldState::WEEKS_PER_SEASON,
+        'current_day' => WorldState::DAYS_PER_WEEK,
     ]);
 
-    $service = new CalendarService();
+    $service = new CalendarService;
 
     \Illuminate\Support\Facades\Queue::fake();
 
-    $service->advanceWeek();
+    $service->advanceDay();
 
     $state = WorldState::current();
     expect($state->current_year)->toBe(2);
@@ -351,13 +352,14 @@ test('calendar service does not dispatch reproduction job on regular week advanc
         'current_year' => 1,
         'current_season' => 'spring',
         'current_week' => 5,
+        'current_day' => WorldState::DAYS_PER_WEEK,
     ]);
 
-    $service = new CalendarService();
+    $service = new CalendarService;
 
     \Illuminate\Support\Facades\Queue::fake();
 
-    $service->advanceWeek();
+    $service->advanceDay();
 
     \Illuminate\Support\Facades\Queue::assertNotPushed(\App\Jobs\ProcessNpcReproduction::class);
 });
@@ -385,7 +387,7 @@ test('couple does not exceed max children', function () {
     $wife->update(['last_birth_year' => null]);
 
     // Try to have more children
-    $service = new NpcReproductionService();
+    $service = new NpcReproductionService;
     $results = $service->processYearlyReproduction();
 
     // Should not have any new births

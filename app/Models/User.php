@@ -127,6 +127,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'energy' => 'integer',
             'max_energy' => 'integer',
             'last_rested_at' => 'datetime',
+            'last_pool_used_at' => 'datetime',
             'weeks_without_food' => 'integer',
             'gold' => 'integer',
             'title_tier' => 'integer',
@@ -370,6 +371,10 @@ class User extends Authenticatable implements MustVerifyEmail
         // Apply belief max HP bonus (Fortitude belief)
         $beliefService = app(BeliefEffectService::class);
         $maxHpBonus += (int) $beliefService->getEffect($this, 'max_hp_bonus');
+
+        // Apply house hearth max HP bonus
+        $houseBuffService = app(\App\Services\HouseBuffService::class);
+        $maxHpBonus += (int) ($houseBuffService->getHouseEffects($this)['max_hp_bonus'] ?? 0);
 
         return $baseHp + $maxHpBonus;
     }

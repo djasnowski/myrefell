@@ -148,6 +148,25 @@ class LocationServices
             'icon' => 'footprints',
             'route' => 'agility',
         ],
+        'sawmill' => [
+            'name' => 'Sawmill',
+            'description' => 'Convert logs into planks',
+            'icon' => 'axe',
+            'route' => 'sawmill',
+        ],
+        'construction' => [
+            'name' => 'Construction',
+            'description' => 'Take on building contracts',
+            'icon' => 'hammer',
+            'route' => 'construction',
+        ],
+        'house' => [
+            'name' => 'My House',
+            'description' => 'Manage your home',
+            'icon' => 'home',
+            'route' => 'house',
+            'requires_house' => true,
+        ],
     ];
 
     /**
@@ -173,6 +192,9 @@ class LocationServices
             'apothecary',
             'farming',
             'agility',
+            'sawmill',
+            'construction',
+            'house',     // Only if player has a house
         ],
         'town' => [
             'training',
@@ -194,6 +216,9 @@ class LocationServices
             'apothecary',
             'farming',
             'agility',
+            'sawmill',
+            'construction',
+            'house',     // Only if player has a house
         ],
         'barony' => [
             'training',
@@ -214,6 +239,9 @@ class LocationServices
             'taxes',
             'apothecary',
             'agility',
+            'sawmill',
+            'construction',
+            'house',
         ],
         'duchy' => [
             'training',
@@ -228,6 +256,8 @@ class LocationServices
             'thieving',
             'apothecary',
             'agility',
+            'construction',
+            'house',
         ],
         'kingdom' => [
             'training',
@@ -242,6 +272,8 @@ class LocationServices
             'tavern',
             'thieving',
             'apothecary',
+            'construction',
+            'house',
         ],
     ];
 

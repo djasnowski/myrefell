@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+    Anvil,
     Beef,
     BicepsFlexed,
     Crosshair,
@@ -51,10 +52,11 @@ const skillIcons: Record<string, LucideIcon> = {
     fishing: Fish,
     woodcutting: TreeDeciduous,
     cooking: Beef,
-    smithing: Hammer,
+    smithing: Anvil,
     crafting: Scissors,
     thieving: Hand,
     herblore: Leaf,
+    construction: Hammer,
 };
 
 const skillColors: Record<string, string> = {
@@ -73,6 +75,7 @@ const skillColors: Record<string, string> = {
     crafting: "text-violet-400",
     thieving: "text-purple-400",
     herblore: "text-emerald-400",
+    construction: "text-orange-400",
 };
 
 export default function LeaderboardModal({ onClose }: Props) {

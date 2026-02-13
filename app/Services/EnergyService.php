@@ -9,7 +9,8 @@ class EnergyService
 {
     public function __construct(
         protected BlessingEffectService $blessingEffectService,
-        protected BeliefEffectService $beliefEffectService
+        protected BeliefEffectService $beliefEffectService,
+        protected HouseBuffService $houseBuffService
     ) {}
 
     /**
@@ -113,6 +114,10 @@ class EnergyService
         // Apply belief energy regen bonus (Temperance belief)
         $energyRegenBonus += $this->beliefEffectService->getEffect($player, 'energy_regen_bonus');
 
+        // Apply house bed energy regen bonus
+        $houseEnergyBonus = $this->houseBuffService->getHouseEffects($player)['energy_regen_bonus'] ?? 0;
+        $energyRegenBonus += $houseEnergyBonus;
+
         if ($energyRegenBonus > 0) {
             $regenAmount = (int) ceil($regenAmount * (1 + $energyRegenBonus / 100));
         }
@@ -145,6 +150,10 @@ class EnergyService
 
             // Apply belief energy regen bonus (Temperance belief)
             $energyRegenBonus += $this->beliefEffectService->getEffect($player, 'energy_regen_bonus');
+
+            // Apply house bed energy regen bonus
+            $houseEnergyBonus = $this->houseBuffService->getHouseEffects($player)['energy_regen_bonus'] ?? 0;
+            $energyRegenBonus += $houseEnergyBonus;
 
             if ($energyRegenBonus > 0) {
                 $regenAmount = (int) ceil($regenAmount * (1 + $energyRegenBonus / 100));
@@ -215,8 +224,17 @@ class EnergyService
             ];
         }
 
+        // Apply house bed energy regen bonus (percentage)
+        $houseRegenBonus = $this->houseBuffService->getHouseEffects($player)['energy_regen_bonus'] ?? 0;
+        if ($houseRegenBonus > 0) {
+            $bonuses[] = [
+                'source' => 'House (Bed)',
+                'amount' => "+{$houseRegenBonus}%",
+            ];
+        }
+
         // Apply total percentage bonus
-        $totalPercentBonus = $blessingRegenBonus + $beliefRegenBonus;
+        $totalPercentBonus = $blessingRegenBonus + $beliefRegenBonus + $houseRegenBonus;
         if ($totalPercentBonus > 0) {
             $regenAmount = (int) ceil($regenAmount * (1 + $totalPercentBonus / 100));
         }

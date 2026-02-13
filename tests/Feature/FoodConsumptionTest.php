@@ -286,8 +286,12 @@ test('service can initialize village food supplies', function () {
 test('calendar service dispatches food consumption job on week advance', function () {
     \Illuminate\Support\Facades\Queue::fake();
 
+    // Set to last day of the week so advanceDay triggers week rollover
+    $state = \App\Models\WorldState::current();
+    $state->update(['current_day' => \App\Models\WorldState::DAYS_PER_WEEK]);
+
     $service = new CalendarService;
-    $service->advanceWeek();
+    $service->advanceDay();
 
     \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\ProcessFoodConsumption::class);
 });

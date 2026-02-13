@@ -25,12 +25,20 @@ class SkillBonusService
         'mining_yield_bonus' => 'mining',
         'woodcutting_yield_bonus' => 'woodcutting',
         'herblore_yield_bonus' => 'herblore',
+        'farming_yield_bonus' => 'farming',
 
         // XP bonuses
         'combat_xp_bonus' => ['attack', 'strength', 'defense', 'hitpoints'],
         'gathering_xp_bonus' => ['fishing', 'mining', 'woodcutting', 'herblore', 'farming'],
         'crafting_xp_bonus' => ['smithing', 'crafting', 'cooking'],
+        'smithing_xp_bonus' => 'smithing',
+        'cooking_xp_bonus' => 'cooking',
+        'prayer_xp_bonus' => 'prayer',
         'thieving_xp_bonus' => 'thieving',
+
+        // Flat bonuses
+        'prayer_bonus' => 'prayer',
+        'max_hp_bonus' => 'hitpoints',
 
         // Penalties
         'xp_penalty' => 'all',
@@ -49,7 +57,8 @@ class SkillBonusService
     ];
 
     public function __construct(
-        protected PotionBuffService $potionBuffService
+        protected PotionBuffService $potionBuffService,
+        protected HouseBuffService $houseBuffService
     ) {}
 
     /**
@@ -63,7 +72,7 @@ class SkillBonusService
         $allSkills = [
             'attack', 'strength', 'defense', 'hitpoints', 'range', 'prayer',
             'agility', 'thieving', 'farming', 'herblore', 'mining', 'fishing',
-            'woodcutting', 'cooking', 'smithing', 'crafting',
+            'woodcutting', 'cooking', 'smithing', 'crafting', 'construction',
         ];
 
         // Initialize all skills
@@ -86,6 +95,9 @@ class SkillBonusService
 
         // 4. Get potion buffs
         $this->addPotionBonuses($user, $bonuses);
+
+        // 5. Get house furniture buffs
+        $this->addHouseBuffBonuses($user, $bonuses);
 
         return $bonuses;
     }
@@ -300,6 +312,42 @@ class SkillBonusService
     }
 
     /**
+     * Add house furniture buff bonuses.
+     */
+    protected function addHouseBuffBonuses(User $user, array &$bonuses): void
+    {
+        $sources = $this->houseBuffService->getHouseBuffSources($user);
+
+        foreach ($sources as $source) {
+            $effectKey = $source['effect_key'];
+            $value = $source['value'];
+            $skills = $this->getSkillsForEffect($effectKey);
+
+            foreach ($skills as $skill) {
+                if (! isset($bonuses[$skill])) {
+                    continue;
+                }
+
+                $isPercent = $this->isPercentBonus($effectKey);
+
+                if ($isPercent) {
+                    $bonuses[$skill]['percent_bonus'] += $value;
+                } else {
+                    $bonuses[$skill]['flat_bonus'] += $value;
+                }
+
+                $bonuses[$skill]['sources'][] = [
+                    'source' => $source['source'],
+                    'type' => 'house',
+                    'value' => $value,
+                    'is_percent' => $isPercent,
+                    'effect' => $this->formatEffectName($effectKey),
+                ];
+            }
+        }
+    }
+
+    /**
      * Get skills affected by an effect key.
      *
      * @return string[]
@@ -316,7 +364,7 @@ class SkillBonusService
             return [
                 'attack', 'strength', 'defense', 'hitpoints', 'range', 'prayer',
                 'agility', 'thieving', 'farming', 'herblore', 'mining', 'fishing',
-                'woodcutting', 'cooking', 'smithing', 'crafting',
+                'woodcutting', 'cooking', 'smithing', 'crafting', 'construction',
             ];
         }
 
@@ -494,6 +542,27 @@ class SkillBonusService
             ];
         }
 
+        // 6. House furniture buffs (permanent while furniture exists)
+        $houseSources = $this->houseBuffService->getHouseBuffSources($user);
+        if (! empty($houseSources)) {
+            $houseEffects = [];
+            foreach ($houseSources as $source) {
+                $houseEffects[] = [
+                    'key' => $source['effect_key'],
+                    'value' => $source['value'],
+                    'label' => $this->formatEffectLabel($source['effect_key'], $source['value']),
+                ];
+            }
+
+            $buffs[] = [
+                'name' => 'House Furniture',
+                'type' => 'house',
+                'effects' => $houseEffects,
+                'expires_at' => null,
+                'minutes_remaining' => null,
+            ];
+        }
+
         return $buffs;
     }
 
@@ -529,6 +598,13 @@ class SkillBonusService
             'rare_drop_bonus' => 'Rare Drops',
             'energy_regen_bonus' => 'Energy Regen',
             'hp_regen_bonus' => 'HP Regen',
+            'smithing_xp_bonus' => 'Smithing XP',
+            'cooking_xp_bonus' => 'Cooking XP',
+            'prayer_xp_bonus' => 'Prayer XP',
+            'prayer_bonus' => 'Prayer',
+            'farming_yield_bonus' => 'Farming Yield',
+            'max_hp_bonus' => 'Max HP',
+            'smithing_speed_bonus' => 'Smithing Speed',
             'combat_hp_leech' => 'Life Steal',
             'first_strike_damage_bonus' => 'First Strike Damage',
             default => $this->formatEffectName($key),

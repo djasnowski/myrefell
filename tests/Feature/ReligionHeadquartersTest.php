@@ -49,13 +49,13 @@ beforeEach(function () {
 it('creates treasury and headquarters when cult is created', function () {
     $user = User::factory()->create(['gold' => 10000]);
 
-    $response = $this->actingAs($user)->postJson('/religions/create-cult', [
+    $response = $this->actingAs($user)->post('/religions/create-cult', [
         'name' => 'Test Cult',
         'description' => 'A test cult',
         'belief_ids' => [Belief::first()->id],
     ]);
 
-    $response->assertSuccessful();
+    $response->assertRedirect();
 
     $religion = Religion::where('name', 'Test Cult')->first();
     expect($religion)->not->toBeNull();

@@ -288,6 +288,7 @@ export default function Show({
     const [showBanForm, setShowBanForm] = useState(false);
     const [showUnbanForm, setShowUnbanForm] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [banError, setBanError] = useState("");
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Admin", href: "/admin" },
@@ -310,6 +311,7 @@ export default function Show({
 
     const handleBan = () => {
         if (!banReason.trim()) return;
+        setBanError("");
         setLoading(true);
         router.post(
             `/admin/users/${user.id}/ban`,
@@ -320,6 +322,9 @@ export default function Show({
                     router.reload();
                     setBanReason("");
                     setShowBanForm(false);
+                },
+                onError: (errors) => {
+                    setBanError(errors.reason || "Failed to ban user");
                 },
                 onFinish: () => setLoading(false),
             },
@@ -1594,18 +1599,26 @@ export default function Show({
                                                 Ban {user.username}
                                             </h4>
                                             <Textarea
-                                                placeholder="Reason for ban (required)..."
+                                                placeholder="Reason for ban (required, min 5 characters)..."
                                                 value={banReason}
-                                                onChange={(e) => setBanReason(e.target.value)}
+                                                onChange={(e) => {
+                                                    setBanReason(e.target.value);
+                                                    setBanError("");
+                                                }}
                                                 className="border-stone-700 bg-stone-900/50"
                                                 rows={3}
                                             />
+                                            {banError && (
+                                                <p className="text-sm text-red-400">{banError}</p>
+                                            )}
                                             <div className="flex gap-2">
                                                 <Button
                                                     variant="destructive"
                                                     size="sm"
                                                     onClick={handleBan}
-                                                    disabled={loading || !banReason.trim()}
+                                                    disabled={
+                                                        loading || banReason.trim().length < 5
+                                                    }
                                                 >
                                                     {loading ? "Banning..." : "Confirm Ban"}
                                                 </Button>
@@ -1615,6 +1628,7 @@ export default function Show({
                                                     onClick={() => {
                                                         setShowBanForm(false);
                                                         setBanReason("");
+                                                        setBanError("");
                                                     }}
                                                     className="border-stone-700"
                                                 >

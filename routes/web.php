@@ -52,7 +52,9 @@ use App\Http\Controllers\MarriageController;
 use App\Http\Controllers\MigrationController;
 use App\Http\Controllers\MinigameController;
 use App\Http\Controllers\NoConfidenceController;
+use App\Http\Controllers\PlayerConstructionController;
 use App\Http\Controllers\PlayerController;
+use App\Http\Controllers\PlayerHouseController;
 use App\Http\Controllers\PlayerProfileController;
 use App\Http\Controllers\PortController;
 use App\Http\Controllers\QuestController;
@@ -61,6 +63,7 @@ use App\Http\Controllers\ReligionController;
 use App\Http\Controllers\ReligionHeadquartersController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RoleStockingController;
+use App\Http\Controllers\SawmillController;
 use App\Http\Controllers\ServiceFavoriteController;
 use App\Http\Controllers\SiegeController;
 use App\Http\Controllers\SkillsController;
@@ -155,6 +158,9 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::class])->group(function () {
     // Impersonation routes
     Route::impersonate();
+
+    // Visit another player's house (requires auth)
+    Route::get('players/{username}/house', [PlayerHouseController::class, 'visitHouse'])->name('players.house');
 
     Route::get('dashboard', fn () => Inertia::render('dashboard', [
         'showTutorial' => auth()->user()->show_tutorial ?? false,
@@ -407,6 +413,10 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('cults/{religion}/hideout/upgrade', [CultHideoutController::class, 'startUpgrade'])->name('cults.hideout.upgrade');
         Route::post('cults/{religion}/hideout/projects/{project}/contribute', [CultHideoutController::class, 'contribute'])->name('cults.hideout.contribute');
         Route::post('cults/{religion}/hideout/projects/{project}/complete', [CultHideoutController::class, 'completeProject'])->name('cults.hideout.complete');
+        Route::get('sawmill', [SawmillController::class, 'index'])->name('sawmill');
+        Route::post('sawmill/convert', [SawmillController::class, 'convert'])->name('sawmill.convert');
+        Route::get('construction', [PlayerConstructionController::class, 'index'])->name('construction');
+        Route::post('construction/contract', [PlayerConstructionController::class, 'doContract'])->name('construction.contract');
     });
 
     // Location-scoped services: Towns
@@ -463,6 +473,10 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('cults/{religion}/hideout/upgrade', [CultHideoutController::class, 'startUpgrade'])->name('cults.hideout.upgrade');
         Route::post('cults/{religion}/hideout/projects/{project}/contribute', [CultHideoutController::class, 'contribute'])->name('cults.hideout.contribute');
         Route::post('cults/{religion}/hideout/projects/{project}/complete', [CultHideoutController::class, 'completeProject'])->name('cults.hideout.complete');
+        Route::get('sawmill', [SawmillController::class, 'index'])->name('sawmill');
+        Route::post('sawmill/convert', [SawmillController::class, 'convert'])->name('sawmill.convert');
+        Route::get('construction', [PlayerConstructionController::class, 'index'])->name('construction');
+        Route::post('construction/contract', [PlayerConstructionController::class, 'doContract'])->name('construction.contract');
     });
 
     // Location-scoped services: Baronies
@@ -509,6 +523,10 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('cults/{religion}/hideout/upgrade', [CultHideoutController::class, 'startUpgrade'])->name('cults.hideout.upgrade');
         Route::post('cults/{religion}/hideout/projects/{project}/contribute', [CultHideoutController::class, 'contribute'])->name('cults.hideout.contribute');
         Route::post('cults/{religion}/hideout/projects/{project}/complete', [CultHideoutController::class, 'completeProject'])->name('cults.hideout.complete');
+        Route::get('sawmill', [SawmillController::class, 'index'])->name('sawmill');
+        Route::post('sawmill/convert', [SawmillController::class, 'convert'])->name('sawmill.convert');
+        Route::get('construction', [PlayerConstructionController::class, 'index'])->name('construction');
+        Route::post('construction/contract', [PlayerConstructionController::class, 'doContract'])->name('construction.contract');
     });
 
     // Location-scoped services: Duchies
@@ -555,6 +573,8 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('cults/{religion}/hideout/upgrade', [CultHideoutController::class, 'startUpgrade'])->name('cults.hideout.upgrade');
         Route::post('cults/{religion}/hideout/projects/{project}/contribute', [CultHideoutController::class, 'contribute'])->name('cults.hideout.contribute');
         Route::post('cults/{religion}/hideout/projects/{project}/complete', [CultHideoutController::class, 'completeProject'])->name('cults.hideout.complete');
+        Route::get('construction', [PlayerConstructionController::class, 'index'])->name('construction');
+        Route::post('construction/contract', [PlayerConstructionController::class, 'doContract'])->name('construction.contract');
     });
 
     // Location-scoped services: Kingdoms
@@ -598,6 +618,8 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('cults/{religion}/hideout/upgrade', [CultHideoutController::class, 'startUpgrade'])->name('cults.hideout.upgrade');
         Route::post('cults/{religion}/hideout/projects/{project}/contribute', [CultHideoutController::class, 'contribute'])->name('cults.hideout.contribute');
         Route::post('cults/{religion}/hideout/projects/{project}/complete', [CultHideoutController::class, 'completeProject'])->name('cults.hideout.complete');
+        Route::get('construction', [PlayerConstructionController::class, 'index'])->name('construction');
+        Route::post('construction/contract', [PlayerConstructionController::class, 'doContract'])->name('construction.contract');
     });
 
     // Crafting Docket
@@ -903,6 +925,55 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
     Route::get('dynasty/succession', [SuccessionController::class, 'index'])->name('dynasty.succession');
     Route::put('dynasty/succession', [SuccessionController::class, 'update'])->name('dynasty.succession.update');
     Route::post('dynasty/succession/disinherit/{member}', [SuccessionController::class, 'disinherit'])->name('dynasty.succession.disinherit');
+
+    // Player House (view routes are location-scoped)
+    Route::get('villages/{village}/house', [PlayerHouseController::class, 'index'])->name('villages.house');
+    Route::get('towns/{town}/house', [PlayerHouseController::class, 'index'])->name('towns.house');
+    Route::get('baronies/{barony}/house', [PlayerHouseController::class, 'index'])->name('baronies.house');
+    Route::get('duchies/{duchy}/house', [PlayerHouseController::class, 'index'])->name('duchies.house');
+    Route::get('kingdoms/{kingdom}/house', [PlayerHouseController::class, 'index'])->name('kingdoms.house');
+
+    // Player House (actions are not location-scoped — they operate on the player's house)
+    Route::prefix('house')->name('house.')->group(function () {
+        Route::post('/purchase', [PlayerHouseController::class, 'purchase'])->name('purchase');
+        Route::post('/upgrade', [PlayerHouseController::class, 'upgrade'])->name('upgrade');
+        Route::post('/build-room', [PlayerHouseController::class, 'buildRoom'])->name('build-room');
+        Route::post('/build-furniture', [PlayerHouseController::class, 'buildFurniture'])->name('build-furniture');
+        Route::post('/demolish-furniture', [PlayerHouseController::class, 'demolishFurniture'])->name('demolish-furniture');
+        Route::post('/demolish-room', [PlayerHouseController::class, 'demolishRoom'])->name('demolish-room');
+        Route::post('/pay-upkeep', [PlayerHouseController::class, 'payUpkeep'])->name('pay-upkeep');
+        Route::post('/repair', [PlayerHouseController::class, 'repairHouse'])->name('repair');
+        Route::post('/deposit', [PlayerHouseController::class, 'deposit'])->name('deposit');
+        Route::post('/withdraw', [PlayerHouseController::class, 'withdraw'])->name('withdraw');
+        Route::post('/set-portal', [PlayerHouseController::class, 'setPortal'])->name('set-portal');
+        Route::post('/teleport', [PlayerHouseController::class, 'teleport'])->name('teleport');
+        Route::post('/trophy/mount', [PlayerHouseController::class, 'mountTrophy'])->name('trophy.mount');
+        Route::post('/trophy/remove', [PlayerHouseController::class, 'removeTrophy'])->name('trophy.remove');
+        Route::post('/servant/hire', [PlayerHouseController::class, 'hireServant'])->name('servant.hire');
+        Route::post('/servant/dismiss', [PlayerHouseController::class, 'dismissServant'])->name('servant.dismiss');
+        Route::post('/servant/assign-task', [PlayerHouseController::class, 'assignServantTask'])->name('servant.assign-task');
+        Route::post('/servant/cancel-task', [PlayerHouseController::class, 'cancelServantTask'])->name('servant.cancel-task');
+        Route::post('/servant/pay-wages', [PlayerHouseController::class, 'payServantWages'])->name('servant.pay-wages');
+        Route::post('/garden/plant', [PlayerHouseController::class, 'gardenPlant'])->name('garden.plant');
+        Route::post('/garden/water', [PlayerHouseController::class, 'gardenWater'])->name('garden.water');
+        Route::post('/garden/tend', [PlayerHouseController::class, 'gardenTend'])->name('garden.tend');
+        Route::post('/garden/harvest', [PlayerHouseController::class, 'gardenHarvest'])->name('garden.harvest');
+        Route::post('/garden/clear', [PlayerHouseController::class, 'gardenClear'])->name('garden.clear');
+        Route::post('/move-storage-slot', [PlayerHouseController::class, 'moveStorageSlot'])->name('move-storage-slot');
+        Route::post('/garden/compost', [PlayerHouseController::class, 'gardenCompost'])->name('garden.compost');
+        Route::post('/garden/use-compost', [PlayerHouseController::class, 'gardenUseCompost'])->name('garden.use-compost');
+        Route::post('/cook', [PlayerHouseController::class, 'cookAtHome'])->name('cook');
+        Route::post('/rest', [PlayerHouseController::class, 'restAtHome'])->name('rest');
+        Route::post('/workshop/craft', [PlayerHouseController::class, 'craftAtWorkshop'])->name('workshop.craft');
+        Route::post('/forge/craft', [PlayerHouseController::class, 'craftAtForge'])->name('forge.craft');
+        Route::post('/pray', [PlayerHouseController::class, 'prayAtHome'])->name('pray');
+        Route::post('/pool', [PlayerHouseController::class, 'usePool'])->name('pool');
+        Route::get('/visitors', [PlayerHouseController::class, 'getVisitors'])->name('visitors');
+        Route::post('/respond-entry', [PlayerHouseController::class, 'respondToEntry'])->name('respond-entry');
+        Route::post('/kick-all', [PlayerHouseController::class, 'kickAllVisitors'])->name('kick-all');
+        Route::get('/entry-status/{username}', [PlayerHouseController::class, 'getEntryStatus'])->name('entry-status');
+        Route::post('/cancel-entry', [PlayerHouseController::class, 'cancelEntry'])->name('cancel-entry');
+    });
 
     // Buildings
     Route::get('buildings', [BuildingController::class, 'index'])->name('buildings.index');

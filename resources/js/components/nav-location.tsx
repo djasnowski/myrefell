@@ -89,6 +89,9 @@ interface SidebarData {
     farm: FarmData | null;
     can_play_minigame?: boolean;
     infirmary: InfirmaryStatus | null;
+    has_house?: boolean;
+    house_url?: string;
+    house_entry_requests_count?: number;
 }
 
 interface NavItem {
@@ -128,8 +131,13 @@ const locationPaths: Record<string, string> = {
 };
 
 // Get player actions (always visible regardless of location)
-function getPlayerActions(canPlayMinigame?: boolean): NavItem[] {
-    return [
+function getPlayerActions(
+    canPlayMinigame?: boolean,
+    hasHouse?: boolean,
+    houseUrl?: string,
+    houseEntryRequestsCount?: number,
+): NavItem[] {
+    const actions: NavItem[] = [
         {
             title: "World Map",
             href: "/travel",
@@ -168,6 +176,18 @@ function getPlayerActions(canPlayMinigame?: boolean): NavItem[] {
             showDot: canPlayMinigame,
         },
     ];
+
+    if (hasHouse && houseUrl) {
+        actions.push({
+            title: "My House",
+            href: houseUrl,
+            icon: Home,
+            description: "Manage your home",
+            showDot: (houseEntryRequestsCount ?? 0) > 0,
+        });
+    }
+
+    return actions;
 }
 
 function formatTime(seconds: number): string {
@@ -344,8 +364,22 @@ export function NavLocation() {
 
     if (!sidebar) return null;
 
-    const { location, travel, nearby_destinations, can_play_minigame, infirmary } = sidebar;
-    const playerActions = getPlayerActions(can_play_minigame);
+    const {
+        location,
+        travel,
+        nearby_destinations,
+        can_play_minigame,
+        infirmary,
+        has_house,
+        house_url,
+        house_entry_requests_count,
+    } = sidebar;
+    const playerActions = getPlayerActions(
+        can_play_minigame,
+        has_house,
+        house_url,
+        house_entry_requests_count,
+    );
     const travelDestinations = nearby_destinations || [];
 
     const LocationIcon = location ? locationIcons[location.type] || MapPin : MapPin;

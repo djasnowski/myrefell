@@ -79,7 +79,7 @@ beforeEach(function () {
 });
 
 test('service can process weekly decay', function () {
-    $service = new ResourceDecayService();
+    $service = new ResourceDecayService;
     $results = $service->processWeeklyDecay();
 
     expect($results)->toHaveKeys([
@@ -102,7 +102,7 @@ test('perishable items decay in stockpiles', function () {
     $stockpile = LocationStockpile::getOrCreate('village', $village->id, $grainItem->id);
     $stockpile->addQuantity(100);
 
-    $service = new ResourceDecayService();
+    $service = new ResourceDecayService;
     $results = $service->processWeeklyDecay();
 
     $stockpile->refresh();
@@ -123,7 +123,7 @@ test('non-perishable items do not decay', function () {
     $stockpile = LocationStockpile::getOrCreate('village', $village->id, $ironOre->id);
     $stockpile->addQuantity(100);
 
-    $service = new ResourceDecayService();
+    $service = new ResourceDecayService;
     $service->processWeeklyDecay();
 
     $stockpile->refresh();
@@ -145,7 +145,7 @@ test('items spoil after specified weeks', function () {
     $stockpile->weeks_stored = 1; // One week away from spoiling
     $stockpile->save();
 
-    $service = new ResourceDecayService();
+    $service = new ResourceDecayService;
     $results = $service->processWeeklyDecay();
 
     // Raw trout should have spoiled and been converted to spoiled food
@@ -198,7 +198,7 @@ test('summer increases decay rate', function () {
     $stockpile = LocationStockpile::getOrCreate('village', $village->id, $testItem->id);
     $stockpile->addQuantity(100);
 
-    $service = new ResourceDecayService();
+    $service = new ResourceDecayService;
     $results = $service->processWeeklyDecay();
 
     $stockpile->refresh();
@@ -240,7 +240,7 @@ test('winter decreases decay rate', function () {
     $stockpile = LocationStockpile::getOrCreate('village', $village->id, $testItem->id);
     $stockpile->addQuantity(100);
 
-    $service = new ResourceDecayService();
+    $service = new ResourceDecayService;
     $results = $service->processWeeklyDecay();
 
     $stockpile->refresh();
@@ -263,7 +263,7 @@ test('player inventory items also decay', function () {
         'weeks_stored' => 0,
     ]);
 
-    $service = new ResourceDecayService();
+    $service = new ResourceDecayService;
     $results = $service->processWeeklyDecay();
 
     $slot->refresh();
@@ -286,7 +286,7 @@ test('player inventory items spoil after specified weeks', function () {
         'weeks_stored' => 1, // One week away from spoiling
     ]);
 
-    $service = new ResourceDecayService();
+    $service = new ResourceDecayService;
     $results = $service->processWeeklyDecay();
 
     // Slot should now contain spoiled food
@@ -308,7 +308,7 @@ test('items are destroyed when quantity reaches zero', function () {
     $stockpile = LocationStockpile::getOrCreate('village', $village->id, $grainItem->id);
     $stockpile->addQuantity(1); // Only 1 unit, will be destroyed by decay
 
-    $service = new ResourceDecayService();
+    $service = new ResourceDecayService;
     $results = $service->processWeeklyDecay();
 
     // Stockpile should be deleted
@@ -331,7 +331,7 @@ test('weeks stored counter increments', function () {
     $stockpile->addQuantity(100);
     expect($stockpile->weeks_stored)->toBe(0);
 
-    $service = new ResourceDecayService();
+    $service = new ResourceDecayService;
     $service->processWeeklyDecay();
 
     $stockpile->refresh();
@@ -355,7 +355,7 @@ test('service can get location decay stats', function () {
     $stockpile->weeks_stored = 1;
     $stockpile->save();
 
-    $service = new ResourceDecayService();
+    $service = new ResourceDecayService;
     $stats = $service->getLocationDecayStats('village', $village->id);
 
     expect($stats)->toHaveCount(1);
@@ -380,7 +380,7 @@ test('service can get player decay stats', function () {
         'weeks_stored' => 1,
     ]);
 
-    $service = new ResourceDecayService();
+    $service = new ResourceDecayService;
     $stats = $service->getPlayerDecayStats($user->id);
 
     expect($stats)->toHaveCount(1);
@@ -393,8 +393,12 @@ test('service can get player decay stats', function () {
 test('calendar service dispatches resource decay job on week advance', function () {
     \Illuminate\Support\Facades\Queue::fake();
 
-    $service = new CalendarService();
-    $service->advanceWeek();
+    // Set to last day of the week so advanceDay triggers week rollover
+    $state = \App\Models\WorldState::current();
+    $state->update(['current_day' => \App\Models\WorldState::DAYS_PER_WEEK]);
+
+    $service = new CalendarService;
+    $service->advanceDay();
 
     \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\ProcessResourceDecay::class);
 });
