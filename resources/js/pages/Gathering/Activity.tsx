@@ -160,7 +160,6 @@ export default function GatheringActivity() {
     const { activity, player_energy, max_energy, location } = usePage<PageProps>().props;
     const [currentEnergy, setCurrentEnergy] = useState(player_energy);
     const [selectedResource, setSelectedResource] = useState<string | null>(null);
-    const [queueXp, setQueueXp] = useState(0);
 
     const Icon = activityIcons[activity.id] || Pickaxe;
     const bgColor = activityBgColors[activity.id] || "from-stone-800 to-stone-900 border-stone-600";
@@ -199,7 +198,6 @@ export default function GatheringActivity() {
     }, []);
 
     const onQueueComplete = useCallback((stats: QueueStats) => {
-        setQueueXp(0);
         if (stats.completed === 0) return;
 
         if (stats.completed === 1 && stats.itemName) {
@@ -220,6 +218,16 @@ export default function GatheringActivity() {
         }
     }, []);
 
+    const buildActionParams = useCallback(
+        () => ({
+            activity: activity.id,
+            resource: selectedResource,
+            location_type: location.type,
+            location_id: location.id,
+        }),
+        [activity.id, selectedResource, location],
+    );
+
     const {
         startQueue,
         cancelQueue,
@@ -229,21 +237,17 @@ export default function GatheringActivity() {
         cooldown,
         performSingleAction,
         isGloballyLocked,
+        totalXp,
+        queueStartedAt,
     } = useActionQueue({
         url: gatherUrl,
         buildBody,
         cooldownMs: GATHER_COOLDOWN_MS,
-        onActionComplete: useCallback(
-            (data: ActionResult) => {
-                onActionComplete(data);
-                if (data.success) {
-                    setQueueXp((prev) => prev + (data.xp_awarded ?? 0));
-                }
-            },
-            [onActionComplete],
-        ),
+        onActionComplete,
         onQueueComplete,
         reloadProps: ["sidebar", "activity"],
+        actionType: "gather",
+        buildActionParams,
     });
 
     // Sync energy state when props change (from router.reload)
@@ -518,7 +522,8 @@ export default function GatheringActivity() {
                             disabled={!canGather || isGloballyLocked}
                             actionLabel={selectedResource ? `Gather ${selectedResource}` : "Gather"}
                             activeLabel="Gathering"
-                            totalXp={queueXp}
+                            totalXp={totalXp}
+                            startedAt={queueStartedAt}
                             buttonClassName="bg-amber-600 text-stone-900 hover:bg-amber-500"
                         />
                     </div>

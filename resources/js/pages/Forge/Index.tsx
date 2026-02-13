@@ -277,7 +277,6 @@ export default function ForgeIndex() {
     const { forge_info, location } = usePage<PageProps>().props;
     const [currentEnergy, setCurrentEnergy] = useState(forge_info.player_energy);
     const [selectedRecipe, setSelectedRecipe] = useState<string | null>(null);
-    const [queueXp, setQueueXp] = useState(0);
 
     const smeltUrl = location
         ? `${locationPath(location.type, location.id)}/forge/smelt`
@@ -292,7 +291,6 @@ export default function ForgeIndex() {
     }, []);
 
     const onQueueComplete = useCallback((stats: QueueStats) => {
-        setQueueXp(0);
         if (stats.completed === 0) return;
 
         if (stats.completed === 1 && stats.itemName) {
@@ -312,6 +310,15 @@ export default function ForgeIndex() {
         }
     }, []);
 
+    const buildActionParams = useCallback(
+        () => ({
+            recipe: selectedRecipe,
+            location_type: location?.type,
+            location_id: location?.id,
+        }),
+        [selectedRecipe, location],
+    );
+
     const {
         startQueue,
         cancelQueue,
@@ -321,21 +328,17 @@ export default function ForgeIndex() {
         cooldown,
         performSingleAction,
         isGloballyLocked,
+        totalXp,
+        queueStartedAt,
     } = useActionQueue({
         url: smeltUrl,
         buildBody,
         cooldownMs: SMELT_COOLDOWN_MS,
-        onActionComplete: useCallback(
-            (data: ActionResult) => {
-                onActionComplete(data);
-                if (data.success) {
-                    setQueueXp((prev) => prev + (data.xp_awarded ?? 0));
-                }
-            },
-            [onActionComplete],
-        ),
+        onActionComplete,
         onQueueComplete,
         reloadProps: ["forge_info", "sidebar"],
+        actionType: "smelt",
+        buildActionParams,
     });
 
     useEffect(() => {
@@ -651,7 +654,8 @@ export default function ForgeIndex() {
                             disabled={!effectiveSelected.can_make || isGloballyLocked}
                             actionLabel="Smelt"
                             activeLabel="Smelting"
-                            totalXp={queueXp}
+                            totalXp={totalXp}
+                            startedAt={queueStartedAt}
                             buttonClassName="bg-orange-600 text-stone-900 hover:bg-orange-500"
                         />
                     </div>

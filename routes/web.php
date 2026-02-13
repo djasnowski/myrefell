@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActionQueueController;
 use App\Http\Controllers\Admin\AppealController as AdminAppealController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DynastyController as AdminDynastyController;
@@ -187,6 +188,11 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
             'count' => app(\App\Services\OnlinePlayersService::class)->getOnlineCount(),
         ]);
     })->name('api.online-count');
+
+    // Action Queue (server-side)
+    Route::post('action-queue/start', [ActionQueueController::class, 'start'])->name('action-queue.start');
+    Route::post('action-queue/cancel', [ActionQueueController::class, 'cancel'])->name('action-queue.cancel');
+    Route::post('action-queue/dismiss', [ActionQueueController::class, 'dismiss'])->name('action-queue.dismiss');
 
     // Skills
     Route::get('skills', [SkillsController::class, 'index'])->name('skills.index');

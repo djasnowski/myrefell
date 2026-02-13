@@ -1,4 +1,5 @@
-import { Loader2, Repeat, Square } from "lucide-react";
+import { Clock, Loader2, Repeat, Square } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface ActionQueueControlsProps {
     isQueueActive: boolean;
@@ -15,9 +16,40 @@ interface ActionQueueControlsProps {
     totalXp?: number;
     buttonClassName?: string;
     disabledClassName?: string;
+    startedAt?: number | null;
 }
 
 const REPEAT_OPTIONS = [5, 10, 25] as const;
+
+function formatElapsed(ms: number): string {
+    const totalSeconds = Math.floor(ms / 1000);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    if (h > 0) {
+        return `${pad(h)}:${pad(m)}:${pad(s)}`;
+    }
+    return `${pad(m)}:${pad(s)}`;
+}
+
+function useElapsedTime(startedAt: number | null): string {
+    const [elapsed, setElapsed] = useState("");
+
+    useEffect(() => {
+        if (!startedAt) {
+            setElapsed("");
+            return;
+        }
+
+        const tick = () => setElapsed(formatElapsed(Date.now() - startedAt));
+        tick();
+        const interval = setInterval(tick, 1000);
+        return () => clearInterval(interval);
+    }, [startedAt]);
+
+    return elapsed;
+}
 
 export function ActionQueueControls({
     isQueueActive,
@@ -34,7 +66,10 @@ export function ActionQueueControls({
     totalXp = 0,
     buttonClassName = "bg-amber-600 text-stone-900 hover:bg-amber-500",
     disabledClassName = "cursor-not-allowed bg-stone-700 text-stone-500",
+    startedAt = null,
 }: ActionQueueControlsProps) {
+    const elapsed = useElapsedTime(isQueueActive ? startedAt : null);
+
     if (isQueueActive) {
         const isAll = queueProgress.total === Infinity;
         const progressText = isAll
@@ -75,11 +110,19 @@ export function ActionQueueControls({
                                 <span>{progressText}</span>
                             )}
                         </div>
-                        {totalXp > 0 && (
-                            <div className="font-pixel text-[10px] text-amber-400">
-                                +{totalXp.toLocaleString()} XP so far
-                            </div>
-                        )}
+                        <div className="flex items-center gap-3">
+                            {totalXp > 0 && (
+                                <span className="font-pixel text-[10px] text-amber-400">
+                                    +{totalXp.toLocaleString()} XP
+                                </span>
+                            )}
+                            {elapsed && (
+                                <span className="flex items-center gap-1 font-pixel text-[10px] text-stone-500">
+                                    <Clock className="h-2.5 w-2.5" />
+                                    {elapsed}
+                                </span>
+                            )}
+                        </div>
                     </div>
                     <button
                         onClick={onCancel}

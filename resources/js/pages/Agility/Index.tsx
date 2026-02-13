@@ -113,7 +113,6 @@ export default function AgilityIndex() {
     const [currentXpProgress, setCurrentXpProgress] = useState(agility_info.agility_xp_progress);
     const [currentXpToNext, setCurrentXpToNext] = useState(agility_info.agility_xp_to_next);
     const [selectedObstacle, setSelectedObstacle] = useState<string | null>(null);
-    const [queueXp, setQueueXp] = useState(0);
 
     const baseLocationUrl = location ? locationPath(location.type, location.id) : null;
     const trainUrl = baseLocationUrl ? `${baseLocationUrl}/agility/train` : "/agility/train";
@@ -136,7 +135,6 @@ export default function AgilityIndex() {
     }, []);
 
     const onQueueComplete = useCallback((stats: QueueStats) => {
-        setQueueXp(0);
         if (stats.completed === 0) return;
 
         if (stats.completed === 1) {
@@ -161,6 +159,15 @@ export default function AgilityIndex() {
         return data.success || data.failed === true;
     }, []);
 
+    const buildActionParams = useCallback(
+        () => ({
+            obstacle: selectedObstacle,
+            location_type: location?.type,
+            location_id: location?.id,
+        }),
+        [selectedObstacle, location],
+    );
+
     const {
         startQueue,
         cancelQueue,
@@ -170,20 +177,18 @@ export default function AgilityIndex() {
         cooldown,
         performSingleAction,
         isGloballyLocked,
+        totalXp,
+        queueStartedAt,
     } = useActionQueue({
         url: trainUrl,
         buildBody,
         cooldownMs: AGILITY_COOLDOWN_MS,
-        onActionComplete: useCallback(
-            (data: ActionResult) => {
-                onActionComplete(data);
-                setQueueXp((prev) => prev + (data.xp_awarded ?? 0));
-            },
-            [onActionComplete],
-        ),
+        onActionComplete,
         onQueueComplete,
         shouldContinue,
         reloadProps: ["sidebar", "agility_info"],
+        actionType: "agility",
+        buildActionParams,
     });
 
     // Sync state from props
@@ -355,7 +360,8 @@ export default function AgilityIndex() {
                                                         disabled={!canTrain || isGloballyLocked}
                                                         actionLabel="Attempt"
                                                         activeLabel="Attempting"
-                                                        totalXp={queueXp}
+                                                        totalXp={totalXp}
+                                                        startedAt={queueStartedAt}
                                                         buttonClassName={`${colors.button} bg-stone-800/80 hover:bg-stone-700/80`}
                                                     />
                                                 ) : !obstacle.is_unlocked ? (

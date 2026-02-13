@@ -1,4 +1,4 @@
-import { router } from "@inertiajs/react";
+import { router, usePage } from "@inertiajs/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface ActionResult {
@@ -26,6 +26,20 @@ export interface QueueStats {
     stopReason?: string;
 }
 
+export interface ServerQueueData {
+    id: number;
+    action_type: string;
+    status: "active" | "completed" | "cancelled" | "failed";
+    total: number;
+    completed: number;
+    total_xp: number;
+    total_quantity: number;
+    item_name: string | null;
+    last_level_up: { skill: string; level: number } | null;
+    stop_reason: string | null;
+    created_at: string | null;
+}
+
 export interface UseActionQueueOptions {
     url: string;
     buildBody: () => Record<string, unknown>;
@@ -34,6 +48,10 @@ export interface UseActionQueueOptions {
     onQueueComplete: (stats: QueueStats) => void;
     shouldContinue?: (data: ActionResult) => boolean;
     reloadProps?: string[];
+    /** Server-side queue action type (craft, smelt, gather, train, agility) */
+    actionType: string;
+    /** Function that builds the action_params for the server-side queue */
+    buildActionParams: () => Record<string, unknown>;
 }
 
 export interface UseActionQueueReturn {
@@ -45,6 +63,8 @@ export interface UseActionQueueReturn {
     cooldown: number;
     performSingleAction: () => void;
     isGloballyLocked: boolean;
+    totalXp: number;
+    queueStartedAt: number | null;
 }
 
 // Global lock — only one queue can run at a time across all pages
@@ -75,6 +95,8 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
         onQueueComplete,
         shouldContinue = (data) => data.success,
         reloadProps = ["sidebar"],
+        actionType,
+        buildActionParams,
     } = options;
 
     // Unique identity for this hook instance (stable across renders)
@@ -84,6 +106,8 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
     const [queueProgress, setQueueProgress] = useState({ completed: 0, total: 0 });
     const [isActionLoading, setIsActionLoading] = useState(false);
     const [cooldown, setCooldown] = useState(0);
+    const [totalXp, setTotalXp] = useState(0);
+    const [queueStartedAt, setQueueStartedAt] = useState<number | null>(null);
 
     const cooldownTimer = useRef<NodeJS.Timeout | null>(null);
     const cooldownStart = useRef<number>(0);
@@ -97,6 +121,13 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
     });
     const isQueueActiveRef = useRef(false);
     const queueTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const serverQueueIdRef = useRef<number | null>(null);
+
+    // Track whether we're in "server mode" (multi-action) or "client mode" (single action)
+    const isServerModeRef = useRef(false);
+    // Track the last known completed count to detect progress
+    const lastCompletedRef = useRef(0);
 
     // Refs for latest option values (avoids stale closures)
     const urlRef = useRef(url);
@@ -106,6 +137,8 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
     const shouldContinueRef = useRef(shouldContinue);
     const reloadPropsRef = useRef(reloadProps);
     const cooldownMsRef = useRef(cooldownMs);
+    const actionTypeRef = useRef(actionType);
+    const buildActionParamsRef = useRef(buildActionParams);
 
     useEffect(() => {
         urlRef.current = url;
@@ -128,6 +161,18 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
     useEffect(() => {
         cooldownMsRef.current = cooldownMs;
     }, [cooldownMs]);
+    useEffect(() => {
+        actionTypeRef.current = actionType;
+    }, [actionType]);
+    useEffect(() => {
+        buildActionParamsRef.current = buildActionParams;
+    }, [buildActionParams]);
+
+    // Read server queue data from sidebar props
+    const page = usePage<{
+        sidebar?: { action_queue?: ServerQueueData | null };
+    }>();
+    const serverQueue = page.props.sidebar?.action_queue ?? null;
 
     const cleanup = useCallback(() => {
         if (cooldownTimer.current) {
@@ -138,6 +183,10 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
             clearTimeout(queueTimeoutRef.current);
             queueTimeoutRef.current = null;
         }
+        if (pollTimerRef.current) {
+            clearInterval(pollTimerRef.current);
+            pollTimerRef.current = null;
+        }
     }, []);
 
     useEffect(() => {
@@ -146,6 +195,8 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
             cleanup();
             cancelledRef.current = true;
             isQueueActiveRef.current = false;
+            isServerModeRef.current = false;
+            serverQueueIdRef.current = null;
             if (globalQueueOwner === owner) {
                 globalQueueOwner = null;
             }
@@ -169,48 +220,204 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
         }, 50);
     }, []);
 
-    const finishQueue = useCallback(
-        (cancelled: boolean, stopReason?: string) => {
-            const stats = { ...statsRef.current, cancelled, stopReason };
-            setIsQueueActive(false);
-            isQueueActiveRef.current = false;
-            setIsActionLoading(false);
-            if (globalQueueOwner === ownerRef.current) {
-                globalQueueOwner = null;
+    const finishQueue = useCallback((cancelled: boolean, stopReason?: string) => {
+        const stats = { ...statsRef.current, cancelled, stopReason };
+        setIsQueueActive(false);
+        isQueueActiveRef.current = false;
+        isServerModeRef.current = false;
+        serverQueueIdRef.current = null;
+        setIsActionLoading(false);
+        setTotalXp(0);
+        setQueueStartedAt(null);
+        if (globalQueueOwner === ownerRef.current) {
+            globalQueueOwner = null;
+        }
+        // Clean up queue/poll timers but preserve cooldown timer
+        if (queueTimeoutRef.current) {
+            clearTimeout(queueTimeoutRef.current);
+            queueTimeoutRef.current = null;
+        }
+        if (pollTimerRef.current) {
+            clearInterval(pollTimerRef.current);
+            pollTimerRef.current = null;
+        }
+
+        // Send browser notification if queue had multiple actions
+        if (stats.total > 1 || stats.total === Infinity || stats.total === 0) {
+            const qty = stats.totalQuantity > 0 ? `${stats.totalQuantity}x ` : "";
+            const itemPart = stats.itemName
+                ? `${qty}${stats.itemName}`
+                : `${stats.completed} actions`;
+
+            if (stopReason) {
+                sendBrowserNotification(
+                    "Queue stopped",
+                    `Completed ${itemPart} (+${stats.totalXp.toLocaleString()} XP). ${stopReason}`,
+                );
+            } else if (cancelled) {
+                sendBrowserNotification(
+                    "Queue cancelled",
+                    `Completed ${itemPart} (+${stats.totalXp.toLocaleString()} XP)`,
+                );
+            } else {
+                sendBrowserNotification(
+                    "Queue finished",
+                    `Completed ${itemPart} (+${stats.totalXp.toLocaleString()} XP)`,
+                );
             }
-            cleanup();
+        }
 
-            // Send browser notification if queue had multiple actions
-            if (stats.total > 1 || stats.total === Infinity) {
-                const qty = stats.totalQuantity > 0 ? `${stats.totalQuantity}x ` : "";
-                const itemPart = stats.itemName
-                    ? `${qty}${stats.itemName}`
-                    : `${stats.completed} actions`;
+        // Reload fresh data
+        router.reload({ only: reloadPropsRef.current });
+        onQueueCompleteRef.current(stats);
+    }, []);
 
-                if (stopReason) {
-                    sendBrowserNotification(
-                        "Queue stopped",
-                        `Completed ${itemPart} (+${stats.totalXp.toLocaleString()} XP). ${stopReason}`,
-                    );
-                } else if (cancelled) {
-                    sendBrowserNotification(
-                        "Queue cancelled",
-                        `Completed ${itemPart} (+${stats.totalXp.toLocaleString()} XP)`,
-                    );
-                } else {
-                    sendBrowserNotification(
-                        "Queue finished",
-                        `Completed ${itemPart} (+${stats.totalXp.toLocaleString()} XP)`,
-                    );
+    // ============================================================
+    // Server-side queue: monitor via sidebar polling
+    // ============================================================
+
+    const startPolling = useCallback(() => {
+        if (pollTimerRef.current) {
+            clearInterval(pollTimerRef.current);
+        }
+        pollTimerRef.current = setInterval(() => {
+            router.reload({ only: ["sidebar"] });
+        }, 3000);
+    }, []);
+
+    // React to sidebar action_queue changes when in server mode
+    useEffect(() => {
+        if (!isServerModeRef.current || !serverQueue) {
+            return;
+        }
+
+        // Only track the queue we started
+        if (serverQueueIdRef.current !== null && serverQueue.id !== serverQueueIdRef.current) {
+            return;
+        }
+
+        // Update progress (total=0 on server means infinite)
+        setQueueProgress({
+            completed: serverQueue.completed,
+            total: serverQueue.total === 0 ? Infinity : serverQueue.total,
+        });
+        setTotalXp(serverQueue.total_xp);
+
+        // Update stats ref
+        statsRef.current = {
+            completed: serverQueue.completed,
+            total: serverQueue.total === 0 ? Infinity : serverQueue.total,
+            totalXp: serverQueue.total_xp,
+            totalQuantity: serverQueue.total_quantity,
+            itemName: serverQueue.item_name ?? undefined,
+            lastLevelUp: serverQueue.last_level_up ?? undefined,
+            cancelled: false,
+        };
+
+        // Check if queue finished
+        if (serverQueue.status !== "active") {
+            const isCancelled = serverQueue.status === "cancelled";
+            const stopReason = serverQueue.stop_reason ?? undefined;
+
+            // Auto-dismiss the completed queue
+            fetch("/action-queue/dismiss", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": getCsrfToken(),
+                },
+                body: JSON.stringify({ queue_id: serverQueue.id }),
+            });
+
+            finishQueue(isCancelled, stopReason);
+        }
+    }, [serverQueue, finishQueue]);
+
+    // On mount, check if there's already an active server queue (page reload scenario)
+    useEffect(() => {
+        if (serverQueue && serverQueue.status === "active" && !isQueueActiveRef.current) {
+            // Resume tracking this queue
+            globalQueueOwner = ownerRef.current;
+            isServerModeRef.current = true;
+            isQueueActiveRef.current = true;
+            serverQueueIdRef.current = serverQueue.id;
+            lastCompletedRef.current = serverQueue.completed;
+            setIsQueueActive(true);
+            setQueueProgress({
+                completed: serverQueue.completed,
+                total: serverQueue.total === 0 ? Infinity : serverQueue.total,
+            });
+            setTotalXp(serverQueue.total_xp);
+            setQueueStartedAt(
+                serverQueue.created_at ? new Date(serverQueue.created_at).getTime() : Date.now(),
+            );
+            statsRef.current = {
+                completed: serverQueue.completed,
+                total: serverQueue.total === 0 ? Infinity : serverQueue.total,
+                totalXp: serverQueue.total_xp,
+                totalQuantity: serverQueue.total_quantity,
+                itemName: serverQueue.item_name ?? undefined,
+                lastLevelUp: serverQueue.last_level_up ?? undefined,
+                cancelled: false,
+            };
+            startPolling();
+        }
+        // Only run on mount
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const startServerQueue = useCallback(
+        async (count: number) => {
+            setIsActionLoading(true);
+
+            try {
+                const params = buildActionParamsRef.current();
+                const response = await fetch("/action-queue/start", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": getCsrfToken(),
+                    },
+                    body: JSON.stringify({
+                        action_type: actionTypeRef.current,
+                        action_params: params,
+                        total: count === Infinity ? 0 : count,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    setIsActionLoading(false);
+                    finishQueue(false, data.message);
+                    return;
                 }
-            }
 
-            // Reload fresh data
-            router.reload({ only: reloadPropsRef.current });
-            onQueueCompleteRef.current(stats);
+                // Store the queue ID so we track the right one
+                if (data.queue) {
+                    serverQueueIdRef.current = data.queue.id;
+                }
+
+                isServerModeRef.current = true;
+                lastCompletedRef.current = 0;
+                setIsActionLoading(false);
+
+                // Start polling for updates
+                startPolling();
+
+                // Reload sidebar immediately to pick up new queue
+                router.reload({ only: ["sidebar"] });
+            } catch {
+                setIsActionLoading(false);
+                finishQueue(false, "Failed to start queue.");
+            }
         },
-        [cleanup],
+        [finishQueue, startPolling],
     );
+
+    // ============================================================
+    // Client-side single action (unchanged from original)
+    // ============================================================
 
     const executeAction = useCallback(async () => {
         if (cancelledRef.current || !isQueueActiveRef.current) {
@@ -268,12 +475,13 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
                     completed: statsRef.current.completed,
                     total: statsRef.current.total,
                 });
+                setTotalXp(statsRef.current.totalXp);
             }
 
             setIsActionLoading(false);
 
             // Reload sidebar after each action so energy bar stays in sync
-            router.reload({ only: ["sidebar"] });
+            router.reload({ only: reloadPropsRef.current });
 
             // Check if queue should stop
             if (
@@ -282,6 +490,8 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
                 !isQueueActiveRef.current ||
                 statsRef.current.completed >= statsRef.current.total
             ) {
+                // Start cooldown even after finishing so button stays disabled briefly
+                startCooldownTimer();
                 finishQueue(cancelledRef.current, failureMessage);
                 return;
             }
@@ -296,6 +506,10 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
             finishQueue(false);
         }
     }, [finishQueue, startCooldownTimer]);
+
+    // ============================================================
+    // Public interface
+    // ============================================================
 
     const startQueue = useCallback(
         (count: number) => {
@@ -318,16 +532,41 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
             };
             setIsQueueActive(true);
             setQueueProgress({ completed: 0, total: count });
-            executeAction();
+            setTotalXp(0);
+            setQueueStartedAt(Date.now());
+
+            if (count === 1) {
+                // Single action: client-side for instant feedback
+                isServerModeRef.current = false;
+                executeAction();
+            } else {
+                // Multi-action: dispatch to server
+                startServerQueue(count);
+            }
         },
-        [executeAction],
+        [executeAction, startServerQueue],
     );
 
     const cancelQueue = useCallback(() => {
-        cancelledRef.current = true;
-        isQueueActiveRef.current = false;
-        cleanup();
-        finishQueue(true);
+        if (isServerModeRef.current) {
+            // Cancel the server-side queue
+            fetch("/action-queue/cancel", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": getCsrfToken(),
+                },
+            }).then(() => {
+                router.reload({ only: ["sidebar"] });
+            });
+            // The sidebar update will trigger finishQueue via the useEffect
+        } else {
+            // Cancel the client-side queue
+            cancelledRef.current = true;
+            isQueueActiveRef.current = false;
+            cleanup();
+            finishQueue(true);
+        }
     }, [cleanup, finishQueue]);
 
     const performSingleAction = useCallback(() => {
@@ -343,5 +582,7 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
         cooldown,
         performSingleAction,
         isGloballyLocked: !!globalQueueOwner && globalQueueOwner !== ownerRef.current,
+        queueStartedAt,
+        totalXp,
     };
 }

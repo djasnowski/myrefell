@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\ActionQueueService;
 use App\Services\BeliefEffectService;
 use App\Services\BlessingEffectService;
 use App\Services\CalendarService;
@@ -36,7 +37,8 @@ class HandleInertiaRequests extends Middleware
         protected PotionBuffService $potionBuffService,
         protected SkillBonusService $skillBonusService,
         protected CalendarService $calendarService,
-        protected HouseBuffService $houseBuffService
+        protected HouseBuffService $houseBuffService,
+        protected ActionQueueService $actionQueueService
     ) {}
 
     /**
@@ -189,6 +191,7 @@ class HandleInertiaRequests extends Middleware
             'has_house' => \App\Models\PlayerHouse::where('player_id', $player->id)->exists(),
             'house_url' => \App\Models\PlayerHouse::where('player_id', $player->id)->first()?->getHouseUrl(),
             'house_entry_requests_count' => $this->getHouseEntryRequestsCount($player),
+            'action_queue' => $this->getActionQueueData($player),
         ];
     }
 
@@ -208,6 +211,32 @@ class HandleInertiaRequests extends Middleware
         }
 
         return $count;
+    }
+
+    /**
+     * Get the latest action queue data for display in the UI.
+     */
+    protected function getActionQueueData($player): ?array
+    {
+        $queue = $this->actionQueueService->getLatestQueue($player);
+
+        if (! $queue) {
+            return null;
+        }
+
+        return [
+            'id' => $queue->id,
+            'action_type' => $queue->action_type,
+            'status' => $queue->status,
+            'total' => $queue->total,
+            'completed' => $queue->completed,
+            'total_xp' => $queue->total_xp,
+            'total_quantity' => $queue->total_quantity,
+            'item_name' => $queue->item_name,
+            'last_level_up' => $queue->last_level_up,
+            'stop_reason' => $queue->stop_reason,
+            'created_at' => $queue->created_at?->toISOString(),
+        ];
     }
 
     /**

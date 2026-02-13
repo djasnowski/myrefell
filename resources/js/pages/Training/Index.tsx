@@ -106,7 +106,6 @@ export default function TrainingIndex() {
     const [currentStats, setCurrentStats] = useState(combat_stats);
     const [currentHp, setCurrentHp] = useState(player_hp);
     const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
-    const [queueXp, setQueueXp] = useState(0);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -123,7 +122,6 @@ export default function TrainingIndex() {
 
     const onQueueComplete = useCallback(
         (stats: QueueStats) => {
-            setQueueXp(0);
             if (stats.completed === 0) return;
 
             const skillName = stats.lastLevelUp?.skill ?? selectedExercise ?? "Combat";
@@ -148,6 +146,13 @@ export default function TrainingIndex() {
         [selectedExercise],
     );
 
+    const buildActionParams = useCallback(
+        () => ({
+            exercise: selectedExercise,
+        }),
+        [selectedExercise],
+    );
+
     const {
         startQueue,
         cancelQueue,
@@ -157,21 +162,17 @@ export default function TrainingIndex() {
         cooldown,
         performSingleAction,
         isGloballyLocked,
+        totalXp,
+        queueStartedAt,
     } = useActionQueue({
         url: "/training/train",
         buildBody,
         cooldownMs: TRAIN_COOLDOWN_MS,
-        onActionComplete: useCallback(
-            (data: ActionResult) => {
-                onActionComplete(data);
-                if (data.success) {
-                    setQueueXp((prev) => prev + (data.xp_awarded ?? 0));
-                }
-            },
-            [onActionComplete],
-        ),
+        onActionComplete,
         onQueueComplete,
         reloadProps: ["sidebar", "player_hp", "exercises", "combat_stats"],
+        actionType: "train",
+        buildActionParams,
     });
 
     // Sync state when props change
@@ -378,7 +379,8 @@ export default function TrainingIndex() {
                                                         disabled={!canTrain || isGloballyLocked}
                                                         actionLabel="Train"
                                                         activeLabel="Training"
-                                                        totalXp={queueXp}
+                                                        totalXp={totalXp}
+                                                        startedAt={queueStartedAt}
                                                         buttonClassName={`${colors.border} bg-stone-800/80 hover:bg-stone-700/80 ${colors.text}`}
                                                     />
                                                 )}
