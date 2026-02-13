@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PlayerHouse;
 use App\Models\PlayerSkill;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -85,7 +84,6 @@ class PlayerProfileController extends Controller
                 'total_level' => $totalLevel,
                 'total_xp' => $totalXp,
                 'total_rank' => $totalRank,
-                'has_house' => PlayerHouse::where('player_id', $player->id)->exists(),
             ],
             'skills' => $skills,
         ]);

@@ -91,35 +91,6 @@ test('unauthenticated user is redirected to login', function () {
         ->assertRedirect('/login');
 });
 
-test('profile shows visit house link when player has house', function () {
-    $kingdom = Kingdom::factory()->create();
-    $player = User::factory()->create();
-    PlayerHouse::create([
-        'player_id' => $player->id,
-        'name' => 'Test House',
-        'tier' => 'cottage',
-        'condition' => 100,
-        'upkeep_due_at' => now()->addDays(7),
-        'kingdom_id' => $kingdom->id,
-    ]);
-
-    $this->get("/players/{$player->username}")
-        ->assertSuccessful()
-        ->assertInertia(fn ($page) => $page
-            ->where('player.has_house', true)
-        );
-});
-
-test('profile hides visit house link when no house', function () {
-    $player = User::factory()->create();
-
-    $this->get("/players/{$player->username}")
-        ->assertSuccessful()
-        ->assertInertia(fn ($page) => $page
-            ->where('player.has_house', false)
-        );
-});
-
 test('village page shows houses at that location', function () {
     $kingdom = Kingdom::factory()->create();
     $village = Village::factory()->create();
