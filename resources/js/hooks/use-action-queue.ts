@@ -281,7 +281,7 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
             clearInterval(pollTimerRef.current);
         }
         pollTimerRef.current = setInterval(() => {
-            router.reload({ only: ["sidebar"] });
+            router.reload({ only: reloadPropsRef.current });
         }, 3000);
     }, []);
 
