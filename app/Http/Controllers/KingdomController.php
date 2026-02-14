@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Config\ConstructionConfig;
 use App\Models\Kingdom;
 use App\Models\MigrationRequest;
+use App\Models\NoConfidenceVote;
 use App\Models\PlayerHouse;
 use App\Models\PlayerRole;
 use App\Models\Role;
@@ -160,6 +161,13 @@ class KingdomController extends Controller
             ->pending()
             ->exists();
 
+        // Get active no-confidence vote
+        $activeNoConfidenceVote = NoConfidenceVote::where('domain_type', 'kingdom')
+            ->where('domain_id', $kingdom->id)
+            ->whereIn('status', [NoConfidenceVote::STATUS_PENDING, NoConfidenceVote::STATUS_OPEN])
+            ->with('targetPlayer:id,username')
+            ->first();
+
         return Inertia::render('kingdoms/show', [
             'kingdom' => [
                 'id' => $kingdom->id,
@@ -191,6 +199,19 @@ class KingdomController extends Controller
             ...$migrationService->getMigrationCooldownInfo($user),
             'has_pending_request' => $hasPendingRequest,
             'houses' => $houses,
+            'active_no_confidence_vote' => $activeNoConfidenceVote ? [
+                'id' => $activeNoConfidenceVote->id,
+                'target_role' => $activeNoConfidenceVote->target_role,
+                'target_player' => [
+                    'id' => $activeNoConfidenceVote->targetPlayer->id,
+                    'username' => $activeNoConfidenceVote->targetPlayer->username,
+                ],
+                'status' => $activeNoConfidenceVote->status,
+                'voting_ends_at' => $activeNoConfidenceVote->voting_ends_at?->toIso8601String(),
+                'votes_for' => $activeNoConfidenceVote->votes_for,
+                'votes_against' => $activeNoConfidenceVote->votes_against,
+                'quorum_required' => $activeNoConfidenceVote->quorum_required,
+            ] : null,
         ]);
     }
 

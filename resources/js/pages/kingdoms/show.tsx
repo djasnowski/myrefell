@@ -36,6 +36,7 @@ import {
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RulerDisplay } from "@/components/ui/legitimacy-badge";
+import NoConfidenceBanner from "@/components/widgets/no-confidence-banner";
 import AppLayout from "@/layouts/app-layout";
 import type { BreadcrumbItem } from "@/types";
 
@@ -112,6 +113,16 @@ interface Props {
     cooldown_remaining: string | null;
     has_pending_request: boolean;
     houses?: HouseEntry[];
+    active_no_confidence_vote?: {
+        id: number;
+        target_role: string;
+        target_player: { id: number; username: string };
+        status: string;
+        voting_ends_at: string | null;
+        votes_for: number;
+        votes_against: number;
+        quorum_required: number;
+    } | null;
 }
 
 const biomeConfig: Record<string, { icon: LucideIcon; color: string; bg: string; border: string }> =
@@ -315,6 +326,7 @@ export default function KingdomShow({
     cooldown_remaining,
     has_pending_request,
     houses = [],
+    active_no_confidence_vote,
 }: Props) {
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
     const [loading, setLoading] = useState(false);
@@ -400,6 +412,11 @@ export default function KingdomShow({
                     <div className="rounded-lg border border-red-600/50 bg-red-900/20 px-4 py-3">
                         <p className="font-pixel text-sm text-red-300">{flash.error}</p>
                     </div>
+                )}
+
+                {/* No-Confidence Vote Banner */}
+                {active_no_confidence_vote && (
+                    <NoConfidenceBanner vote={active_no_confidence_vote} />
                 )}
 
                 {/* Stats Row */}

@@ -33,6 +33,7 @@ import {
 import { useState } from "react";
 import { ServicesGrid } from "@/components/service-card";
 import DisasterWidget from "@/components/widgets/disaster-widget";
+import NoConfidenceBanner from "@/components/widgets/no-confidence-banner";
 import { LegitimacyDisplay } from "@/components/widgets/legitimacy-badge";
 import AppLayout from "@/layouts/app-layout";
 import type { BreadcrumbItem } from "@/types";
@@ -136,6 +137,16 @@ interface Props {
     disasters?: Disaster[];
     pending_migrations?: PendingMigration[];
     houses?: HouseEntry[];
+    active_no_confidence_vote?: {
+        id: number;
+        target_role: string;
+        target_player: { id: number; username: string };
+        status: string;
+        voting_ends_at: string | null;
+        votes_for: number;
+        votes_against: number;
+        quorum_required: number;
+    } | null;
 }
 
 const biomeConfig: Record<string, { icon: LucideIcon; color: string; bg: string; border: string }> =
@@ -211,6 +222,7 @@ export default function TownShow({
     disasters = [],
     pending_migrations = [],
     houses = [],
+    active_no_confidence_vote,
 }: Props) {
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
     const [loading, setLoading] = useState(false);
@@ -364,6 +376,11 @@ export default function TownShow({
                         ) : null}
                     </div>
                 </div>
+
+                {/* No-Confidence Vote Banner */}
+                {active_no_confidence_vote && (
+                    <NoConfidenceBanner vote={active_no_confidence_vote} />
+                )}
 
                 {/* Mayor Actions */}
                 {is_mayor && (

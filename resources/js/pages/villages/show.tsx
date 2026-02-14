@@ -24,6 +24,7 @@ import { useState } from "react";
 import { ActivityFeed } from "@/components/activity-feed";
 import { ServicesGrid } from "@/components/service-card";
 import DisasterWidget from "@/components/widgets/disaster-widget";
+import NoConfidenceBanner from "@/components/widgets/no-confidence-banner";
 import { LegitimacyDisplay } from "@/components/widgets/legitimacy-badge";
 import AppLayout from "@/layouts/app-layout";
 import type { BreadcrumbItem } from "@/types";
@@ -123,6 +124,16 @@ interface Props {
     disasters?: Disaster[];
     pending_migration_requests?: number;
     houses?: HouseEntry[];
+    active_no_confidence_vote?: {
+        id: number;
+        target_role: string;
+        target_player: { id: number; username: string };
+        status: string;
+        voting_ends_at: string | null;
+        votes_for: number;
+        votes_against: number;
+        quorum_required: number;
+    } | null;
     flash?: {
         success?: string;
         error?: string;
@@ -199,6 +210,7 @@ export default function VillageShow({
     disasters = [],
     pending_migration_requests = 0,
     houses = [],
+    active_no_confidence_vote,
 }: Props) {
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
     const [loading, setLoading] = useState(false);
@@ -317,6 +329,11 @@ export default function VillageShow({
                     <div className="rounded-lg border border-red-600/50 bg-red-900/20 px-4 py-3">
                         <p className="font-pixel text-sm text-red-300">{flash.error}</p>
                     </div>
+                )}
+
+                {/* No-Confidence Vote Banner */}
+                {active_no_confidence_vote && (
+                    <NoConfidenceBanner vote={active_no_confidence_vote} />
                 )}
 
                 {/* Pending Migration Requests */}

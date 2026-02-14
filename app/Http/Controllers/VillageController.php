@@ -7,6 +7,7 @@ use App\Config\LocationServices;
 use App\Models\Disaster;
 use App\Models\LocationActivityLog;
 use App\Models\MigrationRequest;
+use App\Models\NoConfidenceVote;
 use App\Models\PlayerHouse;
 use App\Models\PlayerRole;
 use App\Models\Role;
@@ -94,6 +95,13 @@ class VillageController extends Controller
         // Get recent activity at this location
         $recentActivity = $this->getRecentActivity($village);
 
+        // Get active no-confidence vote
+        $activeNoConfidenceVote = NoConfidenceVote::where('domain_type', 'village')
+            ->where('domain_id', $village->id)
+            ->whereIn('status', [NoConfidenceVote::STATUS_PENDING, NoConfidenceVote::STATUS_OPEN])
+            ->with('targetPlayer:id,username')
+            ->first();
+
         return Inertia::render('villages/show', [
             'village' => [
                 'id' => $village->id,
@@ -143,6 +151,19 @@ class VillageController extends Controller
             'disasters' => $this->getActiveDisasters($village),
             'pending_migration_requests' => $pendingMigrationRequests,
             'houses' => $houses,
+            'active_no_confidence_vote' => $activeNoConfidenceVote ? [
+                'id' => $activeNoConfidenceVote->id,
+                'target_role' => $activeNoConfidenceVote->target_role,
+                'target_player' => [
+                    'id' => $activeNoConfidenceVote->targetPlayer->id,
+                    'username' => $activeNoConfidenceVote->targetPlayer->username,
+                ],
+                'status' => $activeNoConfidenceVote->status,
+                'voting_ends_at' => $activeNoConfidenceVote->voting_ends_at?->toIso8601String(),
+                'votes_for' => $activeNoConfidenceVote->votes_for,
+                'votes_against' => $activeNoConfidenceVote->votes_against,
+                'quorum_required' => $activeNoConfidenceVote->quorum_required,
+            ] : null,
         ]);
     }
 

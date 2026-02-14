@@ -12,6 +12,7 @@ import {
     Croissant,
     Crown,
     Fish,
+    Flag,
     Gavel,
     Heart,
     Hop,
@@ -644,6 +645,7 @@ function RoleModal({
     userResidesHere,
     userIsHere,
     locationType,
+    locationId,
     onClose,
     onResign,
     onClaim,
@@ -659,6 +661,7 @@ function RoleModal({
     userResidesHere: boolean;
     userIsHere: boolean;
     locationType: string;
+    locationId: number;
     onClose: () => void;
     onResign: (playerRoleId: number) => void;
     onClaim: (roleId: number) => void;
@@ -673,9 +676,11 @@ function RoleModal({
     const canClaim =
         role.is_vacant && canSelfAppoint && userResidesHere && userIsHere && !isUserRole;
     const willReplaceRole = canClaim && currentUserRole !== undefined;
-    // Can challenge if: has a holder, user is at location, user is a resident, not the holder, and not king
+    // Can challenge if: has a holder, user is at location, user is a resident, not the holder, and not an elected role
     const canChallenge =
-        role.holder && !isCurrentUser && userIsHere && userResidesHere && role.slug !== "king";
+        role.holder && !isCurrentUser && userIsHere && userResidesHere && !role.is_elected;
+    // Can start no-confidence vote if: elected role, has a holder, not the holder, user resides here
+    const canNoConfidence = role.is_elected && role.holder && !isCurrentUser && userResidesHere;
     const locationLabel = locationType.charAt(0).toUpperCase() + locationType.slice(1);
     const consequences = roleConsequences[role.slug] || {
         duties: [],
@@ -885,6 +890,27 @@ function RoleModal({
                             Challenge
                         </button>
                     )}
+                    {canNoConfidence && (
+                        <button
+                            onClick={() => {
+                                router.post(
+                                    `/${locationType}s/${locationId}/no-confidence`,
+                                    { role: role.slug },
+                                    {
+                                        preserveScroll: true,
+                                        onSuccess: () => {
+                                            router.reload();
+                                            onClose();
+                                        },
+                                    },
+                                );
+                            }}
+                            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-red-600/50 bg-red-900/30 px-4 py-2 font-pixel text-xs text-red-300 hover:bg-red-800/40"
+                        >
+                            <Flag className="h-4 w-4" />
+                            Start No-Confidence Vote
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
@@ -1085,6 +1111,7 @@ export default function RolesIndex() {
                     userResidesHere={user_resides_here}
                     userIsHere={user_is_here}
                     locationType={location_type}
+                    locationId={location_id}
                     onClose={() => setSelectedRole(null)}
                     onResign={handleResign}
                     onClaim={handleClaim}

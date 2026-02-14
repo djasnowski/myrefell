@@ -35,11 +35,11 @@ class RolePetitionService
 
         $role = $targetPlayerRole->role;
 
-        // Cannot petition against King (use no-confidence vote)
-        if ($role->slug === 'king') {
+        // Cannot petition against elected/authority roles (use election instead)
+        if ($role->is_elected) {
             return [
                 'success' => false,
-                'message' => 'You cannot petition against the King. Use a no-confidence vote instead.',
+                'message' => 'Elected officials cannot be challenged via petition. Start an election instead.',
             ];
         }
 
