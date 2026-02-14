@@ -93,6 +93,8 @@ class ItemSeeder extends Seeder
                 $multiplier = $tierData['multiplier'];
                 $isStackable = $itemData['stackable'] ?? false;
 
+                $outputQty = $itemData['output_qty'] ?? 1;
+
                 $item = [
                     'name' => "{$metal} {$itemName}",
                     'description' => $this->generateDescription($metal, $itemName, $itemData['type']),
@@ -101,7 +103,7 @@ class ItemSeeder extends Seeder
                     'rarity' => $tierData['rarity'],
                     'stackable' => $isStackable,
                     'required_level' => $level,
-                    'base_value' => $this->calculateValue($tierData['bar_value'], $itemData['bars'], $multiplier),
+                    'base_value' => (int) round($this->calculateValue($tierData['bar_value'], $itemData['bars'], $multiplier) / $outputQty),
                 ];
 
                 if ($isStackable) {
