@@ -25,11 +25,12 @@ interface PageProps {
     playerGold: number;
     location?: Location;
     flash?: { success?: string; error?: string };
+    errors?: Record<string, string>;
     [key: string]: unknown;
 }
 
 export default function SawmillIndex() {
-    const { recipes, playerGold, location, flash } = usePage<PageProps>().props;
+    const { recipes, playerGold, location, flash, errors } = usePage<PageProps>().props;
     const [quantities, setQuantities] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState<string | null>(null);
 
@@ -41,6 +42,13 @@ export default function SawmillIndex() {
             gameToast.error(flash.error);
         }
     }, [flash]);
+
+    useEffect(() => {
+        if (errors && Object.keys(errors).length > 0) {
+            const firstError = Object.values(errors)[0];
+            gameToast.error(firstError);
+        }
+    }, [errors]);
 
     const baseUrl = location ? locationPath(location.type, location.id) : "";
 
@@ -140,7 +148,7 @@ export default function SawmillIndex() {
                                         <input
                                             type="number"
                                             min={1}
-                                            max={recipe.player_logs}
+                                            max={Math.min(recipe.player_logs, 500)}
                                             value={qty}
                                             onChange={(e) =>
                                                 setQuantities((prev) => ({

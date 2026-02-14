@@ -48,7 +48,7 @@ class SawmillController extends Controller
     {
         $request->validate([
             'plank_name' => 'required|string',
-            'quantity' => 'required|integer|min:1|max:100',
+            'quantity' => 'required|integer|min:1|max:500',
         ]);
 
         $result = $this->sawmillService->makePlanks(

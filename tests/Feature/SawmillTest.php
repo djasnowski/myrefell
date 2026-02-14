@@ -105,3 +105,42 @@ test('post convert route works', function () {
         ])
         ->assertRedirect();
 });
+
+test('can convert more than 100 logs at once', function () {
+    $user = User::factory()->create(['gold' => 100000]);
+    $inventoryService = app(InventoryService::class);
+
+    $wood = Item::where('name', 'Wood')->first();
+    $inventoryService->addItem($user, $wood, 200);
+
+    $service = app(SawmillService::class);
+    $result = $service->makePlanks($user, 'Plank', 150);
+
+    expect($result['success'])->toBeTrue();
+    expect($result['planks_made'])->toBe(150);
+
+    $user->refresh();
+    expect($inventoryService->countItem($user, $wood))->toBe(50);
+    expect($inventoryService->countItem($user, Item::where('name', 'Plank')->first()))->toBe(150);
+});
+
+test('post convert route accepts more than 100 quantity', function () {
+    $village = Village::factory()->create();
+    $user = User::factory()->create([
+        'current_location_type' => 'village',
+        'current_location_id' => $village->id,
+        'gold' => 100000,
+    ]);
+
+    $inventoryService = app(InventoryService::class);
+    $wood = Item::where('name', 'Wood')->first();
+    $inventoryService->addItem($user, $wood, 200);
+
+    $this->actingAs($user)
+        ->post("/villages/{$village->id}/sawmill/convert", [
+            'plank_name' => 'Plank',
+            'quantity' => 150,
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('success');
+});
