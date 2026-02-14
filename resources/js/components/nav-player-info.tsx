@@ -215,154 +215,156 @@ export function NavPlayerInfo() {
     }
 
     return (
-        <div className="rounded-lg border border-sidebar-border bg-sidebar-accent/50 p-3">
-            {/* Player Name & Level */}
-            <div className="mb-2 flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                    <div className="truncate font-pixel text-sm text-sidebar-accent-foreground">
-                        {player.username}
+        <div className="space-y-2">
+            <div className="rounded-lg border border-sidebar-border bg-sidebar-accent/50 p-3">
+                {/* Player Name & Level */}
+                <div className="mb-2 flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                        <div className="truncate font-pixel text-sm text-sidebar-accent-foreground">
+                            {player.username}
+                        </div>
+                        <div className="font-pixel text-[10px] text-sidebar-foreground/60">
+                            {titleDisplay}
+                        </div>
                     </div>
-                    <div className="font-pixel text-[10px] text-sidebar-foreground/60">
-                        {titleDisplay}
+                    <div className="ml-2 flex-shrink-0 rounded bg-sidebar-primary/20 px-2 py-0.5 font-pixel text-xs text-sidebar-primary">
+                        Lv.{player.combat_level}
                     </div>
                 </div>
-                <div className="ml-2 flex-shrink-0 rounded bg-sidebar-primary/20 px-2 py-0.5 font-pixel text-xs text-sidebar-primary">
-                    Lv.{player.combat_level}
-                </div>
-            </div>
 
-            {/* HP */}
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <div className="mb-1 cursor-help">
-                            <div className="mb-0.5 flex items-center justify-between">
-                                <span className="flex items-center gap-1">
-                                    <span className="text-xs">❤️</span>
-                                    <span className="font-pixel text-[10px] text-sidebar-foreground/80">
-                                        HP
-                                    </span>
-                                </span>
-                                <span className="font-pixel text-[10px] text-sidebar-foreground/60">
-                                    {player.hp}/
-                                    {player.hp_bonuses.length > 0 ? (
-                                        <span className="text-green-400">{player.max_hp}</span>
-                                    ) : (
-                                        player.max_hp
-                                    )}
-                                    {player.hp_bonuses.length > 0 && (
-                                        <span className="text-green-400 ml-0.5">
-                                            (+{player.max_hp - player.base_max_hp})
-                                        </span>
-                                    )}
-                                </span>
-                            </div>
-                            <StatBar
-                                current={player.hp}
-                                max={player.max_hp}
-                                color="bg-gradient-to-r from-red-700 to-red-500"
-                            />
-                        </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="bg-stone-900 border-stone-700">
-                        <div className="font-pixel text-xs">
-                            <div className="text-stone-300 mb-1">Max HP Breakdown</div>
-                            <div className="text-stone-400">
-                                Base (Hitpoints Lv): {player.base_max_hp}
-                            </div>
-                            {player.hp_bonuses.map((bonus, i) => (
-                                <div key={i} className="text-green-400">
-                                    {bonus.source}: +{bonus.amount}
-                                </div>
-                            ))}
-                            <div className="border-t border-stone-700 mt-1 pt-1 text-stone-200">
-                                Total: {player.max_hp}
-                            </div>
-                        </div>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
-
-            {/* Energy */}
-            {energy_info.regen_bonuses.length > 0 ? (
+                {/* HP */}
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <div className="mb-2 cursor-help">
+                            <div className="mb-1 cursor-help">
                                 <div className="mb-0.5 flex items-center justify-between">
                                     <span className="flex items-center gap-1">
-                                        <span className="text-xs">⚡</span>
+                                        <span className="text-xs">❤️</span>
                                         <span className="font-pixel text-[10px] text-sidebar-foreground/80">
-                                            Energy
+                                            HP
                                         </span>
                                     </span>
                                     <span className="font-pixel text-[10px] text-sidebar-foreground/60">
-                                        {energy_info.current}/{energy_info.max}
+                                        {player.hp}/
+                                        {player.hp_bonuses.length > 0 ? (
+                                            <span className="text-green-400">{player.max_hp}</span>
+                                        ) : (
+                                            player.max_hp
+                                        )}
+                                        {player.hp_bonuses.length > 0 && (
+                                            <span className="text-green-400 ml-0.5">
+                                                (+{player.max_hp - player.base_max_hp})
+                                            </span>
+                                        )}
                                     </span>
                                 </div>
                                 <StatBar
-                                    current={energy_info.current}
-                                    max={energy_info.max}
-                                    color="bg-gradient-to-r from-yellow-600 to-yellow-400"
+                                    current={player.hp}
+                                    max={player.max_hp}
+                                    color="bg-gradient-to-r from-red-700 to-red-500"
                                 />
-                                {!energy_info.at_max && (
-                                    <div className="mt-0.5 text-right">
-                                        <EnergyTimer
-                                            key={energy_info.seconds_until_next}
-                                            secondsUntilNext={energy_info.seconds_until_next}
-                                            regenAmount={energy_info.regen_amount}
-                                        />
-                                    </div>
-                                )}
                             </div>
                         </TooltipTrigger>
                         <TooltipContent side="right" className="bg-stone-900 border-stone-700">
                             <div className="font-pixel text-xs">
-                                <div className="text-stone-300 mb-1">Energy Regen Bonuses</div>
+                                <div className="text-stone-300 mb-1">Max HP Breakdown</div>
                                 <div className="text-stone-400">
-                                    Base: +{energy_info.base_regen_amount}
+                                    Base (Hitpoints Lv): {player.base_max_hp}
                                 </div>
-                                {energy_info.regen_bonuses.map((bonus, i) => (
+                                {player.hp_bonuses.map((bonus, i) => (
                                     <div key={i} className="text-green-400">
-                                        {bonus.source}: {bonus.amount}
+                                        {bonus.source}: +{bonus.amount}
                                     </div>
                                 ))}
                                 <div className="border-t border-stone-700 mt-1 pt-1 text-stone-200">
-                                    Total: +{energy_info.regen_amount}
+                                    Total: {player.max_hp}
                                 </div>
                             </div>
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
-            ) : (
-                <div className="mb-2">
-                    <div className="mb-0.5 flex items-center justify-between">
-                        <span className="flex items-center gap-1">
-                            <span className="text-xs">⚡</span>
-                            <span className="font-pixel text-[10px] text-sidebar-foreground/80">
-                                Energy
+
+                {/* Energy */}
+                {energy_info.regen_bonuses.length > 0 ? (
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="cursor-help">
+                                    <div className="mb-0.5 flex items-center justify-between">
+                                        <span className="flex items-center gap-1">
+                                            <span className="text-xs">⚡</span>
+                                            <span className="font-pixel text-[10px] text-sidebar-foreground/80">
+                                                Energy
+                                            </span>
+                                        </span>
+                                        <span className="font-pixel text-[10px] text-sidebar-foreground/60">
+                                            {energy_info.current}/{energy_info.max}
+                                        </span>
+                                    </div>
+                                    <StatBar
+                                        current={energy_info.current}
+                                        max={energy_info.max}
+                                        color="bg-gradient-to-r from-yellow-600 to-yellow-400"
+                                    />
+                                    {!energy_info.at_max && (
+                                        <div className="mt-0.5 text-right">
+                                            <EnergyTimer
+                                                key={energy_info.seconds_until_next}
+                                                secondsUntilNext={energy_info.seconds_until_next}
+                                                regenAmount={energy_info.regen_amount}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" className="bg-stone-900 border-stone-700">
+                                <div className="font-pixel text-xs">
+                                    <div className="text-stone-300 mb-1">Energy Regen Bonuses</div>
+                                    <div className="text-stone-400">
+                                        Base: +{energy_info.base_regen_amount}
+                                    </div>
+                                    {energy_info.regen_bonuses.map((bonus, i) => (
+                                        <div key={i} className="text-green-400">
+                                            {bonus.source}: {bonus.amount}
+                                        </div>
+                                    ))}
+                                    <div className="border-t border-stone-700 mt-1 pt-1 text-stone-200">
+                                        Total: +{energy_info.regen_amount}
+                                    </div>
+                                </div>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                ) : (
+                    <div>
+                        <div className="mb-0.5 flex items-center justify-between">
+                            <span className="flex items-center gap-1">
+                                <span className="text-xs">⚡</span>
+                                <span className="font-pixel text-[10px] text-sidebar-foreground/80">
+                                    Energy
+                                </span>
                             </span>
-                        </span>
-                        <span className="font-pixel text-[10px] text-sidebar-foreground/60">
-                            {energy_info.current}/{energy_info.max}
-                        </span>
-                    </div>
-                    <StatBar
-                        current={energy_info.current}
-                        max={energy_info.max}
-                        color="bg-gradient-to-r from-yellow-600 to-yellow-400"
-                    />
-                    {!energy_info.at_max && (
-                        <div className="mt-0.5 text-right">
-                            <EnergyTimer
-                                key={energy_info.seconds_until_next}
-                                secondsUntilNext={energy_info.seconds_until_next}
-                                regenAmount={energy_info.regen_amount}
-                            />
+                            <span className="font-pixel text-[10px] text-sidebar-foreground/60">
+                                {energy_info.current}/{energy_info.max}
+                            </span>
                         </div>
-                    )}
-                </div>
-            )}
+                        <StatBar
+                            current={energy_info.current}
+                            max={energy_info.max}
+                            color="bg-gradient-to-r from-yellow-600 to-yellow-400"
+                        />
+                        {!energy_info.at_max && (
+                            <div className="mt-0.5 text-right">
+                                <EnergyTimer
+                                    key={energy_info.seconds_until_next}
+                                    secondsUntilNext={energy_info.seconds_until_next}
+                                    regenAmount={energy_info.regen_amount}
+                                />
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
 
             {/* Gold */}
             <div className="flex items-center justify-center gap-1.5 rounded border border-amber-600/30 bg-amber-900/20 py-1.5">
@@ -374,7 +376,7 @@ export function NavPlayerInfo() {
 
             {/* Active Buffs (blessings, beliefs, potions) */}
             {active_buffs && active_buffs.length > 0 && (
-                <div className="mt-2 rounded border border-violet-600/30 bg-violet-900/20 px-2 py-1.5">
+                <div className="rounded border border-violet-600/30 bg-violet-900/20 px-2 py-1.5">
                     <div className="mb-1 flex items-center gap-1">
                         <LucideIcons.Sparkles className="h-3 w-3 text-violet-400" />
                         <span className="font-pixel text-[9px] text-violet-300">
@@ -487,7 +489,7 @@ export function NavPlayerInfo() {
 
             {/* Role & Job */}
             {(player.role || player.job) && (
-                <div className="mt-2 space-y-1">
+                <div className="space-y-1">
                     {player.role &&
                         (() => {
                             const RoleIcon =

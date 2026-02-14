@@ -45,19 +45,13 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                {/* Player Info Card */}
-                <div className="px-2 py-2">
+                <div className="space-y-2 px-2 pt-2">
+                    {/* Player Info Card */}
                     <NavPlayerInfo />
-                </div>
 
-                <SidebarSeparator />
-
-                {/* Calendar / World Time */}
-                <div className="px-2 py-1">
+                    {/* Calendar / World Time */}
                     <NavCalendar />
                 </div>
-
-                <SidebarSeparator />
 
                 {/* Location-aware Navigation */}
                 <NavLocation />
