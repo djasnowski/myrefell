@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Barony;
 use App\Models\Kingdom;
+use App\Models\LocationActivityLog;
 use App\Models\LocationTreasury;
 use App\Models\PlayerRole;
 use App\Models\Role;
@@ -165,6 +166,7 @@ class TaxService
     {
         $playersTaxed = 0;
         $totalCollected = 0;
+        $locationTotals = []; // Track totals per location for activity logging
 
         // Get all players with gold who have a home location
         User::where('gold', '>', 0)
@@ -173,7 +175,7 @@ class TaxService
                     ->orWhereNotNull('home_location_type');
             })
             ->with(['homeVillage.barony'])
-            ->chunk(100, function ($users) use ($taxPeriod, &$playersTaxed, &$totalCollected) {
+            ->chunk(100, function ($users) use ($taxPeriod, &$playersTaxed, &$totalCollected, &$locationTotals) {
                 foreach ($users as $user) {
                     // Determine home location type and ID
                     $locationType = null;
@@ -222,10 +224,35 @@ class TaxService
                         'tax_period' => $taxPeriod,
                     ]);
 
+                    // Track totals per location
+                    $locationKey = "{$locationType}:{$locationId}";
+                    if (! isset($locationTotals[$locationKey])) {
+                        $locationTotals[$locationKey] = [
+                            'type' => $locationType,
+                            'id' => $locationId,
+                            'amount' => 0,
+                            'count' => 0,
+                        ];
+                    }
+                    $locationTotals[$locationKey]['amount'] += $taxAmount;
+                    $locationTotals[$locationKey]['count']++;
+
                     $playersTaxed++;
                     $totalCollected += $taxAmount;
                 }
             });
+
+        // Log tax collection events per location
+        foreach ($locationTotals as $data) {
+            LocationActivityLog::logSystemEvent(
+                $data['type'],
+                $data['id'],
+                LocationActivityLog::TYPE_TAX_COLLECTION,
+                "Collected {$data['amount']}g in taxes from {$data['count']} residents",
+                null,
+                ['amount' => $data['amount'], 'residents_taxed' => $data['count']]
+            );
+        }
 
         return [
             'players_taxed' => $playersTaxed,
@@ -297,6 +324,16 @@ class TaxService
                             'tax_period' => $taxPeriod,
                         ]);
 
+                        // Log upstream tax event at the town
+                        LocationActivityLog::logSystemEvent(
+                            'town',
+                            $town->id,
+                            LocationActivityLog::TYPE_UPSTREAM_TAX,
+                            "Paid {$taxAmount}g upstream tax to {$barony->name}",
+                            null,
+                            ['amount' => $taxAmount, 'receiver' => $barony->name]
+                        );
+
                         $totalCollected += $taxAmount;
                     }
                 });
@@ -365,6 +402,19 @@ class TaxService
                             'tax_period' => $taxPeriod,
                         ]);
 
+                        // Log upstream tax event at the village
+                        $description = $bonusAmount > 0
+                            ? "Paid {$baseTaxAmount}g upstream tax to {$barony->name} (+{$bonusAmount}g clerk bonus)"
+                            : "Paid {$taxAmount}g upstream tax to {$barony->name}";
+                        LocationActivityLog::logSystemEvent(
+                            'village',
+                            $village->id,
+                            LocationActivityLog::TYPE_UPSTREAM_TAX,
+                            $description,
+                            null,
+                            ['amount' => $taxAmount, 'base_amount' => $baseTaxAmount, 'bonus' => $bonusAmount, 'receiver' => $barony->name]
+                        );
+
                         $totalCollected += $taxAmount;
                     }
                 });
@@ -425,6 +475,16 @@ class TaxService
                             'tax_period' => $taxPeriod,
                         ]);
 
+                        // Log upstream tax event at the barony
+                        LocationActivityLog::logSystemEvent(
+                            'barony',
+                            $barony->id,
+                            LocationActivityLog::TYPE_UPSTREAM_TAX,
+                            "Paid {$taxAmount}g upstream tax to {$kingdom->name}",
+                            null,
+                            ['amount' => $taxAmount, 'receiver' => $kingdom->name]
+                        );
+
                         $totalCollected += $taxAmount;
                     }
                 });
@@ -475,6 +535,17 @@ class TaxService
                                 'salary' => $salary,
                                 'treasury_balance' => $treasury->balance,
                             ]);
+
+                            // Log failed salary payment
+                            LocationActivityLog::logSystemEvent(
+                                $locationType,
+                                $locationId,
+                                LocationActivityLog::TYPE_SALARY_FAILED,
+                                "Failed to pay {$playerRole->role->name} salary to {$playerRole->user->username} (insufficient funds)",
+                                null,
+                                ['role' => $playerRole->role->name, 'username' => $playerRole->user->username, 'salary' => $salary, 'treasury_balance' => $treasury->balance]
+                            );
+
                             $results['failed']++;
 
                             continue;
@@ -501,6 +572,16 @@ class TaxService
                             'source_location_id' => $locationId,
                             'pay_period' => $today,
                         ]);
+
+                        // Log salary payment
+                        LocationActivityLog::logSystemEvent(
+                            $locationType,
+                            $locationId,
+                            LocationActivityLog::TYPE_SALARY_PAYMENT,
+                            "Paid {$salary}g salary to {$playerRole->role->name} {$playerRole->user->username}",
+                            null,
+                            ['role' => $playerRole->role->name, 'username' => $playerRole->user->username, 'amount' => $salary]
+                        );
 
                         $results['salaries_paid']++;
                         $results['total_amount'] += $salary;

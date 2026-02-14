@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Barony;
 use App\Models\Kingdom;
+use App\Models\LocationActivityLog;
 use App\Models\LocationNpc;
 use App\Models\PlayerRole;
 use App\Models\PlayerTitle;
@@ -292,6 +293,20 @@ class RoleService
             // Update the ruler user_id on the location model for primary ruler roles
             $this->updateLocationRuler($role->slug, $locationType, $locationId, $user->id);
 
+            // Log role appointment
+            $subtype = $appointedBy ? 'appointed' : 'self_appointed';
+            $description = $appointedBy
+                ? "{$user->username} appointed as {$role->name} by {$appointedBy->username}"
+                : "{$user->username} claimed the {$role->name} role";
+            LocationActivityLog::logSystemEvent(
+                $locationType,
+                $locationId,
+                LocationActivityLog::TYPE_ROLE_CHANGE,
+                $description,
+                $subtype,
+                ['role' => $role->name, 'role_slug' => $role->slug, 'username' => $user->username, 'appointed_by' => $appointedBy?->username]
+            );
+
             return [
                 'success' => true,
                 'message' => "{$user->username} has been appointed as {$role->name}!",
@@ -387,20 +402,39 @@ class RoleService
         }
 
         return DB::transaction(function () use ($playerRole, $removedBy, $reason) {
+            $username = $playerRole->user->username;
+            $roleName = $playerRole->role->name;
+            $roleSlug = $playerRole->role->slug;
+            $locationType = $playerRole->location_type;
+            $locationId = $playerRole->location_id;
+
             $playerRole->remove($removedBy, $reason);
 
             // Revert title back to peasant
             $this->revertTitle($playerRole->user);
 
             // Reactivate NPC if exists
-            $this->activateNpcIfNeeded($playerRole->role_id, $playerRole->location_type, $playerRole->location_id);
+            $this->activateNpcIfNeeded($playerRole->role_id, $locationType, $locationId);
 
             // Clear the ruler user_id on the location model
             $this->clearLocationRulerIfNeeded($playerRole);
 
+            // Log role removal
+            $description = $reason
+                ? "{$username} removed from {$roleName} role by {$removedBy->username}: {$reason}"
+                : "{$username} removed from {$roleName} role by {$removedBy->username}";
+            LocationActivityLog::logSystemEvent(
+                $locationType,
+                $locationId,
+                LocationActivityLog::TYPE_ROLE_CHANGE,
+                $description,
+                'removed',
+                ['role' => $roleName, 'role_slug' => $roleSlug, 'username' => $username, 'removed_by' => $removedBy->username, 'reason' => $reason]
+            );
+
             return [
                 'success' => true,
-                'message' => "Role has been removed from {$playerRole->user->username}.",
+                'message' => "Role has been removed from {$username}.",
             ];
         });
     }
@@ -425,20 +459,36 @@ class RoleService
         }
 
         return DB::transaction(function () use ($playerRole) {
+            $username = $playerRole->user->username;
+            $roleName = $playerRole->role->name;
+            $roleSlug = $playerRole->role->slug;
+            $locationType = $playerRole->location_type;
+            $locationId = $playerRole->location_id;
+
             $playerRole->resign();
 
             // Revert title back to peasant
             $this->revertTitle($playerRole->user);
 
             // Reactivate NPC if exists
-            $this->activateNpcIfNeeded($playerRole->role_id, $playerRole->location_type, $playerRole->location_id);
+            $this->activateNpcIfNeeded($playerRole->role_id, $locationType, $locationId);
 
             // Clear the ruler user_id on the location model
             $this->clearLocationRulerIfNeeded($playerRole);
 
+            // Log resignation
+            LocationActivityLog::logSystemEvent(
+                $locationType,
+                $locationId,
+                LocationActivityLog::TYPE_ROLE_CHANGE,
+                "{$username} resigned from the {$roleName} role",
+                'resigned',
+                ['role' => $roleName, 'role_slug' => $roleSlug, 'username' => $username]
+            );
+
             return [
                 'success' => true,
-                'message' => "You have resigned from the {$playerRole->role->name} position.",
+                'message' => "You have resigned from the {$roleName} position.",
             ];
         });
     }

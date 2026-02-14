@@ -31,7 +31,6 @@ import {
     type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
-import { ActivityFeed } from "@/components/activity-feed";
 import { ServicesGrid } from "@/components/service-card";
 import DisasterWidget from "@/components/widgets/disaster-widget";
 import { LegitimacyDisplay } from "@/components/widgets/legitimacy-badge";
@@ -105,17 +104,6 @@ interface ServiceInfo {
     route: string;
 }
 
-interface ActivityLogEntry {
-    id: number;
-    username: string;
-    description: string;
-    activity_type: string;
-    subtype: string | null;
-    metadata: Record<string, unknown> | null;
-    created_at: string;
-    time_ago: string;
-}
-
 interface PendingMigration {
     id: number;
     user: {
@@ -135,7 +123,6 @@ interface HouseEntry {
 interface Props {
     town: Town;
     services: ServiceInfo[];
-    recent_activity: ActivityLogEntry[];
     roles: Role[];
     visitors: Visitor[];
     is_visitor: boolean;
@@ -212,7 +199,6 @@ const biomeConfig: Record<string, { icon: LucideIcon; color: string; bg: string;
 export default function TownShow({
     town,
     services,
-    recent_activity,
     roles,
     visitors,
     is_visitor,
@@ -562,18 +548,6 @@ export default function TownShow({
                         locationId={town.id}
                         isPort={town.is_port}
                     />
-                )}
-
-                {/* Recent Activity */}
-                {recent_activity && recent_activity.length > 0 && (
-                    <div>
-                        <ActivityFeed
-                            activities={recent_activity}
-                            title="Recent Activity"
-                            emptyMessage="No recent activity in this town"
-                            maxHeight="250px"
-                        />
-                    </div>
                 )}
 
                 {/* Leadership Section */}

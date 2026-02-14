@@ -124,9 +124,6 @@ class TownController extends Controller
         // Get available services for this town
         $services = LocationServices::getServicesForLocation('town', $town->is_port ?? false);
 
-        // Get recent activity at this location
-        $recentActivity = $this->getRecentActivity($town);
-
         // Get pending migration requests for mayors
         $isMayor = $mayorAssignment?->user_id === $user->id || $town->mayor_user_id === $user->id;
         $pendingMigrations = [];
@@ -181,7 +178,6 @@ class TownController extends Controller
                 'mayor' => $mayor,
             ],
             'services' => array_values(array_map(fn ($service, $id) => array_merge($service, ['id' => $id]), $services, array_keys($services))),
-            'recent_activity' => $recentActivity,
             'roles' => $roles,
             'visitors' => $visitors,
             'is_visitor' => $isVisitor,
@@ -194,33 +190,6 @@ class TownController extends Controller
             'pending_migrations' => $pendingMigrations,
             'houses' => $houses,
         ]);
-    }
-
-    /**
-     * Get recent activity for a town.
-     */
-    protected function getRecentActivity(Town $town): array
-    {
-        try {
-            return LocationActivityLog::atLocation('town', $town->id)
-                ->recent(15)
-                ->with('user:id,username')
-                ->get()
-                ->map(fn ($log) => [
-                    'id' => $log->id,
-                    'username' => $log->user->username ?? 'Unknown',
-                    'description' => $log->description,
-                    'activity_type' => $log->activity_type,
-                    'subtype' => $log->activity_subtype,
-                    'metadata' => $log->metadata,
-                    'created_at' => $log->created_at->toIso8601String(),
-                    'time_ago' => $log->created_at->diffForHumans(),
-                ])
-                ->toArray();
-        } catch (\Illuminate\Database\QueryException $e) {
-            // Table may not exist yet
-            return [];
-        }
     }
 
     /**
@@ -327,6 +296,23 @@ class TownController extends Controller
                 'ended_at' => $election->finalized_at?->toDateTimeString(),
             ]);
 
+        // Get activity logs for the town (system events visible to officials)
+        $activityLogs = LocationActivityLog::atLocation('town', $town->id)
+            ->with('user:id,username')
+            ->orderByDesc('created_at')
+            ->limit(50)
+            ->get()
+            ->map(fn ($log) => [
+                'id' => $log->id,
+                'username' => $log->user?->username,
+                'activity_type' => $log->activity_type,
+                'description' => $log->description,
+                'subtype' => $log->activity_subtype,
+                'metadata' => $log->metadata,
+                'created_at' => $log->created_at->toIso8601String(),
+                'time_ago' => $log->created_at->diffForHumans(short: true),
+            ]);
+
         return Inertia::render('Towns/Hall', [
             'town' => [
                 'id' => $town->id,
@@ -357,6 +343,7 @@ class TownController extends Controller
             'can_start_election' => ! $activeElection && ! $isMayor,
             'is_mayor' => $isMayor,
             'housing' => $this->getHousingData($user),
+            'activity_logs' => $activityLogs,
         ]);
     }
 

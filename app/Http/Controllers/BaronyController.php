@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Config\ConstructionConfig;
 use App\Config\LocationServices;
 use App\Models\Barony;
+use App\Models\LocationActivityLog;
 use App\Models\MigrationRequest;
 use App\Models\PlayerHouse;
 use App\Models\PlayerRole;
@@ -147,8 +148,42 @@ class BaronyController extends Controller
                 'danger_level' => $route->danger_level,
             ]);
 
-        // TODO: Activity logging not yet implemented
-        $recentActivity = collect([]);
+        // Get hierarchical activity - barony plus all villages and towns within it
+        $recentActivity = LocationActivityLog::where(function ($query) use ($barony, $villageIds, $townIds) {
+            // Barony-level events
+            $query->where(function ($q) use ($barony) {
+                $q->where('location_type', 'barony')
+                    ->where('location_id', $barony->id);
+            });
+            // Village events within this barony
+            if (! empty($villageIds)) {
+                $query->orWhere(function ($q) use ($villageIds) {
+                    $q->where('location_type', 'village')
+                        ->whereIn('location_id', $villageIds);
+                });
+            }
+            // Town events within this barony
+            if (! empty($townIds)) {
+                $query->orWhere(function ($q) use ($townIds) {
+                    $q->where('location_type', 'town')
+                        ->whereIn('location_id', $townIds);
+                });
+            }
+        })
+            ->with('user:id,username')
+            ->orderByDesc('created_at')
+            ->limit(20)
+            ->get()
+            ->map(fn ($log) => [
+                'id' => $log->id,
+                'username' => $log->user?->username,
+                'activity_type' => $log->activity_type,
+                'description' => $log->description,
+                'subtype' => $log->activity_subtype,
+                'metadata' => $log->metadata,
+                'created_at' => $log->created_at->toISOString(),
+                'time_ago' => $log->created_at->diffForHumans(short: true),
+            ]);
 
         return Inertia::render('baronies/show', [
             'barony' => [

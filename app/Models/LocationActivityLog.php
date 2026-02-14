@@ -11,25 +11,55 @@ class LocationActivityLog extends Model
 {
     use HasFactory;
 
-    // Activity types
+    // Player activity types
     public const TYPE_TRAINING = 'training';
+
     public const TYPE_GATHERING = 'gathering';
+
     public const TYPE_CRAFTING = 'crafting';
+
     public const TYPE_TRADING = 'trading';
+
     public const TYPE_HEALING = 'healing';
+
     public const TYPE_BLESSING = 'blessing';
+
     public const TYPE_BANKING = 'banking';
+
     public const TYPE_WORKING = 'working';
+
     public const TYPE_FARMING = 'farming';
+
     public const TYPE_TRAVEL = 'travel';
+
     public const TYPE_REST = 'rest';
+
     public const TYPE_ABDICATION = 'abdication';
+
+    // System activity types (no user_id)
+    public const TYPE_TAX_COLLECTION = 'tax_collection';
+
+    public const TYPE_SALARY_PAYMENT = 'salary_payment';
+
+    public const TYPE_SALARY_FAILED = 'salary_failed';
+
+    public const TYPE_UPSTREAM_TAX = 'upstream_tax';
+
+    public const TYPE_ROLE_CHANGE = 'role_change';
+
+    public const TYPE_DISASTER = 'disaster';
+
+    public const TYPE_MIGRATION = 'migration';
 
     // Location types
     public const LOCATION_VILLAGE = 'village';
+
     public const LOCATION_TOWN = 'town';
+
     public const LOCATION_BARONY = 'barony';
+
     public const LOCATION_DUCHY = 'duchy';
+
     public const LOCATION_KINGDOM = 'kingdom';
 
     protected $fillable = [
@@ -99,6 +129,28 @@ class LocationActivityLog extends Model
     ): self {
         return self::create([
             'user_id' => $userId,
+            'location_type' => $locationType,
+            'location_id' => $locationId,
+            'activity_type' => $activityType,
+            'activity_subtype' => $activitySubtype,
+            'description' => $description,
+            'metadata' => $metadata,
+        ]);
+    }
+
+    /**
+     * Static helper to create a system-generated log entry (no user).
+     */
+    public static function logSystemEvent(
+        string $locationType,
+        int $locationId,
+        string $activityType,
+        string $description,
+        ?string $activitySubtype = null,
+        ?array $metadata = null
+    ): self {
+        return self::create([
+            'user_id' => null,
             'location_type' => $locationType,
             'location_id' => $locationId,
             'activity_type' => $activityType,

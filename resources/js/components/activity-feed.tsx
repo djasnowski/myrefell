@@ -9,13 +9,19 @@ import {
     Briefcase,
     Wheat,
     MapPin,
+    Coins,
+    Crown,
+    AlertTriangle,
+    ArrowUpRight,
+    Users,
     type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ActivityLogEntry {
     id: number;
-    username: string;
+    username: string | null;
+    activity_type?: string;
     description: string;
     subtype: string | null;
     metadata: Record<string, unknown> | null;
@@ -35,6 +41,7 @@ interface ActivityFeedProps {
 
 // Map activity types to icons
 const activityIcons: Record<string, LucideIcon> = {
+    // Player activities
     training: Dumbbell,
     gathering: Pickaxe,
     crafting: Hammer,
@@ -45,10 +52,19 @@ const activityIcons: Record<string, LucideIcon> = {
     working: Briefcase,
     farming: Wheat,
     travel: MapPin,
+    // System activities
+    tax_collection: Coins,
+    salary_payment: Banknote,
+    salary_failed: AlertTriangle,
+    upstream_tax: ArrowUpRight,
+    role_change: Crown,
+    disaster: AlertTriangle,
+    migration: Users,
 };
 
 // Get color classes for activity types
 const activityColors: Record<string, string> = {
+    // Player activities
     training: "text-red-400",
     gathering: "text-amber-400",
     crafting: "text-orange-400",
@@ -59,6 +75,14 @@ const activityColors: Record<string, string> = {
     working: "text-blue-400",
     farming: "text-emerald-400",
     travel: "text-cyan-400",
+    // System activities
+    tax_collection: "text-yellow-500",
+    salary_payment: "text-green-500",
+    salary_failed: "text-red-500",
+    upstream_tax: "text-amber-500",
+    role_change: "text-purple-500",
+    disaster: "text-red-600",
+    migration: "text-cyan-500",
 };
 
 function ActivityItem({
@@ -70,10 +94,15 @@ function ActivityItem({
     activityType?: string;
     showIcon?: boolean;
 }) {
-    const Icon = activityType ? activityIcons[activityType] || MapPin : MapPin;
-    const colorClass = activityType
-        ? activityColors[activityType] || "text-muted-foreground"
+    // Use activity's own type if available, otherwise fall back to prop
+    const effectiveType = activity.activity_type || activityType;
+    const Icon = effectiveType ? activityIcons[effectiveType] || MapPin : MapPin;
+    const colorClass = effectiveType
+        ? activityColors[effectiveType] || "text-muted-foreground"
         : "text-muted-foreground";
+
+    const isSystemEvent = !activity.username;
+    const displayName = activity.username || "[System]";
 
     return (
         <div className="flex items-start gap-2 py-2 first:pt-0 last:pb-0">
@@ -84,10 +113,16 @@ function ActivityItem({
             )}
             <div className="min-w-0 flex-1">
                 <p className="text-sm leading-tight">
-                    <span className="font-medium text-foreground">{activity.username}</span>{" "}
-                    <span className="text-muted-foreground">
-                        {formatDescription(activity.description, activity.username)}
-                    </span>
+                    {isSystemEvent ? (
+                        <span className="text-muted-foreground">{activity.description}</span>
+                    ) : (
+                        <>
+                            <span className="font-medium text-foreground">{displayName}</span>{" "}
+                            <span className="text-muted-foreground">
+                                {formatDescription(activity.description, activity.username || "")}
+                            </span>
+                        </>
+                    )}
                 </p>
                 {activity.metadata && (
                     <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-muted-foreground">
@@ -103,6 +138,11 @@ function ActivityItem({
                             <span>
                                 {activity.metadata.quantity as number}x{" "}
                                 {activity.metadata.item as string}
+                            </span>
+                        )}
+                        {activity.metadata.amount && !activity.metadata.xp_gained && (
+                            <span className="text-yellow-400">
+                                {activity.metadata.amount as number}g
                             </span>
                         )}
                     </div>
@@ -184,20 +224,34 @@ export function CompactActivityFeed({
     return (
         <div className={cn("space-y-1", className)}>
             {displayActivities.map((activity) => {
-                const Icon = activityType ? activityIcons[activityType] || MapPin : MapPin;
-                const colorClass = activityType
-                    ? activityColors[activityType] || "text-muted-foreground"
+                const effectiveType = activity.activity_type || activityType;
+                const Icon = effectiveType ? activityIcons[effectiveType] || MapPin : MapPin;
+                const colorClass = effectiveType
+                    ? activityColors[effectiveType] || "text-muted-foreground"
                     : "text-muted-foreground";
+                const isSystemEvent = !activity.username;
+
                 return (
                     <div
                         key={activity.id}
                         className="flex items-center gap-2 text-xs text-muted-foreground"
                     >
                         <Icon className={cn("h-3 w-3 flex-shrink-0", colorClass)} />
-                        <span className="font-medium text-foreground">{activity.username}</span>
-                        <span className="truncate">
-                            {formatDescription(activity.description, activity.username)}
-                        </span>
+                        {isSystemEvent ? (
+                            <span className="truncate">{activity.description}</span>
+                        ) : (
+                            <>
+                                <span className="font-medium text-foreground">
+                                    {activity.username}
+                                </span>
+                                <span className="truncate">
+                                    {formatDescription(
+                                        activity.description,
+                                        activity.username || "",
+                                    )}
+                                </span>
+                            </>
+                        )}
                         <span className="ml-auto flex-shrink-0">{activity.time_ago}</span>
                     </div>
                 );

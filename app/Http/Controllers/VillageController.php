@@ -158,7 +158,7 @@ class VillageController extends Controller
                 ->get()
                 ->map(fn ($log) => [
                     'id' => $log->id,
-                    'username' => $log->user->username ?? 'Unknown',
+                    'username' => $log->user?->username,
                     'description' => $log->description,
                     'activity_type' => $log->activity_type,
                     'subtype' => $log->activity_subtype,
