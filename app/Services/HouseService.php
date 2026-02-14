@@ -510,8 +510,8 @@ class HouseService
             return ['success' => false, 'message' => 'Item not found.'];
         }
 
-        if (! $this->inventoryService->hasItem($user, $item, $quantity)) {
-            return ['success' => false, 'message' => 'You do not have enough '.$itemName.'.'];
+        if (! $this->inventoryService->hasItem($user, $item, $quantity, excludeEquipped: true)) {
+            return ['success' => false, 'message' => 'You do not have enough '.$itemName.' (equipped items cannot be stored).'];
         }
 
         // Check if this would use a new slot (only matters if item isn't already stored)
