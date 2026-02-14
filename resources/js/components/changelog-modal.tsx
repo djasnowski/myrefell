@@ -1,5 +1,6 @@
 import {
     Anvil,
+    Bird,
     Church,
     Dices,
     FlaskConical,
@@ -7,8 +8,10 @@ import {
     Gift,
     Hammer,
     Link2,
+    Mail,
     MessageCircle,
     Repeat,
+    Scroll,
     Shield,
     Sparkles,
     Sprout,
@@ -23,7 +26,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 // Update this when adding new changelog entries
-export const CURRENT_CHANGELOG_VERSION = "0.8.5";
+export const CURRENT_CHANGELOG_VERSION = "0.9.0";
 
 interface ChangelogEntry {
     version: string;
@@ -39,6 +42,44 @@ interface ChangelogEntry {
 }
 
 const changelog: ChangelogEntry[] = [
+    {
+        version: "0.9.0",
+        date: "February 14, 2026",
+        title: "Carrier Pigeons & Role Petitions",
+        description:
+            "Send mail to any player in the realm via carrier pigeon for 5g. Plus, if you think a role holder isn't doing their job, you can now challenge them for their position.",
+        icon: <Bird className="h-8 w-8 text-amber-500" />,
+        changes: [
+            {
+                type: "added",
+                text: "Player mail system — send messages to any player for 5g via carrier pigeon",
+            },
+            {
+                type: "added",
+                text: "Inbox with unread badges, sent mail history, and inline reply",
+            },
+            {
+                type: "added",
+                text: "Mail icon in the sidebar with unread count",
+            },
+            {
+                type: "added",
+                text: "Challenge role holders — click any occupied role and file a petition to have them removed",
+            },
+            {
+                type: "added",
+                text: "Petitions go up the authority chain: village roles → Elder, Elder → Baron, Baron → King",
+            },
+            {
+                type: "added",
+                text: "If approved, the holder loses their role (and its salary and bonuses). You can request to be appointed in their place",
+            },
+            {
+                type: "added",
+                text: "Authority figures see a red badge on their role card and can review, approve, or deny petitions",
+            },
+        ],
+    },
     {
         version: "0.8.5",
         date: "February 12, 2026",
