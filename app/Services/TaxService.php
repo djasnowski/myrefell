@@ -137,17 +137,21 @@ class TaxService
             'players_taxed' => 0,
             'player_tax_total' => 0,
             'village_upstream_total' => 0,
+            'town_upstream_total' => 0,
             'barony_upstream_total' => 0,
         ];
 
         DB::transaction(function () use ($today, &$results) {
-            // Step 1: Collect taxes from players to their home villages
+            // Step 1: Collect taxes from players to their home location (village, town, or barony)
             $results = array_merge($results, $this->collectPlayerTaxes($today));
 
             // Step 2: Villages pay taxes to their baronies
             $results['village_upstream_total'] = $this->collectUpstreamTaxes('village', $today);
 
-            // Step 3: Baronies pay taxes to their kingdoms
+            // Step 3: Towns pay taxes to their baronies
+            $results['town_upstream_total'] = $this->collectUpstreamTaxes('town', $today);
+
+            // Step 4: Baronies pay taxes to their kingdoms
             $results['barony_upstream_total'] = $this->collectUpstreamTaxes('barony', $today);
         });
 
@@ -155,26 +159,40 @@ class TaxService
     }
 
     /**
-     * Collect taxes from all players to their home villages.
+     * Collect taxes from all players to their home location (village, town, or barony).
      */
     protected function collectPlayerTaxes(string $taxPeriod): array
     {
         $playersTaxed = 0;
         $totalCollected = 0;
 
-        // Get all players with gold who have a home village
+        // Get all players with gold who have a home location
         User::where('gold', '>', 0)
-            ->whereNotNull('home_village_id')
-            ->with('homeVillage.barony')
+            ->where(function ($query) {
+                $query->whereNotNull('home_village_id')
+                    ->orWhereNotNull('home_location_type');
+            })
+            ->with(['homeVillage.barony'])
             ->chunk(100, function ($users) use ($taxPeriod, &$playersTaxed, &$totalCollected) {
                 foreach ($users as $user) {
-                    $village = $user->homeVillage;
-                    if (! $village) {
+                    // Determine home location type and ID
+                    $locationType = null;
+                    $locationId = null;
+
+                    if ($user->home_village_id) {
+                        $locationType = 'village';
+                        $locationId = $user->home_village_id;
+                    } elseif ($user->home_location_type && $user->home_location_id) {
+                        $locationType = $user->home_location_type;
+                        $locationId = $user->home_location_id;
+                    }
+
+                    if (! $locationType || ! $locationId) {
                         continue;
                     }
 
-                    // Calculate tax based on barony's tax rate
-                    $taxRate = $this->getTaxRate('village', $village->id);
+                    // Calculate tax based on location's tax rate
+                    $taxRate = $this->getTaxRate($locationType, $locationId);
                     $taxAmount = (int) floor($user->gold * ($taxRate / 100));
 
                     if ($taxAmount <= 0) {
@@ -184,8 +202,8 @@ class TaxService
                     // Deduct from player
                     $user->decrement('gold', $taxAmount);
 
-                    // Add to village treasury
-                    $treasury = $this->getTreasury('village', $village->id);
+                    // Add to location's treasury
+                    $treasury = $this->getTreasury($locationType, $locationId);
                     $treasury->deposit(
                         $taxAmount,
                         TreasuryTransaction::TYPE_TAX_INCOME,
@@ -196,8 +214,8 @@ class TaxService
                     // Record the tax collection
                     TaxCollection::create([
                         'payer_user_id' => $user->id,
-                        'receiver_location_type' => 'village',
-                        'receiver_location_id' => $village->id,
+                        'receiver_location_type' => $locationType,
+                        'receiver_location_id' => $locationId,
                         'amount' => $taxAmount,
                         'tax_type' => TaxCollection::TYPE_INCOME,
                         'description' => 'Daily income tax',
@@ -216,13 +234,73 @@ class TaxService
     }
 
     /**
-     * Collect upstream taxes (village -> barony -> kingdom).
+     * Collect upstream taxes (village/town -> barony -> kingdom).
      */
     protected function collectUpstreamTaxes(string $fromLocationType, string $taxPeriod): int
     {
         $totalCollected = 0;
 
-        if ($fromLocationType === 'village') {
+        if ($fromLocationType === 'town') {
+            // Towns pay to their baronies
+            Town::whereNotNull('barony_id')
+                ->with('barony')
+                ->chunk(100, function ($towns) use ($taxPeriod, &$totalCollected) {
+                    foreach ($towns as $town) {
+                        $barony = $town->barony;
+                        if (! $barony) {
+                            continue;
+                        }
+
+                        $townTreasury = $this->getTreasury('town', $town->id);
+                        if ($townTreasury->balance <= 0) {
+                            continue;
+                        }
+
+                        // Use barony's tax rate
+                        $taxRate = $this->getTaxRate('barony', $barony->id);
+                        $taxAmount = (int) floor($townTreasury->balance * ($taxRate / 100));
+
+                        if ($taxAmount <= 0) {
+                            continue;
+                        }
+
+                        // Withdraw from town
+                        $townTreasury->withdraw(
+                            $taxAmount,
+                            TreasuryTransaction::TYPE_UPSTREAM_TAX,
+                            "Upstream tax to {$barony->name}",
+                            null,
+                            'barony',
+                            $barony->id
+                        );
+
+                        // Deposit to barony
+                        $baronyTreasury = $this->getTreasury('barony', $barony->id);
+                        $baronyTreasury->deposit(
+                            $taxAmount,
+                            TreasuryTransaction::TYPE_TAX_INCOME,
+                            "Tax from {$town->name}",
+                            null,
+                            'town',
+                            $town->id
+                        );
+
+                        // Record the collection
+                        TaxCollection::create([
+                            'payer_location_type' => 'town',
+                            'payer_location_id' => $town->id,
+                            'receiver_location_type' => 'barony',
+                            'receiver_location_id' => $barony->id,
+                            'amount' => $taxAmount,
+                            'tax_type' => TaxCollection::TYPE_UPSTREAM,
+                            'description' => 'Town upstream tax',
+                            'tax_period' => $taxPeriod,
+                        ]);
+
+                        $totalCollected += $taxAmount;
+                    }
+                });
+        } elseif ($fromLocationType === 'village') {
             // Villages pay to their baronies
             Village::whereNotNull('barony_id')
                 ->with('barony')
