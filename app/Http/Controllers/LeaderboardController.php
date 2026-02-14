@@ -148,6 +148,7 @@ class LeaderboardController extends Controller
     {
         $houses = PlayerHouse::with(['rooms.furniture', 'player:id,username'])
             ->whereHas('player', fn ($q) => $q->whereNull('banned_at'))
+            ->has('rooms')
             ->get();
 
         // Compute value for each house

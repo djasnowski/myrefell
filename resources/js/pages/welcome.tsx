@@ -1,7 +1,9 @@
 import { Head, Link, usePage } from "@inertiajs/react";
 import {
-    Anchor,
+    Anvil,
     Baby,
+    Beef,
+    BicepsFlexed,
     Calendar,
     Castle,
     Church,
@@ -10,11 +12,10 @@ import {
     Coins,
     Crown,
     Eye,
-    Flame,
-    Hand,
-    FlaskConical,
+    Fish,
     Footprints,
     Hammer,
+    Hand,
     Heart,
     HeartPulse,
     Home,
@@ -23,6 +24,7 @@ import {
     MapPin,
     Pickaxe,
     Scale,
+    Scissors,
     Scroll,
     Shield,
     Ship,
@@ -30,9 +32,10 @@ import {
     Snowflake,
     Sparkles,
     Sun,
+    Sword,
     Swords,
     Target,
-    Trees,
+    TreeDeciduous,
     Trophy,
     Users,
     Vote,
@@ -217,7 +220,7 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                         <div className="mt-8 md:mt-16 grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-5">
                             {[
                                 { value: "4", label: "Kingdoms" },
-                                { value: "16", label: "Skills to Master" },
+                                { value: "17", label: "Skills to Master" },
                                 { value: "15", label: "Titles to Earn" },
                                 { value: "5", label: "Social Classes" },
                                 { value: "∞", label: "Possibilities" },
@@ -320,7 +323,7 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                     <li className="flex items-center gap-3 text-foreground/80">
                                         <Hammer className="h-5 w-5 text-muted-foreground" />
                                         <span>
-                                            7 trade skills: Farming, Mining, Fishing, and more
+                                            8 trade skills: Mining, Fishing, Construction, and more
                                         </span>
                                     </li>
                                     <li className="flex items-center gap-3 text-foreground/80">
@@ -604,7 +607,7 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                     <div className="mx-auto max-w-7xl px-6">
                         <div className="mb-16 text-center">
                             <h2 className="mb-4 font-[Cinzel] text-3xl font-bold text-foreground md:text-4xl">
-                                Master <span className="text-primary">16 Skills</span>
+                                Master <span className="text-primary">17 Skills</span>
                             </h2>
                             <p className="mx-auto max-w-2xl text-muted-foreground">
                                 Every skill opens new opportunities. Train combat, mine ore, forge
@@ -612,30 +615,31 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-4 gap-4 md:grid-cols-4 lg:grid-cols-8">
+                        <div className="mx-auto grid max-w-5xl grid-cols-4 gap-3 sm:grid-cols-6 lg:grid-cols-9">
                             {[
-                                { icon: Swords, name: "Attack" },
-                                { icon: Shield, name: "Strength" },
-                                { icon: Heart, name: "Defense" },
-                                { icon: HeartPulse, name: "Hitpoints" },
+                                { icon: Sword, name: "Attack" },
+                                { icon: BicepsFlexed, name: "Strength" },
+                                { icon: Shield, name: "Defense" },
+                                { icon: Heart, name: "Hitpoints" },
                                 { icon: Target, name: "Range" },
                                 { icon: Sparkles, name: "Prayer" },
                                 { icon: Wheat, name: "Farming" },
                                 { icon: Pickaxe, name: "Mining" },
-                                { icon: Anchor, name: "Fishing" },
-                                { icon: Trees, name: "Woodcutting" },
-                                { icon: Flame, name: "Cooking" },
-                                { icon: Hammer, name: "Smithing" },
-                                { icon: Hammer, name: "Crafting" },
-                                { icon: FlaskConical, name: "Herblore" },
+                                { icon: Fish, name: "Fishing" },
+                                { icon: TreeDeciduous, name: "Woodcutting" },
+                                { icon: Beef, name: "Cooking" },
+                                { icon: Anvil, name: "Smithing" },
+                                { icon: Scissors, name: "Crafting" },
+                                { icon: Leaf, name: "Herblore" },
                                 { icon: Hand, name: "Thieving" },
                                 { icon: Footprints, name: "Agility" },
+                                { icon: Hammer, name: "Construction" },
                             ].map((skill) => (
                                 <div
                                     key={skill.name}
-                                    className="flex flex-col items-center rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-4 transition hover:border-primary/50"
+                                    className="flex flex-col items-center rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-3 transition hover:border-primary/50"
                                 >
-                                    <div className="mb-2 rounded-lg bg-primary/10 p-2">
+                                    <div className="mb-1.5 rounded-lg bg-primary/10 p-2">
                                         <skill.icon className="h-5 w-5 text-primary" />
                                     </div>
                                     <span className="text-xs text-muted-foreground">
@@ -736,8 +740,8 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                                     desc: "Attend festivals as performer or vendor, compete in tournament brackets for glory and prizes.",
                                 },
                                 {
-                                    title: "Building Construction",
-                                    desc: "Construct buildings in your settlements, manage repairs, expand your infrastructure.",
+                                    title: "Player Housing",
+                                    desc: "Build your own home, upgrade from cottage to mansion, furnish rooms, and compete on the house value leaderboard.",
                                 },
                                 {
                                     title: "Real Elections",
