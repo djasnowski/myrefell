@@ -620,7 +620,7 @@ class RoleService
             'tier' => $role->tier,
             'is_elected' => $role->is_elected,
             'max_per_location' => $role->max_per_location,
-            'holder' => $playerRole ? [
+            'holder' => $playerRole && $playerRole->user ? [
                 'player_role_id' => $playerRole->id,
                 'user_id' => $playerRole->user_id,
                 'username' => $playerRole->user->username,
@@ -637,7 +637,7 @@ class RoleService
                 'description' => $npc->npc_description,
                 'icon' => $npc->npc_icon,
             ] : null,
-            'is_vacant' => ! $playerRole,
+            'is_vacant' => ! $playerRole || ! $playerRole->user,
         ];
     }
 
