@@ -19,6 +19,7 @@ import {
     LogOut,
     Pickaxe,
     Scale,
+    Scroll,
     Shield,
     ShieldCheck,
     Sparkles,
@@ -33,6 +34,7 @@ import {
     X,
 } from "lucide-react";
 import { useState } from "react";
+import { gameToast } from "@/components/ui/game-toast";
 import AppLayout from "@/layouts/app-layout";
 import { formatBonus, locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
@@ -517,6 +519,122 @@ function formatDate(dateString: string): string {
     });
 }
 
+function ChallengeModal({ role, onClose }: { role: Role; onClose: () => void }) {
+    const [reason, setReason] = useState("");
+    const [requestAppointment, setRequestAppointment] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = () => {
+        if (!role.holder || !reason.trim()) return;
+        setLoading(true);
+        router.post(
+            `/roles/${role.holder.player_role_id}/petition`,
+            {
+                reason: reason.trim(),
+                request_appointment: requestAppointment,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    onClose();
+                    router.reload();
+                },
+                onFinish: () => {
+                    setLoading(false);
+                },
+            },
+        );
+    };
+
+    return (
+        <div
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4"
+            onClick={onClose}
+        >
+            <div
+                className="relative w-full max-w-md rounded-xl border-2 border-amber-600/50 bg-stone-800 p-6"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <button
+                    onClick={onClose}
+                    className="absolute right-3 top-3 text-stone-400 hover:text-white"
+                >
+                    <X className="h-5 w-5" />
+                </button>
+
+                <div className="mb-4 flex items-center gap-3">
+                    <div className="rounded-lg bg-amber-900/50 p-2">
+                        <Scroll className="h-5 w-5 text-amber-400" />
+                    </div>
+                    <div>
+                        <h2 className="font-pixel text-lg text-amber-300">Challenge Role</h2>
+                        <p className="font-pixel text-[10px] text-stone-400">
+                            Petition to remove {role.holder?.username} as {role.name}
+                        </p>
+                    </div>
+                </div>
+
+                <p className="mb-4 font-pixel text-xs text-stone-400">
+                    Your petition will be reviewed by the local authority figure. If approved, the
+                    current holder will be removed from their position.
+                </p>
+
+                <div className="mb-4">
+                    <label className="mb-1 block font-pixel text-xs text-stone-300">
+                        Reason for challenge
+                    </label>
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        maxLength={1000}
+                        rows={4}
+                        className="w-full rounded-lg border border-stone-600 bg-stone-900/80 px-3 py-2 font-pixel text-xs text-stone-200 placeholder-stone-500 focus:border-amber-500 focus:outline-none"
+                        placeholder="Explain why this role holder should be removed..."
+                    />
+                    <div className="mt-1 text-right font-pixel text-[10px] text-stone-500">
+                        {reason.length}/1000
+                    </div>
+                </div>
+
+                <label className="mb-4 flex cursor-pointer items-center gap-2">
+                    <input
+                        type="checkbox"
+                        checked={requestAppointment}
+                        onChange={(e) => setRequestAppointment(e.target.checked)}
+                        className="h-4 w-4 rounded border-stone-600 bg-stone-900 text-amber-500 focus:ring-amber-500"
+                    />
+                    <span className="font-pixel text-xs text-stone-300">
+                        I want to be appointed to this role if approved
+                    </span>
+                </label>
+
+                <div className="flex gap-2">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 rounded-lg border border-stone-600 bg-stone-700/50 px-4 py-2 font-pixel text-xs text-stone-300 hover:bg-stone-700"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={loading || !reason.trim()}
+                        className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-amber-600/50 bg-amber-900/30 px-4 py-2 font-pixel text-xs text-amber-300 hover:bg-amber-800/40 disabled:opacity-50"
+                    >
+                        {loading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <>
+                                <Scroll className="h-4 w-4" />
+                                File Petition
+                            </>
+                        )}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function RoleModal({
     role,
     currentUserId,
@@ -529,6 +647,7 @@ function RoleModal({
     onClose,
     onResign,
     onClaim,
+    onChallenge,
     resignLoading,
     claimLoading,
 }: {
@@ -543,6 +662,7 @@ function RoleModal({
     onClose: () => void;
     onResign: (playerRoleId: number) => void;
     onClaim: (roleId: number) => void;
+    onChallenge: () => void;
     resignLoading: number | null;
     claimLoading: number | null;
 }) {
@@ -553,6 +673,9 @@ function RoleModal({
     const canClaim =
         role.is_vacant && canSelfAppoint && userResidesHere && userIsHere && !isUserRole;
     const willReplaceRole = canClaim && currentUserRole !== undefined;
+    // Can challenge if: has a holder, user is at location, user is a resident, not the holder, and not king
+    const canChallenge =
+        role.holder && !isCurrentUser && userIsHere && userResidesHere && role.slug !== "king";
     const locationLabel = locationType.charAt(0).toUpperCase() + locationType.slice(1);
     const consequences = roleConsequences[role.slug] || {
         duties: [],
@@ -753,6 +876,15 @@ function RoleModal({
                             </span>
                         </div>
                     )}
+                    {canChallenge && (
+                        <button
+                            onClick={onChallenge}
+                            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-amber-600/50 bg-amber-900/30 px-4 py-2 font-pixel text-xs text-amber-300 hover:bg-amber-800/40"
+                        >
+                            <Scroll className="h-4 w-4" />
+                            Challenge
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
@@ -776,6 +908,7 @@ export default function RolesIndex() {
     } = usePage<PageProps>().props;
 
     const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+    const [challengeRole, setChallengeRole] = useState<Role | null>(null);
     const [resignLoading, setResignLoading] = useState<number | null>(null);
     const [claimLoading, setClaimLoading] = useState<number | null>(null);
 
@@ -955,9 +1088,18 @@ export default function RolesIndex() {
                     onClose={() => setSelectedRole(null)}
                     onResign={handleResign}
                     onClaim={handleClaim}
+                    onChallenge={() => {
+                        setChallengeRole(selectedRole);
+                        setSelectedRole(null);
+                    }}
                     resignLoading={resignLoading}
                     claimLoading={claimLoading}
                 />
+            )}
+
+            {/* Challenge Petition Modal */}
+            {challengeRole && (
+                <ChallengeModal role={challengeRole} onClose={() => setChallengeRole(null)} />
             )}
         </AppLayout>
     );

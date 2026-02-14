@@ -192,6 +192,10 @@ class HandleInertiaRequests extends Middleware
             'house_url' => \App\Models\PlayerHouse::where('player_id', $player->id)->first()?->getHouseUrl(),
             'house_entry_requests_count' => $this->getHouseEntryRequestsCount($player),
             'action_queue' => $this->getActionQueueData($player),
+            'unread_mail_count' => \App\Models\PlayerMail::where('recipient_id', $player->id)
+                ->where('is_deleted_by_recipient', false)
+                ->where('is_read', false)
+                ->count(),
         ];
     }
 
@@ -627,6 +631,14 @@ class HandleInertiaRequests extends Middleware
                         ->where('kingdom_id', $locationId)
                         ->count();
                 }
+            }
+
+            // Role petitions - any authority role (elder, mayor, baron, king)
+            if (in_array($slug, ['elder', 'mayor', 'baron', 'king'])) {
+                $count += \App\Models\RolePetition::where('authority_user_id', $playerRole->user_id)
+                    ->where('status', 'pending')
+                    ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+                    ->count();
             }
 
         } catch (\Throwable $e) {

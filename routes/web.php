@@ -47,6 +47,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\KingdomController;
 use App\Http\Controllers\LeaderboardController;
+use App\Http\Controllers\MailController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\MarketController;
 use App\Http\Controllers\MarriageController;
@@ -63,6 +64,7 @@ use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\ReligionController;
 use App\Http\Controllers\ReligionHeadquartersController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\RolePetitionController;
 use App\Http\Controllers\RoleStockingController;
 use App\Http\Controllers\SawmillController;
 use App\Http\Controllers\ServiceFavoriteController;
@@ -674,6 +676,19 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
     Route::post('roles/{playerRole}/remove', [RoleController::class, 'remove'])->name('roles.remove');
     Route::get('roles/status', [RoleController::class, 'status'])->name('roles.status');
     Route::post('roles/claim', [RoleController::class, 'claim'])->name('roles.claim');
+
+    // Role Petitions
+    Route::post('roles/{playerRole}/petition', [RolePetitionController::class, 'create'])->name('roles.petition.create');
+    Route::get('roles/petitions', [RolePetitionController::class, 'index'])->name('roles.petitions');
+    Route::post('roles/petitions/{rolePetition}/approve', [RolePetitionController::class, 'approve'])->name('roles.petition.approve');
+    Route::post('roles/petitions/{rolePetition}/deny', [RolePetitionController::class, 'deny'])->name('roles.petition.deny');
+    Route::post('roles/petitions/{rolePetition}/withdraw', [RolePetitionController::class, 'withdraw'])->name('roles.petition.withdraw');
+
+    // Mail
+    Route::get('mail', [MailController::class, 'index'])->name('mail.index');
+    Route::get('mail/{playerMail}', [MailController::class, 'show'])->name('mail.show');
+    Route::post('mail/send', [MailController::class, 'send'])->name('mail.send');
+    Route::post('mail/{playerMail}/delete', [MailController::class, 'delete'])->name('mail.delete');
 
     // Migration (moving between locations)
     Route::get('migration', [MigrationController::class, 'index'])->name('migration.index');

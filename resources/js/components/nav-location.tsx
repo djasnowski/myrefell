@@ -11,6 +11,7 @@ import {
     HeartPulse,
     Home,
     Loader2,
+    Mail,
     Map,
     MapPin,
     ScrollText,
@@ -92,6 +93,7 @@ interface SidebarData {
     has_house?: boolean;
     house_url?: string;
     house_entry_requests_count?: number;
+    unread_mail_count?: number;
 }
 
 interface NavItem {
@@ -100,6 +102,7 @@ interface NavItem {
     icon: LucideIcon;
     description?: string;
     showDot?: boolean;
+    badgeCount?: number;
 }
 
 interface TravelDestination {
@@ -136,6 +139,7 @@ function getPlayerActions(
     hasHouse?: boolean,
     houseUrl?: string,
     houseEntryRequestsCount?: number,
+    unreadMailCount?: number,
 ): NavItem[] {
     const actions: NavItem[] = [
         {
@@ -174,6 +178,14 @@ function getPlayerActions(
             icon: Dices,
             description: "Daily wheel and games",
             showDot: canPlayMinigame,
+        },
+        {
+            title: "Mail",
+            href: "/mail",
+            icon: Mail,
+            description: "Send and receive messages",
+            showDot: (unreadMailCount ?? 0) > 0,
+            badgeCount: unreadMailCount,
         },
     ];
 
@@ -373,12 +385,14 @@ export function NavLocation() {
         has_house,
         house_url,
         house_entry_requests_count,
+        unread_mail_count,
     } = sidebar;
     const playerActions = getPlayerActions(
         can_play_minigame,
         has_house,
         house_url,
         house_entry_requests_count,
+        unread_mail_count,
     );
     const travelDestinations = nearby_destinations || [];
 
@@ -482,9 +496,13 @@ export function NavLocation() {
                                     <Link href={item.href} prefetch>
                                         <item.icon className="h-4 w-4" />
                                         <span className="flex-1">{item.title}</span>
-                                        {item.showDot && (
+                                        {item.badgeCount && item.badgeCount > 0 ? (
+                                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 font-pixel text-[9px] text-white">
+                                                {item.badgeCount}
+                                            </span>
+                                        ) : item.showDot ? (
                                             <span className="h-2 w-2 rounded-full bg-lime-500" />
-                                        )}
+                                        ) : null}
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -519,9 +537,13 @@ export function NavLocation() {
                                     <Link href={item.href} prefetch>
                                         <item.icon className="h-4 w-4" />
                                         <span className="flex-1">{item.title}</span>
-                                        {item.showDot && (
+                                        {item.badgeCount && item.badgeCount > 0 ? (
+                                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 font-pixel text-[9px] text-white">
+                                                {item.badgeCount}
+                                            </span>
+                                        ) : item.showDot ? (
                                             <span className="h-2 w-2 rounded-full bg-lime-500" />
-                                        )}
+                                        ) : null}
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>

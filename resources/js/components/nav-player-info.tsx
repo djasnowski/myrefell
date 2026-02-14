@@ -497,13 +497,17 @@ export function NavPlayerInfo() {
                             return (
                                 <button
                                     onClick={() => {
-                                        const t = player.role!.location_type;
-                                        const plural = t.endsWith("y")
-                                            ? t.slice(0, -1) + "ies"
-                                            : t + "s";
-                                        router.visit(
-                                            `/${plural}/${player.role!.location_id}/roles`,
-                                        );
+                                        if (player.role!.pending_count > 0) {
+                                            router.visit("/roles/petitions");
+                                        } else {
+                                            const t = player.role!.location_type;
+                                            const plural = t.endsWith("y")
+                                                ? t.slice(0, -1) + "ies"
+                                                : t + "s";
+                                            router.visit(
+                                                `/${plural}/${player.role!.location_id}/roles`,
+                                            );
+                                        }
                                     }}
                                     className="relative flex w-full items-center gap-1.5 rounded border border-purple-600/30 bg-purple-900/20 px-2 py-1 transition hover:bg-purple-900/40"
                                 >
