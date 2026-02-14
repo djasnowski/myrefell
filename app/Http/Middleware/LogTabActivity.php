@@ -38,6 +38,14 @@ class LogTabActivity
             return $next($request);
         }
 
+        // Only log if: user is flagged for suspicious activity, OR this is an XP route (needed for detection)
+        $isFlagged = $user->suspicious_activity_flagged_at !== null;
+        $isXpRoute = TabActivityLog::isXpRoute($request->path());
+
+        if (! $isFlagged && ! $isXpRoute) {
+            return $next($request);
+        }
+
         // Log the activity asynchronously (don't block the request)
         try {
             TabActivityLog::logActivity(
