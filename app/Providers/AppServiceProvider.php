@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Listeners\CheckReferralQualification;
 use App\Listeners\UpdateUserLoginInfo;
+use App\Models\Barony;
+use App\Models\Duchy;
 use App\Models\Kingdom;
 use App\Models\Town;
 use App\Models\Village;
@@ -14,10 +16,9 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
-use Opcodes\LogViewer\Facades\LogViewer;
 use Illuminate\Validation\Rules\Password;
+use Opcodes\LogViewer\Facades\LogViewer;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -58,6 +59,8 @@ class AppServiceProvider extends ServiceProvider
         Relation::enforceMorphMap([
             'village' => Village::class,
             'town' => Town::class,
+            'barony' => Barony::class,
+            'duchy' => Duchy::class,
             'kingdom' => Kingdom::class,
         ]);
     }

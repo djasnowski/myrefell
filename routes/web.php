@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AppealController as AdminAppealController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DynastyController as AdminDynastyController;
 use App\Http\Controllers\Admin\ItemController as AdminItemController;
+use App\Http\Controllers\Admin\MailController as AdminMailController;
 use App\Http\Controllers\Admin\ReligionController as AdminReligionController;
 use App\Http\Controllers\Admin\SuspiciousActivityController as AdminSuspiciousActivityController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -1033,6 +1034,9 @@ Route::middleware(['auth', 'verified', 'admin'])
 
         // Appeals
         Route::get('/appeals', [AdminAppealController::class, 'index'])->name('appeals.index');
+
+        // Mail
+        Route::get('/mail', [AdminMailController::class, 'index'])->name('mail.index');
 
         // Dynasties
         Route::get('/dynasties', [AdminDynastyController::class, 'index'])->name('dynasties.index');

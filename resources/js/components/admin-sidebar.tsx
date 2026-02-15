@@ -3,6 +3,7 @@ import {
     Church,
     Crown,
     LayoutDashboard,
+    Mail,
     Package,
     Scroll,
     Shield,
@@ -13,6 +14,7 @@ import { index as adminAppeals } from "@/actions/App/Http/Controllers/Admin/Appe
 import { index as adminDashboard } from "@/actions/App/Http/Controllers/Admin/DashboardController";
 import { index as adminDynasties } from "@/actions/App/Http/Controllers/Admin/DynastyController";
 import { index as adminItems } from "@/actions/App/Http/Controllers/Admin/ItemController";
+import { index as adminMail } from "@/actions/App/Http/Controllers/Admin/MailController";
 import { index as adminReligions } from "@/actions/App/Http/Controllers/Admin/ReligionController";
 import { index as adminSuspiciousActivity } from "@/actions/App/Http/Controllers/Admin/SuspiciousActivityController";
 import { index as adminUsers } from "@/actions/App/Http/Controllers/Admin/UserController";
@@ -62,6 +64,11 @@ const adminNavItems = [
         title: "Cheating",
         url: adminSuspiciousActivity.url(),
         icon: ShieldAlert,
+    },
+    {
+        title: "Mail",
+        url: adminMail.url(),
+        icon: Mail,
     },
     {
         title: "Appeals",
