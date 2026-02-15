@@ -5244,6 +5244,18 @@ function StoragePanel({
 
     const spaceLeft = storageCapacity - storageUsed;
 
+    // Calculate max deposit for the context menu item
+    // For stackable items, if item already exists in storage, we can deposit all
+    // Otherwise we need at least 1 empty slot
+    const maxDeposit = useMemo(() => {
+        if (!contextMenu || contextMenu.source !== "inventory") return 0;
+        const itemExistsInStorage = storage.some((s) => s.item_name === contextMenu.item.name);
+        if (itemExistsInStorage) {
+            return contextMenu.item.quantity; // Can stack onto existing
+        }
+        return spaceLeft > 0 ? contextMenu.item.quantity : 0; // Need 1 slot for new item
+    }, [contextMenu, storage, spaceLeft]);
+
     const openContextMenu = useCallback(
         (
             e: React.MouseEvent,
@@ -5618,7 +5630,7 @@ function StoragePanel({
 
                     {!showQtyInput ? (
                         <>
-                            {contextMenu.source === "inventory" && spaceLeft > 0 && (
+                            {contextMenu.source === "inventory" && maxDeposit > 0 && (
                                 <>
                                     <button
                                         onClick={() => handleDeposit(contextMenu.item.name, 1)}
@@ -5631,17 +5643,13 @@ function StoragePanel({
                                     {contextMenu.item.quantity > 1 && (
                                         <button
                                             onClick={() =>
-                                                handleDeposit(
-                                                    contextMenu.item.name,
-                                                    Math.min(contextMenu.item.quantity, spaceLeft),
-                                                )
+                                                handleDeposit(contextMenu.item.name, maxDeposit)
                                             }
                                             disabled={loading}
                                             className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-300 hover:bg-stone-800"
                                         >
                                             <ArrowDownToLine className="h-3.5 w-3.5 text-green-400" />
-                                            Deposit All (
-                                            {Math.min(contextMenu.item.quantity, spaceLeft)})
+                                            Deposit All ({maxDeposit})
                                         </button>
                                     )}
                                     {contextMenu.item.quantity > 1 && (
@@ -5721,7 +5729,7 @@ function StoragePanel({
                                 min={1}
                                 max={
                                     contextMenu.source === "inventory"
-                                        ? Math.min(contextMenu.item.quantity, spaceLeft)
+                                        ? maxDeposit
                                         : contextMenu.item.quantity
                                 }
                                 value={qty}
@@ -5731,7 +5739,7 @@ function StoragePanel({
                                             1,
                                             Math.min(
                                                 contextMenu.source === "inventory"
-                                                    ? Math.min(contextMenu.item.quantity, spaceLeft)
+                                                    ? maxDeposit
                                                     : contextMenu.item.quantity,
                                                 parseInt(e.target.value) || 1,
                                             ),
