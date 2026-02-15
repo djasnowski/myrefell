@@ -71,10 +71,10 @@ class ItemSeeder extends Seeder
         'Platelegs' => ['bars' => 3, 'offset' => 16, 'type' => 'armor', 'subtype' => 'legs', 'slot' => 'legs', 'atk' => 0, 'str' => 0, 'def' => 12],
         'Plateskirt' => ['bars' => 3, 'offset' => 16, 'type' => 'armor', 'subtype' => 'legs', 'slot' => 'legs', 'atk' => 0, 'str' => 0, 'def' => 12],
         'Platebody' => ['bars' => 5, 'offset' => 18, 'type' => 'armor', 'subtype' => 'chest', 'slot' => 'chest', 'atk' => 0, 'str' => 0, 'def' => 22],
-        // Ammunition (4 types) - stackable
-        'Dart Tips' => ['bars' => 1, 'offset' => 4, 'type' => 'misc', 'subtype' => 'ammunition', 'slot' => null, 'atk' => 2, 'str' => 1, 'def' => 0, 'stackable' => true, 'output_qty' => 10],
-        'Arrowtips' => ['bars' => 1, 'offset' => 5, 'type' => 'misc', 'subtype' => 'ammunition', 'slot' => null, 'atk' => 2, 'str' => 1, 'def' => 0, 'stackable' => true, 'output_qty' => 15],
-        'Javelin Tips' => ['bars' => 1, 'offset' => 6, 'type' => 'misc', 'subtype' => 'ammunition', 'slot' => null, 'atk' => 3, 'str' => 2, 'def' => 0, 'stackable' => true, 'output_qty' => 5],
+        // Ammunition (4 types) - stackable (tips are crafting components, no bonuses)
+        'Dart Tips' => ['bars' => 1, 'offset' => 4, 'type' => 'misc', 'subtype' => 'ammunition', 'slot' => null, 'atk' => 0, 'str' => 0, 'def' => 0, 'stackable' => true, 'output_qty' => 10],
+        'Arrowtips' => ['bars' => 1, 'offset' => 5, 'type' => 'misc', 'subtype' => 'ammunition', 'slot' => null, 'atk' => 0, 'str' => 0, 'def' => 0, 'stackable' => true, 'output_qty' => 15],
+        'Javelin Tips' => ['bars' => 1, 'offset' => 6, 'type' => 'misc', 'subtype' => 'ammunition', 'slot' => null, 'atk' => 0, 'str' => 0, 'def' => 0, 'stackable' => true, 'output_qty' => 5],
         'Throwing Knives' => ['bars' => 1, 'offset' => 7, 'type' => 'weapon', 'subtype' => 'throwing', 'slot' => 'weapon', 'atk' => 3, 'str' => 2, 'def' => 0, 'stackable' => true, 'output_qty' => 5],
     ];
 
