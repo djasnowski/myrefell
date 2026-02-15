@@ -2,10 +2,13 @@ import { Head, router, usePage } from "@inertiajs/react";
 import { gameToast } from "@/components/ui/game-toast";
 import {
     Apple,
+    ArrowUpDown,
+    ChevronDown,
     Droplets,
     Eye,
     Gift,
     Package,
+    Search,
     Shield,
     ShieldOff,
     Sword,
@@ -14,7 +17,7 @@ import {
     User,
     X,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { getItemIcon, GoldIcon } from "@/lib/item-icons";
 import { inventory } from "@/routes";
@@ -642,9 +645,37 @@ function EquipmentSlotDisplay({
     );
 }
 
+type SortOption = "default" | "name" | "type" | "rarity" | "value";
+type FilterType = "all" | "weapon" | "armor" | "consumable" | "resource" | "tool" | "misc";
+
+const rarityOrder: Record<string, number> = {
+    common: 1,
+    uncommon: 2,
+    rare: 3,
+    epic: 4,
+    legendary: 5,
+};
+
+const typeLabels: Record<FilterType, string> = {
+    all: "All",
+    weapon: "Weapons",
+    armor: "Armor",
+    consumable: "Consumables",
+    resource: "Resources",
+    tool: "Tools",
+    misc: "Misc",
+};
+
 export default function Inventory() {
     const { slots, max_slots, gold, can_donate, equipment, combat_stats } =
         usePage<PageProps>().props;
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sortBy, setSortBy] = useState<SortOption>("default");
+    const [filterType, setFilterType] = useState<FilterType>("all");
+    const [showSortDropdown, setShowSortDropdown] = useState(false);
+    const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+    const sortDropdownRef = useRef<HTMLDivElement>(null);
+    const filterDropdownRef = useRef<HTMLDivElement>(null);
     const [contextMenu, setContextMenu] = useState<ContextMenuState>({
         visible: false,
         x: 0,
@@ -672,7 +703,7 @@ export default function Inventory() {
     const contextMenuRef = useRef<HTMLDivElement>(null);
     const equipmentContextMenuRef = useRef<HTMLDivElement>(null);
 
-    // Close context menus when clicking/tapping outside
+    // Close context menus and dropdowns when clicking/tapping outside
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent | TouchEvent) => {
             const target = e.target as Node;
@@ -685,12 +716,20 @@ export default function Inventory() {
             ) {
                 setEquipmentContextMenu((prev) => ({ ...prev, visible: false }));
             }
+            if (sortDropdownRef.current && !sortDropdownRef.current.contains(target)) {
+                setShowSortDropdown(false);
+            }
+            if (filterDropdownRef.current && !filterDropdownRef.current.contains(target)) {
+                setShowFilterDropdown(false);
+            }
         };
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
                 setContextMenu((prev) => ({ ...prev, visible: false }));
                 setEquipmentContextMenu((prev) => ({ ...prev, visible: false }));
                 setDropModal({ visible: false, slotIndex: null, itemName: "" });
+                setShowSortDropdown(false);
+                setShowFilterDropdown(false);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
@@ -934,6 +973,89 @@ export default function Inventory() {
 
     const usedSlots = slots.filter(Boolean).length;
 
+    // Filter and sort slots
+    const processedSlots = useMemo(() => {
+        // Create array with original indices preserved
+        const indexedSlots = slots.map((slot, index) => ({ slot, originalIndex: index }));
+
+        // Filter by search query and type
+        let filtered = indexedSlots.filter(({ slot }) => {
+            if (!slot) return true; // Keep empty slots
+
+            // Search filter
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                if (!slot.item.name.toLowerCase().includes(query)) {
+                    return false;
+                }
+            }
+
+            // Type filter
+            if (filterType !== "all") {
+                if (filterType === "armor") {
+                    // Armor includes head, chest, legs, shield
+                    if (
+                        slot.item.type !== "armor" &&
+                        !["head", "chest", "legs", "shield"].includes(
+                            slot.item.equipment_slot || "",
+                        )
+                    ) {
+                        return false;
+                    }
+                } else if (slot.item.type !== filterType) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        // Sort (only affects items, empty slots stay in place)
+        if (sortBy !== "default") {
+            const itemSlots = filtered.filter(({ slot }) => slot !== null);
+            const emptySlots = filtered.filter(({ slot }) => slot === null);
+
+            itemSlots.sort((a, b) => {
+                const itemA = a.slot!.item;
+                const itemB = b.slot!.item;
+
+                switch (sortBy) {
+                    case "name":
+                        return itemA.name.localeCompare(itemB.name);
+                    case "type":
+                        return (
+                            itemA.type.localeCompare(itemB.type) ||
+                            itemA.name.localeCompare(itemB.name)
+                        );
+                    case "rarity":
+                        return (
+                            (rarityOrder[itemB.rarity] || 0) - (rarityOrder[itemA.rarity] || 0) ||
+                            itemA.name.localeCompare(itemB.name)
+                        );
+                    case "value":
+                        return (
+                            itemB.base_value - itemA.base_value ||
+                            itemA.name.localeCompare(itemB.name)
+                        );
+                    default:
+                        return 0;
+                }
+            });
+
+            filtered = [...itemSlots, ...emptySlots];
+        }
+
+        return filtered;
+    }, [slots, searchQuery, sortBy, filterType]);
+
+    const sortLabels: Record<SortOption, string> = {
+        default: "Default",
+        name: "Name",
+        type: "Type",
+        rarity: "Rarity",
+        value: "Value",
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Inventory" />
@@ -957,28 +1079,173 @@ export default function Inventory() {
                 <div className="flex flex-1 flex-col gap-3 lg:flex-row">
                     {/* Inventory Grid */}
                     <div className="flex-1 rounded-lg border-2 border-stone-600 bg-stone-800/80 p-3">
+                        {/* Search and Filter Bar */}
+                        <div className="mb-3 flex flex-wrap items-center gap-2">
+                            {/* Search Input */}
+                            <div className="relative flex-1 min-w-[140px]">
+                                <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-500" />
+                                <input
+                                    type="text"
+                                    placeholder="Search items..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full rounded border border-stone-600 bg-stone-900 py-1.5 pl-7 pr-2 font-pixel text-xs text-stone-300 placeholder-stone-500 focus:border-amber-500 focus:outline-none"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery("")}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-300"
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Sort Dropdown */}
+                            <div className="relative" ref={sortDropdownRef}>
+                                <button
+                                    onClick={() => {
+                                        setShowSortDropdown(!showSortDropdown);
+                                        setShowFilterDropdown(false);
+                                    }}
+                                    className="flex items-center gap-1 rounded border border-stone-600 bg-stone-900 px-2 py-1.5 font-pixel text-xs text-stone-300 hover:border-stone-500"
+                                >
+                                    <ArrowUpDown className="h-3 w-3" />
+                                    <span className="hidden sm:inline">{sortLabels[sortBy]}</span>
+                                    <ChevronDown className="h-3 w-3" />
+                                </button>
+                                {showSortDropdown && (
+                                    <div className="absolute right-0 top-full z-50 mt-1 min-w-[100px] rounded border border-stone-600 bg-stone-900 py-1 shadow-lg">
+                                        {(Object.keys(sortLabels) as SortOption[]).map((option) => (
+                                            <button
+                                                key={option}
+                                                onClick={() => {
+                                                    setSortBy(option);
+                                                    setShowSortDropdown(false);
+                                                }}
+                                                className={`w-full px-3 py-1 text-left font-pixel text-xs hover:bg-stone-800 ${
+                                                    sortBy === option
+                                                        ? "text-amber-400"
+                                                        : "text-stone-300"
+                                                }`}
+                                            >
+                                                {sortLabels[option]}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Type Filter Dropdown */}
+                            <div className="relative" ref={filterDropdownRef}>
+                                <button
+                                    onClick={() => {
+                                        setShowFilterDropdown(!showFilterDropdown);
+                                        setShowSortDropdown(false);
+                                    }}
+                                    className="flex items-center gap-1 rounded border border-stone-600 bg-stone-900 px-2 py-1.5 font-pixel text-xs text-stone-300 hover:border-stone-500"
+                                >
+                                    <Package className="h-3 w-3" />
+                                    <span className="hidden sm:inline">
+                                        {typeLabels[filterType]}
+                                    </span>
+                                    <ChevronDown className="h-3 w-3" />
+                                </button>
+                                {showFilterDropdown && (
+                                    <div className="absolute right-0 top-full z-50 mt-1 min-w-[110px] rounded border border-stone-600 bg-stone-900 py-1 shadow-lg">
+                                        {(Object.keys(typeLabels) as FilterType[]).map((option) => (
+                                            <button
+                                                key={option}
+                                                onClick={() => {
+                                                    setFilterType(option);
+                                                    setShowFilterDropdown(false);
+                                                }}
+                                                className={`w-full px-3 py-1 text-left font-pixel text-xs hover:bg-stone-800 ${
+                                                    filterType === option
+                                                        ? "text-amber-400"
+                                                        : "text-stone-300"
+                                                }`}
+                                            >
+                                                {typeLabels[option]}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Active filters indicator */}
+                        {(searchQuery || filterType !== "all" || sortBy !== "default") && (
+                            <div className="mb-2 flex flex-wrap items-center gap-1">
+                                {searchQuery && (
+                                    <span className="flex items-center gap-1 rounded bg-stone-700 px-1.5 py-0.5 font-pixel text-[10px] text-stone-300">
+                                        "{searchQuery}"
+                                        <button
+                                            onClick={() => setSearchQuery("")}
+                                            className="text-stone-400 hover:text-stone-200"
+                                        >
+                                            <X className="h-2.5 w-2.5" />
+                                        </button>
+                                    </span>
+                                )}
+                                {filterType !== "all" && (
+                                    <span className="flex items-center gap-1 rounded bg-stone-700 px-1.5 py-0.5 font-pixel text-[10px] text-stone-300">
+                                        {typeLabels[filterType]}
+                                        <button
+                                            onClick={() => setFilterType("all")}
+                                            className="text-stone-400 hover:text-stone-200"
+                                        >
+                                            <X className="h-2.5 w-2.5" />
+                                        </button>
+                                    </span>
+                                )}
+                                {sortBy !== "default" && (
+                                    <span className="flex items-center gap-1 rounded bg-stone-700 px-1.5 py-0.5 font-pixel text-[10px] text-stone-300">
+                                        Sort: {sortLabels[sortBy]}
+                                        <button
+                                            onClick={() => setSortBy("default")}
+                                            className="text-stone-400 hover:text-stone-200"
+                                        >
+                                            <X className="h-2.5 w-2.5" />
+                                        </button>
+                                    </span>
+                                )}
+                                <button
+                                    onClick={() => {
+                                        setSearchQuery("");
+                                        setFilterType("all");
+                                        setSortBy("default");
+                                    }}
+                                    className="font-pixel text-[10px] text-amber-400 hover:text-amber-300"
+                                >
+                                    Clear all
+                                </button>
+                            </div>
+                        )}
+
                         <div className="flex flex-wrap gap-1">
-                            {slots.map((slot, index) => (
+                            {processedSlots.map(({ slot, originalIndex }) => (
                                 <InventorySlotComponent
-                                    key={index}
+                                    key={originalIndex}
                                     slot={slot}
-                                    slotIndex={index}
+                                    slotIndex={originalIndex}
                                     onDrop={(fromSlot) => {
-                                        handleMove(fromSlot, index);
+                                        handleMove(fromSlot, originalIndex);
                                         setDragState({ sourceSlot: null, targetSlot: null });
                                     }}
-                                    onContextMenu={(e) => handleContextMenu(e, index)}
-                                    onLongPress={(e) => handleLongPress(e, index)}
+                                    onContextMenu={(e) => handleContextMenu(e, originalIndex)}
+                                    onLongPress={(e) => handleLongPress(e, originalIndex)}
                                     contextMenuOpen={
-                                        contextMenu.visible && contextMenu.slotIndex === index
+                                        contextMenu.visible &&
+                                        contextMenu.slotIndex === originalIndex
                                     }
                                     draggedItem={
                                         dragState.sourceSlot !== null
                                             ? slots[dragState.sourceSlot]
                                             : null
                                     }
-                                    isBeingDragged={dragState.sourceSlot === index}
-                                    isDragTarget={dragState.targetSlot === index}
+                                    isBeingDragged={dragState.sourceSlot === originalIndex}
+                                    isDragTarget={dragState.targetSlot === originalIndex}
                                     onDragStart={(slotIndex) =>
                                         setDragState({ sourceSlot: slotIndex, targetSlot: null })
                                     }
