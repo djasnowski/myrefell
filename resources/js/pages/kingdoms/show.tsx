@@ -420,62 +420,78 @@ export default function KingdomShow({
                 )}
 
                 {/* Stats Row */}
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
-                        <Users className="mx-auto mb-2 h-6 w-6 text-blue-400" />
-                        <div className="font-pixel text-2xl text-stone-100">
-                            {kingdom.player_count}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                            <Users className="h-5 w-5 text-blue-400" />
+                            <div className="font-pixel text-xl text-stone-100">
+                                {kingdom.player_count}
+                            </div>
                         </div>
                         <div className="text-xs text-stone-500">Players</div>
                     </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
-                        <Users className="mx-auto mb-2 h-6 w-6 text-stone-400" />
-                        <div className="font-pixel text-2xl text-stone-100">
-                            {kingdom.total_population.toLocaleString()}
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                            <Users className="h-5 w-5 text-stone-400" />
+                            <div className="font-pixel text-xl text-stone-100">
+                                {kingdom.total_population.toLocaleString()}
+                            </div>
                         </div>
                         <div className="text-xs text-stone-500">Population</div>
                     </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
-                        <Coins className="mx-auto mb-2 h-6 w-6 text-amber-400" />
-                        <div className="font-pixel text-2xl text-amber-300">
-                            {kingdom.total_wealth.toLocaleString()}
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                            <Coins className="h-5 w-5 text-amber-400" />
+                            <div className="font-pixel text-xl text-amber-300">
+                                {kingdom.total_wealth.toLocaleString()}
+                            </div>
                         </div>
                         <div className="text-xs text-stone-500">Total Wealth</div>
                     </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
-                        <Shield className="mx-auto mb-2 h-6 w-6 text-purple-400" />
-                        <div className="font-pixel text-2xl text-stone-100">
-                            {kingdom.barony_count}
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                            <Percent className="h-5 w-5 text-red-400" />
+                            <div className="font-pixel text-xl text-stone-100">
+                                {kingdom.tax_rate}%
+                            </div>
+                        </div>
+                        <div className="text-xs text-stone-500">Tax Rate</div>
+                    </div>
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                            <Shield className="h-5 w-5 text-purple-400" />
+                            <div className="font-pixel text-xl text-stone-100">
+                                {kingdom.barony_count}
+                            </div>
                         </div>
                         <div className="text-xs text-stone-500">Baronies</div>
                     </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
-                        <Building className="mx-auto mb-2 h-6 w-6 text-purple-400" />
-                        <div className="font-pixel text-2xl text-stone-100">
-                            {kingdom.total_towns}
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                            <Building className="h-5 w-5 text-purple-400" />
+                            <div className="font-pixel text-xl text-stone-100">
+                                {kingdom.total_towns}
+                            </div>
                         </div>
                         <div className="text-xs text-stone-500">Towns</div>
                     </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
-                        <Home className="mx-auto mb-2 h-6 w-6 text-stone-400" />
-                        <div className="font-pixel text-2xl text-stone-100">
-                            {kingdom.total_villages}
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                            <Home className="h-5 w-5 text-stone-400" />
+                            <div className="font-pixel text-xl text-stone-100">
+                                {kingdom.total_villages}
+                            </div>
                         </div>
                         <div className="text-xs text-stone-500">Villages</div>
                     </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
-                        <Anchor className="mx-auto mb-2 h-6 w-6 text-blue-400" />
-                        <div className="font-pixel text-2xl text-stone-100">
-                            {kingdom.total_ports}
+                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                            <Anchor className="h-5 w-5 text-blue-400" />
+                            <div className="font-pixel text-xl text-stone-100">
+                                {kingdom.total_ports}
+                            </div>
                         </div>
                         <div className="text-xs text-stone-500">Ports</div>
-                    </div>
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4 text-center">
-                        <Percent className="mx-auto mb-2 h-6 w-6 text-red-400" />
-                        <div className="font-pixel text-2xl text-stone-100">
-                            {kingdom.tax_rate}%
-                        </div>
-                        <div className="text-xs text-stone-500">Tax Rate</div>
                     </div>
                 </div>
 

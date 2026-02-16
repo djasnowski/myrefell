@@ -121,6 +121,10 @@ class RoleController extends Controller
         // Check if user is physically at this location
         $userIsHere = $user->current_location_type === $locationType && $user->current_location_id === $locationId;
 
+        // Check if king role is claimable yet
+        $kingUnlockTime = \Carbon\Carbon::parse('2026-02-18 15:00:00', 'America/Chicago');
+        $kingClaimable = now()->gte($kingUnlockTime);
+
         return Inertia::render('Roles/Index', [
             'location_type' => $locationType,
             'location_id' => $locationId,
@@ -133,6 +137,8 @@ class RoleController extends Controller
             'user_resides_here' => $userResidesHere,
             'user_is_here' => $userIsHere,
             'self_appoint_threshold' => RoleService::SELF_APPOINT_THRESHOLD,
+            'king_claimable' => $kingClaimable,
+            'king_unlock_date' => $kingClaimable ? null : 'Feb 18',
             'player' => [
                 'id' => $user->id,
                 'username' => $user->username,

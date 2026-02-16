@@ -109,6 +109,8 @@ interface PageProps {
     user_resides_here: boolean;
     user_is_here: boolean;
     self_appoint_threshold: number;
+    king_claimable: boolean;
+    king_unlock_date: string | null;
     player: {
         id: number;
         username: string;
@@ -652,6 +654,8 @@ function RoleModal({
     onChallenge,
     resignLoading,
     claimLoading,
+    kingClaimable,
+    kingUnlockDate,
 }: {
     role: Role;
     currentUserId: number;
@@ -668,13 +672,22 @@ function RoleModal({
     onChallenge: () => void;
     resignLoading: number | null;
     claimLoading: number | null;
+    kingClaimable: boolean;
+    kingUnlockDate: string | null;
 }) {
     const Icon = iconMap[role.icon.toLowerCase()] || Crown;
     const isCurrentUser = role.holder?.user_id === currentUserId;
     const isUserRole = userRoleHere?.role_id === role.id;
-    // Can claim if: vacant, self-appointment allowed, user resides here, user is physically here, and it's not their current role
+    // King has special time-locked claiming
+    const isKingLocked = role.slug === "king" && !kingClaimable;
+    // Can claim if: vacant, self-appointment allowed, user resides here, user is physically here, not their current role, and not time-locked
     const canClaim =
-        role.is_vacant && canSelfAppoint && userResidesHere && userIsHere && !isUserRole;
+        role.is_vacant &&
+        canSelfAppoint &&
+        userResidesHere &&
+        userIsHere &&
+        !isUserRole &&
+        !isKingLocked;
     const willReplaceRole = canClaim && currentUserRole !== undefined;
     // Can challenge if: has a holder, user is at location, user is a resident, not the holder, and not an elected role
     const canChallenge =
@@ -868,7 +881,13 @@ function RoleModal({
                             )}
                         </button>
                     )}
-                    {!canClaim && !isUserRole && role.is_vacant && (
+                    {isKingLocked && role.is_vacant && userIsHere && userResidesHere && (
+                        <div className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-purple-600/50 bg-purple-900/30 px-4 py-2 font-pixel text-xs text-purple-300">
+                            <Clock className="h-4 w-4" />
+                            Coming Soon - {kingUnlockDate}
+                        </div>
+                    )}
+                    {!canClaim && !isUserRole && role.is_vacant && !isKingLocked && (
                         <div className="flex-1 rounded-lg border border-dashed border-stone-600 bg-stone-900/30 p-2 text-center">
                             <span className="font-pixel text-[10px] text-stone-500">
                                 {!userIsHere
@@ -930,6 +949,8 @@ export default function RolesIndex() {
         user_resides_here,
         user_is_here,
         self_appoint_threshold,
+        king_claimable,
+        king_unlock_date,
         player,
     } = usePage<PageProps>().props;
 
@@ -1121,6 +1142,8 @@ export default function RolesIndex() {
                     }}
                     resignLoading={resignLoading}
                     claimLoading={claimLoading}
+                    kingClaimable={king_claimable}
+                    kingUnlockDate={king_unlock_date}
                 />
             )}
 

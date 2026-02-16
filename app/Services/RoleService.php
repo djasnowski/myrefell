@@ -65,12 +65,15 @@ class RoleService
      */
     public function selfAppoint(User $user, Role $role, string $locationType, int $locationId): array
     {
-        // King role cannot be self-appointed
+        // King role cannot be self-appointed until Feb 18, 2026 3pm CST
         if ($role->slug === 'king') {
-            return [
-                'success' => false,
-                'message' => 'The King role cannot be claimed through self-appointment.',
-            ];
+            $unlockTime = \Carbon\Carbon::parse('2026-02-18 15:00:00', 'America/Chicago');
+            if (now()->lt($unlockTime)) {
+                return [
+                    'success' => false,
+                    'message' => 'The King role cannot be claimed yet. It will be available on ' . $unlockTime->format('F j, Y \a\t g:i A') . ' CST.',
+                ];
+            }
         }
 
         // Check if user is physically at this location
