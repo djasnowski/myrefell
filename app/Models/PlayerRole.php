@@ -15,8 +15,11 @@ class PlayerRole extends Model
      * Role statuses.
      */
     public const STATUS_ACTIVE = 'active';
+
     public const STATUS_SUSPENDED = 'suspended';
+
     public const STATUS_RESIGNED = 'resigned';
+
     public const STATUS_REMOVED = 'removed';
 
     protected $fillable = [
@@ -115,7 +118,7 @@ class PlayerRole extends Model
     /**
      * Get the location model.
      */
-    public function getLocationAttribute(): Model|null
+    public function getLocationAttribute(): ?Model
     {
         return match ($this->location_type) {
             'village' => Village::find($this->location_id),
@@ -144,12 +147,14 @@ class PlayerRole extends Model
             'status' => self::STATUS_RESIGNED,
             'removed_at' => now(),
         ]);
+
+        $this->clearLocationRuler();
     }
 
     /**
      * Remove from this role.
      */
-    public function remove(User $removedBy, string $reason = null): void
+    public function remove(User $removedBy, ?string $reason = null): void
     {
         $this->update([
             'status' => self::STATUS_REMOVED,
@@ -157,6 +162,41 @@ class PlayerRole extends Model
             'removed_by_user_id' => $removedBy->id,
             'removal_reason' => $reason,
         ]);
+
+        $this->clearLocationRuler();
+    }
+
+    /**
+     * Clear the ruler user_id on the location model if this is a ruler role.
+     */
+    protected function clearLocationRuler(): void
+    {
+        $role = $this->role;
+        if (! $role) {
+            return;
+        }
+
+        $rulerColumn = match ($role->slug) {
+            'king' => 'king_user_id',
+            'baron' => 'baron_user_id',
+            'mayor' => 'mayor_user_id',
+            default => null,
+        };
+
+        if (! $rulerColumn) {
+            return;
+        }
+
+        $model = match ($this->location_type) {
+            'kingdom' => Kingdom::find($this->location_id),
+            'barony' => Barony::find($this->location_id),
+            'town' => Town::find($this->location_id),
+            default => null,
+        };
+
+        if ($model) {
+            $model->update([$rulerColumn => null]);
+        }
     }
 
     /**
@@ -184,7 +224,7 @@ class PlayerRole extends Model
      */
     public function paySalary(): int
     {
-        if (!$this->isActive()) {
+        if (! $this->isActive()) {
             return 0;
         }
 
