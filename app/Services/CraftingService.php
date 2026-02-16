@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Item;
 use App\Models\LocationActivityLog;
+use App\Models\PlayerRole;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -777,6 +778,12 @@ class CraftingService
                 $xpAwarded = (int) ceil($xpAwarded * (1 + $biomeBonus / 100));
             }
 
+            // Apply role XP bonuses (e.g., Master Jeweler for crafting)
+            $roleXpBonus = $this->getRoleXpBonus($user, $recipe['skill']);
+            if ($roleXpBonus > 0) {
+                $xpAwarded = (int) ceil($xpAwarded * (1 + $roleXpBonus / 100));
+            }
+
             // Get or create the skill
             $skill = $user->skills()->where('skill_name', $recipe['skill'])->first();
 
@@ -789,7 +796,8 @@ class CraftingService
             }
 
             $oldLevel = $skill->level;
-            $skill->addXp($xpAwarded);
+            // Skip automatic bonuses since we've already applied them above
+            $skill->addXp($xpAwarded, skipBonuses: true);
             $newLevel = $skill->fresh()->level;
             $leveledUp = $newLevel > $oldLevel;
 
@@ -1020,6 +1028,12 @@ class CraftingService
                 $xpAwarded = (int) ceil($xpAwarded * (1 + $biomeBonus / 100));
             }
 
+            // Apply role XP bonuses (e.g., Master Jeweler for crafting)
+            $roleXpBonus = $this->getRoleXpBonus($user, $recipe['skill']);
+            if ($roleXpBonus > 0) {
+                $xpAwarded = (int) ceil($xpAwarded * (1 + $roleXpBonus / 100));
+            }
+
             $skill = $user->skills()->where('skill_name', $recipe['skill'])->first();
 
             if (! $skill) {
@@ -1031,7 +1045,8 @@ class CraftingService
             }
 
             $oldLevel = $skill->level;
-            $skill->addXp($xpAwarded);
+            // Skip automatic bonuses since we've already applied them above
+            $skill->addXp($xpAwarded, skipBonuses: true);
             $newLevel = $skill->fresh()->level;
             $leveledUp = $newLevel > $oldLevel;
 
@@ -1095,5 +1110,28 @@ class CraftingService
             'crafting_xp_to_next' => $craftingXpToNext,
             'role_bonuses' => $bonuses,
         ];
+    }
+
+    /**
+     * Get XP bonus percentage from player's active roles for a specific skill.
+     */
+    protected function getRoleXpBonus(User $user, string $skillName): float
+    {
+        $bonusKey = $skillName . '_xp_bonus';
+
+        $activeRoles = PlayerRole::where('user_id', $user->id)
+            ->where('status', 'active')
+            ->with('role')
+            ->get();
+
+        $totalBonus = 0;
+        foreach ($activeRoles as $playerRole) {
+            $role = $playerRole->role;
+            if ($role && $role->bonuses) {
+                $totalBonus += $role->bonuses[$bonusKey] ?? 0;
+            }
+        }
+
+        return $totalBonus;
     }
 }

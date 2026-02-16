@@ -100,18 +100,23 @@ class PlayerSkill extends Model
 
     /**
      * Add XP to this skill and handle level ups.
-     * Applies blessing, belief, and role XP bonuses automatically.
+     * Applies blessing, belief, and role XP bonuses automatically unless skipBonuses is true.
+     *
+     * @param  int  $amount  The base XP amount
+     * @param  bool  $skipBonuses  If true, skip automatic bonus application (for services that calculate bonuses manually)
      */
-    public function addXp(int $amount): int
+    public function addXp(int $amount, bool $skipBonuses = false): int
     {
-        // Apply blessing XP bonuses
-        $amount = $this->applyBlessingXpBonus($amount);
+        if (! $skipBonuses) {
+            // Apply blessing XP bonuses
+            $amount = $this->applyBlessingXpBonus($amount);
 
-        // Apply belief XP bonuses (from religion membership)
-        $amount = $this->applyBeliefXpBonus($amount);
+            // Apply belief XP bonuses (from religion membership)
+            $amount = $this->applyBeliefXpBonus($amount);
 
-        // Apply role XP bonuses (from town/location roles)
-        $amount = $this->applyRoleXpBonus($amount);
+            // Apply role XP bonuses (from town/location roles)
+            $amount = $this->applyRoleXpBonus($amount);
+        }
 
         $this->xp += $amount;
         $newLevel = self::levelFromXp($this->xp);
