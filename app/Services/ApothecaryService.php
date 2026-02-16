@@ -18,13 +18,13 @@ class ApothecaryService
      * Potion recipes configuration.
      */
     public const RECIPES = [
-        // Basic potions (Level 1-20)
+        // Basic potions (Level 1-20) - ~8-10 XP/energy
         'minor_health_potion' => [
             'name' => 'Minor Health Potion',
             'category' => 'restoration',
             'skill' => 'herblore',
             'required_level' => 1,
-            'xp_reward' => 10,
+            'xp_reward' => 25,
             'energy_cost' => 3,
             'task_type' => 'brew',
             'materials' => [
@@ -38,7 +38,7 @@ class ApothecaryService
             'category' => 'restoration',
             'skill' => 'herblore',
             'required_level' => 5,
-            'xp_reward' => 15,
+            'xp_reward' => 35,
             'energy_cost' => 4,
             'task_type' => 'brew',
             'materials' => [
@@ -52,7 +52,7 @@ class ApothecaryService
             'category' => 'restoration',
             'skill' => 'herblore',
             'required_level' => 10,
-            'xp_reward' => 20,
+            'xp_reward' => 50,
             'energy_cost' => 5,
             'task_type' => 'brew',
             'materials' => [
@@ -63,13 +63,13 @@ class ApothecaryService
             'output' => ['name' => 'Energy Tonic', 'quantity' => 1],
         ],
 
-        // Combat potions (Level 15-35)
+        // Combat potions (Level 15-35) - ~10-12 XP/energy
         'attack_potion' => [
             'name' => 'Attack Potion',
             'category' => 'combat',
             'skill' => 'herblore',
             'required_level' => 15,
-            'xp_reward' => 25,
+            'xp_reward' => 55,
             'energy_cost' => 5,
             'task_type' => 'brew',
             'materials' => [
@@ -84,7 +84,7 @@ class ApothecaryService
             'category' => 'combat',
             'skill' => 'herblore',
             'required_level' => 18,
-            'xp_reward' => 28,
+            'xp_reward' => 60,
             'energy_cost' => 5,
             'task_type' => 'brew',
             'materials' => [
@@ -99,7 +99,7 @@ class ApothecaryService
             'category' => 'combat',
             'skill' => 'herblore',
             'required_level' => 20,
-            'xp_reward' => 30,
+            'xp_reward' => 65,
             'energy_cost' => 5,
             'task_type' => 'brew',
             'materials' => [
@@ -114,7 +114,7 @@ class ApothecaryService
             'category' => 'combat',
             'skill' => 'herblore',
             'required_level' => 22,
-            'xp_reward' => 32,
+            'xp_reward' => 70,
             'energy_cost' => 5,
             'task_type' => 'brew',
             'materials' => [
@@ -129,7 +129,7 @@ class ApothecaryService
             'category' => 'combat',
             'skill' => 'herblore',
             'required_level' => 25,
-            'xp_reward' => 35,
+            'xp_reward' => 75,
             'energy_cost' => 6,
             'task_type' => 'brew',
             'materials' => [
@@ -140,13 +140,13 @@ class ApothecaryService
             'output' => ['name' => 'Agility Potion', 'quantity' => 1],
         ],
 
-        // Intermediate potions (Level 25-45)
+        // Intermediate potions (Level 25-45) - ~12-14 XP/energy
         'health_potion' => [
             'name' => 'Health Potion',
             'category' => 'restoration',
             'skill' => 'herblore',
             'required_level' => 25,
-            'xp_reward' => 35,
+            'xp_reward' => 80,
             'energy_cost' => 6,
             'task_type' => 'brew',
             'materials' => [
@@ -161,7 +161,7 @@ class ApothecaryService
             'category' => 'combat',
             'skill' => 'herblore',
             'required_level' => 30,
-            'xp_reward' => 45,
+            'xp_reward' => 95,
             'energy_cost' => 7,
             'task_type' => 'brew',
             'materials' => [
@@ -176,7 +176,7 @@ class ApothecaryService
             'category' => 'combat',
             'skill' => 'herblore',
             'required_level' => 33,
-            'xp_reward' => 48,
+            'xp_reward' => 100,
             'energy_cost' => 7,
             'task_type' => 'brew',
             'materials' => [
@@ -191,7 +191,7 @@ class ApothecaryService
             'category' => 'combat',
             'skill' => 'herblore',
             'required_level' => 36,
-            'xp_reward' => 50,
+            'xp_reward' => 105,
             'energy_cost' => 7,
             'task_type' => 'brew',
             'materials' => [
@@ -206,7 +206,7 @@ class ApothecaryService
             'category' => 'spiritual',
             'skill' => 'herblore',
             'required_level' => 38,
-            'xp_reward' => 55,
+            'xp_reward' => 110,
             'energy_cost' => 7,
             'task_type' => 'brew',
             'materials' => [
@@ -217,13 +217,13 @@ class ApothecaryService
             'output' => ['name' => 'Prayer Potion', 'quantity' => 1],
         ],
 
-        // Advanced potions (Level 45-65)
+        // Advanced potions (Level 45-65) - ~14-16 XP/energy
         'greater_health_potion' => [
             'name' => 'Greater Health Potion',
             'category' => 'restoration',
             'skill' => 'herblore',
             'required_level' => 45,
-            'xp_reward' => 65,
+            'xp_reward' => 120,
             'energy_cost' => 8,
             'task_type' => 'brew',
             'materials' => [
@@ -238,7 +238,7 @@ class ApothecaryService
             'category' => 'combat',
             'skill' => 'herblore',
             'required_level' => 50,
-            'xp_reward' => 75,
+            'xp_reward' => 140,
             'energy_cost' => 9,
             'task_type' => 'brew',
             'materials' => [
@@ -253,7 +253,7 @@ class ApothecaryService
             'category' => 'restoration',
             'skill' => 'herblore',
             'required_level' => 55,
-            'xp_reward' => 85,
+            'xp_reward' => 160,
             'energy_cost' => 10,
             'task_type' => 'brew',
             'materials' => [
@@ -264,13 +264,13 @@ class ApothecaryService
             'output' => ['name' => 'Energy Elixir', 'quantity' => 1],
         ],
 
-        // Master potions (Level 65+)
+        // Master potions (Level 65+) - ~16-18 XP/energy
         'overload_potion' => [
             'name' => 'Overload Potion',
             'category' => 'combat',
             'skill' => 'herblore',
             'required_level' => 65,
-            'xp_reward' => 100,
+            'xp_reward' => 200,
             'energy_cost' => 12,
             'task_type' => 'brew',
             'materials' => [
@@ -286,7 +286,7 @@ class ApothecaryService
             'category' => 'restoration',
             'skill' => 'herblore',
             'required_level' => 75,
-            'xp_reward' => 150,
+            'xp_reward' => 280,
             'energy_cost' => 15,
             'task_type' => 'brew',
             'materials' => [
