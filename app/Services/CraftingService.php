@@ -1122,6 +1122,7 @@ class CraftingService
             'crafting_xp_progress' => $craftingXpProgress,
             'crafting_xp_to_next' => $craftingXpToNext,
             'role_bonuses' => $bonuses,
+            'inventory_summary' => $this->inventoryService->getInventorySummary($user),
         ];
     }
 

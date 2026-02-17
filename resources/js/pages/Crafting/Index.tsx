@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 const CRAFT_COOLDOWN_MS = 3000;
 import AppLayout from "@/layouts/app-layout";
 import { ActionQueueControls } from "@/components/action-queue-controls";
+import { InventorySummary } from "@/components/inventory-summary";
 import { gameToast } from "@/components/ui/game-toast";
 import { useActionQueue, type ActionResult, type QueueStats } from "@/hooks/use-action-queue";
 import { locationPath } from "@/lib/utils";
@@ -43,6 +44,7 @@ interface CraftingInfo {
     crafting_xp: number;
     crafting_xp_progress: number;
     crafting_xp_to_next: number;
+    inventory_summary: { name: string; quantity: number }[];
 }
 
 interface CraftResult {
@@ -84,10 +86,12 @@ function RecipeCard({
     recipe,
     isSelected,
     onSelect,
+    stats,
 }: {
     recipe: Recipe;
     isSelected: boolean;
     onSelect: (id: string) => void;
+    stats?: { xp: number; items: number };
 }) {
     return (
         <button
@@ -159,6 +163,13 @@ function RecipeCard({
                     Missing Materials
                 </div>
             )}
+
+            {/* Session stats */}
+            {stats && (
+                <div className="mt-3 border-t border-stone-700/50 pt-2 font-pixel text-[8px] text-green-400">
+                    ×{stats.items} crafted · {stats.xp} XP
+                </div>
+            )}
         </button>
     );
 }
@@ -167,6 +178,9 @@ export default function CraftingIndex() {
     const { crafting_info, location } = usePage<PageProps>().props;
     const [currentEnergy, setCurrentEnergy] = useState(crafting_info.player_energy);
     const [selectedRecipe, setSelectedRecipe] = useState<string | null>(null);
+    const [sessionStats, setSessionStats] = useState<Record<string, { xp: number; items: number }>>(
+        {},
+    );
 
     // Build the craft URL based on location
     const craftUrl = location
@@ -178,6 +192,18 @@ export default function CraftingIndex() {
     const onActionComplete = useCallback((data: ActionResult) => {
         if (data.success && data.energy_remaining !== undefined) {
             setCurrentEnergy(data.energy_remaining);
+        }
+        if (data.success && data.item) {
+            const name = data.item.name;
+            const xp = data.xp_awarded ?? 0;
+            const qty = data.item.quantity ?? 1;
+            setSessionStats((prev) => ({
+                ...prev,
+                [name]: {
+                    xp: (prev[name]?.xp ?? 0) + xp,
+                    items: (prev[name]?.items ?? 0) + qty,
+                },
+            }));
         }
     }, []);
 
@@ -314,6 +340,8 @@ export default function CraftingIndex() {
                     </div>
                 </div>
 
+                <InventorySummary items={crafting_info.inventory_summary} />
+
                 {/* Queue Controls */}
                 {effectiveSelected && (
                     <div className="mb-4 rounded-lg border border-amber-600/50 bg-stone-800/50 p-3">
@@ -352,6 +380,7 @@ export default function CraftingIndex() {
                             recipe={recipe}
                             isSelected={selectedRecipe === recipe.id}
                             onSelect={setSelectedRecipe}
+                            stats={sessionStats[recipe.output.name]}
                         />
                     ))}
                 </div>

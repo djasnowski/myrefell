@@ -200,6 +200,25 @@ class InventoryService
     }
 
     /**
+     * Get a summary of all resource and misc items in the player's inventory.
+     *
+     * @return array<int, array{name: string, quantity: int}>
+     */
+    public function getInventorySummary(User $player): array
+    {
+        return $player->inventory()
+            ->join('items', 'player_inventory.item_id', '=', 'items.id')
+            ->whereIn('items.type', ['resource', 'misc'])
+            ->groupBy('items.id', 'items.name')
+            ->orderBy('items.name')
+            ->selectRaw('items.name, SUM(player_inventory.quantity) as quantity')
+            ->get()
+            ->map(fn ($row) => ['name' => $row->name, 'quantity' => (int) $row->quantity])
+            ->values()
+            ->toArray();
+    }
+
+    /**
      * Give starter items to a new player.
      */
     public function giveStarterKit(User $player): void

@@ -527,6 +527,7 @@ class GatheringService
             'biome_bonus' => $biomeBonus,
             'gathering_xp_bonus' => $gatheringXpBonus,
             'xp_penalty' => $xpPenalty,
+            'inventory_summary' => $this->inventoryService->getInventorySummary($user),
         ];
     }
 

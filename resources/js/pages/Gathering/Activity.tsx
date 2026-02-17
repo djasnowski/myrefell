@@ -29,6 +29,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
 import { ActionQueueControls } from "@/components/action-queue-controls";
+import { InventorySummary } from "@/components/inventory-summary";
 import { gameToast } from "@/components/ui/game-toast";
 import { useActionQueue, type ActionResult, type QueueStats } from "@/hooks/use-action-queue";
 import { locationPath } from "@/lib/utils";
@@ -96,6 +97,7 @@ interface Activity {
     biome_bonus: number;
     gathering_xp_bonus: number;
     xp_penalty: number;
+    inventory_summary: { name: string; quantity: number }[];
 }
 
 interface GatherResult {
@@ -160,6 +162,9 @@ export default function GatheringActivity() {
     const { activity, player_energy, max_energy, location } = usePage<PageProps>().props;
     const [currentEnergy, setCurrentEnergy] = useState(player_energy);
     const [selectedResource, setSelectedResource] = useState<string | null>(null);
+    const [sessionStats, setSessionStats] = useState<Record<string, { xp: number; items: number }>>(
+        {},
+    );
 
     const Icon = activityIcons[activity.id] || Pickaxe;
     const bgColor = activityBgColors[activity.id] || "from-stone-800 to-stone-900 border-stone-600";
@@ -194,6 +199,18 @@ export default function GatheringActivity() {
     const onActionComplete = useCallback((data: ActionResult) => {
         if (data.success && data.energy_remaining !== undefined) {
             setCurrentEnergy(data.energy_remaining);
+        }
+        if (data.success && data.resource) {
+            const name = data.resource.name;
+            const xp = data.xp_awarded ?? 0;
+            const qty = data.quantity ?? 1;
+            setSessionStats((prev) => ({
+                ...prev,
+                [name]: {
+                    xp: (prev[name]?.xp ?? 0) + xp,
+                    items: (prev[name]?.items ?? 0) + qty,
+                },
+            }));
         }
     }, []);
 
@@ -508,6 +525,8 @@ export default function GatheringActivity() {
                         </div>
                     </div>
 
+                    <InventorySummary items={activity.inventory_summary} />
+
                     {/* Gather Controls */}
                     <div className="mb-6 rounded-xl border-2 border-amber-600/50 bg-stone-800/50 p-4">
                         <ActionQueueControls
@@ -610,6 +629,12 @@ export default function GatheringActivity() {
                                                             +{activity.biome_bonus}% biome
                                                         </span>
                                                     )}
+                                                </div>
+                                            )}
+                                            {sessionStats[resource.name] && (
+                                                <div className="font-pixel text-[8px] text-green-400">
+                                                    ×{sessionStats[resource.name].items} ·{" "}
+                                                    {sessionStats[resource.name].xp} XP
                                                 </div>
                                             )}
                                         </div>
