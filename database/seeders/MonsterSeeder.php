@@ -434,18 +434,21 @@ class MonsterSeeder extends Seeder
                 ['item' => 'Leather Vest', 'chance' => 8, 'min' => 1, 'max' => 1],
                 ['item' => 'Venom Sac', 'chance' => 10, 'min' => 1, 'max' => 1],
                 ['item' => 'Feather', 'chance' => 35, 'min' => 2, 'max' => 5],
+                ['item' => 'Cloth', 'chance' => 12, 'min' => 1, 'max' => 1],
             ],
 
             // Mid level monsters
             'Zombie' => [
                 ['item' => 'Bones', 'chance' => 100, 'min' => 1, 'max' => 2],
                 ['item' => 'Nightshade', 'chance' => 15, 'min' => 1, 'max' => 1],
+                ['item' => 'Cloth', 'chance' => 8, 'min' => 1, 'max' => 1],
             ],
             'Hobgoblin' => [
                 ['item' => 'Bones', 'chance' => 100, 'min' => 1, 'max' => 1],
                 ['item' => 'Iron Sword', 'chance' => 10, 'min' => 1, 'max' => 1],
                 ['item' => 'Iron Sq Shield', 'chance' => 8, 'min' => 1, 'max' => 1],
                 ['item' => 'Turtle Shell Powder', 'chance' => 15, 'min' => 1, 'max' => 1],
+                ['item' => 'Cloth', 'chance' => 10, 'min' => 1, 'max' => 2],
             ],
             'Bear' => [
                 ['item' => 'Big Bones', 'chance' => 100, 'min' => 1, 'max' => 1],
@@ -455,6 +458,7 @@ class MonsterSeeder extends Seeder
                 ['item' => 'Bones', 'chance' => 100, 'min' => 1, 'max' => 1],
                 ['item' => 'Void Essence', 'chance' => 10, 'min' => 1, 'max' => 1],
                 ['item' => 'Nightshade', 'chance' => 25, 'min' => 1, 'max' => 2],
+                ['item' => 'Cloth', 'chance' => 15, 'min' => 1, 'max' => 2],
             ],
             'Troll' => [
                 ['item' => 'Big Bones', 'chance' => 100, 'min' => 1, 'max' => 2],

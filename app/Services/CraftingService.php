@@ -251,6 +251,19 @@ class CraftingService
             ],
             'output' => ['name' => 'Thread', 'quantity' => 1],
         ],
+        'cloth' => [
+            'name' => 'Cloth',
+            'category' => 'crafting',
+            'skill' => 'crafting',
+            'required_level' => 5,
+            'xp_reward' => 10,
+            'energy_cost' => 2,
+            'task_type' => 'craft',
+            'materials' => [
+                ['name' => 'Thread', 'quantity' => 2],
+            ],
+            'output' => ['name' => 'Cloth', 'quantity' => 1],
+        ],
         'rope' => [
             'name' => 'Rope',
             'category' => 'crafting',
@@ -1117,7 +1130,7 @@ class CraftingService
      */
     protected function getRoleXpBonus(User $user, string $skillName): float
     {
-        $bonusKey = $skillName . '_xp_bonus';
+        $bonusKey = $skillName.'_xp_bonus';
 
         $activeRoles = PlayerRole::where('user_id', $user->id)
             ->where('status', 'active')
