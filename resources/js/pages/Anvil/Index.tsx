@@ -80,6 +80,7 @@ interface RecipesByCategory {
     weapons: Recipe[];
     armor: Recipe[];
     ammunition: Recipe[];
+    materials: Recipe[];
 }
 
 interface BarInventory {
@@ -202,7 +203,7 @@ function RecipeCard({
     cooldown: number;
 }) {
     const isLoading = loading === recipe.id;
-    const itemName = recipe.name.split(" ").slice(1).join(" "); // Remove metal prefix
+    const itemName = recipe.name;
     const hasEnoughBars = (recipe.materials[0]?.have ?? 0) >= (recipe.materials[0]?.required ?? 1);
     const colors = metalColor || metalColors.Bronze;
     const canSmith = recipe.can_make && !recipe.is_locked && loading === null && cooldown <= 0;
@@ -317,7 +318,12 @@ function MetalTierSection({
     const [expanded, setExpanded] = useState(defaultExpanded);
     const colors = metalColors[metal] || metalColors.Bronze;
 
-    const allRecipes = [...recipes.weapons, ...recipes.armor, ...recipes.ammunition];
+    const allRecipes = [
+        ...recipes.weapons,
+        ...recipes.armor,
+        ...recipes.ammunition,
+        ...(recipes.materials ?? []),
+    ];
     const totalRecipes = allRecipes.length;
     const craftableRecipes = allRecipes.filter((r) => r.can_make).length;
     // Count recipes that have materials but can't craft (likely due to full inventory)
@@ -433,7 +439,7 @@ function MetalTierSection({
 
                     {/* Ammunition */}
                     {recipes.ammunition.length > 0 && (
-                        <div>
+                        <div className="mb-6">
                             <div className="mb-3 flex items-center gap-2">
                                 <Target className="h-4 w-4 text-green-400" />
                                 <span className="text-sm font-medium text-stone-300">
@@ -445,6 +451,34 @@ function MetalTierSection({
                             </div>
                             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                                 {recipes.ammunition.map((recipe) => (
+                                    <RecipeCard
+                                        key={recipe.id}
+                                        recipe={recipe}
+                                        onSmith={onSmith}
+                                        loading={loading}
+                                        compact
+                                        metalColor={colors}
+                                        cooldown={cooldown}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Materials */}
+                    {(recipes.materials ?? []).length > 0 && (
+                        <div>
+                            <div className="mb-3 flex items-center gap-2">
+                                <Package className="h-4 w-4 text-amber-400" />
+                                <span className="text-sm font-medium text-stone-300">
+                                    Materials
+                                </span>
+                                <span className="text-xs text-stone-500">
+                                    ({recipes.materials.length})
+                                </span>
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                                {recipes.materials.map((recipe) => (
                                     <RecipeCard
                                         key={recipe.id}
                                         recipe={recipe}

@@ -32,7 +32,7 @@ class RoleStockingService
             'Iron Pickaxe',
             'Steel Pickaxe',
             'Hammer',
-            'Nails',
+            'Bronze Nails',
             'Fishing Rod',
             'Bronze Dagger',
             'Iron Dagger',
@@ -126,7 +126,7 @@ class RoleStockingService
             'Iron Pickaxe',
             'Steel Pickaxe',
             'Hammer',
-            'Nails',
+            'Bronze Nails',
         ],
         'weaponsmith' => [
             'Bronze Dagger',
@@ -254,7 +254,7 @@ class RoleStockingService
         $inventory = $user->inventory()->with('item')->get();
 
         return $inventory->filter(function ($slot) use ($stockableItemNames, $isMerchant) {
-            if (!$slot->item) {
+            if (! $slot->item) {
                 return false;
             }
 
@@ -301,7 +301,7 @@ class RoleStockingService
         }
 
         $item = Item::find($itemId);
-        if (!$item) {
+        if (! $item) {
             return [
                 'success' => false,
                 'message' => 'Item not found.',
@@ -326,7 +326,7 @@ class RoleStockingService
             }
         }
 
-        if (!$canStock) {
+        if (! $canStock) {
             return [
                 'success' => false,
                 'message' => 'Your role does not allow stocking this item.',
@@ -334,7 +334,7 @@ class RoleStockingService
         }
 
         // Check player has the item
-        if (!$this->inventoryService->hasItem($user, $item, $quantity)) {
+        if (! $this->inventoryService->hasItem($user, $item, $quantity)) {
             return [
                 'success' => false,
                 'message' => 'You don\'t have enough of this item.',
@@ -400,7 +400,7 @@ class RoleStockingService
             ->where('quantity', '>', 0)
             ->with('item');
 
-        if (!$isMerchant) {
+        if (! $isMerchant) {
             $itemIds = Item::whereIn('name', $stockableItemNames)->pluck('id');
             $query->whereIn('item_id', $itemIds);
         }

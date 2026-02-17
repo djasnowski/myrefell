@@ -147,6 +147,7 @@ class AnvilController extends Controller
                 'weapons' => [],
                 'armor' => [],
                 'ammunition' => [],
+                'materials' => [],
             ];
         }
 
@@ -193,6 +194,7 @@ class AnvilController extends Controller
     {
         $armorTypes = ['Helm', 'Shield', 'Chainbody', 'Platebody', 'Platelegs', 'Plateskirt'];
         $ammoTypes = ['Tips', 'Arrowtips', 'Throwing Knives'];
+        $materialTypes = ['Nails'];
 
         foreach ($armorTypes as $type) {
             if (str_contains($name, $type)) {
@@ -203,6 +205,12 @@ class AnvilController extends Controller
         foreach ($ammoTypes as $type) {
             if (str_contains($name, $type)) {
                 return 'ammunition';
+            }
+        }
+
+        foreach ($materialTypes as $type) {
+            if (str_contains($name, $type)) {
+                return 'materials';
             }
         }
 

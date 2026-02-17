@@ -76,7 +76,7 @@ class ConstructionConfig
                         'crude_chair' => [
                             'name' => 'Crude Chair',
                             'level' => 1,
-                            'materials' => ['Plank' => 3, 'Nails' => 2],
+                            'materials' => ['Plank' => 3, 'Bronze Nails' => 2],
                             'xp' => 30,
                         ],
                         'wooden_chair' => [
@@ -93,7 +93,7 @@ class ConstructionConfig
                         'wooden_bookcase' => [
                             'name' => 'Wooden Bookcase',
                             'level' => 4,
-                            'materials' => ['Plank' => 4, 'Nails' => 3],
+                            'materials' => ['Plank' => 4, 'Bronze Nails' => 3],
                             'xp' => 50,
                         ],
                         'oak_bookcase' => [
@@ -152,7 +152,7 @@ class ConstructionConfig
                         'firepit' => [
                             'name' => 'Firepit',
                             'level' => 5,
-                            'materials' => ['Plank' => 5, 'Nails' => 3],
+                            'materials' => ['Plank' => 5, 'Bronze Nails' => 3],
                             'xp' => 50,
                             'effect' => ['burn_reduction' => 25],
                         ],
@@ -171,7 +171,7 @@ class ConstructionConfig
                         'wooden_larder' => [
                             'name' => 'Wooden Larder',
                             'level' => 9,
-                            'materials' => ['Plank' => 6, 'Nails' => 4],
+                            'materials' => ['Plank' => 6, 'Bronze Nails' => 4],
                             'xp' => 70,
                         ],
                         'oak_larder' => [
@@ -188,7 +188,7 @@ class ConstructionConfig
                         'wooden_shelves' => [
                             'name' => 'Wooden Shelves',
                             'level' => 6,
-                            'materials' => ['Plank' => 4, 'Nails' => 2],
+                            'materials' => ['Plank' => 4, 'Bronze Nails' => 2],
                             'xp' => 45,
                         ],
                         'oak_shelves' => [
@@ -216,7 +216,7 @@ class ConstructionConfig
                         'kitchen_table' => [
                             'name' => 'Kitchen Table',
                             'level' => 8,
-                            'materials' => ['Plank' => 4, 'Nails' => 2],
+                            'materials' => ['Plank' => 4, 'Bronze Nails' => 2],
                             'xp' => 65,
                         ],
                         'oak_table' => [
@@ -260,7 +260,7 @@ class ConstructionConfig
                         'wooden_wardrobe' => [
                             'name' => 'Wooden Wardrobe',
                             'level' => 12,
-                            'materials' => ['Plank' => 4, 'Nails' => 3],
+                            'materials' => ['Plank' => 4, 'Bronze Nails' => 3],
                             'xp' => 90,
                         ],
                     ],
@@ -271,7 +271,7 @@ class ConstructionConfig
                         'wooden_dresser' => [
                             'name' => 'Wooden Dresser',
                             'level' => 11,
-                            'materials' => ['Plank' => 3, 'Nails' => 2],
+                            'materials' => ['Plank' => 3, 'Bronze Nails' => 2],
                             'xp' => 75,
                         ],
                     ],
@@ -337,7 +337,7 @@ class ConstructionConfig
                         'wooden_tool_rack' => [
                             'name' => 'Wooden Tool Rack',
                             'level' => 21,
-                            'materials' => ['Oak Plank' => 3, 'Nails' => 2],
+                            'materials' => ['Oak Plank' => 3, 'Iron Nails' => 2],
                             'xp' => 160,
                         ],
                         'steel_tool_rack' => [
@@ -593,7 +593,7 @@ class ConstructionConfig
                         'tool_chest' => [
                             'name' => 'Tool Chest',
                             'level' => 38,
-                            'materials' => ['Oak Plank' => 4, 'Nails' => 3],
+                            'materials' => ['Oak Plank' => 4, 'Iron Nails' => 3],
                             'xp' => 310,
                         ],
                         'reinforced_chest' => [
@@ -618,7 +618,7 @@ class ConstructionConfig
                         'wooden_table' => [
                             'name' => 'Wooden Table',
                             'level' => 15,
-                            'materials' => ['Plank' => 4, 'Nails' => 2],
+                            'materials' => ['Plank' => 4, 'Iron Nails' => 2],
                             'xp' => 100,
                         ],
                         'oak_table' => [
@@ -641,7 +641,7 @@ class ConstructionConfig
                         'wooden_bench' => [
                             'name' => 'Wooden Bench',
                             'level' => 15,
-                            'materials' => ['Plank' => 3, 'Nails' => 2],
+                            'materials' => ['Plank' => 3, 'Iron Nails' => 2],
                             'xp' => 90,
                         ],
                         'oak_bench' => [
@@ -1032,7 +1032,7 @@ class ConstructionConfig
                         'wooden_crates' => [
                             'name' => 'Wooden Crates',
                             'level' => 25,
-                            'materials' => ['Plank' => 6, 'Nails' => 4],
+                            'materials' => ['Plank' => 6, 'Iron Nails' => 4],
                             'xp' => 200,
                             'effect' => ['storage_bonus' => 50],
                         ],
@@ -1065,7 +1065,7 @@ class ConstructionConfig
                         'wooden_shelving' => [
                             'name' => 'Wooden Shelving',
                             'level' => 25,
-                            'materials' => ['Plank' => 4, 'Nails' => 3],
+                            'materials' => ['Plank' => 4, 'Iron Nails' => 3],
                             'xp' => 180,
                         ],
                         'oak_shelving' => [

@@ -177,7 +177,7 @@ class ThievingService
                 ['item' => 'Iron Bar', 'weight' => 30, 'quantity' => [1, 2]],
                 ['item' => 'Steel Bar', 'weight' => 20, 'quantity' => [1, 1]],
                 ['item' => 'Leather', 'weight' => 25, 'quantity' => [1, 2]],
-                ['item' => 'Nails', 'weight' => 25, 'quantity' => [5, 10]],
+                ['item' => 'Bronze Nails', 'weight' => 25, 'quantity' => [5, 10]],
             ],
         ],
         // Level 20 targets

@@ -78,6 +78,7 @@ class CraftingService
         'Javelin Tips' => ['bars' => 1, 'offset' => 6, 'xp_per_bar' => 12, 'energy_per_bar' => 2, 'output_qty' => 5],
         'Full Helm' => ['bars' => 2, 'offset' => 7, 'xp_per_bar' => 12, 'energy_per_bar' => 2],
         'Throwing Knives' => ['bars' => 1, 'offset' => 7, 'xp_per_bar' => 12, 'energy_per_bar' => 2, 'output_qty' => 5],
+        'Nails' => ['bars' => 1, 'offset' => 0, 'xp_per_bar' => 12, 'energy_per_bar' => 2, 'output_qty' => 15],
         'Sq Shield' => ['bars' => 2, 'offset' => 8, 'xp_per_bar' => 12, 'energy_per_bar' => 2],
         'Warhammer' => ['bars' => 3, 'offset' => 9, 'xp_per_bar' => 12, 'energy_per_bar' => 2],
         'Battleaxe' => ['bars' => 3, 'offset' => 10, 'xp_per_bar' => 12, 'energy_per_bar' => 2],

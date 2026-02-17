@@ -18,7 +18,7 @@ use App\Services\InventoryService;
 beforeEach(function () {
     // Create required items (firstOrCreate since migration may already seed them)
     Item::firstOrCreate(['name' => 'Plank'], ['type' => 'misc', 'subtype' => 'material', 'rarity' => 'common', 'stackable' => true, 'max_stack' => 100, 'base_value' => 20]);
-    Item::firstOrCreate(['name' => 'Nails'], ['type' => 'misc', 'subtype' => 'material', 'rarity' => 'common', 'stackable' => true, 'max_stack' => 100, 'base_value' => 5]);
+    Item::firstOrCreate(['name' => 'Bronze Nails'], ['type' => 'misc', 'subtype' => 'material', 'rarity' => 'common', 'stackable' => true, 'max_stack' => 100, 'base_value' => 5]);
     Item::firstOrCreate(['name' => 'Wood'], ['type' => 'resource', 'subtype' => 'wood', 'rarity' => 'common', 'stackable' => true, 'max_stack' => 100, 'base_value' => 2]);
 });
 
@@ -249,7 +249,7 @@ test('can build furniture at hotspot', function () {
     // Crude Chair needs 3 Planks + 2 Nails
     $inventoryService = app(InventoryService::class);
     $inventoryService->addItem($user, Item::where('name', 'Plank')->first(), 3);
-    $inventoryService->addItem($user, Item::where('name', 'Nails')->first(), 2);
+    $inventoryService->addItem($user, Item::where('name', 'Bronze Nails')->first(), 2);
 
     $service = app(HouseService::class);
     $result = $service->buildFurniture($user, $room->id, 'chair', 'crude_chair');
@@ -259,7 +259,7 @@ test('can build furniture at hotspot', function () {
 
     // Materials should be consumed
     expect($inventoryService->countItem($user, Item::where('name', 'Plank')->first()))->toBe(0);
-    expect($inventoryService->countItem($user, Item::where('name', 'Nails')->first()))->toBe(0);
+    expect($inventoryService->countItem($user, Item::where('name', 'Bronze Nails')->first()))->toBe(0);
 });
 
 test('cannot build furniture without materials', function () {
@@ -756,7 +756,7 @@ test('can demolish furniture and recover materials', function () {
     // Build a crude chair first (3 Planks + 2 Nails)
     $inventoryService = app(InventoryService::class);
     $inventoryService->addItem($user, Item::where('name', 'Plank')->first(), 3);
-    $inventoryService->addItem($user, Item::where('name', 'Nails')->first(), 2);
+    $inventoryService->addItem($user, Item::where('name', 'Bronze Nails')->first(), 2);
 
     $service = app(HouseService::class);
     $service->buildFurniture($user, $room->id, 'chair', 'crude_chair');
@@ -767,7 +767,7 @@ test('can demolish furniture and recover materials', function () {
     expect($result['success'])->toBeTrue();
     expect($result['message'])->toContain('Recovered');
     expect($inventoryService->countItem($user, Item::where('name', 'Plank')->first()))->toBe(1);
-    expect($inventoryService->countItem($user, Item::where('name', 'Nails')->first()))->toBe(1);
+    expect($inventoryService->countItem($user, Item::where('name', 'Bronze Nails')->first()))->toBe(1);
 });
 
 test('can move storage item to empty slot', function () {
@@ -1045,7 +1045,7 @@ test('can demolish room with furniture and get gold plus materials back', functi
 
     // Build a crude chair (3 Planks + 2 Nails)
     $inventoryService->addItem($user, Item::where('name', 'Plank')->first(), 3);
-    $inventoryService->addItem($user, Item::where('name', 'Nails')->first(), 2);
+    $inventoryService->addItem($user, Item::where('name', 'Bronze Nails')->first(), 2);
     $service->buildFurniture($user, $room->id, 'chair', 'crude_chair');
 
     $user->refresh();
@@ -1063,7 +1063,7 @@ test('can demolish room with furniture and get gold plus materials back', functi
 
     // Should get 50% of materials (1 Plank, 1 Nail)
     expect($inventoryService->countItem($user, Item::where('name', 'Plank')->first()))->toBe(1);
-    expect($inventoryService->countItem($user, Item::where('name', 'Nails')->first()))->toBe(1);
+    expect($inventoryService->countItem($user, Item::where('name', 'Bronze Nails')->first()))->toBe(1);
 
     // Room and furniture should be deleted
     expect(HouseRoom::where('player_house_id', $house->id)->count())->toBe(0);

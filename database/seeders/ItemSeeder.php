@@ -76,6 +76,8 @@ class ItemSeeder extends Seeder
         'Arrowtips' => ['bars' => 1, 'offset' => 5, 'type' => 'misc', 'subtype' => 'ammunition', 'slot' => null, 'atk' => 0, 'str' => 0, 'def' => 0, 'stackable' => true, 'output_qty' => 15],
         'Javelin Tips' => ['bars' => 1, 'offset' => 6, 'type' => 'misc', 'subtype' => 'ammunition', 'slot' => null, 'atk' => 0, 'str' => 0, 'def' => 0, 'stackable' => true, 'output_qty' => 5],
         'Throwing Knives' => ['bars' => 1, 'offset' => 7, 'type' => 'weapon', 'subtype' => 'throwing', 'slot' => 'weapon', 'atk' => 3, 'str' => 2, 'def' => 0, 'stackable' => true, 'output_qty' => 5],
+        // Materials
+        'Nails' => ['bars' => 1, 'offset' => 0, 'type' => 'misc', 'subtype' => 'material', 'slot' => null, 'atk' => 0, 'str' => 0, 'def' => 0, 'stackable' => true, 'output_qty' => 15],
     ];
 
     /**
