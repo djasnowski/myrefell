@@ -2,7 +2,6 @@ import { Head, router, usePage } from "@inertiajs/react";
 import {
     ArrowRight,
     Beer,
-    Check,
     ChefHat,
     Coins,
     Dices,
@@ -12,12 +11,16 @@ import {
     X,
     Zap,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { ActionQueueControls } from "@/components/action-queue-controls";
 import { gameToast } from "@/components/ui/game-toast";
 import { DiceGame } from "@/components/games/dice-game";
+import { useActionQueue, type ActionResult, type QueueStats } from "@/hooks/use-action-queue";
 import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
+
+const COOK_COOLDOWN_MS = 3000;
 
 interface Activity {
     id: number;
@@ -51,16 +54,8 @@ interface Recipe {
 interface CookingInfo {
     recipes: Recipe[];
     cooking_level: number;
-}
-
-interface CookResult {
-    success: boolean;
-    message: string;
-    item?: { name: string; quantity: number };
-    xp_awarded?: number;
-    leveled_up?: boolean;
-    new_level?: number;
-    energy_remaining?: number;
+    cooking_xp_progress: number;
+    cooking_xp_to_next: number;
 }
 
 interface TavernStats {
@@ -115,27 +110,26 @@ interface PageProps {
 
 function RecipeCard({
     recipe,
-    onCook,
-    loading,
-    cooldown,
+    isSelected,
+    onSelect,
+    stats,
 }: {
     recipe: Recipe;
-    onCook: (id: string) => void;
-    loading: string | null;
-    cooldown: number;
+    isSelected: boolean;
+    onSelect: (id: string) => void;
+    stats?: { xp: number; items: number };
 }) {
-    const isLoading = loading === recipe.id;
-    const isOnCooldown = cooldown > 0;
-    const isDisabled = isLoading || isOnCooldown;
-
     return (
-        <div
-            className={`rounded-lg border p-3 transition ${
+        <button
+            onClick={() => !recipe.is_locked && onSelect(recipe.id)}
+            className={`w-full rounded-lg border p-3 text-left transition ${
                 recipe.is_locked
-                    ? "border-stone-700 bg-stone-800/30 opacity-60"
-                    : recipe.can_make
-                      ? "border-orange-600/50 bg-orange-900/20"
-                      : "border-stone-700 bg-stone-800/50"
+                    ? "cursor-not-allowed border-stone-700 bg-stone-800/30 opacity-60"
+                    : isSelected
+                      ? "border-orange-400 bg-orange-900/30 ring-1 ring-orange-400/50"
+                      : recipe.can_make
+                        ? "border-orange-600/50 bg-stone-800/50 hover:border-orange-500/70"
+                        : "border-stone-700 bg-stone-800/50 hover:border-stone-600"
             }`}
         >
             <div className="mb-2 flex items-center justify-between">
@@ -166,7 +160,7 @@ function RecipeCard({
             </div>
 
             {/* Stats Row */}
-            <div className="mb-2 flex items-center justify-between text-stone-500">
+            <div className="flex items-center justify-between text-stone-500">
                 <span className="flex items-center gap-1 font-pixel text-[10px]">
                     <Zap className="h-3 w-3 text-yellow-500" />
                     {recipe.energy_cost}
@@ -176,52 +170,30 @@ function RecipeCard({
                 </span>
             </div>
 
-            {/* Cook Button */}
-            {recipe.is_locked ? (
-                <div className="rounded-md bg-stone-900/50 px-2 py-1.5 text-center">
+            {/* Locked message */}
+            {recipe.is_locked && (
+                <div className="mt-2 rounded-md bg-stone-900/50 px-2 py-1.5 text-center">
                     <span className="font-pixel text-[10px] text-stone-500">
                         Requires Level {recipe.required_level}
                     </span>
                 </div>
-            ) : isOnCooldown ? (
-                <div className="relative h-7 w-full overflow-hidden rounded-md bg-stone-700">
-                    <div
-                        className="absolute inset-y-0 right-0 bg-orange-600/50 transition-all duration-1000 ease-linear"
-                        style={{ width: `${(cooldown / 3) * 100}%` }}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="font-pixel text-xs text-stone-300">{cooldown}s</span>
-                    </div>
-                </div>
-            ) : (
-                <button
-                    onClick={() => onCook(recipe.id)}
-                    disabled={!recipe.can_make || isDisabled}
-                    className={`flex w-full items-center justify-center gap-2 rounded-md px-2 py-1.5 font-pixel text-xs transition ${
-                        recipe.can_make && !isDisabled
-                            ? "bg-orange-600 text-stone-900 hover:bg-orange-500"
-                            : "cursor-not-allowed bg-stone-700 text-stone-500"
-                    }`}
-                >
-                    {isLoading ? (
-                        <>
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                            Cooking...
-                        </>
-                    ) : recipe.can_make ? (
-                        <>
-                            <Check className="h-3 w-3" />
-                            Cook
-                        </>
-                    ) : (
-                        <>
-                            <X className="h-3 w-3" />
-                            Missing
-                        </>
-                    )}
-                </button>
             )}
-        </div>
+
+            {/* Can't make message */}
+            {!recipe.is_locked && !recipe.can_make && (
+                <div className="mt-2 flex items-center justify-center gap-1 font-pixel text-[10px] text-stone-500">
+                    <X className="h-3 w-3" />
+                    Missing Materials
+                </div>
+            )}
+
+            {/* Session stats */}
+            {stats && (
+                <div className="mt-2 border-t border-stone-700/50 pt-2 font-pixel text-[8px] text-green-400">
+                    x{stats.items} cooked · {stats.xp} XP
+                </div>
+            )}
+        </button>
     );
 }
 
@@ -254,11 +226,89 @@ const GAME_INFO: Record<
 export default function TavernIndex() {
     const { location, player, rest, recent_activity, cooking, dice } = usePage<PageProps>().props;
     const [loading, setLoading] = useState(false);
-    const [cookingLoading, setCookingLoading] = useState<string | null>(null);
-    const [cookingCooldown, setCookingCooldown] = useState(0); // seconds remaining
-    const [restCooldown, setRestCooldown] = useState(0); // seconds remaining
+    const [restCooldown, setRestCooldown] = useState(0);
     const [currentEnergy, setCurrentEnergy] = useState(player.energy);
     const [selectedDiceGame, setSelectedDiceGame] = useState<GameType | null>(null);
+    const [selectedRecipe, setSelectedRecipe] = useState<string | null>(null);
+    const [sessionStats, setSessionStats] = useState<Record<string, { xp: number; items: number }>>(
+        {},
+    );
+
+    // Build the correct URL based on location type
+    const baseUrl = location
+        ? `${locationPath(location.type, location.id)}/tavern`
+        : "/villages/1/tavern";
+
+    const buildBody = useCallback(() => ({ recipe: selectedRecipe }), [selectedRecipe]);
+
+    const onActionComplete = useCallback((data: ActionResult) => {
+        if (data.success && data.energy_remaining !== undefined) {
+            setCurrentEnergy(data.energy_remaining);
+        }
+        if (data.success && data.item) {
+            const name = data.item.name;
+            const xp = data.xp_awarded ?? 0;
+            const qty = data.item.quantity ?? 1;
+            setSessionStats((prev) => ({
+                ...prev,
+                [name]: {
+                    xp: (prev[name]?.xp ?? 0) + xp,
+                    items: (prev[name]?.items ?? 0) + qty,
+                },
+            }));
+        }
+    }, []);
+
+    const onQueueComplete = useCallback((stats: QueueStats) => {
+        if (stats.completed === 0) return;
+
+        if (stats.completed === 1 && stats.itemName) {
+            gameToast.success(`Cooked ${stats.totalQuantity}x ${stats.itemName}`, {
+                xp: stats.totalXp,
+                levelUp: stats.lastLevelUp,
+            });
+        } else if (stats.completed > 1) {
+            const qty = stats.totalQuantity > 0 ? `${stats.totalQuantity}x ` : "";
+            gameToast.success(
+                `Cooked ${qty}${stats.itemName ?? "items"} (${stats.completed} actions)`,
+                {
+                    xp: stats.totalXp,
+                    levelUp: stats.lastLevelUp,
+                },
+            );
+        }
+    }, []);
+
+    const buildActionParams = useCallback(
+        () => ({
+            recipe: selectedRecipe,
+            location_type: location?.type,
+            location_id: location?.id,
+        }),
+        [selectedRecipe, location],
+    );
+
+    const {
+        startQueue,
+        cancelQueue,
+        isQueueActive,
+        queueProgress,
+        isActionLoading,
+        cooldown,
+        performSingleAction,
+        isGloballyLocked,
+        totalXp,
+        queueStartedAt,
+    } = useActionQueue({
+        url: `${baseUrl}/cook`,
+        buildBody,
+        cooldownMs: COOK_COOLDOWN_MS,
+        onActionComplete,
+        onQueueComplete,
+        reloadProps: ["cooking", "player", "sidebar"],
+        actionType: "cook",
+        buildActionParams,
+    });
 
     // Initialize rest cooldown from server
     useEffect(() => {
@@ -302,11 +352,6 @@ export default function TavernIndex() {
             : [{ title: "Tavern", href: "#" }]),
     ];
 
-    // Build the correct URL based on location type
-    const baseUrl = location
-        ? `${locationPath(location.type, location.id)}/tavern`
-        : "/villages/1/tavern";
-
     const handleRest = () => {
         if (restCooldown > 0) return;
         setLoading(true);
@@ -324,61 +369,8 @@ export default function TavernIndex() {
         );
     };
 
-    const handleCook = async (recipeId: string) => {
-        if (cookingCooldown > 0) return;
-        setCookingLoading(recipeId);
-
-        try {
-            const response = await fetch(`${baseUrl}/cook`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN":
-                        document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute("content") || "",
-                },
-                body: JSON.stringify({ recipe: recipeId }),
-            });
-
-            const data: CookResult = await response.json();
-
-            if (data.success && data.item) {
-                gameToast.success(`Cooked ${data.item.quantity}x ${data.item.name}`, {
-                    xp: data.xp_awarded,
-                    levelUp:
-                        data.leveled_up && data.new_level
-                            ? { skill: "Cooking", level: data.new_level }
-                            : undefined,
-                });
-            } else if (!data.success) {
-                gameToast.error(data.message);
-            }
-
-            if (data.success && data.energy_remaining !== undefined) {
-                setCurrentEnergy(data.energy_remaining);
-            }
-
-            // Reload to update materials
-            router.reload({ only: ["cooking", "player", "sidebar"] });
-
-            // Start 3 second cooldown with countdown
-            setCookingCooldown(3);
-            const interval = setInterval(() => {
-                setCookingCooldown((prev) => {
-                    if (prev <= 1) {
-                        clearInterval(interval);
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-        } catch {
-            gameToast.error("An error occurred");
-        } finally {
-            setCookingLoading(null);
-        }
-    };
+    const selected = cooking.recipes.find((r) => r.id === selectedRecipe);
+    const effectiveSelected = selected && !selected.is_locked ? selected : null;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -582,10 +574,54 @@ export default function TavernIndex() {
                                 <ChefHat className="h-5 w-5 text-orange-400" />
                                 <h2 className="font-pixel text-lg text-orange-300">Kitchen</h2>
                             </div>
-                            <span className="font-pixel text-xs text-stone-400">
-                                Cooking Lv. {cooking.cooking_level}
-                            </span>
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2">
+                                    <div className="h-2 w-24 overflow-hidden rounded-full bg-stone-700">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-orange-600 to-orange-400 transition-all"
+                                            style={{ width: `${cooking.cooking_xp_progress}%` }}
+                                        />
+                                    </div>
+                                    <span className="font-pixel text-[10px] text-stone-500">
+                                        {cooking.cooking_xp_to_next.toLocaleString()} XP to next
+                                    </span>
+                                </div>
+                                <span className="font-pixel text-xs text-stone-400">
+                                    Lv. {cooking.cooking_level}
+                                </span>
+                            </div>
                         </div>
+
+                        {/* Queue Controls */}
+                        {effectiveSelected && (
+                            <div className="mb-4 rounded-lg border border-orange-600/50 bg-stone-800/50 p-3">
+                                <div className="mb-2 font-pixel text-xs text-orange-300">
+                                    {effectiveSelected.name}
+                                </div>
+                                <ActionQueueControls
+                                    isQueueActive={isQueueActive}
+                                    queueProgress={queueProgress}
+                                    isActionLoading={isActionLoading}
+                                    cooldown={cooldown}
+                                    cooldownMs={COOK_COOLDOWN_MS}
+                                    onStart={startQueue}
+                                    onCancel={cancelQueue}
+                                    onSingle={performSingleAction}
+                                    disabled={!effectiveSelected.can_make || isGloballyLocked}
+                                    actionLabel="Cook"
+                                    activeLabel="Cooking"
+                                    buttonClassName="bg-orange-600 text-stone-900 hover:bg-orange-500"
+                                    totalXp={totalXp}
+                                    startedAt={queueStartedAt}
+                                />
+                            </div>
+                        )}
+
+                        {!selectedRecipe && cooking.recipes.length > 0 && (
+                            <div className="mb-4 rounded-lg border border-stone-600 bg-stone-800/30 p-3 text-center font-pixel text-xs text-stone-400">
+                                Select a recipe below to cook
+                            </div>
+                        )}
 
                         {/* Recipe Grid - 4 columns */}
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -593,9 +629,9 @@ export default function TavernIndex() {
                                 <RecipeCard
                                     key={recipe.id}
                                     recipe={recipe}
-                                    onCook={handleCook}
-                                    loading={cookingLoading}
-                                    cooldown={cookingCooldown}
+                                    isSelected={selectedRecipe === recipe.id}
+                                    onSelect={setSelectedRecipe}
+                                    stats={sessionStats[recipe.output.name]}
                                 />
                             ))}
                         </div>

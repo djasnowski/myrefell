@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\ActionQueue;
 use App\Models\User;
 use App\Services\AgilityService;
+use App\Services\CookingService;
 use App\Services\CraftingService;
 use App\Services\GatheringService;
 use App\Services\TrainingService;
@@ -27,6 +28,7 @@ class ProcessActionQueue implements ShouldQueue
     }
 
     public function handle(
+        CookingService $cookingService,
         CraftingService $craftingService,
         GatheringService $gatheringService,
         TrainingService $trainingService,
@@ -68,6 +70,12 @@ class ProcessActionQueue implements ShouldQueue
 
         // Execute the action via the appropriate service
         $result = match ($queue->action_type) {
+            'cook' => $cookingService->cook(
+                $user,
+                $params['recipe'],
+                $locationType,
+                (int) $locationId
+            ),
             'craft', 'smelt' => $craftingService->craft(
                 $user,
                 $params['recipe'],

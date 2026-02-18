@@ -209,6 +209,7 @@ test('process action queue job stops if queue is not active', function () {
 
     $job = new ProcessActionQueue($queue->id);
     $job->handle(
+        app(\App\Services\CookingService::class),
         app(\App\Services\CraftingService::class),
         app(\App\Services\GatheringService::class),
         app(\App\Services\TrainingService::class),
@@ -243,6 +244,7 @@ test('process action queue job stops if user is traveling', function () {
 
     $job = new ProcessActionQueue($queue->id);
     $job->handle(
+        app(\App\Services\CookingService::class),
         app(\App\Services\CraftingService::class),
         app(\App\Services\GatheringService::class),
         app(\App\Services\TrainingService::class),
@@ -276,6 +278,7 @@ test('process action queue job stops if user is in infirmary', function () {
 
     $job = new ProcessActionQueue($queue->id);
     $job->handle(
+        app(\App\Services\CookingService::class),
         app(\App\Services\CraftingService::class),
         app(\App\Services\GatheringService::class),
         app(\App\Services\TrainingService::class),
@@ -311,6 +314,7 @@ test('process action queue job executes training and chains next job', function 
 
     $job = new ProcessActionQueue($queue->id);
     $job->handle(
+        app(\App\Services\CookingService::class),
         app(\App\Services\CraftingService::class),
         app(\App\Services\GatheringService::class),
         app(\App\Services\TrainingService::class),
@@ -348,6 +352,7 @@ test('process action queue job marks queue as completed when total is reached', 
 
     $job = new ProcessActionQueue($queue->id);
     $job->handle(
+        app(\App\Services\CookingService::class),
         app(\App\Services\CraftingService::class),
         app(\App\Services\GatheringService::class),
         app(\App\Services\TrainingService::class),
@@ -383,6 +388,7 @@ test('process action queue job fails when energy runs out', function () {
 
     $job = new ProcessActionQueue($queue->id);
     $job->handle(
+        app(\App\Services\CookingService::class),
         app(\App\Services\CraftingService::class),
         app(\App\Services\GatheringService::class),
         app(\App\Services\TrainingService::class),

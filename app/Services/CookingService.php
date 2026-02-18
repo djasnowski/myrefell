@@ -142,9 +142,13 @@ class CookingService
             $recipes[] = $this->formatRecipe($id, $recipe, $user);
         }
 
+        $cookingSkill = $user->skills()->where('skill_name', 'cooking')->first();
+
         return [
             'recipes' => $recipes,
-            'cooking_level' => $user->getSkillLevel('cooking'),
+            'cooking_level' => $cookingSkill?->level ?? 1,
+            'cooking_xp_progress' => $cookingSkill?->getXpProgress() ?? 0,
+            'cooking_xp_to_next' => $cookingSkill?->xpToNextLevel() ?? 60,
         ];
     }
 
@@ -287,6 +291,8 @@ class CookingService
                     'message' => 'You burned the food! Materials lost, but you learned a little.',
                     'xp_awarded' => $halfXp,
                     'leveled_up' => false,
+                    'skill' => 'cooking',
+                    'new_level' => null,
                     'energy_remaining' => $user->fresh()->energy,
                 ];
             }
@@ -348,6 +354,8 @@ class CookingService
                 ],
                 'xp_awarded' => $xpAwarded,
                 'leveled_up' => $leveledUp,
+                'skill' => 'cooking',
+                'new_level' => $leveledUp ? $skill->fresh()->level : null,
                 'energy_remaining' => $user->fresh()->energy,
             ];
         });
