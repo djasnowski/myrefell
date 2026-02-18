@@ -856,6 +856,25 @@ export default function Inventory() {
                 </div>
 
                 <div className="flex flex-1 flex-col gap-3 lg:flex-row">
+                    {/* Equipment Panel - Left */}
+                    <div className="w-full lg:w-64 lg:shrink-0">
+                        <EquipmentPanel
+                            equippedSlots={equipment as unknown as EquippedSlots}
+                            combatStats={{
+                                attack: combat_stats.attack_level,
+                                strength: combat_stats.strength_level,
+                                defense: combat_stats.defense_level,
+                                hitpoints: combat_stats.hitpoints_level,
+                                atk_bonus: combat_stats.atk_bonus,
+                                str_bonus: combat_stats.str_bonus,
+                                def_bonus: combat_stats.def_bonus,
+                                hp_bonus: combat_stats.hp_bonus,
+                            }}
+                            onUnequip={handleUnequipFromEquipment}
+                            onExamine={handleExamineEquipment}
+                        />
+                    </div>
+
                     {/* Inventory Grid */}
                     <div className="flex-1 rounded-lg border-2 border-stone-600 bg-stone-800/80 p-3">
                         {/* Search and Filter Bar */}
@@ -1040,25 +1059,6 @@ export default function Inventory() {
                                 />
                             ))}
                         </div>
-                    </div>
-
-                    {/* Equipment Panel */}
-                    <div className="w-full lg:w-64">
-                        <EquipmentPanel
-                            equippedSlots={equipment as unknown as EquippedSlots}
-                            combatStats={{
-                                attack: combat_stats.attack_level,
-                                strength: combat_stats.strength_level,
-                                defense: combat_stats.defense_level,
-                                hitpoints: combat_stats.hitpoints_level,
-                                atk_bonus: combat_stats.atk_bonus,
-                                str_bonus: combat_stats.str_bonus,
-                                def_bonus: combat_stats.def_bonus,
-                                hp_bonus: combat_stats.hp_bonus,
-                            }}
-                            onUnequip={handleUnequipFromEquipment}
-                            onExamine={handleExamineEquipment}
-                        />
                     </div>
                 </div>
             </div>

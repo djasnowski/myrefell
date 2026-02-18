@@ -298,7 +298,7 @@ class DungeonController extends Controller
         $inventory = $user->inventory()->where('is_equipped', true)->with('item')->get();
         $slots = [];
 
-        foreach (['head', 'amulet', 'chest', 'legs', 'weapon', 'shield', 'ring'] as $slotType) {
+        foreach (['head', 'amulet', 'chest', 'legs', 'weapon', 'shield', 'ring', 'necklace', 'bracelet'] as $slotType) {
             $equipped = $inventory->first(fn ($inv) => $inv->item->equipment_slot === $slotType);
             $slots[$slotType] = $equipped ? [
                 'item' => [

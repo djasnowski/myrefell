@@ -27,6 +27,8 @@ export interface EquippedSlots {
     weapon: EquippedItemData | null;
     shield: EquippedItemData | null;
     ring: EquippedItemData | null;
+    necklace: EquippedItemData | null;
+    bracelet: EquippedItemData | null;
     [key: string]: EquippedItemData | null;
 }
 
@@ -50,7 +52,17 @@ interface EquipmentPanelProps {
     onExamine?: (slotName: string) => void;
 }
 
-const SLOT_ORDER = ["head", "amulet", "chest", "legs", "weapon", "shield", "ring"] as const;
+const SLOT_ORDER = [
+    "head",
+    "amulet",
+    "necklace",
+    "chest",
+    "legs",
+    "weapon",
+    "shield",
+    "ring",
+    "bracelet",
+] as const;
 
 const rarityColors: Record<string, string> = {
     common: "border-stone-500 bg-stone-800/50",
@@ -128,6 +140,30 @@ const equipmentSlotIcons: Record<string, React.ComponentType<{ className?: strin
             <path d="M12 2v4M8 6l4 4 4-4" />
             <path d="M12 22a8 8 0 1 0 0-16 8 8 0 0 0 0 16z" />
             <circle cx="12" cy="14" r="3" />
+        </svg>
+    ),
+    necklace: ({ className }) => (
+        <svg
+            className={className}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
+            <path d="M6 3c0 0-2 4-2 8s4 8 8 8 8-4 8-8-2-8-2-8" />
+            <circle cx="12" cy="17" r="2" />
+        </svg>
+    ),
+    bracelet: ({ className }) => (
+        <svg
+            className={className}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
+            <ellipse cx="12" cy="12" rx="7" ry="4" />
+            <ellipse cx="12" cy="12" rx="4" ry="2" />
         </svg>
     ),
 };
@@ -405,6 +441,26 @@ export default function EquipmentPanel({
                     onContextMenu={handleContextMenu}
                     onLongPress={handleLongPress}
                     contextMenuOpen={contextMenu.visible && contextMenu.slotName === "amulet"}
+                />
+
+                <EquipmentSlot
+                    label="Necklace"
+                    equipped={equippedSlots.necklace}
+                    slotType="necklace"
+                    interactive={interactive}
+                    onContextMenu={handleContextMenu}
+                    onLongPress={handleLongPress}
+                    contextMenuOpen={contextMenu.visible && contextMenu.slotName === "necklace"}
+                />
+                <div></div>
+                <EquipmentSlot
+                    label="Bracelet"
+                    equipped={equippedSlots.bracelet}
+                    slotType="bracelet"
+                    interactive={interactive}
+                    onContextMenu={handleContextMenu}
+                    onLongPress={handleLongPress}
+                    contextMenuOpen={contextMenu.visible && contextMenu.slotName === "bracelet"}
                 />
             </div>
 
