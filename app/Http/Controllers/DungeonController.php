@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Dungeon;
 use App\Models\Kingdom;
+use App\Services\CombatService;
 use App\Services\DungeonLootService;
 use App\Services\DungeonService;
 use App\Services\InventoryService;
@@ -18,7 +19,8 @@ class DungeonController extends Controller
     public function __construct(
         protected DungeonService $dungeonService,
         protected DungeonLootService $dungeonLootService,
-        protected InventoryService $inventoryService
+        protected InventoryService $inventoryService,
+        protected CombatService $combatService
     ) {}
 
     /**
@@ -87,14 +89,24 @@ class DungeonController extends Controller
         // Check for dungeon completion flash data
         $dungeonCompletion = session('dungeon_completion');
 
+        $weaponSubtype = $this->combatService->getPlayerWeaponSubtype($user);
+        $attackStyles = CombatService::WEAPON_ATTACK_STYLES[$weaponSubtype] ?? CombatService::WEAPON_ATTACK_STYLES['unarmed'];
+        $weaponSpeed = $this->combatService->getWeaponSpeed($weaponSubtype);
+
+        $equippedSlots = $this->getEquippedSlots($user);
+
         return Inertia::render('Dungeons/Index', [
             'dungeons' => $dungeons,
             'kingdom' => $kingdom,
             'player_stats' => $dungeonInfo['player_stats'],
             'equipment' => $dungeonInfo['equipment'],
+            'equipped_slots' => $equippedSlots,
             'energy' => $dungeonInfo['energy'],
             'loot_count' => $lootCount,
             'dungeon_completion' => $dungeonCompletion,
+            'weapon_subtype' => $weaponSubtype,
+            'weapon_speed' => $weaponSpeed,
+            'available_attack_styles' => $attackStyles,
         ]);
     }
 
@@ -130,14 +142,14 @@ class DungeonController extends Controller
     {
         $request->validate([
             'dungeon_id' => 'required|integer|exists:dungeons,id',
-            'training_style' => 'nullable|string|in:attack,strength,defense',
+            'attack_style_index' => 'nullable|integer|min:0|max:3',
         ]);
 
         $user = $request->user();
         $result = $this->dungeonService->enterDungeon(
             $user,
             $request->input('dungeon_id'),
-            $request->input('training_style', 'attack')
+            $request->input('attack_style_index', 0)
         );
 
         return response()->json($result, $result['success'] ? 200 : 422);
@@ -276,5 +288,34 @@ class DungeonController extends Controller
         );
 
         return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Get equipped items organized by slot type for display.
+     */
+    protected function getEquippedSlots(\App\Models\User $user): array
+    {
+        $inventory = $user->inventory()->where('is_equipped', true)->with('item')->get();
+        $slots = [];
+
+        foreach (['head', 'amulet', 'chest', 'legs', 'weapon', 'shield', 'ring'] as $slotType) {
+            $equipped = $inventory->first(fn ($inv) => $inv->item->equipment_slot === $slotType);
+            $slots[$slotType] = $equipped ? [
+                'item' => [
+                    'id' => $equipped->item->id,
+                    'name' => $equipped->item->name,
+                    'type' => $equipped->item->type,
+                    'subtype' => $equipped->item->subtype,
+                    'rarity' => $equipped->item->rarity,
+                    'atk_bonus' => $equipped->item->atk_bonus,
+                    'str_bonus' => $equipped->item->str_bonus,
+                    'def_bonus' => $equipped->item->def_bonus,
+                    'hp_bonus' => $equipped->item->hp_bonus,
+                    'energy_bonus' => $equipped->item->energy_bonus,
+                ],
+            ] : null;
+        }
+
+        return $slots;
     }
 }

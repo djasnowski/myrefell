@@ -40,6 +40,7 @@ class DungeonSession extends Model
         'gold_accumulated',
         'loot_accumulated',
         'training_style',
+        'attack_style_index',
         'entry_location_type',
         'entry_location_id',
     ];
@@ -50,6 +51,7 @@ class DungeonSession extends Model
             'current_floor' => 'integer',
             'monsters_defeated' => 'integer',
             'total_monsters_on_floor' => 'integer',
+            'attack_style_index' => 'integer',
             'xp_accumulated' => 'integer',
             'gold_accumulated' => 'integer',
             'loot_accumulated' => 'array',

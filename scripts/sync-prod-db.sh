@@ -25,13 +25,18 @@ DUMP_SIZE=$(du -h $DUMP_FILE | cut -f1)
 echo "   Downloaded: $DUMP_SIZE"
 
 echo "🗑️  Dropping local database..."
-./vendor/bin/sail exec -T pgsql dropdb -U $LOCAL_DB_USER --if-exists $LOCAL_DB_NAME 2>/dev/null
+./vendor/bin/sail exec -T pgsql psql -U $LOCAL_DB_USER -d postgres -c "
+    ALTER DATABASE $LOCAL_DB_NAME CONNECTION LIMIT 0;
+    SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$LOCAL_DB_NAME' AND pid <> pg_backend_pid();
+" > /dev/null
+./vendor/bin/sail exec -T pgsql dropdb -U $LOCAL_DB_USER --if-exists $LOCAL_DB_NAME
 
 echo "🆕 Creating fresh database..."
-./vendor/bin/sail exec -T pgsql createdb -U $LOCAL_DB_USER $LOCAL_DB_NAME 2>/dev/null
+./vendor/bin/sail exec -T pgsql createdb -U $LOCAL_DB_USER $LOCAL_DB_NAME
+./vendor/bin/sail exec -T pgsql psql -U $LOCAL_DB_USER -d postgres -c "ALTER DATABASE $LOCAL_DB_NAME CONNECTION LIMIT -1;" > /dev/null
 
 echo "📤 Importing data..."
-./vendor/bin/sail exec -T pgsql psql -U $LOCAL_DB_USER -d $LOCAL_DB_NAME -q < $DUMP_FILE 2>/dev/null
+./vendor/bin/sail exec -T pgsql psql -U $LOCAL_DB_USER -d $LOCAL_DB_NAME -q < $DUMP_FILE 2>&1 | grep -v "^SET$\|^COMMENT$\|^ALTER\|^CREATE\|^REVOKE\|^GRANT" || true
 
 rm $DUMP_FILE
 

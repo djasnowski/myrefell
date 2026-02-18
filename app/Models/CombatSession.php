@@ -28,6 +28,7 @@ class CombatSession extends Model
         'monster_hp',
         'round',
         'training_style',
+        'attack_style_index',
         'xp_gained',
         'status',
         'location_type',
@@ -40,6 +41,7 @@ class CombatSession extends Model
             'player_hp' => 'integer',
             'monster_hp' => 'integer',
             'round' => 'integer',
+            'attack_style_index' => 'integer',
             'xp_gained' => 'integer',
             'location_id' => 'integer',
         ];

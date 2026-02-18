@@ -35,6 +35,7 @@ class CombatController extends Controller
         }
 
         $combatInfo = $this->combatService->getCombatInfo($user);
+        $equippedSlots = $this->getEquippedSlots($user);
 
         // If in active combat, show the combat arena
         if ($combatInfo['in_combat']) {
@@ -42,7 +43,10 @@ class CombatController extends Controller
                 'session' => $combatInfo['session'],
                 'player_stats' => $combatInfo['player_stats'],
                 'equipment' => $combatInfo['equipment'],
+                'equipped_slots' => $equippedSlots,
                 'food' => $this->combatService->getAvailableFood($user),
+                'weapon_subtype' => $combatInfo['weapon_subtype'],
+                'available_attack_styles' => $combatInfo['available_attack_styles'],
             ]);
         }
 
@@ -53,8 +57,41 @@ class CombatController extends Controller
             'monsters' => $monsters,
             'player_stats' => $combatInfo['player_stats'],
             'equipment' => $combatInfo['equipment'],
+            'equipped_slots' => $equippedSlots,
             'energy' => $combatInfo['energy'],
+            'weapon_subtype' => $combatInfo['weapon_subtype'],
+            'weapon_speed' => $combatInfo['weapon_speed'],
+            'available_attack_styles' => $combatInfo['available_attack_styles'],
         ]);
+    }
+
+    /**
+     * Get equipped items organized by slot type for display.
+     */
+    protected function getEquippedSlots(\App\Models\User $user): array
+    {
+        $inventory = $user->inventory()->where('is_equipped', true)->with('item')->get();
+        $slots = [];
+
+        foreach (['head', 'amulet', 'chest', 'legs', 'weapon', 'shield', 'ring'] as $slotType) {
+            $equipped = $inventory->first(fn ($inv) => $inv->item->equipment_slot === $slotType);
+            $slots[$slotType] = $equipped ? [
+                'item' => [
+                    'id' => $equipped->item->id,
+                    'name' => $equipped->item->name,
+                    'type' => $equipped->item->type,
+                    'subtype' => $equipped->item->subtype,
+                    'rarity' => $equipped->item->rarity,
+                    'atk_bonus' => $equipped->item->atk_bonus,
+                    'str_bonus' => $equipped->item->str_bonus,
+                    'def_bonus' => $equipped->item->def_bonus,
+                    'hp_bonus' => $equipped->item->hp_bonus,
+                    'energy_bonus' => $equipped->item->energy_bonus,
+                ],
+            ] : null;
+        }
+
+        return $slots;
     }
 
     /**
@@ -64,14 +101,14 @@ class CombatController extends Controller
     {
         $request->validate([
             'monster_id' => 'required|integer|exists:monsters,id',
-            'training_style' => 'nullable|string|in:attack,strength,defense',
+            'attack_style_index' => 'nullable|integer|min:0|max:3',
         ]);
 
         $user = $request->user();
         $result = $this->combatService->startCombat(
             $user,
             $request->input('monster_id'),
-            $request->input('training_style', 'attack')
+            $request->input('attack_style_index', 0)
         );
 
         return response()->json($result, $result['success'] ? 200 : 422);

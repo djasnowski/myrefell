@@ -21,6 +21,121 @@ class CombatService
 
     public const XP_PER_DAMAGE = 4;
 
+    /**
+     * Attack styles per weapon subtype.
+     * Each style: [name, attack_type, weapon_style, xp_skills]
+     * weapon_style: accurate/aggressive/controlled/defensive
+     * xp_skills: array of skills that receive XP
+     */
+    public const WEAPON_ATTACK_STYLES = [
+        'dagger' => [
+            ['name' => 'Stab', 'attack_type' => 'stab', 'weapon_style' => 'accurate', 'xp_skills' => ['attack']],
+            ['name' => 'Lunge', 'attack_type' => 'stab', 'weapon_style' => 'aggressive', 'xp_skills' => ['strength']],
+            ['name' => 'Slash', 'attack_type' => 'slash', 'weapon_style' => 'aggressive', 'xp_skills' => ['strength']],
+            ['name' => 'Block', 'attack_type' => 'stab', 'weapon_style' => 'defensive', 'xp_skills' => ['defense']],
+        ],
+        'sword' => [
+            ['name' => 'Stab', 'attack_type' => 'stab', 'weapon_style' => 'accurate', 'xp_skills' => ['attack']],
+            ['name' => 'Lunge', 'attack_type' => 'stab', 'weapon_style' => 'aggressive', 'xp_skills' => ['strength']],
+            ['name' => 'Slash', 'attack_type' => 'slash', 'weapon_style' => 'aggressive', 'xp_skills' => ['strength']],
+            ['name' => 'Block', 'attack_type' => 'stab', 'weapon_style' => 'defensive', 'xp_skills' => ['defense']],
+        ],
+        'scimitar' => [
+            ['name' => 'Chop', 'attack_type' => 'slash', 'weapon_style' => 'accurate', 'xp_skills' => ['attack']],
+            ['name' => 'Slash', 'attack_type' => 'slash', 'weapon_style' => 'aggressive', 'xp_skills' => ['strength']],
+            ['name' => 'Lunge', 'attack_type' => 'stab', 'weapon_style' => 'controlled', 'xp_skills' => ['attack', 'strength', 'defense']],
+            ['name' => 'Block', 'attack_type' => 'slash', 'weapon_style' => 'defensive', 'xp_skills' => ['defense']],
+        ],
+        'longsword' => [
+            ['name' => 'Chop', 'attack_type' => 'slash', 'weapon_style' => 'accurate', 'xp_skills' => ['attack']],
+            ['name' => 'Slash', 'attack_type' => 'slash', 'weapon_style' => 'aggressive', 'xp_skills' => ['strength']],
+            ['name' => 'Lunge', 'attack_type' => 'stab', 'weapon_style' => 'controlled', 'xp_skills' => ['attack', 'strength', 'defense']],
+            ['name' => 'Block', 'attack_type' => 'slash', 'weapon_style' => 'defensive', 'xp_skills' => ['defense']],
+        ],
+        'axe' => [
+            ['name' => 'Chop', 'attack_type' => 'slash', 'weapon_style' => 'accurate', 'xp_skills' => ['attack']],
+            ['name' => 'Hack', 'attack_type' => 'slash', 'weapon_style' => 'aggressive', 'xp_skills' => ['strength']],
+            ['name' => 'Smash', 'attack_type' => 'crush', 'weapon_style' => 'aggressive', 'xp_skills' => ['strength']],
+            ['name' => 'Block', 'attack_type' => 'slash', 'weapon_style' => 'defensive', 'xp_skills' => ['defense']],
+        ],
+        'battleaxe' => [
+            ['name' => 'Chop', 'attack_type' => 'slash', 'weapon_style' => 'accurate', 'xp_skills' => ['attack']],
+            ['name' => 'Hack', 'attack_type' => 'slash', 'weapon_style' => 'aggressive', 'xp_skills' => ['strength']],
+            ['name' => 'Smash', 'attack_type' => 'crush', 'weapon_style' => 'aggressive', 'xp_skills' => ['strength']],
+            ['name' => 'Block', 'attack_type' => 'slash', 'weapon_style' => 'defensive', 'xp_skills' => ['defense']],
+        ],
+        '2hsword' => [
+            ['name' => 'Chop', 'attack_type' => 'slash', 'weapon_style' => 'accurate', 'xp_skills' => ['attack']],
+            ['name' => 'Slash', 'attack_type' => 'slash', 'weapon_style' => 'aggressive', 'xp_skills' => ['strength']],
+            ['name' => 'Smash', 'attack_type' => 'crush', 'weapon_style' => 'aggressive', 'xp_skills' => ['strength']],
+            ['name' => 'Block', 'attack_type' => 'slash', 'weapon_style' => 'defensive', 'xp_skills' => ['defense']],
+        ],
+        'mace' => [
+            ['name' => 'Pound', 'attack_type' => 'crush', 'weapon_style' => 'accurate', 'xp_skills' => ['attack']],
+            ['name' => 'Pummel', 'attack_type' => 'crush', 'weapon_style' => 'aggressive', 'xp_skills' => ['strength']],
+            ['name' => 'Spike', 'attack_type' => 'stab', 'weapon_style' => 'controlled', 'xp_skills' => ['attack', 'strength', 'defense']],
+            ['name' => 'Block', 'attack_type' => 'crush', 'weapon_style' => 'defensive', 'xp_skills' => ['defense']],
+        ],
+        'warhammer' => [
+            ['name' => 'Pound', 'attack_type' => 'crush', 'weapon_style' => 'accurate', 'xp_skills' => ['attack']],
+            ['name' => 'Pummel', 'attack_type' => 'crush', 'weapon_style' => 'aggressive', 'xp_skills' => ['strength']],
+            ['name' => 'Block', 'attack_type' => 'crush', 'weapon_style' => 'defensive', 'xp_skills' => ['defense']],
+        ],
+        'spear' => [
+            ['name' => 'Lunge', 'attack_type' => 'stab', 'weapon_style' => 'controlled', 'xp_skills' => ['attack', 'strength', 'defense']],
+            ['name' => 'Swipe', 'attack_type' => 'slash', 'weapon_style' => 'controlled', 'xp_skills' => ['attack', 'strength', 'defense']],
+            ['name' => 'Pound', 'attack_type' => 'crush', 'weapon_style' => 'controlled', 'xp_skills' => ['attack', 'strength', 'defense']],
+            ['name' => 'Block', 'attack_type' => 'stab', 'weapon_style' => 'defensive', 'xp_skills' => ['defense']],
+        ],
+        'claws' => [
+            ['name' => 'Chop', 'attack_type' => 'slash', 'weapon_style' => 'accurate', 'xp_skills' => ['attack']],
+            ['name' => 'Slash', 'attack_type' => 'slash', 'weapon_style' => 'aggressive', 'xp_skills' => ['strength']],
+            ['name' => 'Lunge', 'attack_type' => 'stab', 'weapon_style' => 'controlled', 'xp_skills' => ['attack', 'strength', 'defense']],
+            ['name' => 'Block', 'attack_type' => 'slash', 'weapon_style' => 'defensive', 'xp_skills' => ['defense']],
+        ],
+        'throwing' => [
+            ['name' => 'Accurate', 'attack_type' => 'stab', 'weapon_style' => 'accurate', 'xp_skills' => ['attack']],
+            ['name' => 'Rapid', 'attack_type' => 'stab', 'weapon_style' => 'aggressive', 'xp_skills' => ['strength']],
+            ['name' => 'Longrange', 'attack_type' => 'stab', 'weapon_style' => 'defensive', 'xp_skills' => ['defense']],
+        ],
+        'unarmed' => [
+            ['name' => 'Punch', 'attack_type' => 'crush', 'weapon_style' => 'accurate', 'xp_skills' => ['attack']],
+            ['name' => 'Kick', 'attack_type' => 'crush', 'weapon_style' => 'aggressive', 'xp_skills' => ['strength']],
+            ['name' => 'Block', 'attack_type' => 'crush', 'weapon_style' => 'defensive', 'xp_skills' => ['defense']],
+        ],
+    ];
+
+    /**
+     * Stance bonuses (invisible level boosts).
+     */
+    public const STANCE_BONUSES = [
+        'accurate' => ['attack' => 3, 'strength' => 0, 'defense' => 0],
+        'aggressive' => ['attack' => 0, 'strength' => 3, 'defense' => 0],
+        'defensive' => ['attack' => 0, 'strength' => 0, 'defense' => 3],
+        'controlled' => ['attack' => 1, 'strength' => 1, 'defense' => 1],
+    ];
+
+    /**
+     * Weapon speed per subtype (lower = faster, OSRS-style).
+     */
+    public const WEAPON_SPEED = [
+        'dagger' => 4, 'claws' => 4, 'scimitar' => 4, 'sword' => 4,
+        'mace' => 5, 'axe' => 5, 'longsword' => 5, 'spear' => 5, 'throwing' => 5,
+        'battleaxe' => 6, 'warhammer' => 6,
+        '2hsword' => 7,
+        'unarmed' => 4,
+    ];
+
+    /**
+     * Number of hits per combat round based on weapon speed.
+     */
+    public const SPEED_HITS = [4 => 2, 5 => 1, 6 => 1, 7 => 1];
+
+    /**
+     * Damage multiplier for slow weapons to compensate for fewer attacks.
+     */
+    public const SPEED_DAMAGE_MULT = [4 => 1.0, 5 => 1.0, 6 => 1.15, 7 => 1.3];
+
     public function __construct(
         protected EnergyService $energyService,
         protected LootService $lootService,
@@ -80,7 +195,7 @@ class CombatService
     /**
      * Start a new combat session.
      */
-    public function startCombat(User $player, int $monsterId, string $trainingStyle = 'attack'): array
+    public function startCombat(User $player, int $monsterId, int $attackStyleIndex = 0): array
     {
         // Check if player is traveling
         if ($player->isTraveling()) {
@@ -119,10 +234,14 @@ class CombatService
             return ['success' => false, 'message' => "You need combat level {$monster->min_player_combat_level} to fight this monster."];
         }
 
-        // Validate training style
-        if (! in_array($trainingStyle, CombatSession::TRAINING_STYLES)) {
-            $trainingStyle = 'attack';
-        }
+        // Resolve attack style config from weapon + index
+        $weaponSubtype = $this->getPlayerWeaponSubtype($player);
+        $styles = self::WEAPON_ATTACK_STYLES[$weaponSubtype] ?? self::WEAPON_ATTACK_STYLES['unarmed'];
+        $attackStyleIndex = max(0, min($attackStyleIndex, count($styles) - 1));
+        $styleConfig = $styles[$attackStyleIndex];
+
+        // Derive training_style from XP skills (first skill for non-controlled, or 'attack' for controlled)
+        $trainingStyle = $styleConfig['xp_skills'][0] ?? 'attack';
 
         // Consume energy
         $this->energyService->consumeEnergy($player, self::ENERGY_COST);
@@ -135,6 +254,7 @@ class CombatService
             'monster_hp' => $monster->max_hp,
             'round' => 1,
             'training_style' => $trainingStyle,
+            'attack_style_index' => $attackStyleIndex,
             'status' => CombatSession::STATUS_ACTIVE,
             'location_type' => $player->current_location_type,
             'location_id' => $player->current_location_id,
@@ -165,45 +285,59 @@ class CombatService
             $logs = [];
             $monster = $session->monster;
 
-            // Player attacks first (pass round for first-strike bonus)
-            $playerAttack = $this->calculatePlayerAttack($player, $monster, $session->round);
-            $session->monster_hp = max(0, $session->monster_hp - $playerAttack['damage']);
+            // Determine weapon speed for multi-hit
+            $weaponSubtype = $this->getPlayerWeaponSubtype($player);
+            $speed = $this->getWeaponSpeed($weaponSubtype);
+            $hitsPerRound = self::SPEED_HITS[$speed] ?? 1;
+            $damageMult = self::SPEED_DAMAGE_MULT[$speed] ?? 1.0;
 
-            // Award XP immediately based on damage dealt
-            $xpThisHit = $playerAttack['damage'] * self::XP_PER_DAMAGE;
-            if ($xpThisHit > 0) {
-                $session->xp_gained += $xpThisHit;
-                $this->awardCombatXp($player, $session->training_style, $xpThisHit);
+            // Player attacks (possibly multiple times for fast weapons)
+            for ($hit = 0; $hit < $hitsPerRound; $hit++) {
+                $playerAttack = $this->calculatePlayerAttack($player, $monster, $session->round, $session);
+
+                // Apply slow weapon damage multiplier
+                if ($damageMult !== 1.0 && $playerAttack['damage'] > 0) {
+                    $playerAttack['damage'] = (int) round($playerAttack['damage'] * $damageMult);
+                }
+
+                $session->monster_hp = max(0, $session->monster_hp - $playerAttack['damage']);
+
+                // Award XP immediately based on damage dealt
+                $xpThisHit = $playerAttack['damage'] * self::XP_PER_DAMAGE;
+                if ($xpThisHit > 0) {
+                    $session->xp_gained += $xpThisHit;
+                    $this->awardCombatXp($player, $session, $xpThisHit);
+                }
+
+                // Apply Soul Siphon HP leech (cult belief)
+                $hpLeech = $this->beliefEffectService->getEffect($player, 'combat_hp_leech');
+                $hpHealed = 0;
+                if ($hpLeech > 0 && $playerAttack['damage'] > 0) {
+                    $hpHealed = (int) ceil($playerAttack['damage'] * $hpLeech / 100);
+                    $session->player_hp = min($player->max_hp, $session->player_hp + $hpHealed);
+                }
+
+                $logs[] = CombatLog::create([
+                    'combat_session_id' => $session->id,
+                    'round' => $session->round,
+                    'actor' => CombatLog::ACTOR_PLAYER,
+                    'action' => CombatLog::ACTION_ATTACK,
+                    'hit' => $playerAttack['hit'],
+                    'damage' => $playerAttack['damage'],
+                    'player_hp_after' => $session->player_hp,
+                    'monster_hp_after' => $session->monster_hp,
+                    'xp_gained' => $xpThisHit,
+                    'hp_restored' => $hpHealed,
+                ]);
+
+                // Check if monster is dead after each hit
+                if ($session->isMonsterDead()) {
+                    return $this->handleVictory($player, $session, $logs);
+                }
             }
 
-            // Apply Soul Siphon HP leech (cult belief)
-            $hpLeech = $this->beliefEffectService->getEffect($player, 'combat_hp_leech');
-            $hpHealed = 0;
-            if ($hpLeech > 0 && $playerAttack['damage'] > 0) {
-                $hpHealed = (int) ceil($playerAttack['damage'] * $hpLeech / 100);
-                $session->player_hp = min($player->max_hp, $session->player_hp + $hpHealed);
-            }
-
-            $logs[] = CombatLog::create([
-                'combat_session_id' => $session->id,
-                'round' => $session->round,
-                'actor' => CombatLog::ACTOR_PLAYER,
-                'action' => CombatLog::ACTION_ATTACK,
-                'hit' => $playerAttack['hit'],
-                'damage' => $playerAttack['damage'],
-                'player_hp_after' => $session->player_hp,
-                'monster_hp_after' => $session->monster_hp,
-                'xp_gained' => $xpThisHit,
-                'hp_restored' => $hpHealed,
-            ]);
-
-            // Check if monster is dead
-            if ($session->isMonsterDead()) {
-                return $this->handleVictory($player, $session, $logs);
-            }
-
-            // Monster attacks back
-            $monsterAttack = $this->calculateMonsterAttack($player, $monster);
+            // Monster attacks back (once per round regardless of player speed)
+            $monsterAttack = $this->calculateMonsterAttack($player, $monster, $session);
             $session->player_hp = max(0, $session->player_hp - $monsterAttack['damage']);
 
             // Sync player HP
@@ -298,7 +432,7 @@ class CombatService
             $player->save();
 
             // Monster attacks back
-            $monsterAttack = $this->calculateMonsterAttack($player, $monster);
+            $monsterAttack = $this->calculateMonsterAttack($player, $monster, $session);
             $session->player_hp = max(0, $session->player_hp - $monsterAttack['damage']);
 
             // Sync player HP
@@ -392,7 +526,7 @@ class CombatService
                 'monster_hp_after' => $session->monster_hp,
             ]);
 
-            $monsterAttack = $this->calculateMonsterAttack($player, $monster);
+            $monsterAttack = $this->calculateMonsterAttack($player, $monster, $session);
             $session->player_hp = max(0, $session->player_hp - $monsterAttack['damage']);
 
             $player->hp = $session->player_hp;
@@ -429,9 +563,58 @@ class CombatService
     }
 
     /**
+     * Get the equipped weapon's subtype, or 'unarmed' if none.
+     */
+    public function getPlayerWeaponSubtype(User $player): string
+    {
+        $weapon = $player->inventory()
+            ->where('is_equipped', true)
+            ->whereHas('item', fn ($q) => $q->where('equipment_slot', 'weapon'))
+            ->with('item')
+            ->first();
+
+        if (! $weapon || ! $weapon->item->subtype) {
+            return 'unarmed';
+        }
+
+        return $weapon->item->subtype;
+    }
+
+    /**
+     * Get the attack style config for a weapon subtype and style index.
+     */
+    public function getAttackStyleConfig(string $weaponSubtype, int $styleIndex): array
+    {
+        $styles = self::WEAPON_ATTACK_STYLES[$weaponSubtype] ?? self::WEAPON_ATTACK_STYLES['unarmed'];
+
+        return $styles[min($styleIndex, count($styles) - 1)];
+    }
+
+    /**
+     * Get the monster's defense value for a specific attack type.
+     */
+    protected function getMonsterDefenseForType(Monster $monster, string $attackType): int
+    {
+        return match ($attackType) {
+            'stab' => $monster->stab_defense ?: $monster->defense_level,
+            'slash' => $monster->slash_defense ?: $monster->defense_level,
+            'crush' => $monster->crush_defense ?: $monster->defense_level,
+            default => $monster->defense_level,
+        };
+    }
+
+    /**
+     * Get weapon speed for a subtype.
+     */
+    public function getWeaponSpeed(string $weaponSubtype): int
+    {
+        return self::WEAPON_SPEED[$weaponSubtype] ?? 5;
+    }
+
+    /**
      * Calculate player's attack damage.
      */
-    protected function calculatePlayerAttack(User $player, Monster $monster, int $round = 1): array
+    protected function calculatePlayerAttack(User $player, Monster $monster, int $round = 1, ?CombatSession $session = null): array
     {
         $attackLevel = $player->getSkillLevel('attack');
         $strengthLevel = $player->getSkillLevel('strength');
@@ -450,14 +633,34 @@ class CombatService
         $attackBonus += (int) $this->beliefEffectService->getEffect($player, 'attack_bonus');
         $strengthBonus += (int) $this->beliefEffectService->getEffect($player, 'strength_bonus');
 
+        // Apply stance bonuses
+        $stanceBonus = ['attack' => 0, 'strength' => 0, 'defense' => 0];
+        if ($session) {
+            $styleConfig = $this->getAttackStyleConfig(
+                $this->getPlayerWeaponSubtype($player),
+                $session->attack_style_index
+            );
+            $stanceBonus = self::STANCE_BONUSES[$styleConfig['weapon_style']] ?? $stanceBonus;
+        }
+
         // Apply potion buffs (percentage boost to base levels + bonuses)
-        $effectiveAttack = $attackLevel + $attackBonus;
-        $effectiveStrength = $strengthLevel + $strengthBonus;
+        $effectiveAttack = $attackLevel + $attackBonus + $stanceBonus['attack'];
+        $effectiveStrength = $strengthLevel + $strengthBonus + $stanceBonus['strength'];
         $effectiveAttack = $this->potionBuffService->applyAttackBuff($player, $effectiveAttack);
         $effectiveStrength = $this->potionBuffService->applyStrengthBuff($player, $effectiveStrength);
 
+        // Determine monster defense based on attack type
+        $monsterDefense = $monster->defense_level;
+        if ($session) {
+            $styleConfig = $styleConfig ?? $this->getAttackStyleConfig(
+                $this->getPlayerWeaponSubtype($player),
+                $session->attack_style_index
+            );
+            $monsterDefense = $this->getMonsterDefenseForType($monster, $styleConfig['attack_type']);
+        }
+
         // Hit chance: based on effective attack (with buffs) vs monster defense
-        $hitChance = 50 + ($effectiveAttack - $monster->defense_level) * 2 + $equipment['atk_bonus'];
+        $hitChance = 50 + ($effectiveAttack - $monsterDefense) * 2 + $equipment['atk_bonus'];
         $hitChance = max(10, min(95, $hitChance)); // Clamp between 10% and 95%
 
         $hit = rand(1, 100) <= $hitChance;
@@ -495,7 +698,7 @@ class CombatService
     /**
      * Calculate monster's attack damage.
      */
-    protected function calculateMonsterAttack(User $player, Monster $monster): array
+    protected function calculateMonsterAttack(User $player, Monster $monster, ?CombatSession $session = null): array
     {
         // Agility dodge chance: 0.2% per level (max 10% at level 50+)
         $agilityLevel = $player->getSkillLevel('agility');
@@ -522,6 +725,16 @@ class CombatService
         if ($defensePenalty < 0) {
             // Penalty is stored as negative, so this reduces effective defense
             $defenseBonus += (int) $defensePenalty;
+        }
+
+        // Apply stance defense bonus
+        if ($session) {
+            $styleConfig = $this->getAttackStyleConfig(
+                $this->getPlayerWeaponSubtype($player),
+                $session->attack_style_index
+            );
+            $stanceBonus = self::STANCE_BONUSES[$styleConfig['weapon_style']] ?? [];
+            $defenseBonus += $stanceBonus['defense'] ?? 0;
         }
 
         // Apply potion buff to defense (includes all bonuses)
@@ -614,8 +827,12 @@ class CombatService
         $session->save();
 
         // XP was already awarded per hit during combat
-        // Check if player leveled up during the fight
-        $skill = $player->skills()->where('skill_name', $session->training_style)->first();
+        // Get attack style info for the victory screen
+        $weaponSubtype = $this->getPlayerWeaponSubtype($player);
+        $styleConfig = $this->getAttackStyleConfig($weaponSubtype, $session->attack_style_index);
+        $xpSkills = $styleConfig['xp_skills'];
+
+        $skill = $player->skills()->where('skill_name', $xpSkills[0])->first();
 
         // Roll for loot
         $loot = $this->lootService->rollAndGiveLoot($player, $monster);
@@ -630,9 +847,11 @@ class CombatService
                 'rewards' => [
                     'xp' => $session->xp_gained,
                     'skill' => $session->training_style,
+                    'xp_skills' => $xpSkills,
                     'current_level' => $skill?->level ?? 1,
                     'gold' => $loot['gold'],
                     'items' => $loot['items'],
+                    'attack_style' => $styleConfig['name'],
                 ],
             ],
         ];
@@ -674,10 +893,11 @@ class CombatService
     }
 
     /**
-     * Award XP to a combat skill and hitpoints.
+     * Award XP to combat skill(s) and hitpoints.
      * HP XP is always 1/3 of the combat XP earned.
+     * For controlled stance, XP is split evenly across attack/strength/defense.
      */
-    protected function awardCombatXp(User $player, string $skillName, int $xp): void
+    protected function awardCombatXp(User $player, CombatSession $session, int $xp): void
     {
         // Apply belief combat XP bonus (Martial Prowess, Bloodlust, Pride)
         $combatXpBonus = $this->beliefEffectService->getEffect($player, 'combat_xp_bonus');
@@ -691,11 +911,25 @@ class CombatService
             $xp = (int) ceil($xp * (1 + $xpPenalty / 100));
         }
 
-        // Award XP to the training style skill
-        $this->addXpToSkill($player, $skillName, $xp);
+        // Determine XP skills from attack style config
+        $weaponSubtype = $this->getPlayerWeaponSubtype($player);
+        $styleConfig = $this->getAttackStyleConfig($weaponSubtype, $session->attack_style_index);
+        $xpSkills = $styleConfig['xp_skills'];
+
+        if (count($xpSkills) > 1) {
+            // Controlled: split XP evenly across skills
+            $xpPerSkill = (int) floor($xp / count($xpSkills));
+            foreach ($xpSkills as $skill) {
+                if ($xpPerSkill > 0) {
+                    $this->addXpToSkill($player, $skill, $xpPerSkill);
+                }
+            }
+        } else {
+            // Single skill: award full XP
+            $this->addXpToSkill($player, $xpSkills[0], $xp);
+        }
 
         // Award HP XP (1/3 of combat XP, floored per hit like OSRS)
-        // e.g., 4 combat XP = 1.33 HP XP → floored to 1 HP XP
         $hpXp = (int) floor($xp / 3);
         if ($hpXp > 0) {
             $this->addXpToSkill($player, 'hitpoints', $hpXp);
@@ -728,6 +962,9 @@ class CombatService
     {
         $session = $this->getActiveCombat($player);
         $equipment = $this->getPlayerEquipmentBonuses($player);
+        $weaponSubtype = $this->getPlayerWeaponSubtype($player);
+        $attackStyles = self::WEAPON_ATTACK_STYLES[$weaponSubtype] ?? self::WEAPON_ATTACK_STYLES['unarmed'];
+        $weaponSpeed = $this->getWeaponSpeed($weaponSubtype);
 
         return [
             'in_combat' => $session !== null,
@@ -745,6 +982,9 @@ class CombatService
                 'current' => $player->energy,
                 'cost' => self::ENERGY_COST,
             ],
+            'weapon_subtype' => $weaponSubtype,
+            'weapon_speed' => $weaponSpeed,
+            'available_attack_styles' => $attackStyles,
         ];
     }
 

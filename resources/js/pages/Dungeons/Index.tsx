@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import EquipmentPanel from "@/components/equipment-panel";
+import type { EquippedSlots } from "@/components/equipment-panel";
 import type { BreadcrumbItem } from "@/types";
 
 interface FloorMonsterSpawn {
@@ -99,14 +101,25 @@ interface DungeonCompletion {
     loot_items: LootItem[];
 }
 
+interface AttackStyle {
+    name: string;
+    attack_type: "stab" | "slash" | "crush";
+    weapon_style: "accurate" | "aggressive" | "controlled" | "defensive";
+    xp_skills: string[];
+}
+
 interface PageProps {
     dungeons: Dungeon[];
     kingdom: Kingdom;
     player_stats: PlayerStats;
     equipment: Equipment;
+    equipped_slots: EquippedSlots;
     energy: EnergyInfo;
     loot_count: number;
     dungeon_completion: DungeonCompletion | null;
+    weapon_subtype: string;
+    weapon_speed: number;
+    available_attack_styles: AttackStyle[];
     [key: string]: unknown;
 }
 
@@ -130,10 +143,21 @@ const themeIcons: Record<string, string> = {
 };
 
 export default function DungeonsIndex() {
-    const { dungeons, kingdom, player_stats, equipment, energy, loot_count, dungeon_completion } =
-        usePage<PageProps>().props;
+    const {
+        dungeons,
+        kingdom,
+        player_stats,
+        equipment,
+        equipped_slots,
+        energy,
+        loot_count,
+        dungeon_completion,
+        weapon_subtype,
+        weapon_speed,
+        available_attack_styles,
+    } = usePage<PageProps>().props;
     const [selectedDungeon, setSelectedDungeon] = useState<Dungeon | null>(null);
-    const [trainingStyle, setTrainingStyle] = useState<"attack" | "strength" | "defense">("attack");
+    const [attackStyleIndex, setAttackStyleIndex] = useState(0);
     const [isEntering, setIsEntering] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showCompletionModal, setShowCompletionModal] = useState(!!dungeon_completion);
@@ -166,7 +190,7 @@ export default function DungeonsIndex() {
                 },
                 body: JSON.stringify({
                     dungeon_id: selectedDungeon.id,
-                    training_style: trainingStyle,
+                    attack_style_index: attackStyleIndex,
                 }),
             });
 
@@ -210,265 +234,302 @@ export default function DungeonsIndex() {
                     </Link>
                 </div>
 
-                {/* Player Stats */}
-                <div className="mb-6 grid gap-4 md:grid-cols-2">
-                    {/* Health & Energy */}
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4">
-                        <h3 className="mb-3 font-pixel text-sm text-amber-300">Status</h3>
-                        <div className="space-y-3">
-                            <div>
-                                <div className="mb-1 flex items-center justify-between font-pixel text-xs">
-                                    <span className="flex items-center gap-1 text-red-400">
-                                        <Heart className="h-3 w-3" /> HP
-                                    </span>
-                                    <span className="text-stone-300">
-                                        {player_stats.hp} / {player_stats.max_hp}
-                                    </span>
-                                </div>
-                                <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
-                                    <div
-                                        className="h-full bg-gradient-to-r from-red-600 to-red-400"
-                                        style={{
-                                            width: `${(player_stats.hp / player_stats.max_hp) * 100}%`,
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <div className="mb-1 flex items-center justify-between font-pixel text-xs">
-                                    <span className="flex items-center gap-1 text-yellow-400">
-                                        <Zap className="h-3 w-3" /> Energy
-                                    </span>
-                                    <span className="text-stone-300">{energy.current}</span>
-                                </div>
-                            </div>
+                <div className="flex flex-1 gap-4">
+                    {/* Equipment Sidebar - Left */}
+                    <div className="hidden w-64 shrink-0 lg:block">
+                        <div className="sticky top-4">
+                            <EquipmentPanel
+                                equippedSlots={equipped_slots}
+                                combatStats={{
+                                    attack: player_stats.attack,
+                                    strength: player_stats.strength,
+                                    defense: player_stats.defense,
+                                    hp: player_stats.hp,
+                                    max_hp: player_stats.max_hp,
+                                    atk_bonus: equipment.atk_bonus,
+                                    str_bonus: equipment.str_bonus,
+                                    def_bonus: equipment.def_bonus,
+                                    hp_bonus: equipment.hp_bonus,
+                                }}
+                            />
                         </div>
                     </div>
 
-                    {/* Combat Stats */}
-                    <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4">
-                        <h3 className="mb-3 font-pixel text-sm text-amber-300">
-                            Combat Level {player_stats.combat_level}
-                        </h3>
-                        <div className="grid grid-cols-3 gap-3">
-                            <div className="text-center">
-                                <Sword className="mx-auto h-5 w-5 text-red-400" />
-                                <div className="font-pixel text-xs text-stone-400">Attack</div>
-                                <div className="font-pixel text-sm text-white">
-                                    {player_stats.attack}
-                                    {equipment.atk_bonus > 0 && (
-                                        <span className="text-green-400">
-                                            {" "}
-                                            +{equipment.atk_bonus}
-                                        </span>
-                                    )}
-                                </div>
+                    {/* Main Content */}
+                    <div className="flex min-w-0 flex-1 flex-col">
+                        {/* Player Status */}
+                        <div className="mb-6 rounded-lg border border-stone-700 bg-stone-800/50 p-4">
+                            <div className="mb-3 flex items-center justify-between">
+                                <h3 className="font-pixel text-sm text-amber-300">Status</h3>
+                                <span className="font-pixel text-sm text-amber-400">
+                                    Combat Level {player_stats.combat_level}
+                                </span>
                             </div>
-                            <div className="text-center">
-                                <Skull className="mx-auto h-5 w-5 text-orange-400" />
-                                <div className="font-pixel text-xs text-stone-400">Strength</div>
-                                <div className="font-pixel text-sm text-white">
-                                    {player_stats.strength}
-                                    {equipment.str_bonus > 0 && (
-                                        <span className="text-green-400">
-                                            {" "}
-                                            +{equipment.str_bonus}
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div>
+                                    <div className="mb-1 flex items-center justify-between font-pixel text-xs">
+                                        <span className="flex items-center gap-1 text-red-400">
+                                            <Heart className="h-3 w-3" /> HP
                                         </span>
-                                    )}
+                                        <span className="text-stone-300">
+                                            {player_stats.hp} / {player_stats.max_hp}
+                                        </span>
+                                    </div>
+                                    <div className="h-2 w-full overflow-hidden rounded-full bg-stone-700">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-red-600 to-red-400"
+                                            style={{
+                                                width: `${(player_stats.hp / player_stats.max_hp) * 100}%`,
+                                            }}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="text-center">
-                                <Shield className="mx-auto h-5 w-5 text-blue-400" />
-                                <div className="font-pixel text-xs text-stone-400">Defense</div>
-                                <div className="font-pixel text-sm text-white">
-                                    {player_stats.defense}
-                                    {equipment.def_bonus > 0 && (
-                                        <span className="text-green-400">
-                                            {" "}
-                                            +{equipment.def_bonus}
+                                <div>
+                                    <div className="mb-1 flex items-center justify-between font-pixel text-xs">
+                                        <span className="flex items-center gap-1 text-yellow-400">
+                                            <Zap className="h-3 w-3" /> Energy
                                         </span>
-                                    )}
+                                        <span className="text-stone-300">{energy.current}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                {/* Training Style Selection */}
-                <div className="mb-6 rounded-lg border border-stone-700 bg-stone-800/50 p-4">
-                    <h3 className="mb-3 font-pixel text-sm text-amber-300">
-                        Training Style (XP Focus)
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                        {(["attack", "strength", "defense"] as const).map((style) => (
-                            <button
-                                key={style}
-                                onClick={() => setTrainingStyle(style)}
-                                className={`flex-1 rounded-lg border-2 px-3 py-2 font-pixel text-sm capitalize transition sm:px-4 sm:py-3 ${
-                                    trainingStyle === style
-                                        ? "border-amber-500 bg-amber-900/50 text-amber-300"
-                                        : "border-stone-600 bg-stone-800/50 text-stone-400 hover:bg-stone-700/50"
-                                }`}
-                            >
-                                {style}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Error Message */}
-                {error && (
-                    <div className="mb-4 rounded-lg border border-red-500/50 bg-red-900/30 p-3 font-pixel text-sm text-red-300">
-                        {error}
-                    </div>
-                )}
-
-                {/* Dungeons Grid */}
-                <div className="mb-6">
-                    <h3 className="mb-4 font-pixel text-lg text-amber-300">Available Dungeons</h3>
-                    {dungeons.length === 0 ? (
-                        <div className="flex flex-1 items-center justify-center py-12">
-                            <div className="text-center">
-                                <Castle className="mx-auto mb-3 h-16 w-16 text-stone-600" />
-                                <p className="font-pixel text-base text-stone-500">
-                                    No dungeons available here
-                                </p>
-                                <p className="font-pixel text-xs text-stone-600">
-                                    Try a different location or level up
-                                </p>
+                        {/* Attack Style Selection */}
+                        <div className="mb-6 rounded-lg border border-stone-700 bg-stone-800/50 p-4">
+                            <div className="mb-3 flex items-center justify-between">
+                                <h3 className="font-pixel text-sm text-amber-300">Attack Style</h3>
+                                <span className="font-pixel text-[10px] text-stone-500 capitalize">
+                                    {weapon_subtype === "unarmed" ? "Unarmed" : weapon_subtype}
+                                </span>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {dungeons.map((dungeon) => {
-                                const isSelected = selectedDungeon?.id === dungeon.id;
-                                const colorClass =
-                                    difficultyColors[dungeon.difficulty] ||
-                                    "border-stone-600/50 bg-stone-800/50";
-                                const canEnterThis = canEnter(dungeon);
-
-                                return (
-                                    <div
-                                        key={dungeon.id}
-                                        className={`rounded-xl border-2 p-4 transition ${colorClass} ${
-                                            isSelected ? "ring-2 ring-amber-500" : ""
-                                        } ${!canEnterThis ? "opacity-50" : ""}`}
-                                    >
+                            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                                {available_attack_styles.map((style, index) => {
+                                    const typeColors: Record<string, string> = {
+                                        stab: "text-teal-400",
+                                        slash: "text-red-400",
+                                        crush: "text-amber-400",
+                                    };
+                                    const typeBg: Record<string, string> = {
+                                        stab: "bg-teal-900/30 border-teal-500/50",
+                                        slash: "bg-red-900/30 border-red-500/50",
+                                        crush: "bg-amber-900/30 border-amber-500/50",
+                                    };
+                                    return (
                                         <button
-                                            onClick={() =>
-                                                setSelectedDungeon(isSelected ? null : dungeon)
-                                            }
-                                            disabled={!canEnterThis}
-                                            className={`w-full text-left ${!canEnterThis ? "cursor-not-allowed" : ""}`}
+                                            key={index}
+                                            onClick={() => setAttackStyleIndex(index)}
+                                            className={`rounded-lg border-2 px-3 py-2 text-left transition ${
+                                                attackStyleIndex === index
+                                                    ? `${typeBg[style.attack_type]} ring-1 ring-amber-500/50`
+                                                    : "border-stone-600 bg-stone-800/50 hover:bg-stone-700/50"
+                                            }`}
                                         >
-                                            <div className="mb-3 flex items-center justify-between">
-                                                <div>
-                                                    <h4 className="font-pixel text-base text-amber-300">
-                                                        {dungeon.name}
-                                                    </h4>
-                                                    <p className="font-pixel text-[10px] text-stone-400">
-                                                        {themeIcons[dungeon.theme] || dungeon.theme}{" "}
-                                                        - {dungeon.floor_count} Floors
-                                                    </p>
-                                                </div>
-                                                <div className="rounded bg-stone-800/50 px-2 py-1">
-                                                    <span className="font-pixel text-xs capitalize">
-                                                        {dungeon.difficulty}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {dungeon.description && (
-                                                <p className="mb-3 font-pixel text-[10px] text-stone-400">
-                                                    {dungeon.description}
-                                                </p>
-                                            )}
-
-                                            <div className="mb-2 grid grid-cols-2 gap-2 font-pixel text-xs text-stone-400">
-                                                <span>Level: {dungeon.min_combat_level}+</span>
-                                                <span>Rec: {dungeon.recommended_level}</span>
-                                                <span>Energy: {dungeon.energy_cost}</span>
-                                                <span>XP: {dungeon.xp_reward_base}+</span>
-                                            </div>
-
-                                            <div className="flex items-center justify-between font-pixel text-xs text-stone-400">
-                                                <span>
-                                                    Gold: {dungeon.gold_reward_min}-
-                                                    {dungeon.gold_reward_max}
+                                            <div className="flex items-center justify-between">
+                                                <span
+                                                    className={`font-pixel text-sm ${
+                                                        attackStyleIndex === index
+                                                            ? typeColors[style.attack_type]
+                                                            : "text-stone-300"
+                                                    }`}
+                                                >
+                                                    {style.name}
                                                 </span>
-                                                {dungeon.boss_monster && (
-                                                    <span className="text-red-400">
-                                                        Boss: {dungeon.boss_monster.name}
-                                                    </span>
-                                                )}
+                                                <span
+                                                    className={`rounded px-1 py-0.5 font-pixel text-[10px] capitalize ${
+                                                        typeColors[style.attack_type]
+                                                    }`}
+                                                >
+                                                    {style.attack_type}
+                                                </span>
                                             </div>
+                                            <div className="mt-1 flex items-center justify-between font-pixel text-[10px] text-stone-500">
+                                                <span className="capitalize">
+                                                    {style.weapon_style}
+                                                </span>
+                                                <span className="capitalize">
+                                                    {style.xp_skills.length > 1
+                                                        ? "Shared XP"
+                                                        : `${style.xp_skills[0]} XP`}
+                                                </span>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
 
-                                            {/* Monster list from floor spawns */}
-                                            {dungeon.floors &&
-                                                dungeon.floors.length > 0 &&
-                                                (() => {
-                                                    const uniqueMonsters = new Map<
-                                                        number,
-                                                        { name: string; combat_level: number }
-                                                    >();
-                                                    dungeon.floors.forEach((floor) => {
-                                                        floor.monsters?.forEach((spawn) => {
-                                                            if (
-                                                                spawn.monster &&
-                                                                !uniqueMonsters.has(
-                                                                    spawn.monster.id,
-                                                                )
-                                                            ) {
-                                                                uniqueMonsters.set(
-                                                                    spawn.monster.id,
-                                                                    spawn.monster,
-                                                                );
-                                                            }
-                                                        });
-                                                    });
-                                                    const monsterList = Array.from(
-                                                        uniqueMonsters.values(),
-                                                    ).sort(
-                                                        (a, b) => a.combat_level - b.combat_level,
-                                                    );
-                                                    if (monsterList.length === 0) return null;
-                                                    return (
-                                                        <div className="mt-2 border-t border-stone-700/50 pt-2">
-                                                            <span className="font-pixel text-[10px] text-stone-500">
-                                                                Monsters:{" "}
-                                                            </span>
-                                                            <span className="font-pixel text-[10px] text-stone-400">
-                                                                {monsterList
-                                                                    .map(
-                                                                        (m) =>
-                                                                            `${m.name} (Lv${m.combat_level})`,
-                                                                    )
-                                                                    .join(", ")}
+                        {/* Error Message */}
+                        {error && (
+                            <div className="mb-4 rounded-lg border border-red-500/50 bg-red-900/30 p-3 font-pixel text-sm text-red-300">
+                                {error}
+                            </div>
+                        )}
+
+                        {/* Dungeons Grid */}
+                        <div className="mb-6">
+                            <h3 className="mb-4 font-pixel text-lg text-amber-300">
+                                Available Dungeons
+                            </h3>
+                            {dungeons.length === 0 ? (
+                                <div className="flex flex-1 items-center justify-center py-12">
+                                    <div className="text-center">
+                                        <Castle className="mx-auto mb-3 h-16 w-16 text-stone-600" />
+                                        <p className="font-pixel text-base text-stone-500">
+                                            No dungeons available here
+                                        </p>
+                                        <p className="font-pixel text-xs text-stone-600">
+                                            Try a different location or level up
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                    {dungeons.map((dungeon) => {
+                                        const isSelected = selectedDungeon?.id === dungeon.id;
+                                        const colorClass =
+                                            difficultyColors[dungeon.difficulty] ||
+                                            "border-stone-600/50 bg-stone-800/50";
+                                        const canEnterThis = canEnter(dungeon);
+
+                                        return (
+                                            <div
+                                                key={dungeon.id}
+                                                className={`rounded-xl border-2 p-4 transition ${colorClass} ${
+                                                    isSelected ? "ring-2 ring-amber-500" : ""
+                                                } ${!canEnterThis ? "opacity-50" : ""}`}
+                                            >
+                                                <button
+                                                    onClick={() =>
+                                                        setSelectedDungeon(
+                                                            isSelected ? null : dungeon,
+                                                        )
+                                                    }
+                                                    disabled={!canEnterThis}
+                                                    className={`w-full text-left ${!canEnterThis ? "cursor-not-allowed" : ""}`}
+                                                >
+                                                    <div className="mb-3 flex items-center justify-between">
+                                                        <div>
+                                                            <h4 className="font-pixel text-base text-amber-300">
+                                                                {dungeon.name}
+                                                            </h4>
+                                                            <p className="font-pixel text-[10px] text-stone-400">
+                                                                {themeIcons[dungeon.theme] ||
+                                                                    dungeon.theme}{" "}
+                                                                - {dungeon.floor_count} Floors
+                                                            </p>
+                                                        </div>
+                                                        <div className="rounded bg-stone-800/50 px-2 py-1">
+                                                            <span className="font-pixel text-xs capitalize">
+                                                                {dungeon.difficulty}
                                                             </span>
                                                         </div>
-                                                    );
-                                                })()}
-                                        </button>
+                                                    </div>
 
-                                        {/* Enter button appears when selected */}
-                                        {isSelected && (
-                                            <button
-                                                onClick={enterDungeon}
-                                                disabled={!canEnterThis || isEntering}
-                                                className={`mt-3 w-full rounded-lg py-2 font-pixel text-sm transition ${
-                                                    canEnterThis && !isEntering
-                                                        ? "bg-amber-600 text-white hover:bg-amber-500"
-                                                        : "cursor-not-allowed bg-stone-700 text-stone-500"
-                                                }`}
-                                            >
-                                                {isEntering ? "Entering..." : "Enter Dungeon"}
-                                            </button>
-                                        )}
-                                    </div>
-                                );
-                            })}
+                                                    {dungeon.description && (
+                                                        <p className="mb-3 font-pixel text-[10px] text-stone-400">
+                                                            {dungeon.description}
+                                                        </p>
+                                                    )}
+
+                                                    <div className="mb-2 grid grid-cols-2 gap-2 font-pixel text-xs text-stone-400">
+                                                        <span>
+                                                            Level: {dungeon.min_combat_level}+
+                                                        </span>
+                                                        <span>
+                                                            Rec: {dungeon.recommended_level}
+                                                        </span>
+                                                        <span>Energy: {dungeon.energy_cost}</span>
+                                                        <span>XP: {dungeon.xp_reward_base}+</span>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between font-pixel text-xs text-stone-400">
+                                                        <span>
+                                                            Gold: {dungeon.gold_reward_min}-
+                                                            {dungeon.gold_reward_max}
+                                                        </span>
+                                                        {dungeon.boss_monster && (
+                                                            <span className="text-red-400">
+                                                                Boss: {dungeon.boss_monster.name}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Monster list from floor spawns */}
+                                                    {dungeon.floors &&
+                                                        dungeon.floors.length > 0 &&
+                                                        (() => {
+                                                            const uniqueMonsters = new Map<
+                                                                number,
+                                                                {
+                                                                    name: string;
+                                                                    combat_level: number;
+                                                                }
+                                                            >();
+                                                            dungeon.floors.forEach((floor) => {
+                                                                floor.monsters?.forEach((spawn) => {
+                                                                    if (
+                                                                        spawn.monster &&
+                                                                        !uniqueMonsters.has(
+                                                                            spawn.monster.id,
+                                                                        )
+                                                                    ) {
+                                                                        uniqueMonsters.set(
+                                                                            spawn.monster.id,
+                                                                            spawn.monster,
+                                                                        );
+                                                                    }
+                                                                });
+                                                            });
+                                                            const monsterList = Array.from(
+                                                                uniqueMonsters.values(),
+                                                            ).sort(
+                                                                (a, b) =>
+                                                                    a.combat_level - b.combat_level,
+                                                            );
+                                                            if (monsterList.length === 0)
+                                                                return null;
+                                                            return (
+                                                                <div className="mt-2 border-t border-stone-700/50 pt-2">
+                                                                    <span className="font-pixel text-[10px] text-stone-500">
+                                                                        Monsters:{" "}
+                                                                    </span>
+                                                                    <span className="font-pixel text-[10px] text-stone-400">
+                                                                        {monsterList
+                                                                            .map(
+                                                                                (m) =>
+                                                                                    `${m.name} (Lv${m.combat_level})`,
+                                                                            )
+                                                                            .join(", ")}
+                                                                    </span>
+                                                                </div>
+                                                            );
+                                                        })()}
+                                                </button>
+
+                                                {/* Enter button appears when selected */}
+                                                {isSelected && (
+                                                    <button
+                                                        onClick={enterDungeon}
+                                                        disabled={!canEnterThis || isEntering}
+                                                        className={`mt-3 w-full rounded-lg py-2 font-pixel text-sm transition ${
+                                                            canEnterThis && !isEntering
+                                                                ? "bg-amber-600 text-white hover:bg-amber-500"
+                                                                : "cursor-not-allowed bg-stone-700 text-stone-500"
+                                                        }`}
+                                                    >
+                                                        {isEntering
+                                                            ? "Entering..."
+                                                            : "Enter Dungeon"}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
                 </div>
 
                 {/* Dungeon Completion Modal */}

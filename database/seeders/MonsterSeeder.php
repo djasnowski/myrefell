@@ -10,6 +10,21 @@ use Illuminate\Database\Seeder;
 class MonsterSeeder extends Seeder
 {
     /**
+     * Defense type modifiers by monster type.
+     * Values are multipliers applied to defense_level to get stab/slash/crush defense.
+     */
+    public const DEFENSE_TYPE_MODIFIERS = [
+        'humanoid' => ['stab' => 1.0, 'slash' => 1.0, 'crush' => 1.0],
+        'beast' => ['stab' => 0.8, 'slash' => 1.1, 'crush' => 1.0],
+        'undead' => ['stab' => 1.2, 'slash' => 1.1, 'crush' => 0.8],
+        'dragon' => ['stab' => 0.8, 'slash' => 1.3, 'crush' => 1.1],
+        'demon' => ['stab' => 1.1, 'slash' => 1.0, 'crush' => 0.9],
+        'elemental' => ['stab' => 1.0, 'slash' => 1.2, 'crush' => 0.8],
+        'giant' => ['stab' => 1.0, 'slash' => 0.9, 'crush' => 1.1],
+        'goblinoid' => ['stab' => 0.9, 'slash' => 1.0, 'crush' => 1.0],
+    ];
+
+    /**
      * Run the database seeds.
      */
     public function run(): void
@@ -389,6 +404,15 @@ class MonsterSeeder extends Seeder
         ];
 
         foreach ($monsters as $monsterData) {
+            // Derive typed defenses from defense_level and monster type
+            $defenseLevel = $monsterData['defense_level'];
+            $type = $monsterData['type'];
+            $modifiers = self::DEFENSE_TYPE_MODIFIERS[$type] ?? ['stab' => 1.0, 'slash' => 1.0, 'crush' => 1.0];
+
+            $monsterData['stab_defense'] = max(0, (int) round($defenseLevel * $modifiers['stab']));
+            $monsterData['slash_defense'] = max(0, (int) round($defenseLevel * $modifiers['slash']));
+            $monsterData['crush_defense'] = max(0, (int) round($defenseLevel * $modifiers['crush']));
+
             Monster::updateOrCreate(
                 ['name' => $monsterData['name']],
                 $monsterData

@@ -9,16 +9,15 @@ import {
     Gift,
     Package,
     Search,
-    Shield,
     ShieldOff,
     Sword,
-    Swords,
     Trash2,
-    User,
     X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import EquipmentPanel from "@/components/equipment-panel";
+import type { EquippedSlots } from "@/components/equipment-panel";
 import { getItemIcon, GoldIcon } from "@/lib/item-icons";
 import { inventory } from "@/routes";
 import type { BreadcrumbItem } from "@/types";
@@ -132,13 +131,6 @@ interface EquippedItem {
     };
 }
 
-interface EquipmentContextMenuState {
-    visible: boolean;
-    x: number;
-    y: number;
-    slotName: keyof Equipment | null;
-}
-
 interface Equipment {
     head: EquippedItem | null;
     amulet: EquippedItem | null;
@@ -149,6 +141,7 @@ interface Equipment {
     ring: EquippedItem | null;
     necklace: EquippedItem | null;
     bracelet: EquippedItem | null;
+    [key: string]: EquippedItem | null;
 }
 
 interface CombatStats {
@@ -476,175 +469,6 @@ function InventorySlotComponent({
     );
 }
 
-const equipmentSlotIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-    head: ({ className }) => (
-        <svg
-            className={className}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-        >
-            <circle cx="12" cy="8" r="5" />
-            <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
-        </svg>
-    ),
-    chest: ({ className }) => (
-        <svg
-            className={className}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-        >
-            <path d="M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6l-8-4z" />
-        </svg>
-    ),
-    legs: ({ className }) => (
-        <svg
-            className={className}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-        >
-            <path d="M6 4h4v8l-2 10h-2l2-10V4zM14 4h4v8l2 10h-2l-2-10V4z" />
-        </svg>
-    ),
-    weapon: Sword,
-    shield: Shield,
-    ring: ({ className }) => (
-        <svg
-            className={className}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-        >
-            <circle cx="12" cy="12" r="8" />
-            <circle cx="12" cy="12" r="4" />
-        </svg>
-    ),
-    amulet: ({ className }) => (
-        <svg
-            className={className}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-        >
-            <path d="M12 2v4M8 6l4 4 4-4" />
-            <path d="M12 22a8 8 0 1 0 0-16 8 8 0 0 0 0 16z" />
-            <circle cx="12" cy="14" r="3" />
-        </svg>
-    ),
-};
-
-function EquipmentSlotDisplay({
-    label,
-    equipped,
-    slotType,
-    slotName,
-    onContextMenu,
-    onLongPress,
-    contextMenuOpen,
-}: {
-    label: string;
-    equipped: EquippedItem | null;
-    slotType: string;
-    slotName: keyof Equipment;
-    onContextMenu: (e: React.MouseEvent, slotName: keyof Equipment) => void;
-    onLongPress: (e: React.TouchEvent, slotName: keyof Equipment) => void;
-    contextMenuOpen: boolean;
-}) {
-    const [showTooltip, setShowTooltip] = useState(false);
-    const SlotIcon = equipmentSlotIcons[slotType] || Package;
-
-    // Long-press for mobile context menu
-    const longPressHandlers = useLongPress(
-        (e) => {
-            if (equipped) {
-                e.preventDefault();
-                onLongPress(e as React.TouchEvent, slotName);
-            }
-        },
-        undefined,
-        { delay: 500 },
-    );
-
-    return (
-        <div className="relative flex flex-col items-center">
-            <div
-                className={`flex h-12 w-12 cursor-pointer items-center justify-center rounded border-2 transition-all ${
-                    equipped
-                        ? `${rarityColors[equipped.item.rarity]} ring-1 ring-green-500 hover:brightness-110`
-                        : "border-stone-700 bg-stone-900/50"
-                } ${showTooltip ? "z-50" : ""}`}
-                onContextMenu={(e) => equipped && onContextMenu(e, slotName)}
-                onMouseEnter={() => setShowTooltip(true)}
-                onMouseLeave={() => setShowTooltip(false)}
-                {...longPressHandlers}
-            >
-                {equipped ? (
-                    (() => {
-                        const Icon = getItemIcon(equipped.item.type, equipped.item.subtype);
-                        return <Icon className="h-6 w-6 text-stone-300" />;
-                    })()
-                ) : (
-                    <SlotIcon className="h-5 w-5 text-stone-600" />
-                )}
-            </div>
-            <span className="mt-1 font-pixel text-[8px] text-stone-500">{label}</span>
-            {/* Tooltip */}
-            {equipped && showTooltip && !contextMenuOpen && (
-                <div className="absolute top-full left-1/2 z-[100] mt-2 w-48 -translate-x-1/2 rounded border-2 border-stone-600 bg-stone-900 p-2 shadow-lg">
-                    <div
-                        className={`font-pixel text-xs capitalize ${rarityTextColors[equipped.item.rarity] || "text-stone-300"}`}
-                    >
-                        {equipped.item.name}
-                    </div>
-                    {(equipped.item.atk_bonus > 0 ||
-                        equipped.item.str_bonus > 0 ||
-                        equipped.item.def_bonus > 0 ||
-                        equipped.item.hp_bonus > 0 ||
-                        equipped.item.energy_bonus > 0) && (
-                        <div className="space-y-0.5 border-t border-stone-700 pt-1">
-                            {equipped.item.atk_bonus > 0 && (
-                                <div className="font-pixel text-[10px] text-red-400">
-                                    +{equipped.item.atk_bonus} ATK BONUS
-                                </div>
-                            )}
-                            {equipped.item.str_bonus > 0 && (
-                                <div className="font-pixel text-[10px] text-orange-400">
-                                    +{equipped.item.str_bonus} STR BONUS
-                                </div>
-                            )}
-                            {equipped.item.def_bonus > 0 && (
-                                <div className="font-pixel text-[10px] text-blue-400">
-                                    +{equipped.item.def_bonus} DEF BONUS
-                                </div>
-                            )}
-                            {equipped.item.hp_bonus > 0 && (
-                                <div className="font-pixel text-[10px] text-green-400">
-                                    +{equipped.item.hp_bonus} HP BONUS
-                                </div>
-                            )}
-                            {equipped.item.energy_bonus > 0 && (
-                                <div className="font-pixel text-[10px] text-yellow-400">
-                                    +{equipped.item.energy_bonus} EN BONUS
-                                </div>
-                            )}
-                        </div>
-                    )}
-                    <div className="mt-1 font-pixel text-[10px] text-green-400">✓ Equipped</div>
-                    {/* Arrow */}
-                    <div className="absolute left-1/2 bottom-full -translate-x-1/2 border-8 border-transparent border-b-stone-600" />
-                </div>
-            )}
-        </div>
-    );
-}
-
 type SortOption = "default" | "name" | "type" | "rarity" | "value";
 type FilterType = "all" | "weapon" | "armor" | "consumable" | "resource" | "tool" | "misc";
 
@@ -687,12 +511,6 @@ export default function Inventory() {
         slotIndex: null,
         itemName: "",
     });
-    const [equipmentContextMenu, setEquipmentContextMenu] = useState<EquipmentContextMenuState>({
-        visible: false,
-        x: 0,
-        y: 0,
-        slotName: null,
-    });
     const [dragState, setDragState] = useState<{
         sourceSlot: number | null;
         targetSlot: number | null;
@@ -701,7 +519,6 @@ export default function Inventory() {
         targetSlot: null,
     });
     const contextMenuRef = useRef<HTMLDivElement>(null);
-    const equipmentContextMenuRef = useRef<HTMLDivElement>(null);
 
     // Close context menus and dropdowns when clicking/tapping outside
     useEffect(() => {
@@ -709,12 +526,6 @@ export default function Inventory() {
             const target = e.target as Node;
             if (contextMenuRef.current && !contextMenuRef.current.contains(target)) {
                 setContextMenu((prev) => ({ ...prev, visible: false }));
-            }
-            if (
-                equipmentContextMenuRef.current &&
-                !equipmentContextMenuRef.current.contains(target)
-            ) {
-                setEquipmentContextMenu((prev) => ({ ...prev, visible: false }));
             }
             if (sortDropdownRef.current && !sortDropdownRef.current.contains(target)) {
                 setShowSortDropdown(false);
@@ -726,7 +537,6 @@ export default function Inventory() {
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
                 setContextMenu((prev) => ({ ...prev, visible: false }));
-                setEquipmentContextMenu((prev) => ({ ...prev, visible: false }));
                 setDropModal({ visible: false, slotIndex: null, itemName: "" });
                 setShowSortDropdown(false);
                 setShowFilterDropdown(false);
@@ -771,36 +581,7 @@ export default function Inventory() {
         setContextMenu((prev) => ({ ...prev, visible: false }));
     };
 
-    const handleEquipmentContextMenu = (e: React.MouseEvent, slotName: keyof Equipment) => {
-        e.preventDefault();
-        if (!equipment[slotName]) return;
-        setEquipmentContextMenu({
-            visible: true,
-            x: e.clientX,
-            y: e.clientY,
-            slotName,
-        });
-    };
-
-    // Long-press handler for equipment slots on mobile
-    const handleEquipmentLongPress = (e: React.TouchEvent, slotName: keyof Equipment) => {
-        if (!equipment[slotName]) return;
-        const touch = e.touches?.[0] || e.changedTouches?.[0];
-        const x = touch?.clientX ?? 0;
-        const y = touch?.clientY ?? 0;
-        setEquipmentContextMenu({
-            visible: true,
-            x,
-            y,
-            slotName,
-        });
-    };
-
-    const closeEquipmentContextMenu = () => {
-        setEquipmentContextMenu((prev) => ({ ...prev, visible: false }));
-    };
-
-    const handleUnequipFromEquipment = (slotName: keyof Equipment) => {
+    const handleUnequipFromEquipment = (slotName: string) => {
         const equipped = equipment[slotName];
         if (!equipped) return;
 
@@ -814,13 +595,11 @@ export default function Inventory() {
                 },
             },
         );
-        closeEquipmentContextMenu();
     };
 
-    const handleExamineEquipment = (slotName: keyof Equipment) => {
+    const handleExamineEquipment = (slotName: string) => {
         const equipped = equipment[slotName];
         if (!equipped) return;
-        closeEquipmentContextMenu();
         gameToast.info(equipped.item.name, {
             description: equipped.item.description || "Nothing interesting.",
             duration: 5000,
@@ -1264,200 +1043,22 @@ export default function Inventory() {
                     </div>
 
                     {/* Equipment Panel */}
-                    <div className="w-full rounded-lg border-2 border-stone-600 bg-stone-800/80 p-3 lg:w-64">
-                        <h2 className="mb-3 flex items-center gap-1 font-pixel text-xs text-amber-400">
-                            <User className="h-3 w-3" /> Equipment
-                        </h2>
-
-                        {/* Equipment Slots Grid */}
-                        <div className="mb-4 grid grid-cols-3 gap-2">
-                            {/* Top row: empty - head - empty */}
-                            <div></div>
-                            <EquipmentSlotDisplay
-                                label="Head"
-                                equipped={equipment.head}
-                                slotType="head"
-                                slotName="head"
-                                onContextMenu={handleEquipmentContextMenu}
-                                onLongPress={handleEquipmentLongPress}
-                                contextMenuOpen={
-                                    equipmentContextMenu.visible &&
-                                    equipmentContextMenu.slotName === "head"
-                                }
-                            />
-                            <div></div>
-
-                            {/* Middle row: weapon - chest - shield */}
-                            <EquipmentSlotDisplay
-                                label="Weapon"
-                                equipped={equipment.weapon}
-                                slotType="weapon"
-                                slotName="weapon"
-                                onContextMenu={handleEquipmentContextMenu}
-                                onLongPress={handleEquipmentLongPress}
-                                contextMenuOpen={
-                                    equipmentContextMenu.visible &&
-                                    equipmentContextMenu.slotName === "weapon"
-                                }
-                            />
-                            <EquipmentSlotDisplay
-                                label="Chest"
-                                equipped={equipment.chest}
-                                slotType="chest"
-                                slotName="chest"
-                                onContextMenu={handleEquipmentContextMenu}
-                                onLongPress={handleEquipmentLongPress}
-                                contextMenuOpen={
-                                    equipmentContextMenu.visible &&
-                                    equipmentContextMenu.slotName === "chest"
-                                }
-                            />
-                            <EquipmentSlotDisplay
-                                label="Shield"
-                                equipped={equipment.shield}
-                                slotType="shield"
-                                slotName="shield"
-                                onContextMenu={handleEquipmentContextMenu}
-                                onLongPress={handleEquipmentLongPress}
-                                contextMenuOpen={
-                                    equipmentContextMenu.visible &&
-                                    equipmentContextMenu.slotName === "shield"
-                                }
-                            />
-
-                            {/* Bottom row: ring - legs - amulet */}
-                            <EquipmentSlotDisplay
-                                label="Ring"
-                                equipped={equipment.ring}
-                                slotType="ring"
-                                slotName="ring"
-                                onContextMenu={handleEquipmentContextMenu}
-                                onLongPress={handleEquipmentLongPress}
-                                contextMenuOpen={
-                                    equipmentContextMenu.visible &&
-                                    equipmentContextMenu.slotName === "ring"
-                                }
-                            />
-                            <EquipmentSlotDisplay
-                                label="Legs"
-                                equipped={equipment.legs}
-                                slotType="legs"
-                                slotName="legs"
-                                onContextMenu={handleEquipmentContextMenu}
-                                onLongPress={handleEquipmentLongPress}
-                                contextMenuOpen={
-                                    equipmentContextMenu.visible &&
-                                    equipmentContextMenu.slotName === "legs"
-                                }
-                            />
-                            <EquipmentSlotDisplay
-                                label="Amulet"
-                                equipped={equipment.amulet}
-                                slotType="amulet"
-                                slotName="amulet"
-                                onContextMenu={handleEquipmentContextMenu}
-                                onLongPress={handleEquipmentLongPress}
-                                contextMenuOpen={
-                                    equipmentContextMenu.visible &&
-                                    equipmentContextMenu.slotName === "amulet"
-                                }
-                            />
-                        </div>
-
-                        {/* Equipped Items List */}
-                        <div className="border-t border-stone-700 pt-3">
-                            <h3 className="mb-2 font-pixel text-[10px] text-stone-400">Equipped</h3>
-                            <div className="space-y-1">
-                                {(
-                                    [
-                                        "head",
-                                        "amulet",
-                                        "chest",
-                                        "legs",
-                                        "weapon",
-                                        "shield",
-                                        "ring",
-                                    ] as const
-                                ).map((slot) => {
-                                    const item = equipment[slot];
-                                    if (!item) return null;
-                                    return (
-                                        <div key={slot} className="flex items-center gap-1.5">
-                                            <span className="font-pixel text-[8px] text-stone-500 w-12">
-                                                {slot}
-                                            </span>
-                                            <span
-                                                className={`font-pixel text-[9px] ${rarityTextColors[item.item.rarity]}`}
-                                            >
-                                                {item.item.name}
-                                            </span>
-                                        </div>
-                                    );
-                                })}
-                                {!Object.values(equipment).some(Boolean) && (
-                                    <p className="font-pixel text-[8px] text-stone-600 italic">
-                                        Nothing equipped
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Combat Stats */}
-                        <div className="border-t border-stone-700 pt-3 mt-3">
-                            <h3 className="mb-2 flex items-center gap-1 font-pixel text-[10px] text-stone-400">
-                                <Swords className="h-3 w-3" /> Combat Stats
-                            </h3>
-                            <div className="space-y-1.5">
-                                <div className="flex justify-between font-pixel text-[10px]">
-                                    <span className="text-red-400">Attack</span>
-                                    <span className="text-stone-300">
-                                        {combat_stats.attack_level}
-                                        {combat_stats.atk_bonus > 0 && (
-                                            <span className="text-green-400">
-                                                {" "}
-                                                (+{combat_stats.atk_bonus})
-                                            </span>
-                                        )}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between font-pixel text-[10px]">
-                                    <span className="text-orange-400">Strength</span>
-                                    <span className="text-stone-300">
-                                        {combat_stats.strength_level}
-                                        {combat_stats.str_bonus > 0 && (
-                                            <span className="text-green-400">
-                                                {" "}
-                                                (+{combat_stats.str_bonus})
-                                            </span>
-                                        )}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between font-pixel text-[10px]">
-                                    <span className="text-blue-400">Defense</span>
-                                    <span className="text-stone-300">
-                                        {combat_stats.defense_level}
-                                        {combat_stats.def_bonus > 0 && (
-                                            <span className="text-green-400">
-                                                {" "}
-                                                (+{combat_stats.def_bonus})
-                                            </span>
-                                        )}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between font-pixel text-[10px]">
-                                    <span className="text-green-400">Hitpoints</span>
-                                    <span className="text-stone-300">
-                                        {combat_stats.hitpoints_level}
-                                        {combat_stats.hp_bonus > 0 && (
-                                            <span className="text-green-400">
-                                                {" "}
-                                                (+{combat_stats.hp_bonus})
-                                            </span>
-                                        )}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+                    <div className="w-full lg:w-64">
+                        <EquipmentPanel
+                            equippedSlots={equipment as unknown as EquippedSlots}
+                            combatStats={{
+                                attack: combat_stats.attack_level,
+                                strength: combat_stats.strength_level,
+                                defense: combat_stats.defense_level,
+                                hitpoints: combat_stats.hitpoints_level,
+                                atk_bonus: combat_stats.atk_bonus,
+                                str_bonus: combat_stats.str_bonus,
+                                def_bonus: combat_stats.def_bonus,
+                                hp_bonus: combat_stats.hp_bonus,
+                            }}
+                            onUnequip={handleUnequipFromEquipment}
+                            onExamine={handleExamineEquipment}
+                        />
                     </div>
                 </div>
             </div>
@@ -1567,52 +1168,6 @@ export default function Inventory() {
                                 </>
                             );
                         })()}
-                    </div>
-                )}
-
-            {/* Equipment Context Menu */}
-            {equipmentContextMenu.visible &&
-                equipmentContextMenu.slotName !== null &&
-                equipment[equipmentContextMenu.slotName] && (
-                    <div
-                        ref={equipmentContextMenuRef}
-                        className="fixed z-[200] min-w-40 rounded-lg border-2 border-stone-600 bg-stone-900 p-1 shadow-xl"
-                        style={{
-                            left: equipmentContextMenu.x,
-                            top: equipmentContextMenu.y,
-                        }}
-                    >
-                        {/* Unequip */}
-                        <button
-                            onClick={() =>
-                                handleUnequipFromEquipment(equipmentContextMenu.slotName!)
-                            }
-                            className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-300 hover:bg-stone-800"
-                        >
-                            <ShieldOff className="h-3.5 w-3.5 text-orange-400" />
-                            Unequip
-                        </button>
-
-                        <div className="my-1 h-px bg-stone-700" />
-
-                        {/* Examine */}
-                        <button
-                            onClick={() => handleExamineEquipment(equipmentContextMenu.slotName!)}
-                            className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-300 hover:bg-stone-800"
-                        >
-                            <Eye className="h-3.5 w-3.5 text-blue-400" />
-                            Examine
-                        </button>
-
-                        <div className="my-1 h-px bg-stone-700" />
-
-                        {/* Cancel */}
-                        <button
-                            onClick={closeEquipmentContextMenu}
-                            className="flex w-full items-center gap-2 rounded px-3 py-1.5 font-pixel text-xs text-stone-400 hover:bg-stone-800"
-                        >
-                            Cancel
-                        </button>
                     </div>
                 )}
 

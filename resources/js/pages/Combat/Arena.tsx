@@ -36,12 +36,20 @@ interface CombatLog {
     item?: { name: string };
 }
 
+interface AttackStyle {
+    name: string;
+    attack_type: "stab" | "slash" | "crush";
+    weapon_style: "accurate" | "aggressive" | "controlled" | "defensive";
+    xp_skills: string[];
+}
+
 interface CombatSession {
     id: number;
     player_hp: number;
     monster_hp: number;
     round: number;
     training_style: string;
+    attack_style_index: number;
     status: "active" | "victory" | "defeat" | "fled";
     monster: Monster;
     logs: CombatLog[];
@@ -75,6 +83,8 @@ interface PageProps {
     player_stats: PlayerStats;
     equipment: Equipment;
     food: FoodItem[];
+    weapon_subtype: string;
+    available_attack_styles: AttackStyle[];
     [key: string]: unknown;
 }
 
@@ -85,7 +95,20 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function CombatArena() {
-    const { session: initialSession, player_stats, food: initialFood } = usePage<PageProps>().props;
+    const {
+        session: initialSession,
+        player_stats,
+        food: initialFood,
+        weapon_subtype,
+        available_attack_styles,
+    } = usePage<PageProps>().props;
+    const activeStyle = available_attack_styles?.[initialSession.attack_style_index] ?? null;
+
+    const attackTypeColors: Record<string, string> = {
+        stab: "text-teal-400",
+        slash: "text-red-400",
+        crush: "text-amber-400",
+    };
     const [session, setSession] = useState(initialSession);
     const [food, setFood] = useState(initialFood);
     const [isActing, setIsActing] = useState(false);
@@ -93,9 +116,11 @@ export default function CombatArena() {
     const [rewards, setRewards] = useState<{
         xp: number;
         skill: string;
+        xp_skills?: string[];
         levels_gained: number;
         gold: number;
         items: { name: string; quantity: number }[];
+        attack_style?: string;
     } | null>(null);
     const [showFood, setShowFood] = useState(false);
 
@@ -235,9 +260,27 @@ export default function CombatArena() {
                 {/* Combat Header */}
                 <div className="mb-4 text-center">
                     <h1 className="font-pixel text-xl text-amber-400">Round {session.round}</h1>
-                    <p className="font-pixel text-xs text-stone-400">
-                        Training: {session.training_style}
-                    </p>
+                    <div className="flex items-center justify-center gap-2">
+                        {activeStyle && (
+                            <>
+                                <span
+                                    className={`font-pixel text-xs ${attackTypeColors[activeStyle.attack_type] ?? "text-stone-400"}`}
+                                >
+                                    {activeStyle.name}
+                                </span>
+                                <span className="font-pixel text-[10px] text-stone-600">|</span>
+                                <span className="font-pixel text-[10px] capitalize text-stone-500">
+                                    {activeStyle.attack_type}
+                                </span>
+                                <span className="font-pixel text-[10px] text-stone-600">|</span>
+                            </>
+                        )}
+                        <span className="font-pixel text-[10px] capitalize text-stone-500">
+                            {activeStyle
+                                ? activeStyle.xp_skills.join("+") + " XP"
+                                : session.training_style + " XP"}
+                        </span>
+                    </div>
                 </div>
 
                 {/* Health Bars */}
@@ -374,7 +417,9 @@ export default function CombatArena() {
                                         +{rewards.xp}
                                     </div>
                                     <div className="font-pixel text-xs capitalize text-stone-400">
-                                        {rewards.skill} XP
+                                        {rewards.xp_skills && rewards.xp_skills.length > 1
+                                            ? rewards.xp_skills.join("+") + " XP"
+                                            : rewards.skill + " XP"}
                                         {rewards.levels_gained > 0 && (
                                             <span className="ml-1 text-yellow-400">
                                                 <Sparkles className="inline h-3 w-3" /> Level Up!

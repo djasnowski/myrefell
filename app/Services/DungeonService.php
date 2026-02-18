@@ -78,7 +78,7 @@ class DungeonService
     /**
      * Enter a dungeon.
      */
-    public function enterDungeon(User $player, int $dungeonId, string $trainingStyle = 'attack'): array
+    public function enterDungeon(User $player, int $dungeonId, int $attackStyleIndex = 0): array
     {
         // Check if player is traveling
         if ($player->isTraveling()) {
@@ -123,12 +123,14 @@ class DungeonService
             return ['success' => false, 'message' => "You need {$dungeon->energy_cost} energy to enter this dungeon."];
         }
 
-        // Validate training style
-        if (! in_array($trainingStyle, DungeonSession::TRAINING_STYLES)) {
-            $trainingStyle = 'attack';
-        }
+        // Resolve attack style config from weapon + index
+        $weaponSubtype = $this->combatService->getPlayerWeaponSubtype($player);
+        $styles = CombatService::WEAPON_ATTACK_STYLES[$weaponSubtype] ?? CombatService::WEAPON_ATTACK_STYLES['unarmed'];
+        $attackStyleIndex = max(0, min($attackStyleIndex, count($styles) - 1));
+        $styleConfig = $styles[$attackStyleIndex];
+        $trainingStyle = $styleConfig['xp_skills'][0] ?? 'attack';
 
-        return DB::transaction(function () use ($player, $dungeon, $trainingStyle) {
+        return DB::transaction(function () use ($player, $dungeon, $trainingStyle, $attackStyleIndex) {
             // Consume energy
             $this->energyService->consumeEnergy($player, $dungeon->energy_cost);
 
@@ -148,6 +150,7 @@ class DungeonService
                 'gold_accumulated' => 0,
                 'loot_accumulated' => [],
                 'training_style' => $trainingStyle,
+                'attack_style_index' => $attackStyleIndex,
                 'entry_location_type' => $player->current_location_type,
                 'entry_location_id' => $player->current_location_id,
             ]);
@@ -277,19 +280,52 @@ class DungeonService
         $strengthLevel = $player->getSkillLevel('strength');
         $defenseLevel = $player->getSkillLevel('defense');
 
+        // Get attack style and weapon speed from the active session
+        $session = $this->getActiveSession($player);
+        $weaponSubtype = $this->combatService->getPlayerWeaponSubtype($player);
+        $attackStyleIndex = $session?->attack_style_index ?? 0;
+        $styleConfig = $this->combatService->getAttackStyleConfig($weaponSubtype, $attackStyleIndex);
+        $stanceBonus = CombatService::STANCE_BONUSES[$styleConfig['weapon_style']] ?? ['attack' => 0, 'strength' => 0, 'defense' => 0];
+
+        // Apply stance bonuses
+        $effectiveAttack = $attackLevel + $stanceBonus['attack'];
+        $effectiveStrength = $strengthLevel + $stanceBonus['strength'];
+        $effectiveDefense = $defenseLevel + $stanceBonus['defense'];
+
+        // Get typed monster defense
+        $monsterDefense = match ($styleConfig['attack_type']) {
+            'stab' => $monster->stab_defense ?: $monster->defense_level,
+            'slash' => $monster->slash_defense ?: $monster->defense_level,
+            'crush' => $monster->crush_defense ?: $monster->defense_level,
+            default => $monster->defense_level,
+        };
+
+        // Weapon speed
+        $speed = $this->combatService->getWeaponSpeed($weaponSubtype);
+        $hitsPerRound = CombatService::SPEED_HITS[$speed] ?? 1;
+        $damageMult = CombatService::SPEED_DAMAGE_MULT[$speed] ?? 1.0;
+
         while ($playerHp > 0 && $monsterHp > 0 && $rounds < $maxRounds) {
             $rounds++;
 
-            // Player attacks
-            $playerHitChance = 50 + ($attackLevel - $monster->defense_level) * 2 + $equipment['atk_bonus'];
-            $playerHitChance = max(10, min(95, $playerHitChance));
+            // Player attacks (possibly multiple times for fast weapons)
+            for ($hit = 0; $hit < $hitsPerRound && $monsterHp > 0; $hit++) {
+                $playerHitChance = 50 + ($effectiveAttack - $monsterDefense) * 2 + $equipment['atk_bonus'];
+                $playerHitChance = max(10, min(95, $playerHitChance));
 
-            if (rand(1, 100) <= $playerHitChance) {
-                $baseDamage = $strengthLevel + $equipment['str_bonus'];
-                $maxHit = (int) floor($baseDamage * 0.5);
-                $damage = rand(1, max(1, $maxHit));
-                $monsterHp -= $damage;
-                $totalDamageDealt += $damage;
+                if (rand(1, 100) <= $playerHitChance) {
+                    $baseDamage = $effectiveStrength + $equipment['str_bonus'];
+                    $maxHit = (int) floor($baseDamage * 0.5);
+                    $damage = rand(1, max(1, $maxHit));
+
+                    // Apply slow weapon damage multiplier
+                    if ($damageMult !== 1.0) {
+                        $damage = (int) round($damage * $damageMult);
+                    }
+
+                    $monsterHp -= $damage;
+                    $totalDamageDealt += $damage;
+                }
             }
 
             if ($monsterHp <= 0) {
@@ -297,7 +333,7 @@ class DungeonService
             }
 
             // Monster attacks
-            $monsterHitChance = 50 + ($monster->attack_level - $defenseLevel - $equipment['def_bonus']) * 2;
+            $monsterHitChance = 50 + ($monster->attack_level - $effectiveDefense - $equipment['def_bonus']) * 2;
             $monsterHitChance = max(10, min(95, $monsterHitChance));
 
             if (rand(1, 100) <= $monsterHitChance) {
@@ -484,8 +520,23 @@ class DungeonService
     {
         $xp = $session->xp_accumulated;
 
-        // Award XP to training skill
-        $this->addXpToSkill($player, $session->training_style, $xp);
+        // Determine XP skills from attack style config
+        $weaponSubtype = $this->combatService->getPlayerWeaponSubtype($player);
+        $styleConfig = $this->combatService->getAttackStyleConfig($weaponSubtype, $session->attack_style_index ?? 0);
+        $xpSkills = $styleConfig['xp_skills'];
+
+        if (count($xpSkills) > 1) {
+            // Controlled: split XP evenly across skills
+            $xpPerSkill = (int) floor($xp / count($xpSkills));
+            foreach ($xpSkills as $skill) {
+                if ($xpPerSkill > 0) {
+                    $this->addXpToSkill($player, $skill, $xpPerSkill);
+                }
+            }
+        } else {
+            // Single skill: award full XP
+            $this->addXpToSkill($player, $xpSkills[0], $xp);
+        }
 
         // Award HP XP (1/3 of combat XP, floored like OSRS)
         $hpXp = (int) floor($xp / 3);
