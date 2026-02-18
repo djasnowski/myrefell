@@ -52,6 +52,7 @@ interface MigrationRequestData {
     needs_baron: boolean;
     needs_king: boolean;
     denial_reason: string | null;
+    approve_as: "elder" | "mayor" | "baron" | "king" | null;
     created_at: string;
     completed_at: string | null;
 }
@@ -267,6 +268,7 @@ export default function MigrationIndex() {
             { level },
             {
                 preserveScroll: true,
+                onSuccess: () => router.reload(),
                 onFinish: () => setLoading(null),
             },
         );
@@ -280,6 +282,7 @@ export default function MigrationIndex() {
             { level, reason },
             {
                 preserveScroll: true,
+                onSuccess: () => router.reload(),
                 onFinish: () => setLoading(null),
             },
         );
@@ -295,17 +298,6 @@ export default function MigrationIndex() {
                 onFinish: () => setLoading(null),
             },
         );
-    };
-
-    // Determine which level the current user can approve
-    const getApprovalLevel = (
-        request: MigrationRequestData,
-    ): "elder" | "mayor" | "baron" | "king" | undefined => {
-        if (request.needs_elder && request.elder_approved === null) return "elder";
-        if (request.needs_mayor && request.mayor_approved === null) return "mayor";
-        if (request.needs_baron && request.baron_approved === null) return "baron";
-        if (request.needs_king && request.king_approved === null) return "king";
-        return undefined;
     };
 
     return (
@@ -505,7 +497,7 @@ export default function MigrationIndex() {
                                 <RequestCard
                                     key={request.id}
                                     request={request}
-                                    showApproveButtons={getApprovalLevel(request)}
+                                    showApproveButtons={request.approve_as ?? undefined}
                                     onApprove={handleApprove}
                                     onDeny={handleDeny}
                                     loading={loading}

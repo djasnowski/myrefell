@@ -6,6 +6,7 @@ use App\Models\Barony;
 use App\Models\Kingdom;
 use App\Models\MigrationRequest;
 use App\Models\Town;
+use App\Models\User;
 use App\Models\Village;
 use App\Services\MigrationService;
 use Illuminate\Http\RedirectResponse;
@@ -45,7 +46,7 @@ class MigrationController extends Controller
             // Legacy field for backwards compatibility
             'current_village' => $currentHome,
             'pending_request' => $pendingRequest ? $this->formatRequest($pendingRequest) : null,
-            'requests_to_approve' => $requestsToApprove->map(fn ($r) => $this->formatRequest($r)),
+            'requests_to_approve' => $requestsToApprove->map(fn ($r) => $this->formatRequest($r, $user)),
             'request_history' => $requestHistory->map(fn ($r) => $this->formatRequest($r)),
             'can_migrate' => $this->migrationService->canMigrate($user),
             'cooldown_ends' => $user->last_migration_at
@@ -234,10 +235,21 @@ class MigrationController extends Controller
     /**
      * Format a migration request for the frontend.
      */
-    protected function formatRequest(MigrationRequest $request): array
+    protected function formatRequest(MigrationRequest $request, ?User $approver = null): array
     {
         $barony = $request->getDestinationBarony();
         $kingdom = $request->getDestinationKingdom();
+
+        // Determine which level this user can approve at for this request
+        $approveAs = null;
+        if ($approver) {
+            foreach (['elder', 'mayor', 'baron', 'king'] as $level) {
+                if ($this->migrationService->canApproveAt($approver, $request, $level) && $request->{"{$level}_approved"} === null) {
+                    $approveAs = $level;
+                    break;
+                }
+            }
+        }
 
         return [
             'id' => $request->id,
@@ -279,6 +291,7 @@ class MigrationController extends Controller
             'needs_baron' => $request->needsBaronApproval(),
             'needs_king' => $request->needsKingApproval(),
             'denial_reason' => $request->denial_reason,
+            'approve_as' => $approveAs,
             'created_at' => $request->created_at->toISOString(),
             'completed_at' => $request->completed_at?->toISOString(),
         ];

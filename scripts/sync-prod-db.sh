@@ -20,20 +20,16 @@ echo "🔄 Syncing production database to local..."
 echo ""
 
 echo "📦 Dumping production database..."
-ssh $PROD_HOST "cd $PROD_APP_DIR && source .env && PGPASSWORD=\"\$DB_PASSWORD\" pg_dump -h \$DB_HOST -U \$DB_USERNAME -d \$DB_DATABASE --no-owner --no-acl" > $DUMP_FILE 2>/dev/null
+ssh $PROD_HOST "cd $PROD_APP_DIR && source .env && PGPASSWORD=\"\$DB_PASSWORD\" pg_dump -h \$DB_HOST -U \$DB_USERNAME -d \$DB_DATABASE --no-owner --no-acl --exclude-table-data=location_activity_logs" > $DUMP_FILE 2>/dev/null
 DUMP_SIZE=$(du -h $DUMP_FILE | cut -f1)
 echo "   Downloaded: $DUMP_SIZE"
 
 echo "🗑️  Dropping local database..."
-./vendor/bin/sail exec -T pgsql psql -U $LOCAL_DB_USER -d postgres -c "
-    ALTER DATABASE $LOCAL_DB_NAME CONNECTION LIMIT 0;
-    SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$LOCAL_DB_NAME' AND pid <> pg_backend_pid();
-" > /dev/null
-./vendor/bin/sail exec -T pgsql dropdb -U $LOCAL_DB_USER --if-exists $LOCAL_DB_NAME
+./vendor/bin/sail exec -T pgsql psql -U $LOCAL_DB_USER -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$LOCAL_DB_NAME' AND pid <> pg_backend_pid();" > /dev/null
+./vendor/bin/sail exec -T pgsql dropdb -U $LOCAL_DB_USER --if-exists --force $LOCAL_DB_NAME
 
 echo "🆕 Creating fresh database..."
 ./vendor/bin/sail exec -T pgsql createdb -U $LOCAL_DB_USER $LOCAL_DB_NAME
-./vendor/bin/sail exec -T pgsql psql -U $LOCAL_DB_USER -d postgres -c "ALTER DATABASE $LOCAL_DB_NAME CONNECTION LIMIT -1;" > /dev/null
 
 echo "📤 Importing data..."
 ./vendor/bin/sail exec -T pgsql psql -U $LOCAL_DB_USER -d $LOCAL_DB_NAME -q < $DUMP_FILE 2>&1 | grep -v "^SET$\|^COMMENT$\|^ALTER\|^CREATE\|^REVOKE\|^GRANT" || true
