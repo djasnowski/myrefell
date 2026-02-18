@@ -629,16 +629,6 @@ export default function KingdomShow({
                             </div>
                         </Link>
                         <Link
-                            href={`/kingdoms/${kingdom.id}/infirmary`}
-                            className="flex items-center gap-3 rounded-lg border-2 border-red-600/50 bg-red-900/20 p-4 transition hover:bg-red-800/30"
-                        >
-                            <HeartPulse className="h-8 w-8 text-red-400" />
-                            <div>
-                                <span className="font-pixel text-sm text-red-300">Infirmary</span>
-                                <p className="text-xs text-stone-500">Recovery & healing</p>
-                            </div>
-                        </Link>
-                        <Link
                             href={`/kingdoms/${kingdom.id}/market`}
                             className="flex items-center gap-3 rounded-lg border-2 border-green-600/50 bg-green-900/20 p-4 transition hover:bg-green-800/30"
                         >

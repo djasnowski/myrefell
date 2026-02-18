@@ -56,8 +56,15 @@ class HealerController extends Controller
     {
         $user = $request->user();
 
-        // Check if player is at this location
-        if ($user->current_location_type !== $locationType || $user->current_location_id !== $locationId) {
+        // Check if player is at this location (or within its hierarchy for infirmary access)
+        $isAtLocation = $user->current_location_type === $locationType && $user->current_location_id === $locationId;
+
+        // If player is in infirmary, allow access to kingdom infirmary if they're within that kingdom
+        if (! $isAtLocation && $user->isInInfirmary() && $locationType === 'kingdom') {
+            $isAtLocation = $this->isPlayerInKingdom($user, $locationId);
+        }
+
+        if (! $isAtLocation) {
             return Inertia::render('Healer/NotHere', [
                 'message' => 'You must be at this location to visit the healer.',
             ]);
@@ -163,5 +170,25 @@ class HealerController extends Controller
         $result = $this->healerService->treatDisease($user, $infection);
 
         return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Check if a player is within a kingdom (at a village/town/barony in that kingdom).
+     */
+    protected function isPlayerInKingdom($user, int $kingdomId): bool
+    {
+        $locationType = $user->current_location_type;
+        $locationId = $user->current_location_id;
+
+        return match ($locationType) {
+            'kingdom' => $locationId === $kingdomId,
+            'barony' => \App\Models\Barony::where('id', $locationId)
+                ->where('kingdom_id', $kingdomId)->exists(),
+            'town' => \App\Models\Town::whereHas('barony', fn ($q) => $q->where('kingdom_id', $kingdomId))
+                ->where('id', $locationId)->exists(),
+            'village' => \App\Models\Village::whereHas('barony', fn ($q) => $q->where('kingdom_id', $kingdomId))
+                ->where('id', $locationId)->exists(),
+            default => false,
+        };
     }
 }
