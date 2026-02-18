@@ -142,8 +142,7 @@ function TitlesInfoModal({ onClose }: { onClose: () => void }) {
                 {
                     name: "Yeoman",
                     tier: 4,
-                    howToGet:
-                        "50,000 gold + Combat Level 20 + own property + 30 days militia service",
+                    howToGet: "50,000 gold + Combat Level 20 + own property",
                     benefits: "+10 Prestige, addressed as Goodman/Goodwife",
                 },
             ],
