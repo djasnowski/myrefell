@@ -383,8 +383,10 @@ class UserController extends Controller
         // Update user's banned_at
         $user->update(['banned_at' => now()]);
 
-        // Remove all roles from banned user
-        PlayerRole::where('user_id', $user->id)->delete();
+        // Remove all active roles from banned user
+        PlayerRole::where('user_id', $user->id)
+            ->where('status', PlayerRole::STATUS_ACTIVE)
+            ->update(['status' => PlayerRole::STATUS_REMOVED, 'removed_at' => now()]);
 
         return back()->with('success', "User {$user->username} has been banned.");
     }

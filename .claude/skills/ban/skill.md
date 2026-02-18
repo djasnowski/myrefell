@@ -33,7 +33,7 @@ echo 'Account Age: ' . \\\$u->created_at->diffInDays(now()) . ' days' . PHP_EOL;
 echo 'Gold: ' . number_format(\\\$u->gold) . PHP_EOL;
 echo 'Total Level: ' . \\\$u->total_level . PHP_EOL;
 echo 'Combat Level: ' . \\\$u->combat_level . PHP_EOL;
-echo 'Is Banned: ' . (\\\$u->is_banned ? 'Yes' : 'No') . PHP_EOL;
+echo 'Is Banned: ' . (\\\$u->banned_at ? 'Yes (since ' . \\\$u->banned_at . ')' : 'No') . PHP_EOL;
 echo 'Flagged At: ' . (\\\$u->suspicious_activity_flagged_at ?? 'Never') . PHP_EOL;
 echo PHP_EOL;
 
@@ -111,10 +111,21 @@ Evidence: [summarize key indicators]
 
 ## Executing the Ban
 
-Only after user confirmation:
+Only after user confirmation. This creates a `UserBan` record and sets `banned_at` on the user:
 ```bash
-ssh forge@myrefell.com "cd /home/forge/myrefell.com/current && php artisan tinker --execute=\"\\\$u = App\\\\Models\\\\User::where('username', 'USERNAME')->first(); \\\$u->is_banned = true; \\\$u->ban_reason = 'Botting/automation detected - X% suspicious activity, Y max actions per second'; \\\$u->banned_at = now(); \\\$u->save(); echo 'Banned ' . \\\$u->username;\""
+ssh forge@myrefell.com "cd /home/forge/myrefell.com/current && php artisan tinker --execute=\"
+\\\$u = App\\\\Models\\\\User::where('username', 'USERNAME')->first();
+\\\$u->banned_at = now();
+\\\$u->save();
+App\\\\Models\\\\UserBan::create(['user_id' => \\\$u->id, 'banned_by' => 1, 'reason' => 'Botting/automation detected - X% suspicious activity, Y max actions per second', 'banned_at' => now()]);
+\\\$removed = \\\$u->activePlayerRoles;
+foreach (\\\$removed as \\\$r) { \\\$r->update(['status' => App\\\\Models\\\\PlayerRole::STATUS_REMOVED, 'removed_at' => now()]); }
+echo 'Banned ' . \\\$u->username . ' at ' . \\\$u->banned_at . PHP_EOL;
+echo 'Removed ' . \\\$removed->count() . ' active role(s).' . PHP_EOL;
+\""
 ```
+
+The `banned_by` value of `1` is the admin user (dan). The `reason` field should summarize the key evidence. Any active roles (e.g. Elder, Mayor, Guildmaster) are automatically removed on ban.
 
 ## Important Notes
 
