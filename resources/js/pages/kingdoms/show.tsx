@@ -11,7 +11,6 @@ import {
     Crown,
     Dumbbell,
     Hammer,
-    HeartPulse,
     Home,
     Loader2,
     MapPin,
@@ -49,6 +48,7 @@ interface Settlement {
     is_port?: boolean;
     population: number;
     ruler: string | null;
+    ruler_player_role_id: number | null;
     ruler_title: string;
 }
 
@@ -66,6 +66,7 @@ interface Barony {
         username: string;
     } | null;
     baron_name: string | null;
+    baron_player_role_id: number | null;
     settlements: Settlement[];
 }
 
@@ -123,6 +124,7 @@ interface Props {
     current_user_id: number;
     is_visitor: boolean;
     is_resident: boolean;
+    is_king: boolean;
     can_migrate: boolean;
     cooldown_ends_at: string | null;
     cooldown_remaining: string | null;
@@ -256,7 +258,7 @@ function HierarchyTree({ baronies }: { baronies: Barony[] }) {
                         <div key={barony.id} className={!isLast ? "mb-2" : ""}>
                             <button
                                 onClick={() => toggleBarony(barony.id)}
-                                className="group flex w-full items-center gap-2 rounded p-1 text-left transition hover:bg-stone-700/50"
+                                className="group flex w-full items-center gap-2 rounded p-1.5 text-left transition hover:bg-stone-700/50"
                             >
                                 {isExpanded ? (
                                     <ChevronDown className="h-4 w-4 text-stone-500" />
@@ -353,6 +355,7 @@ export default function KingdomShow({
     current_user_id,
     is_visitor,
     is_resident,
+    is_king,
     can_migrate,
     cooldown_remaining,
     has_pending_request,
@@ -544,6 +547,22 @@ export default function KingdomShow({
                 <div>
                     <h2 className="mb-4 font-pixel text-lg text-stone-300">Kingdom Services</h2>
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        {is_king && (
+                            <Link
+                                href={`/kingdoms/${kingdom.id}/management`}
+                                className="flex items-center gap-3 rounded-lg border-2 border-red-600/50 bg-red-900/20 p-4 transition hover:bg-red-800/30"
+                            >
+                                <Crown className="h-8 w-8 text-red-400" />
+                                <div>
+                                    <span className="font-pixel text-sm text-red-300">
+                                        Royal Management
+                                    </span>
+                                    <p className="text-xs text-stone-500">
+                                        Manage officials & decrees
+                                    </p>
+                                </div>
+                            </Link>
+                        )}
                         <Link
                             href={`/kingdoms/${kingdom.id}/roles`}
                             className="flex items-center gap-3 rounded-lg border-2 border-amber-600/50 bg-amber-900/20 p-4 transition hover:bg-amber-800/30"

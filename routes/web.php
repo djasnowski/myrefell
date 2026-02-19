@@ -215,6 +215,7 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
     // World location routes
     Route::get('kingdoms', [KingdomController::class, 'index'])->name('kingdoms.index');
     Route::get('kingdoms/{kingdom}', [KingdomController::class, 'show'])->name('kingdoms.show');
+    Route::get('kingdoms/{kingdom}/management', [KingdomController::class, 'management'])->name('kingdoms.management');
     Route::get('kingdoms/{kingdom}/baronies', [KingdomController::class, 'baronies'])->name('kingdoms.baronies');
     Route::get('duchies', [DuchyController::class, 'index'])->name('duchies.index');
     Route::get('duchies/{duchy}', [DuchyController::class, 'show'])->name('duchies.show');

@@ -238,13 +238,20 @@ class RoleController extends Controller
 
         $currentUser = $request->user();
 
+        // Cannot remove yourself — use resign instead
+        if ($playerRole->user_id === $currentUser->id) {
+            return back()->with('error', 'You cannot remove yourself from a role. Use resign instead.');
+        }
+
         // Check if current user has permission to remove
-        $canRemove = $currentUser->isAdmin() || $this->roleService->hasPermission(
-            $currentUser,
-            'remove_roles',
-            $playerRole->location_type,
-            $playerRole->location_id
-        );
+        $canRemove = $currentUser->isAdmin()
+            || $this->roleService->hasPermission(
+                $currentUser,
+                'remove_roles',
+                $playerRole->location_type,
+                $playerRole->location_id
+            )
+            || $this->roleService->hasHierarchicalRemovalAuthority($currentUser, $playerRole);
 
         if (! $canRemove) {
             return back()->with('error', 'You do not have permission to remove this role holder.');

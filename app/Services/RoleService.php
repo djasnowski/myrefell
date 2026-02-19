@@ -71,7 +71,7 @@ class RoleService
             if (now()->lt($unlockTime)) {
                 return [
                     'success' => false,
-                    'message' => 'The King role cannot be claimed yet. It will be available on ' . $unlockTime->format('F j, Y \a\t g:i A') . ' CST.',
+                    'message' => 'The King role cannot be claimed yet. It will be available on '.$unlockTime->format('F j, Y \a\t g:i A').' CST.',
                 ];
             }
         }
@@ -410,6 +410,7 @@ class RoleService
             $roleSlug = $playerRole->role->slug;
             $locationType = $playerRole->location_type;
             $locationId = $playerRole->location_id;
+            $isRoyalDecree = $this->isRoyalDecreeRemoval($removedBy, $playerRole);
 
             $playerRole->remove($removedBy, $reason);
 
@@ -423,23 +424,215 @@ class RoleService
             $this->clearLocationRulerIfNeeded($playerRole);
 
             // Log role removal
-            $description = $reason
-                ? "{$username} removed from {$roleName} role by {$removedBy->username}: {$reason}"
-                : "{$username} removed from {$roleName} role by {$removedBy->username}";
-            LocationActivityLog::logSystemEvent(
-                $locationType,
-                $locationId,
-                LocationActivityLog::TYPE_ROLE_CHANGE,
-                $description,
-                'removed',
-                ['role' => $roleName, 'role_slug' => $roleSlug, 'username' => $username, 'removed_by' => $removedBy->username, 'reason' => $reason]
-            );
+            if ($isRoyalDecree) {
+                $description = $this->buildRoyalDecreeDescription($removedBy, $playerRole, $username, $roleName, $locationType, $locationId);
+                $subtype = 'royal_decree';
+                $metadata = [
+                    'role' => $roleName,
+                    'role_slug' => $roleSlug,
+                    'username' => $username,
+                    'removed_by' => $removedBy->username,
+                    'reason' => $reason,
+                    'royal_decree' => true,
+                ];
+
+                // Log at the target's location
+                LocationActivityLog::logSystemEvent(
+                    $locationType,
+                    $locationId,
+                    LocationActivityLog::TYPE_ROLE_CHANGE,
+                    $description,
+                    $subtype,
+                    $metadata
+                );
+
+                // Also log at kingdom level if target location is not the kingdom
+                $kingdomId = $this->getKingdomIdForLocation($locationType, $locationId);
+                if ($kingdomId && ! ($locationType === 'kingdom' && $locationId === $kingdomId)) {
+                    LocationActivityLog::logSystemEvent(
+                        'kingdom',
+                        $kingdomId,
+                        LocationActivityLog::TYPE_ROLE_CHANGE,
+                        $description,
+                        $subtype,
+                        $metadata
+                    );
+                }
+            } else {
+                $description = $reason
+                    ? "{$username} removed from {$roleName} role by {$removedBy->username}: {$reason}"
+                    : "{$username} removed from {$roleName} role by {$removedBy->username}";
+                LocationActivityLog::logSystemEvent(
+                    $locationType,
+                    $locationId,
+                    LocationActivityLog::TYPE_ROLE_CHANGE,
+                    $description,
+                    'removed',
+                    ['role' => $roleName, 'role_slug' => $roleSlug, 'username' => $username, 'removed_by' => $removedBy->username, 'reason' => $reason]
+                );
+            }
 
             return [
                 'success' => true,
                 'message' => "Role has been removed from {$username}.",
             ];
         });
+    }
+
+    /**
+     * Check if a user has hierarchical authority to remove a role holder.
+     * This allows a King to remove anyone in their kingdom, and a Baron
+     * to remove village/town role holders in their barony.
+     */
+    public function hasHierarchicalRemovalAuthority(User $user, PlayerRole $targetPlayerRole): bool
+    {
+        // Get all active roles held by the user that have remove_roles permission
+        $userRoles = PlayerRole::where('user_id', $user->id)
+            ->active()
+            ->with('role')
+            ->get();
+
+        foreach ($userRoles as $userPlayerRole) {
+            if (! $userPlayerRole->role->hasPermission('remove_roles')) {
+                continue;
+            }
+
+            // Check if the user's role location is an ancestor of the target's location
+            if ($this->locationIsWithin(
+                $targetPlayerRole->location_type,
+                $targetPlayerRole->location_id,
+                $userPlayerRole->location_type,
+                $userPlayerRole->location_id
+            )) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if a child location is within a parent location.
+     * Kingdom > Barony > Village/Town
+     */
+    public function locationIsWithin(string $childType, int $childId, string $parentType, int $parentId): bool
+    {
+        // Same location is not "within" — that's a direct permission check
+        if ($childType === $parentType && $childId === $parentId) {
+            return false;
+        }
+
+        return match ($parentType) {
+            'kingdom' => $this->locationIsInKingdom($childType, $childId, $parentId),
+            'barony' => $this->locationIsInBarony($childType, $childId, $parentId),
+            default => false,
+        };
+    }
+
+    /**
+     * Check if a location is within a kingdom.
+     */
+    protected function locationIsInKingdom(string $childType, int $childId, int $kingdomId): bool
+    {
+        return match ($childType) {
+            'barony' => Barony::where('id', $childId)->where('kingdom_id', $kingdomId)->exists(),
+            'village' => Village::where('id', $childId)
+                ->whereHas('barony', fn ($q) => $q->where('kingdom_id', $kingdomId))
+                ->exists(),
+            'town' => Town::where('id', $childId)
+                ->whereHas('barony', fn ($q) => $q->where('kingdom_id', $kingdomId))
+                ->exists(),
+            default => false,
+        };
+    }
+
+    /**
+     * Check if a location is within a barony.
+     */
+    protected function locationIsInBarony(string $childType, int $childId, int $baronyId): bool
+    {
+        return match ($childType) {
+            'village' => Village::where('id', $childId)->where('barony_id', $baronyId)->exists(),
+            'town' => Town::where('id', $childId)->where('barony_id', $baronyId)->exists(),
+            default => false,
+        };
+    }
+
+    /**
+     * Check if the removal is a royal decree (remover is King of the relevant kingdom).
+     */
+    public function isRoyalDecreeRemoval(User $removedBy, PlayerRole $targetPlayerRole): bool
+    {
+        $kingdomId = $this->getKingdomIdForLocation(
+            $targetPlayerRole->location_type,
+            $targetPlayerRole->location_id
+        );
+
+        if (! $kingdomId) {
+            return false;
+        }
+
+        $kingdom = Kingdom::find($kingdomId);
+
+        return $kingdom && $kingdom->king_user_id === $removedBy->id;
+    }
+
+    /**
+     * Resolve the kingdom ID for any location type.
+     */
+    public function getKingdomIdForLocation(string $type, int $id): ?int
+    {
+        return match ($type) {
+            'kingdom' => $id,
+            'barony' => Barony::where('id', $id)->value('kingdom_id'),
+            'village' => Village::where('id', $id)
+                ->with('barony')
+                ->first()
+                ?->barony?->kingdom_id,
+            'town' => Town::where('id', $id)
+                ->with('barony')
+                ->first()
+                ?->barony?->kingdom_id,
+            default => null,
+        };
+    }
+
+    /**
+     * Resolve a location name for flavor text.
+     */
+    public function getLocationName(string $type, int $id): string
+    {
+        $model = match ($type) {
+            'village' => Village::find($id),
+            'town' => Town::find($id),
+            'barony' => Barony::find($id),
+            'kingdom' => Kingdom::find($id),
+            default => null,
+        };
+
+        return $model?->name ?? 'Unknown';
+    }
+
+    /**
+     * Build royal decree flavor text for removal activity log.
+     */
+    protected function buildRoyalDecreeDescription(
+        User $king,
+        PlayerRole $targetPlayerRole,
+        string $username,
+        string $roleName,
+        string $locationType,
+        int $locationId
+    ): string {
+        $locationName = $this->getLocationName($locationType, $locationId);
+        $roleSlug = $targetPlayerRole->role->slug;
+
+        return match ($roleSlug) {
+            'elder' => "By royal decree, Elder {$username} of {$locationName} has been stripped of their position by King {$king->username}",
+            'baron' => "King {$king->username} has revoked Baron {$username}'s authority over {$locationName}",
+            'mayor' => "By royal decree, Mayor {$username} of {$locationName} has been stripped of their position by King {$king->username}",
+            default => "{$username} has been removed as {$roleName} by order of King {$king->username}",
+        };
     }
 
     /**

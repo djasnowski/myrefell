@@ -7,6 +7,7 @@ use App\Models\Kingdom;
 use App\Models\MigrationRequest;
 use App\Models\NoConfidenceVote;
 use App\Models\PlayerHouse;
+use App\Models\PlayerMail;
 use App\Models\PlayerRole;
 use App\Models\Role;
 use App\Services\MigrationService;
@@ -88,7 +89,10 @@ class KingdomController extends Controller
             $slug = $roleSlugById[$assignment->role_id] ?? null;
             if ($slug) {
                 $key = "{$assignment->location_type}:{$assignment->location_id}:{$slug}";
-                $roleMap[$key] = $assignment->user?->username;
+                $roleMap[$key] = [
+                    'username' => $assignment->user?->username,
+                    'player_role_id' => $assignment->id,
+                ];
             }
         }
 
@@ -172,7 +176,8 @@ class KingdomController extends Controller
                     'id' => $barony->baron->id,
                     'username' => $barony->baron->username,
                 ] : null,
-                'baron_name' => $roleMap["barony:{$barony->id}:baron"] ?? null,
+                'baron_name' => $roleMap["barony:{$barony->id}:baron"]['username'] ?? null,
+                'baron_player_role_id' => $roleMap["barony:{$barony->id}:baron"]['player_role_id'] ?? null,
                 // Hierarchy data - settlements within the barony
                 'settlements' => [
                     ...$barony->towns->map(fn ($town) => [
@@ -182,7 +187,8 @@ class KingdomController extends Controller
                         'is_capital' => $town->is_capital,
                         'is_port' => $town->is_port,
                         'population' => $town->population,
-                        'ruler' => $roleMap["town:{$town->id}:mayor"] ?? null,
+                        'ruler' => $roleMap["town:{$town->id}:mayor"]['username'] ?? null,
+                        'ruler_player_role_id' => $roleMap["town:{$town->id}:mayor"]['player_role_id'] ?? null,
                         'ruler_title' => 'Mayor',
                     ]),
                     ...$barony->villages->map(fn ($village) => [
@@ -191,7 +197,8 @@ class KingdomController extends Controller
                         'type' => $village->isHamlet() ? 'hamlet' : 'village',
                         'is_port' => $village->is_port,
                         'population' => $village->population,
-                        'ruler' => $roleMap["village:{$village->id}:elder"] ?? null,
+                        'ruler' => $roleMap["village:{$village->id}:elder"]['username'] ?? null,
+                        'ruler_player_role_id' => $roleMap["village:{$village->id}:elder"]['player_role_id'] ?? null,
                         'ruler_title' => 'Elder',
                     ]),
                 ],
@@ -263,6 +270,7 @@ class KingdomController extends Controller
             ...$migrationService->getMigrationCooldownInfo($user),
             'has_pending_request' => $hasPendingRequest,
             'houses' => $houses,
+            'is_king' => $kingdom->king_user_id === $user->id,
             'active_no_confidence_vote' => $activeNoConfidenceVote ? [
                 'id' => $activeNoConfidenceVote->id,
                 'target_role' => $activeNoConfidenceVote->target_role,
@@ -276,6 +284,136 @@ class KingdomController extends Controller
                 'votes_against' => $activeNoConfidenceVote->votes_against,
                 'quorum_required' => $activeNoConfidenceVote->quorum_required,
             ] : null,
+        ]);
+    }
+
+    /**
+     * Display the royal management page (King only).
+     */
+    public function management(Request $request, Kingdom $kingdom): Response
+    {
+        $user = $request->user();
+
+        if ($kingdom->king_user_id !== $user->id) {
+            abort(403, 'Only the King may access Royal Management.');
+        }
+
+        $kingdom->load(['baronies.villages', 'baronies.towns']);
+
+        // Collect all location IDs
+        $allVillageIds = $kingdom->baronies->flatMap(fn ($b) => $b->villages->pluck('id'))->all();
+        $allTownIds = $kingdom->baronies->flatMap(fn ($b) => $b->towns->pluck('id'))->all();
+        $allBaronyIds = $kingdom->baronies->pluck('id')->all();
+
+        // Authority role map for hierarchy display
+        $authorityRoleSlugs = ['elder', 'baron', 'mayor', 'king'];
+        $authorityRoleIds = Role::whereIn('slug', $authorityRoleSlugs)->pluck('id', 'slug');
+
+        $roleAssignments = PlayerRole::active()
+            ->whereIn('role_id', $authorityRoleIds->values())
+            ->with('user:id,username')
+            ->where(function ($q) use ($allVillageIds, $allTownIds, $allBaronyIds, $kingdom) {
+                $q->where(function ($sq) use ($allVillageIds) {
+                    $sq->where('location_type', 'village')->whereIn('location_id', $allVillageIds);
+                })->orWhere(function ($sq) use ($allTownIds) {
+                    $sq->where('location_type', 'town')->whereIn('location_id', $allTownIds);
+                })->orWhere(function ($sq) use ($allBaronyIds) {
+                    $sq->where('location_type', 'barony')->whereIn('location_id', $allBaronyIds);
+                })->orWhere(function ($sq) use ($kingdom) {
+                    $sq->where('location_type', 'kingdom')->where('location_id', $kingdom->id);
+                });
+            })
+            ->get();
+
+        $roleSlugById = $authorityRoleIds->flip();
+        $roleMap = [];
+        foreach ($roleAssignments as $assignment) {
+            $slug = $roleSlugById[$assignment->role_id] ?? null;
+            if ($slug) {
+                $key = "{$assignment->location_type}:{$assignment->location_id}:{$slug}";
+                $roleMap[$key] = $assignment->user?->username;
+            }
+        }
+
+        // Build barony hierarchy data
+        $baroniesData = $kingdom->baronies->map(fn ($barony) => [
+            'id' => $barony->id,
+            'name' => $barony->name,
+            'is_capital' => $barony->isCapitalBarony(),
+            'baron_name' => $roleMap["barony:{$barony->id}:baron"] ?? null,
+            'settlements' => [
+                ...$barony->towns->map(fn ($town) => [
+                    'id' => $town->id,
+                    'name' => $town->name,
+                    'type' => 'town',
+                    'is_capital' => $town->is_capital,
+                    'is_port' => $town->is_port,
+                    'population' => $town->population,
+                    'ruler' => $roleMap["town:{$town->id}:mayor"] ?? null,
+                    'ruler_title' => 'Mayor',
+                ]),
+                ...$barony->villages->map(fn ($village) => [
+                    'id' => $village->id,
+                    'name' => $village->name,
+                    'type' => $village->isHamlet() ? 'hamlet' : 'village',
+                    'is_port' => $village->is_port,
+                    'population' => $village->population,
+                    'ruler' => $roleMap["village:{$village->id}:elder"] ?? null,
+                    'ruler_title' => 'Elder',
+                ]),
+            ],
+        ]);
+
+        // Build location name lookup
+        $locationNames = [];
+        $locationNames["kingdom:{$kingdom->id}"] = $kingdom->name;
+        foreach ($kingdom->baronies as $barony) {
+            $locationNames["barony:{$barony->id}"] = $barony->name;
+            foreach ($barony->towns as $town) {
+                $locationNames["town:{$town->id}"] = $town->name;
+            }
+            foreach ($barony->villages as $village) {
+                $locationNames["village:{$village->id}"] = $village->name;
+            }
+        }
+
+        // Query ALL active role assignments in this kingdom
+        $allRoleAssignments = PlayerRole::active()
+            ->with(['user:id,username', 'role:id,name,slug,tier'])
+            ->where(function ($q) use ($allVillageIds, $allTownIds, $allBaronyIds, $kingdom) {
+                $q->where(function ($sq) use ($allVillageIds) {
+                    $sq->where('location_type', 'village')->whereIn('location_id', $allVillageIds);
+                })->orWhere(function ($sq) use ($allTownIds) {
+                    $sq->where('location_type', 'town')->whereIn('location_id', $allTownIds);
+                })->orWhere(function ($sq) use ($allBaronyIds) {
+                    $sq->where('location_type', 'barony')->whereIn('location_id', $allBaronyIds);
+                })->orWhere(function ($sq) use ($kingdom) {
+                    $sq->where('location_type', 'kingdom')->where('location_id', $kingdom->id);
+                });
+            })
+            ->get();
+
+        $roleHolders = $allRoleAssignments->map(fn ($assignment) => [
+            'player_role_id' => $assignment->id,
+            'username' => $assignment->user?->username,
+            'user_id' => $assignment->user_id,
+            'role_name' => $assignment->role?->name,
+            'role_slug' => $assignment->role?->slug,
+            'role_tier' => $assignment->role?->tier ?? 0,
+            'location_type' => $assignment->location_type,
+            'location_id' => $assignment->location_id,
+            'location_name' => $locationNames["{$assignment->location_type}:{$assignment->location_id}"] ?? 'Unknown',
+        ])->values()->all();
+
+        return Inertia::render('kingdoms/management', [
+            'kingdom' => [
+                'id' => $kingdom->id,
+                'name' => $kingdom->name,
+                'baronies' => $baroniesData,
+            ],
+            'role_holders' => $roleHolders,
+            'mail_cost' => PlayerMail::MAIL_COST,
+            'current_user_id' => $user->id,
         ]);
     }
 

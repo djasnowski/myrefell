@@ -2,6 +2,8 @@
 
 use App\Models\Barony;
 use App\Models\Kingdom;
+use App\Models\PlayerRole;
+use App\Models\Role;
 use App\Models\Town;
 use App\Models\User;
 use App\Models\Village;
@@ -112,4 +114,72 @@ test('kingdom page shows settlement hierarchy in baronies', function () {
             ->component('kingdoms/show')
             ->has('kingdom.baronies.0.settlements', 2)
     );
+});
+
+test('king can access royal management page with role holders', function () {
+    $kingdom = Kingdom::factory()->create();
+    $barony = Barony::factory()->for($kingdom)->create();
+    $village = Village::factory()->for($barony)->create();
+
+    $king = User::factory()->create();
+    $kingdom->update(['king_user_id' => $king->id]);
+
+    $kingRole = Role::factory()->create([
+        'name' => 'King', 'slug' => 'king', 'location_type' => 'kingdom', 'tier' => 7,
+    ]);
+    $baronRole = Role::factory()->create([
+        'name' => 'Baron', 'slug' => 'baron', 'location_type' => 'barony', 'tier' => 5,
+    ]);
+    $elderRole = Role::factory()->create([
+        'name' => 'Elder', 'slug' => 'elder', 'location_type' => 'village', 'tier' => 4,
+    ]);
+
+    PlayerRole::factory()->create([
+        'user_id' => $king->id,
+        'role_id' => $kingRole->id,
+        'location_type' => 'kingdom',
+        'location_id' => $kingdom->id,
+        'status' => 'active',
+    ]);
+
+    $baron = User::factory()->create();
+    PlayerRole::factory()->create([
+        'user_id' => $baron->id,
+        'role_id' => $baronRole->id,
+        'location_type' => 'barony',
+        'location_id' => $barony->id,
+        'status' => 'active',
+    ]);
+
+    $elder = User::factory()->create();
+    PlayerRole::factory()->create([
+        'user_id' => $elder->id,
+        'role_id' => $elderRole->id,
+        'location_type' => 'village',
+        'location_id' => $village->id,
+        'status' => 'active',
+    ]);
+
+    $response = $this->actingAs($king)->get("/kingdoms/{$kingdom->id}/management");
+
+    $response->assertOk();
+    $response->assertInertia(
+        fn ($page) => $page
+            ->component('kingdoms/management')
+            ->has('role_holders', 3)
+            ->has('mail_cost')
+    );
+});
+
+test('non-king cannot access royal management page', function () {
+    $kingdom = Kingdom::factory()->create();
+
+    $king = User::factory()->create();
+    $kingdom->update(['king_user_id' => $king->id]);
+
+    $regularUser = User::factory()->create();
+
+    $response = $this->actingAs($regularUser)->get("/kingdoms/{$kingdom->id}/management");
+
+    $response->assertForbidden();
 });
