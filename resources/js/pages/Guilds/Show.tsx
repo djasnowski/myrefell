@@ -348,7 +348,9 @@ export default function GuildShow() {
                                         }
                                     >
                                         {membership.dues_paid
-                                            ? `Dues paid until ${new Date(membership.dues_paid_until!).toLocaleDateString()}`
+                                            ? membership.dues_paid_until
+                                                ? `Dues paid until ${new Date(membership.dues_paid_until).toLocaleDateString()}`
+                                                : "Dues paid"
                                             : "Dues owed"}
                                     </div>
                                 </div>
