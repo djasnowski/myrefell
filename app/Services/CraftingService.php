@@ -292,6 +292,19 @@ class CraftingService
             ],
             'output' => ['name' => 'Torch', 'quantity' => 1],
         ],
+        'limestone_brick' => [
+            'name' => 'Limestone Brick',
+            'category' => 'stonecutting',
+            'skill' => 'crafting',
+            'required_level' => 5,
+            'xp_reward' => 12,
+            'energy_cost' => 3,
+            'task_type' => 'craft',
+            'materials' => [
+                ['name' => 'Limestone', 'quantity' => 3],
+            ],
+            'output' => ['name' => 'Limestone Brick', 'quantity' => 1],
+        ],
     ];
 
     /**
