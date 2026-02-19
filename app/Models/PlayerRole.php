@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\MigrationService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -149,6 +150,7 @@ class PlayerRole extends Model
         ]);
 
         $this->clearLocationRuler();
+        $this->autoApprovePendingMigrations();
     }
 
     /**
@@ -164,6 +166,7 @@ class PlayerRole extends Model
         ]);
 
         $this->clearLocationRuler();
+        $this->autoApprovePendingMigrations();
     }
 
     /**
@@ -196,6 +199,60 @@ class PlayerRole extends Model
 
         if ($model) {
             $model->update([$rulerColumn => null]);
+        }
+    }
+
+    /**
+     * Auto-approve pending migration requests that were waiting on this authority role.
+     * When an elder/mayor/baron/king leaves, their pending approvals should be cleared.
+     */
+    protected function autoApprovePendingMigrations(): void
+    {
+        $role = $this->role;
+        if (! $role) {
+            return;
+        }
+
+        $approvalLevel = match ($role->slug) {
+            'elder' => 'elder',
+            'mayor' => 'mayor',
+            'baron' => 'baron',
+            'king' => 'king',
+            default => null,
+        };
+
+        if (! $approvalLevel) {
+            return;
+        }
+
+        // Find pending migration requests that need this approval
+        $pendingRequests = MigrationRequest::pending()
+            ->whereNull("{$approvalLevel}_approved")
+            ->get();
+
+        foreach ($pendingRequests as $request) {
+            // Verify this request actually targets a location under this role's jurisdiction
+            $shouldApprove = match ($approvalLevel) {
+                'elder' => $request->isToVillage()
+                    && ($request->to_location_id === $this->location_id || $request->to_village_id === $this->location_id),
+                'mayor' => $request->isToTown() && $request->to_location_id === $this->location_id,
+                'baron' => $request->getDestinationBarony()?->id === $this->location_id,
+                'king' => $request->getDestinationKingdom()?->id === $this->location_id,
+                default => false,
+            };
+
+            if ($shouldApprove) {
+                $request->update([
+                    "{$approvalLevel}_approved" => true,
+                    "{$approvalLevel}_decided_at" => now(),
+                ]);
+
+                // Check if fully approved now and complete if so
+                $request->refresh();
+                if ($request->checkAllApprovals()) {
+                    app(MigrationService::class)->completeMigrationFromModel($request);
+                }
+            }
         }
     }
 

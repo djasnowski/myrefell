@@ -366,6 +366,14 @@ class MigrationService
     }
 
     /**
+     * Complete a migration from an external caller (e.g., when authority role vacated).
+     */
+    public function completeMigrationFromModel(MigrationRequest $request): array
+    {
+        return $this->completeMigration($request);
+    }
+
+    /**
      * Check if user can migrate (cooldown check).
      */
     public function canMigrate(User $user): bool
