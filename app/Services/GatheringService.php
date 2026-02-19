@@ -35,6 +35,8 @@ class GatheringService
                 // Ores
                 ['name' => 'Copper Ore', 'weight' => 60, 'min_level' => 1, 'xp_bonus' => 0],
                 ['name' => 'Tin Ore', 'weight' => 40, 'min_level' => 1, 'xp_bonus' => 8],
+                // Stone
+                ['name' => 'Limestone', 'weight' => 35, 'min_level' => 5, 'xp_bonus' => 10],
                 ['name' => 'Iron Ore', 'weight' => 30, 'min_level' => 10, 'xp_bonus' => 23],
                 ['name' => 'Coal', 'weight' => 25, 'min_level' => 15, 'xp_bonus' => 33],
                 ['name' => 'Silver Ore', 'weight' => 15, 'min_level' => 25, 'xp_bonus' => 58],
