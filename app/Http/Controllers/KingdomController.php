@@ -9,8 +9,12 @@ use App\Models\NoConfidenceVote;
 use App\Models\PlayerHouse;
 use App\Models\PlayerMail;
 use App\Models\PlayerRole;
+use App\Models\PlayerTitle;
 use App\Models\Role;
+use App\Models\TitleType;
+use App\Models\User;
 use App\Services\MigrationService;
+use App\Services\TitleService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -290,7 +294,7 @@ class KingdomController extends Controller
     /**
      * Display the royal management page (King only).
      */
-    public function management(Request $request, Kingdom $kingdom): Response
+    public function management(Request $request, Kingdom $kingdom, TitleService $titleService): Response
     {
         $user = $request->user();
 
@@ -311,7 +315,7 @@ class KingdomController extends Controller
 
         $roleAssignments = PlayerRole::active()
             ->whereIn('role_id', $authorityRoleIds->values())
-            ->with('user:id,username')
+            ->with('user:id,username,last_active_at')
             ->where(function ($q) use ($allVillageIds, $allTownIds, $allBaronyIds, $kingdom) {
                 $q->where(function ($sq) use ($allVillageIds) {
                     $sq->where('location_type', 'village')->whereIn('location_id', $allVillageIds);
@@ -331,7 +335,10 @@ class KingdomController extends Controller
             $slug = $roleSlugById[$assignment->role_id] ?? null;
             if ($slug) {
                 $key = "{$assignment->location_type}:{$assignment->location_id}:{$slug}";
-                $roleMap[$key] = $assignment->user?->username;
+                $roleMap[$key] = [
+                    'username' => $assignment->user?->username,
+                    'last_active_at' => $assignment->user?->last_active_at?->toIso8601String(),
+                ];
             }
         }
 
@@ -340,7 +347,8 @@ class KingdomController extends Controller
             'id' => $barony->id,
             'name' => $barony->name,
             'is_capital' => $barony->isCapitalBarony(),
-            'baron_name' => $roleMap["barony:{$barony->id}:baron"] ?? null,
+            'baron_name' => $roleMap["barony:{$barony->id}:baron"]['username'] ?? null,
+            'baron_last_active' => $roleMap["barony:{$barony->id}:baron"]['last_active_at'] ?? null,
             'settlements' => [
                 ...$barony->towns->map(fn ($town) => [
                     'id' => $town->id,
@@ -349,7 +357,8 @@ class KingdomController extends Controller
                     'is_capital' => $town->is_capital,
                     'is_port' => $town->is_port,
                     'population' => $town->population,
-                    'ruler' => $roleMap["town:{$town->id}:mayor"] ?? null,
+                    'ruler' => $roleMap["town:{$town->id}:mayor"]['username'] ?? null,
+                    'ruler_last_active' => $roleMap["town:{$town->id}:mayor"]['last_active_at'] ?? null,
                     'ruler_title' => 'Mayor',
                 ]),
                 ...$barony->villages->map(fn ($village) => [
@@ -358,7 +367,8 @@ class KingdomController extends Controller
                     'type' => $village->isHamlet() ? 'hamlet' : 'village',
                     'is_port' => $village->is_port,
                     'population' => $village->population,
-                    'ruler' => $roleMap["village:{$village->id}:elder"] ?? null,
+                    'ruler' => $roleMap["village:{$village->id}:elder"]['username'] ?? null,
+                    'ruler_last_active' => $roleMap["village:{$village->id}:elder"]['last_active_at'] ?? null,
                     'ruler_title' => 'Elder',
                 ]),
             ],
@@ -379,7 +389,7 @@ class KingdomController extends Controller
 
         // Query ALL active role assignments in this kingdom
         $allRoleAssignments = PlayerRole::active()
-            ->with(['user:id,username', 'role:id,name,slug,tier'])
+            ->with(['user:id,username,last_active_at', 'role:id,name,slug,tier'])
             ->where(function ($q) use ($allVillageIds, $allTownIds, $allBaronyIds, $kingdom) {
                 $q->where(function ($sq) use ($allVillageIds) {
                     $sq->where('location_type', 'village')->whereIn('location_id', $allVillageIds);
@@ -403,7 +413,82 @@ class KingdomController extends Controller
             'location_type' => $assignment->location_type,
             'location_id' => $assignment->location_id,
             'location_name' => $locationNames["{$assignment->location_type}:{$assignment->location_id}"] ?? 'Unknown',
+            'last_active_at' => $assignment->user?->last_active_at?->toIso8601String(),
         ])->values()->all();
+
+        // Title management data
+        $grantableTitles = $titleService->getGrantableTitles($user)
+            ->map(fn ($titleType) => [
+                'id' => $titleType->id,
+                'name' => $titleType->name,
+                'slug' => $titleType->slug,
+                'tier' => $titleType->tier,
+                'category' => $titleType->category,
+                'description' => $titleType->description,
+                'style_of_address' => $titleType->style_of_address,
+                'requires_ceremony' => $titleType->requires_ceremony,
+                'domain_type' => $titleType->domain_type,
+            ])->values()->all();
+
+        // Subjects: people settled anywhere in this kingdom (village, town, barony, or kingdom itself)
+        $settledScope = function ($q) use ($allVillageIds, $allTownIds, $allBaronyIds, $kingdom) {
+            $q->whereIn('home_village_id', $allVillageIds)
+                ->orWhere(function ($sq) use ($allVillageIds) {
+                    $sq->where('home_location_type', 'village')
+                        ->whereIn('home_location_id', $allVillageIds);
+                })
+                ->orWhere(function ($sq) use ($allTownIds) {
+                    $sq->where('home_location_type', 'town')
+                        ->whereIn('home_location_id', $allTownIds);
+                })
+                ->orWhere(function ($sq) use ($allBaronyIds) {
+                    $sq->where('home_location_type', 'barony')
+                        ->whereIn('home_location_id', $allBaronyIds);
+                })
+                ->orWhere(function ($sq) use ($kingdom) {
+                    $sq->where('home_location_type', 'kingdom')
+                        ->where('home_location_id', $kingdom->id);
+                });
+        };
+
+        $kingdomSubjects = User::where($settledScope)
+            ->select('id', 'username', 'primary_title', 'title_tier', 'last_active_at')
+            ->orderBy('username')
+            ->limit(100)
+            ->get()
+            ->map(fn ($subject) => [
+                'id' => $subject->id,
+                'username' => $subject->username,
+                'primary_title' => $subject->primary_title,
+                'title_tier' => $subject->title_tier,
+            ])->values()->all();
+
+        // Build a slug→TitleType lookup for player titles missing title_type_id
+        $titleTypeLookup = TitleType::active()->get()->keyBy('slug');
+
+        $titledPlayers = PlayerTitle::where('is_active', true)
+            ->whereNull('revoked_at')
+            ->whereHas('user', $settledScope)
+            ->with(['user:id,username,last_active_at', 'titleType:id,name,slug,tier,category,style_of_address', 'grantedBy:id,username'])
+            ->orderByDesc('tier')
+            ->get()
+            ->map(function ($pt) use ($titleTypeLookup) {
+                $tt = $pt->titleType ?? $titleTypeLookup->get($pt->title);
+
+                return [
+                    'id' => $pt->id,
+                    'user_id' => $pt->user_id,
+                    'username' => $pt->user?->username,
+                    'title_name' => $tt?->name ?? ucfirst($pt->title),
+                    'title_tier' => $pt->tier,
+                    'category' => $tt?->category,
+                    'style_of_address' => $tt?->style_of_address,
+                    'granted_by' => $pt->grantedBy?->username,
+                    'granted_at' => $pt->granted_at?->format('M j, Y'),
+                    'acquisition_method' => $pt->acquisition_method,
+                    'last_active_at' => $pt->user?->last_active_at?->toIso8601String(),
+                ];
+            })->values()->all();
 
         return Inertia::render('kingdoms/management', [
             'kingdom' => [
@@ -414,6 +499,9 @@ class KingdomController extends Controller
             'role_holders' => $roleHolders,
             'mail_cost' => PlayerMail::MAIL_COST,
             'current_user_id' => $user->id,
+            'grantable_titles' => $grantableTitles,
+            'kingdom_subjects' => $kingdomSubjects,
+            'titled_players' => $titledPlayers,
         ]);
     }
 

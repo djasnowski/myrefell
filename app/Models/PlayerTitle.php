@@ -66,6 +66,7 @@ class PlayerTitle extends Model
 
     protected $fillable = [
         'user_id',
+        'title_type_id',
         'title',
         'tier',
         'domain_type',
