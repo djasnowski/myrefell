@@ -821,7 +821,7 @@ class RoleSeeder extends Seeder
                 'permissions' => ['rule_kingdom', 'appoint_roles', 'remove_roles', 'set_kingdom_taxes', 'declare_war', 'make_laws', 'moderate_chat'],
                 'bonuses' => ['reputation_bonus' => 50, 'income_bonus' => 25],
                 'salary' => 2000,
-                'tier' => 5,
+                'tier' => 7,
                 'is_elected' => true,
                 'max_per_location' => 1,
             ],
