@@ -372,6 +372,15 @@ class RoleService
         $user->primary_title = $title;
         $user->title_tier = $tier;
         $user->save();
+
+        // Promote to noble class for tier 5+ roles (baron, duke, king)
+        if ($role->tier >= 5 && $user->social_class !== User::CLASS_NOBLE) {
+            app(SocialClassService::class)->changeClass(
+                $user,
+                User::CLASS_NOBLE,
+                "Elevated to nobility upon appointment as {$role->name}"
+            );
+        }
     }
 
     /**
