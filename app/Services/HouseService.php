@@ -1148,7 +1148,7 @@ class HouseService
         }
 
         $xpBonus = $workbenchConfig['effect']['crafting_xp_bonus'] ?? 0;
-        $categories = ['crafting', 'fletching', 'gem_cutting', 'jewelry'];
+        $categories = ['crafting', 'fletching', 'stonecutting', 'gem_cutting', 'jewelry'];
         $recipes = $this->craftingService->getHomeRecipes($user, $categories);
 
         return [
@@ -1172,7 +1172,7 @@ class HouseService
         return $this->craftingService->craftAtHome(
             $user,
             $recipeId,
-            ['crafting', 'fletching', 'gem_cutting', 'jewelry'],
+            ['crafting', 'fletching', 'stonecutting', 'gem_cutting', 'jewelry'],
             $workshopData['xp_bonus']
         );
     }

@@ -1121,8 +1121,8 @@ class CraftingService
         $craftingXpProgress = $craftingSkill?->getXpProgress() ?? 0;
         $craftingXpToNext = $craftingSkill?->xpToNextLevel() ?? 60;
 
-        // Workshop shows crafting, fletching, gem cutting, and jewelry (not smithing/smelting)
-        $workshopCategories = ['crafting', 'fletching', 'gem_cutting', 'jewelry'];
+        // Workshop shows crafting, fletching, stonecutting, gem cutting, and jewelry (not smithing/smelting)
+        $workshopCategories = ['crafting', 'fletching', 'stonecutting', 'gem_cutting', 'jewelry'];
 
         return [
             'can_craft' => true,
