@@ -55,6 +55,43 @@ class KingdomController extends Controller
         $kingdom->load(['capitalTown', 'baronies.villages', 'baronies.towns', 'baronies.baron', 'king']);
         $user = $request->user();
 
+        // Batch-load all active authority role assignments within this kingdom
+        $authorityRoleSlugs = ['elder', 'baron', 'mayor', 'king'];
+        $authorityRoleIds = Role::whereIn('slug', $authorityRoleSlugs)->pluck('id', 'slug');
+
+        // Collect all location IDs by type for batch query
+        $allVillageIds = $kingdom->baronies->flatMap(fn ($b) => $b->villages->pluck('id'))->all();
+        $allTownIds = $kingdom->baronies->flatMap(fn ($b) => $b->towns->pluck('id'))->all();
+        $allBaronyIds = $kingdom->baronies->pluck('id')->all();
+
+        // Query all active authority assignments at once
+        $roleAssignments = PlayerRole::active()
+            ->whereIn('role_id', $authorityRoleIds->values())
+            ->with('user:id,username')
+            ->where(function ($q) use ($allVillageIds, $allTownIds, $allBaronyIds, $kingdom) {
+                $q->where(function ($sq) use ($allVillageIds) {
+                    $sq->where('location_type', 'village')->whereIn('location_id', $allVillageIds);
+                })->orWhere(function ($sq) use ($allTownIds) {
+                    $sq->where('location_type', 'town')->whereIn('location_id', $allTownIds);
+                })->orWhere(function ($sq) use ($allBaronyIds) {
+                    $sq->where('location_type', 'barony')->whereIn('location_id', $allBaronyIds);
+                })->orWhere(function ($sq) use ($kingdom) {
+                    $sq->where('location_type', 'kingdom')->where('location_id', $kingdom->id);
+                });
+            })
+            ->get();
+
+        // Index assignments by "location_type:location_id:role_slug"
+        $roleMap = [];
+        $roleSlugById = $authorityRoleIds->flip();
+        foreach ($roleAssignments as $assignment) {
+            $slug = $roleSlugById[$assignment->role_id] ?? null;
+            if ($slug) {
+                $key = "{$assignment->location_type}:{$assignment->location_id}:{$slug}";
+                $roleMap[$key] = $assignment->user?->username;
+            }
+        }
+
         // Get the king's role assignment for legitimacy
         $king = null;
         if ($kingdom->king) {
@@ -87,7 +124,7 @@ class KingdomController extends Controller
         $villageIds = [];
 
         // Build enhanced barony data with hierarchy
-        $baroniesData = $kingdom->baronies->map(function ($barony) use (&$totalVillagePopulation, &$totalTownPopulation, &$totalVillageWealth, &$totalTownWealth, &$totalPorts, &$villageIds) {
+        $baroniesData = $kingdom->baronies->map(function ($barony) use (&$totalVillagePopulation, &$totalTownPopulation, &$totalVillageWealth, &$totalTownWealth, &$totalPorts, &$villageIds, $roleMap) {
             $baronyVillagePopulation = $barony->villages->sum('population');
             $baronyTownPopulation = $barony->towns->sum('population');
             $baronyVillageWealth = $barony->villages->sum('wealth');
@@ -118,6 +155,7 @@ class KingdomController extends Controller
                     'id' => $barony->baron->id,
                     'username' => $barony->baron->username,
                 ] : null,
+                'baron_name' => $roleMap["barony:{$barony->id}:baron"] ?? null,
                 // Hierarchy data - settlements within the barony
                 'settlements' => [
                     ...$barony->towns->map(fn ($town) => [
@@ -127,6 +165,8 @@ class KingdomController extends Controller
                         'is_capital' => $town->is_capital,
                         'is_port' => $town->is_port,
                         'population' => $town->population,
+                        'ruler' => $roleMap["town:{$town->id}:mayor"] ?? null,
+                        'ruler_title' => 'Mayor',
                     ]),
                     ...$barony->villages->map(fn ($village) => [
                         'id' => $village->id,
@@ -134,6 +174,8 @@ class KingdomController extends Controller
                         'type' => $village->isHamlet() ? 'hamlet' : 'village',
                         'is_port' => $village->is_port,
                         'population' => $village->population,
+                        'ruler' => $roleMap["village:{$village->id}:elder"] ?? null,
+                        'ruler_title' => 'Elder',
                     ]),
                 ],
             ];

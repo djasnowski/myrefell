@@ -530,50 +530,47 @@ class MigrationService
                         });
                 })
                     ->orWhere(function ($q) use ($baronBaronies) {
-                        // Baron can approve requests to villages/towns in their barony
-                        $q->where(function ($sq) use ($baronBaronies) {
-                            $sq->whereHas('toVillage', fn ($vq) => $vq->whereIn('barony_id', $baronBaronies));
-                        })
-                            ->orWhere(function ($sq) use ($baronBaronies) {
-                                $sq->where('to_location_type', 'town')
-                                    ->whereIn('to_location_id', function ($tq) use ($baronBaronies) {
-                                        $tq->select('id')->from('towns')->whereIn('barony_id', $baronBaronies);
+                        // Baron can approve requests to villages/towns/baronies in their barony
+                        $q->whereNull('baron_approved')
+                            ->where(function ($inner) use ($baronBaronies) {
+                                $inner->whereHas('toVillage', fn ($vq) => $vq->whereIn('barony_id', $baronBaronies))
+                                    ->orWhere(function ($sq) use ($baronBaronies) {
+                                        $sq->where('to_location_type', 'town')
+                                            ->whereIn('to_location_id', function ($tq) use ($baronBaronies) {
+                                                $tq->select('id')->from('towns')->whereIn('barony_id', $baronBaronies);
+                                            });
+                                    })
+                                    ->orWhere(function ($sq) use ($baronBaronies) {
+                                        $sq->where('to_location_type', 'barony')
+                                            ->whereIn('to_location_id', $baronBaronies);
                                     });
-                            })
-                        // Baron can approve direct barony settlement requests
-                            ->orWhere(function ($sq) use ($baronBaronies) {
-                                $sq->where('to_location_type', 'barony')
-                                    ->whereIn('to_location_id', $baronBaronies);
-                            })
-                            ->whereNull('baron_approved');
+                            });
                     })
                     ->orWhere(function ($q) use ($kingKingdoms) {
-                        // King can approve requests to villages/towns in their kingdom
-                        $q->where(function ($sq) use ($kingKingdoms) {
-                            $sq->whereHas('toVillage.barony', fn ($bq) => $bq->whereIn('kingdom_id', $kingKingdoms));
-                        })
-                            ->orWhere(function ($sq) use ($kingKingdoms) {
-                                $sq->where('to_location_type', 'town')
-                                    ->whereIn('to_location_id', function ($tq) use ($kingKingdoms) {
-                                        $tq->select('towns.id')
-                                            ->from('towns')
-                                            ->join('baronies', 'towns.barony_id', '=', 'baronies.id')
-                                            ->whereIn('baronies.kingdom_id', $kingKingdoms);
+                        // King can approve requests to villages/towns/baronies/kingdoms in their kingdom
+                        $q->whereNull('king_approved')
+                            ->where(function ($inner) use ($kingKingdoms) {
+                                $inner->whereHas('toVillage.barony', fn ($bq) => $bq->whereIn('kingdom_id', $kingKingdoms))
+                                    ->orWhere(function ($sq) use ($kingKingdoms) {
+                                        $sq->where('to_location_type', 'town')
+                                            ->whereIn('to_location_id', function ($tq) use ($kingKingdoms) {
+                                                $tq->select('towns.id')
+                                                    ->from('towns')
+                                                    ->join('baronies', 'towns.barony_id', '=', 'baronies.id')
+                                                    ->whereIn('baronies.kingdom_id', $kingKingdoms);
+                                            });
+                                    })
+                                    ->orWhere(function ($sq) use ($kingKingdoms) {
+                                        $sq->where('to_location_type', 'barony')
+                                            ->whereIn('to_location_id', function ($bq) use ($kingKingdoms) {
+                                                $bq->select('id')->from('baronies')->whereIn('kingdom_id', $kingKingdoms);
+                                            });
+                                    })
+                                    ->orWhere(function ($sq) use ($kingKingdoms) {
+                                        $sq->where('to_location_type', 'kingdom')
+                                            ->whereIn('to_location_id', $kingKingdoms);
                                     });
-                            })
-                        // King can approve requests to baronies in their kingdom
-                            ->orWhere(function ($sq) use ($kingKingdoms) {
-                                $sq->where('to_location_type', 'barony')
-                                    ->whereIn('to_location_id', function ($bq) use ($kingKingdoms) {
-                                        $bq->select('id')->from('baronies')->whereIn('kingdom_id', $kingKingdoms);
-                                    });
-                            })
-                        // King can approve direct kingdom settlement requests
-                            ->orWhere(function ($sq) use ($kingKingdoms) {
-                                $sq->where('to_location_type', 'kingdom')
-                                    ->whereIn('to_location_id', $kingKingdoms);
-                            })
-                            ->whereNull('king_approved');
+                            });
                     });
             })
             ->get();

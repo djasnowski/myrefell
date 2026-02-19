@@ -47,6 +47,8 @@ interface Settlement {
     is_capital?: boolean;
     is_port?: boolean;
     population: number;
+    ruler: string | null;
+    ruler_title: string;
 }
 
 interface Barony {
@@ -62,6 +64,7 @@ interface Barony {
         id: number;
         username: string;
     } | null;
+    baron_name: string | null;
     settlements: Settlement[];
 }
 
@@ -249,16 +252,19 @@ function HierarchyTree({ baronies }: { baronies: Barony[] }) {
                                     <ChevronRight className="h-4 w-4 text-stone-500" />
                                 )}
                                 <Shield className="h-4 w-4 text-amber-400" />
-                                <Link
-                                    href={`/baronies/${barony.id}`}
-                                    className="font-medium text-stone-200 hover:text-amber-400 hover:underline"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    {barony.name}
-                                </Link>
+                                <span className="font-medium text-stone-200">{barony.name}</span>
                                 {barony.is_capital && (
                                     <span className="text-xs text-amber-500">(Capital Region)</span>
                                 )}
+                                <span className="text-xs text-stone-500">—</span>
+                                <span className="text-xs">
+                                    <span className="text-stone-500">Baron: </span>
+                                    {barony.baron_name ? (
+                                        <span className="text-amber-400">{barony.baron_name}</span>
+                                    ) : (
+                                        <span className="italic text-stone-600">Vacant</span>
+                                    )}
+                                </span>
                                 <span className="ml-auto text-xs text-stone-500">
                                     {barony.settlements.length} settlements
                                 </span>
@@ -280,16 +286,9 @@ function HierarchyTree({ baronies }: { baronies: Barony[] }) {
                                                 ) : (
                                                     <Home className="h-3 w-3 text-stone-400" />
                                                 )}
-                                                <Link
-                                                    href={
-                                                        settlement.type === "town"
-                                                            ? `/towns/${settlement.id}`
-                                                            : `/villages/${settlement.id}`
-                                                    }
-                                                    className="text-stone-300 hover:text-amber-400 hover:underline"
-                                                >
+                                                <span className="text-stone-300">
                                                     {settlement.name}
-                                                </Link>
+                                                </span>
                                                 {settlement.is_capital && (
                                                     <Crown
                                                         className="h-3 w-3 text-amber-400"
@@ -302,6 +301,21 @@ function HierarchyTree({ baronies }: { baronies: Barony[] }) {
                                                         title="Port"
                                                     />
                                                 )}
+                                                <span className="text-xs text-stone-600">—</span>
+                                                <span className="text-xs">
+                                                    <span className="text-stone-500">
+                                                        {settlement.ruler_title}:{" "}
+                                                    </span>
+                                                    {settlement.ruler ? (
+                                                        <span className="text-amber-400">
+                                                            {settlement.ruler}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="italic text-stone-600">
+                                                            Vacant
+                                                        </span>
+                                                    )}
+                                                </span>
                                                 <span className="ml-auto text-xs text-stone-500">
                                                     {settlement.population.toLocaleString()} pop
                                                 </span>
