@@ -31,9 +31,8 @@ import {
     Users,
     UsersRound,
     Vote,
-    X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import TutorialModal from "@/components/tutorial-modal";
 import HealthStatusWidget from "@/components/widgets/health-status-widget";
 import AppLayout from "@/layouts/app-layout";
@@ -107,19 +106,6 @@ export default function Dashboard() {
     const { sidebar, showTutorial } = usePage<{ sidebar: SidebarData; showTutorial: boolean }>()
         .props;
     const [tutorialOpen, setTutorialOpen] = useState(showTutorial);
-    const [showKingBanner, setShowKingBanner] = useState(false);
-
-    useEffect(() => {
-        const dismissed = localStorage.getItem("king-banner-dismissed");
-        if (!dismissed) {
-            setShowKingBanner(true);
-        }
-    }, []);
-
-    const dismissKingBanner = () => {
-        localStorage.setItem("king-banner-dismissed", "true");
-        setShowKingBanner(false);
-    };
 
     const player = sidebar?.player;
     const location = sidebar?.location;
@@ -347,34 +333,6 @@ export default function Dashboard() {
             )}
 
             <div className="space-y-6 p-6">
-                {/* King Announcement Banner */}
-                {showKingBanner && (
-                    <div className="relative flex items-center gap-3 rounded-xl border border-amber-500/50 bg-gradient-to-r from-amber-900/30 via-yellow-900/20 to-amber-900/30 px-4 py-3">
-                        <div className="rounded-lg bg-amber-500/20 p-2">
-                            <Crown className="h-5 w-5 text-amber-400" />
-                        </div>
-                        <div className="flex-1">
-                            <p className="font-[Cinzel] text-sm font-bold text-amber-300">
-                                The Crown Awaits
-                            </p>
-                            <p className="text-xs text-stone-400">
-                                Kings can be claimed starting{" "}
-                                <span className="font-semibold text-amber-400">
-                                    Wednesday, February 18th at 3:00 PM CST
-                                </span>
-                                . Will you rise to rule?
-                            </p>
-                        </div>
-                        <button
-                            onClick={dismissKingBanner}
-                            className="rounded-lg p-1.5 text-stone-500 transition hover:bg-stone-800 hover:text-stone-300"
-                            aria-label="Dismiss"
-                        >
-                            <X className="h-4 w-4" />
-                        </button>
-                    </div>
-                )}
-
                 {/* Health Alert */}
                 {health?.infection && <HealthStatusWidget infection={health.infection} />}
 
