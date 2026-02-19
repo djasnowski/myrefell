@@ -166,9 +166,46 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
     // Visit another player's house (requires auth)
     Route::get('players/{username}/house', [PlayerHouseController::class, 'visitHouse'])->name('players.house');
 
-    Route::get('dashboard', fn () => Inertia::render('dashboard', [
-        'showTutorial' => auth()->user()->show_tutorial ?? false,
-    ]))->name('dashboard');
+    Route::get('dashboard', function () {
+        $kingdoms = \App\Models\Kingdom::with(['king:id,username,primary_title', 'baronies.villages', 'baronies.towns'])
+            ->orderBy('name')
+            ->get()
+            ->map(function ($kingdom) {
+                $villageIds = $kingdom->baronies->flatMap(fn ($b) => $b->villages->pluck('id'))->all();
+                $totalVillages = count($villageIds);
+                $totalTowns = $kingdom->baronies->sum(fn ($b) => $b->towns->count());
+                $totalPopulation = $kingdom->baronies->sum(fn ($b) => $b->villages->sum('population') + $b->towns->sum('population'));
+                $totalWealth = $kingdom->baronies->sum(fn ($b) => $b->villages->sum('wealth') + $b->towns->sum('wealth'));
+                $totalPorts = $kingdom->baronies->sum(fn ($b) => $b->villages->where('is_port', true)->count() + $b->towns->where('is_port', true)->count());
+                $playerCount = \App\Models\User::whereIn('home_village_id', $villageIds)->count();
+
+                return [
+                    'id' => $kingdom->id,
+                    'name' => $kingdom->name,
+                    'description' => $kingdom->description,
+                    'biome' => $kingdom->biome,
+                    'tax_rate' => $kingdom->tax_rate,
+                    'baronies_count' => $kingdom->baronies->count(),
+                    'total_villages' => $totalVillages,
+                    'total_towns' => $totalTowns,
+                    'total_settlements' => $totalVillages + $totalTowns,
+                    'total_population' => $totalPopulation,
+                    'total_wealth' => $totalWealth,
+                    'total_ports' => $totalPorts,
+                    'player_count' => $playerCount,
+                    'king' => $kingdom->king ? [
+                        'id' => $kingdom->king->id,
+                        'username' => $kingdom->king->username,
+                        'primary_title' => $kingdom->king->primary_title,
+                    ] : null,
+                ];
+            });
+
+        return Inertia::render('dashboard', [
+            'showTutorial' => auth()->user()->show_tutorial ?? false,
+            'kingdoms' => $kingdoms,
+        ]);
+    })->name('dashboard');
 
     Route::post('tutorial/dismiss', function () {
         auth()->user()->update(['show_tutorial' => false]);

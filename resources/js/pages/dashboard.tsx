@@ -1,5 +1,12 @@
 import { Head, Link, usePage } from "@inertiajs/react";
 import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog";
+import {
     Anchor,
     Anvil,
     ArrowRight,
@@ -38,6 +45,27 @@ import HealthStatusWidget from "@/components/widgets/health-status-widget";
 import AppLayout from "@/layouts/app-layout";
 import { pluralizeLocationType } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
+
+interface DashboardKingdom {
+    id: number;
+    name: string;
+    description: string | null;
+    biome: string;
+    tax_rate: string;
+    baronies_count: number;
+    total_villages: number;
+    total_towns: number;
+    total_settlements: number;
+    total_population: number;
+    total_wealth: number;
+    total_ports: number;
+    player_count: number;
+    king: {
+        id: number;
+        username: string;
+        primary_title: string | null;
+    } | null;
+}
 
 interface LocationFeatures {
     market: boolean;
@@ -103,9 +131,13 @@ interface SidebarData {
 }
 
 export default function Dashboard() {
-    const { sidebar, showTutorial } = usePage<{ sidebar: SidebarData; showTutorial: boolean }>()
-        .props;
+    const { sidebar, showTutorial, kingdoms } = usePage<{
+        sidebar: SidebarData;
+        showTutorial: boolean;
+        kingdoms: DashboardKingdom[];
+    }>().props;
     const [tutorialOpen, setTutorialOpen] = useState(showTutorial);
+    const [selectedKingdom, setSelectedKingdom] = useState<DashboardKingdom | null>(null);
 
     const player = sidebar?.player;
     const location = sidebar?.location;
@@ -433,6 +465,302 @@ export default function Dashboard() {
                         </div>
                     )}
                 </div>
+
+                {/* Kings of the Realm */}
+                {kingdoms && kingdoms.length > 0 && (
+                    <div>
+                        <h2 className="mb-2 font-[Cinzel] text-sm font-bold text-stone-100">
+                            Kings of the Realm
+                        </h2>
+                        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                            {kingdoms.map((kingdom) => {
+                                const biomeColors: Record<
+                                    string,
+                                    { text: string; border: string; bg: string }
+                                > = {
+                                    plains: {
+                                        text: "text-green-400",
+                                        border: "border-green-600/40",
+                                        bg: "bg-green-900/20",
+                                    },
+                                    forest: {
+                                        text: "text-emerald-400",
+                                        border: "border-emerald-600/40",
+                                        bg: "bg-emerald-900/20",
+                                    },
+                                    tundra: {
+                                        text: "text-cyan-400",
+                                        border: "border-cyan-600/40",
+                                        bg: "bg-cyan-900/20",
+                                    },
+                                    coastal: {
+                                        text: "text-blue-400",
+                                        border: "border-blue-600/40",
+                                        bg: "bg-blue-900/20",
+                                    },
+                                    desert: {
+                                        text: "text-amber-400",
+                                        border: "border-amber-600/40",
+                                        bg: "bg-amber-900/20",
+                                    },
+                                    volcano: {
+                                        text: "text-red-400",
+                                        border: "border-red-600/40",
+                                        bg: "bg-red-900/20",
+                                    },
+                                    mountains: {
+                                        text: "text-slate-400",
+                                        border: "border-slate-600/40",
+                                        bg: "bg-slate-900/20",
+                                    },
+                                    swamps: {
+                                        text: "text-lime-400",
+                                        border: "border-lime-600/40",
+                                        bg: "bg-lime-900/20",
+                                    },
+                                    tropical: {
+                                        text: "text-teal-400",
+                                        border: "border-teal-600/40",
+                                        bg: "bg-teal-900/20",
+                                    },
+                                };
+                                const colors = biomeColors[kingdom.biome] || biomeColors.plains;
+
+                                return (
+                                    <button
+                                        key={kingdom.id}
+                                        type="button"
+                                        onClick={() => setSelectedKingdom(kingdom)}
+                                        className={`group rounded-lg border ${colors.border} ${colors.bg} p-3 text-left transition hover:border-stone-600`}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <Crown className={`h-4 w-4 shrink-0 ${colors.text}`} />
+                                            <span className="truncate font-[Cinzel] text-sm font-bold text-stone-100 group-hover:text-amber-400">
+                                                {kingdom.name}
+                                            </span>
+                                        </div>
+                                        <div className="mt-1.5 text-xs text-stone-400">
+                                            {kingdom.king ? (
+                                                <span>
+                                                    <span className="text-stone-300">
+                                                        {kingdom.king.username}
+                                                    </span>
+                                                    {" — "}
+                                                    <span className="capitalize">
+                                                        {kingdom.king.primary_title ?? "King"}
+                                                    </span>
+                                                </span>
+                                            ) : (
+                                                <span className="italic text-stone-500">
+                                                    Throne vacant
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="mt-1.5 flex items-center gap-3 text-[10px] text-stone-500">
+                                            <span>{kingdom.baronies_count} baronies</span>
+                                            <span className="capitalize">{kingdom.biome}</span>
+                                            <span>{kingdom.tax_rate}% tax</span>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {/* Kingdom Detail Modal */}
+                <Dialog
+                    open={!!selectedKingdom}
+                    onOpenChange={(open) => !open && setSelectedKingdom(null)}
+                >
+                    <DialogContent className="gap-0 overflow-hidden border-stone-700 bg-stone-900 p-0 text-stone-100">
+                        {selectedKingdom &&
+                            (() => {
+                                const biomeTheme: Record<
+                                    string,
+                                    { text: string; bg: string; border: string; accent: string }
+                                > = {
+                                    plains: {
+                                        text: "text-green-400",
+                                        bg: "bg-green-900/30",
+                                        border: "border-green-600/30",
+                                        accent: "from-green-900/40",
+                                    },
+                                    forest: {
+                                        text: "text-emerald-400",
+                                        bg: "bg-emerald-900/30",
+                                        border: "border-emerald-600/30",
+                                        accent: "from-emerald-900/40",
+                                    },
+                                    tundra: {
+                                        text: "text-cyan-400",
+                                        bg: "bg-cyan-900/30",
+                                        border: "border-cyan-600/30",
+                                        accent: "from-cyan-900/40",
+                                    },
+                                    coastal: {
+                                        text: "text-blue-400",
+                                        bg: "bg-blue-900/30",
+                                        border: "border-blue-600/30",
+                                        accent: "from-blue-900/40",
+                                    },
+                                    desert: {
+                                        text: "text-amber-400",
+                                        bg: "bg-amber-900/30",
+                                        border: "border-amber-600/30",
+                                        accent: "from-amber-900/40",
+                                    },
+                                    volcano: {
+                                        text: "text-red-400",
+                                        bg: "bg-red-900/30",
+                                        border: "border-red-600/30",
+                                        accent: "from-red-900/40",
+                                    },
+                                    mountains: {
+                                        text: "text-slate-400",
+                                        bg: "bg-slate-900/30",
+                                        border: "border-slate-600/30",
+                                        accent: "from-slate-900/40",
+                                    },
+                                    swamps: {
+                                        text: "text-lime-400",
+                                        bg: "bg-lime-900/30",
+                                        border: "border-lime-600/30",
+                                        accent: "from-lime-900/40",
+                                    },
+                                    tropical: {
+                                        text: "text-teal-400",
+                                        bg: "bg-teal-900/30",
+                                        border: "border-teal-600/30",
+                                        accent: "from-teal-900/40",
+                                    },
+                                };
+                                const theme =
+                                    biomeTheme[selectedKingdom.biome] || biomeTheme.plains;
+
+                                return (
+                                    <>
+                                        {/* Header with gradient */}
+                                        <div
+                                            className={`bg-gradient-to-b ${theme.accent} to-transparent px-6 pt-6 pb-4`}
+                                        >
+                                            <DialogHeader>
+                                                <DialogTitle className="flex items-center gap-2.5 font-[Cinzel] text-xl text-stone-100">
+                                                    <div
+                                                        className={`rounded-lg ${theme.bg} border ${theme.border} p-2`}
+                                                    >
+                                                        <Crown
+                                                            className={`h-5 w-5 ${theme.text}`}
+                                                        />
+                                                    </div>
+                                                    {selectedKingdom.name}
+                                                </DialogTitle>
+                                                <DialogDescription className="mt-1 leading-relaxed text-stone-400">
+                                                    {selectedKingdom.description ||
+                                                        "A kingdom in the realm of Refell."}
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                        </div>
+
+                                        <div className="space-y-4 px-6 pb-6">
+                                            {/* Ruler */}
+                                            <div
+                                                className={`flex items-center gap-3 rounded-lg border ${theme.border} ${theme.bg} p-3`}
+                                            >
+                                                <div className="rounded-full bg-stone-800 p-2">
+                                                    <Crown className="h-4 w-4 text-amber-400" />
+                                                </div>
+                                                {selectedKingdom.king ? (
+                                                    <div>
+                                                        <div className="text-sm font-semibold text-stone-200">
+                                                            {selectedKingdom.king.username}
+                                                        </div>
+                                                        <div className="text-xs capitalize text-stone-500">
+                                                            {selectedKingdom.king.primary_title ??
+                                                                "King"}{" "}
+                                                            of {selectedKingdom.name}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div>
+                                                        <div className="text-sm font-semibold italic text-stone-500">
+                                                            Throne Vacant
+                                                        </div>
+                                                        <div className="text-xs text-stone-600">
+                                                            No ruler sits upon the throne
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Stats grid */}
+                                            <div>
+                                                <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-stone-600">
+                                                    Kingdom Statistics
+                                                </h4>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    {[
+                                                        {
+                                                            label: "Biome",
+                                                            value: selectedKingdom.biome,
+                                                            capitalize: true,
+                                                            color: theme.text,
+                                                        },
+                                                        {
+                                                            label: "Tax Rate",
+                                                            value: `${selectedKingdom.tax_rate}%`,
+                                                        },
+                                                        {
+                                                            label: "Players",
+                                                            value: selectedKingdom.player_count.toLocaleString(),
+                                                        },
+                                                        {
+                                                            label: "Population",
+                                                            value: selectedKingdom.total_population.toLocaleString(),
+                                                        },
+                                                        {
+                                                            label: "Wealth",
+                                                            value: selectedKingdom.total_wealth.toLocaleString(),
+                                                        },
+                                                        {
+                                                            label: "Baronies",
+                                                            value: selectedKingdom.baronies_count,
+                                                        },
+                                                        {
+                                                            label: "Towns",
+                                                            value: selectedKingdom.total_towns,
+                                                        },
+                                                        {
+                                                            label: "Villages",
+                                                            value: selectedKingdom.total_villages,
+                                                        },
+                                                        {
+                                                            label: "Ports",
+                                                            value: selectedKingdom.total_ports,
+                                                        },
+                                                    ].map((stat) => (
+                                                        <div
+                                                            key={stat.label}
+                                                            className="rounded-lg border border-stone-800 bg-stone-800/40 px-3 py-2"
+                                                        >
+                                                            <div className="text-[10px] text-stone-500">
+                                                                {stat.label}
+                                                            </div>
+                                                            <div
+                                                                className={`font-pixel text-sm ${stat.color ?? "text-stone-200"} ${stat.capitalize ? "capitalize" : ""}`}
+                                                            >
+                                                                {stat.value}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                );
+                            })()}
+                    </DialogContent>
+                </Dialog>
 
                 {/* Quick Actions + Getting Started side by side */}
                 <div className="grid gap-4 lg:grid-cols-2">
