@@ -46,7 +46,7 @@ class VillageController extends Controller
      */
     public function show(Request $request, Village $village, MigrationService $migrationService): Response
     {
-        $village->load(['barony.kingdom', 'residents', 'parentVillage']);
+        $village->load(['barony.kingdom', 'residents', 'visitors', 'parentVillage']);
         $user = $request->user();
 
         $isResident = $user->home_village_id === $village->id;
@@ -102,6 +102,16 @@ class VillageController extends Controller
             ->with('targetPlayer:id,username')
             ->first();
 
+        // Get visitors (players currently in this village)
+        $visitors = $village->visitors->take(12)->map(fn ($visitor) => [
+            'id' => $visitor->id,
+            'username' => $visitor->username,
+            'combat_level' => $visitor->combat_level ?? 1,
+        ]);
+
+        // Check if user is currently in this village
+        $isVisitor = $user->current_location_type === 'village' && $user->current_location_id === $village->id;
+
         return Inertia::render('villages/show', [
             'village' => [
                 'id' => $village->id,
@@ -129,14 +139,17 @@ class VillageController extends Controller
                     'id' => $village->parentVillage->id,
                     'name' => $village->parentVillage->name,
                 ] : null,
-                'residents' => $village->residents->map(fn ($resident) => [
+                'residents' => $village->residents->take(12)->map(fn ($resident) => [
                     'id' => $resident->id,
                     'username' => $resident->username,
-                    'combat_level' => $resident->combat_level,
+                    'combat_level' => $resident->combat_level ?? 1,
                 ]),
                 'resident_count' => $village->residents->count(),
+                'visitor_count' => $village->visitors->count(),
                 'elder' => $elder,
             ],
+            'visitors' => $visitors,
+            'is_visitor' => $isVisitor,
             'services' => array_values(array_map(fn ($service, $id) => array_merge($service, ['id' => $id]), $services, array_keys($services))),
             'recent_activity' => $recentActivity,
             'is_resident' => $isResident,

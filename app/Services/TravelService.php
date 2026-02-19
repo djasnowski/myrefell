@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Barony;
 use App\Models\Kingdom;
+use App\Models\LocationActivityLog;
 use App\Models\Town;
 use App\Models\User;
 use App\Models\Village;
@@ -168,12 +169,44 @@ class TravelService
             // Update kingdom tracking for biome attunement
             $this->biomeService->updatePlayerKingdom($user);
 
+            // Log departure from old location
+            $destinationName = $destination?->name ?? 'Unknown';
+            if ($previousLocation['type'] && $previousLocation['id']) {
+                try {
+                    LocationActivityLog::log(
+                        userId: $user->id,
+                        locationType: $previousLocation['type'],
+                        locationId: $previousLocation['id'],
+                        activityType: LocationActivityLog::TYPE_TRAVEL,
+                        description: "{$user->username} departed for {$destinationName}",
+                        activitySubtype: 'departure',
+                    );
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // Table may not exist yet
+                }
+            }
+
+            // Log arrival at new location
+            try {
+                $previousName = $this->getDestination($previousLocation['type'], $previousLocation['id'])?->name ?? 'Unknown';
+                LocationActivityLog::log(
+                    userId: $user->id,
+                    locationType: $user->current_location_type,
+                    locationId: $user->current_location_id,
+                    activityType: LocationActivityLog::TYPE_TRAVEL,
+                    description: "{$user->username} arrived from {$previousName}",
+                    activitySubtype: 'arrival',
+                );
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Table may not exist yet
+            }
+
             return [
                 'arrived' => true,
                 'location' => [
                     'type' => $user->current_location_type,
                     'id' => $user->current_location_id,
-                    'name' => $destination?->name ?? 'Unknown',
+                    'name' => $destinationName,
                 ],
                 'previous_location' => $previousLocation,
             ];

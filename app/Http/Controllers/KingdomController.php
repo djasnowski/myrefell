@@ -52,7 +52,7 @@ class KingdomController extends Controller
      */
     public function show(Request $request, Kingdom $kingdom, MigrationService $migrationService): Response
     {
-        $kingdom->load(['capitalTown', 'baronies.villages', 'baronies.towns', 'baronies.baron', 'king']);
+        $kingdom->load(['capitalTown', 'baronies.villages', 'baronies.towns', 'baronies.baron', 'king', 'visitors', 'residents']);
         $user = $request->user();
 
         // Batch-load all active authority role assignments within this kingdom
@@ -91,6 +91,23 @@ class KingdomController extends Controller
                 $roleMap[$key] = $assignment->user?->username;
             }
         }
+
+        // Get visitors (players currently in this kingdom)
+        $visitors = $kingdom->visitors->take(12)->map(fn ($visitor) => [
+            'id' => $visitor->id,
+            'username' => $visitor->username,
+            'combat_level' => $visitor->combat_level ?? 1,
+        ]);
+
+        // Check if user is currently in this kingdom
+        $isVisitor = $user->current_location_type === 'kingdom' && $user->current_location_id === $kingdom->id;
+
+        // Get residents with home set to this kingdom
+        $kingdomResidents = $kingdom->residents->take(12)->map(fn ($resident) => [
+            'id' => $resident->id,
+            'username' => $resident->username,
+            'combat_level' => $resident->combat_level ?? 1,
+        ]);
 
         // Get the king's role assignment for legitimacy
         $king = null;
@@ -236,7 +253,12 @@ class KingdomController extends Controller
                 'player_count' => $playerCount,
                 'king' => $king,
             ],
+            'visitors' => $visitors,
+            'visitor_count' => $kingdom->visitors->count(),
+            'residents_list' => $kingdomResidents,
+            'resident_count' => $kingdom->residents->count(),
             'current_user_id' => $user->id,
+            'is_visitor' => $isVisitor,
             'is_resident' => $isResident,
             ...$migrationService->getMigrationCooldownInfo($user),
             'has_pending_request' => $hasPendingRequest,

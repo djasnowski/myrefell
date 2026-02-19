@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { ActivityFeed } from "@/components/activity-feed";
+import { PlayerList } from "@/components/widgets/player-list";
 import { ServicesGrid } from "@/components/service-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
@@ -120,6 +121,12 @@ interface TradeRouteInfo {
     danger_level: string;
 }
 
+interface Player {
+    id: number;
+    username: string;
+    combat_level: number;
+}
+
 interface HouseEntry {
     name: string;
     tier_name: string;
@@ -131,8 +138,13 @@ interface Props {
     services: ServiceInfo[];
     trade_routes: TradeRouteInfo[];
     recent_activity: ActivityLogEntry[];
+    visitors: Player[];
+    visitor_count: number;
+    residents: Player[];
+    resident_count: number;
     current_user_id: number;
     is_baron: boolean;
+    is_visitor: boolean;
     is_resident: boolean;
     can_migrate: boolean;
     cooldown_ends_at: string | null;
@@ -204,8 +216,13 @@ export default function BaronyShow({
     services,
     trade_routes,
     recent_activity,
+    visitors = [],
+    visitor_count = 0,
+    residents = [],
+    resident_count = 0,
     current_user_id,
     is_baron,
+    is_visitor,
     is_resident,
     can_migrate,
     cooldown_remaining,
@@ -287,13 +304,20 @@ export default function BaronyShow({
                             </div>
                         </div>
 
-                        {/* Home badge */}
-                        {is_resident && (
+                        {/* Home/Visitor badge */}
+                        {is_resident ? (
                             <div className="mt-3 flex items-center gap-2 rounded-lg border border-green-600/50 bg-green-900/30 px-3 py-2 sm:mt-0">
                                 <Home className="h-4 w-4 text-green-400" />
                                 <span className="font-pixel text-xs text-green-400">Your Home</span>
                             </div>
-                        )}
+                        ) : is_visitor ? (
+                            <div className="mt-3 flex items-center gap-2 rounded-lg border border-blue-600/50 bg-blue-900/30 px-3 py-2 sm:mt-0">
+                                <MapPin className="h-4 w-4 text-blue-400" />
+                                <span className="font-pixel text-xs text-blue-400">
+                                    You Are Here
+                                </span>
+                            </div>
+                        ) : null}
                     </div>
                 </div>
 
@@ -481,6 +505,24 @@ export default function BaronyShow({
                         maxHeight="250px"
                     />
                 )}
+
+                {/* Visitors */}
+                <PlayerList
+                    title="Visitors"
+                    players={visitors}
+                    totalCount={visitor_count}
+                    currentUserId={current_user_id}
+                    youLabelClass="text-blue-400"
+                />
+
+                {/* Residents */}
+                <PlayerList
+                    title="Residents"
+                    players={residents}
+                    totalCount={resident_count}
+                    currentUserId={current_user_id}
+                    youLabelClass="text-green-400"
+                />
 
                 {/* Migration / Settlement */}
                 {!is_resident && (

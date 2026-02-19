@@ -37,6 +37,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RulerDisplay } from "@/components/ui/legitimacy-badge";
 import NoConfidenceBanner from "@/components/widgets/no-confidence-banner";
+import { PlayerList } from "@/components/widgets/player-list";
 import AppLayout from "@/layouts/app-layout";
 import type { BreadcrumbItem } from "@/types";
 
@@ -101,6 +102,12 @@ interface Kingdom {
     king?: Ruler | null;
 }
 
+interface Player {
+    id: number;
+    username: string;
+    combat_level: number;
+}
+
 interface HouseEntry {
     name: string;
     tier_name: string;
@@ -109,7 +116,12 @@ interface HouseEntry {
 
 interface Props {
     kingdom: Kingdom;
+    visitors: Player[];
+    visitor_count: number;
+    residents_list: Player[];
+    resident_count: number;
     current_user_id: number;
+    is_visitor: boolean;
     is_resident: boolean;
     can_migrate: boolean;
     cooldown_ends_at: string | null;
@@ -334,7 +346,12 @@ function HierarchyTree({ baronies }: { baronies: Barony[] }) {
 
 export default function KingdomShow({
     kingdom,
+    visitors = [],
+    visitor_count = 0,
+    residents_list = [],
+    resident_count = 0,
     current_user_id,
+    is_visitor,
     is_resident,
     can_migrate,
     cooldown_remaining,
@@ -406,13 +423,20 @@ export default function KingdomShow({
                             )}
                         </div>
 
-                        {/* Home badge */}
-                        {is_resident && (
+                        {/* Home/Visitor badge */}
+                        {is_resident ? (
                             <div className="flex items-center gap-2 rounded-lg border border-green-600/50 bg-green-900/30 px-3 py-2">
                                 <Home className="h-4 w-4 text-green-400" />
                                 <span className="font-pixel text-xs text-green-400">Your Home</span>
                             </div>
-                        )}
+                        ) : is_visitor ? (
+                            <div className="flex items-center gap-2 rounded-lg border border-blue-600/50 bg-blue-900/30 px-3 py-2">
+                                <MapPin className="h-4 w-4 text-blue-400" />
+                                <span className="font-pixel text-xs text-blue-400">
+                                    You Are Here
+                                </span>
+                            </div>
+                        ) : null}
                     </div>
                 </div>
 
@@ -711,6 +735,24 @@ export default function KingdomShow({
                         )}
                     </div>
                 )}
+
+                {/* Visitors */}
+                <PlayerList
+                    title="Visitors"
+                    players={visitors}
+                    totalCount={visitor_count}
+                    currentUserId={current_user_id}
+                    youLabelClass="text-blue-400"
+                />
+
+                {/* Residents */}
+                <PlayerList
+                    title="Residents"
+                    players={residents_list}
+                    totalCount={resident_count}
+                    currentUserId={current_user_id}
+                    youLabelClass="text-green-400"
+                />
 
                 {/* Hierarchy Tree */}
                 {kingdom.baronies.length > 0 && <HierarchyTree baronies={kingdom.baronies} />}

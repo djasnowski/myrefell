@@ -11,7 +11,6 @@ import {
     Shield,
     Snowflake,
     Sun,
-    Swords,
     TreePine,
     Trees,
     UserPlus,
@@ -25,6 +24,7 @@ import { ActivityFeed } from "@/components/activity-feed";
 import { ServicesGrid } from "@/components/service-card";
 import DisasterWidget from "@/components/widgets/disaster-widget";
 import NoConfidenceBanner from "@/components/widgets/no-confidence-banner";
+import { PlayerList } from "@/components/widgets/player-list";
 import { LegitimacyDisplay } from "@/components/widgets/legitimacy-badge";
 import AppLayout from "@/layouts/app-layout";
 import type { BreadcrumbItem } from "@/types";
@@ -71,6 +71,7 @@ interface Village {
     } | null;
     residents: Resident[];
     resident_count: number;
+    visitor_count: number;
     elder?: Ruler | null;
 }
 
@@ -115,6 +116,8 @@ interface Props {
     village: Village;
     services: ServiceInfo[];
     recent_activity: ActivityLogEntry[];
+    visitors: Resident[];
+    is_visitor: boolean;
     is_resident: boolean;
     can_migrate: boolean;
     cooldown_ends_at: string | null;
@@ -202,6 +205,8 @@ export default function VillageShow({
     village,
     services,
     recent_activity,
+    visitors = [],
+    is_visitor,
     is_resident,
     can_migrate,
     cooldown_remaining,
@@ -309,13 +314,20 @@ export default function VillageShow({
                             </div>
                         </div>
 
-                        {/* Home badge - hidden on mobile, shown inline on desktop */}
-                        {is_resident && (
+                        {/* Home/Visitor badge */}
+                        {is_resident ? (
                             <div className="mt-3 flex items-center gap-2 rounded-lg border border-green-600/50 bg-green-900/30 px-3 py-2 sm:mt-0">
                                 <Home className="h-4 w-4 text-green-400" />
                                 <span className="font-pixel text-xs text-green-400">Your Home</span>
                             </div>
-                        )}
+                        ) : is_visitor ? (
+                            <div className="mt-3 flex items-center gap-2 rounded-lg border border-blue-600/50 bg-blue-900/30 px-3 py-2 sm:mt-0">
+                                <MapPin className="h-4 w-4 text-blue-400" />
+                                <span className="font-pixel text-xs text-blue-400">
+                                    You Are Here
+                                </span>
+                            </div>
+                        ) : null}
                     </div>
                 </div>
 
@@ -528,53 +540,24 @@ export default function VillageShow({
                     </div>
                 )}
 
+                {/* Visitors */}
+                <PlayerList
+                    title="Visitors"
+                    players={visitors}
+                    totalCount={village.visitor_count}
+                    currentUserId={current_user_id}
+                    youLabelClass="text-blue-400"
+                />
+
                 {/* Residents */}
-                {village.resident_count > 0 && (
-                    <div>
-                        <div className="mb-3 flex items-center justify-between">
-                            <h2 className="font-pixel text-sm text-stone-400">
-                                Residents ({village.resident_count})
-                            </h2>
-                            <Link
-                                href={`/villages/${village.id}/residents`}
-                                className="text-xs text-amber-400 hover:underline"
-                            >
-                                View All
-                            </Link>
-                        </div>
-                        <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                            {village.residents.slice(0, 8).map((resident) => (
-                                <div
-                                    key={resident.id}
-                                    className="flex items-center gap-3 rounded-lg border border-stone-700 bg-stone-800/30 p-3"
-                                >
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-700">
-                                        <Users className="h-5 w-5 text-stone-400" />
-                                    </div>
-                                    <div>
-                                        <div className="font-pixel text-sm text-stone-200">
-                                            {resident.username}
-                                            {resident.id === current_user_id && (
-                                                <span className="ml-1 text-xs text-green-400">
-                                                    (You)
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-1 text-xs text-stone-500">
-                                            <Swords className="h-3 w-3" />
-                                            Combat Lv. {resident.combat_level}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        {village.resident_count > 8 && (
-                            <p className="mt-2 text-center text-xs text-stone-500">
-                                +{village.resident_count - 8} more residents
-                            </p>
-                        )}
-                    </div>
-                )}
+                <PlayerList
+                    title="Residents"
+                    players={village.residents}
+                    totalCount={village.resident_count}
+                    currentUserId={current_user_id}
+                    youLabelClass="text-green-400"
+                    viewAllHref={`/villages/${village.id}/residents`}
+                />
 
                 {/* Houses */}
                 {houses.length > 0 && (

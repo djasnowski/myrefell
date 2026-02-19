@@ -20,7 +20,6 @@ import {
     Snowflake,
     Store,
     Sun,
-    Swords,
     TreePine,
     Trees,
     UserPlus,
@@ -34,6 +33,7 @@ import { useState } from "react";
 import { ServicesGrid } from "@/components/service-card";
 import DisasterWidget from "@/components/widgets/disaster-widget";
 import NoConfidenceBanner from "@/components/widgets/no-confidence-banner";
+import { PlayerList } from "@/components/widgets/player-list";
 import { LegitimacyDisplay } from "@/components/widgets/legitimacy-badge";
 import AppLayout from "@/layouts/app-layout";
 import type { BreadcrumbItem } from "@/types";
@@ -126,6 +126,8 @@ interface Props {
     services: ServiceInfo[];
     roles: Role[];
     visitors: Visitor[];
+    residents: Visitor[];
+    resident_count: number;
     is_visitor: boolean;
     is_resident: boolean;
     is_mayor: boolean;
@@ -212,6 +214,8 @@ export default function TownShow({
     services,
     roles,
     visitors,
+    residents = [],
+    resident_count = 0,
     is_visitor,
     is_resident,
     is_mayor,
@@ -670,46 +674,22 @@ export default function TownShow({
                 )}
 
                 {/* Visitors */}
-                {visitors.length > 0 && (
-                    <div>
-                        <div className="mb-3 flex items-center justify-between">
-                            <h2 className="font-pixel text-sm text-stone-400">
-                                Visitors ({town.visitor_count})
-                            </h2>
-                        </div>
-                        <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                            {visitors.map((visitor) => (
-                                <div
-                                    key={visitor.id}
-                                    className="flex items-center gap-3 rounded-lg border border-stone-700 bg-stone-800/30 p-3"
-                                >
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-700">
-                                        <Users className="h-5 w-5 text-stone-400" />
-                                    </div>
-                                    <div>
-                                        <div className="font-pixel text-sm text-stone-200">
-                                            {visitor.username}
-                                            {visitor.id === current_user_id && (
-                                                <span className="ml-1 text-xs text-blue-400">
-                                                    (You)
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-1 text-xs text-stone-500">
-                                            <Swords className="h-3 w-3" />
-                                            Combat Lv. {visitor.combat_level}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        {town.visitor_count > 12 && (
-                            <p className="mt-2 text-center text-xs text-stone-500">
-                                +{town.visitor_count - 12} more visitors
-                            </p>
-                        )}
-                    </div>
-                )}
+                <PlayerList
+                    title="Visitors"
+                    players={visitors}
+                    totalCount={town.visitor_count}
+                    currentUserId={current_user_id}
+                    youLabelClass="text-blue-400"
+                />
+
+                {/* Residents */}
+                <PlayerList
+                    title="Residents"
+                    players={residents}
+                    totalCount={resident_count}
+                    currentUserId={current_user_id}
+                    youLabelClass="text-green-400"
+                />
 
                 {/* Houses */}
                 {houses.length > 0 && (

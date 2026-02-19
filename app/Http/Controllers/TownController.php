@@ -39,7 +39,7 @@ class TownController extends Controller
     public function show(Request $request, Town $town): Response
     {
         $user = $request->user();
-        $town->load(['barony.duchy.kingdom', 'barony.kingdom', 'mayor', 'visitors']);
+        $town->load(['barony.duchy.kingdom', 'barony.kingdom', 'mayor', 'visitors', 'residents']);
 
         // Get mayor with legitimacy - check PlayerRole first, then fall back to town->mayor
         $mayor = null;
@@ -79,6 +79,13 @@ class TownController extends Controller
             'id' => $visitor->id,
             'username' => $visitor->username,
             'combat_level' => $visitor->combat_level ?? 1,
+        ]);
+
+        // Get residents (players who have their home set to this town)
+        $residents = $town->residents->take(12)->map(fn ($resident) => [
+            'id' => $resident->id,
+            'username' => $resident->username,
+            'combat_level' => $resident->combat_level ?? 1,
         ]);
 
         // Check if user is currently in this town
@@ -188,6 +195,8 @@ class TownController extends Controller
             'services' => array_values(array_map(fn ($service, $id) => array_merge($service, ['id' => $id]), $services, array_keys($services))),
             'roles' => $roles,
             'visitors' => $visitors,
+            'residents' => $residents,
+            'resident_count' => $town->residents->count(),
             'is_visitor' => $isVisitor,
             'is_resident' => $isResident,
             'is_mayor' => $isMayor,

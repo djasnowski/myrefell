@@ -79,7 +79,18 @@ class Village extends Model
      */
     public function residents(): HasMany
     {
-        return $this->hasMany(User::class, 'home_village_id');
+        return $this->hasMany(User::class, 'home_village_id')
+            ->whereNull('banned_at');
+    }
+
+    /**
+     * Get players currently visiting this village.
+     */
+    public function visitors(): HasMany
+    {
+        return $this->hasMany(User::class, 'current_location_id')
+            ->where('current_location_type', 'village')
+            ->whereNull('banned_at');
     }
 
     /**

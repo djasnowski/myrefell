@@ -56,7 +56,7 @@ class BaronyController extends Controller
      */
     public function show(Request $request, Barony $barony, MigrationService $migrationService): Response
     {
-        $barony->load(['kingdom', 'villages', 'towns']);
+        $barony->load(['kingdom', 'villages', 'towns', 'visitors', 'residents']);
         $user = $request->user();
 
         // Get the baron from player_roles table (the authoritative source)
@@ -79,6 +79,23 @@ class BaronyController extends Controller
                 ];
             }
         }
+
+        // Get visitors (players currently in this barony)
+        $visitors = $barony->visitors->take(12)->map(fn ($visitor) => [
+            'id' => $visitor->id,
+            'username' => $visitor->username,
+            'combat_level' => $visitor->combat_level ?? 1,
+        ]);
+
+        // Check if user is currently in this barony
+        $isVisitor = $user->current_location_type === 'barony' && $user->current_location_id === $barony->id;
+
+        // Get residents with home set to this barony
+        $residents = $barony->residents->take(12)->map(fn ($resident) => [
+            'id' => $resident->id,
+            'username' => $resident->username,
+            'combat_level' => $resident->combat_level ?? 1,
+        ]);
 
         // Check if current user is the baron
         $isBaron = $baron && $baron['id'] === $user->id;
@@ -226,8 +243,13 @@ class BaronyController extends Controller
             'services' => array_values(array_map(fn ($service, $id) => array_merge($service, ['id' => $id]), $services, array_keys($services))),
             'trade_routes' => $tradeRoutes,
             'recent_activity' => $recentActivity,
+            'visitors' => $visitors,
+            'visitor_count' => $barony->visitors->count(),
+            'residents' => $residents,
+            'resident_count' => $barony->residents->count(),
             'current_user_id' => $user->id,
             'is_baron' => $isBaron,
+            'is_visitor' => $isVisitor,
             'is_resident' => $isResident,
             ...$migrationService->getMigrationCooldownInfo($user),
             'has_pending_request' => $hasPendingRequest,

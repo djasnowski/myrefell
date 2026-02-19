@@ -73,6 +73,26 @@ class Barony extends Model
     }
 
     /**
+     * Get players currently visiting this barony.
+     */
+    public function visitors(): HasMany
+    {
+        return $this->hasMany(User::class, 'current_location_id')
+            ->where('current_location_type', 'barony')
+            ->whereNull('banned_at');
+    }
+
+    /**
+     * Get players who have their home set to this barony.
+     */
+    public function residents(): HasMany
+    {
+        return $this->hasMany(User::class, 'home_location_id')
+            ->where('home_location_type', 'barony')
+            ->whereNull('banned_at');
+    }
+
+    /**
      * Check if this barony is in the capital town's region.
      */
     public function isCapitalBarony(): bool

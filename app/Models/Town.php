@@ -80,7 +80,18 @@ class Town extends Model
     public function visitors(): HasMany
     {
         return $this->hasMany(User::class, 'current_location_id')
-            ->where('current_location_type', 'town');
+            ->where('current_location_type', 'town')
+            ->whereNull('banned_at');
+    }
+
+    /**
+     * Get players who have their home set to this town.
+     */
+    public function residents(): HasMany
+    {
+        return $this->hasMany(User::class, 'home_location_id')
+            ->where('home_location_type', 'town')
+            ->whereNull('banned_at');
     }
 
     /**

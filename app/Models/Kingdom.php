@@ -82,6 +82,26 @@ class Kingdom extends Model
     }
 
     /**
+     * Get players currently visiting this kingdom.
+     */
+    public function visitors(): HasMany
+    {
+        return $this->hasMany(User::class, 'current_location_id')
+            ->where('current_location_type', 'kingdom')
+            ->whereNull('banned_at');
+    }
+
+    /**
+     * Get players who have their home set to this kingdom.
+     */
+    public function residents(): HasMany
+    {
+        return $this->hasMany(User::class, 'home_location_id')
+            ->where('home_location_type', 'kingdom')
+            ->whereNull('banned_at');
+    }
+
+    /**
      * Get all elections for this kingdom.
      */
     public function elections(): MorphMany
