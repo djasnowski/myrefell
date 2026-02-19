@@ -561,8 +561,8 @@ export default function KingdomManagement({
     current_user_id,
 }: Props) {
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
-    const sidebarData = usePage().props.sidebar as { gold?: number } | undefined;
-    const playerGold = sidebarData?.gold ?? 0;
+    const sidebarData = usePage().props.sidebar as { player?: { gold?: number } } | undefined;
+    const playerGold = sidebarData?.player?.gold ?? 0;
 
     const [removeTarget, setRemoveTarget] = useState<{
         playerRoleId: number;
