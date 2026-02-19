@@ -116,7 +116,7 @@ class PlayerHouse extends Model
 
     public function getRepairCost(): int
     {
-        return (int) ceil($this->getUpkeepCost() * (100 - $this->condition) * 0.5);
+        return (int) ceil($this->getUpkeepCost() * (100 - $this->condition) * 0.1);
     }
 
     public function areBuffsDisabled(): bool

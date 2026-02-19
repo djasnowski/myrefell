@@ -21,7 +21,6 @@ class ProcessHouseUpkeep implements ShouldQueue
         Log::info('House upkeep processed', [
             'processed' => $results['processed'],
             'degraded' => $results['degraded'],
-            'abandoned' => $results['abandoned'],
         ]);
     }
 }

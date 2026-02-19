@@ -886,7 +886,7 @@ class HouseService
     /**
      * Process upkeep degradation for all overdue houses.
      *
-     * @return array{processed: int, degraded: int, abandoned: int}
+     * @return array{processed: int, degraded: int}
      */
     public function processUpkeepDegradation(): array
     {
@@ -895,24 +895,17 @@ class HouseService
             ->get();
 
         $degraded = 0;
-        $abandoned = 0;
 
         foreach ($houses as $house) {
             $newCondition = max(0, $house->condition - 10);
             $house->condition = $newCondition;
             $house->save();
             $degraded++;
-
-            if ($newCondition <= 0) {
-                $house->delete();
-                $abandoned++;
-            }
         }
 
         return [
             'processed' => $houses->count(),
             'degraded' => $degraded,
-            'abandoned' => $abandoned,
         ];
     }
 
