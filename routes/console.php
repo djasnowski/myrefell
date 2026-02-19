@@ -11,6 +11,7 @@ use App\Jobs\ProcessHouseUpkeep;
 use App\Jobs\ProcessServantWages;
 use App\Jobs\RegenerateEnergy;
 use App\Jobs\RegenerateHp;
+use App\Services\CaravanService;
 use App\Services\DungeonLootService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -69,6 +70,12 @@ Schedule::job(new ProcessServantWages)->dailyAt('00:30');
 
 // House upkeep degradation - daily at 01:00
 Schedule::job(new ProcessHouseUpkeep)->dailyAt('01:00');
+
+// Caravan travel processing - daily at 01:30
+Schedule::call(function () {
+    $results = app(CaravanService::class)->processDailyTravel();
+    Log::info('Caravan daily travel processed', ['caravans' => count($results)]);
+})->dailyAt('01:30');
 
 // Prune old tab activity logs - daily at 03:00
 Schedule::command('tab-activity:prune')->dailyAt('03:00');
