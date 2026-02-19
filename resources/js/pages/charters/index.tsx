@@ -165,8 +165,8 @@ export default function ChartersIndex({
                 </div>
 
                 {!isCreating ? (
-                    <Button onClick={() => setIsCreating(true)} className="w-fit">
-                        Request New Charter
+                    <Button disabled className="w-fit opacity-50 cursor-not-allowed">
+                        Charter Founding Temporarily Disabled
                     </Button>
                 ) : (
                     <Card>

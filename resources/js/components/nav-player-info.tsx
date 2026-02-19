@@ -498,7 +498,7 @@ export function NavPlayerInfo() {
                                 <button
                                     onClick={() => {
                                         if (player.role!.pending_count > 0) {
-                                            router.visit("/roles/petitions");
+                                            router.visit("/roles/duties");
                                         } else {
                                             const t = player.role!.location_type;
                                             const plural = t.endsWith("y")

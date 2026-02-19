@@ -96,6 +96,8 @@ class CharterController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        return response()->json(['success' => false, 'message' => 'Charter founding is temporarily disabled.'], 403);
+
         $validated = $request->validate([
             'settlement_name' => 'required|string|max:100',
             'settlement_type' => 'required|in:village,town,barony',

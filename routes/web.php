@@ -65,6 +65,7 @@ use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\ReligionController;
 use App\Http\Controllers\ReligionHeadquartersController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\RoleDutiesController;
 use App\Http\Controllers\RolePetitionController;
 use App\Http\Controllers\RoleStockingController;
 use App\Http\Controllers\SawmillController;
@@ -715,6 +716,9 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
     Route::post('roles/{playerRole}/remove', [RoleController::class, 'remove'])->name('roles.remove');
     Route::get('roles/status', [RoleController::class, 'status'])->name('roles.status');
     Route::post('roles/claim', [RoleController::class, 'claim'])->name('roles.claim');
+
+    // Role Duties Hub
+    Route::get('roles/duties', [RoleDutiesController::class, 'index'])->name('roles.duties');
 
     // Role Petitions
     Route::post('roles/{playerRole}/petition', [RolePetitionController::class, 'create'])->name('roles.petition.create');

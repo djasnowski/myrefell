@@ -624,11 +624,13 @@ class HandleInertiaRequests extends Middleware
 
             // King - kingdom-wide matters
             if ($slug === 'king') {
-                $count += \App\Models\Charter::where('status', 'pending')->count();
+                $count += \App\Models\Charter::where('status', 'pending')
+                    ->where('kingdom_id', $locationId)
+                    ->count();
 
                 if (class_exists(\App\Models\EnnoblementRequest::class)) {
                     $count += \App\Models\EnnoblementRequest::where('status', 'pending')
-                        ->where('kingdom_id', $locationId)
+                        ->where('king_id', $playerRole->user_id)
                         ->count();
                 }
             }
