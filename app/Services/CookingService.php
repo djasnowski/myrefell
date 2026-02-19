@@ -18,6 +18,7 @@ class CookingService
             'required_level' => 1,
             'xp_reward' => 8,
             'energy_cost' => 2,
+            'can_burn' => false,
             'materials' => [
                 ['name' => 'Grain', 'quantity' => 2],
             ],
@@ -28,6 +29,8 @@ class CookingService
             'required_level' => 1,
             'xp_reward' => 15,
             'energy_cost' => 2,
+            'can_burn' => true,
+            'stop_burn_level' => 35,
             'materials' => [
                 ['name' => 'Flour', 'quantity' => 1],
             ],
@@ -38,6 +41,8 @@ class CookingService
             'required_level' => 1,
             'xp_reward' => 18,
             'energy_cost' => 2,
+            'can_burn' => true,
+            'stop_burn_level' => 34,
             'materials' => [
                 ['name' => 'Raw Shrimp', 'quantity' => 1],
             ],
@@ -48,6 +53,8 @@ class CookingService
             'required_level' => 1,
             'xp_reward' => 15,
             'energy_cost' => 2,
+            'can_burn' => true,
+            'stop_burn_level' => 34,
             'materials' => [
                 ['name' => 'Raw Chicken', 'quantity' => 1],
             ],
@@ -58,6 +65,8 @@ class CookingService
             'required_level' => 5,
             'xp_reward' => 22,
             'energy_cost' => 2,
+            'can_burn' => true,
+            'stop_burn_level' => 35,
             'materials' => [
                 ['name' => 'Raw Sardine', 'quantity' => 1],
             ],
@@ -68,6 +77,8 @@ class CookingService
             'required_level' => 10,
             'xp_reward' => 35,
             'energy_cost' => 3,
+            'can_burn' => true,
+            'stop_burn_level' => 50,
             'materials' => [
                 ['name' => 'Raw Trout', 'quantity' => 1],
             ],
@@ -78,6 +89,8 @@ class CookingService
             'required_level' => 20,
             'xp_reward' => 50,
             'energy_cost' => 3,
+            'can_burn' => true,
+            'stop_burn_level' => 58,
             'materials' => [
                 ['name' => 'Raw Salmon', 'quantity' => 1],
             ],
@@ -88,6 +101,8 @@ class CookingService
             'required_level' => 30,
             'xp_reward' => 75,
             'energy_cost' => 4,
+            'can_burn' => true,
+            'stop_burn_level' => 74,
             'materials' => [
                 ['name' => 'Raw Lobster', 'quantity' => 1],
             ],
@@ -98,6 +113,8 @@ class CookingService
             'required_level' => 40,
             'xp_reward' => 100,
             'energy_cost' => 4,
+            'can_burn' => true,
+            'stop_burn_level' => 86,
             'materials' => [
                 ['name' => 'Raw Swordfish', 'quantity' => 1],
             ],
@@ -108,6 +125,8 @@ class CookingService
             'required_level' => 5,
             'xp_reward' => 25,
             'energy_cost' => 2,
+            'can_burn' => true,
+            'stop_burn_level' => 31,
             'materials' => [
                 ['name' => 'Raw Meat', 'quantity' => 1],
             ],
@@ -118,6 +137,8 @@ class CookingService
             'required_level' => 15,
             'xp_reward' => 55,
             'energy_cost' => 4,
+            'can_burn' => true,
+            'stop_burn_level' => 50,
             'materials' => [
                 ['name' => 'Flour', 'quantity' => 1],
                 ['name' => 'Raw Meat', 'quantity' => 1],
@@ -132,14 +153,14 @@ class CookingService
     ) {}
 
     /**
-     * Get cooking info for the tavern.
+     * Get cooking info for the tavern or kitchen.
      */
-    public function getCookingInfo(User $user): array
+    public function getCookingInfo(User $user, int $burnBonus = 0): array
     {
         $recipes = [];
 
         foreach (self::RECIPES as $id => $recipe) {
-            $recipes[] = $this->formatRecipe($id, $recipe, $user);
+            $recipes[] = $this->formatRecipe($id, $recipe, $user, $burnBonus);
         }
 
         $cookingSkill = $user->skills()->where('skill_name', 'cooking')->first();
@@ -155,7 +176,7 @@ class CookingService
     /**
      * Format a recipe for display.
      */
-    protected function formatRecipe(string $id, array $recipe, User $user): array
+    protected function formatRecipe(string $id, array $recipe, User $user, int $burnBonus = 0): array
     {
         $skillLevel = $user->getSkillLevel('cooking');
         $isLocked = $skillLevel < $recipe['required_level'];
@@ -202,7 +223,7 @@ class CookingService
     /**
      * Cook a recipe.
      */
-    public function cook(User $user, string $recipeId, ?string $locationType = null, ?int $locationId = null, float $burnChance = 0.0): array
+    public function cook(User $user, string $recipeId, ?string $locationType = null, ?int $locationId = null, int $burnBonus = 0): array
     {
         $recipe = self::RECIPES[$recipeId] ?? null;
 
@@ -259,7 +280,7 @@ class CookingService
         $locationType = $locationType ?? $user->current_location_type;
         $locationId = $locationId ?? $user->current_location_id;
 
-        return DB::transaction(function () use ($user, $recipe, $outputItem, $recipeId, $locationType, $locationId, $burnChance) {
+        return DB::transaction(function () use ($user, $recipe, $outputItem, $recipeId, $locationType, $locationId, $burnBonus) {
             // Consume energy
             $user->consumeEnergy($recipe['energy_cost']);
 
@@ -270,6 +291,7 @@ class CookingService
             }
 
             // Check for burn
+            $burnChance = $this->calculateBurnChance($recipe, $user->getSkillLevel('cooking'), $burnBonus);
             if ($burnChance > 0 && random_int(1, 100) <= (int) $burnChance) {
                 $halfXp = (int) floor($recipe['xp_reward'] / 2);
 
@@ -359,5 +381,41 @@ class CookingService
                 'energy_remaining' => $user->fresh()->energy,
             ];
         });
+    }
+
+    /**
+     * Calculate burn chance for a recipe using OSRS-style linear interpolation.
+     *
+     * Burn chance starts at (55 - burnBonus)% at the recipe's required level
+     * and linearly decreases toward the stop_burn_level, but never drops
+     * below a minimum floor (5% tavern, 2% home stoves).
+     */
+    public function calculateBurnChance(array $recipe, int $cookingLevel, int $burnBonus = 0): float
+    {
+        if (! ($recipe['can_burn'] ?? true)) {
+            return 0.0;
+        }
+
+        $minBurn = $burnBonus > 0 ? 2.0 : 5.0;
+
+        $stopBurnLevel = $recipe['stop_burn_level'] ?? $recipe['required_level'];
+        $requiredLevel = $recipe['required_level'];
+
+        if ($cookingLevel >= $stopBurnLevel) {
+            return $minBurn;
+        }
+
+        $baseBurn = 30 - $burnBonus;
+        $levelRange = $stopBurnLevel - $requiredLevel;
+
+        if ($levelRange <= 0) {
+            return $minBurn;
+        }
+
+        $decreasePerLevel = $baseBurn / $levelRange;
+        $levelsAboveMin = $cookingLevel - $requiredLevel;
+        $burnChance = $baseBurn - ($levelsAboveMin * $decreasePerLevel);
+
+        return max($minBurn, round($burnChance, 1));
     }
 }

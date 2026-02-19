@@ -254,7 +254,7 @@ interface KitchenRecipe {
 }
 
 interface KitchenData {
-    burn_chance: number;
+    burn_bonus: number;
     stove_name: string;
     recipes: KitchenRecipe[];
     cooking_level: number;
@@ -3697,9 +3697,6 @@ function KitchenPanel({
                             <div className="flex items-center gap-3">
                                 <span className="font-pixel text-[10px] text-stone-400">
                                     Cooking Lv.{kitchen.cooking_level}
-                                </span>
-                                <span className="font-pixel text-[10px] text-red-400">
-                                    {kitchen.burn_chance}% burn
                                 </span>
                             </div>
                         </div>

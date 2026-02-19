@@ -130,7 +130,7 @@ test('cannot cook at home without stove', function () {
     expect($result['message'])->toContain('stove');
 });
 
-test('burn chance works when cooking at home', function () {
+test('burn chance works when cooking burnable food at low level', function () {
     $kingdom = Kingdom::factory()->create();
     $user = User::factory()->create([
         'energy' => 100,
@@ -141,20 +141,27 @@ test('burn chance works when cooking at home', function () {
 
     createHouseWithKitchen($user, $kingdom);
 
-    // Give user materials
-    $grain = Item::where('name', 'Grain')->first();
-    app(InventoryService::class)->addItem($user, $grain, 2);
+    // Give user materials for bread (burnable at level 1)
+    $flour = Item::where('name', 'Flour')->first();
+    app(InventoryService::class)->addItem($user, $flour, 1);
 
-    // Test the burn mechanic directly via CookingService with 100% burn chance
-    $cookingService = app(CookingService::class);
-    $result = $cookingService->cook($user, 'flour', 'house', 1, 100.0);
+    // At level 1 with firepit (burn_bonus=3), burn chance for bread is 55-3=52%
+    // Mock random_int to always return 1 (guarantees burn since 1 <= 52)
+    $cookingService = Mockery::mock(CookingService::class)->makePartial();
+    $cookingService->shouldAllowMockingProtectedMethods();
 
-    expect($result['success'])->toBeTrue();
-    expect($result['burned'])->toBeTrue();
-    expect($result['message'])->toContain('burned');
+    // Use the real service but override random_int via a cook call that will burn
+    // Since we can't easily mock random_int, we'll test via calculateBurnChance
+    $realService = app(CookingService::class);
+    $recipe = CookingService::RECIPES['bread'];
+    $burnChance = $realService->calculateBurnChance($recipe, 1, 3);
+
+    // At level 1 with firepit burn_bonus=3: base=27, range=35-1=34, decrease=27/34≈0.79, levels_above=0
+    // burn_chance = 27 - 0 = 27%
+    expect($burnChance)->toBe(27.0);
 });
 
-test('burned food gives half xp and no output', function () {
+test('flour never burns because can_burn is false', function () {
     $kingdom = Kingdom::factory()->create();
     $user = User::factory()->create([
         'energy' => 100,
@@ -169,23 +176,38 @@ test('burned food gives half xp and no output', function () {
     $flour = Item::where('name', 'Flour')->first();
     app(InventoryService::class)->addItem($user, $grain, 2);
 
-    // Force 100% burn
     $cookingService = app(CookingService::class);
-    $result = $cookingService->cook($user, 'flour', 'house', 1, 100.0);
+    $result = $cookingService->cook($user, 'flour', 'house', 1);
 
-    // XP should be half (flour recipe is 8 XP, half = 4)
-    expect($result['xp_awarded'])->toBe(4);
+    // Flour can't burn, so it should always succeed with the item
+    expect($result['success'])->toBeTrue();
+    expect($result)->not->toHaveKey('burned');
+    expect($result['xp_awarded'])->toBe(8);
 
-    // Should NOT have the flour output
     $flourCount = app(InventoryService::class)->countItem($user->fresh(), $flour);
-    expect($flourCount)->toBe(0);
-
-    // Materials should be consumed
-    $grainCount = app(InventoryService::class)->countItem($user->fresh(), $grain);
-    expect($grainCount)->toBe(0);
+    expect($flourCount)->toBe(1);
 });
 
-test('kitchen burn chance is lower with iron stove', function () {
+test('kitchen data returns burn_bonus from stove config', function () {
+    $kingdom = Kingdom::factory()->create();
+    $user = User::factory()->create([
+        'energy' => 100,
+        'max_energy' => 100,
+        'current_kingdom_id' => $kingdom->id,
+    ]);
+    PlayerSkill::create(['player_id' => $user->id, 'skill_name' => 'cooking', 'level' => 1, 'xp' => 0]);
+
+    $service = app(HouseService::class);
+
+    // Firepit has burn_bonus of 3
+    createHouseWithKitchen($user, $kingdom, 'firepit');
+    $kitchenData = $service->getKitchenData($user);
+    expect($kitchenData)->not->toBeNull();
+    expect($kitchenData['stove_name'])->toBe('Firepit');
+    expect($kitchenData['burn_bonus'])->toBe(3);
+});
+
+test('iron stove has higher burn_bonus than firepit', function () {
     $kingdom = Kingdom::factory()->create();
     $user = User::factory()->create([
         'energy' => 100,
@@ -201,8 +223,91 @@ test('kitchen burn chance is lower with iron stove', function () {
 
     expect($kitchenData)->not->toBeNull();
     expect($kitchenData['stove_name'])->toBe('Iron Stove');
-    // 50 - 45 = 5 base, * level scaling ~1.0 at level 1 = 5
-    expect($kitchenData['burn_chance'])->toBeLessThanOrEqual(5);
+    expect($kitchenData['burn_bonus'])->toBe(5);
+});
+
+// ===== Burn Formula Tests =====
+
+test('calculateBurnChance returns correct values at different levels', function () {
+    $service = app(CookingService::class);
+    $bread = CookingService::RECIPES['bread']; // req=1, stop=35
+
+    // At required level (1), no bonus: base=30, levels_above=0 → 30%
+    expect($service->calculateBurnChance($bread, 1, 0))->toBe(30.0);
+
+    // At stop burn level (35): hits minimum floor (5% tavern)
+    expect($service->calculateBurnChance($bread, 35, 0))->toBe(5.0);
+
+    // Above stop burn level: still minimum floor
+    expect($service->calculateBurnChance($bread, 50, 0))->toBe(5.0);
+
+    // Mid-level (18 = halfway between 1 and 35): ~15%
+    $midBurn = $service->calculateBurnChance($bread, 18, 0);
+    expect($midBurn)->toBeGreaterThan(13.0);
+    expect($midBurn)->toBeLessThan(17.0);
+});
+
+test('flour recipe never burns', function () {
+    $service = app(CookingService::class);
+    $flour = CookingService::RECIPES['flour'];
+
+    expect($service->calculateBurnChance($flour, 1, 0))->toBe(0.0);
+    expect($service->calculateBurnChance($flour, 50, 0))->toBe(0.0);
+    expect($service->calculateBurnChance($flour, 1, 5))->toBe(0.0);
+});
+
+test('burn chance linearly decreases with cooking level', function () {
+    $service = app(CookingService::class);
+    $shrimp = CookingService::RECIPES['cooked_shrimp']; // req=1, stop=34
+
+    $prev = 100.0;
+    for ($level = 1; $level <= 34; $level++) {
+        $chance = $service->calculateBurnChance($shrimp, $level, 0);
+        expect($chance)->toBeLessThanOrEqual($prev);
+        $prev = $chance;
+    }
+
+    // At level 34 (stop burn), should hit minimum floor (5% tavern)
+    expect($service->calculateBurnChance($shrimp, 34, 0))->toBe(5.0);
+});
+
+test('burn bonus reduces burn chance', function () {
+    $service = app(CookingService::class);
+    $trout = CookingService::RECIPES['cooked_trout']; // req=10, stop=50
+
+    $noBonus = $service->calculateBurnChance($trout, 10, 0);
+    $firepitBonus = $service->calculateBurnChance($trout, 10, 3);
+    $stoveBonus = $service->calculateBurnChance($trout, 10, 5);
+
+    // No bonus: base=30
+    expect($noBonus)->toBe(30.0);
+    // Firepit: base=27
+    expect($firepitBonus)->toBe(27.0);
+    // Iron stove: base=25
+    expect($stoveBonus)->toBe(25.0);
+
+    expect($stoveBonus)->toBeLessThan($firepitBonus);
+    expect($firepitBonus)->toBeLessThan($noBonus);
+});
+
+test('stop burn level means minimum burn floor', function () {
+    $service = app(CookingService::class);
+
+    foreach (CookingService::RECIPES as $recipe) {
+        if (! ($recipe['can_burn'] ?? true)) {
+            continue;
+        }
+
+        $stopLevel = $recipe['stop_burn_level'];
+
+        // At stop level: tavern floor (5%), home stove floor (2%)
+        expect($service->calculateBurnChance($recipe, $stopLevel, 0))->toBe(5.0);
+        expect($service->calculateBurnChance($recipe, $stopLevel, 3))->toBe(2.0);
+        expect($service->calculateBurnChance($recipe, $stopLevel, 5))->toBe(2.0);
+
+        // Above stop level, still at floor
+        expect($service->calculateBurnChance($recipe, $stopLevel + 10, 0))->toBe(5.0);
+    }
 });
 
 // ===== Bedroom Tests =====

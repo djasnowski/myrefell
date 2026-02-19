@@ -74,7 +74,8 @@ class ProcessActionQueue implements ShouldQueue
                 $user,
                 $params['recipe'],
                 $locationType,
-                (int) $locationId
+                (int) $locationId,
+                (int) ($params['burn_bonus'] ?? 0)
             ),
             'craft', 'smelt' => $craftingService->craft(
                 $user,

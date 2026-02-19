@@ -976,15 +976,12 @@ class HouseService
             return null;
         }
 
-        $burnReduction = $stoveConfig['effect']['burn_reduction'] ?? 0;
-        $cookingLevel = $user->getSkillLevel('cooking');
-        $baseBurn = max(5, 50 - $burnReduction);
-        $burnChance = round($baseBurn * max(0.2, 1 - $cookingLevel / 99));
+        $burnBonus = $stoveConfig['effect']['burn_bonus'] ?? 0;
 
-        $cookingInfo = $this->cookingService->getCookingInfo($user);
+        $cookingInfo = $this->cookingService->getCookingInfo($user, $burnBonus);
 
         return [
-            'burn_chance' => $burnChance,
+            'burn_bonus' => $burnBonus,
             'stove_name' => $stoveConfig['name'],
             'recipes' => $cookingInfo['recipes'],
             'cooking_level' => $cookingInfo['cooking_level'],
@@ -1010,7 +1007,7 @@ class HouseService
             $recipeId,
             'house',
             $house->id,
-            $kitchenData['burn_chance']
+            $kitchenData['burn_bonus']
         );
     }
 

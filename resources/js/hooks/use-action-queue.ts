@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export interface ActionResult {
     success: boolean;
     failed?: boolean;
+    burned?: boolean;
     message: string;
     xp_awarded?: number;
     leveled_up?: boolean;
