@@ -186,17 +186,8 @@ class TradeRouteController extends Controller
     {
         $user = $request->user();
 
-        // Check if user is baron of this barony
-        $baronRole = Role::where('slug', 'baron')->first();
-        $isBaron = $baronRole && PlayerRole::where('user_id', $user->id)
-            ->where('role_id', $baronRole->id)
-            ->where('location_type', 'barony')
-            ->where('location_id', $barony->id)
-            ->active()
-            ->exists();
-
-        if (! $isBaron) {
-            abort(403, 'You must be the Baron of this barony to manage its trade routes.');
+        if (! $this->canManageBaronyRoutes($user, $barony)) {
+            abort(403, 'You must be the Baron or King to manage this barony\'s trade routes.');
         }
 
         // Get villages in this barony for the dropdown
@@ -300,19 +291,10 @@ class TradeRouteController extends Controller
     {
         $user = $request->user();
 
-        // Check if user is baron of this barony
-        $baronRole = Role::where('slug', 'baron')->first();
-        $isBaron = $baronRole && PlayerRole::where('user_id', $user->id)
-            ->where('role_id', $baronRole->id)
-            ->where('location_type', 'barony')
-            ->where('location_id', $barony->id)
-            ->active()
-            ->exists();
-
-        if (! $isBaron) {
+        if (! $this->canManageBaronyRoutes($user, $barony)) {
             return response()->json([
                 'success' => false,
-                'message' => 'You must be the Baron of this barony to create trade routes.',
+                'message' => 'You must be the Baron or King to manage this barony\'s trade routes.',
             ], 403);
         }
 
@@ -402,19 +384,10 @@ class TradeRouteController extends Controller
     {
         $user = $request->user();
 
-        // Check if user is baron of this barony
-        $baronRole = Role::where('slug', 'baron')->first();
-        $isBaron = $baronRole && PlayerRole::where('user_id', $user->id)
-            ->where('role_id', $baronRole->id)
-            ->where('location_type', 'barony')
-            ->where('location_id', $barony->id)
-            ->active()
-            ->exists();
-
-        if (! $isBaron) {
+        if (! $this->canManageBaronyRoutes($user, $barony)) {
             return response()->json([
                 'success' => false,
-                'message' => 'You must be the Baron of this barony to update trade routes.',
+                'message' => 'You must be the Baron or King to manage this barony\'s trade routes.',
             ], 403);
         }
 
@@ -476,19 +449,10 @@ class TradeRouteController extends Controller
     {
         $user = $request->user();
 
-        // Check if user is baron of this barony
-        $baronRole = Role::where('slug', 'baron')->first();
-        $isBaron = $baronRole && PlayerRole::where('user_id', $user->id)
-            ->where('role_id', $baronRole->id)
-            ->where('location_type', 'barony')
-            ->where('location_id', $barony->id)
-            ->active()
-            ->exists();
-
-        if (! $isBaron) {
+        if (! $this->canManageBaronyRoutes($user, $barony)) {
             return response()->json([
                 'success' => false,
-                'message' => 'You must be the Baron of this barony to delete trade routes.',
+                'message' => 'You must be the Baron or King to manage this barony\'s trade routes.',
             ], 403);
         }
 
@@ -534,5 +498,34 @@ class TradeRouteController extends Controller
 
         return ($tradeRoute->origin_type === 'village' && in_array($tradeRoute->origin_id, $baronyVillageIds))
             || ($tradeRoute->origin_type === 'town' && in_array($tradeRoute->origin_id, $baronyTownIds));
+    }
+
+    /**
+     * Check if user can manage trade routes for a barony (baron of the barony or king of its kingdom).
+     */
+    private function canManageBaronyRoutes($user, Barony $barony): bool
+    {
+        // Check if user is baron of this barony
+        $baronRole = Role::where('slug', 'baron')->first();
+        $isBaron = $baronRole && PlayerRole::where('user_id', $user->id)
+            ->where('role_id', $baronRole->id)
+            ->where('location_type', 'barony')
+            ->where('location_id', $barony->id)
+            ->active()
+            ->exists();
+
+        if ($isBaron) {
+            return true;
+        }
+
+        // Check if user is king of this barony's kingdom
+        $kingRole = Role::where('slug', 'king')->first();
+
+        return $kingRole && PlayerRole::where('user_id', $user->id)
+            ->where('role_id', $kingRole->id)
+            ->where('location_type', 'kingdom')
+            ->where('location_id', $barony->kingdom_id)
+            ->active()
+            ->exists();
     }
 }

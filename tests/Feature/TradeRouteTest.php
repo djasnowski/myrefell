@@ -185,3 +185,91 @@ it('cannot update route in another barony', function () {
         ])
         ->assertForbidden();
 });
+
+it('king can update trade route in their kingdom barony', function () {
+    $data = setupBaronWithRoute();
+
+    $kingRole = Role::factory()->create([
+        'slug' => 'king',
+        'name' => 'King',
+        'location_type' => 'kingdom',
+        'tier' => 7,
+    ]);
+
+    $king = User::factory()->create();
+    PlayerRole::factory()->create([
+        'user_id' => $king->id,
+        'role_id' => $kingRole->id,
+        'location_type' => 'kingdom',
+        'location_id' => $data['kingdom']->id,
+        'status' => 'active',
+    ]);
+
+    $this->actingAs($king)
+        ->putJson("/baronies/{$data['barony']->id}/trade-routes/{$data['route']->id}", [
+            'name' => 'Royal Rename',
+            'danger_level' => 'safe',
+            'notes' => 'By royal decree',
+        ])
+        ->assertSuccessful()
+        ->assertJson(['success' => true]);
+
+    $data['route']->refresh();
+    expect($data['route']->name)->toBe('Royal Rename');
+    expect($data['route']->danger_level)->toBe('safe');
+});
+
+it('king can delete trade route in their kingdom barony', function () {
+    $data = setupBaronWithRoute();
+
+    $kingRole = Role::factory()->create([
+        'slug' => 'king',
+        'name' => 'King',
+        'location_type' => 'kingdom',
+        'tier' => 7,
+    ]);
+
+    $king = User::factory()->create();
+    PlayerRole::factory()->create([
+        'user_id' => $king->id,
+        'role_id' => $kingRole->id,
+        'location_type' => 'kingdom',
+        'location_id' => $data['kingdom']->id,
+        'status' => 'active',
+    ]);
+
+    $this->actingAs($king)
+        ->deleteJson("/baronies/{$data['barony']->id}/trade-routes/{$data['route']->id}")
+        ->assertSuccessful()
+        ->assertJson(['success' => true]);
+
+    expect($data['route']->fresh()->is_active)->toBeFalse();
+});
+
+it('king of another kingdom cannot manage barony trade routes', function () {
+    $data = setupBaronWithRoute();
+
+    $otherKingdom = Kingdom::factory()->create();
+    $kingRole = Role::factory()->create([
+        'slug' => 'king',
+        'name' => 'King',
+        'location_type' => 'kingdom',
+        'tier' => 7,
+    ]);
+
+    $otherKing = User::factory()->create();
+    PlayerRole::factory()->create([
+        'user_id' => $otherKing->id,
+        'role_id' => $kingRole->id,
+        'location_type' => 'kingdom',
+        'location_id' => $otherKingdom->id,
+        'status' => 'active',
+    ]);
+
+    $this->actingAs($otherKing)
+        ->putJson("/baronies/{$data['barony']->id}/trade-routes/{$data['route']->id}", [
+            'name' => 'Foreign King',
+            'danger_level' => 'safe',
+        ])
+        ->assertForbidden();
+});
