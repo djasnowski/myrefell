@@ -101,11 +101,11 @@ class GatheringService
                 ['name' => 'Sunblossom', 'weight' => 40, 'min_level' => 8, 'xp_bonus' => 8],
                 // Intermediate herbs (Level 10-25)
                 ['name' => 'Stoneroot', 'weight' => 35, 'min_level' => 12, 'xp_bonus' => 12],
-                ['name' => 'Moonpetal', 'weight' => 30, 'min_level' => 15, 'xp_bonus' => 15],
+                ['name' => 'Bloodroot', 'weight' => 30, 'min_level' => 15, 'xp_bonus' => 15],
                 ['name' => 'Nightshade', 'weight' => 28, 'min_level' => 18, 'xp_bonus' => 18],
                 ['name' => 'Ironbark', 'weight' => 25, 'min_level' => 22, 'xp_bonus' => 22],
                 // Advanced herbs (Level 25-40)
-                ['name' => 'Bloodroot', 'weight' => 22, 'min_level' => 25, 'xp_bonus' => 25],
+                ['name' => 'Moonpetal', 'weight' => 22, 'min_level' => 25, 'xp_bonus' => 25],
                 ['name' => 'Hawkeye Leaf', 'weight' => 20, 'min_level' => 28, 'xp_bonus' => 28],
                 ['name' => 'Swiftfoot Moss', 'weight' => 18, 'min_level' => 32, 'xp_bonus' => 32],
                 ['name' => 'Ghostcap Mushroom', 'weight' => 15, 'min_level' => 35, 'xp_bonus' => 35],
