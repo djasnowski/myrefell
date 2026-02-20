@@ -394,4 +394,145 @@ class TradeRouteController extends Controller
             'route_id' => $route->id,
         ]);
     }
+
+    /**
+     * Update a trade route for a barony.
+     */
+    public function updateBaronyRoute(Request $request, Barony $barony, TradeRoute $tradeRoute)
+    {
+        $user = $request->user();
+
+        // Check if user is baron of this barony
+        $baronRole = Role::where('slug', 'baron')->first();
+        $isBaron = $baronRole && PlayerRole::where('user_id', $user->id)
+            ->where('role_id', $baronRole->id)
+            ->where('location_type', 'barony')
+            ->where('location_id', $barony->id)
+            ->active()
+            ->exists();
+
+        if (! $isBaron) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You must be the Baron of this barony to update trade routes.',
+            ], 403);
+        }
+
+        // Verify the route belongs to this barony (origin is within barony)
+        if (! $this->routeBelongsToBarony($tradeRoute, $barony)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This trade route does not belong to your barony.',
+            ], 403);
+        }
+
+        // Block editing if there are active caravans on the route
+        $activeCaravans = $tradeRoute->caravans()
+            ->whereIn('status', [
+                Caravan::STATUS_PREPARING,
+                Caravan::STATUS_TRAVELING,
+                Caravan::STATUS_RETURNING,
+            ])
+            ->count();
+
+        if ($activeCaravans > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot edit this route while {$activeCaravans} caravan(s) are active on it.",
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'danger_level' => 'required|in:safe,moderate,dangerous,perilous',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $banditChance = match ($validated['danger_level']) {
+            'safe' => 5,
+            'moderate' => 15,
+            'dangerous' => 30,
+            'perilous' => 50,
+            default => 10,
+        };
+
+        $tradeRoute->update([
+            'name' => $validated['name'],
+            'danger_level' => $validated['danger_level'],
+            'bandit_chance' => $banditChance,
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Trade route updated successfully.',
+        ]);
+    }
+
+    /**
+     * Deactivate a trade route for a barony.
+     */
+    public function deleteBaronyRoute(Request $request, Barony $barony, TradeRoute $tradeRoute)
+    {
+        $user = $request->user();
+
+        // Check if user is baron of this barony
+        $baronRole = Role::where('slug', 'baron')->first();
+        $isBaron = $baronRole && PlayerRole::where('user_id', $user->id)
+            ->where('role_id', $baronRole->id)
+            ->where('location_type', 'barony')
+            ->where('location_id', $barony->id)
+            ->active()
+            ->exists();
+
+        if (! $isBaron) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You must be the Baron of this barony to delete trade routes.',
+            ], 403);
+        }
+
+        // Verify the route belongs to this barony
+        if (! $this->routeBelongsToBarony($tradeRoute, $barony)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This trade route does not belong to your barony.',
+            ], 403);
+        }
+
+        // Block deletion if there are active caravans on the route
+        $activeCaravans = $tradeRoute->caravans()
+            ->whereIn('status', [
+                Caravan::STATUS_PREPARING,
+                Caravan::STATUS_TRAVELING,
+                Caravan::STATUS_RETURNING,
+            ])
+            ->count();
+
+        if ($activeCaravans > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot delete this route while {$activeCaravans} caravan(s) are active on it.",
+            ], 422);
+        }
+
+        $tradeRoute->update(['is_active' => false]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Trade route has been removed.',
+        ]);
+    }
+
+    /**
+     * Check if a trade route's origin belongs to the given barony.
+     */
+    private function routeBelongsToBarony(TradeRoute $tradeRoute, Barony $barony): bool
+    {
+        $baronyVillageIds = $barony->villages->pluck('id')->toArray();
+        $baronyTownIds = $barony->towns->pluck('id')->toArray();
+
+        return ($tradeRoute->origin_type === 'village' && in_array($tradeRoute->origin_id, $baronyVillageIds))
+            || ($tradeRoute->origin_type === 'town' && in_array($tradeRoute->origin_id, $baronyTownIds));
+    }
 }

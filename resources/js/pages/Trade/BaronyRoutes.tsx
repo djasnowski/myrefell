@@ -3,10 +3,14 @@ import {
     AlertTriangle,
     ArrowLeft,
     ArrowRight,
+    Check,
+    Loader2,
     MapPin,
+    Pencil,
     Plus,
     Route,
     Shield,
+    Trash2,
     Truck,
     X,
 } from "lucide-react";
@@ -96,6 +100,15 @@ export default function BaronyTradeRoutes() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
+    // Edit state
+    const [editingRouteId, setEditingRouteId] = useState<number | null>(null);
+    const [editData, setEditData] = useState({ name: "", danger_level: "", notes: "" });
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Delete state
+    const [deletingRouteId, setDeletingRouteId] = useState<number | null>(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
         { title: "Baronies", href: "/baronies" },
@@ -119,6 +132,87 @@ export default function BaronyTradeRoutes() {
         }
         const [type, id] = value.split(":");
         setFormData({ ...formData, destination_id: id, destination_type: type });
+    };
+
+    const startEditing = (route: TradeRoute) => {
+        setEditingRouteId(route.id);
+        setEditData({
+            name: route.name,
+            danger_level: route.danger_level,
+            notes: route.notes || "",
+        });
+        setError(null);
+    };
+
+    const cancelEditing = () => {
+        setEditingRouteId(null);
+        setEditData({ name: "", danger_level: "", notes: "" });
+    };
+
+    const saveEdit = async (routeId: number) => {
+        if (!editData.name.trim()) {
+            setError("Route name is required.");
+            return;
+        }
+
+        setIsSaving(true);
+        setError(null);
+
+        try {
+            const response = await fetch(`/baronies/${barony.id}/trade-routes/${routeId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
+                },
+                body: JSON.stringify(editData),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setSuccess(data.message);
+                setEditingRouteId(null);
+                router.reload();
+            } else {
+                setError(data.message);
+            }
+        } catch {
+            setError("Failed to update trade route");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const deleteRoute = async (routeId: number) => {
+        setDeletingRouteId(routeId);
+        setError(null);
+
+        try {
+            const response = await fetch(`/baronies/${barony.id}/trade-routes/${routeId}`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                            ?.content || "",
+                },
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setSuccess(data.message);
+                setConfirmDeleteId(null);
+                router.reload();
+            } else {
+                setError(data.message);
+            }
+        } catch {
+            setError("Failed to delete trade route");
+        } finally {
+            setDeletingRouteId(null);
+        }
     };
 
     const createRoute = async () => {
@@ -357,6 +451,116 @@ export default function BaronyTradeRoutes() {
                         {routes.map((route) => {
                             const dangerStyle =
                                 dangerColors[route.danger_level] || dangerColors.moderate;
+                            const isEditing = editingRouteId === route.id;
+
+                            if (isEditing) {
+                                return (
+                                    <div
+                                        key={route.id}
+                                        className={`rounded-xl border-2 border-emerald-500/50 bg-emerald-900/10 p-4`}
+                                    >
+                                        <div className="mb-3 flex items-center gap-2">
+                                            <Pencil className="h-4 w-4 text-emerald-400" />
+                                            <span className="font-pixel text-sm text-emerald-300">
+                                                Edit Route
+                                            </span>
+                                        </div>
+
+                                        <div className="mb-3">
+                                            <label className="mb-1 block font-pixel text-xs text-stone-400">
+                                                Route Name
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={editData.name}
+                                                onChange={(e) =>
+                                                    setEditData({
+                                                        ...editData,
+                                                        name: e.target.value,
+                                                    })
+                                                }
+                                                maxLength={100}
+                                                className="w-full rounded border border-stone-600 bg-stone-800 px-3 py-2 font-pixel text-sm text-white focus:border-emerald-500 focus:outline-none"
+                                            />
+                                        </div>
+
+                                        <div className="mb-3">
+                                            <label className="mb-1 block font-pixel text-xs text-stone-400">
+                                                Danger Level
+                                            </label>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {Object.entries(dangerColors).map(
+                                                    ([level, colors]) => (
+                                                        <button
+                                                            key={level}
+                                                            type="button"
+                                                            onClick={() =>
+                                                                setEditData({
+                                                                    ...editData,
+                                                                    danger_level: level,
+                                                                })
+                                                            }
+                                                            className={`rounded border-2 p-2 text-center transition ${
+                                                                editData.danger_level === level
+                                                                    ? `${colors.border} ${colors.bg}`
+                                                                    : "border-stone-600 bg-stone-800 hover:border-stone-500"
+                                                            }`}
+                                                        >
+                                                            <span
+                                                                className={`font-pixel text-xs ${editData.danger_level === level ? colors.text : "text-white"}`}
+                                                            >
+                                                                {colors.label}
+                                                            </span>
+                                                        </button>
+                                                    ),
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="mb-3">
+                                            <label className="mb-1 block font-pixel text-xs text-stone-400">
+                                                Notes (optional)
+                                            </label>
+                                            <textarea
+                                                value={editData.notes}
+                                                onChange={(e) =>
+                                                    setEditData({
+                                                        ...editData,
+                                                        notes: e.target.value,
+                                                    })
+                                                }
+                                                maxLength={500}
+                                                rows={2}
+                                                className="w-full rounded border border-stone-600 bg-stone-800 px-3 py-2 font-pixel text-xs text-white focus:border-emerald-500 focus:outline-none"
+                                                placeholder="Optional notes about this route..."
+                                            />
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={cancelEditing}
+                                                className="flex flex-1 items-center justify-center gap-1 rounded border border-stone-600 bg-stone-700/50 py-2 font-pixel text-xs text-stone-300 hover:bg-stone-700"
+                                            >
+                                                <X className="h-3 w-3" />
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={() => saveEdit(route.id)}
+                                                disabled={isSaving}
+                                                className="flex flex-1 items-center justify-center gap-1 rounded bg-emerald-600 py-2 font-pixel text-xs text-white hover:bg-emerald-500 disabled:opacity-50"
+                                            >
+                                                {isSaving ? (
+                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                ) : (
+                                                    <Check className="h-3 w-3" />
+                                                )}
+                                                Save
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            }
+
                             return (
                                 <div
                                     key={route.id}
@@ -441,6 +645,44 @@ export default function BaronyTradeRoutes() {
                                             </p>
                                         </div>
                                     )}
+
+                                    {/* Edit / Delete Buttons */}
+                                    <div className="mt-3 flex gap-2">
+                                        <button
+                                            onClick={() =>
+                                                route.active_caravans_count > 0
+                                                    ? setError(
+                                                          "Cannot edit a route while caravans are active on it.",
+                                                      )
+                                                    : startEditing(route)
+                                            }
+                                            className={`flex flex-1 items-center justify-center gap-1 rounded border py-1.5 font-pixel text-[10px] transition ${
+                                                route.active_caravans_count > 0
+                                                    ? "cursor-not-allowed border-stone-700 bg-stone-800/30 text-stone-600"
+                                                    : "border-stone-600 bg-stone-700/50 text-stone-300 hover:bg-stone-700"
+                                            }`}
+                                        >
+                                            <Pencil className="h-3 w-3" />
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={() =>
+                                                route.active_caravans_count > 0
+                                                    ? setError(
+                                                          "Cannot delete a route while caravans are active on it.",
+                                                      )
+                                                    : setConfirmDeleteId(route.id)
+                                            }
+                                            className={`flex flex-1 items-center justify-center gap-1 rounded border py-1.5 font-pixel text-[10px] transition ${
+                                                route.active_caravans_count > 0
+                                                    ? "cursor-not-allowed border-stone-700 bg-stone-800/30 text-stone-600"
+                                                    : "border-red-600/50 bg-red-900/20 text-red-400 hover:bg-red-900/40"
+                                            }`}
+                                        >
+                                            <Trash2 className="h-3 w-3" />
+                                            Delete
+                                        </button>
+                                    </div>
                                 </div>
                             );
                         })}
@@ -484,6 +726,57 @@ export default function BaronyTradeRoutes() {
                     </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {confirmDeleteId !== null && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+                    <div className="mx-4 w-full max-w-md rounded-xl border-2 border-red-600/40 bg-stone-900 p-6">
+                        <div className="mb-4 flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-900/40">
+                                <Trash2 className="h-5 w-5 text-red-400" />
+                            </div>
+                            <h3 className="font-pixel text-lg text-red-300">Delete Trade Route</h3>
+                        </div>
+
+                        <div className="mb-4 space-y-2 font-pixel text-xs text-stone-400">
+                            <p>
+                                Are you sure you want to delete{" "}
+                                <span className="text-white">
+                                    {routes.find((r) => r.id === confirmDeleteId)?.name}
+                                </span>
+                                ?
+                            </p>
+                            <p>This will:</p>
+                            <ul className="ml-4 list-disc space-y-1 text-stone-500">
+                                <li>Remove the route from the trade network</li>
+                                <li>Prevent new caravans from using this route</li>
+                                <li>The route cannot be recovered once deleted</li>
+                            </ul>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="flex flex-1 items-center justify-center gap-1 rounded border border-stone-600 bg-stone-700/50 py-2 font-pixel text-xs text-stone-300 hover:bg-stone-700"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => deleteRoute(confirmDeleteId)}
+                                disabled={deletingRouteId === confirmDeleteId}
+                                className="flex flex-1 items-center justify-center gap-1 rounded border border-red-600/50 bg-red-900/30 py-2 font-pixel text-xs text-red-300 hover:bg-red-800/40 disabled:opacity-50"
+                            >
+                                {deletingRouteId === confirmDeleteId ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                    <Trash2 className="h-3 w-3" />
+                                )}
+                                Delete Route
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }

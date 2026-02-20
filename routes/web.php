@@ -859,6 +859,8 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
     Route::post('trade/routes', [TradeRouteController::class, 'store'])->name('trade.routes.store');
     Route::get('baronies/{barony}/trade-routes', [TradeRouteController::class, 'baronyTradeRoutes'])->name('baronies.trade-routes');
     Route::post('baronies/{barony}/trade-routes', [TradeRouteController::class, 'storeBaronyRoute'])->name('baronies.trade-routes.store');
+    Route::put('baronies/{barony}/trade-routes/{tradeRoute}', [TradeRouteController::class, 'updateBaronyRoute'])->name('baronies.trade-routes.update');
+    Route::delete('baronies/{barony}/trade-routes/{tradeRoute}', [TradeRouteController::class, 'deleteBaronyRoute'])->name('baronies.trade-routes.destroy');
 
     // Caravans
     Route::get('trade/caravans', [CaravanController::class, 'index'])->name('trade.caravans');
