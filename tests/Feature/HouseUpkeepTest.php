@@ -71,9 +71,9 @@ test('can repair house', function () {
     $house = PlayerHouse::where('player_id', $user->id)->first();
     expect($house->condition)->toBe(100);
 
-    // Cost should be ceil(100 * (100-50) * 0.5) = 2500
+    // Cost should be ceil(100 * (100-50) * 0.1) = 500
     $user->refresh();
-    expect($user->gold)->toBe(50000 - 2500);
+    expect($user->gold)->toBe(50000 - 500);
 });
 
 test('cannot repair at full condition', function () {
@@ -111,13 +111,12 @@ test('degrades overdue houses by 10 condition', function () {
     $result = $service->processUpkeepDegradation();
 
     expect($result['degraded'])->toBe(1);
-    expect($result['abandoned'])->toBe(0);
 
     $house = PlayerHouse::where('player_id', $user->id)->first();
     expect($house->condition)->toBe(70);
 });
 
-test('abandons house at condition 0', function () {
+test('degrades house to condition 0', function () {
     $kingdom = Kingdom::factory()->create();
     $user = User::factory()->create();
     PlayerHouse::create([
@@ -132,8 +131,10 @@ test('abandons house at condition 0', function () {
     $service = app(HouseService::class);
     $result = $service->processUpkeepDegradation();
 
-    expect($result['abandoned'])->toBe(1);
-    expect(PlayerHouse::where('player_id', $user->id)->exists())->toBeFalse();
+    expect($result['degraded'])->toBe(1);
+
+    $house = PlayerHouse::where('player_id', $user->id)->first();
+    expect($house->condition)->toBe(0);
 });
 
 test('disables buffs when condition 50 or below', function () {

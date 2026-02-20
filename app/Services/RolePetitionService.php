@@ -86,6 +86,14 @@ class RolePetitionService
             ];
         }
 
+        // King cannot be petitioned (use no-confidence vote)
+        if ($role->slug === 'king') {
+            return [
+                'success' => false,
+                'message' => 'The King cannot be challenged via petition. Use a no-confidence vote instead.',
+            ];
+        }
+
         // Find the authority figure
         $authority = $this->getAuthorityForRole($targetPlayerRole);
 

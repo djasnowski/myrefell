@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\HouseRoom;
 use App\Models\Kingdom;
 use App\Models\PlayerHouse;
 use App\Models\User;
@@ -17,7 +18,7 @@ test('ranks houses by value', function () {
     $kingdom = Kingdom::factory()->create();
 
     $user1 = User::factory()->create();
-    PlayerHouse::create([
+    $house1 = PlayerHouse::create([
         'player_id' => $user1->id,
         'name' => 'Small House',
         'tier' => 'cottage',
@@ -25,9 +26,10 @@ test('ranks houses by value', function () {
         'upkeep_due_at' => now()->addDays(7),
         'kingdom_id' => $kingdom->id,
     ]);
+    HouseRoom::create(['player_house_id' => $house1->id, 'room_type' => 'bedroom', 'grid_x' => 0, 'grid_y' => 0]);
 
     $user2 = User::factory()->create();
-    PlayerHouse::create([
+    $house2 = PlayerHouse::create([
         'player_id' => $user2->id,
         'name' => 'Big House',
         'tier' => 'house',
@@ -35,6 +37,7 @@ test('ranks houses by value', function () {
         'upkeep_due_at' => now()->addDays(7),
         'kingdom_id' => $kingdom->id,
     ]);
+    HouseRoom::create(['player_house_id' => $house2->id, 'room_type' => 'bedroom', 'grid_x' => 0, 'grid_y' => 0]);
 
     $this->get('/leaderboard?tab=houses')
         ->assertSuccessful()
@@ -50,7 +53,7 @@ test('excludes banned players from house leaderboard', function () {
     $kingdom = Kingdom::factory()->create();
 
     $bannedUser = User::factory()->create(['banned_at' => now()]);
-    PlayerHouse::create([
+    $bannedHouse = PlayerHouse::create([
         'player_id' => $bannedUser->id,
         'name' => 'Banned House',
         'tier' => 'manor',
@@ -58,9 +61,10 @@ test('excludes banned players from house leaderboard', function () {
         'upkeep_due_at' => now()->addDays(7),
         'kingdom_id' => $kingdom->id,
     ]);
+    HouseRoom::create(['player_house_id' => $bannedHouse->id, 'room_type' => 'bedroom', 'grid_x' => 0, 'grid_y' => 0]);
 
     $normalUser = User::factory()->create();
-    PlayerHouse::create([
+    $normalHouse = PlayerHouse::create([
         'player_id' => $normalUser->id,
         'name' => 'Normal House',
         'tier' => 'cottage',
@@ -68,6 +72,7 @@ test('excludes banned players from house leaderboard', function () {
         'upkeep_due_at' => now()->addDays(7),
         'kingdom_id' => $kingdom->id,
     ]);
+    HouseRoom::create(['player_house_id' => $normalHouse->id, 'room_type' => 'bedroom', 'grid_x' => 0, 'grid_y' => 0]);
 
     $this->get('/leaderboard?tab=houses')
         ->assertSuccessful()

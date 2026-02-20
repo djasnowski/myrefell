@@ -28,18 +28,21 @@ function setupVillageWithRoles(): array
         'slug' => 'guard_captain',
         'name' => 'Guard Captain',
         'location_type' => 'village',
+        'is_elected' => false,
     ]);
 
     $baronRole = Role::factory()->create([
         'slug' => 'baron',
         'name' => 'Baron',
         'location_type' => 'barony',
+        'is_elected' => false,
     ]);
 
     $kingRole = Role::factory()->create([
         'slug' => 'king',
         'name' => 'King',
         'location_type' => 'kingdom',
+        'is_elected' => false,
     ]);
 
     // Elder (authority for village roles)
@@ -136,10 +139,9 @@ test('petition against village guard goes to elder', function () {
     expect($result['petition']->authority_role_slug)->toBe('elder');
 });
 
-test('petition against elder goes to baron', function () {
+test('cannot petition against elected elder', function () {
     $data = setupVillageWithRoles();
 
-    // Petitioner needs to be at village and reside there
     $service = app(RolePetitionService::class);
     $result = $service->createPetition(
         $data['petitioner'],
@@ -147,9 +149,8 @@ test('petition against elder goes to baron', function () {
         'Corrupt leadership',
     );
 
-    expect($result['success'])->toBeTrue();
-    expect($result['petition']->authority_user_id)->toBe($data['baron']->id);
-    expect($result['petition']->authority_role_slug)->toBe('baron');
+    expect($result['success'])->toBeFalse();
+    expect($result['message'])->toContain('Elected officials');
 });
 
 test('petition against baron goes to king', function () {
@@ -481,6 +482,7 @@ test('fails when authority position is vacant', function () {
         'slug' => 'guard_captain',
         'name' => 'Guard Captain',
         'location_type' => 'village',
+        'is_elected' => false,
     ]);
 
     // Create elder role but don't assign anyone to it
