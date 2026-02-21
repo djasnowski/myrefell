@@ -17,6 +17,7 @@ import {
     Home,
     Landmark,
     MessageSquare,
+    Newspaper,
     Pickaxe,
     Receipt,
     Search,
@@ -82,6 +83,7 @@ const iconMap: Record<string, LucideIcon> = {
     footprints: Footprints,
     target: Target,
     home: Home,
+    newspaper: Newspaper,
 };
 
 export function ServiceCard({

@@ -144,6 +144,7 @@ interface Props {
     resident_count: number;
     current_user_id: number;
     is_baron: boolean;
+    can_manage_routes: boolean;
     is_visitor: boolean;
     is_resident: boolean;
     can_migrate: boolean;
@@ -222,6 +223,7 @@ export default function BaronyShow({
     resident_count = 0,
     current_user_id,
     is_baron,
+    can_manage_routes,
     is_visitor,
     is_resident,
     can_migrate,
@@ -431,7 +433,7 @@ export default function BaronyShow({
                                     ({trade_routes.length})
                                 </span>
                             </div>
-                            {is_baron && (
+                            {can_manage_routes && (
                                 <Link
                                     href={`/baronies/${barony.id}/trade-routes`}
                                     className="flex items-center gap-1 rounded border border-emerald-600/50 bg-emerald-900/30 px-2 py-1 text-xs text-emerald-300 transition hover:bg-emerald-800/50"

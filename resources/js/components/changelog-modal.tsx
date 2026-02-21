@@ -10,6 +10,7 @@ import {
     Link2,
     Mail,
     MessageCircle,
+    Newspaper,
     Repeat,
     Scroll,
     Shield,
@@ -26,7 +27,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 // Update this when adding new changelog entries
-export const CURRENT_CHANGELOG_VERSION = "0.9.0";
+export const CURRENT_CHANGELOG_VERSION = "0.10.0";
 
 interface ChangelogEntry {
     version: string;
@@ -42,6 +43,40 @@ interface ChangelogEntry {
 }
 
 const changelog: ChangelogEntry[] = [
+    {
+        version: "0.10.0",
+        date: "February 21, 2026",
+        title: "Notice Board",
+        description:
+            "Every settlement now has a Notice Board where you can publish broadsheets for your fellow citizens to read. Write about local events, post announcements, or share your thoughts with the realm. Popular broadsheets spread — earn enough endorsements and your writing reaches the entire barony or even the kingdom.",
+        icon: <Newspaper className="h-8 w-8 text-amber-500" />,
+        changes: [
+            {
+                type: "added",
+                text: "Notice Board service available at villages, towns, baronies, duchies, and kingdoms",
+            },
+            {
+                type: "added",
+                text: "Write and publish broadsheets with a rich text editor — bold, italic, underline, headings, lists, quotes, and text alignment",
+            },
+            {
+                type: "added",
+                text: "Endorsement system — broadsheets with 5+ endorsements spread to the barony, 15+ reach the kingdom",
+            },
+            {
+                type: "added",
+                text: "Comment on broadsheets and reply to other comments",
+            },
+            {
+                type: "added",
+                text: "Tiered publishing costs — 50g at villages and towns, scaling up to 200g at kingdoms",
+            },
+            {
+                type: "added",
+                text: "One broadsheet per day — delete yours to revise and republish",
+            },
+        ],
+    },
     {
         version: "0.9.0",
         date: "February 14, 2026",

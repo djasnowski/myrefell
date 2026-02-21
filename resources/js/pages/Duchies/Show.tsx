@@ -1,5 +1,5 @@
 import { Head, Link } from "@inertiajs/react";
-import { Crown, Shield } from "lucide-react";
+import { Crown, Newspaper, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RulerDisplay } from "@/components/ui/legitimacy-badge";
@@ -166,6 +166,37 @@ export default function DuchyShow({ duchy, roles, current_user_id, is_duke }: Pr
                     title="Duke"
                     isCurrentUser={duchy.duke?.id === current_user_id}
                 />
+
+                {/* Duchy Services */}
+                <div>
+                    <h2 className="mb-4 font-pixel text-lg text-stone-300">Duchy Services</h2>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <Link
+                            href={`/duchies/${duchy.id}/notice-board`}
+                            className="flex items-center gap-3 rounded-lg border-2 border-amber-600/50 bg-amber-900/20 p-4 transition hover:bg-amber-800/30"
+                        >
+                            <Newspaper className="h-8 w-8 text-amber-400" />
+                            <div>
+                                <span className="font-pixel text-sm text-amber-300">
+                                    Notice Board
+                                </span>
+                                <p className="text-xs text-stone-500">
+                                    Read and publish broadsheets
+                                </p>
+                            </div>
+                        </Link>
+                        <Link
+                            href={`/duchies/${duchy.id}/roles`}
+                            className="flex items-center gap-3 rounded-lg border-2 border-amber-600/50 bg-amber-900/20 p-4 transition hover:bg-amber-800/30"
+                        >
+                            <Shield className="h-8 w-8 text-amber-400" />
+                            <div>
+                                <span className="font-pixel text-sm text-amber-300">Roles</span>
+                                <p className="text-xs text-stone-500">Officials & positions</p>
+                            </div>
+                        </Link>
+                    </div>
+                </div>
 
                 {/* Duchy Roles */}
                 <div>

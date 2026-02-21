@@ -17,6 +17,7 @@ import {
     HeartPulse,
     Landmark,
     MessageSquare,
+    Newspaper,
     Pickaxe,
     Receipt,
     Shield,
@@ -72,6 +73,7 @@ const iconMap: Record<string, LucideIcon> = {
     warehouse: Warehouse,
     "flask-conical": FlaskConical,
     footprints: Footprints,
+    newspaper: Newspaper,
 };
 
 // Location type to URL path mapping
@@ -103,6 +105,7 @@ const locationServices: Record<string, string[]> = {
         "apothecary",
         "farming",
         "agility",
+        "notice-board",
     ],
     town: [
         "training",
@@ -123,6 +126,7 @@ const locationServices: Record<string, string[]> = {
         "apothecary",
         "farming",
         "agility",
+        "notice-board",
     ],
     barony: [
         "training",
@@ -142,6 +146,7 @@ const locationServices: Record<string, string[]> = {
         "taxes",
         "apothecary",
         "agility",
+        "notice-board",
     ],
     duchy: [
         "training",
@@ -155,6 +160,7 @@ const locationServices: Record<string, string[]> = {
         "thieving",
         "apothecary",
         "agility",
+        "notice-board",
     ],
     kingdom: [
         "training",
@@ -167,6 +173,7 @@ const locationServices: Record<string, string[]> = {
         "tavern",
         "thieving",
         "apothecary",
+        "notice-board",
     ],
 };
 

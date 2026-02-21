@@ -160,6 +160,12 @@ class LocationServices
             'icon' => 'hammer',
             'route' => 'construction',
         ],
+        'notice-board' => [
+            'name' => 'Notice Board',
+            'description' => 'Read and publish broadsheets',
+            'icon' => 'newspaper',
+            'route' => 'notice-board',
+        ],
         'house' => [
             'name' => 'My House',
             'description' => 'Manage your home',
@@ -194,6 +200,7 @@ class LocationServices
             'agility',
             'sawmill',
             'construction',
+            'notice-board',
             'house',     // Only if player has a house
         ],
         'town' => [
@@ -218,6 +225,7 @@ class LocationServices
             'agility',
             'sawmill',
             'construction',
+            'notice-board',
             'house',     // Only if player has a house
         ],
         'barony' => [
@@ -241,6 +249,7 @@ class LocationServices
             'agility',
             'sawmill',
             'construction',
+            'notice-board',
             'house',
         ],
         'duchy' => [
@@ -257,6 +266,7 @@ class LocationServices
             'apothecary',
             'agility',
             'construction',
+            'notice-board',
             'house',
         ],
         'kingdom' => [
@@ -273,6 +283,7 @@ class LocationServices
             'thieving',
             'apothecary',
             'construction',
+            'notice-board',
             'house',
         ],
     ];

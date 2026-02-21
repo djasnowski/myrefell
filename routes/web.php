@@ -20,6 +20,7 @@ use App\Http\Controllers\BankController;
 use App\Http\Controllers\BaronyController;
 use App\Http\Controllers\BattleController;
 use App\Http\Controllers\BlessingController;
+use App\Http\Controllers\BroadsheetController;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\CalendarController;
@@ -465,6 +466,13 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('sawmill/convert', [SawmillController::class, 'convert'])->name('sawmill.convert');
         Route::get('construction', [PlayerConstructionController::class, 'index'])->name('construction');
         Route::post('construction/contract', [PlayerConstructionController::class, 'doContract'])->name('construction.contract');
+        Route::get('notice-board', [BroadsheetController::class, 'index'])->name('notice-board');
+        Route::get('notice-board/{broadsheet}', [BroadsheetController::class, 'show'])->name('notice-board.show');
+        Route::post('notice-board', [BroadsheetController::class, 'store'])->name('notice-board.store');
+        Route::delete('notice-board/{broadsheet}', [BroadsheetController::class, 'destroy'])->name('notice-board.destroy');
+        Route::post('notice-board/{broadsheet}/react', [BroadsheetController::class, 'react'])->name('notice-board.react');
+        Route::post('notice-board/{broadsheet}/comments', [BroadsheetController::class, 'comment'])->name('notice-board.comment');
+        Route::delete('notice-board/{broadsheetComment}/delete-comment', [BroadsheetController::class, 'deleteComment'])->name('notice-board.comment.delete');
     });
 
     // Location-scoped services: Towns
@@ -525,6 +533,13 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('sawmill/convert', [SawmillController::class, 'convert'])->name('sawmill.convert');
         Route::get('construction', [PlayerConstructionController::class, 'index'])->name('construction');
         Route::post('construction/contract', [PlayerConstructionController::class, 'doContract'])->name('construction.contract');
+        Route::get('notice-board', [BroadsheetController::class, 'index'])->name('notice-board');
+        Route::get('notice-board/{broadsheet}', [BroadsheetController::class, 'show'])->name('notice-board.show');
+        Route::post('notice-board', [BroadsheetController::class, 'store'])->name('notice-board.store');
+        Route::delete('notice-board/{broadsheet}', [BroadsheetController::class, 'destroy'])->name('notice-board.destroy');
+        Route::post('notice-board/{broadsheet}/react', [BroadsheetController::class, 'react'])->name('notice-board.react');
+        Route::post('notice-board/{broadsheet}/comments', [BroadsheetController::class, 'comment'])->name('notice-board.comment');
+        Route::delete('notice-board/{broadsheetComment}/delete-comment', [BroadsheetController::class, 'deleteComment'])->name('notice-board.comment.delete');
     });
 
     // Location-scoped services: Baronies
@@ -575,6 +590,13 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('sawmill/convert', [SawmillController::class, 'convert'])->name('sawmill.convert');
         Route::get('construction', [PlayerConstructionController::class, 'index'])->name('construction');
         Route::post('construction/contract', [PlayerConstructionController::class, 'doContract'])->name('construction.contract');
+        Route::get('notice-board', [BroadsheetController::class, 'index'])->name('notice-board');
+        Route::get('notice-board/{broadsheet}', [BroadsheetController::class, 'show'])->name('notice-board.show');
+        Route::post('notice-board', [BroadsheetController::class, 'store'])->name('notice-board.store');
+        Route::delete('notice-board/{broadsheet}', [BroadsheetController::class, 'destroy'])->name('notice-board.destroy');
+        Route::post('notice-board/{broadsheet}/react', [BroadsheetController::class, 'react'])->name('notice-board.react');
+        Route::post('notice-board/{broadsheet}/comments', [BroadsheetController::class, 'comment'])->name('notice-board.comment');
+        Route::delete('notice-board/{broadsheetComment}/delete-comment', [BroadsheetController::class, 'deleteComment'])->name('notice-board.comment.delete');
     });
 
     // Location-scoped services: Duchies
@@ -623,6 +645,13 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('cults/{religion}/hideout/projects/{project}/complete', [CultHideoutController::class, 'completeProject'])->name('cults.hideout.complete');
         Route::get('construction', [PlayerConstructionController::class, 'index'])->name('construction');
         Route::post('construction/contract', [PlayerConstructionController::class, 'doContract'])->name('construction.contract');
+        Route::get('notice-board', [BroadsheetController::class, 'index'])->name('notice-board');
+        Route::get('notice-board/{broadsheet}', [BroadsheetController::class, 'show'])->name('notice-board.show');
+        Route::post('notice-board', [BroadsheetController::class, 'store'])->name('notice-board.store');
+        Route::delete('notice-board/{broadsheet}', [BroadsheetController::class, 'destroy'])->name('notice-board.destroy');
+        Route::post('notice-board/{broadsheet}/react', [BroadsheetController::class, 'react'])->name('notice-board.react');
+        Route::post('notice-board/{broadsheet}/comments', [BroadsheetController::class, 'comment'])->name('notice-board.comment');
+        Route::delete('notice-board/{broadsheetComment}/delete-comment', [BroadsheetController::class, 'deleteComment'])->name('notice-board.comment.delete');
     });
 
     // Location-scoped services: Kingdoms
@@ -668,6 +697,13 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('cults/{religion}/hideout/projects/{project}/complete', [CultHideoutController::class, 'completeProject'])->name('cults.hideout.complete');
         Route::get('construction', [PlayerConstructionController::class, 'index'])->name('construction');
         Route::post('construction/contract', [PlayerConstructionController::class, 'doContract'])->name('construction.contract');
+        Route::get('notice-board', [BroadsheetController::class, 'index'])->name('notice-board');
+        Route::get('notice-board/{broadsheet}', [BroadsheetController::class, 'show'])->name('notice-board.show');
+        Route::post('notice-board', [BroadsheetController::class, 'store'])->name('notice-board.store');
+        Route::delete('notice-board/{broadsheet}', [BroadsheetController::class, 'destroy'])->name('notice-board.destroy');
+        Route::post('notice-board/{broadsheet}/react', [BroadsheetController::class, 'react'])->name('notice-board.react');
+        Route::post('notice-board/{broadsheet}/comments', [BroadsheetController::class, 'comment'])->name('notice-board.comment');
+        Route::delete('notice-board/{broadsheetComment}/delete-comment', [BroadsheetController::class, 'deleteComment'])->name('notice-board.comment.delete');
     });
 
     // Crafting Docket
@@ -732,6 +768,9 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
     Route::get('mail/{playerMail}', [MailController::class, 'show'])->name('mail.show');
     Route::post('mail/send', [MailController::class, 'send'])->name('mail.send');
     Route::post('mail/{playerMail}/delete', [MailController::class, 'delete'])->name('mail.delete');
+
+    // Broadsheets (global read-only show route for shared links)
+    Route::get('broadsheets/{broadsheet}', [BroadsheetController::class, 'showGlobal'])->name('broadsheets.show');
 
     // Migration (moving between locations)
     Route::get('migration', [MigrationController::class, 'index'])->name('migration.index');
