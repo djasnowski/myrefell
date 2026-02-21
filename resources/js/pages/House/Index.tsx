@@ -3516,6 +3516,123 @@ const storageRarityColors: Record<string, string> = {
     legendary: "border-amber-500 bg-amber-900/30",
 };
 
+function FurnitureHotspots({
+    room,
+    constructionLevel,
+    loading,
+    canAct,
+    onBuildFurniture,
+    onDemolish,
+}: {
+    room: Room;
+    constructionLevel: number;
+    loading: boolean;
+    canAct: boolean;
+    onBuildFurniture: (roomId: number, hotspotSlug: string, furnitureKey: string) => void;
+    onDemolish: (roomId: number, hotspotSlug: string) => void;
+}) {
+    const [expandedHotspot, setExpandedHotspot] = useState<string | null>(null);
+
+    return (
+        <div className="mb-4 space-y-2">
+            {Object.entries(room.hotspots).map(([slug, hotspot]) => (
+                <div
+                    key={slug}
+                    className="rounded-md border border-stone-700/50 bg-stone-800/30 p-2.5"
+                >
+                    <div className="flex items-center justify-between">
+                        <span className="font-pixel text-xs text-stone-300">{hotspot.name}</span>
+                        {hotspot.current ? (
+                            <div className="flex items-center gap-1.5">
+                                <span className="font-pixel text-xs text-green-400">
+                                    {hotspot.current.name}
+                                </span>
+                                {canAct && (
+                                    <button
+                                        onClick={() => onDemolish(room.id, slug)}
+                                        disabled={loading}
+                                        className="text-red-500/50 hover:text-red-400"
+                                        title="Demolish"
+                                    >
+                                        <Trash2 className="h-3 w-3" />
+                                    </button>
+                                )}
+                            </div>
+                        ) : (
+                            <span className="font-pixel text-[10px] text-stone-600">Empty</span>
+                        )}
+                    </div>
+
+                    {canAct && hotspot.options.length > 0 && (
+                        <button
+                            onClick={() =>
+                                setExpandedHotspot(expandedHotspot === slug ? null : slug)
+                            }
+                            className="mt-1 font-pixel text-xs text-amber-400/70 hover:text-amber-400"
+                        >
+                            {expandedHotspot === slug ? "Hide options" : "Build options"}
+                        </button>
+                    )}
+
+                    {expandedHotspot === slug && (
+                        <div className="mt-2 space-y-1.5">
+                            {hotspot.options.map((opt) => {
+                                const isCurrentlyBuilt = hotspot.current?.key === opt.key;
+                                const meetsLevel = constructionLevel >= opt.level;
+
+                                return (
+                                    <div
+                                        key={opt.key}
+                                        className={`rounded border p-2 ${isCurrentlyBuilt ? "border-green-600/50 bg-green-900/20" : "border-stone-700/30 bg-stone-900/30"}`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span
+                                                className={`font-pixel text-xs ${isCurrentlyBuilt ? "text-green-300" : "text-stone-300"}`}
+                                            >
+                                                {opt.name}
+                                            </span>
+                                            {!meetsLevel && (
+                                                <span className="flex items-center gap-0.5 font-pixel text-xs text-stone-600">
+                                                    <Lock className="h-2.5 w-2.5" /> Lv {opt.level}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="mt-0.5 font-pixel text-xs text-stone-500">
+                                            {Object.entries(opt.materials)
+                                                .map(([m, q]) => `${q} ${m}`)
+                                                .join(", ")}{" "}
+                                            &bull; +{opt.xp} XP
+                                            {opt.effect &&
+                                                Object.entries(opt.effect).map(([k, v]) => (
+                                                    <span key={k} className="text-cyan-400">
+                                                        {" "}
+                                                        &bull; +{v as number}%{" "}
+                                                        {k.replace(/_/g, " ")}
+                                                    </span>
+                                                ))}
+                                        </div>
+                                        {!isCurrentlyBuilt && meetsLevel && (
+                                            <button
+                                                onClick={() =>
+                                                    onBuildFurniture(room.id, slug, opt.key)
+                                                }
+                                                disabled={loading}
+                                                className="mt-1.5 flex items-center gap-1 rounded border border-amber-600/40 bg-amber-900/30 px-2 py-0.5 font-pixel text-xs text-amber-300 transition-colors hover:bg-amber-800/30 disabled:opacity-40"
+                                            >
+                                                <Hammer className="h-3 w-3" /> Build
+                                            </button>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+}
+
 function KitchenPanel({
     room,
     kitchen,
@@ -3621,67 +3738,14 @@ function KitchenPanel({
                 </button>
             </div>
 
-            {/* Furniture Hotspots */}
-            <div className="mb-4 space-y-2">
-                {Object.entries(room.hotspots).map(([slug, hotspot]) => (
-                    <div
-                        key={slug}
-                        className="rounded-md border border-stone-700/50 bg-stone-800/30 p-2.5"
-                    >
-                        <div className="flex items-center justify-between">
-                            <span className="font-pixel text-xs text-stone-400">
-                                {hotspot.name}
-                            </span>
-                            {hotspot.current ? (
-                                <div className="flex items-center gap-2">
-                                    <span className="font-pixel text-xs text-green-400">
-                                        {hotspot.current.name}
-                                    </span>
-                                    {canAct && (
-                                        <button
-                                            onClick={() => onDemolish(room.id, slug)}
-                                            disabled={loading}
-                                            className="rounded p-0.5 text-red-400/60 hover:bg-red-900/20 hover:text-red-400"
-                                        >
-                                            <Trash2 className="h-3 w-3" />
-                                        </button>
-                                    )}
-                                </div>
-                            ) : (
-                                <span className="font-pixel text-[10px] text-stone-600">Empty</span>
-                            )}
-                        </div>
-                        {canAct && !hotspot.current && hotspot.options.length > 0 && (
-                            <div className="mt-2 space-y-1">
-                                {hotspot.options.map((opt) => {
-                                    const canBuild = constructionLevel >= opt.level;
-                                    return (
-                                        <button
-                                            key={opt.key}
-                                            onClick={() => onBuildFurniture(room.id, slug, opt.key)}
-                                            disabled={loading || !canBuild}
-                                            className={`flex w-full items-center justify-between rounded px-2 py-1 font-pixel text-[10px] transition ${
-                                                canBuild
-                                                    ? "bg-stone-700/30 text-stone-300 hover:bg-stone-700/60"
-                                                    : "cursor-not-allowed text-stone-600"
-                                            }`}
-                                        >
-                                            <span>
-                                                {opt.name} (Lv.{opt.level})
-                                            </span>
-                                            <span className="text-stone-500">
-                                                {Object.entries(opt.materials)
-                                                    .map(([m, q]) => `${q} ${m}`)
-                                                    .join(", ")}
-                                            </span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
+            <FurnitureHotspots
+                room={room}
+                constructionLevel={constructionLevel}
+                loading={loading}
+                canAct={canAct}
+                onBuildFurniture={onBuildFurniture}
+                onDemolish={onDemolish}
+            />
 
             {/* Cooking Section */}
             {kitchen ? (
@@ -3919,67 +3983,14 @@ function BedroomPanel({
                 </button>
             </div>
 
-            {/* Furniture Hotspots */}
-            <div className="mb-4 space-y-2">
-                {Object.entries(room.hotspots).map(([slug, hotspot]) => (
-                    <div
-                        key={slug}
-                        className="rounded-md border border-stone-700/50 bg-stone-800/30 p-2.5"
-                    >
-                        <div className="flex items-center justify-between">
-                            <span className="font-pixel text-xs text-stone-400">
-                                {hotspot.name}
-                            </span>
-                            {hotspot.current ? (
-                                <div className="flex items-center gap-2">
-                                    <span className="font-pixel text-xs text-green-400">
-                                        {hotspot.current.name}
-                                    </span>
-                                    {canAct && (
-                                        <button
-                                            onClick={() => onDemolish(room.id, slug)}
-                                            disabled={loading}
-                                            className="rounded p-0.5 text-red-400/60 hover:bg-red-900/20 hover:text-red-400"
-                                        >
-                                            <Trash2 className="h-3 w-3" />
-                                        </button>
-                                    )}
-                                </div>
-                            ) : (
-                                <span className="font-pixel text-[10px] text-stone-600">Empty</span>
-                            )}
-                        </div>
-                        {canAct && !hotspot.current && hotspot.options.length > 0 && (
-                            <div className="mt-2 space-y-1">
-                                {hotspot.options.map((opt) => {
-                                    const canBuild = constructionLevel >= opt.level;
-                                    return (
-                                        <button
-                                            key={opt.key}
-                                            onClick={() => onBuildFurniture(room.id, slug, opt.key)}
-                                            disabled={loading || !canBuild}
-                                            className={`flex w-full items-center justify-between rounded px-2 py-1 font-pixel text-[10px] transition ${
-                                                canBuild
-                                                    ? "bg-stone-700/30 text-stone-300 hover:bg-stone-700/60"
-                                                    : "cursor-not-allowed text-stone-600"
-                                            }`}
-                                        >
-                                            <span>
-                                                {opt.name} (Lv.{opt.level})
-                                            </span>
-                                            <span className="text-stone-500">
-                                                {Object.entries(opt.materials)
-                                                    .map(([m, q]) => `${q} ${m}`)
-                                                    .join(", ")}
-                                            </span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
+            <FurnitureHotspots
+                room={room}
+                constructionLevel={constructionLevel}
+                loading={loading}
+                canAct={canAct}
+                onBuildFurniture={onBuildFurniture}
+                onDemolish={onDemolish}
+            />
 
             {/* Rest Section */}
             {bedroom ? (
@@ -4152,67 +4163,14 @@ function SuperiorGardenPanel({
                 </button>
             </div>
 
-            {/* Furniture Hotspots */}
-            <div className="mb-4 space-y-2">
-                {Object.entries(room.hotspots).map(([slug, hotspot]) => (
-                    <div
-                        key={slug}
-                        className="rounded-md border border-stone-700/50 bg-stone-800/30 p-2.5"
-                    >
-                        <div className="flex items-center justify-between">
-                            <span className="font-pixel text-xs text-stone-400">
-                                {hotspot.name}
-                            </span>
-                            {hotspot.current ? (
-                                <div className="flex items-center gap-2">
-                                    <span className="font-pixel text-xs text-green-400">
-                                        {hotspot.current.name}
-                                    </span>
-                                    {canAct && (
-                                        <button
-                                            onClick={() => onDemolish(room.id, slug)}
-                                            disabled={loading}
-                                            className="rounded p-0.5 text-red-400/60 hover:bg-red-900/20 hover:text-red-400"
-                                        >
-                                            <Trash2 className="h-3 w-3" />
-                                        </button>
-                                    )}
-                                </div>
-                            ) : (
-                                <span className="font-pixel text-[10px] text-stone-600">Empty</span>
-                            )}
-                        </div>
-                        {canAct && !hotspot.current && hotspot.options.length > 0 && (
-                            <div className="mt-2 space-y-1">
-                                {hotspot.options.map((opt) => {
-                                    const canBuild = constructionLevel >= opt.level;
-                                    return (
-                                        <button
-                                            key={opt.key}
-                                            onClick={() => onBuildFurniture(room.id, slug, opt.key)}
-                                            disabled={loading || !canBuild}
-                                            className={`flex w-full items-center justify-between rounded px-2 py-1 font-pixel text-[10px] transition ${
-                                                canBuild
-                                                    ? "bg-stone-700/30 text-stone-300 hover:bg-stone-700/60"
-                                                    : "cursor-not-allowed text-stone-600"
-                                            }`}
-                                        >
-                                            <span>
-                                                {opt.name} (Lv.{opt.level})
-                                            </span>
-                                            <span className="text-stone-500">
-                                                {Object.entries(opt.materials)
-                                                    .map(([m, q]) => `${q} ${m}`)
-                                                    .join(", ")}
-                                            </span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
+            <FurnitureHotspots
+                room={room}
+                constructionLevel={constructionLevel}
+                loading={loading}
+                canAct={canAct}
+                onBuildFurniture={onBuildFurniture}
+                onDemolish={onDemolish}
+            />
 
             {/* Pool Section */}
             {pool ? (
@@ -4462,67 +4420,14 @@ function CraftingStationPanel({
                 </button>
             </div>
 
-            {/* Furniture Hotspots */}
-            <div className="mb-4 space-y-2">
-                {Object.entries(room.hotspots).map(([slug, hotspot]) => (
-                    <div
-                        key={slug}
-                        className="rounded-md border border-stone-700/50 bg-stone-800/30 p-2.5"
-                    >
-                        <div className="flex items-center justify-between">
-                            <span className="font-pixel text-xs text-stone-400">
-                                {hotspot.name}
-                            </span>
-                            {hotspot.current ? (
-                                <div className="flex items-center gap-2">
-                                    <span className="font-pixel text-xs text-green-400">
-                                        {hotspot.current.name}
-                                    </span>
-                                    {canAct && (
-                                        <button
-                                            onClick={() => onDemolish(room.id, slug)}
-                                            disabled={loading}
-                                            className="rounded p-0.5 text-red-400/60 hover:bg-red-900/20 hover:text-red-400"
-                                        >
-                                            <Trash2 className="h-3 w-3" />
-                                        </button>
-                                    )}
-                                </div>
-                            ) : (
-                                <span className="font-pixel text-[10px] text-stone-600">Empty</span>
-                            )}
-                        </div>
-                        {canAct && !hotspot.current && hotspot.options.length > 0 && (
-                            <div className="mt-2 space-y-1">
-                                {hotspot.options.map((opt) => {
-                                    const canBuild = constructionLevel >= opt.level;
-                                    return (
-                                        <button
-                                            key={opt.key}
-                                            onClick={() => onBuildFurniture(room.id, slug, opt.key)}
-                                            disabled={loading || !canBuild}
-                                            className={`flex w-full items-center justify-between rounded px-2 py-1 font-pixel text-[10px] transition ${
-                                                canBuild
-                                                    ? "bg-stone-700/30 text-stone-300 hover:bg-stone-700/60"
-                                                    : "cursor-not-allowed text-stone-600"
-                                            }`}
-                                        >
-                                            <span>
-                                                {opt.name} (Lv.{opt.level})
-                                            </span>
-                                            <span className="text-stone-500">
-                                                {Object.entries(opt.materials)
-                                                    .map(([m, q]) => `${q} ${m}`)
-                                                    .join(", ")}
-                                            </span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
+            <FurnitureHotspots
+                room={room}
+                constructionLevel={constructionLevel}
+                loading={loading}
+                canAct={canAct}
+                onBuildFurniture={onBuildFurniture}
+                onDemolish={onDemolish}
+            />
 
             {/* Station Info */}
             {Object.keys(recipes).length > 0 ? (
@@ -4869,67 +4774,14 @@ function ChapelPanel({
                 </button>
             </div>
 
-            {/* Furniture Hotspots */}
-            <div className="mb-4 space-y-2">
-                {Object.entries(room.hotspots).map(([slug, hotspot]) => (
-                    <div
-                        key={slug}
-                        className="rounded-md border border-stone-700/50 bg-stone-800/30 p-2.5"
-                    >
-                        <div className="flex items-center justify-between">
-                            <span className="font-pixel text-xs text-stone-400">
-                                {hotspot.name}
-                            </span>
-                            {hotspot.current ? (
-                                <div className="flex items-center gap-2">
-                                    <span className="font-pixel text-xs text-green-400">
-                                        {hotspot.current.name}
-                                    </span>
-                                    {canAct && (
-                                        <button
-                                            onClick={() => onDemolish(room.id, slug)}
-                                            disabled={loading}
-                                            className="rounded p-0.5 text-red-400/60 hover:bg-red-900/20 hover:text-red-400"
-                                        >
-                                            <Trash2 className="h-3 w-3" />
-                                        </button>
-                                    )}
-                                </div>
-                            ) : (
-                                <span className="font-pixel text-[10px] text-stone-600">Empty</span>
-                            )}
-                        </div>
-                        {canAct && !hotspot.current && hotspot.options.length > 0 && (
-                            <div className="mt-2 space-y-1">
-                                {hotspot.options.map((opt) => {
-                                    const canBuild = constructionLevel >= opt.level;
-                                    return (
-                                        <button
-                                            key={opt.key}
-                                            onClick={() => onBuildFurniture(room.id, slug, opt.key)}
-                                            disabled={loading || !canBuild}
-                                            className={`flex w-full items-center justify-between rounded px-2 py-1 font-pixel text-[10px] transition ${
-                                                canBuild
-                                                    ? "bg-stone-700/30 text-stone-300 hover:bg-stone-700/60"
-                                                    : "cursor-not-allowed text-stone-600"
-                                            }`}
-                                        >
-                                            <span>
-                                                {opt.name} (Lv.{opt.level})
-                                            </span>
-                                            <span className="text-stone-500">
-                                                {Object.entries(opt.materials)
-                                                    .map(([m, q]) => `${q} ${m}`)
-                                                    .join(", ")}
-                                            </span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
+            <FurnitureHotspots
+                room={room}
+                constructionLevel={constructionLevel}
+                loading={loading}
+                canAct={canAct}
+                onBuildFurniture={onBuildFurniture}
+                onDemolish={onDemolish}
+            />
 
             {/* Prayer Section */}
             {chapel ? (
@@ -5085,67 +4937,14 @@ function HearthPanel({
                 </button>
             </div>
 
-            {/* Furniture Hotspots */}
-            <div className="mb-4 space-y-2">
-                {Object.entries(room.hotspots).map(([slug, hotspot]) => (
-                    <div
-                        key={slug}
-                        className="rounded-md border border-stone-700/50 bg-stone-800/30 p-2.5"
-                    >
-                        <div className="flex items-center justify-between">
-                            <span className="font-pixel text-xs text-stone-400">
-                                {hotspot.name}
-                            </span>
-                            {hotspot.current ? (
-                                <div className="flex items-center gap-2">
-                                    <span className="font-pixel text-xs text-green-400">
-                                        {hotspot.current.name}
-                                    </span>
-                                    {canAct && (
-                                        <button
-                                            onClick={() => onDemolish(room.id, slug)}
-                                            disabled={loading}
-                                            className="rounded p-0.5 text-red-400/60 hover:bg-red-900/20 hover:text-red-400"
-                                        >
-                                            <Trash2 className="h-3 w-3" />
-                                        </button>
-                                    )}
-                                </div>
-                            ) : (
-                                <span className="font-pixel text-[10px] text-stone-600">Empty</span>
-                            )}
-                        </div>
-                        {canAct && !hotspot.current && hotspot.options.length > 0 && (
-                            <div className="mt-2 space-y-1">
-                                {hotspot.options.map((opt) => {
-                                    const canBuild = constructionLevel >= opt.level;
-                                    return (
-                                        <button
-                                            key={opt.key}
-                                            onClick={() => onBuildFurniture(room.id, slug, opt.key)}
-                                            disabled={loading || !canBuild}
-                                            className={`flex w-full items-center justify-between rounded px-2 py-1 font-pixel text-[10px] transition ${
-                                                canBuild
-                                                    ? "bg-stone-700/30 text-stone-300 hover:bg-stone-700/60"
-                                                    : "cursor-not-allowed text-stone-600"
-                                            }`}
-                                        >
-                                            <span>
-                                                {opt.name} (Lv.{opt.level})
-                                            </span>
-                                            <span className="text-stone-500">
-                                                {Object.entries(opt.materials)
-                                                    .map(([m, q]) => `${q} ${m}`)
-                                                    .join(", ")}
-                                            </span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
+            <FurnitureHotspots
+                room={room}
+                constructionLevel={constructionLevel}
+                loading={loading}
+                canAct={canAct}
+                onBuildFurniture={onBuildFurniture}
+                onDemolish={onDemolish}
+            />
 
             {/* Hearth Info */}
             {hearth ? (
