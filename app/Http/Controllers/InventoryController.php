@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\LocationStockpile;
 use App\Models\PlayerInventory;
+use App\Services\FoodConsumptionService;
 use App\Services\PotionBuffService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +12,10 @@ use Inertia\Response;
 
 class InventoryController extends Controller
 {
+    public function __construct(
+        protected FoodConsumptionService $foodConsumptionService
+    ) {}
+
     /**
      * Display the player's inventory.
      */
@@ -363,21 +367,24 @@ class InventoryController extends Controller
 
         $quantity = min($request->quantity ?? $slot->quantity, $slot->quantity);
 
-        // Add to location stockpile
-        $stockpile = LocationStockpile::getOrCreate(
+        // Add to granary via FoodConsumptionService (respects capacity, stores as grain)
+        $added = $this->foodConsumptionService->addFoodToLocation(
             $player->current_location_type,
             $player->current_location_id,
-            $item->id
+            $quantity
         );
-        $stockpile->addQuantity($quantity);
 
-        // Remove from player inventory
-        if ($quantity >= $slot->quantity) {
-            $slot->delete();
-        } else {
-            $slot->decrement('quantity', $quantity);
+        if ($added <= 0) {
+            return back()->withErrors(['error' => 'The granary is full.']);
         }
 
-        return back()->with('success', "Donated {$quantity} {$item->name} to the village granary!");
+        // Remove donated amount from player inventory
+        if ($added >= $slot->quantity) {
+            $slot->delete();
+        } else {
+            $slot->decrement('quantity', $added);
+        }
+
+        return back()->with('success', "Donated {$added} {$item->name} to the granary!");
     }
 }
