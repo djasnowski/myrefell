@@ -452,6 +452,7 @@ class KingdomController extends Controller
         };
 
         $kingdomSubjects = User::where($settledScope)
+            ->whereNull('banned_at')
             ->select('id', 'username', 'primary_title', 'title_tier', 'last_active_at')
             ->orderBy('username')
             ->limit(100)
@@ -490,6 +491,8 @@ class KingdomController extends Controller
                 ];
             })->values()->all();
 
+        $baronRoleId = Role::where('slug', 'baron')->value('id');
+
         return Inertia::render('kingdoms/management', [
             'kingdom' => [
                 'id' => $kingdom->id,
@@ -502,6 +505,7 @@ class KingdomController extends Controller
             'grantable_titles' => $grantableTitles,
             'kingdom_subjects' => $kingdomSubjects,
             'titled_players' => $titledPlayers,
+            'baron_role_id' => $baronRoleId,
         ]);
     }
 

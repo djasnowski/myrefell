@@ -200,13 +200,14 @@ class RoleController extends Controller
         $role = Role::findOrFail($request->role_id);
 
         // Check if current user has permission to appoint
-        // For now, only admins or higher-tier role holders can appoint
-        $canAppoint = $currentUser->isAdmin() || $this->roleService->hasPermission(
-            $currentUser,
-            'appoint_roles',
-            $request->location_type,
-            $request->location_id
-        );
+        $canAppoint = $currentUser->isAdmin()
+            || $this->roleService->hasPermission(
+                $currentUser,
+                'appoint_roles',
+                $request->location_type,
+                $request->location_id
+            )
+            || $this->roleService->hasHierarchicalAppointmentAuthority($currentUser, $request->location_type, (int) $request->location_id);
 
         if (! $canAppoint) {
             return back()->with('error', 'You do not have permission to appoint roles.');

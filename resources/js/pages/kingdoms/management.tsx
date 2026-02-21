@@ -11,9 +11,10 @@ import {
     Mail,
     Search,
     Shield,
+    UserPlus,
     type LucideIcon,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     Dialog,
     DialogContent,
@@ -146,6 +147,7 @@ interface Props {
     grantable_titles: GrantableTitle[];
     kingdom_subjects: KingdomSubject[];
     titled_players: TitledPlayer[];
+    baron_role_id: number | null;
 }
 
 const locationTypeOrder: Record<string, number> = {
@@ -601,6 +603,194 @@ function GrantTitleDialog({
     );
 }
 
+function AppointBaronDialog({
+    open,
+    onOpenChange,
+    subjects,
+    vacantBaronies,
+    baronRoleId,
+    preselectedBaronyId,
+}: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    subjects: KingdomSubject[];
+    vacantBaronies: Barony[];
+    baronRoleId: number;
+    preselectedBaronyId?: number | null;
+}) {
+    const [selectedSubject, setSelectedSubject] = useState<KingdomSubject | null>(null);
+    const [selectedBaronyId, setSelectedBaronyId] = useState<number | null>(
+        preselectedBaronyId ?? null,
+    );
+    const [searchQuery, setSearchQuery] = useState("");
+    const [appointing, setAppointing] = useState(false);
+    const [showDropdown, setShowDropdown] = useState(false);
+
+    useEffect(() => {
+        if (open) {
+            setSelectedBaronyId(preselectedBaronyId ?? null);
+        }
+    }, [open, preselectedBaronyId]);
+
+    const filteredSubjects = useMemo(() => {
+        if (!searchQuery.trim()) return subjects;
+        const q = searchQuery.toLowerCase();
+        return subjects.filter((s) => s.username.toLowerCase().includes(q));
+    }, [subjects, searchQuery]);
+
+    const handleAppoint = () => {
+        if (!selectedSubject || !selectedBaronyId) return;
+        setAppointing(true);
+        router.post(
+            "/roles/appoint",
+            {
+                user_id: selectedSubject.id,
+                role_id: baronRoleId,
+                location_type: "barony",
+                location_id: selectedBaronyId,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                    onOpenChange(false);
+                    setSelectedSubject(null);
+                    setSelectedBaronyId(null);
+                    setSearchQuery("");
+                },
+                onFinish: () => setAppointing(false),
+            },
+        );
+    };
+
+    const handleClose = (isOpen: boolean) => {
+        if (!isOpen) {
+            setSelectedSubject(null);
+            setSelectedBaronyId(null);
+            setSearchQuery("");
+            setShowDropdown(false);
+        }
+        onOpenChange(isOpen);
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={handleClose}>
+            <DialogContent className="border-amber-700/60 bg-stone-900 sm:max-w-lg">
+                <DialogHeader>
+                    <div className="flex items-center gap-3">
+                        <div className="rounded-lg border border-amber-700/50 bg-amber-900/30 p-2">
+                            <Shield className="h-5 w-5 text-amber-400" />
+                        </div>
+                        <div>
+                            <DialogTitle className="font-[Cinzel] text-amber-300">
+                                Appoint Baron
+                            </DialogTitle>
+                            <DialogDescription className="text-stone-500">
+                                Appoint a subject to govern a barony
+                            </DialogDescription>
+                        </div>
+                    </div>
+                </DialogHeader>
+
+                <div className="space-y-4">
+                    {/* Player Search */}
+                    <div>
+                        <label className="mb-1 block text-xs text-stone-500">Subject</label>
+                        <div className="relative">
+                            <Search className="absolute top-2.5 left-3 h-4 w-4 text-stone-500" />
+                            <input
+                                type="text"
+                                value={selectedSubject ? selectedSubject.username : searchQuery}
+                                onChange={(e) => {
+                                    setSearchQuery(e.target.value);
+                                    setSelectedSubject(null);
+                                    setShowDropdown(true);
+                                }}
+                                onFocus={() => setShowDropdown(true)}
+                                className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2 pr-3 pl-9 text-sm text-stone-200 placeholder-stone-600 focus:border-amber-600 focus:outline-none"
+                                placeholder="Search for a subject..."
+                            />
+                            {showDropdown && !selectedSubject && filteredSubjects.length > 0 && (
+                                <div className="absolute z-10 mt-1 max-h-40 w-full overflow-y-auto rounded-lg border border-stone-700 bg-stone-800 shadow-lg">
+                                    {filteredSubjects.slice(0, 20).map((subject) => (
+                                        <button
+                                            key={subject.id}
+                                            onClick={() => {
+                                                setSelectedSubject(subject);
+                                                setSearchQuery("");
+                                                setShowDropdown(false);
+                                            }}
+                                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-stone-700"
+                                        >
+                                            <span className="text-amber-400">
+                                                {subject.username}
+                                            </span>
+                                            {subject.primary_title && (
+                                                <span className="text-xs text-stone-500">
+                                                    ({subject.primary_title})
+                                                </span>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Barony Selector */}
+                    <div>
+                        <label className="mb-1 block text-xs text-stone-500">Barony</label>
+                        {vacantBaronies.length > 0 ? (
+                            <select
+                                value={selectedBaronyId ?? ""}
+                                onChange={(e) =>
+                                    setSelectedBaronyId(
+                                        e.target.value ? Number(e.target.value) : null,
+                                    )
+                                }
+                                className="w-full rounded-lg border border-stone-700 bg-stone-800 px-3 py-2 text-sm text-stone-200 focus:border-amber-600 focus:outline-none"
+                            >
+                                <option value="">Select a barony...</option>
+                                {vacantBaronies.map((barony) => (
+                                    <option key={barony.id} value={barony.id}>
+                                        {barony.name}
+                                        {barony.is_capital ? " (Capital Region)" : ""}
+                                    </option>
+                                ))}
+                            </select>
+                        ) : (
+                            <p className="rounded-lg border border-stone-700 bg-stone-800/50 px-3 py-2 text-sm text-stone-500 italic">
+                                No vacant baronies available
+                            </p>
+                        )}
+                    </div>
+                </div>
+
+                <DialogFooter>
+                    <button
+                        onClick={() => handleClose(false)}
+                        disabled={appointing}
+                        className="rounded-lg border border-stone-600 px-4 py-2 text-sm text-stone-400 transition hover:bg-stone-800"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleAppoint}
+                        disabled={appointing || !selectedSubject || !selectedBaronyId}
+                        className="rounded-lg border border-amber-700/50 bg-amber-900/40 px-4 py-2 text-sm font-bold text-amber-300 transition hover:bg-amber-900/60 disabled:opacity-50"
+                    >
+                        {appointing ? (
+                            <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+                        ) : (
+                            "Appoint Baron"
+                        )}
+                    </button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 const categoryColors: Record<string, string> = {
     commoner: "text-stone-400",
     minor_nobility: "text-blue-400",
@@ -695,7 +885,15 @@ function TitleHoldersList({ titledPlayers }: { titledPlayers: TitledPlayer[] }) 
     );
 }
 
-function HierarchyTree({ baronies }: { baronies: Barony[] }) {
+function HierarchyTree({
+    baronies,
+    hasAppointPower,
+    onAppointBaron,
+}: {
+    baronies: Barony[];
+    hasAppointPower: boolean;
+    onAppointBaron?: (baronyId: number) => void;
+}) {
     const [expandedBaronies, setExpandedBaronies] = useState<Set<number>>(
         new Set(baronies.map((b) => b.id)),
     );
@@ -780,7 +978,20 @@ function HierarchyTree({ baronies }: { baronies: Barony[] }) {
                                             </span>
                                         </>
                                     ) : (
-                                        <span className="italic text-stone-600">Vacant</span>
+                                        <>
+                                            <span className="italic text-stone-600">Vacant</span>
+                                            {hasAppointPower && onAppointBaron && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onAppointBaron(barony.id);
+                                                    }}
+                                                    className="ml-1 rounded px-1.5 py-0.5 text-xs text-amber-500 transition hover:bg-amber-900/30 hover:text-amber-300"
+                                                >
+                                                    Appoint
+                                                </button>
+                                            )}
+                                        </>
                                     )}
                                 </span>
                                 <span className="ml-auto text-sm text-stone-500">
@@ -862,14 +1073,20 @@ function RoleHolderList({
     roleHolders,
     currentUserId,
     mailCost,
+    vacantBaronies,
+    hasAppointPower,
     onRemove,
     onMessage,
+    onAppointBaron,
 }: {
     roleHolders: RoleHolder[];
     currentUserId: number;
     mailCost: number;
+    vacantBaronies?: Barony[];
+    hasAppointPower?: boolean;
     onRemove: (holder: RoleHolder) => void;
     onMessage: (holder: RoleHolder) => void;
+    onAppointBaron?: (baronyId: number) => void;
 }) {
     const grouped = useMemo(() => {
         const groups: Record<
@@ -909,8 +1126,7 @@ function RoleHolderList({
     }
 
     return (
-        <div className="space-y-3">
-            <h3 className="font-pixel text-stone-400">Role Holders</h3>
+        <div>
             <div className="overflow-x-auto rounded-lg border border-amber-700/40 bg-stone-800/30">
                 <table className="w-full">
                     <thead>
@@ -989,6 +1205,47 @@ function RoleHolderList({
                                 );
                             }),
                         )}
+                        {vacantBaronies && vacantBaronies.length > 0 && (
+                            <>
+                                {roleHolders.length > 0 && (
+                                    <tr>
+                                        <td
+                                            colSpan={5}
+                                            className="border-t border-stone-700/40 px-4 py-2 font-pixel text-xs text-stone-600"
+                                        >
+                                            Vacant Positions
+                                        </td>
+                                    </tr>
+                                )}
+                                {vacantBaronies.map((barony) => (
+                                    <tr
+                                        key={`vacant-${barony.id}`}
+                                        className="text-stone-600 transition hover:bg-stone-700/30"
+                                    >
+                                        <td className="px-4 py-2.5 italic">Vacant</td>
+                                        <td className="px-4 py-2.5">Baron</td>
+                                        <td className="hidden px-4 py-2.5 sm:table-cell">
+                                            <div className="flex items-center gap-2">
+                                                <span>{locationTypeIcon.barony ?? ""}</span>
+                                                <span>{barony.name}</span>
+                                                <span className="text-sm">(barony)</span>
+                                            </div>
+                                        </td>
+                                        <td className="hidden px-4 py-2.5 md:table-cell">—</td>
+                                        <td className="px-4 py-2.5 text-right">
+                                            {hasAppointPower && onAppointBaron && (
+                                                <button
+                                                    onClick={() => onAppointBaron(barony.id)}
+                                                    className="rounded px-2 py-1 text-sm text-amber-500/70 transition hover:bg-amber-900/30 hover:text-amber-300"
+                                                >
+                                                    Appoint
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </>
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -1012,6 +1269,7 @@ export default function KingdomManagement({
     grantable_titles,
     kingdom_subjects,
     titled_players,
+    baron_role_id,
 }: Props) {
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
     const sidebarData = usePage().props.sidebar as { player?: { gold?: number } } | undefined;
@@ -1027,6 +1285,13 @@ export default function KingdomManagement({
         username: string;
     } | null>(null);
     const [grantDialogOpen, setGrantDialogOpen] = useState(false);
+    const [appointDialogOpen, setAppointDialogOpen] = useState(false);
+    const [preselectedBaronyId, setPreselectedBaronyId] = useState<number | null>(null);
+
+    const vacantBaronies = useMemo(
+        () => kingdom.baronies.filter((b) => !b.baron_name),
+        [kingdom.baronies],
+    );
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -1090,9 +1355,30 @@ export default function KingdomManagement({
 
                 {/* Tab Content */}
                 {activeTab === "hierarchy" && (
-                    <div>
+                    <div className="space-y-3">
+                        {baron_role_id && vacantBaronies.length > 0 && (
+                            <div className="flex justify-end">
+                                <button
+                                    onClick={() => {
+                                        setPreselectedBaronyId(null);
+                                        setAppointDialogOpen(true);
+                                    }}
+                                    className="flex items-center gap-1.5 rounded-lg border border-amber-700/50 bg-amber-900/30 px-3 py-1.5 text-xs font-medium text-amber-300 transition hover:bg-amber-900/50"
+                                >
+                                    <UserPlus className="h-3.5 w-3.5" />
+                                    Appoint Baron
+                                </button>
+                            </div>
+                        )}
                         {kingdom.baronies.length > 0 ? (
-                            <HierarchyTree baronies={kingdom.baronies} />
+                            <HierarchyTree
+                                baronies={kingdom.baronies}
+                                hasAppointPower={!!baron_role_id}
+                                onAppointBaron={(baronyId) => {
+                                    setPreselectedBaronyId(baronyId);
+                                    setAppointDialogOpen(true);
+                                }}
+                            />
                         ) : (
                             <div className="rounded-lg border border-stone-700 bg-stone-800/30 p-4 text-center text-sm text-stone-500">
                                 No baronies in this kingdom yet.
@@ -1102,19 +1388,42 @@ export default function KingdomManagement({
                 )}
 
                 {activeTab === "roles" && (
-                    <RoleHolderList
-                        roleHolders={role_holders}
-                        currentUserId={current_user_id}
-                        mailCost={mail_cost}
-                        onRemove={(holder) =>
-                            setRemoveTarget({
-                                playerRoleId: holder.player_role_id,
-                                targetName: holder.username,
-                                roleName: holder.role_name,
-                            })
-                        }
-                        onMessage={(holder) => setMessageTarget({ username: holder.username })}
-                    />
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-pixel text-sm text-stone-400">Role Holders</h3>
+                            {baron_role_id && vacantBaronies.length > 0 && (
+                                <button
+                                    onClick={() => {
+                                        setPreselectedBaronyId(null);
+                                        setAppointDialogOpen(true);
+                                    }}
+                                    className="flex items-center gap-1.5 rounded-lg border border-amber-700/50 bg-amber-900/30 px-3 py-1.5 text-xs font-medium text-amber-300 transition hover:bg-amber-900/50"
+                                >
+                                    <UserPlus className="h-3.5 w-3.5" />
+                                    Appoint Baron
+                                </button>
+                            )}
+                        </div>
+                        <RoleHolderList
+                            roleHolders={role_holders}
+                            currentUserId={current_user_id}
+                            mailCost={mail_cost}
+                            vacantBaronies={vacantBaronies}
+                            hasAppointPower={!!baron_role_id}
+                            onRemove={(holder) =>
+                                setRemoveTarget({
+                                    playerRoleId: holder.player_role_id,
+                                    targetName: holder.username,
+                                    roleName: holder.role_name,
+                                })
+                            }
+                            onMessage={(holder) => setMessageTarget({ username: holder.username })}
+                            onAppointBaron={(baronyId) => {
+                                setPreselectedBaronyId(baronyId);
+                                setAppointDialogOpen(true);
+                            }}
+                        />
+                    </div>
                 )}
 
                 {activeTab === "titles" && (
@@ -1166,6 +1475,21 @@ export default function KingdomManagement({
                 subjects={kingdom_subjects}
                 kingdomId={kingdom.id}
             />
+
+            {/* Appoint Baron Dialog */}
+            {baron_role_id && (
+                <AppointBaronDialog
+                    open={appointDialogOpen}
+                    onOpenChange={(isOpen) => {
+                        setAppointDialogOpen(isOpen);
+                        if (!isOpen) setPreselectedBaronyId(null);
+                    }}
+                    subjects={kingdom_subjects}
+                    vacantBaronies={vacantBaronies}
+                    baronRoleId={baron_role_id}
+                    preselectedBaronyId={preselectedBaronyId}
+                />
+            )}
         </AppLayout>
     );
 }

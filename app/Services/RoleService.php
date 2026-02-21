@@ -521,6 +521,31 @@ class RoleService
     }
 
     /**
+     * Check if a user has hierarchical authority to appoint a role holder.
+     * This allows a King to appoint roles in baronies within their kingdom,
+     * and a Baron to appoint roles in settlements within their barony.
+     */
+    public function hasHierarchicalAppointmentAuthority(User $user, string $locationType, int $locationId): bool
+    {
+        $userRoles = PlayerRole::where('user_id', $user->id)
+            ->active()
+            ->with('role')
+            ->get();
+
+        foreach ($userRoles as $userPlayerRole) {
+            if (! $userPlayerRole->role->hasPermission('appoint_roles')) {
+                continue;
+            }
+
+            if ($this->locationIsWithin($locationType, $locationId, $userPlayerRole->location_type, $userPlayerRole->location_id)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Check if a child location is within a parent location.
      * Kingdom > Barony > Village/Town
      */
