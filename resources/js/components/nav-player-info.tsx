@@ -216,7 +216,7 @@ export function NavPlayerInfo() {
 
     return (
         <div className="space-y-2">
-            <div className="rounded-lg border border-sidebar-border bg-sidebar-accent/50 p-3">
+            <div className="rounded-lg border border-sidebar-border bg-sidebar-accent/50 px-3 pt-3 pb-0">
                 {/* Player Name & Level */}
                 <div className="mb-2 flex items-center justify-between">
                     <div className="min-w-0 flex-1">
