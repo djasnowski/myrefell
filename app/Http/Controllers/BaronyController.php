@@ -100,6 +100,14 @@ class BaronyController extends Controller
         // Check if current user is the baron
         $isBaron = $baron && $baron['id'] === $user->id;
 
+        // Check if current user is king of this barony's kingdom
+        $isKing = PlayerRole::where('user_id', $user->id)
+            ->whereHas('role', fn ($q) => $q->where('slug', 'king'))
+            ->where('location_type', 'kingdom')
+            ->where('location_id', $barony->kingdom_id)
+            ->active()
+            ->exists();
+
         // Check if user is a resident of this barony (settled directly in barony)
         $isResident = $user->home_location_type === 'barony' && $user->home_location_id === $barony->id;
 
@@ -249,6 +257,7 @@ class BaronyController extends Controller
             'resident_count' => $barony->residents->count(),
             'current_user_id' => $user->id,
             'is_baron' => $isBaron,
+            'can_manage_routes' => $isBaron || $isKing,
             'is_visitor' => $isVisitor,
             'is_resident' => $isResident,
             ...$migrationService->getMigrationCooldownInfo($user),
