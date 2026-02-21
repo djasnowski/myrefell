@@ -60,6 +60,10 @@ class BroadsheetController extends Controller
 
         $publishCost = $this->broadsheetService->getPublishCost($locationType);
 
+        $isHomeLocation = $location
+            && $user->home_location_type === $locationType
+            && $user->home_location_id === $location->id;
+
         return Inertia::render('Broadsheets/Index', [
             'local' => $local,
             'barony' => $baronyData,
@@ -68,6 +72,7 @@ class BroadsheetController extends Controller
             'player_gold' => $user->gold,
             'publish_cost' => $publishCost,
             'has_published_today' => $hasPublishedToday,
+            'can_publish_here' => $isHomeLocation,
             'location' => $location ? [
                 'type' => $locationType,
                 'id' => $location->id,
@@ -136,8 +141,13 @@ class BroadsheetController extends Controller
         ?Duchy $duchy = null,
         ?Kingdom $kingdom = null,
     ): RedirectResponse {
+        $user = $request->user();
         $location = $village ?? $town ?? $barony ?? $duchy ?? $kingdom;
         $locationType = $this->getLocationType($location);
+
+        if (! $location || $user->home_location_type !== $locationType || $user->home_location_id !== $location->id) {
+            return back()->with('error', 'You can only publish broadsheets in your home settlement.');
+        }
 
         $locationData = $this->buildLocationData($location, $locationType);
 
@@ -145,7 +155,7 @@ class BroadsheetController extends Controller
             return back()->with('error', 'Invalid location.');
         }
 
-        $result = $this->broadsheetService->publish($request->user(), $request->validated(), $locationData);
+        $result = $this->broadsheetService->publish($user, $request->validated(), $locationData);
 
         if (! $result['success']) {
             return back()->with('error', $result['message']);

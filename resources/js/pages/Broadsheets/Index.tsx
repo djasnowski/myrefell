@@ -66,6 +66,7 @@ interface PageProps {
     player_gold: number;
     publish_cost: number;
     has_published_today: boolean;
+    can_publish_here: boolean;
     location: Location | null;
     barony_name: string | null;
     kingdom_name: string | null;
@@ -211,12 +212,14 @@ function WriteTab({
     playerGold,
     publishCost,
     hasPublishedToday,
+    canPublishHere,
     baseUrl,
     onPublished,
 }: {
     playerGold: number;
     publishCost: number;
     hasPublishedToday: boolean;
+    canPublishHere: boolean;
     baseUrl: string;
     onPublished?: () => void;
 }) {
@@ -226,7 +229,19 @@ function WriteTab({
 
     const canAfford = playerGold >= publishCost;
     const hasContent = title.trim().length > 0 && !isEmptyContent(content);
-    const canPublish = canAfford && hasContent && !hasPublishedToday && !publishing;
+    const canPublish =
+        canAfford && hasContent && !hasPublishedToday && !publishing && canPublishHere;
+
+    if (!canPublishHere) {
+        return (
+            <div className="py-12 text-center">
+                <Newspaper className="mx-auto mb-3 h-8 w-8 text-stone-600" />
+                <p className="font-pixel text-xs text-stone-500 sm:text-sm">
+                    You can only publish broadsheets in your home settlement.
+                </p>
+            </div>
+        );
+    }
 
     const handlePublish = () => {
         if (!canPublish) {
@@ -343,6 +358,7 @@ export default function BroadsheetIndex() {
         player_gold,
         publish_cost,
         has_published_today,
+        can_publish_here,
         location,
         barony_name,
         kingdom_name,
@@ -484,6 +500,7 @@ export default function BroadsheetIndex() {
                             playerGold={player_gold}
                             publishCost={publish_cost}
                             hasPublishedToday={has_published_today}
+                            canPublishHere={can_publish_here}
                             baseUrl={baseUrl}
                             onPublished={() => setActiveTab("local")}
                         />
