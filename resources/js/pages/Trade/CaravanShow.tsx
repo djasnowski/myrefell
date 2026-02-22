@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/layouts/app-layout";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { BreadcrumbItem } from "@/types";
 
 interface Location {
@@ -445,8 +446,19 @@ export default function CaravanShow() {
                                     <Package className="h-5 w-5" />
                                     Goods Loaded
                                 </h2>
-                                <span className="font-pixel text-sm text-amber-400">
-                                    Total: {caravan.goods_value}g
+                                <span className="flex items-center gap-1.5 font-pixel text-sm text-amber-400">
+                                    Purchase Value: {caravan.goods_value}g
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Info className="h-3.5 w-3.5 cursor-help text-stone-500" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p className="max-w-52 text-xs">
+                                                The total cost paid to load these goods. Sell at a
+                                                higher price at your destination to earn a profit.
+                                            </p>
+                                        </TooltipContent>
+                                    </Tooltip>
                                 </span>
                             </div>
 
