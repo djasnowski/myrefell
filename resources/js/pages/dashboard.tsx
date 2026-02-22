@@ -196,14 +196,18 @@ export default function Dashboard() {
                 : "/villages",
             icon: Swords,
         },
-        {
-            title: "Gather Resources",
-            description: "Mine, fish, or chop wood",
-            href: location
-                ? `/${pluralizeLocationType(location.type)}/${location.id}/gathering`
-                : "/villages",
-            icon: Pickaxe,
-        },
+        ...(location?.type === "village" || location?.type === "town" || !location
+            ? [
+                  {
+                      title: "Gather Resources",
+                      description: "Mine, fish, or chop wood",
+                      href: location
+                          ? `/${pluralizeLocationType(location.type)}/${location.id}/gathering`
+                          : "/villages",
+                      icon: Pickaxe,
+                  },
+              ]
+            : []),
         {
             title: "Visit Market",
             description: "Buy and sell goods",
