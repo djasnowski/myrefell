@@ -27,13 +27,13 @@ class CraftingService
      */
     public const GEM_TIERS = [
         'Opal' => ['level' => 1, 'xp' => 15, 'energy' => 1],
-        'Jade' => ['level' => 13, 'xp' => 20, 'energy' => 2],
-        'Red Topaz' => ['level' => 25, 'xp' => 30, 'energy' => 2],
-        'Sapphire' => ['level' => 35, 'xp' => 50, 'energy' => 3],
-        'Emerald' => ['level' => 43, 'xp' => 65, 'energy' => 3],
-        'Ruby' => ['level' => 55, 'xp' => 85, 'energy' => 4],
-        'Diamond' => ['level' => 65, 'xp' => 110, 'energy' => 4],
-        'Oria Stone' => ['level' => 75, 'xp' => 150, 'energy' => 5],
+        'Jade' => ['level' => 7, 'xp' => 20, 'energy' => 2],
+        'Red Topaz' => ['level' => 13, 'xp' => 30, 'energy' => 2],
+        'Sapphire' => ['level' => 19, 'xp' => 50, 'energy' => 3],
+        'Emerald' => ['level' => 26, 'xp' => 65, 'energy' => 3],
+        'Ruby' => ['level' => 33, 'xp' => 85, 'energy' => 4],
+        'Diamond' => ['level' => 42, 'xp' => 110, 'energy' => 4],
+        'Oria Stone' => ['level' => 54, 'xp' => 150, 'energy' => 5],
     ];
 
     /**
