@@ -196,8 +196,9 @@ class AnvilController extends Controller
         $ammoTypes = ['Tips', 'Arrowtips', 'Throwing Knives'];
         $materialTypes = ['Nails'];
 
+        $lowerName = strtolower($name);
         foreach ($armorTypes as $type) {
-            if (str_contains($name, $type)) {
+            if (str_contains($lowerName, strtolower($type))) {
                 return 'armor';
             }
         }
