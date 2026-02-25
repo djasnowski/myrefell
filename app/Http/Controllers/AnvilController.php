@@ -24,9 +24,9 @@ class AnvilController extends Controller
         'Bronze' => ['base_level' => 1, 'color' => 'orange'],
         'Iron' => ['base_level' => 15, 'color' => 'gray'],
         'Steel' => ['base_level' => 30, 'color' => 'slate'],
-        'Mithril' => ['base_level' => 45, 'color' => 'blue'],
-        'Celestial' => ['base_level' => 60, 'color' => 'purple'],
-        'Oria' => ['base_level' => 75, 'color' => 'amber'],
+        'Mithril' => ['base_level' => 50, 'color' => 'blue'],
+        'Celestial' => ['base_level' => 65, 'color' => 'purple'],
+        'Oria' => ['base_level' => 81, 'color' => 'amber'],
     ];
 
     public function __construct(

@@ -26,9 +26,9 @@ class ForgeController extends Controller
         'Silver' => ['base_level' => 25, 'color' => 'zinc'],
         'Steel' => ['base_level' => 30, 'color' => 'slate'],
         'Gold' => ['base_level' => 40, 'color' => 'yellow'],
-        'Mithril' => ['base_level' => 45, 'color' => 'blue'],
-        'Celestial' => ['base_level' => 60, 'color' => 'purple'],
-        'Oria' => ['base_level' => 75, 'color' => 'amber'],
+        'Mithril' => ['base_level' => 50, 'color' => 'blue'],
+        'Celestial' => ['base_level' => 65, 'color' => 'purple'],
+        'Oria' => ['base_level' => 81, 'color' => 'amber'],
     ];
 
     public function __construct(

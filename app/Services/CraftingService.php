@@ -14,12 +14,12 @@ class CraftingService
      * Metal tiers with base levels and bar recipes.
      */
     public const METAL_TIERS = [
-        'Bronze' => ['base_level' => 1, 'ore1' => 'Copper Ore', 'ore2' => 'Tin Ore', 'coal' => 0, 'bar_xp' => 12, 'bar_energy' => 3],
-        'Iron' => ['base_level' => 15, 'ore1' => 'Iron Ore', 'ore2' => null, 'coal' => 1, 'bar_xp' => 25, 'bar_energy' => 4],
-        'Steel' => ['base_level' => 30, 'ore1' => 'Iron Ore', 'ore2' => null, 'coal' => 2, 'bar_xp' => 40, 'bar_energy' => 5],
-        'Mithril' => ['base_level' => 45, 'ore1' => 'Mithril Ore', 'ore2' => null, 'coal' => 3, 'bar_xp' => 55, 'bar_energy' => 5],
-        'Celestial' => ['base_level' => 60, 'ore1' => 'Celestial Ore', 'ore2' => null, 'coal' => 4, 'bar_xp' => 75, 'bar_energy' => 6],
-        'Oria' => ['base_level' => 75, 'ore1' => 'Oria Ore', 'ore2' => null, 'coal' => 5, 'bar_xp' => 100, 'bar_energy' => 7],
+        'Bronze' => ['base_level' => 1, 'ore1' => 'Copper Ore', 'ore2' => 'Tin Ore', 'coal' => 0, 'bar_xp' => 12, 'bar_energy' => 3, 'smith_xp' => 12, 'smith_energy' => 2],
+        'Iron' => ['base_level' => 15, 'ore1' => 'Iron Ore', 'ore2' => null, 'coal' => 1, 'bar_xp' => 25, 'bar_energy' => 4, 'smith_xp' => 25, 'smith_energy' => 3],
+        'Steel' => ['base_level' => 30, 'ore1' => 'Iron Ore', 'ore2' => null, 'coal' => 2, 'bar_xp' => 40, 'bar_energy' => 5, 'smith_xp' => 37, 'smith_energy' => 4],
+        'Mithril' => ['base_level' => 50, 'ore1' => 'Mithril Ore', 'ore2' => null, 'coal' => 3, 'bar_xp' => 55, 'bar_energy' => 5, 'smith_xp' => 50, 'smith_energy' => 5],
+        'Celestial' => ['base_level' => 65, 'ore1' => 'Celestial Ore', 'ore2' => null, 'coal' => 4, 'bar_xp' => 75, 'bar_energy' => 6, 'smith_xp' => 62, 'smith_energy' => 6],
+        'Oria' => ['base_level' => 81, 'ore1' => 'Oria Ore', 'ore2' => null, 'coal' => 5, 'bar_xp' => 100, 'bar_energy' => 7, 'smith_xp' => 75, 'smith_energy' => 7],
     ];
 
     /**
@@ -401,8 +401,8 @@ class CraftingService
                     'category' => 'smithing',
                     'skill' => 'smithing',
                     'required_level' => $level,
-                    'xp_reward' => $itemData['bars'] * $itemData['xp_per_bar'],
-                    'energy_cost' => $itemData['bars'] * $itemData['energy_per_bar'],
+                    'xp_reward' => $itemData['bars'] * $tier['smith_xp'],
+                    'energy_cost' => $itemData['bars'] * $tier['smith_energy'],
                     'task_type' => 'smith',
                     'materials' => [['name' => $barName, 'quantity' => $itemData['bars']]],
                     'output' => [
