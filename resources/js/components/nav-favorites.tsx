@@ -15,6 +15,7 @@ import {
     Hammer,
     Hand,
     HeartPulse,
+    Home,
     Landmark,
     MessageSquare,
     Newspaper,
@@ -46,6 +47,7 @@ interface LocationData {
 interface SidebarData {
     favorites: Favorite[];
     location: LocationData | null;
+    house_url: string | null;
 }
 
 // Map icon names to Lucide icons (same as service-card.tsx)
@@ -74,6 +76,7 @@ const iconMap: Record<string, LucideIcon> = {
     "flask-conical": FlaskConical,
     footprints: Footprints,
     newspaper: Newspaper,
+    home: Home,
 };
 
 // Location type to URL path mapping
@@ -101,10 +104,13 @@ const locationServices: Record<string, string[]> = {
         "port",
         "stables",
         "tavern",
+        "arena",
         "thieving",
         "apothecary",
         "farming",
         "agility",
+        "sawmill",
+        "construction",
         "notice-board",
     ],
     town: [
@@ -122,10 +128,13 @@ const locationServices: Record<string, string[]> = {
         "hall",
         "stables",
         "tavern",
+        "arena",
         "thieving",
         "apothecary",
         "farming",
         "agility",
+        "sawmill",
+        "construction",
         "notice-board",
     ],
     barony: [
@@ -140,12 +149,15 @@ const locationServices: Record<string, string[]> = {
         "jobs",
         "stables",
         "tavern",
+        "arena",
         "thieving",
         "businesses",
         "chat",
         "taxes",
         "apothecary",
         "agility",
+        "sawmill",
+        "construction",
         "notice-board",
     ],
     duchy: [
@@ -157,9 +169,11 @@ const locationServices: Record<string, string[]> = {
         "jobs",
         "stables",
         "tavern",
+        "arena",
         "thieving",
         "apothecary",
         "agility",
+        "construction",
         "notice-board",
     ],
     kingdom: [
@@ -167,12 +181,15 @@ const locationServices: Record<string, string[]> = {
         "crafting",
         "forge",
         "anvil",
+        "market",
+        "infirmary",
         "shrine",
         "jobs",
         "stables",
         "tavern",
         "thieving",
         "apothecary",
+        "construction",
         "notice-board",
     ],
 };
@@ -180,24 +197,33 @@ const locationServices: Record<string, string[]> = {
 function FavoriteBadge({
     favorite,
     location,
+    houseUrl,
 }: {
     favorite: Favorite;
     location: LocationData | null;
+    houseUrl: string | null;
 }) {
     const { isCurrentUrl } = useCurrentUrl();
     const Icon = iconMap[favorite.icon] || Store;
 
+    // "house" is special — always available if the player has one, and uses
+    // the fixed house_url (which points to the house's location, not the
+    // player's current location).
+    const isHouse = favorite.service_id === "house";
+
     // Check if service is available at current location
-    const isAvailable =
-        location?.type &&
-        location?.id &&
-        locationServices[location.type]?.includes(favorite.service_id);
+    const isAvailable = isHouse
+        ? !!houseUrl
+        : location?.type &&
+          location?.id &&
+          locationServices[location.type]?.includes(favorite.service_id);
 
     // Build the URL for the service at current location
-    const href =
-        isAvailable && location?.type && location?.id
-            ? `/${locationPaths[location.type]}/${location.id}/${favorite.route}`
-            : null;
+    const href = isHouse
+        ? houseUrl
+        : isAvailable && location?.type && location?.id
+          ? `/${locationPaths[location.type]}/${location.id}/${favorite.route}`
+          : null;
 
     // Check if this is the current page
     const isActive = href && isCurrentUrl(href);
@@ -256,6 +282,7 @@ export function NavFavorites() {
                         key={favorite.service_id}
                         favorite={favorite}
                         location={sidebar.location}
+                        houseUrl={sidebar.house_url}
                     />
                 ))}
             </div>
