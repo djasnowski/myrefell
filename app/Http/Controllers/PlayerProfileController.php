@@ -23,6 +23,15 @@ class PlayerProfileController extends Controller
             abort(404);
         }
 
+        if ($player->isBanned()) {
+            return Inertia::render('Players/Show', [
+                'player' => [
+                    'username' => $player->username,
+                    'is_banned' => true,
+                ],
+            ]);
+        }
+
         $player->load('skills');
 
         $skills = collect(PlayerSkill::SKILLS)->map(function ($skillName) use ($player) {
@@ -84,6 +93,7 @@ class PlayerProfileController extends Controller
                 'total_level' => $totalLevel,
                 'total_xp' => $totalXp,
                 'total_rank' => $totalRank,
+                'is_banned' => false,
             ],
             'skills' => $skills,
         ]);

@@ -2,6 +2,7 @@ import { Head, Link, usePage } from "@inertiajs/react";
 import type { LucideIcon } from "lucide-react";
 import {
     ArrowLeft,
+    Ban,
     Beef,
     BicepsFlexed,
     Crown,
@@ -28,10 +29,11 @@ import type { SharedData } from "@/types";
 
 interface PlayerProfile {
     username: string;
-    combat_level: number;
-    total_level: number;
-    total_xp: number;
-    total_rank: number | null;
+    is_banned: boolean;
+    combat_level?: number;
+    total_level?: number;
+    total_xp?: number;
+    total_rank?: number | null;
 }
 
 interface SkillData {
@@ -44,7 +46,7 @@ interface SkillData {
 
 interface PageProps extends SharedData {
     player: PlayerProfile;
-    skills: SkillData[];
+    skills?: SkillData[];
 }
 
 const skillIcons: Record<string, LucideIcon> = {
@@ -106,7 +108,87 @@ const skillBgColors: Record<string, string> = {
 };
 
 export default function PlayerShow() {
-    const { player, skills, auth } = usePage<PageProps>().props;
+    const { player, skills = [], auth } = usePage<PageProps>().props;
+
+    if (player.is_banned) {
+        return (
+            <>
+                <Head title={`${player.username}'s Profile - Myrefell`}>
+                    <link rel="preconnect" href="https://fonts.bunny.net" />
+                    <link
+                        href="https://fonts.bunny.net/css?family=cinzel:400,700&family=inter:400,500,600"
+                        rel="stylesheet"
+                    />
+                </Head>
+
+                <div className="relative min-h-screen bg-background text-foreground">
+                    <div className="fixed inset-0 bg-background">
+                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
+                    </div>
+
+                    <nav className="fixed top-0 z-50 w-full border-b border-border/50 bg-background/90 backdrop-blur-sm">
+                        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+                            <div className="flex items-center gap-4">
+                                <Link
+                                    href="/leaderboard"
+                                    className="flex items-center gap-2 text-muted-foreground transition hover:text-primary"
+                                >
+                                    <ArrowLeft className="h-4 w-4" />
+                                    <span className="text-sm">Highscores</span>
+                                </Link>
+                                <div className="h-4 w-px bg-border" />
+                                <Link href="/" className="flex items-center gap-2">
+                                    <Crown className="h-6 w-6 text-primary" />
+                                    <span className="font-[Cinzel] text-xl font-bold tracking-wide text-primary">
+                                        Myrefell
+                                    </span>
+                                </Link>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                {auth.user ? (
+                                    <Link
+                                        href={dashboard()}
+                                        className="rounded-lg bg-primary px-6 py-2 font-semibold text-primary-foreground transition hover:bg-primary/90"
+                                    >
+                                        Enter World
+                                    </Link>
+                                ) : (
+                                    <>
+                                        <Link
+                                            href={login()}
+                                            className="px-4 py-2 text-muted-foreground transition hover:text-primary"
+                                        >
+                                            Sign In
+                                        </Link>
+                                        <Link
+                                            href={register()}
+                                            className="rounded-lg bg-primary px-6 py-2 font-semibold text-primary-foreground transition hover:bg-primary/90"
+                                        >
+                                            Play Now
+                                        </Link>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </nav>
+
+                    <section className="relative pt-32 pb-8">
+                        <div className="mx-auto max-w-4xl px-6">
+                            <div className="rounded-xl border border-red-800/50 bg-red-950/20 p-8 text-center backdrop-blur-sm">
+                                <Ban className="mx-auto mb-4 h-16 w-16 text-red-500/60" />
+                                <h1 className="font-[Cinzel] text-2xl font-bold text-red-400">
+                                    {player.username}
+                                </h1>
+                                <p className="mt-2 text-muted-foreground">
+                                    This account has been banned and is no longer active.
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </>
+        );
+    }
 
     const combatSkills = skills.filter((s) =>
         ["attack", "strength", "defense", "hitpoints", "range", "prayer"].includes(s.name),
