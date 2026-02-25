@@ -16,7 +16,12 @@ import AppLayout from "@/layouts/app-layout";
 import { ActionQueueControls } from "@/components/action-queue-controls";
 import { gameToast } from "@/components/ui/game-toast";
 import { DiceGame } from "@/components/games/dice-game";
-import { useActionQueue, type ActionResult, type QueueStats } from "@/hooks/use-action-queue";
+import {
+    useActionQueue,
+    getActionVerb,
+    type ActionResult,
+    type QueueStats,
+} from "@/hooks/use-action-queue";
 import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
@@ -261,16 +266,17 @@ export default function TavernIndex() {
 
     const onQueueComplete = useCallback((stats: QueueStats) => {
         if (stats.completed === 0) return;
+        const verb = getActionVerb(stats.actionType);
 
         if (stats.completed === 1 && stats.itemName) {
-            gameToast.success(`Cooked ${stats.totalQuantity}x ${stats.itemName}`, {
+            gameToast.success(`${verb} ${stats.totalQuantity}x ${stats.itemName}`, {
                 xp: stats.totalXp,
                 levelUp: stats.lastLevelUp,
             });
         } else if (stats.completed > 1) {
             const qty = stats.totalQuantity > 0 ? `${stats.totalQuantity}x ` : "";
             gameToast.success(
-                `Cooked ${qty}${stats.itemName ?? "items"} (${stats.completed} actions)`,
+                `${verb} ${qty}${stats.itemName ?? "items"} (${stats.completed} actions)`,
                 {
                     xp: stats.totalXp,
                     levelUp: stats.lastLevelUp,

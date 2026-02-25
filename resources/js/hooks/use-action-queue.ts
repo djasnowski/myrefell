@@ -25,6 +25,20 @@ export interface QueueStats {
     totalQuantity: number;
     cancelled: boolean;
     stopReason?: string;
+    actionType?: string;
+}
+
+const ACTION_VERBS: Record<string, string> = {
+    cook: "Cooked",
+    smelt: "Smelted",
+    craft: "Crafted",
+    gather: "Gathered",
+    train: "Trained",
+    agility: "Completed",
+};
+
+export function getActionVerb(actionType?: string): string {
+    return ACTION_VERBS[actionType ?? ""] ?? "Completed";
 }
 
 export interface ServerQueueData {
@@ -222,7 +236,12 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
     }, []);
 
     const finishQueue = useCallback((cancelled: boolean, stopReason?: string) => {
-        const stats = { ...statsRef.current, cancelled, stopReason };
+        const stats = {
+            ...statsRef.current,
+            cancelled,
+            stopReason,
+            actionType: actionTypeRef.current,
+        };
         setIsQueueActive(false);
         isQueueActiveRef.current = false;
         isServerModeRef.current = false;
@@ -341,7 +360,9 @@ export function useActionQueue(options: UseActionQueueOptions): UseActionQueueRe
         }
 
         if (serverQueue.status === "active") {
-            // Resume tracking this active queue
+            // Resume tracking this active queue — use server's action_type
+            // so the correct verb is shown even if we're on a different page
+            actionTypeRef.current = serverQueue.action_type;
             globalQueueOwner = ownerRef.current;
             isServerModeRef.current = true;
             isQueueActiveRef.current = true;
