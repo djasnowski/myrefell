@@ -256,7 +256,7 @@ export default function CombatArena() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Fighting ${session.monster.name}`} />
-            <div className="flex h-full flex-1 flex-col p-4">
+            <div className="flex h-[calc(100svh-4rem)] flex-col p-4">
                 {/* Combat Header */}
                 <div className="mb-4 shrink-0 text-center">
                     <h1 className="font-pixel text-xl text-amber-400">Round {session.round}</h1>
