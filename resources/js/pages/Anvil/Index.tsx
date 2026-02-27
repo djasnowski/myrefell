@@ -7,7 +7,6 @@ import {
     ChevronRight,
     Flame,
     Info,
-    Loader2,
     Lock,
     Mountain,
     Package,
@@ -26,7 +25,15 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { ActionQueueControls } from "@/components/action-queue-controls";
+import {
+    type ActionResult,
+    type QueueStats,
+    getActionVerb,
+    useActionQueue,
+} from "@/hooks/use-action-queue";
+import { gameToast } from "@/components/ui/game-toast";
 
 const SMITH_COOLDOWN_MS = 3000;
 
@@ -189,57 +196,40 @@ const metalColors: Record<string, { bg: string; border: string; text: string; gl
 
 function RecipeCard({
     recipe,
-    onSmith,
-    loading,
+    isSelected,
+    onSelect,
     compact = false,
     metalColor,
-    cooldown,
 }: {
     recipe: Recipe;
-    onSmith: (id: string) => void;
-    loading: string | null;
+    isSelected: boolean;
+    onSelect: (id: string) => void;
     compact?: boolean;
     metalColor?: { bg: string; border: string; text: string; glow: string };
-    cooldown: number;
 }) {
-    const isLoading = loading === recipe.id;
     const itemName = recipe.name;
     const hasEnoughBars = (recipe.materials[0]?.have ?? 0) >= (recipe.materials[0]?.required ?? 1);
     const colors = metalColor || metalColors.Bronze;
-    const canSmith = recipe.can_make && !recipe.is_locked && loading === null && cooldown <= 0;
+    const canSelect = !recipe.is_locked;
 
     return (
         <button
-            onClick={() => canSmith && onSmith(recipe.id)}
-            disabled={!canSmith}
+            onClick={() => canSelect && onSelect(recipe.id)}
+            disabled={!canSelect}
             className={`group relative w-full overflow-hidden rounded-xl border-2 p-4 text-left transition-all ${
                 recipe.is_locked
                     ? "cursor-not-allowed border-stone-700/50 bg-stone-900/50 opacity-60"
-                    : recipe.can_make
-                      ? `${colors.border} bg-gradient-to-br from-stone-800/80 to-stone-900/80 hover:scale-[1.02] hover:shadow-xl ${colors.glow} cursor-pointer`
-                      : "cursor-not-allowed border-stone-700 bg-stone-900/50"
+                    : isSelected
+                      ? "border-amber-400 bg-gradient-to-br from-stone-800/80 to-stone-900/80 ring-2 ring-amber-400/30 shadow-xl shadow-amber-500/20"
+                      : recipe.can_make
+                        ? `${colors.border} bg-gradient-to-br from-stone-800/80 to-stone-900/80 hover:scale-[1.02] hover:shadow-xl ${colors.glow} cursor-pointer`
+                        : "cursor-pointer border-stone-700 bg-stone-900/50"
             }`}
         >
-            {/* Loading overlay */}
-            {isLoading && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-stone-900/80">
-                    <Loader2 className="h-8 w-8 animate-spin text-amber-400" />
-                </div>
-            )}
-
-            {/* Cooldown overlay */}
-            {cooldown > 0 && !isLoading && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-stone-900/60">
-                    <span className="font-pixel text-lg text-stone-300">
-                        {(cooldown / 1000).toFixed(1)}s
-                    </span>
-                </div>
-            )}
-
             {/* Item name */}
             <div className="mb-4 flex items-center justify-between">
                 <h4
-                    className={`text-lg font-semibold ${recipe.is_locked ? "text-stone-500" : colors.text}`}
+                    className={`text-lg font-semibold ${recipe.is_locked ? "text-stone-500" : isSelected ? "text-amber-300" : colors.text}`}
                 >
                     {compact ? itemName : recipe.name}
                 </h4>
@@ -248,10 +238,10 @@ function RecipeCard({
                         <Lock className="h-4 w-4 text-stone-500" />
                         <span className="text-sm text-stone-500">Lvl {recipe.required_level}</span>
                     </div>
-                ) : canSmith ? (
-                    <div className="flex items-center gap-1.5 rounded-lg bg-amber-600/20 px-3 py-1 transition-colors group-hover:bg-amber-600/40">
-                        <Anvil className="h-4 w-4 text-amber-400" />
-                        <span className="text-sm font-medium text-amber-400">Smith</span>
+                ) : isSelected ? (
+                    <div className="flex items-center gap-1.5 rounded-lg bg-amber-600/30 px-3 py-1">
+                        <Anvil className="h-4 w-4 text-amber-300" />
+                        <span className="text-sm font-medium text-amber-300">Selected</span>
                     </div>
                 ) : null}
             </div>
@@ -302,18 +292,16 @@ function MetalTierSection({
     metal,
     tier,
     recipes,
-    onSmith,
-    loading,
+    selectedRecipe,
+    onSelect,
     defaultExpanded = false,
-    cooldown,
 }: {
     metal: string;
     tier: MetalTier;
     recipes: RecipesByCategory;
-    onSmith: (id: string) => void;
-    loading: string | null;
+    selectedRecipe: string | null;
+    onSelect: (id: string) => void;
     defaultExpanded?: boolean;
-    cooldown: number;
 }) {
     const [expanded, setExpanded] = useState(defaultExpanded);
     const colors = metalColors[metal] || metalColors.Bronze;
@@ -400,11 +388,10 @@ function MetalTierSection({
                                     <RecipeCard
                                         key={recipe.id}
                                         recipe={recipe}
-                                        onSmith={onSmith}
-                                        loading={loading}
+                                        isSelected={selectedRecipe === recipe.id}
+                                        onSelect={onSelect}
                                         compact
                                         metalColor={colors}
-                                        cooldown={cooldown}
                                     />
                                 ))}
                             </div>
@@ -426,11 +413,10 @@ function MetalTierSection({
                                     <RecipeCard
                                         key={recipe.id}
                                         recipe={recipe}
-                                        onSmith={onSmith}
-                                        loading={loading}
+                                        isSelected={selectedRecipe === recipe.id}
+                                        onSelect={onSelect}
                                         compact
                                         metalColor={colors}
-                                        cooldown={cooldown}
                                     />
                                 ))}
                             </div>
@@ -454,11 +440,10 @@ function MetalTierSection({
                                     <RecipeCard
                                         key={recipe.id}
                                         recipe={recipe}
-                                        onSmith={onSmith}
-                                        loading={loading}
+                                        isSelected={selectedRecipe === recipe.id}
+                                        onSelect={onSelect}
                                         compact
                                         metalColor={colors}
-                                        cooldown={cooldown}
                                     />
                                 ))}
                             </div>
@@ -482,11 +467,10 @@ function MetalTierSection({
                                     <RecipeCard
                                         key={recipe.id}
                                         recipe={recipe}
-                                        onSmith={onSmith}
-                                        loading={loading}
+                                        isSelected={selectedRecipe === recipe.id}
+                                        onSelect={onSelect}
                                         compact
                                         metalColor={colors}
-                                        cooldown={cooldown}
                                     />
                                 ))}
                             </div>
@@ -500,57 +484,97 @@ function MetalTierSection({
 
 export default function AnvilIndex() {
     const { anvil_info, location } = usePage<PageProps>().props;
-    const [loading, setLoading] = useState<string | null>(null);
     const [currentEnergy, setCurrentEnergy] = useState(anvil_info.player_energy);
-    const [cooldown, setCooldown] = useState(0);
-    const cooldownInterval = useRef<NodeJS.Timeout | null>(null);
-
-    const startCooldown = () => {
-        setCooldown(SMITH_COOLDOWN_MS);
-        if (cooldownInterval.current) clearInterval(cooldownInterval.current);
-        const startTime = Date.now();
-        cooldownInterval.current = setInterval(() => {
-            const remaining = Math.max(0, SMITH_COOLDOWN_MS - (Date.now() - startTime));
-            setCooldown(remaining);
-            if (remaining <= 0 && cooldownInterval.current) {
-                clearInterval(cooldownInterval.current);
-                cooldownInterval.current = null;
-            }
-        }, 50);
-    };
-
-    useEffect(() => {
-        // Reload fresh data on mount to avoid stale cache from Inertia navigation
-        router.reload({ only: ["anvil_info"] });
-
-        return () => {
-            if (cooldownInterval.current) clearInterval(cooldownInterval.current);
-        };
-    }, []);
+    const [selectedRecipe, setSelectedRecipe] = useState<string | null>(null);
 
     const smithUrl = location
         ? `${locationPath(location.type, location.id)}/anvil/smith`
         : "/anvil/smith";
 
-    const handleSmith = (recipeId: string) => {
-        if (loading || cooldown > 0) return;
-        setLoading(recipeId);
+    const buildBody = useCallback(() => ({ recipe: selectedRecipe }), [selectedRecipe]);
 
-        router.post(
-            smithUrl,
-            { recipe: recipeId },
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    startCooldown();
-                    router.reload({ only: ["anvil_info", "sidebar"] });
+    const onActionComplete = useCallback((data: ActionResult) => {
+        if (data.success && data.energy_remaining !== undefined) {
+            setCurrentEnergy(data.energy_remaining);
+        }
+    }, []);
+
+    const onQueueComplete = useCallback((stats: QueueStats) => {
+        if (stats.completed === 0) return;
+
+        const verb = getActionVerb(stats.actionType);
+        if (stats.completed === 1 && stats.itemName) {
+            gameToast.success(`${verb} ${stats.totalQuantity}x ${stats.itemName}`, {
+                xp: stats.totalXp,
+                levelUp: stats.lastLevelUp,
+            });
+        } else if (stats.completed > 1) {
+            const qty = stats.totalQuantity > 0 ? `${stats.totalQuantity}x ` : "";
+            gameToast.success(
+                `${verb} ${qty}${stats.itemName ?? "items"} (${stats.completed} actions)`,
+                {
+                    xp: stats.totalXp,
+                    levelUp: stats.lastLevelUp,
                 },
-                onFinish: () => {
-                    setLoading(null);
-                },
-            },
-        );
+            );
+        }
+    }, []);
+
+    const buildActionParams = useCallback(
+        () => ({
+            recipe: selectedRecipe,
+            location_type: location?.type,
+            location_id: location?.id,
+        }),
+        [selectedRecipe, location],
+    );
+
+    const {
+        startQueue,
+        cancelQueue,
+        isQueueActive,
+        queueProgress,
+        isActionLoading,
+        cooldown,
+        performSingleAction,
+        isGloballyLocked,
+        totalXp,
+        queueStartedAt,
+    } = useActionQueue({
+        url: smithUrl,
+        buildBody,
+        cooldownMs: SMITH_COOLDOWN_MS,
+        onActionComplete,
+        onQueueComplete,
+        reloadProps: ["anvil_info", "sidebar"],
+        actionType: "smith",
+        buildActionParams,
+    });
+
+    useEffect(() => {
+        // Reload fresh data on mount to avoid stale cache from Inertia navigation
+        router.reload({ only: ["anvil_info"] });
+    }, []);
+
+    // Find the selected recipe object across all tiers
+    const findSelectedRecipe = (): Recipe | null => {
+        if (!selectedRecipe) return null;
+        for (const metal of Object.keys(anvil_info.recipes_by_tier)) {
+            const tierRecipes = anvil_info.recipes_by_tier[metal];
+            for (const recipe of [
+                ...tierRecipes.weapons,
+                ...tierRecipes.armor,
+                ...tierRecipes.ammunition,
+                ...(tierRecipes.materials ?? []),
+            ]) {
+                if (recipe.id === selectedRecipe) return recipe;
+            }
+        }
+        return null;
     };
+
+    const selected = findSelectedRecipe();
+    const effectiveSelected = selected && !selected.is_locked ? selected : null;
 
     const metalOrder = ["Bronze", "Iron", "Steel", "Mithril", "Celestial", "Oria"];
 
@@ -816,6 +840,37 @@ export default function AnvilIndex() {
                     </div>
                 )}
 
+                {/* Queue Controls */}
+                {effectiveSelected && (
+                    <div className="mb-4 rounded-lg border border-amber-600/50 bg-stone-800/50 p-3">
+                        <div className="mb-2 font-pixel text-xs text-amber-300">
+                            {effectiveSelected.name}
+                        </div>
+                        <ActionQueueControls
+                            isQueueActive={isQueueActive}
+                            queueProgress={queueProgress}
+                            isActionLoading={isActionLoading}
+                            cooldown={cooldown}
+                            cooldownMs={SMITH_COOLDOWN_MS}
+                            onStart={startQueue}
+                            onCancel={cancelQueue}
+                            onSingle={performSingleAction}
+                            disabled={!effectiveSelected.can_make || isGloballyLocked}
+                            actionLabel="Smith"
+                            activeLabel="Smithing"
+                            totalXp={totalXp}
+                            startedAt={queueStartedAt}
+                            buttonClassName="bg-amber-600 text-stone-900 hover:bg-amber-500"
+                        />
+                    </div>
+                )}
+
+                {!selectedRecipe && (
+                    <div className="mb-4 rounded-lg border border-stone-600 bg-stone-800/30 p-3 text-center font-pixel text-xs text-stone-400">
+                        Select a recipe below to smith
+                    </div>
+                )}
+
                 {/* Metal Tiers */}
                 <div className="space-y-3">
                     {metalOrder.map((metal, index) => {
@@ -830,10 +885,9 @@ export default function AnvilIndex() {
                                 metal={metal}
                                 tier={tier}
                                 recipes={recipes}
-                                onSmith={handleSmith}
-                                loading={loading}
+                                selectedRecipe={selectedRecipe}
+                                onSelect={setSelectedRecipe}
                                 defaultExpanded={index === 0 && tier.unlocked}
-                                cooldown={cooldown}
                             />
                         );
                     })}

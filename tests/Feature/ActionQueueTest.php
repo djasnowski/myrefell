@@ -214,6 +214,7 @@ test('process action queue job stops if queue is not active', function () {
         app(\App\Services\GatheringService::class),
         app(\App\Services\TrainingService::class),
         app(\App\Services\AgilityService::class),
+        app(\App\Services\ApothecaryService::class),
     );
 
     // Should not dispatch another job
@@ -249,6 +250,7 @@ test('process action queue job stops if user is traveling', function () {
         app(\App\Services\GatheringService::class),
         app(\App\Services\TrainingService::class),
         app(\App\Services\AgilityService::class),
+        app(\App\Services\ApothecaryService::class),
     );
 
     Queue::assertNothingPushed();
@@ -283,6 +285,7 @@ test('process action queue job stops if user is in infirmary', function () {
         app(\App\Services\GatheringService::class),
         app(\App\Services\TrainingService::class),
         app(\App\Services\AgilityService::class),
+        app(\App\Services\ApothecaryService::class),
     );
 
     Queue::assertNothingPushed();
@@ -319,6 +322,7 @@ test('process action queue job executes training and chains next job', function 
         app(\App\Services\GatheringService::class),
         app(\App\Services\TrainingService::class),
         app(\App\Services\AgilityService::class),
+        app(\App\Services\ApothecaryService::class),
     );
 
     $queue->refresh();
@@ -357,6 +361,7 @@ test('process action queue job marks queue as completed when total is reached', 
         app(\App\Services\GatheringService::class),
         app(\App\Services\TrainingService::class),
         app(\App\Services\AgilityService::class),
+        app(\App\Services\ApothecaryService::class),
     );
 
     $queue->refresh();
@@ -393,6 +398,7 @@ test('process action queue job fails when energy runs out', function () {
         app(\App\Services\GatheringService::class),
         app(\App\Services\TrainingService::class),
         app(\App\Services\AgilityService::class),
+        app(\App\Services\ApothecaryService::class),
     );
 
     $queue->refresh();

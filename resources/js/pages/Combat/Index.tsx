@@ -1,6 +1,6 @@
 import { Head, router, usePage } from "@inertiajs/react";
 import { Skull, Sword, Shield, Zap, Heart } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AppLayout from "@/layouts/app-layout";
 import EquipmentPanel from "@/components/equipment-panel";
 import type { EquippedSlots } from "@/components/equipment-panel";
@@ -105,8 +105,23 @@ export default function CombatIndex() {
         weapon_speed,
         available_attack_styles,
     } = usePage<PageProps>().props;
-    const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
-    const [attackStyleIndex, setAttackStyleIndex] = useState(0);
+    const [selectedMonster, setSelectedMonster] = useState<Monster | null>(() => {
+        const storedId = localStorage.getItem("combat_last_monster_id");
+        if (storedId) {
+            const found = monsters.find((m) => m.id === Number(storedId));
+            return found ?? null;
+        }
+        return null;
+    });
+    const [attackStyleIndex, setAttackStyleIndex] = useState(() => {
+        const storedIndex = localStorage.getItem("combat_last_attack_style_index");
+        const storedSubtype = localStorage.getItem("combat_last_weapon_subtype");
+        if (storedIndex && storedSubtype === weapon_subtype) {
+            const idx = Number(storedIndex);
+            return idx >= 0 && idx < available_attack_styles.length ? idx : 0;
+        }
+        return 0;
+    });
     const [isStarting, setIsStarting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -136,6 +151,9 @@ export default function CombatIndex() {
             const data = await response.json();
 
             if (data.success) {
+                localStorage.setItem("combat_last_monster_id", String(selectedMonster.id));
+                localStorage.setItem("combat_last_attack_style_index", String(attackStyleIndex));
+                localStorage.setItem("combat_last_weapon_subtype", weapon_subtype);
                 router.reload();
             } else {
                 setError(data.message);

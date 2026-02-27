@@ -2,11 +2,9 @@ import { Head, router, usePage } from "@inertiajs/react";
 import {
     ArrowRight,
     Backpack,
-    Check,
     FlaskConical,
     Heart,
     Leaf,
-    Loader2,
     Lock,
     Shield,
     Sparkles,
@@ -14,11 +12,18 @@ import {
     X,
     Zap,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { ActionQueueControls } from "@/components/action-queue-controls";
+import {
+    type ActionResult,
+    type QueueStats,
+    getActionVerb,
+    useActionQueue,
+} from "@/hooks/use-action-queue";
+import { gameToast } from "@/components/ui/game-toast";
 
 const BREW_COOLDOWN_MS = 3000;
 import AppLayout from "@/layouts/app-layout";
-import { gameToast } from "@/components/ui/game-toast";
 import { locationPath } from "@/lib/utils";
 import type { BreadcrumbItem } from "@/types";
 
@@ -62,17 +67,6 @@ interface BrewingInfo {
     herblore_xp_progress: number;
     herblore_xp_to_next: number;
     herbs_in_inventory: IngredientInventory[];
-}
-
-interface BrewResult {
-    success: boolean;
-    message: string;
-    item?: { name: string; quantity: number };
-    xp_awarded?: number;
-    skill?: string;
-    leveled_up?: boolean;
-    new_level?: number;
-    energy_remaining?: number;
 }
 
 interface Location {
@@ -119,35 +113,45 @@ const categoryColors: Record<string, string> = {
 
 function RecipeCard({
     recipe,
-    onBrew,
-    loading,
-    cooldown,
+    isSelected,
+    onSelect,
 }: {
     recipe: Recipe;
-    onBrew: (id: string) => void;
-    loading: string | null;
-    cooldown: number;
+    isSelected: boolean;
+    onSelect: (id: string) => void;
 }) {
-    const isLoading = loading === recipe.id;
     const CategoryIcon = categoryIcons[recipe.category] || FlaskConical;
     const categoryColor = categoryColors[recipe.category] || "text-stone-400";
+    const canSelect = !recipe.is_locked;
 
     return (
-        <div
-            className={`rounded-lg border p-3 transition ${
+        <button
+            onClick={() => canSelect && onSelect(recipe.id)}
+            disabled={!canSelect}
+            className={`w-full rounded-lg border p-3 text-left transition ${
                 recipe.is_locked
-                    ? "border-stone-700 bg-stone-800/30 opacity-60"
-                    : recipe.can_make
-                      ? "border-emerald-600/50 bg-stone-800/50"
-                      : "border-stone-700 bg-stone-800/50"
+                    ? "cursor-not-allowed border-stone-700 bg-stone-800/30 opacity-60"
+                    : isSelected
+                      ? "border-emerald-400 bg-stone-800/50 ring-2 ring-emerald-400/30 shadow-lg shadow-emerald-500/10"
+                      : recipe.can_make
+                        ? "cursor-pointer border-emerald-600/50 bg-stone-800/50 hover:border-emerald-500/70"
+                        : "cursor-pointer border-stone-700 bg-stone-800/50 hover:border-stone-600"
             }`}
         >
             <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <CategoryIcon className={`h-4 w-4 ${categoryColor}`} />
-                    <span className="font-pixel text-sm text-emerald-300">{recipe.name}</span>
+                    <span
+                        className={`font-pixel text-sm ${isSelected ? "text-emerald-200" : "text-emerald-300"}`}
+                    >
+                        {recipe.name}
+                    </span>
                 </div>
-                {recipe.is_locked && <Lock className="h-4 w-4 text-stone-500" />}
+                {recipe.is_locked ? (
+                    <Lock className="h-4 w-4 text-stone-500" />
+                ) : isSelected ? (
+                    <span className="font-pixel text-[10px] text-emerald-300">Selected</span>
+                ) : null}
             </div>
 
             {/* Materials */}
@@ -173,7 +177,7 @@ function RecipeCard({
             </div>
 
             {/* Stats Row */}
-            <div className="mb-3 flex items-center justify-between text-stone-500">
+            <div className="flex items-center justify-between text-stone-500">
                 <span className="flex items-center gap-1 font-pixel text-[10px]">
                     <Zap className="h-3 w-3 text-yellow-500" />
                     {recipe.energy_cost}
@@ -183,138 +187,106 @@ function RecipeCard({
                 </span>
             </div>
 
-            {/* Brew Button */}
-            {recipe.is_locked ? (
-                <div className="rounded-md bg-stone-900/50 px-3 py-2 text-center">
+            {/* Locked message */}
+            {recipe.is_locked && (
+                <div className="mt-3 rounded-md bg-stone-900/50 px-3 py-2 text-center">
                     <span className="font-pixel text-[10px] text-stone-500">
                         Requires Level {recipe.required_level} Herblore
                     </span>
                 </div>
-            ) : (
-                <button
-                    onClick={() => onBrew(recipe.id)}
-                    disabled={!recipe.can_make || loading !== null || cooldown > 0}
-                    className={`relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-md px-3 py-2 font-pixel text-xs transition ${
-                        recipe.can_make && !loading && cooldown <= 0
-                            ? "bg-emerald-600 text-stone-900 hover:bg-emerald-500"
-                            : "cursor-not-allowed bg-stone-700 text-stone-500"
-                    }`}
-                >
-                    {cooldown > 0 && (
-                        <div
-                            className="absolute inset-0 bg-stone-600/30"
-                            style={{ width: `${(cooldown / BREW_COOLDOWN_MS) * 100}%` }}
-                        />
-                    )}
-                    <span className="relative">
-                        {isLoading ? (
-                            <span className="flex items-center gap-1">
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                                Brewing...
-                            </span>
-                        ) : cooldown > 0 ? (
-                            `${(cooldown / 1000).toFixed(1)}s`
-                        ) : recipe.can_make ? (
-                            <span className="flex items-center gap-1">
-                                <Check className="h-3 w-3" />
-                                Brew
-                            </span>
-                        ) : (
-                            <span className="flex items-center gap-1">
-                                <X className="h-3 w-3" />
-                                Missing Ingredients
-                            </span>
-                        )}
-                    </span>
-                </button>
             )}
-        </div>
+
+            {/* Can't make indicator */}
+            {!recipe.is_locked && !recipe.can_make && !isSelected && (
+                <div className="mt-3 flex items-center justify-center gap-1 font-pixel text-[10px] text-stone-500">
+                    <X className="h-3 w-3" />
+                    Missing Ingredients
+                </div>
+            )}
+        </button>
     );
 }
 
 export default function ApothecaryIndex() {
     const { brewing_info, location } = usePage<PageProps>().props;
-    const [loading, setLoading] = useState<string | null>(null);
     const [activeCategory, setActiveCategory] = useState<string>("all");
     const [currentEnergy, setCurrentEnergy] = useState(brewing_info.player_energy);
-    const [cooldown, setCooldown] = useState(0);
-    const cooldownInterval = useRef<NodeJS.Timeout | null>(null);
-
-    const startCooldown = () => {
-        setCooldown(BREW_COOLDOWN_MS);
-        if (cooldownInterval.current) clearInterval(cooldownInterval.current);
-        const startTime = Date.now();
-        cooldownInterval.current = setInterval(() => {
-            const remaining = Math.max(0, BREW_COOLDOWN_MS - (Date.now() - startTime));
-            setCooldown(remaining);
-            if (remaining <= 0 && cooldownInterval.current) {
-                clearInterval(cooldownInterval.current);
-                cooldownInterval.current = null;
-            }
-        }, 50);
-    };
-
-    useEffect(() => {
-        // Reload fresh data on mount to avoid stale cache from Inertia navigation
-        router.reload({ only: ["brewing_info"] });
-
-        return () => {
-            if (cooldownInterval.current) clearInterval(cooldownInterval.current);
-        };
-    }, []);
+    const [selectedRecipe, setSelectedRecipe] = useState<string | null>(null);
 
     const brewUrl = location
         ? `${locationPath(location.type, location.id)}/apothecary/brew`
         : "/apothecary/brew";
 
-    const handleBrew = async (recipeId: string) => {
-        if (loading || cooldown > 0) return;
-        setLoading(recipeId);
+    const buildBody = useCallback(() => ({ recipe: selectedRecipe }), [selectedRecipe]);
 
-        try {
-            const response = await fetch(brewUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN":
-                        document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute("content") || "",
-                },
-                body: JSON.stringify({ recipe: recipeId }),
-            });
-
-            const data: BrewResult = await response.json();
-
-            if (data.success && data.item) {
-                gameToast.success(`Brewed ${data.item.quantity}x ${data.item.name}`, {
-                    xp: data.xp_awarded,
-                    levelUp:
-                        data.leveled_up && data.new_level
-                            ? {
-                                  skill: data.skill || "Herblore",
-                                  level: data.new_level,
-                              }
-                            : undefined,
-                });
-                startCooldown();
-            } else if (!data.success) {
-                gameToast.error(data.message);
-            }
-
-            if (data.success && data.energy_remaining !== undefined) {
-                setCurrentEnergy(data.energy_remaining);
-            }
-
-            router.reload({ only: ["brewing_info", "sidebar"] });
-        } catch {
-            gameToast.error("An error occurred");
-        } finally {
-            setLoading(null);
+    const onActionComplete = useCallback((data: ActionResult) => {
+        if (data.success && data.energy_remaining !== undefined) {
+            setCurrentEnergy(data.energy_remaining);
         }
-    };
+    }, []);
 
+    const onQueueComplete = useCallback((stats: QueueStats) => {
+        if (stats.completed === 0) return;
+
+        const verb = getActionVerb(stats.actionType);
+        if (stats.completed === 1 && stats.itemName) {
+            gameToast.success(`${verb} ${stats.totalQuantity}x ${stats.itemName}`, {
+                xp: stats.totalXp,
+                levelUp: stats.lastLevelUp,
+            });
+        } else if (stats.completed > 1) {
+            const qty = stats.totalQuantity > 0 ? `${stats.totalQuantity}x ` : "";
+            gameToast.success(
+                `${verb} ${qty}${stats.itemName ?? "potions"} (${stats.completed} actions)`,
+                {
+                    xp: stats.totalXp,
+                    levelUp: stats.lastLevelUp,
+                },
+            );
+        }
+    }, []);
+
+    const buildActionParams = useCallback(
+        () => ({
+            recipe: selectedRecipe,
+            location_type: location?.type,
+            location_id: location?.id,
+        }),
+        [selectedRecipe, location],
+    );
+
+    const {
+        startQueue,
+        cancelQueue,
+        isQueueActive,
+        queueProgress,
+        isActionLoading,
+        cooldown,
+        performSingleAction,
+        isGloballyLocked,
+        totalXp,
+        queueStartedAt,
+    } = useActionQueue({
+        url: brewUrl,
+        buildBody,
+        cooldownMs: BREW_COOLDOWN_MS,
+        onActionComplete,
+        onQueueComplete,
+        reloadProps: ["brewing_info", "sidebar"],
+        actionType: "brew",
+        buildActionParams,
+    });
+
+    useEffect(() => {
+        // Reload fresh data on mount to avoid stale cache from Inertia navigation
+        router.reload({ only: ["brewing_info"] });
+    }, []);
+
+    // Find the selected recipe object
     const allRecipes = Object.entries(brewing_info.all_recipes).flatMap(([, recipes]) => recipes);
+    const selected = allRecipes.find((r) => r.id === selectedRecipe);
+    const effectiveSelected = selected && !selected.is_locked ? selected : null;
+
     const displayRecipes =
         activeCategory === "all" ? allRecipes : brewing_info.all_recipes[activeCategory] || [];
 
@@ -487,6 +459,37 @@ export default function ApothecaryIndex() {
                     </div>
                 </div>
 
+                {/* Queue Controls */}
+                {effectiveSelected && (
+                    <div className="mb-4 rounded-lg border border-emerald-600/50 bg-stone-800/50 p-3">
+                        <div className="mb-2 font-pixel text-xs text-emerald-300">
+                            {effectiveSelected.name}
+                        </div>
+                        <ActionQueueControls
+                            isQueueActive={isQueueActive}
+                            queueProgress={queueProgress}
+                            isActionLoading={isActionLoading}
+                            cooldown={cooldown}
+                            cooldownMs={BREW_COOLDOWN_MS}
+                            onStart={startQueue}
+                            onCancel={cancelQueue}
+                            onSingle={performSingleAction}
+                            disabled={!effectiveSelected.can_make || isGloballyLocked}
+                            actionLabel="Brew"
+                            activeLabel="Brewing"
+                            totalXp={totalXp}
+                            startedAt={queueStartedAt}
+                            buttonClassName="bg-emerald-600 text-stone-900 hover:bg-emerald-500"
+                        />
+                    </div>
+                )}
+
+                {!selectedRecipe && (
+                    <div className="mb-4 rounded-lg border border-stone-600 bg-stone-800/30 p-3 text-center font-pixel text-xs text-stone-400">
+                        Select a recipe below to brew
+                    </div>
+                )}
+
                 {/* Category Tabs */}
                 <div className="mb-4 flex gap-2 overflow-x-auto">
                     {categories.map((cat) => {
@@ -516,9 +519,8 @@ export default function ApothecaryIndex() {
                         <RecipeCard
                             key={recipe.id}
                             recipe={recipe}
-                            onBrew={handleBrew}
-                            loading={loading}
-                            cooldown={cooldown}
+                            isSelected={selectedRecipe === recipe.id}
+                            onSelect={setSelectedRecipe}
                         />
                     ))}
                 </div>

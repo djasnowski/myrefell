@@ -10,7 +10,7 @@ use App\Models\Town;
 use App\Models\Village;
 use App\Services\BiomeService;
 use App\Services\CraftingService;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -109,7 +109,7 @@ class AnvilController extends Controller
     /**
      * Smith an item at the anvil.
      */
-    public function smith(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null): RedirectResponse
+    public function smith(Request $request, ?Village $village = null, ?Town $town = null, ?Barony $barony = null, ?Duchy $duchy = null, ?Kingdom $kingdom = null): JsonResponse
     {
         $request->validate([
             'recipe' => 'required|string',
@@ -126,11 +126,7 @@ class AnvilController extends Controller
             $location?->id ?? $user->current_location_id
         );
 
-        if ($result['success']) {
-            return back()->with('success', $result['message']);
-        }
-
-        return back()->with('error', $result['message']);
+        return response()->json($result, $result['success'] ? 200 : 422);
     }
 
     /**

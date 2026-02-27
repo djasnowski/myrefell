@@ -48,6 +48,8 @@ interface SidebarData {
     favorites: Favorite[];
     location: LocationData | null;
     house_url: string | null;
+    house_location_type: string | null;
+    house_location_id: number | null;
 }
 
 // Map icon names to Lucide icons (same as service-card.tsx)
@@ -198,29 +200,34 @@ function FavoriteBadge({
     favorite,
     location,
     houseUrl,
+    houseLocationType,
+    houseLocationId,
 }: {
     favorite: Favorite;
     location: LocationData | null;
     houseUrl: string | null;
+    houseLocationType: string | null;
+    houseLocationId: number | null;
 }) {
     const { isCurrentUrl } = useCurrentUrl();
     const Icon = iconMap[favorite.icon] || Store;
 
-    // "house" is special — always available if the player has one, and uses
-    // the fixed house_url (which points to the house's location, not the
-    // player's current location).
+    // "house" is special — only available when the player is at the same
+    // settlement as their house, and uses the fixed house_url.
     const isHouse = favorite.service_id === "house";
 
     // Check if service is available at current location
     const isAvailable = isHouse
-        ? !!houseUrl
+        ? !!houseUrl && location?.type === houseLocationType && location?.id === houseLocationId
         : location?.type &&
           location?.id &&
           locationServices[location.type]?.includes(favorite.service_id);
 
     // Build the URL for the service at current location
     const href = isHouse
-        ? houseUrl
+        ? isAvailable
+            ? houseUrl
+            : null
         : isAvailable && location?.type && location?.id
           ? `/${locationPaths[location.type]}/${location.id}/${favorite.route}`
           : null;
@@ -283,6 +290,8 @@ export function NavFavorites() {
                         favorite={favorite}
                         location={sidebar.location}
                         houseUrl={sidebar.house_url}
+                        houseLocationType={sidebar.house_location_type}
+                        houseLocationId={sidebar.house_location_id}
                     />
                 ))}
             </div>

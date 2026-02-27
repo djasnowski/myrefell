@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\ActionQueue;
 use App\Models\User;
 use App\Services\AgilityService;
+use App\Services\ApothecaryService;
 use App\Services\CookingService;
 use App\Services\CraftingService;
 use App\Services\GatheringService;
@@ -32,7 +33,8 @@ class ProcessActionQueue implements ShouldQueue
         CraftingService $craftingService,
         GatheringService $gatheringService,
         TrainingService $trainingService,
-        AgilityService $agilityService
+        AgilityService $agilityService,
+        ApothecaryService $apothecaryService
     ): void {
         $queue = ActionQueue::find($this->queueId);
 
@@ -77,11 +79,17 @@ class ProcessActionQueue implements ShouldQueue
                 (int) $locationId,
                 (int) ($params['burn_bonus'] ?? 0)
             ),
-            'craft', 'smelt' => $craftingService->craft(
+            'craft', 'smelt', 'smith' => $craftingService->craft(
                 $user,
                 $params['recipe'],
                 $locationType,
                 $locationId
+            ),
+            'brew' => $apothecaryService->brew(
+                $user,
+                $params['recipe'],
+                $locationType,
+                (int) $locationId
             ),
             'gather' => $gatheringService->gather(
                 $user,

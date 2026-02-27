@@ -32,6 +32,8 @@ const ACTION_VERBS: Record<string, string> = {
     cook: "Cooked",
     smelt: "Smelted",
     craft: "Crafted",
+    smith: "Smithed",
+    brew: "Brewed",
     gather: "Gathered",
     train: "Trained",
     agility: "Completed",

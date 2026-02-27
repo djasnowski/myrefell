@@ -188,8 +188,10 @@ class HandleInertiaRequests extends Middleware
             'infirmary' => $this->infirmaryService->getInfirmaryStatus($player),
             'active_buffs' => $this->skillBonusService->getAllActiveBuffs($player),
             'skill_bonuses' => $this->skillBonusService->getSkillBonuses($player),
-            'has_house' => \App\Models\PlayerHouse::where('player_id', $player->id)->exists(),
-            'house_url' => \App\Models\PlayerHouse::where('player_id', $player->id)->first()?->getHouseUrl(),
+            'has_house' => ($playerHouse = \App\Models\PlayerHouse::where('player_id', $player->id)->first()) !== null,
+            'house_url' => $playerHouse?->getHouseUrl(),
+            'house_location_type' => $playerHouse?->location_type,
+            'house_location_id' => $playerHouse?->location_id,
             'house_entry_requests_count' => $this->getHouseEntryRequestsCount($player),
             'action_queue' => $this->getActionQueueData($player),
             'unread_mail_count' => \App\Models\PlayerMail::where('recipient_id', $player->id)

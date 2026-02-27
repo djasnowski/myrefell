@@ -258,7 +258,7 @@ export default function CombatArena() {
             <Head title={`Fighting ${session.monster.name}`} />
             <div className="flex h-full flex-1 flex-col p-4">
                 {/* Combat Header */}
-                <div className="mb-4 text-center">
+                <div className="mb-4 shrink-0 text-center">
                     <h1 className="font-pixel text-xl text-amber-400">Round {session.round}</h1>
                     <div className="flex items-center justify-center gap-2">
                         {activeStyle && (
@@ -284,7 +284,7 @@ export default function CombatArena() {
                 </div>
 
                 {/* Health Bars */}
-                <div className="mb-6 grid gap-4 md:grid-cols-2">
+                <div className="mb-6 shrink-0 grid gap-4 md:grid-cols-2">
                     {/* Player HP */}
                     <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-4">
                         <div className="mb-2 flex items-center justify-between">
@@ -341,13 +341,9 @@ export default function CombatArena() {
                 </div>
 
                 {/* Combat Log - Flexible Height */}
-                <div className="mb-4 flex min-h-[100px] flex-1 flex-col overflow-hidden rounded-lg border border-stone-700 bg-stone-900/50 p-4">
-                    <h3 className="mb-3 font-pixel text-sm text-amber-300">Combat Log</h3>
-                    <div
-                        id="combat-logs"
-                        className="flex-1 space-y-1 overflow-y-auto"
-                        style={{ maxHeight: "calc(100vh - 420px)" }}
-                    >
+                <div className="mb-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-stone-700 bg-stone-900/50 p-4">
+                    <h3 className="mb-3 shrink-0 font-pixel text-sm text-amber-300">Combat Log</h3>
+                    <div id="combat-logs" className="h-full space-y-1 overflow-y-auto">
                         {combatLogs.map((log) => (
                             <div
                                 key={log.id}
@@ -371,7 +367,7 @@ export default function CombatArena() {
 
                 {/* Victory Screen */}
                 {isVictory && rewards && (
-                    <div className="rounded-xl border-2 border-green-500/50 bg-gradient-to-b from-green-900/40 to-green-950/60 p-4">
+                    <div className="shrink-0 rounded-xl border-2 border-green-500/50 bg-gradient-to-b from-green-900/40 to-green-950/60 p-4">
                         {/* Header - Compact */}
                         <div className="mb-4 flex items-center justify-center gap-3">
                             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/20 ring-2 ring-green-500/50">
@@ -487,7 +483,7 @@ export default function CombatArena() {
 
                 {/* Defeat Screen */}
                 {isDefeat && (
-                    <div className="rounded-xl border-2 border-red-500/50 bg-gradient-to-b from-red-900/40 to-red-950/60 p-4">
+                    <div className="shrink-0 rounded-xl border-2 border-red-500/50 bg-gradient-to-b from-red-900/40 to-red-950/60 p-4">
                         {/* Header - Compact */}
                         <div className="mb-4 flex items-center justify-center gap-3">
                             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/20 ring-2 ring-red-500/50">
@@ -523,7 +519,7 @@ export default function CombatArena() {
 
                 {/* Fled Screen */}
                 {hasFled && (
-                    <div className="rounded-xl border-2 border-yellow-500/50 bg-gradient-to-b from-yellow-900/40 to-yellow-950/60 p-4">
+                    <div className="shrink-0 rounded-xl border-2 border-yellow-500/50 bg-gradient-to-b from-yellow-900/40 to-yellow-950/60 p-4">
                         {/* Header - Compact */}
                         <div className="mb-4 flex items-center justify-center gap-3">
                             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-500/20 ring-2 ring-yellow-500/50">
@@ -551,7 +547,7 @@ export default function CombatArena() {
 
                 {/* Action Buttons */}
                 {isActive && (
-                    <div className="space-y-3">
+                    <div className="shrink-0 space-y-3">
                         {/* Food Panel */}
                         {showFood && (
                             <div className="rounded-lg border border-stone-700 bg-stone-800/90 p-4">

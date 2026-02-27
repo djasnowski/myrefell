@@ -15,7 +15,7 @@ class ActionQueueController extends Controller
     public function start(Request $request): JsonResponse
     {
         $request->validate([
-            'action_type' => 'required|string|in:cook,craft,smelt,gather,train,agility',
+            'action_type' => 'required|string|in:cook,craft,smelt,smith,brew,gather,train,agility',
             'action_params' => 'required|array',
             'total' => 'required|integer|min:0',
         ]);
