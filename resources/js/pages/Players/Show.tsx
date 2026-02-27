@@ -199,7 +199,9 @@ export default function PlayerShow() {
     const craftingSkills = skills.filter((s) =>
         ["cooking", "smithing", "crafting", "herblore"].includes(s.name),
     );
-    const supportSkills = skills.filter((s) => ["thieving", "agility"].includes(s.name));
+    const supportSkills = skills.filter((s) =>
+        ["thieving", "agility", "construction"].includes(s.name),
+    );
 
     const renderSkillCard = (skill: SkillData) => {
         const Icon = skillIcons[skill.name] || Sword;
