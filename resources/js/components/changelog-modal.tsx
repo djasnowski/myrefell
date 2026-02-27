@@ -14,6 +14,7 @@ import {
     Repeat,
     Scroll,
     Shield,
+    ShoppingBag,
     Sparkles,
     Sprout,
     Star,
@@ -27,7 +28,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 // Update this when adding new changelog entries
-export const CURRENT_CHANGELOG_VERSION = "0.10.0";
+export const CURRENT_CHANGELOG_VERSION = "0.10.1";
 
 interface ChangelogEntry {
     version: string;
@@ -43,6 +44,48 @@ interface ChangelogEntry {
 }
 
 const changelog: ChangelogEntry[] = [
+    {
+        version: "0.10.1",
+        date: "February 27, 2026",
+        title: "NPC Shops",
+        description:
+            "Specialty shops have opened their doors across the realm. Named NPC vendors now sell biome-themed goods at every level of settlement — from volcanic stoneworks to coastal fishing supplies. Some of these items are hard to find anywhere else, and builders will want to pay special attention to what's on the shelves.",
+        icon: <ShoppingBag className="h-8 w-8 text-amber-500" />,
+        changes: [
+            {
+                type: "added",
+                text: "Shops service available at villages, towns, baronies, duchies, and kingdoms",
+            },
+            {
+                type: "added",
+                text: "4 NPC merchants to start, each with unique biome-themed inventory",
+            },
+            {
+                type: "added",
+                text: "Ashenfell — Cindervault Stoneworks: volcanic stone, marble, gold leaf, and the elusive Magic Stone",
+            },
+            {
+                type: "added",
+                text: "Valdoria — The Golden Furrow: seeds and farming supplies for every crop",
+            },
+            {
+                type: "added",
+                text: "Frostholm — Ironbark Provisions: cold-weather gear, leather, cloth, and crafting supplies",
+            },
+            {
+                type: "added",
+                text: "Sandmar — The Coral Bazaar: fishing equipment, vials, chisels, and exotic goods",
+            },
+            {
+                type: "added",
+                text: "Hard-to-obtain construction materials now available — Gold Leaf and Magic Stone can finally be purchased",
+            },
+            {
+                type: "added",
+                text: "Kingdom-level shops are accessible from any settlement within the kingdom",
+            },
+        ],
+    },
     {
         version: "0.10.0",
         date: "February 21, 2026",

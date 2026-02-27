@@ -20,6 +20,7 @@ import {
     Percent,
     ScrollText,
     Shield,
+    ShoppingBag,
     Snowflake,
     Sparkles,
     Store,
@@ -707,6 +708,18 @@ export default function KingdomShow({
                                 </span>
                                 <p className="text-xs text-stone-500">
                                     Read and publish broadsheets
+                                </p>
+                            </div>
+                        </Link>
+                        <Link
+                            href={`/kingdoms/${kingdom.id}/shops`}
+                            className="flex items-center gap-3 rounded-lg border-2 border-amber-600/50 bg-amber-900/20 p-4 transition hover:bg-amber-800/30"
+                        >
+                            <ShoppingBag className="h-8 w-8 text-amber-400" />
+                            <div>
+                                <span className="font-pixel text-sm text-amber-300">Shops</span>
+                                <p className="text-xs text-stone-500">
+                                    Specialty shops & unique goods
                                 </p>
                             </div>
                         </Link>

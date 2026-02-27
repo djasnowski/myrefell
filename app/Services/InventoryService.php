@@ -194,7 +194,10 @@ class InventoryService
      */
     public function freeSlots(User $player): int
     {
-        $usedSlots = $player->inventory()->count();
+        $usedSlots = $player->inventory()
+            ->where('slot_number', '>=', 0)
+            ->where('slot_number', '<', PlayerInventory::MAX_SLOTS)
+            ->count();
 
         return PlayerInventory::MAX_SLOTS - $usedSlots;
     }

@@ -71,6 +71,7 @@ use App\Http\Controllers\RolePetitionController;
 use App\Http\Controllers\RoleStockingController;
 use App\Http\Controllers\SawmillController;
 use App\Http\Controllers\ServiceFavoriteController;
+use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SiegeController;
 use App\Http\Controllers\SkillsController;
 use App\Http\Controllers\SocialClassController;
@@ -473,6 +474,9 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('notice-board/{broadsheet}/react', [BroadsheetController::class, 'react'])->name('notice-board.react');
         Route::post('notice-board/{broadsheet}/comments', [BroadsheetController::class, 'comment'])->name('notice-board.comment');
         Route::delete('notice-board/{broadsheetComment}/delete-comment', [BroadsheetController::class, 'deleteComment'])->name('notice-board.comment.delete');
+        Route::get('shops', [ShopController::class, 'index'])->name('shops');
+        Route::get('shops/{shop}', [ShopController::class, 'show'])->name('shops.show');
+        Route::post('shops/{shop}/buy', [ShopController::class, 'buy'])->name('shops.buy');
     });
 
     // Location-scoped services: Towns
@@ -540,6 +544,9 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('notice-board/{broadsheet}/react', [BroadsheetController::class, 'react'])->name('notice-board.react');
         Route::post('notice-board/{broadsheet}/comments', [BroadsheetController::class, 'comment'])->name('notice-board.comment');
         Route::delete('notice-board/{broadsheetComment}/delete-comment', [BroadsheetController::class, 'deleteComment'])->name('notice-board.comment.delete');
+        Route::get('shops', [ShopController::class, 'index'])->name('shops');
+        Route::get('shops/{shop}', [ShopController::class, 'show'])->name('shops.show');
+        Route::post('shops/{shop}/buy', [ShopController::class, 'buy'])->name('shops.buy');
     });
 
     // Location-scoped services: Baronies
@@ -597,6 +604,9 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('notice-board/{broadsheet}/react', [BroadsheetController::class, 'react'])->name('notice-board.react');
         Route::post('notice-board/{broadsheet}/comments', [BroadsheetController::class, 'comment'])->name('notice-board.comment');
         Route::delete('notice-board/{broadsheetComment}/delete-comment', [BroadsheetController::class, 'deleteComment'])->name('notice-board.comment.delete');
+        Route::get('shops', [ShopController::class, 'index'])->name('shops');
+        Route::get('shops/{shop}', [ShopController::class, 'show'])->name('shops.show');
+        Route::post('shops/{shop}/buy', [ShopController::class, 'buy'])->name('shops.buy');
     });
 
     // Location-scoped services: Duchies
@@ -652,6 +662,9 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('notice-board/{broadsheet}/react', [BroadsheetController::class, 'react'])->name('notice-board.react');
         Route::post('notice-board/{broadsheet}/comments', [BroadsheetController::class, 'comment'])->name('notice-board.comment');
         Route::delete('notice-board/{broadsheetComment}/delete-comment', [BroadsheetController::class, 'deleteComment'])->name('notice-board.comment.delete');
+        Route::get('shops', [ShopController::class, 'index'])->name('shops');
+        Route::get('shops/{shop}', [ShopController::class, 'show'])->name('shops.show');
+        Route::post('shops/{shop}/buy', [ShopController::class, 'buy'])->name('shops.buy');
     });
 
     // Location-scoped services: Kingdoms
@@ -704,6 +717,9 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\EnsureUserNotBanned::
         Route::post('notice-board/{broadsheet}/react', [BroadsheetController::class, 'react'])->name('notice-board.react');
         Route::post('notice-board/{broadsheet}/comments', [BroadsheetController::class, 'comment'])->name('notice-board.comment');
         Route::delete('notice-board/{broadsheetComment}/delete-comment', [BroadsheetController::class, 'deleteComment'])->name('notice-board.comment.delete');
+        Route::get('shops', [ShopController::class, 'index'])->name('shops');
+        Route::get('shops/{shop}', [ShopController::class, 'show'])->name('shops.show');
+        Route::post('shops/{shop}/buy', [ShopController::class, 'buy'])->name('shops.buy');
     });
 
     // Crafting Docket

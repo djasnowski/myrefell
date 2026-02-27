@@ -22,6 +22,7 @@ import {
     Receipt,
     Search,
     Shield,
+    ShoppingBag,
     Sparkles,
     Star,
     Store,
@@ -84,6 +85,7 @@ const iconMap: Record<string, LucideIcon> = {
     target: Target,
     home: Home,
     newspaper: Newspaper,
+    "shopping-bag": ShoppingBag,
 };
 
 export function ServiceCard({

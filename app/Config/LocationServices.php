@@ -173,6 +173,12 @@ class LocationServices
             'route' => 'house',
             'requires_house' => true,
         ],
+        'shops' => [
+            'name' => 'Shops',
+            'description' => 'Browse specialty shops and buy unique goods',
+            'icon' => 'shopping-bag',
+            'route' => 'shops',
+        ],
     ];
 
     /**
@@ -201,6 +207,7 @@ class LocationServices
             'sawmill',
             'construction',
             'notice-board',
+            'shops',
             'house',     // Only if player has a house
         ],
         'town' => [
@@ -226,6 +233,7 @@ class LocationServices
             'sawmill',
             'construction',
             'notice-board',
+            'shops',
             'house',     // Only if player has a house
         ],
         'barony' => [
@@ -250,6 +258,7 @@ class LocationServices
             'sawmill',
             'construction',
             'notice-board',
+            'shops',
             'house',
         ],
         'duchy' => [
@@ -267,6 +276,7 @@ class LocationServices
             'agility',
             'construction',
             'notice-board',
+            'shops',
             'house',
         ],
         'kingdom' => [
@@ -284,6 +294,7 @@ class LocationServices
             'apothecary',
             'construction',
             'notice-board',
+            'shops',
             'house',
         ],
     ];
