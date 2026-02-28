@@ -142,6 +142,13 @@ class TaxService
             'barony_upstream_total' => 0,
         ];
 
+        // Prevent duplicate tax collection for the same day
+        if (TaxCollection::where('tax_period', $today)->exists()) {
+            Log::warning('Daily taxes already collected for today, skipping', ['date' => $today]);
+
+            return $results;
+        }
+
         DB::transaction(function () use ($today, &$results) {
             // Step 1: Collect taxes from players to their home location (village, town, or barony)
             $results = array_merge($results, $this->collectPlayerTaxes($today));
